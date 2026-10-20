@@ -18,19 +18,19 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
-
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Base for the tools that work on the files in a chat's workspace. Each call runs within the tool time limit, can
- * only reach the workspace of the chat it is made in, and returns problems (bad paths, missing files, limits) to
- * the model as an error it can act on.
+ * Base for the tools that work on the files in a session's workspace. Each call runs within the session's tool time
+ * limit, can only reach the workspace of the session it is made in (see {@link ToolCallContext#workspace()}), is
+ * bounded by the session's limits (see {@link ToolCallContext#limits()}), and returns problems (bad paths, missing
+ * files, limits) to the model as an error it can act on.
  */
 abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
 
@@ -41,48 +41,70 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
      */
     static final int MAX_LINE_CHARS = 2_000;
 
-    protected final ChatWorkspace workspace;
+    // The workspaces of all sessions, to run a call within its time limit and check where it may write. A call
+    // reaches its own session's files, and its limits, through its context.
+    private final ChatWorkspace workspaces;
 
-    AbstractWorkspaceTool(final ChatWorkspace workspace) {
-        this.workspace = workspace;
+    AbstractWorkspaceTool(final ChatWorkspace workspaces) {
+        this.workspaces = workspaces;
     }
 
     @Override
-    public final String execute(final ToolExecutionRequest request) {
-        return "Error: " + specification().name() + " can only be used in a chat.";
-    }
-
-    @Override
-    public final String execute(final ToolExecutionRequest request, final int chatId) {
+    public final ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        if (context.workspace().isEmpty()) {
+            return ToolResult.text(onlyInAChat(definition().name()));
+        }
         try {
-            return workspace.withTimeLimit(timeLimit(request), () -> run(request, chatId));
-        } catch (final WorkspaceException e) {
-            return "Error: " + e.getMessage();
+            final ToolResult result = workspaces.withTimeLimit(timeLimit(request, context),
+                    () -> run(request, context));
+            return result.withResources(written(context));
+        } catch (final WorkspaceException | ToolSessionException e) {
+            // ToolSessionException: the tool needs the chat (e.g. the tab the user attached), and this isn't one.
+            return ToolResult.text("Error: " + e.getMessage());
         }
     }
 
-    /**
-     * @return How long a call may take.
-     */
-    protected Duration timeLimit() {
-        return limits().getToolTimeLimit().getDuration();
+    // The files the call wrote, which its text names, as the result's resources.
+    private List<ToolResource> written(final ToolCallContext context) {
+        final String description = "Written by the " + definition().name() + " tool";
+        return sessionWorkspace(context).written().stream()
+                .map(path -> ToolResource.workspaceFile(path, description))
+                .toList();
+    }
+
+    /// @param context The call's context, which [#execute] has checked has a workspace.
+    /// @return The workspace of the session the call is made in.
+    protected static SessionWorkspace sessionWorkspace(final ToolCallContext context) {
+        return context.workspace()
+                .orElseThrow(() -> new ToolSessionException("This tool can only be used in a chat."));
+    }
+
+    /// @param context The call's context.
+    /// @return How long a call of the tool may take in the call's session: by default the session's tool time
+    /// limit ([ToolCallContext#timeLimit()]). Tools that run queries override it with the session's query time
+    /// limit.
+    protected Duration timeLimit(final ToolCallContext context) {
+        return context.timeLimit()
+                .orElseGet(() -> limits(context).getToolTimeLimit().getDuration());
     }
 
     /// @param request The model's call.
-    /// @return How long this call may take: by default, as long as any call of the tool ([#timeLimit()]).
-    protected Duration timeLimit(final ToolExecutionRequest request) {
-        return timeLimit();
+    /// @param context The call's context.
+    /// @return How long this call may take: by default, as long as any call of the tool in the session
+    /// ([#timeLimit(ToolCallContext)]).
+    protected Duration timeLimit(final ToolCall request, final ToolCallContext context) {
+        return timeLimit(context);
     }
 
     /**
      * Runs the tool.
      *
      * @param request The model's call.
-     * @param chatId  The chat it is made in.
-     * @return The result for the model.
+     * @param context The session it is made in, which has a workspace (see {@link #sessionWorkspace}).
+     * @return The result for the model, with any files the call wrote and any user actions it offers.
      * @throws WorkspaceException for a problem the model can act on.
      */
-    abstract String run(ToolExecutionRequest request, int chatId);
+    abstract ToolResult run(ToolCall request, ToolCallContext context);
 
     @Override
     public boolean boundsItsOutput() {
@@ -93,14 +115,14 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
      * @return The path argument.
      * @throws WorkspaceException if it is missing or not a valid workspace path.
      */
-    protected WorkspacePath pathArg(final ToolExecutionRequest request, final String name) {
+    protected WorkspacePath pathArg(final ToolCall request, final String name) {
         return WorkspacePath.parse(stringArg(request, name));
     }
 
     /**
      * @return The value of a true/false argument, or the default if it is absent.
      */
-    protected boolean booleanArg(final ToolExecutionRequest request, final String name, final boolean other) {
+    protected boolean booleanArg(final ToolCall request, final String name, final boolean other) {
         final String value = stringArg(request, name);
         return value == null
                 ? other
@@ -110,26 +132,27 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     /**
      * @return The optional out path argument, or null.
      */
-    protected WorkspacePath outArg(final ToolExecutionRequest request) {
+    protected WorkspacePath outArg(final ToolCall request) {
         final String out = stringArg(request, OUT_ARG);
         if (out == null) {
             return null;
         }
         final WorkspacePath path = WorkspacePath.parse(out);
-        workspace.checkWritable(path);
+        workspaces.checkWritable(path);
         return path;
     }
 
     /**
-     * @return Result lines for the model, as many as fit, with a note of how many more there are.
+     * @return Result lines for the model, as many as fit within the session's limits, with a note of how many more
+     * there are.
      */
-    protected String boundedLines(final List<String> lines, final long total) {
+    protected static String boundedLines(final ToolCallContext context, final List<String> lines, final long total) {
         final StringBuilder sb = new StringBuilder();
         int shown = 0;
         for (final String line : lines) {
             final String shortened = shortenLine(line);
-            if (shown >= limits().getMaxLinesPerRead()
-                || sb.length() + shortened.length() > limits().getMaxCharsPerRead()) {
+            if (shown >= limits(context).getMaxLinesPerRead()
+                || sb.length() + shortened.length() > limits(context).getMaxCharsPerRead()) {
                 break;
             }
             sb.append(shortened).append('\n');
@@ -144,8 +167,10 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
                 : "");
     }
 
-    protected AiWorkspaceConfig limits() {
-        return workspace.limits();
+    /// @param context The call's context.
+    /// @return The limits of the call's session (see [ToolCallContext#limits()]).
+    protected static AiWorkspaceConfig limits(final ToolCallContext context) {
+        return context.limits().workspace();
     }
 
     /**

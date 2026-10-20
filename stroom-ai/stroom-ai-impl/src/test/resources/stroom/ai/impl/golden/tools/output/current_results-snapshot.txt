@@ -1,0 +1,111 @@
+Arguments: {}
+
+=== Output ===
+Took a snapshot of Logons in Query 'Logons': 25 row(s) of 25 found, taken <time of the call>.
+State: ok
+The rows are in /tabs/results/query-uuid/results.md. Work out figures with the table tool (or summarise_column, fetch_events).
+
+Profile of 'Logons' in Query 'Logons': 25 rows, 1 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| User | text | 0 | 4 | user0 | user3 | user0 (7), user1 (6), user2 (6), user3 (6) |
+
+First 3 rows:
+
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+
+=== Workspace file /tabs/results/query-uuid/results.json ===
+{
+  "tab" : {
+    "type" : "Query",
+    "uuid" : "query-uuid",
+    "name" : "Logons"
+  },
+  "tableName" : "Logons",
+  "path" : "/tabs/results/query-uuid/results.md",
+  "requestHash" : "972a551f86428ee1fecc175c5ca34b8b041616a1835606306337c94bba98a56c",
+  "takenAtMs" : 0,
+  "rowsHeld" : 25,
+  "rowsWanted" : 50000,
+  "truncated" : false,
+  "totalRows" : 25,
+  "finished" : true,
+  "cutByLimit" : false,
+  "refreshed" : false,
+  "tabQueryKey" : "tab-key",
+  "request" : {
+    "type" : "queryTable",
+    "description" : "Query 'Logons'",
+    "node" : "node1",
+    "searchRequest" : {
+      "queryKey" : {
+        "uuid" : "tab-key"
+      },
+      "query" : "from \"Windows events\" select User",
+      "queryContext" : { },
+      "incremental" : true,
+      "timeout" : 1000,
+      "storeHistory" : false,
+      "requestedRange" : {
+        "offset" : 0,
+        "length" : 100
+      },
+      "groupSelection" : {
+        "expandedDepth" : 0,
+        "openGroups" : [ ],
+        "closedGroups" : [ ]
+      }
+    }
+  }
+}
+
+=== Workspace file /tabs/results/query-uuid/results.md ===
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+
+
+=== Workspace file /tabs/results/query-uuid/results.profile.md ===
+Profile of 'Logons' in Query 'Logons': 25 rows, 1 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| User | text | 0 | 4 | user0 | user3 | user0 (7), user1 (6), user2 (6), user3 (6) |
+
+First 3 rows:
+
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+

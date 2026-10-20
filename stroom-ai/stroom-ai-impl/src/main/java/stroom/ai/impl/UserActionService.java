@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.UserActionRecord.CodeChange;
 import stroom.ai.impl.UserActionRecord.DashboardChange;
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
@@ -182,14 +183,14 @@ public class UserActionService {
         if (!lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action) + ", so the change "
                                    + "can't be undone here. Use Ctrl+Z in the editor.";
-            auditLog.processed(chatId, action.doc(), UNDO_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         final String outcome = "Undid the applied change, not saved";
         if (update(message, result, action.withStatus(Status.PENDING, outcome)) == null) {
             return new AiUserActionResult(false, "This has already changed. Try again.", null);
         }
-        auditLog.processed(chatId, action.doc(), UNDO_COMMAND, target,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_COMMAND, target,
                 "Undid an applied change: " + lineCounts(action), true);
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I undid the "
                                                                      + "proposed change I had applied to "
@@ -203,10 +204,10 @@ public class UserActionService {
                 ? Optional.empty()
                 : lookup.find(action.doc());
         if (found.isEmpty()) {
-            auditLog.userAction(chatId, action.action(), action.label(), "Not found", false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), "Not found", false);
             return new AiUserActionResult(false, "The document no longer exists, or you cannot see it.", null);
         }
-        auditLog.userAction(chatId, action.action(), action.label(), "Opened", true);
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), "Opened", true);
         return new AiUserActionResult(true, null, action.doc());
     }
 
@@ -217,10 +218,11 @@ public class UserActionService {
     private AiUserActionResult createQuery(final int chatId, final UserActionRecord action) {
         if (action.request() == null || lookup.usableDataSource(action.request()).isEmpty()) {
             final String problem = "The query's data source no longer exists, or you can't use it.";
-            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
             return new AiUserActionResult(false, problem, null);
         }
-        auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Query dialog", true);
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), "Opened the New Query dialog",
+                true);
         return new AiUserActionResult(true, null, null, action.name(), action.request());
     }
 
@@ -233,7 +235,7 @@ public class UserActionService {
         if (action.request() == null || action.newDashboard() == null
             || lookup.usableDataSource(action.request()).isEmpty()) {
             final String problem = "The query's data source no longer exists, or you can't use it.";
-            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         final DashboardBuilder.Built built;
@@ -242,10 +244,11 @@ public class UserActionService {
                     action.newDashboard().preview());
         } catch (final IllegalArgumentException e) {
             final String problem = "The dashboard can no longer be built from the query: " + e.getMessage();
-            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem, false);
             return new AiUserActionResult(false, problem, null);
         }
-        auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Dashboard dialog", true);
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
+                "Opened the New Dashboard dialog", true);
         return AiUserActionResult.createDashboard(action.name(), built.config());
     }
 
@@ -260,13 +263,13 @@ public class UserActionService {
         final String target = describeTarget(action);
         if (action.doc() == null || action.codeChange() == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The document no longer exists, or you cannot see it.";
-            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         if (!lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action)
                                    + ", so the change can't be applied.";
-            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         final LineDiffResult proposed = LineDiff.diff(action.codeChange().baseCode(), action.request());
@@ -282,7 +285,7 @@ public class UserActionService {
             if (update(message, result, action.withStatus(Status.DONE, APPLIED)) == null) {
                 return new AiUserActionResult(false, "This has already been done.", null);
             }
-            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target,
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target,
                     "Applied a proposed change, not saved: " + lineCounts(action), true);
             // So the model knows on its next turn (or now, if it is working).
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
@@ -302,7 +305,7 @@ public class UserActionService {
         if (update(message, result, action.withStatus(Status.DONE, outcome)) == null) {
             return new AiUserActionResult(false, "This has already been done.", null);
         }
-        auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target,
                 "Applied part of a proposed change, not saved: " + counts, true);
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied part of "
                                                                      + "the proposed change to " + target + " ("
@@ -386,19 +389,19 @@ public class UserActionService {
                 : String.join("; ", NullSafe.list(change.changes()));
         if (action.doc() == null || change == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The dashboard no longer exists, or you cannot see it.";
-            auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         if (!lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action)
                                    + ", so the change can't be applied.";
-            auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         if (update(message, result, action.withStatus(Status.DONE, APPLIED_DASHBOARD)) == null) {
             return new AiUserActionResult(false, "This has already been done.", null);
         }
-        auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target + ": " + operations,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_DASHBOARD_COMMAND, target + ": " + operations,
                 "Applied a proposed change, not saved: " + operations, true);
         // So the model knows on its next turn (or now, if it is working).
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
@@ -421,14 +424,14 @@ public class UserActionService {
         if (action.doc() == null || !lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action) + ", so the change "
                                    + "can't be undone here. Close the dashboard without saving to go back.";
-            auditLog.processed(chatId, action.doc(), UNDO_DASHBOARD_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_DASHBOARD_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         final String outcome = "Undid the applied change, not saved";
         if (update(message, result, action.withStatus(Status.PENDING, outcome)) == null) {
             return new AiUserActionResult(false, "This has already changed. Try again.", null);
         }
-        auditLog.processed(chatId, action.doc(), UNDO_DASHBOARD_COMMAND, target,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_DASHBOARD_COMMAND, target,
                 "Undid an applied change: " + String.join("; ", NullSafe.list(NullSafe.get(change,
                         DashboardChange::changes))), true);
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I undid the "
@@ -484,7 +487,7 @@ public class UserActionService {
         final Optional<String> problem = userActions.recheck(action);
         if (problem.isPresent()) {
             update(message, result, action.withStatus(Status.FAILED, problem.get()));
-            auditLog.userAction(chatId, action.action(), action.label(), problem.get(), false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), problem.get(), false);
             return new AiUserActionResult(false, problem.get(), null);
         }
 
@@ -505,10 +508,10 @@ public class UserActionService {
                     : "disable") + " processor filter " + action.filterId() + ": " + e.getMessage();
             aiDao.compareAndSetMessageText(message.getId(), claimed,
                     JsonUtil.writeValueAsString(replace(result, action.withStatus(Status.FAILED, failed)), false));
-            auditLog.userAction(chatId, action.action(), action.label(), failed, false);
+            auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), failed, false);
             return new AiUserActionResult(false, failed, null);
         }
-        auditLog.userAction(chatId, action.action(), action.label(), done, true);
+        auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(), done, true);
         // So the model knows on its next turn (or now, if it is working).
         final String note = "(With a button in the chat) I " + (enable
                 ? "enabled"

@@ -16,15 +16,14 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.ChatWorkspace.Entry;
 import stroom.ai.impl.workspace.SafePattern;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.io.BufferedWriter;
@@ -58,33 +57,44 @@ class GrepTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Finds the lines of a workspace file, or of every file in a directory, that contain "
-                             + "some text. The text is matched literally unless regex is true. Give out to write "
-                             + "every matching line to a file instead of returning them.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "A file or directory, e.g. /outputs/.")
+                .description(ToolDescription.builder()
+                        .general("Finds the lines of a ")
+                        .chatOnly("workspace ")
+                        .general("file, or of every file in a directory, that contain some text. The text is "
+                                 + "matched literally unless regex is true.")
+                        .chatOnly(" Give out to write every matching line to a file instead of returning them.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("A file or directory")
+                                .chatOnly(", e.g. /outputs/")
+                                .general(".")
+                                .build())
                         .addStringProperty(PATTERN_ARG, "The text to find.")
                         .addBooleanProperty(REGEX_ARG, "True if the pattern is a regular expression.")
                         .addBooleanProperty(IGNORE_CASE_ARG, "True to ignore case.")
                         .addIntegerProperty(MAX_RESULTS_ARG, "The most matching lines to return (default "
                                                              + DEFAULT_MAX_RESULTS + ").")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the matching lines to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the matching lines to.")
+                                .build())
                         .required(PATH_ARG, PATTERN_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final SafePattern pattern = SafePattern.of(rawArg(request, PATTERN_ARG),
                 booleanArg(request, REGEX_ARG, false),
                 booleanArg(request, IGNORE_CASE_ARG, false));
         final int maxResults = Math.clamp(Objects.requireNonNullElse(intArg(request, MAX_RESULTS_ARG),
-                DEFAULT_MAX_RESULTS), 1, limits().getMaxLinesPerRead());
+                DEFAULT_MAX_RESULTS), 1, limits(context).getMaxLinesPerRead());
         final String outArg = stringArg(request, OUT_ARG);
         final WorkspacePath out = outArg != null
                 ? WorkspacePath.parse(outArg)
@@ -92,13 +102,13 @@ class GrepTool extends AbstractWorkspaceTool {
 
         final List<WorkspacePath> files = path.isFile()
                 ? List.of(path)
-                : workspace.list(chatId, path).stream()
+                : workspace.list(path).stream()
                         .filter(entry -> entry.unavailable() == null)
                         .map(Entry::path)
                         .toList();
         if (files.size() > MAX_FILES) {
-            return "Error: " + path + " holds " + files.size() + " files; search at most " + MAX_FILES
-                   + " at once, e.g. a smaller directory.";
+            return ToolResult.text("Error: " + path + " holds " + files.size() + " files; search at most " + MAX_FILES
+                                   + " at once, e.g. a smaller directory.");
         }
 
         final Path temp = out != null
@@ -112,12 +122,12 @@ class GrepTool extends AbstractWorkspaceTool {
             String sourceDocUuid = null;
             for (final WorkspacePath file : files) {
                 if (sourceDocUuid == null) {
-                    sourceDocUuid = workspace.sourceDocUuid(chatId, file);
+                    sourceDocUuid = workspace.sourceDocUuid(file);
                 }
-                final long total = workspace.lineCount(chatId, file);
+                final long total = workspace.lineCount(file);
                 for (long from = 0; from < total; from += BATCH_LINES) {
                     long lineNo = from + 1;
-                    for (final String line : workspace.readLines(chatId, file, from, BATCH_LINES)) {
+                    for (final String line : workspace.readLines(file, from, BATCH_LINES)) {
                         ToolDeadline.check();
                         if (pattern.find(line)) {
                             matches++;
@@ -125,7 +135,7 @@ class GrepTool extends AbstractWorkspaceTool {
                                 writer.write(line);
                                 writer.newLine();
                             } else if (matches <= maxResults
-                                       && sb.length() < limits().getMaxCharsPerRead()) {
+                                       && sb.length() < limits(context).getMaxCharsPerRead()) {
                                 sb.append(files.size() > 1
                                         ? file + ":"
                                         : "").append(lineNo).append(": ").append(shortenLine(line))
@@ -140,17 +150,17 @@ class GrepTool extends AbstractWorkspaceTool {
             }
             if (writer != null) {
                 writer.close();
-                workspace.write(chatId, out, temp, sourceDocUuid);
-                return "Wrote " + matches + " matching line(s) to " + out + ".";
+                workspace.write(out, temp, sourceDocUuid);
+                return ToolResult.text("Wrote " + matches + " matching line(s) to " + out + ".");
             }
             if (matches == 0) {
-                return "No lines match.";
+                return ToolResult.text("No lines match.");
             }
             final int shown = (int) sb.toString().lines().count();
-            return sb.toString().strip() + (matches > shown
+            return ToolResult.text(sb.toString().strip() + (matches > shown
                     ? "\n(" + matches + " matching lines in all; " + (matches - shown) + " not shown. Give out "
                       + "to write them all to a file.)"
-                    : "");
+                    : ""));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } finally {

@@ -20,10 +20,14 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiMemoryDao;
+import stroom.ai.impl.ApprovalOutcome;
+import stroom.ai.impl.ConsentGates;
+import stroom.ai.impl.ToolConsentGate;
 import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMemory;
@@ -51,6 +55,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -111,7 +116,8 @@ class TestAiMemoryService {
         // Messages are read from the database, so requests for approval stored there are found.
         Mockito.when(aiService.getMessages(Mockito.anyInt()))
                 .thenAnswer(invocation -> aiDao.getMessages(invocation.getArgument(0)));
-        service = new AiMemoryService(memoryDao, aiService, runManager, securityContext, aiDao);
+        service = new AiMemoryService(memoryDao, aiService, ConsentGates.chat(null, aiService, runManager),
+                securityContext, aiDao);
     }
 
     @Test
@@ -205,6 +211,42 @@ class TestAiMemoryService {
 
         assertThat(service.write(chatId, "/memories/prefs.md", "x", null)).contains("asked to approve");
         assertThat(memoryDao.list("user1", AiMemoryScope.USER, "")).isEmpty();
+    }
+
+    @Test
+    void testAChangeApprovedAsSoonAsAskedIsMade() {
+        // As a session that asks with a form could answer (a chat's gate always leaves it waiting for its card).
+        final ToolConsentGate gate = Mockito.mock(ToolConsentGate.class);
+        Mockito.when(gate.lastingChangeApprovalReason(ToolSession.chat(chatId))).thenReturn(Optional.of("Why"));
+        Mockito.when(gate.requestChangeApproval(Mockito.eq(ToolSession.chat(chatId)), Mockito.any()))
+                .thenReturn(new ApprovalOutcome(ApprovalOutcome.Status.ALLOWED, null, null));
+        final AiMemoryService answeredAtOnce = new AiMemoryService(memoryDao, aiService, gate, securityContext,
+                aiDao);
+
+        assertThat(answeredAtOnce.write(chatId, "/memories/prefs.md", "x", null))
+                .isEqualTo("Created /memories/prefs.md.");
+        assertThat(memoryDao.list("user1", AiMemoryScope.USER, "")).hasSize(1);
+        final ArgumentCaptor<MemoryChange> asked = ArgumentCaptor.forClass(MemoryChange.class);
+        Mockito.verify(gate).requestChangeApproval(Mockito.eq(ToolSession.chat(chatId)), asked.capture());
+        assertThat(asked.getValue().status()).isEqualTo(ApprovalStatus.PENDING);
+        assertThat(asked.getValue().reason()).isEqualTo("Why");
+    }
+
+    @Test
+    void testAChangeDeniedAsSoonAsAskedIsNotMade() {
+        final ToolConsentGate gate = Mockito.mock(ToolConsentGate.class);
+        Mockito.when(gate.lastingChangeApprovalReason(ToolSession.chat(chatId))).thenReturn(Optional.of("Why"));
+        Mockito.when(gate.requestChangeApproval(Mockito.eq(ToolSession.chat(chatId)), Mockito.any()))
+                .thenReturn(new ApprovalOutcome(ApprovalOutcome.Status.DENIED, null, null));
+        final AiMemoryService answeredAtOnce = new AiMemoryService(memoryDao, aiService, gate, securityContext,
+                aiDao);
+
+        assertThat(answeredAtOnce.write(chatId, "/memories/prefs.md", "x", null))
+                .isEqualTo("The user did not approve this change to /memories/prefs.md, so it has not been made.");
+        assertThat(memoryDao.list("user1", AiMemoryScope.USER, "")).isEmpty();
+        // The session's own memory never asks.
+        assertThat(answeredAtOnce.write(chatId, "/memories/session/plan.md", "x", null)).startsWith("Created");
+        Mockito.verify(gate).lastingChangeApprovalReason(ToolSession.chat(chatId));
     }
 
     @Test

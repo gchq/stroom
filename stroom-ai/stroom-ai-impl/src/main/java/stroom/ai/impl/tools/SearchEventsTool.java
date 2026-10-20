@@ -16,11 +16,13 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
 import stroom.ai.impl.workspace.SafeJq;
 import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.SafeXPath;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Query;
@@ -34,9 +36,6 @@ import stroom.util.json.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XdmNode;
@@ -79,26 +78,34 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Searches each event in a file from fetch_events, writing a table with one row per "
-                             + "event: StreamId, EventId and the result. Give xpath to get a value from each event "
-                             + "(evaluated against that event alone, e.g. "
-                             + "'//d:EventDetail/d:Authenticate/d:Outcome/d:Reason'; the events' namespace is "
-                             + "bound to '" + DEFAULT_PREFIX + "'; several values are joined with ' | '). Give text "
-                             + "to keep only the events containing it (in the xpath's value if given, else "
-                             + "anywhere in the event), with a snippet around the match. Give join (the table the "
-                             + "events came from) to add the result as a column to that table instead. Give jq "
-                             + "with xpath to parse each XPath value as JSON and apply a jq filter to it, with a "
-                             + "row per result (e.g. xpath /d:map/d:string[@key='message'] with jq "
-                             + "'.. | .username? // empty' for every username at any depth); values that aren't "
-                             + "JSON are counted, not failed. Then use "
-                             + "the table tool on the output to count, group or filter.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The events file, e.g. /outputs/events.xml.")
+                .description(ToolDescription.builder()
+                        .general("Searches each event in a file")
+                        .chatOnly(" from fetch_events")
+                        .general(", writing a table with one row per event: StreamId, EventId and the result. Give "
+                                 + "xpath to get a value from each event (evaluated against that event alone, e.g. "
+                                 + "'//d:EventDetail/d:Authenticate/d:Outcome/d:Reason'; the events' namespace is "
+                                 + "bound to '" + DEFAULT_PREFIX + "'; several values are joined with ' | '). Give "
+                                 + "text to keep only the "
+                                 + "events containing it (in the xpath's value if given, else anywhere in the "
+                                 + "event), with a snippet around the match. Give join (the table the events came "
+                                 + "from) to add the result as a column to that table instead. Give jq with xpath to "
+                                 + "parse each XPath value as JSON and apply a jq filter to it, with a row per "
+                                 + "result (e.g. xpath /d:map/d:string[@key='message'] with jq '.. | .username? // "
+                                 + "empty' for every username at any depth); values that aren't JSON are counted, "
+                                 + "not failed.")
+                        .chatOnly(" Then use the table tool on the output to count, group or filter.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The events file")
+                                .chatOnly(", e.g. /outputs/events.xml")
+                                .general(".")
+                                .build())
                         .addStringProperty(XPATH_ARG, "An XPath expression to evaluate against each event.")
-                        .addProperty(NAMESPACES_ARG, JsonObjectSchema.builder()
+                        .addProperty(NAMESPACES_ARG, ObjectSchema.builder()
                                 .description("Namespace prefixes to use, e.g. {\"e\": \"event-logging:3\"}.")
                                 .build())
                         .addStringProperty(JQ_ARG, "A jq filter to apply to each XPath value, parsed as "
@@ -108,17 +115,23 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                         .addBooleanProperty(IGNORE_CASE_ARG, "False to match the case of text (default true).")
                         .addStringProperty(COLUMN_ARG, "A name for the result column (default 'value' with "
                                                        + "xpath, else 'match').")
-                        .addStringProperty(JOIN_ARG, "A table with StreamId and EventId columns to add the "
-                                                     + "result column to, e.g. /attachments/12.md.")
-                        .addStringProperty(OUT_ARG, "A .csv file in /outputs/ to write the table to (default "
-                                                    + DEFAULT_OUT + ").")
+                        .addStringProperty(JOIN_ARG, ToolDescription.builder()
+                                .general("A table with StreamId and EventId columns to add the result column to")
+                                .chatOnly(", e.g. /attachments/12.md")
+                                .general(".")
+                                .build())
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A .csv file in /outputs/ to write the table to (default " + DEFAULT_OUT
+                                          + ").")
+                                .build())
                         .required(PATH_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath requestedOut = outArg(request);
         final WorkspacePath out = requestedOut != null
@@ -148,7 +161,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                 ? SafeJq.compile(jq)
                 : null;
 
-        final List<XdmNode> events = events(SafeXPath.parse(workspace.localFile(chatId, path)));
+        final List<XdmNode> events = events(SafeXPath.parse(workspace.localFile(path)));
         final XPathExecutable executable = hasXPath
                 ? SafeXPath.compile(expression, namespaces(request, events))
                 : null;
@@ -197,17 +210,17 @@ class SearchEventsTool extends AbstractWorkspaceTool {
 
         final String joinArg = rawArg(request, JOIN_ARG);
         final Result table = joinArg != null && !joinArg.isBlank()
-                ? join(chatId, WorkspacePath.parse(joinArg), column, results)
+                ? join(workspace, WorkspacePath.parse(joinArg), column, results)
                 : asTable(column, results);
-        writeCsv(chatId, out, table, workspace.sourceDocUuid(chatId, path));
+        writeCsv(workspace, out, table, workspace.sourceDocUuid(path));
         final String found = pattern != null || query != null
                 ? results.size() + " of " + events.size() + " event(s) " + (query != null
                 ? "gave a jq result"
                 : "matched")
                 : "Searched " + events.size() + " event(s)";
-        return found + jqErrors.summary() + ". Wrote " + table.rows().size() + " row(s) to " + out
-               + "; use the table tool on it to "
-               + "count, group or filter. The first rows:\n\n" + markdown(table);
+        return ToolResult.text(found + jqErrors.summary() + ". Wrote " + table.rows().size() + " row(s) to " + out
+                               + "; use the table tool on it to "
+                               + "count, group or filter. The first rows:\n\n" + markdown(table));
     }
 
     /// @return The events in the file, in order.
@@ -298,7 +311,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     /// @return The namespaces given, with the events' own namespace bound to [#DEFAULT_PREFIX] unless it is given.
-    private static Map<String, String> namespaces(final ToolExecutionRequest request, final List<XdmNode> events) {
+    private static Map<String, String> namespaces(final ToolCall request, final List<XdmNode> events) {
         final Map<String, String> namespaces = new LinkedHashMap<>();
         try {
             final Map<?, ?> args = JsonUtil.readValue(request.arguments(), Map.class);
@@ -347,11 +360,11 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     /// @return The table, with the results added as a column, matched on stream and event ids.
-    private Result join(final int chatId,
+    private Result join(final SessionWorkspace workspace,
                         final WorkspacePath tablePath,
                         final String column,
                         final Map<List<String>, List<String>> results) {
-        final Result table = TableEngine.run(workspace.localFile(chatId, tablePath), Format.forPath(tablePath),
+        final Result table = TableEngine.run(workspace.localFile(tablePath), Format.forPath(tablePath),
                 new Query(null, null, null, null, false, false, null, null));
         final int streamColumn = indexOf(table.columns(), FetchEventsTool.STREAM_ID_COLUMN);
         final int eventColumn = indexOf(table.columns(), FetchEventsTool.EVENT_ID_COLUMN);
@@ -387,8 +400,9 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         return -1;
     }
 
-    private void writeCsv(final int chatId, final WorkspacePath out, final Result result, final String source) {
-        ToolTables.writeCsv(workspace, chatId, out, result.columns(), result.rows(), source);
+    private void writeCsv(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
+            final String source) {
+        ToolTables.writeCsv(workspace, out, result.columns(), result.rows(), source);
     }
 
     private static String markdown(final Result result) {

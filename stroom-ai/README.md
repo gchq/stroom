@@ -590,6 +590,47 @@ kept at all. Turning off request detail stops it being kept for later answers, a
   _Apply to dashboard_ is clicked.
 
 
+## Developer notes
+
+### Reference files
+
+Several tests in `stroom-ai-impl` compare what they produce with reference files under
+`src/test/resources/stroom/ai/impl/golden/` (`GoldenFiles`): the tools and prompts the model is shown, the exact
+output of the larger tools, scripted chat runs, how stored chats are read back, and the permission, audit, consent
+and tool-name tables. They are there to show that a change (e.g. a refactor) leaves what the agent does as it was. A
+mismatch writes the actual text under `build/golden-actual/` and fails. When a change is meant to alter them, accept
+it with `./gradlew :stroom-ai:stroom-ai-impl:test -DtestUpdateGoldenFiles=true` and review the reference files'
+`git diff` with the change. The stored-chat fixture (`fixtures/stored-chats/`) is never regenerated: it is how chats
+are stored today, so a change that can't read it breaks existing chats.
+
+### Model evaluation
+
+`TestModelEvaluation` (in `stroom-ai-impl`'s tests) runs a small set of real prompts against a real model through
+the real agent loop, to compare the tools the agent chooses and what it answers before and after a change, e.g. each
+step of the tool groundwork. It is not part of the build: it needs a model, costs tokens, and a model's answers vary
+from run to run, so compare reports rather than expecting every check to pass every time. It runs over a small
+fixed Stroom held in memory (`ModelEvaluationWorld`: feeds, a pipeline and its processor filter, an index, a
+dashboard, processor and server tasks, system properties, canned query results, and a fake MCP server whose index
+template tool asks for review), so no database or Stroom instance is needed.
+
+```bash
+export STROOM_AI_EVAL_API_KEY=...   # Not needed for a local server without one.
+./gradlew :stroom-ai:stroom-ai-impl:test --tests '*TestModelEvaluation*' \
+  -DrunModelEvaluation=true \
+  -DtestAiEvalBaseUrl=https://api.openai.com/v1/ \
+  -DtestAiEvalModel=gpt-4.1
+```
+
+* `-DtestAiEvalScenarios=pipeline-feeds,stroomql-query` runs only the scenarios named.
+* `-DtestAiEvalReportDir=...` writes the report elsewhere (the default is `stroom-ai/stroom-ai-impl/build/ai-eval/`).
+
+The scenarios are in `src/test/resources/stroom/ai/impl/eval/scenarios.json`: each has a prompt, the tab attached
+(`pipeline` or `dashboard`, or none), the user's application permissions, the tools expected to be called (`a|b` for
+either), and checks on what the user sees (the answer, and any `ask_user` questions) and on the tools' arguments.
+Each run writes `report-<time>.md` and `.json`, with the tools called per scenario and whether each check passed,
+and the test fails if any check failed.
+
+
 ## Roadmap
 
 Planned, not yet built.
@@ -662,6 +703,7 @@ Planned, not yet built.
   * Tool descriptions that don't depend on other tools existing (e.g. jq or read_file).
   * One inventory of tool names, owners, behaviour and permissions shared with the MCP server, aligning the
     tools both have (instructions, AGENTS docs, build docs, document reads) with Stroom as the source of truth.
+    The built-in tools, and the MCP server tools they overlap, are listed in [TOOLS.md](TOOLS.md).
   * One consent model: a short form where the client supports elicitation, else an approval id the user
     confirms, as the MCP server does; approval rules kept with each tool.
   * Each tool's required permission declared as metadata, so an MCP endpoint can list tools per user; rate and

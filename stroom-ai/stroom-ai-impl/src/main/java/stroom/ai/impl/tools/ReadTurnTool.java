@@ -17,19 +17,18 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 
 /**
  * {@code read_turn} - reads a whole turn of the chat again (question, tool calls and results, and answer), e.g.
@@ -49,27 +48,26 @@ class ReadTurnTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Reads a whole turn of this conversation again: the question, every tool call and "
                              + "its result, and the answer. Use it when you need exact detail from an earlier turn "
                              + "that you only see as a digest or summary, or a tool result of this turn that has "
                              + "been removed to save space. Leave out the turn id to read the current turn.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addIntegerProperty(TURN_ID_ARG, "The turn's id, as shown in its digest (\"Turn 123\").")
                         .build())
                 .build();
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
-        final List<AiChatMessage> history = aiService.getMessages(chatId);
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        final OptionalInt chatId = context.session().chatId();
+        if (chatId.isEmpty()) {
+            return ToolResult.text(onlyInAChat(NAME));
+        }
+        final List<AiChatMessage> history = aiService.getMessages(chatId.getAsInt());
         final Integer requested = intArg(request, TURN_ID_ARG);
         final int turnId = requested != null
                 ? requested
@@ -78,14 +76,15 @@ class ReadTurnTool extends AbstractBuiltInTool {
                 .filter(m -> m.getTurnId() == turnId)
                 .toList();
         if (turn.stream().noneMatch(m -> m.getMessageType() == AiMessageType.USER_MESSAGE)) {
-            return "Error: there is no turn " + turnId + " in this chat. Turn ids are shown in the digests of "
-                   + "earlier turns, or can be found with search_history.";
+            return ToolResult.text(
+                    "Error: there is no turn " + turnId + " in this chat. Turn ids are shown in the digests of "
+                    + "earlier turns, or can be found with search_history.");
         }
         final StringBuilder sb = new StringBuilder("Turn ").append(turnId).append(":\n");
         for (final AiChatMessage message : turn) {
             appendMessage(sb, message);
         }
-        return sb.toString().strip();
+        return ToolResult.text(sb.toString().strip());
     }
 
     private static void appendMessage(final StringBuilder sb, final AiChatMessage message) {

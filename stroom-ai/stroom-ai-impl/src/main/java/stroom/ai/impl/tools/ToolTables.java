@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 
 import org.apache.commons.csv.CSVFormat;
@@ -43,15 +44,13 @@ final class ToolTables {
 
     /// Writes a table to a workspace file as CSV.
     ///
-    /// @param workspace     The chat's workspace.
-    /// @param chatId        The chat.
+    /// @param workspace     The session's workspace.
     /// @param out           The file to write.
     /// @param columns       The column headings.
     /// @param rows          The rows, each with a cell per column.
     /// @param sourceDocUuid The document the table came from, so access to it is checked again when the file is
     ///                      used, or null.
-    static void writeCsv(final ChatWorkspace workspace,
-                         final int chatId,
+    static void writeCsv(final SessionWorkspace workspace,
                          final WorkspacePath out,
                          final List<String> columns,
                          final List<List<String>> rows,
@@ -65,7 +64,7 @@ final class ToolTables {
                     printer.printRecord(row);
                 }
             }
-            workspace.write(chatId, out, temp, sourceDocUuid);
+            workspace.write(out, temp, sourceDocUuid);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } finally {

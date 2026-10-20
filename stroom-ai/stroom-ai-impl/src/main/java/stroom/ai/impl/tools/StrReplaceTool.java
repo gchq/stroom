@@ -16,13 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
@@ -46,11 +45,15 @@ class StrReplaceTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Replaces some text in a file in /outputs/. The text must appear exactly once.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Replaces some text in a file")
+                        .chatOnly(" in /outputs/")
+                        .general(". The text must appear exactly once.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The file.")
                         .addStringProperty(OLD_TEXT_ARG, "The text to replace, exactly as it is in the file.")
                         .addStringProperty(NEW_TEXT_ARG, "The text to replace it with.")
@@ -60,7 +63,8 @@ class StrReplaceTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final String oldText = rawArg(request, OLD_TEXT_ARG);
         final String newText = rawArg(request, NEW_TEXT_ARG);
@@ -71,7 +75,7 @@ class StrReplaceTool extends AbstractWorkspaceTool {
         workspace.checkWritable(path);
         final String content;
         try {
-            content = Files.readString(workspace.localFile(chatId, path), StandardCharsets.UTF_8);
+            content = Files.readString(workspace.localFile(path), StandardCharsets.UTF_8);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -83,10 +87,10 @@ class StrReplaceTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("The text to replace appears more than once in " + path
                                          + ". Give more of it, so it appears once.");
         }
-        workspace.write(chatId, path,
+        workspace.write(path,
                 content.substring(0, index) + newText + content.substring(index + oldText.length()),
-                workspace.sourceDocUuid(chatId, path));
-        return "Replaced the text in " + path + ".";
+                workspace.sourceDocUuid(path));
+        return ToolResult.text("Replaced the text in " + path + ".");
     }
 
     @Override

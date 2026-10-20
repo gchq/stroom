@@ -16,13 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.ChatWorkspace.Entry;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.List;
@@ -41,27 +40,37 @@ class LsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Lists the files in this chat's workspace: /attachments/ (tables the user attached, "
-                             + "each with a .profile.md summary; read-only) and /outputs/ (large tool results, "
-                             + "and files you write). Read files with read_file, search them with grep.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The directory to list, e.g. /outputs/. Leave out for all.")
+                .description(ToolDescription.builder()
+                        .general("Lists the files")
+                        .chatOnly(" in this chat's workspace: /attachments/ (tables the user attached, each with a "
+                                  + ".profile.md summary; read-only) and /outputs/ (large tool results, and files "
+                                  + "you write)")
+                        .general(".")
+                        .chatOnly(" Read files with read_file, search them with grep.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The directory to list")
+                                .chatOnly(", e.g. /outputs/")
+                                .general(". Leave out for all.")
+                                .build())
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String raw = stringArg(request, PATH_ARG);
         final WorkspacePath dir = raw == null
                 ? WorkspacePath.ROOT
                 : WorkspacePath.parse(raw);
-        final List<Entry> entries = workspace.list(chatId, dir);
+        final List<Entry> entries = workspace.list(dir);
         if (entries.isEmpty()) {
-            return "There are no files in " + dir + ".";
+            return ToolResult.text("There are no files in " + dir + ".");
         }
         final StringBuilder sb = new StringBuilder();
         for (final Entry entry : entries.subList(0, Math.min(entries.size(), MAX_ENTRIES))) {
@@ -76,6 +85,6 @@ class LsTool extends AbstractWorkspaceTool {
         if (entries.size() > MAX_ENTRIES) {
             sb.append("(").append(entries.size() - MAX_ENTRIES).append(" more; list a directory to see them)");
         }
-        return sb.toString().strip();
+        return ToolResult.text(sb.toString().strip());
     }
 }

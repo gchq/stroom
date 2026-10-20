@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
@@ -83,7 +84,7 @@ class TestUserActionService {
                 .singleElement()
                 .extracting(UserActionRecord::status)
                 .isEqualTo(Status.DONE);
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq("enable_processor_filter"),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq("enable_processor_filter"),
                 Mockito.anyString(), Mockito.anyString(), Mockito.eq(true));
         // The model is told on its next turn.
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -148,7 +149,8 @@ class TestUserActionService {
 
         assertThat(result.isDone()).isFalse();
         assertThat(result.getMessage()).contains("do not have permission");
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)), Mockito.anyString(),
+                Mockito.anyString(),
                 Mockito.contains("permission"), Mockito.eq(false));
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
     }
@@ -186,7 +188,7 @@ class TestUserActionService {
         // The button can be used again (e.g. after the dialog was cancelled), so the result isn't changed.
         Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
                 Mockito.anyString());
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_QUERY),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(UserActions.CREATE_QUERY),
                 Mockito.anyString(), Mockito.eq("Opened the New Query dialog"), Mockito.eq(true));
     }
 
@@ -200,7 +202,7 @@ class TestUserActionService {
 
         assertThat(result.isDone()).isFalse();
         assertThat(result.getCreateQueryText()).isNull();
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_QUERY),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(UserActions.CREATE_QUERY),
                 Mockito.anyString(), Mockito.contains("can't use"), Mockito.eq(false));
     }
 
@@ -222,7 +224,8 @@ class TestUserActionService {
         // The button can be used again (e.g. after the dialog was cancelled), so the result isn't changed.
         Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
                 Mockito.anyString());
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_DASHBOARD),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(UserActions.CREATE_DASHBOARD),
                 Mockito.anyString(), Mockito.eq("Opened the New Dashboard dialog"), Mockito.eq(true));
     }
 
@@ -237,7 +240,8 @@ class TestUserActionService {
         assertThat(result.isDone()).isFalse();
         assertThat(result.getCreateDashboardConfig()).isNull();
         Mockito.verifyNoInteractions(dashboardBuilder);
-        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_DASHBOARD),
+        Mockito.verify(auditLog).userAction(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(UserActions.CREATE_DASHBOARD),
                 Mockito.anyString(), Mockito.contains("can't use"), Mockito.eq(false));
     }
 
@@ -284,7 +288,7 @@ class TestUserActionService {
                     // What it was proposed against is kept, for Undo apply and the card.
                     assertThat(action.codeChange().baseCode()).isEqualTo("<a/>");
                 });
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.contains("element 'xsltFilter'"),
                 Mockito.eq("Applied a proposed change, not saved: +2 −1 lines"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -304,7 +308,7 @@ class TestUserActionService {
 
         assertThat(result.isDone()).isTrue();
         assertThat(result.getMessage()).isEqualTo("Applied, not saved (1 of 2 parts)");
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.contains("element 'xsltFilter'"),
                 Mockito.eq("Applied part of a proposed change, not saved: +1 −1 lines, 1 of 2 parts"),
                 Mockito.eq(true));
@@ -364,7 +368,7 @@ class TestUserActionService {
                     assertThat(action.status()).isEqualTo(Status.DONE);
                     assertThat(action.dashboardChange().operations()).hasSize(1);
                 });
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
                 Mockito.eq(UserActionService.APPLY_DASHBOARD_COMMAND), Mockito.contains("table 'Events'"),
                 Mockito.eq("Applied a proposed change, not saved: Group by 'EventType' (level 1)"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -383,7 +387,7 @@ class TestUserActionService {
         assertThat(result.getMessage()).contains("don't have permission to edit Dashboard 'Logons'");
         Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.any(),
                 Mockito.any());
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
                 Mockito.eq(UserActionService.APPLY_DASHBOARD_COMMAND), Mockito.anyString(), Mockito.anyString(),
                 Mockito.eq(false));
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.any());
@@ -411,7 +415,7 @@ class TestUserActionService {
         // The button stays, in case the user is given Edit.
         Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
                 Mockito.anyString());
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.anyString(), Mockito.contains("permission"),
                 Mockito.eq(false));
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
@@ -443,7 +447,7 @@ class TestUserActionService {
                 .singleElement()
                 .extracting(UserActionRecord::status)
                 .isEqualTo(Status.PENDING);
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.eq(UserActionService.UNDO_COMMAND), Mockito.anyString(),
                 Mockito.eq("Undid an applied change: +2 −1 lines"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -463,7 +467,7 @@ class TestUserActionService {
 
         assertThat(applied.isDone()).isTrue();
         assertThat(applied.getMessage()).isEqualTo("Applied, not saved");
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(query),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(query),
                 Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.eq("Query 'Twitter tweets'"),
                 Mockito.eq("Applied a proposed change, not saved: +1 −1 lines"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -500,7 +504,7 @@ class TestUserActionService {
                 .singleElement()
                 .extracting(UserActionRecord::status)
                 .isEqualTo(Status.PENDING);
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
                 Mockito.eq(UserActionService.UNDO_DASHBOARD_COMMAND), Mockito.contains("table 'Events'"),
                 Mockito.eq("Undid an applied change: Group by 'EventType' (level 1)"), Mockito.eq(true));
         Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
@@ -516,7 +520,7 @@ class TestUserActionService {
 
         assertThat(result.isDone()).isFalse();
         assertThat(result.getMessage()).contains("permission to edit");
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
                 Mockito.eq(UserActionService.UNDO_DASHBOARD_COMMAND), Mockito.anyString(), Mockito.anyString(),
                 Mockito.eq(false));
 
@@ -552,7 +556,7 @@ class TestUserActionService {
 
         assertThat(result.isDone()).isFalse();
         assertThat(result.getMessage()).contains("Ctrl+Z");
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.eq(UserActionService.UNDO_COMMAND), Mockito.anyString(), Mockito.contains("permission"),
                 Mockito.eq(false));
 

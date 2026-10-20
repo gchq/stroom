@@ -242,6 +242,7 @@ class TestDocumentLinksTool {
         final DocumentLinksTool tool = new DocumentLinksTool(fixture.workspace, () -> fixture.dependencyService,
                 fixture.documentAccess(), fixture.processorFilterAccess(processorFilterService),
                 fixture.auditLog());
-        return tool.run(ToolTestFixture.request(DocumentLinksTool.NAME, arguments), 1);
+        return tool.run(ToolTestFixture.request(DocumentLinksTool.NAME, arguments), ToolCalls.inChat(1,
+                fixture.workspace)).text();
     }
 }

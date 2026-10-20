@@ -1,0 +1,17 @@
+Arguments: {"uuid":"top-uuid"}
+
+=== Output ===
+Dictionary 'Malicious IPs', /Firewalls.
+It has 3 word(s) in all, combined with the dictionaries it imports as Stroom uses it (each import's words first, duplicates removed); 1 are its own.
+
+Imports:
+- Dictionary 'Known bad' (uuid middle-uuid): 1 word(s) of its own
+  - Dictionary 'Botnets' (uuid bottom-uuid): 2 word(s) of its own
+- Dictionary 'Secret IPs': not included: no permission
+
+The list is incomplete: 1 import(s) couldn't be included because you don't have permission to view them (Dictionary 'Secret IPs'). Say so in your answer.
+
+Words:
+3.3.3.3  (from Dictionary 'Botnets')
+1.1.1.1  (from Dictionary 'Botnets')
+2.2.2.2  (from Dictionary 'Known bad')

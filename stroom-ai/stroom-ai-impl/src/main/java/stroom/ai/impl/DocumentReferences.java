@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
@@ -85,7 +86,7 @@ public class DocumentReferences {
             aiService.updateAttachmentStatus(attachment.getId(), AiAttachmentStatus.READY, null, description, null,
                     false);
             aiService.storeMessage(chatId, AiMessageType.ATTACHMENT, attachment.getId(), description);
-            documentAccess.logView(chatId, docRef, "Attached to the chat as a reference");
+            documentAccess.logView(ToolSession.chat(chatId), docRef, "Attached to the chat as a reference");
         }
     }
 

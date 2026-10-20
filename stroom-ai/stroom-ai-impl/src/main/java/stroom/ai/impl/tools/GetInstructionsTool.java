@@ -18,12 +18,11 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.security.shared.DocumentPermission;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
@@ -48,8 +47,15 @@ class GetInstructionsTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Gives the standing instructions (Documentation docs named " + AgentInstructions.DOC_NAME
                              + ") that apply to some folders or documents: a doc applies to its folder and below, "
@@ -57,7 +63,7 @@ class GetInstructionsTool extends AbstractBuiltInTool {
                              + "fields are mapped, how things are named, or which folders searches leave out. Call "
                              + "it before proposing code or names for documents in a folder, and follow what it "
                              + "says; the user's own request takes precedence.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addProperty(FOLDERS_ARG, stringArraySchema("Folders the work touches, by UUID or Explorer "
                                                                       + "path, e.g. '/Feeds/Events'."))
                         .addProperty(UUIDS_ARG, stringArraySchema("Documents the work touches, e.g. an XSLT or a "
@@ -67,12 +73,7 @@ class GetInstructionsTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final List<String> paths = new ArrayList<>();
         final List<String> notFound = new ArrayList<>();
         for (final String folder : stringListArg(request, FOLDERS_ARG)) {
@@ -90,7 +91,7 @@ class GetInstructionsTool extends AbstractBuiltInTool {
             paths.add("/");
         }
 
-        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
                                                                  + " tool");
         final List<InstructionDoc> applying = standing.applyingTo(paths);
         final StringBuilder sb = new StringBuilder();
@@ -100,7 +101,7 @@ class GetInstructionsTool extends AbstractBuiltInTool {
                     .append(AgentInstructions.DOC_NAME).append(" in a folder applies to that folder and below.");
         } else {
             sb.append(applying.size()).append(" ").append(AgentInstructions.DOC_NAME).append(" doc(s) apply.")
-                    .append(standing.note(paths));
+                    .append(standing.note(context.links(), paths));
         }
         final List<String> elsewhere = standing.docs().stream()
                 .filter(doc -> !applying.contains(doc))
@@ -114,7 +115,7 @@ class GetInstructionsTool extends AbstractBuiltInTool {
             sb.append("\n\nNot found, or you don't have permission to view them: ")
                     .append(String.join(", ", notFound)).append('.');
         }
-        return sb.toString().strip();
+        return ToolResult.text(sb.toString().strip());
     }
 
     // The path of a folder itself (not of the folder it is in), or `/` for the top of the tree.
