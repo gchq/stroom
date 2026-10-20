@@ -1,0 +1,230 @@
+# Today's consent decisions. A verdict is RUN, DENY (reason) or ASK, with the buttons the approval
+# card offers (allow for chat, allow the server's read-only tools), the risks it shows, the reason
+# logged and the reason the card shows (when it differs).
+
+## Built-in tools
+- ask_user (read-only, reads only trusted content): RUN in every situation
+- config_properties (read-only, reads untrusted content): RUN in every situation
+- current_results (read-only, reads untrusted content): RUN in every situation
+- delete_file (changes things, reads only trusted content): RUN in every situation
+- describe_data_source (read-only, reads untrusted content): RUN in every situation
+- document_documentation (read-only, reads untrusted content): RUN in every situation
+- document_info (read-only, reads untrusted content): RUN in every situation
+- document_links (read-only, reads untrusted content): RUN in every situation
+- fetch_events (read-only, reads untrusted content): RUN in every situation
+- find_in_content (read-only, reads untrusted content): RUN in every situation
+- folder_contents (read-only, reads untrusted content): RUN in every situation
+- get_current_date (read-only, reads only trusted content): RUN in every situation
+- get_current_datetime (read-only, reads only trusted content): RUN in every situation
+- get_current_time (read-only, reads only trusted content): RUN in every situation
+- get_instructions (read-only, reads untrusted content): RUN in every situation
+- get_utc_time_offset (read-only, reads only trusted content): RUN in every situation
+- grep (read-only, reads untrusted content): RUN in every situation
+- jq (read-only, reads untrusted content): RUN in every situation
+- list_data_sources (read-only, reads untrusted content): RUN in every situation
+- ls (read-only, reads untrusted content): RUN in every situation
+- memory (changes things, reads only trusted content): RUN in every situation
+- pipeline (read-only, reads untrusted content): RUN in every situation
+- processor_tasks (read-only, reads untrusted content): RUN in every situation
+- propose_code_change (read-only, reads untrusted content): RUN in every situation
+- propose_dashboard (read-only, reads only trusted content): RUN in every situation
+- propose_dashboard_change (read-only, reads untrusted content): RUN in every situation
+- propose_query (read-only, reads only trusted content): RUN in every situation
+- propose_query_change (read-only, reads untrusted content): RUN in every situation
+- read_document (read-only, reads untrusted content): RUN in every situation
+- read_file (read-only, reads untrusted content): RUN in every situation
+- read_turn (read-only, reads untrusted content): RUN in every situation
+- run_stroomql (read-only, reads untrusted content): RUN in every situation
+- search_events (read-only, reads untrusted content): RUN in every situation
+- search_history (read-only, reads untrusted content): RUN in every situation
+- server_tasks (read-only, reads untrusted content): RUN in every situation
+- str_replace (changes things, reads only trusted content): RUN in every situation
+- stream_meta (read-only, reads untrusted content): RUN in every situation
+- summarise_column (read-only, reads untrusted content): RUN in every situation
+- table (read-only, reads untrusted content): RUN in every situation
+- task_list (read-only, reads only trusted content): RUN in every situation
+- validate_stroomql (read-only, reads only trusted content): RUN in every situation
+- wc (read-only, reads only trusted content): RUN in every situation
+- write_file (changes things, reads only trusted content): RUN in every situation
+- xpath (read-only, reads untrusted content): RUN in every situation
+- xslt_lookups (read-only, reads untrusted content): RUN in every situation
+
+## MCP tools
+Servers: 'trusted' (trusted; reprocess is ASK_ALWAYS, always_ok is ALLOW), 'untrusted'.
+
+### find_docs (server trusted, tool find_docs, trusted yes, readOnlyHint true, destructiveHint false, openWorldHint false, confirms no, policy null, read-only for the chat yes)
+- normal: RUN
+- user away (unattended): RUN
+- after reading untrusted content: RUN
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [after reading data], reason: "This tool only reads, but this chat has read data from tools or attached tables, which could tell the model to put that data in this call, and the tool's server would receive it."}
+- after reading an untrusted server's output: RUN
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: RUN [the earlier approval is removed]
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: RUN
+- user away, allowed for the chat earlier: RUN
+
+### update_doc (server trusted, tool update_doc, trusted yes, readOnlyHint false, destructiveHint false, openWorldHint false, confirms no, policy null, read-only for the chat no)
+- normal: RUN
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: RUN
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: RUN
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify], reason: "This chat has read the output of an untrusted MCP server, which could tell the model to misuse this tool, and it can modify data."}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: RUN [the earlier approval is removed]
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: RUN
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### delete_doc (server trusted, tool delete_doc, trusted yes, readOnlyHint false, destructiveHint true, openWorldHint false, confirms no, policy null, read-only for the chat no)
+- normal: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify, destructive], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none} [the earlier approval is removed]
+- server's read-only tools allowed for the chat: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify, destructive], reason: "The tool can delete or overwrite things.", card: none}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify, destructive], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### fetch_url (server trusted, tool fetch_url, trusted yes, readOnlyHint true, destructiveHint false, openWorldHint true, confirms no, policy null, read-only for the chat yes)
+- normal: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none} [the earlier approval is removed]
+- server's read-only tools allowed for the chat: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "The tool reaches outside Stroom.", card: none}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [read-only, reaches outside Stroom], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### create_feed (server trusted, tool create_feed, trusted yes, readOnlyHint false, destructiveHint false, openWorldHint false, confirms yes, policy null, read-only for the chat no)
+- normal: RUN
+- user away (unattended): RUN
+- after reading untrusted content: RUN
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: RUN
+- after reading an untrusted server's output: RUN
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: RUN
+- allowed for the chat earlier, tool since changed: RUN
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: RUN
+- user away, allowed for the chat earlier: RUN
+
+### reprocess (server trusted, tool reprocess, trusted yes, readOnlyHint false, destructiveHint false, openWorldHint false, confirms no, policy ASK_ALWAYS, read-only for the chat no)
+- normal: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- after reading an untrusted server's output: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- denied for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- server's read-only tools allowed for the chat: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "An administrator has set this tool to ask every time."}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### always_ok (server trusted, tool always_ok, trusted yes, readOnlyHint false, destructiveHint false, openWorldHint false, confirms no, policy ALLOW, read-only for the chat no)
+- normal: RUN
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: RUN
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: RUN
+- after reading an untrusted server's output: RUN
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: RUN
+- allowed for the chat earlier, tool since changed: RUN
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: RUN
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### no_hints (server trusted, tool no_hints, trusted yes, readOnlyHint null, destructiveHint null, openWorldHint null, confirms no, policy null, read-only for the chat no)
+- normal: RUN
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: RUN
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: RUN
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [can modify], reason: "This chat has read the output of an untrusted MCP server, which could tell the model to misuse this tool, and it can modify data."}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: RUN [the earlier approval is removed]
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: RUN
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### search (server untrusted, tool search, trusted no, readOnlyHint true, destructiveHint false, openWorldHint false, confirms no, policy null, read-only for the chat no)
+- normal: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, read-only], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none} [the earlier approval is removed]
+- server's read-only tools allowed for the chat: RUN
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: yes, risks: [untrusted server, read-only], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, read-only], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### write (server untrusted, tool write, trusted no, readOnlyHint false, destructiveHint false, openWorldHint false, confirms no, policy null, read-only for the chat no)
+- normal: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none} [the earlier approval is removed]
+- server's read-only tools allowed for the chat: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### confirming_write (server untrusted, tool confirming_write, trusted no, readOnlyHint false, destructiveHint false, openWorldHint false, confirms yes, policy null, read-only for the chat no)
+- normal: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+- after reading untrusted content: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- allowed for the chat earlier: RUN
+- denied for the chat earlier: DENY (You chose not to allow this tool in this chat.)
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none} [the earlier approval is removed]
+- server's read-only tools allowed for the chat: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: yes, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "Its server, untrusted, is not trusted, so anything it says about the tool cannot be relied on.", card: none}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [untrusted server, can modify], reason: "You were away when the agent wanted to do this, and the tool can modify data."}
+
+### not_a_tool (not a tool any server offers)
+- normal: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- user away (unattended): ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- after reading untrusted content: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- after reading untrusted content, askReadOnlyToolsAfterUntrustedContent on: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- after reading an untrusted server's output: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- denied for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- allowed for the chat earlier, tool since changed: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- server's read-only tools allowed for the chat: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- 'approve everything' on, after reading an untrusted server's output: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+- user away, allowed for the chat earlier: ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "This tool is not known to be safe."}
+
+## Memory changes (AiMemoryService)
+- normal, write /memories/prefs.md: "Created /memories/prefs.md."; saved: yes; messages: [MEMORY_UPDATE {"kind":"MEMORY","operation":"CREATE","path":"/memories/prefs.md","after":"Times in UTC.","undone":false}]
+- normal, write /memories/session/plan.md: "Created /memories/session/plan.md."; saved: yes; messages: []
+- after reading untrusted content, write /memories/prefs.md: "The user has been asked to approve this change to /memories/prefs.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work."; saved: no; messages: [APPROVAL_REQUEST {"kind":"MEMORY","operation":"CREATE","path":"/memories/prefs.md","after":"Times in UTC.","status":"PENDING","reason":"The agent had read tool output or data in this chat, which could have told it to make this change.","undone":false}]
+- after reading untrusted content, write /memories/session/plan.md: "Created /memories/session/plan.md."; saved: yes; messages: []
+- user away (unattended), write /memories/prefs.md: "The user has been asked to approve this change to /memories/prefs.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work."; saved: no; messages: [APPROVAL_REQUEST {"kind":"MEMORY","operation":"CREATE","path":"/memories/prefs.md","after":"Times in UTC.","status":"PENDING","reason":"You were away when the agent made this change.","undone":false}]
+- user away (unattended), write /memories/session/plan.md: "Created /memories/session/plan.md."; saved: yes; messages: []
+
+## Answers to a tool approval request (ToolApprovalService)
+- buttons offered, allow once: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: []
+- buttons offered, allow for the chat: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: [trusted/update_doc ALLOW (hash tool-hash), trusted/find_docs ALLOW (hash tool-hash-2)]
+- buttons offered, allow the server's read-only tools: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: [trusted/* ALLOW (hash server-hash), trusted/* ALLOW (hash server-hash)]
+- buttons offered, deny: status ANSWERED; calls [call-1=DENIED (Not that one.), call-2=DENIED (Not that one.)]; remembered: []
+- buttons offered, allow only the first call: status PENDING; calls [call-1=ALLOWED, call-2=null]; remembered: []
+- no buttons offered, allow once: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: []
+- no buttons offered, allow for the chat: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: []
+- no buttons offered, allow the server's read-only tools: status ANSWERED; calls [call-1=ALLOWED, call-2=ALLOWED]; remembered: []
+- no buttons offered, deny: status ANSWERED; calls [call-1=DENIED (Not that one.), call-2=DENIED (Not that one.)]; remembered: []
+- no buttons offered, allow only the first call: status PENDING; calls [call-1=ALLOWED, call-2=null]; remembered: []
+- answered after PT24H: status EXPIRED; the waiting run is stopped: yes

@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiSteppingContext;
@@ -87,7 +88,8 @@ class TestTabSnapshots {
         // Each file records the document, so access to it is checked again whenever the file is used.
         assertThat(files.source("/tabs/1/code.xsl")).contains(XSLT.getUuid());
         assertThat(files.source("/tabs/1/snapshot.json")).contains(XSLT.getUuid());
-        Mockito.verify(documentAccess).logView(Mockito.eq(CHAT), Mockito.eq(XSLT), Mockito.contains("unsaved"));
+        Mockito.verify(documentAccess).logView(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
+                Mockito.contains("unsaved"));
 
         final StoredTabSnapshot snapshot = tabSnapshots.read(stored.snapshotId()).orElseThrow();
         assertThat(snapshot.dirty()).isTrue();
@@ -159,7 +161,7 @@ class TestTabSnapshots {
 
         assertThat(stored).isEqualTo(TabSnapshots.Stored.NONE);
         assertThat(files.paths()).isEmpty();
-        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.anyInt(), Mockito.any(), Mockito.any());
+        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test

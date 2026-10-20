@@ -117,11 +117,12 @@ record TaskErrorStreams(Map<Long, List<MetaRow>> byTask, boolean lookupFailed) {
         return ids;
     }
 
-    /// @param task A task.
+    /// @param task  A task.
+    /// @param links How to link to the streams, for the caller.
     /// @return Its Error streams in words, as links with their counts, e.g. `Error stream(s) [stream 9](…) (1
     /// fatal, 3 error(s), 0 warning(s))`, or that it has none. A Failed task's run threw, so it usually has none,
     /// which is said so as not to suggest nothing went wrong.
-    String describe(final ProcessorTask task) {
+    String describe(final ProcessorTask task, final StroomLinks links) {
         final List<MetaRow> rows = of(task);
         if (rows.isEmpty()) {
             if (lookupFailed) {
@@ -135,7 +136,7 @@ record TaskErrorStreams(Map<Long, List<MetaRow>> byTask, boolean lookupFailed) {
             };
         }
         return "Error stream(s) " + String.join(", ", rows.stream()
-                .map(row -> ProcessorTasksTool.streamLink(row.getMeta().getId()) + " ("
+                .map(row -> links.stream(row.getMeta().getId()) + " ("
                             + MetaCounts.of(List.of(row)).describe() + ")")
                 .toList());
     }

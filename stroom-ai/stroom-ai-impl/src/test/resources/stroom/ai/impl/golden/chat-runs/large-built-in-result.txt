@@ -1,0 +1,171 @@
+# large-built-in-result
+
+read_turn's result is over the inline limit, so it is saved to the workspace and the model is given a stub saying where it is and how it starts.
+
+== What happened ==
+The user asks: Which of those feeds had errors?
+Run 1: answered: FEED-007 and FEED-042 had errors.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    List yesterday's feeds.
+#2 AI_RESPONSE (turn 1)
+    | Feed | Streams | Errors |
+    | --- | --- | --- |
+    | FEED-001 | 7 | no |
+    | FEED-002 | 14 | no |
+    | FEED-003 | 21 | no |
+    | FEED-004 | 28 | no |
+    | FEED-005 | 35 | no |
+    | FEED-006 | 42 | no |
+    | FEED-007 | 49 | yes |
+    | FEED-008 | 56 | no |
+    | FEED-009 | 63 | no |
+    | FEED-010 | 70 | no |
+    | FEED-011 | 77 | no |
+    | FEED-012 | 84 | no |
+    | FEED-013 | 91 | no |
+    | FEED-014 | 98 | no |
+    | FEED-015 | 5 | no |
+    | FEED-016 | 12 | no |
+    | FEED-017 | 19 | no |
+    | FEED-018 | 26 | no |
+    | FEED-019 | 33 | no |
+    | FEED-020 | 40 | no |
+    | FEED-021 | 47 | no |
+    | FEED-022 | 54 | no |
+    | FEED-023 | 61 | no |
+    | FEED-024 | 68 | no |
+    | FEED-025 | 75 | no |
+    | FEED-026 | 82 | no |
+    | FEED-027 | 89 | no |
+    | FEED-028 | 96 | no |
+    | FEED-029 | 3 | no |
+    | FEED-030 | 10 | no |
+    | FEED-031 | 17 | no |
+    | FEED-032 | 24 | no |
+    | FEED-033 | 31 | no |
+    | FEED-034 | 38 | no |
+    | FEED-035 | 45 | no |
+    | FEED-036 | 52 | no |
+    | FEED-037 | 59 | no |
+    | FEED-038 | 66 | no |
+    | FEED-039 | 73 | no |
+    | FEED-040 | 80 | no |
+    | FEED-041 | 87 | no |
+    | FEED-042 | 94 | yes |
+    | FEED-043 | 1 | no |
+    | FEED-044 | 8 | no |
+    | FEED-045 | 15 | no |
+    | FEED-046 | 22 | no |
+    | FEED-047 | 29 | no |
+    | FEED-048 | 36 | no |
+    | FEED-049 | 43 | no |
+    | FEED-050 | 50 | no |
+    | FEE
+    [… shortened for this file: 4629 characters in all, SHA-256 4828a3479030a99051e32d390ee53c806a7a0c136f11b766d69e452a1792fd05 …]
+    D-192 | 44 | no |
+    | FEED-193 | 51 | no |
+    | FEED-194 | 58 | no |
+    | FEED-195 | 65 | no |
+    | FEED-196 | 72 | no |
+    | FEED-197 | 79 | no |
+    | FEED-198 | 86 | no |
+    | FEED-199 | 93 | no |
+    | FEED-200 | 0 | no |
+#3 USER_MESSAGE (turn 3)
+    Which of those feeds had errors?
+#4 THINKING (turn 3)
+    {
+      "text" : "The feeds are in turn 1; read it rather than guess.",
+      "durationMs" : "<time>"
+    }
+#5 INTERIM_RESPONSE (turn 3)
+    Reading the earlier answer again.
+#6 TOOL_CALL (turn 3)
+    {
+      "callId" : "call-1",
+      "tool" : "read_turn",
+      "arguments" : "{\"turnId\":1}",
+      "rationale" : "Reading the earlier answer again."
+    }
+#7 TOOL_RESULT (turn 3)
+    {
+      "callId" : "call-1",
+      "tool" : "read_turn",
+      "error" : false,
+      "text" : "The result was too large to show in full (4681 characters, 208 lines), so it has been saved to the workspace file /outputs/turn-3/call-6.txt. It starts with these 30 line(s):\n\nTurn 1:\n\nQuestion:\nList yesterday's feeds.\n\nAnswer:\n| Feed | Streams | Errors |\n| --- | --- | --- |\n| FEED-001 | 7 | no |\n| FEED-002 | 14 | no |\n| FEED-003 | 21 | no |\n| FEED-004 | 28 | no |\n| FEED-005 | 35 | no |\n| FEED-006 | 42 | no |\n| FEED-007 | 49 | yes |\n| FEED-008 | 56 | no |\n| FEED-009 | 63 | no |\n| FEED-010 | 70 | no |\n| FEED-011 | 77 | no |\n| FEED-012 | 84 | no |\n| FEED-013 | 91 | no |\n| FEED-014 | 98 | no |\n| FEED-015 | 5 | no |\n| FEED-016 | 12 | no |\n| FEED-017 | 19 | no |\n| FEED-018 | 26 | no |\n| FEED-019 | 33 | no |\n| FEED-020 | 40 | no |\n| FEED-021 | 47 | no |\n| FEED-022 | 54 | no |\n\nIf you need more of it, read it from the workspace file with the workspace tools, if you have them.",
+      "path" : "/outputs/turn-3/call-6.txt",
+      "chars" : 4681,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+/outputs/turn-3/call-6.txt (TOOL_OUTPUT, from message #6, 4681 characters, SHA-256 2b8b485693fdbb3457a78b5f5147596f3ceccb7fcb9b9c4f05df358b93c04591)
+    Turn 1:
+    
+    Question:
+    List yesterday's feeds.
+    
+    …
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+(none)
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Which of those feeds had errors?
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Which of those feeds had errors?
+[2] AI
+    Thinking: The feeds are in turn 1; read it rather than guess.
+    Reading the earlier answer again.
+    Calls read_turn as call-1 with {"turnId":1}
+[3] TOOL RESULT for call-1 (read_turn)
+    The result was too large to show in full (4681 characters, 208 lines), so it has been saved to the workspace file /outputs/turn-3/call-6.txt. It starts with these 30 line(s):
+    
+    Turn 1:
+    
+    Question:
+    List yesterday's feeds.
+    
+    Answer:
+    | Feed | Streams | Errors |
+    | --- | --- | --- |
+    | FEED-001 | 7 | no |
+    | FEED-002 | 14 | no |
+    | FEED-003 | 21 | no |
+    | FEED-004 | 28 | no |
+    | FEED-005 | 35 | no |
+    | FEED-006 | 42 | no |
+    | FEED-007 | 49 | yes |
+    | FEED-008 | 56 | no |
+    | FEED-009 | 63 | no |
+    | FEED-010 | 70 | no |
+    | FEED-011 | 77 | no |
+    | FEED-012 | 84 | no |
+    | FEED-013 | 91 | no |
+    | FEED-014 | 98 | no |
+    | FEED-015 | 5 | no |
+    | FEED-016 | 12 | no |
+    | FEED-017 | 19 | no |
+    | FEED-018 | 26 | no |
+    | FEED-019 | 33 | no |
+    | FEED-020 | 40 | no |
+    | FEED-021 | 47 | no |
+    | FEED-022 | 54 | no |
+    
+    If you need more of it, read it from the workspace file with the workspace tools, if you have them.

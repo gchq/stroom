@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
@@ -40,9 +42,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -192,22 +191,34 @@ class ServerTasksTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .requires(AppPermission.MANAGE_TASKS_PERMISSION)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("The live view of Monitoring > Server Tasks: the tasks running on every node of the "
-                             + "cluster right now, for 'what is running?', 'how many searches are users "
-                             + "running?', 'who is running the longest searches?', 'what is node X busy with?' "
-                             + "or 'is anything stuck?'. Not for stream processing (use processor_tasks). mode "
-                             + "'summary' (the default) counts the tasks by name, user and node (top-level "
-                             + "tasks apart from sub-tasks) and gives the oldest; with kind 'search' it counts "
-                             + "users' searches, each once (not each node's sub-tasks), by user, type and node, "
-                             + "and gives the longest running. mode 'list' lists tasks (id, name, info, user, "
-                             + "node, thread, age, parent, sub-tasks), oldest first; give out for a file. mode "
-                             + "'tree' shows one task (id) with its sub-tasks. All modes take the same filters. "
-                             + "Each result is a snapshot, and says which nodes didn't answer. Read only: it "
-                             + "never stops a task. Needs the Manage Tasks permission, as the screen does.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("The live view of Monitoring > Server Tasks: the tasks running on every node of the "
+                                 + "cluster right now, for 'what is running?', 'how many searches are users "
+                                 + "running?', 'who is running the longest searches?', 'what is node X busy with?' "
+                                 + "or 'is anything stuck?'. Not for stream processing")
+                        .chatOnly(" (use processor_tasks)")
+                        .general(". mode 'summary' (the default) counts the tasks by name, user and node (top-level "
+                                 + "tasks apart from sub-tasks) and gives the oldest; with kind 'search' it counts "
+                                 + "users' searches, each once (not each node's sub-tasks), by user, type and node, "
+                                 + "and gives the longest running. mode 'list' lists tasks (id, name, info, user, "
+                                 + "node, thread, age, parent, sub-tasks), oldest first")
+                        .chatOnly("; give out for a file")
+                        .general(". mode 'tree' shows one task (id) with its sub-tasks. All modes take the same "
+                                 + "filters. Each result is a snapshot, and says which nodes didn't answer. Read "
+                                 + "only: it never stops a task. Needs the Manage Tasks permission, as the screen "
+                                 + "does.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addEnumProperty(MODE_ARG, MODES, "summary (default), list or tree.")
                         .addEnumProperty(KIND_ARG, KINDS, "search for users' searches only, each counted once "
                                                           + "by its top-level task; any (default) for all "
@@ -223,18 +234,19 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                         .addEnumProperty(ORDER_ARG, ORDERS, "For list: oldest first (default) or newest first.")
                         .addIntegerProperty(LIMIT_ARG, "For list: the most tasks (default " + DEFAULT_LIST_LIMIT
                                                        + ", at most " + MAX_LIST_LIMIT + ").")
-                        .addStringProperty(OUT_ARG, "For list: a file in /outputs/ to write all the matching "
-                                                    + "tasks to, .csv for a table (e.g. " + DEFAULT_OUT
-                                                    + ") or .txt.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("For list: a file in /outputs/ to write all the matching tasks to, .csv "
+                                          + "for a table (e.g. " + DEFAULT_OUT + ") or .txt.")
+                                .build())
                         .addStringProperty(ID_ARG, "For tree: the task's id, as list gives it.")
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         if (!canManageTasks()) {
-            return NEEDS_MANAGE_TASKS;
+            return ToolResult.text(NEEDS_MANAGE_TASKS);
         }
         final String mode = choice(request, MODE_ARG, MODES, SUMMARY);
         final Filters filters = filters(request);
@@ -246,16 +258,16 @@ class ServerTasksTool extends AbstractWorkspaceTool {
         final WorkspacePath out = LIST.equals(mode)
                 ? outArg(request)
                 : null;
-        final Snapshot snapshot = snapshot();
+        final Snapshot snapshot = snapshot(context);
         final StringBuilder sb = new StringBuilder();
         appendHeader(sb, snapshot, filters);
         final int shown = switch (mode) {
-            case LIST -> list(sb, request, chatId, out, newest, snapshot, filters);
+            case LIST -> list(sb, request, context, out, newest, snapshot, filters);
             case TREE -> tree(sb, snapshot, filters, id);
             default -> summary(sb, snapshot, filters);
         };
-        logSearch(chatId, mode, filters, id, shown);
-        return sb.toString().stripTrailing();
+        logSearch(context, mode, filters, id, shown);
+        return ToolResult.text(sb.toString().stripTrailing());
     }
 
     /// @return True if the user has the Manage Tasks permission; false if not, or if it can't be checked.
@@ -269,7 +281,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
         }
     }
 
-    private static String choice(final ToolExecutionRequest request,
+    private static String choice(final ToolCall request,
                                  final String name,
                                  final List<String> choices,
                                  final String other) {
@@ -286,7 +298,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
 
     /// @return The tasks asked about, from the arguments.
     /// @throws WorkspaceException for an argument that can't be used.
-    private Filters filters(final ToolExecutionRequest request) {
+    private Filters filters(final ToolCall request) {
         final List<String> description = new ArrayList<>();
         final String kind = choice(request, KIND_ARG, KINDS, ANY);
         final boolean searches = SEARCH.equals(kind);
@@ -333,7 +345,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
     /// Asks every enabled node for its tasks, as the screen does, waiting at most [#NODE_WAIT] for them.
     ///
     /// @return What the nodes that answered are running.
-    private Snapshot snapshot() {
+    private Snapshot snapshot(final ToolCallContext context) {
         final List<String> enabled;
         final List<String> disabled = new ArrayList<>();
         try {
@@ -365,7 +377,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
             futures.put(nodeName, CompletableFuture.supplyAsync(supplier, executor));
         }
 
-        final long deadlineNanos = System.nanoTime() + nodeWait().toNanos();
+        final long deadlineNanos = System.nanoTime() + nodeWait(context).toNanos();
         final Map<String, TaskProgress> tasks = new LinkedHashMap<>();
         final List<String> answered = new ArrayList<>();
         final Map<String, String> notAnswered = new LinkedHashMap<>();
@@ -394,8 +406,8 @@ class ServerTasksTool extends AbstractWorkspaceTool {
         return new Snapshot(timeMs, new TaskTree(tasks), answered, notAnswered, disabled);
     }
 
-    private Duration nodeWait() {
-        final Duration toolLimit = timeLimit();
+    private Duration nodeWait(final ToolCallContext context) {
+        final Duration toolLimit = timeLimit(context);
         final Duration twoThirds = toolLimit.multipliedBy(2).dividedBy(3);
         return twoThirds.compareTo(NODE_WAIT) < 0
                 ? twoThirds
@@ -577,12 +589,13 @@ class ServerTasksTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
     private int list(final StringBuilder sb,
-                     final ToolExecutionRequest request,
-                     final int chatId,
+                     final ToolCall request,
+                     final ToolCallContext context,
                      final WorkspacePath out,
                      final boolean newest,
                      final Snapshot snapshot,
                      final Filters filters) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final TaskTree tree = snapshot.tree();
         final Integer limitArg = intArg(request, LIMIT_ARG);
         final int limit = limitArg == null
@@ -612,7 +625,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                 final List<List<String>> rows = matched.stream()
                         .map(task -> row(task, tree, snapshot.timeMs()))
                         .toList();
-                ToolTables.writeCsv(workspace, chatId, out, TASK_COLUMNS, rows, null);
+                ToolTables.writeCsv(workspace, out, TASK_COLUMNS, rows, null);
                 sb.append("Wrote ").append(rows.size()).append(" row(s) to ").append(out)
                         .append("; use the table tool on it to filter, group or sort. The first rows:\n\n")
                         .append(ToolTables.preview(TASK_COLUMNS, rows, PREVIEW_ROWS));
@@ -620,7 +633,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                 final StringBuilder text = new StringBuilder();
                 matched.forEach(task -> text.append("- ").append(describe(task, tree, snapshot.timeMs(),
                         MAX_FILE_INFO_CHARS)).append('\n'));
-                workspace.write(chatId, out, text.toString(), null);
+                workspace.write(out, text.toString(), null);
                 sb.append("Wrote ").append(matched.size()).append(" task(s) to ").append(out).append(".\n");
             }
             return matched.size();
@@ -914,7 +927,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                                    || contains(userRef.getFullName(), user));
     }
 
-    private void logSearch(final int chatId,
+    private void logSearch(final ToolCallContext context,
                            final String mode,
                            final Filters filters,
                            final String id,
@@ -924,7 +937,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                 : " where " + filters.description()) + (TREE.equals(mode)
                 ? ", tree of task " + id
                 : "");
-        auditLog.searched(chatId, TASK_MANAGER, query, (long) shown,
+        auditLog.searched(context.session(), TASK_MANAGER, query, (long) shown,
                 "Server tasks read by the " + NAME + " tool (" + mode + ")");
     }
 

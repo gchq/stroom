@@ -20,8 +20,12 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.ToolApprovalRequest.Decision;
 import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.LangChain4jTools.StroomToolExecutor;
 import stroom.ai.impl.tools.TaskListReminder;
+import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolUserAction;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
@@ -185,7 +189,7 @@ class McpAgentChat {
     private final AiChatRunManager runManager;
     private final WorkspaceStore workspaceStore;
     private final ContextUsageTracker usageTracker;
-    private final ToolConsent toolConsent;
+    private final ToolConsentGate consentGate;
     private final AiAuditLog auditLog;
     private final ModelStreamer modelStreamer;
     private final ToolGroups.Activations toolGroupActivations;
@@ -198,7 +202,7 @@ class McpAgentChat {
                  final AiChatRunManager runManager,
                  final WorkspaceStore workspaceStore,
                  final ContextUsageTracker usageTracker,
-                 final ToolConsent toolConsent,
+                 final ToolConsentGate consentGate,
                  final AiAuditLog auditLog,
                  final ModelStreamer modelStreamer,
                  final ToolGroups.Activations toolGroupActivations,
@@ -215,7 +219,7 @@ class McpAgentChat {
         this.runManager = runManager;
         this.workspaceStore = workspaceStore;
         this.usageTracker = usageTracker;
-        this.toolConsent = toolConsent;
+        this.consentGate = consentGate;
         this.auditLog = auditLog;
     }
 
@@ -403,7 +407,7 @@ class McpAgentChat {
                 final AiChatMessage callMessage = aiService.storeMessage(chatId, AiMessageType.TOOL_CALL,
                         JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
                                 toolRequest.arguments(), aiMessage.text()), false));
-                final boolean unattended = runManager.isUnattended(chatId);
+                final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
                 // A tool that isn't offered (e.g. a name the model made up) can't run, so the user isn't asked
                 // about it, and the model is told at once.
                 if (!isOffered(tools, toolRequest.name())) {
@@ -416,7 +420,8 @@ class McpAgentChat {
                 final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
                                                     && toolGroups.isGrouped()
                         ? ToolConsent.Verdict.RUN
-                        : toolConsent.decide(chatId, toolRequest.name(), builtInTools, toolset, unattended);
+                        : consentGate.checkCall(ToolSession.chat(chatId), toolRequest.name(), builtInTools,
+                                toolset, unattended);
                 // The user has asked for their message to be read now, so the step's other calls wait for it.
                 if (verdict.kind() == ToolConsent.Kind.RUN
                     && aiService.hasMessageOfType(chatId, AiMessageType.SEND_NOW_STEER_MESSAGE)) {
@@ -449,10 +454,14 @@ class McpAgentChat {
                 remindAboutTaskList(conversation);
             }
             if (!pending.isEmpty()) {
-                // Stop here, giving up the thread and the slot, until the user answers. The run carries on from
-                // the stored calls (see resumePending).
-                aiService.storeMessage(chatId, AiMessageType.APPROVAL_REQUEST,
-                        JsonUtil.writeValueAsString(approvalRequest(pending, askVerdicts), false));
+                // Stop here, giving up the thread and the slot, until the user answers on the card the chat shows.
+                // The run carries on from the stored calls (see resumePending).
+                final ApprovalOutcome outcome = consentGate.requestCallApproval(ToolSession.chat(chatId),
+                        approvalRequest(pending, askVerdicts));
+                if (!outcome.isPending()) {
+                    // A chat's gate always asks on a card; only another session's could answer at once.
+                    throw new IllegalStateException("A chat's tool approvals are answered on the chat's card");
+                }
                 throw new AiChatRunManager.WaitingForUserException(pending.size() + " tool call(s) in chat "
                                                                    + chatId + " need approval");
             }
@@ -516,7 +525,9 @@ class McpAgentChat {
             runManager.markReadUntrustedServer(chatId);
         }
         final long startMs = System.currentTimeMillis();
-        final String result = execute(tools, toolRequest, toolRequest.name(), chatId, !isBuiltIn(toolRequest.name()));
+        final ToolResult toolResult = execute(tools, toolRequest, toolRequest.name(), chatId,
+                !isBuiltIn(toolRequest.name()));
+        final String result = toolResult.text();
         final long durationMs = System.currentTimeMillis() - startMs;
         runManager.addUsage(chatId, 0, 0, 1);
         LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
@@ -538,10 +549,10 @@ class McpAgentChat {
         final boolean error = isError(result);
         // Steps that are the user's, checked, to show as buttons. The model is not told about them: the steps are
         // in the result's text too.
-        // Stroom's own tools offer theirs through the run's context.
-        final List<Map<String, Object>> builtInActions = ToolRunContext.current()
-                .map(context -> context.takeUserActions(toolRequest.id()))
-                .orElse(List.of());
+        // Stroom's own tools offer theirs with their result.
+        final List<Map<String, Object>> builtInActions = toolResult.userActions().stream()
+                .map(ToolUserAction::toMap)
+                .toList();
         final List<UserActionRecord> actions = userActions.check(toolset.takeUserActions(toolRequest.id()),
                 builtInActions, System.currentTimeMillis());
         aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
@@ -549,7 +560,7 @@ class McpAgentChat {
                         error, forModel, path, result.length(), durationMs, actions.isEmpty()
                         ? null
                         : actions), false));
-        auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), error
+        auditLog.toolCall(ToolSession.chat(chatId), toolRequest.name(), toolRequest.arguments(), error
                 ? "Failed"
                 : "Run", !error, unattended);
         return forModel;
@@ -568,7 +579,8 @@ class McpAgentChat {
         aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
                 JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(), true, text,
                         null, text.length(), 0, null), false));
-        auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), outcome, false, unattended);
+        auditLog.toolCall(ToolSession.chat(chatId), toolRequest.name(), toolRequest.arguments(), outcome, false,
+                unattended);
         return text;
     }
 
@@ -625,7 +637,7 @@ class McpAgentChat {
                             .filter(pendingCall -> call.callId().equals(pendingCall.callId()))
                             .findFirst()
                             .orElse(null);
-            final boolean unattended = runManager.isUnattended(chatId);
+            final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
             final String result;
             if (decided != null && decided.decision() == Decision.ALLOWED) {
                 LOGGER.debug(() -> "Running approved tool '" + call.tool() + "' in chatId=" + chatId);
@@ -1188,39 +1200,42 @@ class McpAgentChat {
     /// @param stoppable True if the tool is to be given up on as soon as the run is stopped, rather than when it
     ///                  returns: an MCP server's, which can take as long as the server likes (e.g. while the user
     ///                  fills in its form). Built-in tools rely on the run's thread, and limit their own time.
-    private String execute(final Map<ToolSpecification, ToolExecutor> tools,
-                           final ToolExecutionRequest toolRequest,
-                           final String toolName,
-                           final int chatId,
-                           final boolean stoppable) {
+    private ToolResult execute(final Map<ToolSpecification, ToolExecutor> tools,
+                               final ToolExecutionRequest toolRequest,
+                               final String toolName,
+                               final int chatId,
+                               final boolean stoppable) {
         final ToolExecutor executor = tools.entrySet().stream()
                 .filter(entry -> entry.getKey().name().equals(toolName))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
         if (executor == null) {
-            return "Error: no such tool '" + toolName + "'";
+            return ToolResult.text("Error: no such tool '" + toolName + "'");
         }
+        // Stroom's own tools give a typed result (with any user actions they offer); others give only text.
+        final Supplier<ToolResult> call = executor instanceof final StroomToolExecutor stroomTool
+                ? () -> stroomTool.result(toolRequest, chatId)
+                : () -> ToolResult.text(executor.execute(toolRequest, chatId));
         final AtomicBoolean stop = stoppable
                 ? runManager.stopFlag(chatId)
                 : null;
         try {
             return stop != null
-                    ? StoppableCall.run(() -> executor.execute(toolRequest, chatId), stop, sendNowCheck(chatId),
-                    STOP_CHECK_INTERVAL)
-                    : executor.execute(toolRequest, chatId);
+                    ? StoppableCall.run(call, stop, sendNowCheck(chatId), STOP_CHECK_INTERVAL)
+                    : call.get();
         } catch (final StoppableCall.CutShortException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' given up on for chatId=" + chatId
                                + " as the user sent a message to be read now");
-            return CUT_SHORT_RESULT;
+            return ToolResult.text(CUT_SHORT_RESULT);
         } catch (final StoppableCall.StoppedException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' given up on for chatId=" + chatId + " as the run was stopped");
-            return "Error calling tool '" + toolName + "': the user stopped the chat before it finished (its server "
-                   + "may still finish what it started).";
+            return ToolResult.text("Error calling tool '" + toolName + "': the user stopped the chat before it "
+                                   + "finished (its server may still finish what it started).");
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' failed for chatId=" + chatId, e);
-            return "Error calling tool '" + toolName + "': "
-                   + NullSafe.nonBlankStringElse(e.getMessage(), e.toString());
+            return ToolResult.text("Error calling tool '" + toolName + "': "
+                                   + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
     }
 

@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -28,15 +30,14 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -107,8 +108,16 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Follows the links between Stroom documents, as the Dependencies screen shows them, "
                              + "from some documents (by UUID), to find e.g. what processes a feed's data or what "
@@ -123,7 +132,7 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                              + "each document names, e.g. a processor filter that picks streams by type alone has "
                              + "no link to a feed, so if a link you expect is missing, read the filters and "
                              + "pipelines rather than conclude there is none.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addProperty(UUIDS_ARG, stringArraySchema("The documents to start from."))
                         .addEnumProperty(DIRECTION_ARG, List.of(DEPENDANTS, DEPENDENCIES),
                                 "Which way to follow the links (default " + DEPENDANTS + ").")
@@ -134,14 +143,17 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                                                                      + "followed, but not returned."))
                         .addIntegerProperty(LIMIT_ARG, "The most documents to return (default " + DEFAULT_LIMIT
                                                        + ", at most " + MAX_LIMIT + ").")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the whole list to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the whole list to.")
+                                .build())
                         .required(UUIDS_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath out = outArg(request);
         final List<String> uuids = stringListArg(request, UUIDS_ARG);
         if (uuids.isEmpty()) {
@@ -184,7 +196,7 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
             lines.add(line(node, walk, canManageProcessors));
         }
         final List<Reached> shown = results.stream().limit(limit).toList();
-        logSearch(chatId, starts, dependants, depth, shown);
+        logSearch(context, starts, dependants, depth, shown);
 
         final StringBuilder sb = new StringBuilder();
         sb.append("Followed the ").append(dependants
@@ -205,18 +217,18 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                                                                              + "or start nearer.");
         }
         if (out != null) {
-            workspace.write(chatId, out, String.join("\n", lines) + "\n", null);
+            workspace.write(out, String.join("\n", lines) + "\n", null);
             sb.append(" Wrote them all to ").append(out).append('.');
         }
         if (!lines.isEmpty()) {
             final List<String> shownLines = lines.stream().limit(limit).toList();
-            sb.append("\n\n").append(boundedLines(shownLines, shownLines.size()));
+            sb.append("\n\n").append(boundedLines(context, shownLines, shownLines.size()));
             if (lines.size() > limit) {
                 sb.append("\n(").append(lines.size() - limit).append(" more not shown; give a larger limit, "
                                                                      + "types, or out.)");
             }
         }
-        return sb.toString();
+        return ToolResult.text(sb.toString());
     }
 
     private static boolean direction(final String direction) {
@@ -283,7 +295,7 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
         return docRef.getType() + " '" + NullSafe.string(docRef.getName()) + "'";
     }
 
-    private void logSearch(final int chatId,
+    private void logSearch(final ToolCallContext context,
                            final List<DocRef> starts,
                            final boolean dependants,
                            final int depth,
@@ -296,7 +308,7 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                 : DEPENDENCIES) + " of " + starts.stream()
                 .map(docRef -> describe(docRef) + " (" + docRef.getUuid() + ")")
                 .collect(Collectors.joining(", ")) + ", depth " + depth;
-        auditLog.documentsSearched(chatId, query, objects, Map.of(), "Document links followed by the " + NAME
+        auditLog.documentsSearched(context.session(), query, objects, Map.of(), "Document links followed by the " + NAME
                                                                      + " tool");
     }
 

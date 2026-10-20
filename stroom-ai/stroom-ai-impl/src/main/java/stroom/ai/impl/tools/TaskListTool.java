@@ -17,19 +17,18 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 /// Lets the agent keep a task list for work with several steps (e.g. onboarding a feed), which the user sees above
 /// the chat's input as the agent works through it, so they can see the plan, how far it has got and what is left.
@@ -54,20 +53,20 @@ class TaskListTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        final JsonObjectSchema task = JsonObjectSchema.builder()
+    public ToolDefinition definition() {
+        final ObjectSchema task = ObjectSchema.builder()
                 .addStringProperty(TITLE, "What the step is, in a few words.")
                 .addEnumProperty(STATUS, List.of(NOT_STARTED, IN_PROGRESS, COMPLETED), "How far along it is.")
                 .required(TITLE, STATUS)
                 .build();
-        return ToolSpecification.builder()
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Keeps a task list for work with several steps, which the user sees as you work. "
                              + "Give the whole list each time: write the steps before you start, keep one step "
                              + "in_progress at a time, and mark each completed as soon as it is done. Don't use "
                              + "it for a single quick step.")
-                .parameters(JsonObjectSchema.builder()
-                        .addProperty(TASKS_ARG, JsonArraySchema.builder().items(task)
+                .parameters(ObjectSchema.builder()
+                        .addProperty(TASKS_ARG, ArraySchema.builder().items(task)
                                 .description("All the steps, in order (at most " + MAX_TASKS + ").").build())
                         .required(TASKS_ARG)
                         .build())
@@ -75,21 +74,20 @@ class TaskListTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        final OptionalInt chatId = context.session().chatId();
+        if (chatId.isEmpty()) {
+            return ToolResult.text(onlyInAChat(NAME));
+        }
         final List<Map<String, String>> tasks;
         try {
             tasks = tasks(request.arguments());
         } catch (final IllegalArgumentException e) {
-            return "Error: " + e.getMessage();
+            return ToolResult.text("Error: " + e.getMessage());
         }
-        aiService.storeMessage(chatId, AiMessageType.TASK_LIST,
+        aiService.storeMessage(chatId.getAsInt(), AiMessageType.TASK_LIST,
                 JsonUtil.writeValueAsString(Map.of(TASKS_ARG, tasks), false));
-        return summary(tasks);
+        return ToolResult.text(summary(tasks));
     }
 
     /// @return The tasks in the arguments, checked.

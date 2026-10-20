@@ -1,0 +1,9 @@
+Arguments: {"mode":"tree","id":"s1d"}
+
+=== Output ===
+Server tasks (Monitoring > Server Tasks), a snapshot as of <time of the call>. Tasks start and finish all the time, so call again for a fresh one.
+Nodes that answered: node1, node2. Didn't answer: node3 (node3 is not responding), so their tasks are missing.
+
+Under: FederatedSearchTask s1 on node1 > Search node: node2 s1b on node1.
+- s1d 'Cluster Search' by alice on node2 (thread thread-s1d), running 2m, parent s1b, 1 sub-task(s)
+  - s1e 'Search Index Shard' by alice on node2 (thread thread-s1e), running 1m, parent s1d; info: shard 7

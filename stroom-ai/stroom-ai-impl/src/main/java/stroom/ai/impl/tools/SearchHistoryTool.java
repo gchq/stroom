@@ -17,19 +17,18 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 
 /**
  * {@code search_history} - finds the turns of the chat that mention some text. The text is matched literally
@@ -53,13 +52,15 @@ class SearchHistoryTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Searches this conversation (questions, answers, tool calls and tool results) for "
-                             + "some text, ignoring case, and lists where it appears with the turn id. Read a "
-                             + "whole turn with read_turn.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Searches this conversation (questions, answers, tool calls and tool results) for "
+                                 + "some text, ignoring case, and lists where it appears with the turn id.")
+                        .chatOnly(" Read a whole turn with read_turn.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(TEXT_ARG, "The text to find. Matched literally, not as a pattern.")
                         .addIntegerProperty(MAX_RESULTS_ARG, "The most matches to list (default "
                                                              + DEFAULT_MAX_RESULTS + ", at most "
@@ -70,18 +71,17 @@ class SearchHistoryTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        final OptionalInt chatId = context.session().chatId();
+        if (chatId.isEmpty()) {
+            return ToolResult.text(onlyInAChat(NAME));
+        }
         final String text = stringArg(request, TEXT_ARG);
         if (text == null) {
-            return "Error: the '" + TEXT_ARG + "' argument is required.";
+            return ToolResult.text("Error: the '" + TEXT_ARG + "' argument is required.");
         }
         if (text.length() > MAX_TEXT_LENGTH) {
-            return "Error: the text to find may be at most " + MAX_TEXT_LENGTH + " characters.";
+            return ToolResult.text("Error: the text to find may be at most " + MAX_TEXT_LENGTH + " characters.");
         }
         final int maxResults = Math.clamp(Objects.requireNonNullElse(intArg(request, MAX_RESULTS_ARG),
                 DEFAULT_MAX_RESULTS), 1, MAX_MAX_RESULTS);
@@ -89,7 +89,7 @@ class SearchHistoryTool extends AbstractBuiltInTool {
 
         final StringBuilder sb = new StringBuilder();
         int found = 0;
-        for (final AiChatMessage message : aiService.getMessages(chatId)) {
+        for (final AiChatMessage message : aiService.getMessages(chatId.getAsInt())) {
             final String haystack = searchableText(message);
             if (haystack == null) {
                 continue;
@@ -105,12 +105,12 @@ class SearchHistoryTool extends AbstractBuiltInTool {
             }
         }
         if (found == 0) {
-            return "No part of this conversation mentions \"" + text + "\".";
+            return ToolResult.text("No part of this conversation mentions \"" + text + "\".");
         }
         final String more = found > maxResults
                 ? "\n(" + (found - maxResults) + " more not listed.)"
                 : "";
-        return "Found \"" + text + "\" in " + found + " place(s):\n" + sb.toString().strip() + more;
+        return ToolResult.text("Found \"" + text + "\" in " + found + " place(s):\n" + sb.toString().strip() + more);
     }
 
     private static String searchableText(final AiChatMessage message) {

@@ -47,7 +47,6 @@ import stroom.util.time.StroomDuration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -202,7 +201,8 @@ class TestWorkspaceTools {
         assertThat(run(new LsTool(workspace), "{\"path\":\"/attachments\"}"))
                 .contains("/attachments/7.md")
                 .doesNotContain("events.log");
-        assertThat(new LsTool(workspace).execute(request("{}"), otherChatId)).startsWith("There are no files");
+        assertThat(new LsTool(workspace).execute(request("{}"), ToolCalls.inChat(otherChatId,
+                workspace)).text()).startsWith("There are no files");
     }
 
     @Test
@@ -264,9 +264,11 @@ class TestWorkspaceTools {
         assertThat(run(tool, "{\"path\":\"/outputs/%2e%2e/x\"}")).startsWith("Error:");
         assertThat(run(tool, "{}")).startsWith("Error:");
         // Another chat's files cannot be reached.
-        assertThat(tool.execute(request("{\"path\":\"/outputs/events.log\"}"), otherChatId))
+        assertThat(tool.execute(request("{\"path\":\"/outputs/events.log\"}"), ToolCalls.inChat(otherChatId,
+                workspace)).text())
                 .startsWith("Error: There is no file");
-        assertThat(tool.execute(request("{\"path\":\"/outputs/events.log\"}"))).startsWith("Error:");
+        assertThat(tool.execute(request("{\"path\":\"/outputs/events.log\"}"),
+                ToolCalls.outsideChat()).text()).startsWith("Error:");
     }
 
     @Test
@@ -341,6 +343,32 @@ class TestWorkspaceTools {
         assertThat(run(new DeleteFileTool(workspace), "{\"path\":\"/outputs/notes.md\"}"))
                 .isEqualTo("Deleted /outputs/notes.md.");
         assertThat(run(new WcTool(workspace), "{\"path\":\"/outputs/notes.md\"}")).contains("There is no file");
+    }
+
+    @Test
+    void testResultsGiveTheFilesTheCallWrote() {
+        final ToolResult grep = new GrepTool(workspace).execute(request("{\"path\":\"/outputs/events.log\","
+                                                                        + "\"pattern\":\"ERROR\","
+                                                                        + "\"out\":\"/outputs/errors.log\"}"),
+                ToolCalls.inChat(chatId, workspace));
+        final ToolResult write = new WriteFileTool(workspace).execute(request("{\"path\":\"/outputs/notes.md\","
+                                                                              + "\"content\":\"x\"}"),
+                ToolCalls.inChat(chatId, workspace));
+        final ToolResult read = new ReadFileTool(workspace).execute(request("{\"path\":\"/outputs/notes.md\"}"),
+                ToolCalls.inChat(chatId, workspace));
+        final ToolResult refused = new WriteFileTool(workspace).execute(request("{\"path\":\"/attachments/7.md\","
+                                                                                + "\"content\":\"x\"}"),
+                ToolCalls.inChat(chatId, workspace));
+
+        assertThat(grep.resources()).containsExactly(new ToolResource("/outputs/errors.log", "text/plain",
+                "Written by the grep tool"));
+        assertThat(grep.isError()).isFalse();
+        assertThat(write.resources()).containsExactly(new ToolResource("/outputs/notes.md", "text/markdown",
+                "Written by the write_file tool"));
+        // Reading a file, or failing to write one, gives none.
+        assertThat(read.resources()).isEmpty();
+        assertThat(refused.resources()).isEmpty();
+        assertThat(refused.isError()).isTrue();
     }
 
     @Test
@@ -450,7 +478,7 @@ class TestWorkspaceTools {
         final String evals = "[" + parts[0].substring("eval ".length()) + "]";
         final String aggregates = "[" + parts[1] + "]";
 
-        assertThat(tableTool().specification().description()).contains(TableTool.EXAMPLES).contains("String: ");
+        assertThat(tableTool().definition().description()).contains(TableTool.EXAMPLES).contains("String: ");
         assertThat(run(tableTool(), "{\"path\":\"/attachments/9.md\",\"eval\":" + evals
                                     + ",\"select\":[\"rate\",\"site\",\"hour\"]}"))
                 .contains("| rate | site | hour |")
@@ -487,7 +515,7 @@ class TestWorkspaceTools {
     void testRegistration() {
         final BuiltInTools tools = new BuiltInTools(Set.of(new LsTool(workspace), new ReadFileTool(workspace),
                 new GrepTool(workspace), new WcTool(workspace), new WriteFileTool(workspace),
-                new StrReplaceTool(workspace), new DeleteFileTool(workspace)));
+                new StrReplaceTool(workspace), new DeleteFileTool(workspace)), ToolCalls.chatContexts(workspace));
 
         assertThat(tools.toolMap().keySet()).extracting(spec -> spec.name())
                 .containsExactlyInAnyOrder("ls", "read_file", "grep", "wc", "write_file", "str_replace",
@@ -507,15 +535,15 @@ class TestWorkspaceTools {
     }
 
     private TableTool tableTool() {
-        return new TableTool(workspace, new ColumnSummariser(workspace, Mockito.mock(TableSummariser.class),
+        return new TableTool(workspace, new ColumnSummariser(Mockito.mock(TableSummariser.class),
                 () -> null));
     }
 
-    private String run(final BuiltInTool tool, final String arguments) {
-        return tool.execute(request(arguments), chatId);
+    private String run(final StroomTool tool, final String arguments) {
+        return tool.execute(request(arguments), ToolCalls.inChat(chatId, workspace)).text();
     }
 
-    private static ToolExecutionRequest request(final String arguments) {
-        return ToolExecutionRequest.builder().id("x").name("t").arguments(arguments).build();
+    private static ToolCall request(final String arguments) {
+        return new ToolCall("x", "t", arguments);
     }
 }

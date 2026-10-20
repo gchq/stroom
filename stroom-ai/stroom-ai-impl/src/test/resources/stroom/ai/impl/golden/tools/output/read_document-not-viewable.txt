@@ -1,0 +1,4 @@
+Arguments: {"uuid":"secret-uuid"}
+
+=== Output ===
+You don't have permission to view this document.

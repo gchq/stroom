@@ -200,9 +200,11 @@ class TestAgentModeTools {
                 .thenAnswer(invocation -> new AiChatMessage(1000, 1, 0L, invocation.getArgument(1), null,
                         invocation.getArgument(2), 1, null));
         final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
+        final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
         final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools,
-                Mockito.mock(AiChatRunManager.class), Mockito.mock(WorkspaceStore.class),
-                Mockito.mock(ContextUsageTracker.class), toolConsent, Mockito.mock(AiAuditLog.class),
+                runManager, Mockito.mock(WorkspaceStore.class),
+                Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
+                Mockito.mock(AiAuditLog.class),
                 new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
                 new UserActions(Mockito.mock(UserActionLookup.class)));
         final List<ChatRequest> requests = new ArrayList<>();

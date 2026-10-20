@@ -53,7 +53,7 @@ class TestHistoryTools {
 
     @Test
     void testReadTurn() {
-        final String result = readTurn.execute(request("{\"turnId\":10}"), 1);
+        final String result = readTurn.execute(request("{\"turnId\":10}"), ToolCalls.inChat(1)).text();
 
         assertThat(result)
                 .startsWith("Turn 10:")
@@ -67,19 +67,21 @@ class TestHistoryTools {
 
     @Test
     void testReadTurn_defaultsToTheLatestTurn() {
-        assertThat(readTurn.execute(request("{}"), 1)).startsWith("Turn 20:").contains("And fw2?");
+        assertThat(readTurn.execute(request("{}"), ToolCalls.inChat(1)).text()).startsWith("Turn 20:")
+                .contains("And fw2?");
     }
 
     @Test
     void testReadTurn_onlyReadsItsOwnChat() {
-        assertThat(readTurn.execute(request("{\"turnId\":30}"), 1)).startsWith("Error: there is no turn 30");
-        assertThat(readTurn.execute(request("{\"turnId\":\"x\"}"), 1)).startsWith("Turn 20:");
-        assertThat(readTurn.execute(request("{}"))).startsWith("Error:");
+        assertThat(readTurn.execute(request("{\"turnId\":30}"),
+                ToolCalls.inChat(1)).text()).startsWith("Error: there is no turn 30");
+        assertThat(readTurn.execute(request("{\"turnId\":\"x\"}"), ToolCalls.inChat(1)).text()).startsWith("Turn 20:");
+        assertThat(readTurn.execute(request("{}"), ToolCalls.outsideChat()).text()).startsWith("Error:");
     }
 
     @Test
     void testSearchHistory() {
-        final String result = searchHistory.execute(request("{\"text\":\"fw1\"}"), 1);
+        final String result = searchHistory.execute(request("{\"text\":\"fw1\"}"), ToolCalls.inChat(1)).text();
 
         assertThat(result)
                 .startsWith("Found \"fw1\" in 2 place(s):")
@@ -91,19 +93,19 @@ class TestHistoryTools {
 
     @Test
     void testSearchHistory_textIsLiteralNotAPattern() {
-        assertThat(searchHistory.execute(request("{\"text\":\"(a+)+$\"}"), 1))
+        assertThat(searchHistory.execute(request("{\"text\":\"(a+)+$\"}"), ToolCalls.inChat(1)).text())
                 .isEqualTo("No part of this conversation mentions \"(a+)+$\".");
-        assertThat(searchHistory.execute(request("{\"text\":\"42 rows\"}"), 1))
+        assertThat(searchHistory.execute(request("{\"text\":\"42 rows\"}"), ToolCalls.inChat(1)).text())
                 .contains("tool result: 42 rows");
     }
 
     @Test
     void testSearchHistory_limitsAndBadInput() {
-        assertThat(searchHistory.execute(request("{\"text\":\"fw\",\"maxResults\":1}"), 1))
+        assertThat(searchHistory.execute(request("{\"text\":\"fw\",\"maxResults\":1}"), ToolCalls.inChat(1)).text())
                 .contains("in 3 place(s)")
                 .contains("(2 more not listed.)");
-        assertThat(searchHistory.execute(request("{}"), 1)).startsWith("Error:");
-        assertThat(searchHistory.execute(request("{\"text\":\"" + "x".repeat(300) + "\"}"), 1))
+        assertThat(searchHistory.execute(request("{}"), ToolCalls.inChat(1)).text()).startsWith("Error:");
+        assertThat(searchHistory.execute(request("{\"text\":\"" + "x".repeat(300) + "\"}"), ToolCalls.inChat(1)).text())
                 .startsWith("Error:");
     }
 
@@ -119,7 +121,7 @@ class TestHistoryTools {
 
     @Test
     void testRegistered() {
-        final BuiltInTools tools = new BuiltInTools(Set.of(readTurn, searchHistory));
+        final BuiltInTools tools = new BuiltInTools(Set.of(readTurn, searchHistory), ToolCalls.chatContexts());
 
         assertThat(tools.isReadOnly(ReadTurnTool.NAME)).isTrue();
         assertThat(tools.isReadOnly(SearchHistoryTool.NAME)).isTrue();
@@ -129,11 +131,12 @@ class TestHistoryTools {
                 .findFirst()
                 .orElseThrow()
                 .getValue()
-                .execute(request("{}"), 1)).startsWith("Turn 20:");
+                .execute(ToolExecutionRequest.builder().id("x").name("t").arguments("{}").build(), 1))
+                .startsWith("Turn 20:");
     }
 
-    private static ToolExecutionRequest request(final String arguments) {
-        return ToolExecutionRequest.builder().id("x").name("t").arguments(arguments).build();
+    private static ToolCall request(final String arguments) {
+        return new ToolCall("x", "t", arguments);
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text, final int turn) {

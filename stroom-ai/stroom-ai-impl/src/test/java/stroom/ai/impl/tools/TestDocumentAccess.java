@@ -112,9 +112,9 @@ class TestDocumentAccess {
 
     @Test
     void viewsAreLogged() {
-        documentAccess.logView(3, XSLT, "Read");
+        documentAccess.logView(ToolSession.chat(3), XSLT, "Read");
 
-        Mockito.verify(auditLog).documentViewed(3, XSLT, "Read");
+        Mockito.verify(auditLog).documentViewed(ToolSession.chat(3), XSLT, "Read");
     }
 
     private void nodeExists(final DocRef docRef) {

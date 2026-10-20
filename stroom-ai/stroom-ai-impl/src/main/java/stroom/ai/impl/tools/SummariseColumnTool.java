@@ -16,11 +16,9 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 /**
@@ -42,15 +40,21 @@ class SummariseColumnTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Summarises a free-text column of a table (e.g. log messages): first reduces it to "
-                             + "its distinct patterns with counts (numbers, IPs, dates and IDs masked), and only "
-                             + "if there are still too many has them summarised. Use the table tool for exact "
-                             + "figures.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The table, e.g. /attachments/12.md.")
+                .description(ToolDescription.builder()
+                        .general("Summarises a free-text column of a table (e.g. log messages): first reduces it to "
+                                 + "its distinct patterns with counts (numbers, IPs, dates and IDs masked), and only "
+                                 + "if there are still too many has them summarised.")
+                        .chatOnly(" Use the table tool for exact figures.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The table")
+                                .chatOnly(", e.g. /attachments/12.md")
+                                .general(".")
+                                .build())
                         .addStringProperty(COLUMN_ARG, "The column.")
                         .addStringProperty(FOCUS_ARG, "What to look for, if anything in particular.")
                         .required(PATH_ARG, COLUMN_ARG)
@@ -59,8 +63,10 @@ class SummariseColumnTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
-        return columnSummariser.summarise(chatId, pathArg(request, PATH_ARG), stringArg(request, COLUMN_ARG),
-                stringArg(request, FOCUS_ARG));
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        return ToolResult.text(columnSummariser.summarise(sessionWorkspace(context), context,
+                pathArg(request, PATH_ARG),
+                stringArg(request, COLUMN_ARG),
+                stringArg(request, FOCUS_ARG)));
     }
 }

@@ -1,0 +1,67 @@
+# mcp-review-in-full
+
+A needs_review result over the inline limit is kept in full for the model, as it must show it to the user exactly as it is.
+
+== What happened ==
+The user asks: Make an index template for ACME.
+Run 1: answered: Here is the template to review.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Make an index template for ACME.
+#2 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_index_template",
+      "arguments" : "{\"name\":\"acme\"}"
+    }
+#3 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_index_template",
+      "error" : false,
+      "text" : "{\"status\":\"needs_review\",\"dev_tools\":\"PUT _index_template/acme\\n{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patte\n[… shortened for this file: 10027 characters in all, SHA-256 917c6cdfcd5d8f5abe65db9916ed6c34d0a7b685115715df5a7370cddb77b550 …]\n*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}{\\\"index_patterns\\\":[\\\"acme-*\\\"]}\",\"review_id\":\"0123456789ab\",\"hint\":\"Show the user dev_tools.\"}",
+      "chars" : 10027,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+propose_index_template
+    Description: Does propose index template.
+    Parameters: {
+      "type" : "object",
+      "properties" : {
+        "query" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ]
+    }
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn, propose_index_template
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Make an index template for ACME.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn, propose_index_template
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Make an index template for ACME.
+[2] AI
+    Calls propose_index_template as call-1 with {"name":"acme"}
+[3] TOOL RESULT for call-1 (propose_index_template)
+    {"status":"needs_review","dev_tools":"PUT _index_template/acme\n{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patte
+    [… shortened for this file: 10027 characters in all, SHA-256 917c6cdfcd5d8f5abe65db9916ed6c34d0a7b685115715df5a7370cddb77b550 …]
+    *\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}{\"index_patterns\":[\"acme-*\"]}","review_id":"0123456789ab","hint":"Show the user dev_tools."}

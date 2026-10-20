@@ -16,9 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.ExpressionException;
 import stroom.ai.impl.workspace.ExpressionFunctions;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Aggregate;
 import stroom.ai.impl.workspace.TableEngine.Condition;
@@ -31,10 +34,6 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.concurrent.LazyValue;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
@@ -72,8 +71,8 @@ class TableTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        final JsonObjectSchema condition = JsonObjectSchema.builder()
+    public ToolDefinition definition() {
+        final ObjectSchema condition = ObjectSchema.builder()
                 .addStringProperty("column", "The column.")
                 .addEnumProperty("op", List.of("=", "!=", "<", "<=", ">", ">=", "contains", "not_contains",
                         "starts_with", "ends_with", "matches", "is_empty", "not_empty"), "The comparison. "
@@ -81,7 +80,7 @@ class TableTool extends AbstractWorkspaceTool {
                 .addStringProperty("value", "The value to compare with.")
                 .required("column", "op")
                 .build();
-        final JsonObjectSchema aggregate = JsonObjectSchema.builder()
+        final ObjectSchema aggregate = ObjectSchema.builder()
                 .addEnumProperty("function", List.of("count", "count_distinct", "sum", "min", "max", "avg"),
                         "What to work out for each group, or give expression instead.")
                 .addStringProperty("column", "The column (not needed for count).")
@@ -89,37 +88,43 @@ class TableTool extends AbstractWorkspaceTool {
                                                  + "instead of function, e.g. round(sum(${bytes}) / count(), 2).")
                 .addStringProperty("as", "A name for the result column.")
                 .build();
-        final JsonObjectSchema eval = JsonObjectSchema.builder()
+        final ObjectSchema eval = ObjectSchema.builder()
                 .addStringProperty("as", "The new column's name.")
                 .addStringProperty("expression", "What it is for each row, e.g. ${bytes} / ${duration}.")
                 .required("as", "expression")
                 .build();
-        final JsonObjectSchema order = JsonObjectSchema.builder()
+        final ObjectSchema order = ObjectSchema.builder()
                 .addStringProperty("column", "A column of the result.")
                 .addBooleanProperty("descending", "True for largest first.")
                 .required("column")
                 .build();
-        return ToolSpecification.builder()
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description(description())
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The table, e.g. /attachments/12.md.")
-                        .addProperty("eval", JsonArraySchema.builder().items(eval)
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The table")
+                                .chatOnly(", e.g. /attachments/12.md")
+                                .general(".")
+                                .build())
+                        .addProperty("eval", ArraySchema.builder().items(eval)
                                 .description("Columns worked out for each row, first, which the rest can use as "
                                              + "any other.").build())
                         .addProperty("select", stringArraySchema("The columns to keep (default all)."))
-                        .addProperty("where", JsonArraySchema.builder().items(condition)
+                        .addProperty("where", ArraySchema.builder().items(condition)
                                 .description("Conditions every row must meet.").build())
                         .addProperty("groupBy", stringArraySchema("The columns to group by."))
-                        .addProperty("aggregates", JsonArraySchema.builder().items(aggregate)
+                        .addProperty("aggregates", ArraySchema.builder().items(aggregate)
                                 .description("What to work out for each group (default count).").build())
                         .addBooleanProperty("distinct", "True for the distinct values of the selected columns, "
                                                         + "with counts.")
                         .addBooleanProperty("mask", "True to mask numbers, IPs, dates and IDs in grouped values.")
-                        .addProperty("orderBy", JsonArraySchema.builder().items(order)
+                        .addProperty("orderBy", ArraySchema.builder().items(order)
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
-                        .addStringProperty(OUT_ARG, "A .csv file in /outputs/ to write the result to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A .csv file in /outputs/ to write the result to.")
+                                .build())
                         .addProperty(HELP_ARG, stringArraySchema("Expression functions to describe (what each "
                                                                  + "takes and does), instead of querying a "
                                                                  + "table."))
@@ -129,14 +134,23 @@ class TableTool extends AbstractWorkspaceTool {
 
     // What the tool does, how to write expressions, and the functions there are, by category. The functions are
     // Stroom's, so are listed when first asked for.
-    private static String description() {
-        return "Queries a table in the workspace (an attached table in /attachments/, or a .csv or .tsv file) "
-               + "exactly, in code: eval adds columns worked out for each row, where filters rows, then groupBy "
-               + "and aggregates (or distinct, for each distinct value with its count) summarise them, orderBy sorts "
-               + "and limit cuts the result. Use mask with distinct or groupBy to count free text (e.g. messages) "
-               + "as patterns, with numbers, IPs, dates and IDs masked. Use this for any figures; never count rows "
-               + "or work figures out by reading them. Give out to write the result to a CSV file.\n\n"
-               + "Expressions (eval, and aggregates given as expression) are in Stroom's expression language, as in "
+    private static ToolDescription description() {
+        return ToolDescription.builder()
+                .general("Queries a table")
+                .chatOnly(" in the workspace (an attached table in /attachments/, or a .csv or .tsv file)")
+                .general(" exactly, in code: eval adds columns worked out for each row, where filters rows, then "
+                         + "groupBy and aggregates (or distinct, for each distinct value with its count) summarise "
+                         + "them, orderBy sorts and limit cuts the result. Use mask with distinct or groupBy to count "
+                         + "free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this "
+                         + "for any figures; never count rows or work figures out by reading them.")
+                .chatOnly(" Give out to write the result to a CSV file.")
+                .general("\n\n" + expressionsHelp())
+                .build();
+    }
+
+    // How to write expressions, and the functions there are, by category.
+    private static String expressionsHelp() {
+        return "Expressions (eval, and aggregates given as expression) are in Stroom's expression language, as in "
                + "dashboards: ${column} is a column's value, 'text' or \"text\" a string, operators are "
                + "+ - * / % ^ and = != < <= > >=, and functions are called as name(arguments). The names are "
                + "Stroom's, not SQL's: the mean is average(), not avg(). A cell that is "
@@ -152,19 +166,19 @@ class TableTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final List<String> help = strings(argsMap(request).get(HELP_ARG), HELP_ARG);
         if (!help.isEmpty()) {
-            return ExpressionFunctions.help(help);
+            return ToolResult.text(ExpressionFunctions.help(help));
         }
         final WorkspacePath path = pathArg(request, PATH_ARG);
         try {
-            return query(request, chatId, path);
+            return ToolResult.text(query(request, context, path));
         } catch (final ExpressionException e) {
             // The model fixes its expression from the message; a column's summary wouldn't help.
             throw e;
         } catch (final WorkspaceException e) {
-            return fallBack(request, chatId, path, e);
+            return ToolResult.text(fallBack(request, context, path, e));
         }
     }
 
@@ -172,28 +186,31 @@ class TableTool extends AbstractWorkspaceTool {
      * After a table has failed to be queried twice in a run, summarises the column the query was about instead
      * (the automatic fallback), so the model is not left trying query after query.
      */
-    private String fallBack(final ToolExecutionRequest request,
-                            final int chatId,
+    private String fallBack(final ToolCall request,
+                            final ToolCallContext context,
                             final WorkspacePath path,
                             final WorkspaceException e) {
-        final int failures = ToolRunContext.current()
-                .map(context -> context.recordFailure(NAME + ":" + path))
+        final int failures = context.runContext()
+                .map(runContext -> runContext.recordFailure(NAME + ":" + path))
                 .orElse(0);
         if (failures < FAILURES_BEFORE_FALLBACK) {
             throw e;
         }
-        final String column = referencedColumn(request, chatId, path);
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final String column = referencedColumn(request, workspace, path);
         if (column == null) {
             throw new WorkspaceException(e.getMessage() + " Queries of this table have failed " + failures
                                          + " times; consider summarise_column to summarise a column instead.");
         }
         return "Error: " + e.getMessage() + "\n\nQueries of this table have failed " + failures + " times, so "
                + "here is a summary of column '" + column + "' instead:\n\n"
-               + columnSummariser.summarise(chatId, path, column, null);
+               + columnSummariser.summarise(workspace, context, path, column, null);
     }
 
-    private String referencedColumn(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
-        final List<String> columns = TableEngine.run(workspace.localFile(chatId, path), Format.forPath(path),
+    private String referencedColumn(final ToolCall request,
+                                    final SessionWorkspace workspace,
+                                    final WorkspacePath path) {
+        final List<String> columns = TableEngine.run(workspace.localFile(path), Format.forPath(path),
                 new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), 1)).columns();
         final Map<?, ?> args = argsMap(request);
         final List<String> referenced = new ArrayList<>();
@@ -214,7 +231,8 @@ class TableTool extends AbstractWorkspaceTool {
         return null;
     }
 
-    private String query(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
+    private String query(final ToolCall request, final ToolCallContext context, final WorkspacePath path) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath out = outArg(request);
         final Map<?, ?> args = argsMap(request);
         final Query query = new Query(
@@ -228,24 +246,28 @@ class TableTool extends AbstractWorkspaceTool {
                 orders(args.get("orderBy")),
                 limit(args.get("limit")));
 
-        final Result result = TableEngine.run(workspace.localFile(chatId, path), Format.forPath(path), query);
+        final Result result = TableEngine.run(workspace.localFile(path), Format.forPath(path), query);
         final String summary = result.rowsMatched() + " of " + result.rowsRead() + " rows matched; the result has "
                                + result.rows().size() + " row(s).";
         if (out != null) {
-            writeCsv(chatId, out, result, workspace.sourceDocUuid(chatId, path));
+            writeCsv(workspace, out, result, workspace.sourceDocUuid(path));
             return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"
-                   + markdown(result.columns(), result.rows(), PREVIEW_ROWS);
+                   + markdown(context, result.columns(), result.rows(), PREVIEW_ROWS);
         }
-        return summary + "\n\n" + markdown(result.columns(), result.rows(), limits().getMaxLinesPerRead());
+        return summary + "\n\n" + markdown(context, result.columns(), result.rows(),
+                limits(context).getMaxLinesPerRead());
     }
 
-    private String markdown(final List<String> columns, final List<List<String>> rows, final int maxRows) {
+    private static String markdown(final ToolCallContext context,
+                                   final List<String> columns,
+                                   final List<List<String>> rows,
+                                   final int maxRows) {
         final StringBuilder sb = new StringBuilder(row(columns));
         sb.append("|").append(" --- |".repeat(columns.size())).append('\n');
         int shown = 0;
         for (final List<String> row : rows) {
             final String line = row(row);
-            if (shown >= maxRows || sb.length() + line.length() > limits().getMaxCharsPerRead()) {
+            if (shown >= maxRows || sb.length() + line.length() > limits(context).getMaxCharsPerRead()) {
                 sb.append("\n(").append(rows.size() - shown).append(" more rows not shown. Give out to write them "
                                                                     + "all to a file.)");
                 break;
@@ -264,8 +286,9 @@ class TableTool extends AbstractWorkspaceTool {
         return sb.append('\n').toString();
     }
 
-    private void writeCsv(final int chatId, final WorkspacePath out, final Result result, final String source) {
-        ToolTables.writeCsv(workspace, chatId, out, result.columns(), result.rows(), source);
+    private void writeCsv(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
+            final String source) {
+        ToolTables.writeCsv(workspace, out, result.columns(), result.rows(), source);
     }
 
     private static List<String> strings(final Object value, final String name) {
