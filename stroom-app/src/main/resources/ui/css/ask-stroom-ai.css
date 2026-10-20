@@ -45,6 +45,14 @@
     padding: 8px 16px 24px;
 }
 
+/* Following the conversation glides to new content (the container's smooth scrolling), unless the user would
+   rather have less motion. */
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-middle.markdown-container {
+        scroll-behavior: auto;
+    }
+}
+
 .askStroomAiViewImpl-bottom {
     padding: 10px;
 }
@@ -1501,10 +1509,18 @@
 
 /* ---- Forms from MCP tools ---- */
 
+/* What the server says, as Markdown. */
 .ai-elicitation-message {
-    white-space: pre-wrap;
     word-break: break-word;
     margin: 4px 0 6px;
+}
+
+.ai-elicitation-message > div > :first-child {
+    margin-top: 0;
+}
+
+.ai-elicitation-message > div > :last-child {
+    margin-bottom: 0;
 }
 
 .ai-elicitation-form {

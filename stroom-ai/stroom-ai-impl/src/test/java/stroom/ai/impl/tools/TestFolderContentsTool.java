@@ -25,6 +25,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -38,7 +39,10 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -256,8 +260,8 @@ class TestFolderContentsTool {
 
         assertThat(result)
                 .contains("Processor filters: 1\n- Filter 1 (uuid filter-1-uuid) of Pipeline [Firewall pipeline]"
-                          + "(?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): enabled, priority 20, "
-                          + "Complete, 12 stream(s), 3400 event(s)")
+                          + "(?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): selects all streams; enabled, "
+                          + "priority 20, Complete, 12 stream(s), 3400 event(s)")
                 .doesNotContain("Filter 2")
                 .doesNotContain("Secret pipe")
                 .doesNotContain("Filter 3");
@@ -266,6 +270,28 @@ class TestFolderContentsTool {
         assertThat(request.getValue().getExpression().toString())
                 .contains("Pipeline in folder Firewalls")
                 .contains("Analytic Rule in folder Firewalls");
+    }
+
+    @Test
+    void eachProcessorFilterSaysWhatItSelects() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, FEED)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, "Raw Events")
+                .build();
+        final List<ProcessorListRow> rows = List.of(new ProcessorFilterRow(filter(4, PIPELINE).enabled(false)
+                .queryData(QueryData.builder().expression(expression).build())
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(86_400_000L)
+                .build()));
+        Mockito.when(processorFilterService.find(Mockito.any(FetchProcessorRequest.class)))
+                .thenReturn(ResultPage.createUnboundedList(rows));
+
+        assertThat(run("{\"folder\":\"firewalls-uuid\",\"show\":[\"processors\"]}"))
+                .contains("- Filter 4 (uuid filter-4-uuid) of Pipeline [Firewall pipeline]"
+                          + "(?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): selects streams where Feed is "
+                          + "'FIREWALL-EVENTS' and Type is 'Raw Events', created on or after "
+                          + "1970-01-01T00:00:00.000Z, created on or before 1970-01-02T00:00:00.000Z; disabled, "
+                          + "priority");
     }
 
     @Test
@@ -352,7 +378,8 @@ class TestFolderContentsTool {
     }
 
     private FolderContentsTool tool() {
-        return new FolderContentsTool(fixture.documentAccess(), fixture.securityContext, () -> metaService,
+        return new FolderContentsTool(fixture.documentAccess(), fixture.processorFilterAccess(processorFilterService),
+                () -> metaService,
                 () -> processorFilterService, () -> processorTaskService, () -> docFinder,
                 fixture.agentInstructions(), fixture.auditLog());
     }

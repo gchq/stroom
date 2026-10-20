@@ -523,7 +523,8 @@ class McpAgentChat {
         appendDebugToolCall(debugLog, callNo, toolRequest, result);
 
         // A large result is saved to the workspace and the model is given a stub, so it does not fill the
-        // model's context.
+        // model's context. A result the user must be shown exactly as it is (e.g. a needs_review reply) is
+        // given in full up to a higher limit, as the model can't show the user a stub (see ToolOutputs).
         final boolean large = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name());
         final String saved = large
                 ? ToolOutputs.forSaving(result)

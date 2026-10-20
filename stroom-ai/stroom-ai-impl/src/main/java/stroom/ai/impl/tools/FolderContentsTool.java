@@ -24,7 +24,6 @@ import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -39,13 +38,10 @@ import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterRow;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -109,17 +105,17 @@ class FolderContentsTool extends AbstractBuiltInTool {
     static final int MAX_TASK_ROWS = 500;
 
     private final DocumentAccess documentAccess;
-    private final SecurityContext securityContext;
+    private final ProcessorFilterAccess processorFilterAccess;
     private final Provider<MetaService> metaServiceProvider;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
-    private final Provider<DocFinder> docFinderProvider;
+    private final FeedAccess feedAccess;
     private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
 
     @Inject
     FolderContentsTool(final DocumentAccess documentAccess,
-                       final SecurityContext securityContext,
+                       final ProcessorFilterAccess processorFilterAccess,
                        final Provider<MetaService> metaServiceProvider,
                        final Provider<ProcessorFilterService> processorFilterServiceProvider,
                        final Provider<ProcessorTaskService> processorTaskServiceProvider,
@@ -127,11 +123,11 @@ class FolderContentsTool extends AbstractBuiltInTool {
                        final AgentInstructions agentInstructions,
                        final AiAuditLog auditLog) {
         this.documentAccess = documentAccess;
-        this.securityContext = securityContext;
+        this.processorFilterAccess = processorFilterAccess;
         this.metaServiceProvider = metaServiceProvider;
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.processorTaskServiceProvider = processorTaskServiceProvider;
-        this.docFinderProvider = docFinderProvider;
+        this.feedAccess = new FeedAccess(docFinderProvider, documentAccess);
         this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
     }
@@ -145,8 +141,9 @@ class FolderContentsTool extends AbstractBuiltInTool {
                              + "folders in it, each as a link; give depth to look in the folders below too), "
                              + "'streams' (how many streams its feeds received and its pipelines produced, and "
                              + "the most recent; use stream_meta with folder for more), 'processors' (the "
-                             + "processor filters of its pipelines and analytic rules: enabled, priority, "
-                             + "progress) and 'tasks' (counts of their processing tasks by status). Ask for the "
+                             + "processor filters of its pipelines and analytic rules: what streams each "
+                             + "selects, enabled, priority, progress) and 'tasks' (counts of their processing "
+                             + "tasks by status). Ask for the "
                              + "streams, processors or tasks when the user mentions data, processing or tasks. "
                              + "Folders an AGENTS doc says to ignore (e.g. an Archive) are shown but not looked "
                              + "in, and the AGENTS docs that apply to the folder are given.")
@@ -439,7 +436,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
                                   final boolean root,
                                   final Listing listing) {
         sb.append("\nProcessor filters: ");
-        if (!canManageProcessors()) {
+        if (!processorFilterAccess.canManageProcessors()) {
             sb.append("you need the Manage Processors permission to see them, as the Processors tab does.\n");
             return;
         }
@@ -473,40 +470,11 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 ? " (the first " + MAX_FILTERS + " are listed)"
                 : "").append('\n');
         for (final ProcessorFilter filter : filters.subList(0, Math.min(filters.size(), MAX_FILTERS))) {
-            final DocRef pipeline = filter.getPipeline();
+            final DocRef pipeline = ProcessorFilterAccess.pipelineOf(filter);
             sb.append("- Filter ").append(filter.getId()).append(" (uuid ").append(filter.getUuid()).append(") of ")
-                    .append(pipeline.getType()).append(' ').append(DocumentInfoTool.link(pipeline.copy()
-                            .name(NullSafe.nonBlankStringElse(filter.getPipelineName(), pipeline.getName()))
-                            .build()))
-                    .append(": ").append(filter.isEnabled()
-                            ? "enabled"
-                            : "disabled")
-                    .append(", priority ").append(filter.getPriority());
-            if (filter.isReprocess()) {
-                sb.append(", reprocessing");
-            }
-            final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
-            if (tracker != null) {
-                if (tracker.getStatus() != null) {
-                    sb.append(", ").append(tracker.getStatus().getDisplayValue());
-                }
-                if (tracker.getMetaCount() != null) {
-                    sb.append(", ").append(tracker.getMetaCount()).append(" stream(s)");
-                }
-                if (tracker.getEventCount() != null) {
-                    sb.append(", ").append(tracker.getEventCount()).append(" event(s)");
-                }
-                if (tracker.getLastPollMs() != null) {
-                    sb.append(", last polled ").append(DateUtil.createNormalDateTimeString(tracker.getLastPollMs()));
-                }
-                if (NullSafe.isNonBlankString(tracker.getMessage())) {
-                    sb.append(", message: ").append(tracker.getMessage().strip());
-                }
-            }
-            if (filter.getRunAsUser() != null) {
-                sb.append(", runs as ").append(filter.getRunAsUser().toDisplayString());
-            }
-            sb.append('\n');
+                    .append(pipeline.getType()).append(' ').append(DocumentInfoTool.link(pipeline))
+                    .append(": selects ").append(ProcessorFilterAccess.selection(filter))
+                    .append("; ").append(ProcessorFilterAccess.status(filter)).append('\n');
             listing.documents.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));
             listing.filters++;
         }
@@ -518,7 +486,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
                              final boolean root,
                              final Listing listing) {
         sb.append("\nProcessing tasks: ");
-        if (!canManageProcessors()) {
+        if (!processorFilterAccess.canManageProcessors()) {
             sb.append("you need the Manage Processors permission to see them, as the Active Tasks tab does.\n");
             return;
         }
@@ -536,7 +504,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
             final Map<String, Boolean> feeds = new HashMap<>();
             for (final ProcessorTaskSummary summary : found.subList(0, Math.min(found.size(), MAX_TASK_ROWS))) {
                 if (documentAccess.canView(summary.getPipeline())
-                    && feeds.computeIfAbsent(NullSafe.string(summary.getFeed()), this::canViewFeed)) {
+                    && feeds.computeIfAbsent(NullSafe.string(summary.getFeed()), feedAccess::canView)) {
                     summaries.add(summary);
                 }
             }
@@ -568,31 +536,6 @@ class FolderContentsTool extends AbstractBuiltInTool {
             counts.forEach((status, count) -> parts.add(count + " " + status));
             sb.append("- ").append(key).append(": ").append(String.join(", ", parts)).append('\n');
         });
-    }
-
-    /// @return True if the user may manage processors, as the Processors and Active Tasks tabs need. False if they
-    /// may not, or if checking fails (failing closed).
-    private boolean canManageProcessors() {
-        try {
-            return securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to check the Manage Processors permission", e);
-            return false;
-        }
-    }
-
-    /// @return True if the user can view a feed of this name. False if not, or if it can't be found.
-    private boolean canViewFeed(final String name) {
-        if (name.isBlank()) {
-            return false;
-        }
-        try {
-            return docFinderProvider.get().findByName(FeedDoc.TYPE, name).stream()
-                    .anyMatch(documentAccess::canView);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the feed " + name, e);
-            return false;
-        }
     }
 
     private static String joinPath(final String parent, final String name) {

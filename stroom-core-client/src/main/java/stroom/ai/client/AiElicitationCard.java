@@ -40,7 +40,8 @@ import java.util.Map;
 
 /// The fields of a form an MCP tool asked the user to fill in (MCP elicitation), shown in the chat's card for it:
 /// a text box for text and numbers, a list for a choice of one, and tick boxes for true/false and for a choice of
-/// several. Everything the server wrote is shown as text, never as HTML.
+/// several. The server's message is shown as Markdown, sanitised as the chat's answers are; everything else it wrote
+/// is shown as text, never as HTML.
 final class AiElicitationCard {
 
     /// On each input: the name of the field it is for.
@@ -301,6 +302,56 @@ final class AiElicitationCard {
             }
         }
         return fallback;
+    }
+
+    /// @param message What the server said, as Markdown or plain text.
+    /// @return The message as Markdown that keeps the server's line breaks: a line followed by another line of
+    /// the same paragraph ends with a hard break, as plain text would show it. Fenced code, lists, tables, quotes and
+    /// headings are left as they are.
+    static String messageMarkdown(final String message) {
+        if (message == null) {
+            return "";
+        }
+        final String[] lines = message.replace("\r\n", "\n").split("\n", -1);
+        final StringBuilder sb = new StringBuilder();
+        boolean inFence = false;
+        for (int i = 0; i < lines.length; i++) {
+            final String line = lines[i];
+            final boolean fence = isFence(line);
+            if (fence) {
+                inFence = !inFence;
+            }
+            sb.append(line);
+            if (i < lines.length - 1) {
+                final boolean breakHere = !inFence
+                                          && !fence
+                                          && !line.trim().isEmpty()
+                                          && !line.trim().startsWith("|")
+                                          && !line.trim().startsWith("#")
+                                          && !startsBlock(lines[i + 1]);
+                sb.append(breakHere
+                        ? "  \n"
+                        : "\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean isFence(final String line) {
+        final String text = line.trim();
+        return text.startsWith("```") || text.startsWith("~~~");
+    }
+
+    // Whether a line starts something of its own, so the line before it needs no break.
+    private static boolean startsBlock(final String line) {
+        final String text = line.trim();
+        return text.isEmpty()
+               || isFence(line)
+               || text.startsWith("#")
+               || text.startsWith(">")
+               || text.startsWith("|")
+               || text.matches("^([-*+]|\\d+[.)])(\\s.*)?$")
+               || text.matches("^([-*_]\\s*){3,}$");
     }
 
     /// Adds what the user answered: each field they gave a value, by its title, with a choice shown by its label

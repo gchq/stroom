@@ -1183,6 +1183,59 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void aLargeReviewTheUserMustSeeIsGivenToTheModelInFull() {
+        // As propose_index_template gave it: about 10,000 characters, stubbed, so the agent never showed the user
+        // the template to confirm.
+        final String review = "{\"status\":\"needs_review\",\"dev_tools\":\"PUT _index_template/x\\n"
+                              + "{}".repeat(5_000) + "\",\"review_id\":\"0123456789ab\",\"hint\":\"Show it.\"}";
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent(review))).build());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(review).hasSizeGreaterThan(ToolOutputs.MAX_INLINE_CHARS);
+        assertThat(lastToolResult(model.requests.get(1))).isEqualTo(review);
+        Mockito.verifyNoInteractions(workspaceStore);
+    }
+
+    @Test
+    void aReviewOverTheCapIsSavedAndItsStubSaysTheUserMustSeeIt() {
+        final String review = "{\"status\":\"needs_review\",\"show_user\":\""
+                              + "x".repeat(ToolOutputs.MAX_SHOWN_IN_FULL_CHARS) + "\",\"review_id\":\"0123456789ab\"}";
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent(review))).build());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final String path = ToolOutputs.outputPath(500, 1000);
+        Mockito.verify(workspaceStore).createFile(Mockito.eq(7), Mockito.eq(AiAttachmentType.TOOL_OUTPUT),
+                Mockito.eq(path), Mockito.eq(1000), Mockito.anyString());
+        assertThat(lastToolResult(model.requests.get(1)))
+                .contains("too large to show in full")
+                .contains("must be shown its show_user exactly as it is")
+                .contains("review_id '0123456789ab'")
+                .hasSizeLessThan(ToolOutputs.MAX_INLINE_CHARS);
+    }
+
+    @Test
     void shortenToolResultsKeepsTheLatestAndShortOnes() {
         final List<ChatMessage> conversation = new ArrayList<>(List.of(
                 UserMessage.from("q"),
