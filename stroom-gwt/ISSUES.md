@@ -1715,6 +1715,17 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `FieldEnd` (`ResizeObserver`) sets the padding where what is over the end changes width, and the
   stylesheets where it doesn't. Measured on every such field on `Widgets/Inputs/ViewStates`
   `AllControls`; workbench: `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd`.
+* **Every check of a schedule made a new schedule dialog** (`ScheduleBox.validate`): it asked its
+  provider for a new `SchedulePopup` each time, though it already had one, so leaving the box, and
+  each change of its value or enabled state, made a whole dialog (presenter and view) to check the
+  expression with: three times leaving it made five. It uses its own dialog. Workbench:
+  `Widgets/Date & Time/ScheduleBox` `CheckingReusesTheDialog`.
+* **The schedule box only opened its dialog on Enter or a click, and its quick settings borrowed the
+  time range's classes** (`ScheduleBox`, `ScheduleViewImpl`, `TimeRangePopup`): Alt+Down opens it
+  too, the field says it opens a dialog, and its classes are BEM (`schedule-box`; `ScheduleBox.css`
+  is gone). The schedule and time range dialogs' presets are a shared `QuickSettings` (`quick-settings.css`;
+  the `timeRange-quick*` rules in `components.css` are gone), each 24px high. Workbench:
+  `Widgets/Date & Time/ScheduleBox` `KeysOpenTheDialog`, `QuickSettingsAreGroupedButtons`.
 * **A calendar day's number sat above the middle of its fill and focus ring** (`calendar.css`):
   `stroom.css` puts a table cell's content at its top; the days are centred.
 * **A date-time box was too narrow for its value**: an ISO time (`2024-01-15T09:50:00.000Z`) needs

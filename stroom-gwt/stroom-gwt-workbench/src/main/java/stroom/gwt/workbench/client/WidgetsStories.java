@@ -39,6 +39,7 @@ import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DurationPickerStories;
+import stroom.gwt.workbench.client.widgets.dateandtime.ScheduleBoxStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.TimePickerStories;
 import stroom.gwt.workbench.client.widgets.dialogs.AlertDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogStories;
@@ -189,6 +190,8 @@ public final class WidgetsStories {
         DateTimePickerStories.addTo(registry);
         // Widgets/Date & Time/DurationPicker
         DurationPickerStories.addTo(registry);
+        // Widgets/Date & Time/ScheduleBox
+        ScheduleBoxStories.addTo(registry);
         // Widgets/Date & Time/TimePicker
         TimePickerStories.addTo(registry);
         // Widgets/CellList

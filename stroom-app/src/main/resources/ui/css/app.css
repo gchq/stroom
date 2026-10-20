@@ -52,7 +52,8 @@
 @import url("calendar.css");
 @import url("date-time-view.css");
 @import url("date-time-box.css");
-@import url("ScheduleBox.css");
+@import url("quick-settings.css");
+@import url("schedule-box.css");
 @import url("selection-box.css");
 @import url("selection-popup.css");
 @import url("svg-icon-box.css");

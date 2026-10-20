@@ -604,6 +604,14 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 - **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
 - **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
 
+## Schedule box
+
+`ScheduleBox` (`stroom.schedule.client`, styled by `schedule-box.css`) is a text field for a schedule's expression (a frequency such as `10m`, or a cron expression), with a clock at its end, and behaves as a date-time box: Enter or Alt+Down in the field, or a click on the clock, opens the Change Schedule dialog (`SchedulePopup`), never focus, and the field is `aria-haspopup="dialog"`. An expression the server rejects marks the field invalid when it is left; that check, and the dialog's, use the box's one dialog. In the dialog, the quick settings are a `QuickSettings`, and the Next Scheduled Time is a polite live region, as it changes when the expression is calculated.
+
+`QuickSettings` (`stroom.widget.button.client`, styled by `quick-settings.css`) is presets that fill in a value, in titled groups side by side: each group a `group` named by its title, each preset a `LinkButton` named by its text, at least 24px high. The schedule dialog and the time range dialog use it (they had built the same markup each, with the time range's `timeRange-quick*` classes).
+
+Stories `Widgets/Date & Time/ScheduleBox` (`ScheduleBoxStories`): `KeysOpenTheDialog`, `QuickSettingsAreGroupedButtons`, `CheckingReusesTheDialog`.
+
 ## Field ends
 
 A field with something drawn over its end (an icon box's icon, a password box's button and badge, a quick filter's buttons, a spinner's arrows) keeps its text 4px (`FieldEnd.GAP`) clear of it: its text never runs under what is over its end. Where that never changes width (an icon box's 26px icon, a selection box's arrow), the stylesheet pads the field's end by its width and 4px. Where it does (a quick filter's Clear comes and goes, a password badge's width depends on its text), `FieldEnd` (`stroom.widget.util.client`) watches it (`ResizeObserver`) while the widget is attached and sets the field's `--field__end-space`, which the stylesheet uses as its end padding, with a fallback for before it is shown. Story `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd` gives each such field a value too long for it and measures the space.
