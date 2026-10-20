@@ -45,6 +45,15 @@ public interface StroomTool {
         return true;
     }
 
+    /// Whether one call of the tool only reads, for a tool with some commands that change something and some that
+    /// don't (e.g. memory's `read` and `write`). While the user is away, only calls that only read run.
+    ///
+    /// @param call The call, with its arguments.
+    /// @return True if this call cannot change anything. Defaults to [#isReadOnly()].
+    default boolean isReadOnly(final ToolCall call) {
+        return isReadOnly();
+    }
+
     /// Whether the tool's output could hold instructions planted by someone else. It maps to MCP's
     /// `openWorldHint` tool annotation.
     ///

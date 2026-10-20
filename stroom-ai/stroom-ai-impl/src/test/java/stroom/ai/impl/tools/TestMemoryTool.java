@@ -21,6 +21,7 @@ import stroom.ai.impl.memory.AiMemoryService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,6 +72,21 @@ class TestMemoryTool {
         assertThat(tools.readsUntrustedContent(ReadTurnTool.NAME)).isTrue();
         // Anything else, e.g. an MCP tool.
         assertThat(tools.readsUntrustedContent("stroom__find_documents")).isTrue();
+    }
+
+    @Test
+    void onlyListAndReadAreReadOnlyCalls() {
+        // While the user is away only calls that only read run (ToolConsent), so a change must not pass as one.
+        assertThat(tool.isReadOnly()).isFalse();
+        assertThat(tool.isReadOnly(request("{\"command\":\"list\"}"))).isTrue();
+        assertThat(tool.isReadOnly(request("{\"command\":\"read\",\"path\":\"/memories/a\"}"))).isTrue();
+        for (final String command : List.of("write", "append", "replace", "delete")) {
+            assertThat(tool.isReadOnly(request("{\"command\":\"" + command + "\"}"))).as(command).isFalse();
+        }
+        // A command that can't be read is treated as a change.
+        assertThat(tool.isReadOnly(request("{}"))).isFalse();
+        assertThat(tool.isReadOnly(request("not json"))).isFalse();
+        assertThat(tool.isReadOnly(request(null))).isFalse();
     }
 
     private static ToolCall request(final String arguments) {

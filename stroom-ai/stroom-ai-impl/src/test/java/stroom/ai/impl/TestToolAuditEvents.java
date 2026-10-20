@@ -94,10 +94,10 @@ class TestToolAuditEvents {
                     FakeMcpServer.tool("update_doc", false, false, false, false)));
             final McpToolset toolset = FakeMcpServer.toolset(server);
             final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
-            Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
-                    Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
+            Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                    Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
             Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.eq("update_doc"), Mockito.any(),
-                            Mockito.any(), Mockito.anyBoolean()))
+                    Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                     .thenReturn(ToolConsent.Verdict.deny("You chose not to allow this tool in this chat."));
             final McpAgentChat agentChat = world.agentChat(toolConsent, Mockito.mock(AiChatRunManager.class));
             final BuiltInToolWorld.ScriptedModel model = new BuiltInToolWorld.ScriptedModel(List.of(List.of(
