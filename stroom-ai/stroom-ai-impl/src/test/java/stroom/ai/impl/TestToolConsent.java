@@ -46,6 +46,7 @@ class TestToolConsent {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
                 ToolSpecification.builder().name("read_file").build(), (request, memoryId) -> ""));
         Mockito.when(builtInTools.isReadOnly("read_file")).thenReturn(true);
+        Mockito.when(builtInTools.isReadOnlyCall(Mockito.eq("read_file"), Mockito.any())).thenReturn(true);
         Mockito.when(approvalDao.find(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Optional.empty());
     }
@@ -57,14 +58,37 @@ class TestToolConsent {
     }
 
     @Test
-    void testBuiltInToolsThatChangeTheWorkspaceRunWhileTheUserIsAway() {
+    void testBuiltInToolsThatChangeTheWorkspaceRunOnlyWhileTheUserIsThere() {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
                 ToolSpecification.builder().name("write_file").build(), (request, memoryId) -> ""));
         Mockito.when(builtInTools.isReadOnly("write_file")).thenReturn(false);
 
-        // They only reach the chat's own workspace and memory, which have their own controls.
-        assertThat(decide("write_file", false).kind()).isEqualTo(Kind.RUN);
-        assertThat(decide("write_file", true).kind()).isEqualTo(Kind.RUN);
+        // They only reach the chat's own workspace and memory, so run while the user is there.
+        assertThat(consent.decide(1, "write_file", "{\"path\":\"/a.txt\"}", builtInTools, toolset, false).kind())
+                .isEqualTo(Kind.RUN);
+        // While the user is away only what reads runs: a change waits for them, as an MCP tool's does.
+        final Verdict away = consent.decide(1, "write_file", "{\"path\":\"/a.txt\"}", builtInTools, toolset, true);
+        assertThat(away.kind()).isEqualTo(Kind.ASK);
+        assertThat(away.reason()).contains("You were away").contains("the chat's files or memory");
+        assertThat(away.allowForChat()).isFalse();
+        // A call whose arguments aren't known is judged as a change.
+        assertThat(decide("write_file", true).kind()).isEqualTo(Kind.ASK);
+    }
+
+    @Test
+    void testWhileTheUserIsAwayABuiltInToolsCallsThatOnlyReadRun() {
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                ToolSpecification.builder().name("memory").build(), (request, memoryId) -> ""));
+        Mockito.when(builtInTools.isReadOnly("memory")).thenReturn(false);
+        Mockito.when(builtInTools.isReadOnlyCall("memory", "{\"command\":\"read\"}")).thenReturn(true);
+        Mockito.when(builtInTools.isReadOnlyCall("memory", "{\"command\":\"write\"}")).thenReturn(false);
+
+        assertThat(consent.decide(1, "memory", "{\"command\":\"read\"}", builtInTools, toolset, true).kind())
+                .isEqualTo(Kind.RUN);
+        assertThat(consent.decide(1, "memory", "{\"command\":\"write\"}", builtInTools, toolset, true).kind())
+                .isEqualTo(Kind.ASK);
+        assertThat(consent.decide(1, "memory", "{\"command\":\"write\"}", builtInTools, toolset, false).kind())
+                .isEqualTo(Kind.RUN);
     }
 
     @Test

@@ -65,12 +65,12 @@ class TestChatConsentGate {
     @Test
     void aCallIsDecidedByTheChatsConsentRules() {
         final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
-        Mockito.when(toolConsent.decide(CHAT_ID, "server__tool", builtInTools, McpToolset.EMPTY, true))
+        Mockito.when(toolConsent.decide(CHAT_ID, "server__tool", "{}", builtInTools, McpToolset.EMPTY, true))
                 .thenReturn(ToolConsent.Verdict.RUN);
 
-        assertThat(gate.checkCall(SESSION, "server__tool", builtInTools, McpToolset.EMPTY, true))
+        assertThat(gate.checkCall(SESSION, "server__tool", "{}", builtInTools, McpToolset.EMPTY, true))
                 .isSameAs(ToolConsent.Verdict.RUN);
-        Mockito.verify(toolConsent).decide(CHAT_ID, "server__tool", builtInTools, McpToolset.EMPTY, true);
+        Mockito.verify(toolConsent).decide(CHAT_ID, "server__tool", "{}", builtInTools, McpToolset.EMPTY, true);
     }
 
     @Test

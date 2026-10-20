@@ -75,7 +75,8 @@ class TestToolPermissionMatrix {
             new Case("propose_query_change", null, List.of(Need.VIEW, Need.USE)),
             new Case("propose_code_change", null, List.of(Need.VIEW)),
             new Case("propose_dashboard_change", null, List.of(Need.VIEW)),
-            new Case("current_results", null, List.of(Need.USE)));
+            new Case("current_results", null, List.of(Need.USE)),
+            new Case("elastic_index_templates", null, List.of(Need.VIEW)));
 
     /// What the reference file says of tools whose checks are made elsewhere, outside this world.
     private static final Map<String, String> NOTES = Map.of(

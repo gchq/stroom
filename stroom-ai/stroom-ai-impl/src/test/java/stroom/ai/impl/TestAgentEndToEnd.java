@@ -122,8 +122,8 @@ class TestAgentEndToEnd {
                 .thenReturn(Optional.of(new DocRef("Pipeline", PIPELINE_UUID, "Acme-Events")));
 
         final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
-        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
-                Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
+        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
         // No built-in tools: this is about the model and MCP server.
         final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());

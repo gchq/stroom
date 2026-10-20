@@ -135,6 +135,28 @@
     "totalResults" : 0
   }
 
+## elastic_index_templates {"uuid":"elastic-index-uuid"}
+- audit: documentViewed(1, DocRef{type='ElasticIndex', uuid='elastic-index-uuid', name='Test elastic index'}, "Elasticsearch index and component templates read by the elastic_index_templates tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed ElasticIndex 'Test elastic index' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Elasticsearch index and component templates read by the elastic_index_templates tool"
+      } ],
+      "id" : "elastic-index-uuid",
+      "name" : "Test elastic index",
+      "type" : "ElasticIndex"
+    } ],
+    "outcome" : {
+      "description" : "Elasticsearch index and component templates read by the elastic_index_templates tool",
+      "success" : true
+    }
+  }
+
 ## fetch_events {"path":"/outputs/a.csv"}
 (nothing recorded)
 
