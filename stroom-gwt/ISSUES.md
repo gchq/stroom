@@ -804,10 +804,22 @@ Identification):
 
 ### Keyboard trap in the code editor
 
-Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
-Stroom's Ace (1.5.0) predates Ace's own way out. Either Stroom adds a key binding of its own, e.g.
-Ctrl+M to switch Tab between indenting and moving focus, or Escape then Tab, or Ace is upgraded (see
-below).
+**Fixed (session 6).** Tab in an editable code editor inserted an indent, so keyboard users couldn't
+leave it (WCAG 2.1.2). Every editor now has Ace 1.44's keyboard accessibility mode on
+(`enableKeyboardAccessibility`, set by `Editor` through `AceEditor.setKeyboardAccessibility`, one of
+two setters added to `AceEditor` with approval): Tab reaches the editor's content, its one tab stop
+(Ace's text input is no longer one, and the gutter, which the mode also makes one, is put back as it
+was, its errors and folds having Ace's keys while editing: Alt+E, F2); Enter on the content starts editing, where Tab still
+indents; Escape stops editing, back to the content, and Tab then moves on. Chosen over a Stroom key
+of its own (Ctrl+M, or Escape then Tab) as it is Ace's own, documented pattern, named for screen
+readers. Dialogs already leave keys from Ace's text input to Ace (`AbstractPopupPanel`), so in a
+dialog the first Escape stops editing and the second cancels. With Vim keys, Escape leaves insert
+mode, and a second leaves editing. Ace's focus ring (a fixed blue for any focus) is replaced by
+Stroom's, for keyboard focus only, in a colour that follows the editor's theme. The text input's
+name ("Code editor"), which Ace now rewrites on focus, goes in through Ace's `textInputAriaLabel`
+(`AceEditor.setTextInputAriaLabel`). Stories: `Widgets/Editors & Viewers/AceEditor`
+`KeyboardWayOut`, `KeyboardErrorsAndFolds` and `KeyboardReadOnly`, `AceEditorFeatures` `VimKeys`, and `App/Editors/QueryEditor`
+`ColumnFilterMenu` (Escape in a dialog); real input `ace-editor.mjs`.
 
 ### XML schema text tab handlers
 
@@ -818,7 +830,7 @@ and component settings (they aren't saved).
 
 ### Upgrading the Ace editor
 
-**Upgraded; the keyboard trap remains.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
+**Upgraded.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
 `ace-builds`), from its one tracked copy (`edu/ycp/cs/dh/acegwt/public/ace`; the copies in
 `stroom-app/src/main/resources/ui` are build outputs). `ace.js` is no longer patched: Stroom's
 annotation types go in as each annotation's `className`, and `AceEditor` labels their gutter
@@ -828,7 +840,7 @@ snippets, every annotation type (in the gutter, with its tooltip, and the overvi
 and the query editor's markers, the context menu, formatting, Vim keys, Stroom's modes and the
 editor themes, including the 10 that 1.44 added, which the user preferences now offer. Ace 1.44 has
 `enableKeyboardAccessibility`, which fixes the trap (Tab moves past the editor, Enter starts editing
-and Escape stops), but Stroom doesn't turn it on yet.
+and Escape stops), now turned on (see Keyboard trap in the code editor).
 
 ### Expression terms and tables
 
