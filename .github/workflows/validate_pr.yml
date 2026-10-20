@@ -4,6 +4,9 @@ on:
   pull_request_target:
 
 permissions:
+  # We need to do the following:
+  # - Check if the author is a member of the "Stroom Administrators" org level team
+  # - Check if the PR contains changes to CI related files
   pull-requests: write
 
 jobs:
@@ -17,7 +20,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
         run: |
+          echo "Author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
           gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
           --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."
 
