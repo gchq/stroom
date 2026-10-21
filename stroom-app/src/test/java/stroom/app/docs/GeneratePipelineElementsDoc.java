@@ -94,6 +94,8 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
     private static final String MISSING_CATEGORY_DESCRIPTION = "> TODO - Add description";
 
+    private static final Path DATA_SUB_PATH = Paths.get("assets/data/doc-reference");
+
     private static final Path ELEMENENT_REFERENCE_SUB_PATH = Paths.get(
             "content/en/docs/reference-section/pipeline-elements.md");
     private static final Path PIPE_ELM_SHORT_CODE_SUB_PATH = Paths.get(

@@ -23,6 +23,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.test.common.docs.StroomDocsUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,7 +49,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -140,16 +140,19 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
         final Path outputPath = StroomDocsUtil.resolveStroomDocsFile(DATA_SUB_PATH, false);
         try {
             Files.createDirectories(outputPath);
-            try (final Stream<Path> pathStream = Files.list(outputPath)) {
-                pathStream
-                        .filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString().endsWith(".json"))
-                        .forEach(GenerateDocumentReferenceDoc::deleteFile);
-            }
+
+            final List<Path> jsonFiles = FileUtil.listChildPaths(outputPath, path ->
+                    Files.isRegularFile(path)
+                    && path.getFileName().toString().endsWith(".json"));
+
+            // Delete any existing JSON files so that we can regenerate them.
+            // Ensures any docs that have been deleted/renamed are removed from the docs.
+            jsonFiles.forEach(GenerateDocumentReferenceDoc::deleteFile);
 
             docInfoList.stream()
                     .sorted(Comparator.comparing(DocInfo::getLowerType))
                     .forEach(this::writeDataFile);
+
         } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error writing document reference data to {}", outputPath), e);
@@ -225,6 +228,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
             return null;
         }
     }
+
 
     // --------------------------------------------------------------------------------
 
