@@ -30,7 +30,6 @@ import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -69,6 +68,7 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -124,7 +124,7 @@ public class TaskManagerListPresenter
     private final Map<String, List<String>> errorMap = new HashMap<>();
     private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
-    private final MyDataGrid<TaskProgress> dataGrid;
+    private final DataGridWidget<TaskProgress> dataGrid;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
@@ -161,7 +161,7 @@ public class TaskManagerListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid = new DataGridWidget<>(this, 1000);
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 

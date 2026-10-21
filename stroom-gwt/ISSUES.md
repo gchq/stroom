@@ -1971,6 +1971,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   play's click there scrolled the page. Screens now take `StroomThemeDecorator.CANVAS_HEIGHT`
   (`calc(100vh - 48px)`), as does `VisualisationAssetsStories`' frame. Every screen story's
   screenshot changed once.
+* **A tree list's columns stopped short of the right edge in the new grid.** `TreeRowHandler`
+  narrows the expander column once rows arrive, and the new grid had already sized its fill
+  columns, so the width given up was left as a gap (Server Tasks' Info column, 199px short). The
+  handler now has the grid give spare width to its fill columns. `App/Main/ServerTasksScreen`
+  `FlatListDetails` checks it.
 
 ## Checked and not bugs
 

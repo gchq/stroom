@@ -16,10 +16,12 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
@@ -34,6 +36,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -158,6 +161,8 @@ public class DataGridWidget<R> extends Widget
     private RowSpans<R> rowSpans;
     private HeadingListener headingListener;
     private LoadingState loadingState;
+    // The column of expanders (an ExpanderCell's), which makes the grid a treegrid, or -1
+    private int treeColumn = -1;
     // Whether data or the row count changed since the loading state was last fired
     private boolean loadingStateUpdated;
     private final DataGridKeyboard<R> keyboard;
@@ -1151,6 +1156,95 @@ public class DataGridWidget<R> extends Widget
         return element != null && body.isOrHasChild(element);
     }
 
+    // --------------------------------------------------------------------------------
+    // Tree rows: a grid with a column of expanders (ExpanderCell) is a treegrid. Its rows say their
+    // level and whether they are expanded (aria-level, aria-expanded), and the keys expand and
+    // collapse them (DataGridKeyboard) through the expander column's own field updater, as a click
+    // on an expander does, so a screen needs nothing more than its expander column.
+    // --------------------------------------------------------------------------------
+
+    private int findTreeColumn() {
+        for (int i = 0; i < getColumnCount(); i++) {
+            if (getColumn(i).getCell() instanceof ExpanderCell) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Expander expanderOf(final R row) {
+        if (treeColumn < 0 || treeColumn >= getColumnCount() || row == null) {
+            return null;
+        }
+        final Object value = getColumn(treeColumn).getValue(row);
+        return value instanceof final Expander expander
+                ? expander
+                : null;
+    }
+
+    private void setTreeAttributes(final Element rowElement, final R row) {
+        final Expander expander = expanderOf(row);
+        if (expander == null) {
+            rowElement.removeAttribute("aria-level");
+            rowElement.removeAttribute("aria-expanded");
+        } else {
+            rowElement.setAttribute("aria-level", String.valueOf(expander.getDepth() + 1));
+            if (expander.isLeaf()) {
+                rowElement.removeAttribute("aria-expanded");
+            } else {
+                rowElement.setAttribute("aria-expanded", String.valueOf(expander.isExpanded()));
+            }
+        }
+    }
+
+    /// @param indexOnPage The page-relative row index.
+    /// @return The row's expander, or `null` if the grid isn't a tree or there is no such row.
+    Expander getTreeExpander(final int indexOnPage) {
+        if (indexOnPage < 0 || indexOnPage >= getVisibleItemCount()) {
+            return null;
+        }
+        return expanderOf(getVisibleItem(indexOnPage));
+    }
+
+    /// Expand or collapse a row, as a click on its expander does.
+    ///
+    /// @param indexOnPage The page-relative row index.
+    /// @param expanded    Whether to expand it.
+    /// @return `true` if the row was changed; `false` if it has no children, is already as asked,
+    /// or the grid isn't a tree.
+    boolean setTreeRowExpanded(final int indexOnPage, final boolean expanded) {
+        final Expander expander = getTreeExpander(indexOnPage);
+        if (expander == null || expander.isLeaf() || expander.isExpanded() == expanded) {
+            return false;
+        }
+        @SuppressWarnings("unchecked") final Column<R, Expander> column =
+                (Column<R, Expander>) getColumn(treeColumn);
+        final FieldUpdater<R, Expander> updater = column.getFieldUpdater();
+        if (updater == null) {
+            return false;
+        }
+        // The expander column's updater toggles the row, as a click on the expander does
+        updater.update(getPageStart() + indexOnPage, getVisibleItem(indexOnPage), expander);
+        return true;
+    }
+
+    /// @param indexOnPage The page-relative row index.
+    /// @return The page-relative index of the row's parent (the nearest row above it at a lower
+    /// level), or -1 if it has none on the page or the grid isn't a tree.
+    int getTreeParentRow(final int indexOnPage) {
+        final Expander expander = getTreeExpander(indexOnPage);
+        if (expander == null) {
+            return -1;
+        }
+        for (int i = indexOnPage - 1; i >= 0; i--) {
+            final Expander above = getTreeExpander(i);
+            if (above != null && above.getDepth() < expander.getDepth()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /// @param indexOnPage The page-relative row index.
     /// @return The row's element, or `null` if the row is not currently rendered.
     public Element getRowElement(final int indexOnPage) {
@@ -1234,6 +1328,12 @@ public class DataGridWidget<R> extends Widget
         if (structureChanged) {
             // New columns may draw taller rows
             measuredRowHeight = 0;
+        }
+        if (structureChanged) {
+            treeColumn = findTreeColumn();
+            scroller.setAttribute("role", treeColumn >= 0
+                    ? "treegrid"
+                    : "grid");
         }
         final boolean headerChanged = structureChanged || headersDirty;
         if (headerChanged) {
@@ -1558,6 +1658,7 @@ public class DataGridWidget<R> extends Widget
         } else {
             rendered.element.removeAttribute("aria-selected");
         }
+        setTreeAttributes(rendered.element, row);
 
         rendered.value = row;
         rendered.index = index;

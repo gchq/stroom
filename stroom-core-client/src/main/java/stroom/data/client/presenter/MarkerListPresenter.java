@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.WrapperView;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.svg.shared.SvgImage;
@@ -30,6 +29,7 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -45,8 +45,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
@@ -55,7 +58,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private final RegExp messageCauseDelimiterPattern;
 
-    private final MyDataGrid<Marker> dataGrid;
+    private final DataGridWidget<Marker> dataGrid;
     private Set<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
@@ -63,9 +66,23 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
     public MarkerListPresenter(final EventBus eventBus,
                                final WrapperView view) {
         super(eventBus, view);
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Markers");
         dataGrid.setMultiLine(true);
+        // A severity's summary row is keyed by its severity (there is one of each), so it is still the
+        // same row, keeping the keyboard's place, when expanding or collapsing it fetches new rows
+        dataGrid.setKeyProvider(marker -> marker instanceof final Summary summary
+                ? summary.getSeverity()
+                : marker);
+        // A summary row's text spans the severity's column and the four after it
+        dataGrid.setRowSpans((marker, absIndex) -> {
+            if (marker instanceof Summary) {
+                final Map<Integer, Integer> spans = new HashMap<>();
+                spans.put(2, 5);
+                return spans;
+            }
+            return Collections.emptyMap();
+        });
         view.setWidget(dataGrid);
 
         addExpanderColumn();
@@ -280,13 +297,6 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
         } else {
             dataGrid.setRowData(start, markers);
             dataGrid.setRowCount(count);
-
-            // Make summary rows span multiple columns.
-            for (int i = 0; i < markers.size(); i++) {
-                if (markers.get(i) instanceof Summary) {
-                    dataGrid.getRowElement(i).getCells().getItem(2).setColSpan(5);
-                }
-            }
         }
     }
 

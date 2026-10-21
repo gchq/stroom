@@ -17,10 +17,10 @@
 package stroom.config.global.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
+import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -43,7 +43,7 @@ public class ConfigPropertyClusterValuesListPresenter
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private final ListDataProvider<ClusterValuesRow> dataProvider;
     private final ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
-    private final MyDataGrid<ClusterValuesRow> dataGrid;
+    private final DataGridWidget<ClusterValuesRow> dataGrid;
 
     private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
@@ -52,7 +52,7 @@ public class ConfigPropertyClusterValuesListPresenter
                                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid = new DataGridWidget<>(this, 1000);
         dataGrid.setTableName("Cluster Property Values");
         dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);

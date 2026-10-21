@@ -140,7 +140,7 @@ public final class ServerTasksScreenStories {
                     play.findByText("Stream Processor A");
                     play.findByText("Stream Processor B");
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
-                    play.click(play.within(play.getByText("Stream Processor A").closest("tr"))
+                    play.click(play.within(play.getByText("Stream Processor A").closest(StroomDom.GRID_ROW))
                             .querySelector(".tick-box"));
                     play.click(play.getByRole("button", "Terminate Selected Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -252,12 +252,21 @@ public final class ServerTasksScreenStories {
                 .withPlay(play -> {
                     play.findByText("Orphan Task");
                     // An unknown node reads '?', not blank (scoped to the row: the pager also shows '?')
-                    play.expect(play.within(play.getByText("Orphan Task").closest("tr")).getByText("?"))
+                    play.expect(play.within(play.getByText("Orphan Task").closest(StroomDom.GRID_ROW)).getByText("?"))
                             .toBeInTheDocument();
-                    // Nothing is expandable, so the expander column (the second) collapses.
-                    // The grid is a table, so this checks the expander column's <col>, which GWT gives
-                    // 1px
-                    play.expect(play.querySelector("colgroup col:nth-child(2)").attribute("style")).toBe("width: 1px;");
+                    // Nothing is expandable, so the expander column (the second) collapses to the
+                    // grid's 1px least: the gap between the first and third columns. (Its empty
+                    // header cell's padding overflows the track, so the cell itself is wider.)
+                    final Value<Double> firstRight = play.querySelector("[data-hcol=\"0\"]").right();
+                    final Value<Double> thirdLeft = play.querySelector("[data-hcol=\"2\"]").left();
+                    play.expect("the expander column's width", () -> thirdLeft.get() - firstRight.get())
+                            .toBe(1.0);
+                    // and the Info column (a fill column) takes the width it gave up: the columns
+                    // still reach the grid's right edge (less its scroll bar)
+                    final Value<Double> lastRight = play.querySelector("[data-hcol=\"8\"]").right();
+                    final Value<Double> gridRight = play.querySelector(".data-grid").right();
+                    play.expect("the space right of the columns", () -> gridRight.get() - lastRight.get())
+                            .toBeLessThan(20);
                     expectNoProblems(play);
                 })
                 // The first fetch sorts by Age descending (TaskManagerListPresenter's constructor)
@@ -277,7 +286,7 @@ public final class ServerTasksScreenStories {
 
     // The Info cell of a task's row: the last column, the only one with a context menu
     private static Query infoCell(final Play play, final String taskName) {
-        return play.within(play.getByText(taskName).closest("tr")).querySelector("td:last-child");
+        return play.within(play.getByText(taskName).closest(StroomDom.GRID_ROW)).querySelector("[data-col]:last-child");
     }
 
     // The texts of the first items of the menu shown

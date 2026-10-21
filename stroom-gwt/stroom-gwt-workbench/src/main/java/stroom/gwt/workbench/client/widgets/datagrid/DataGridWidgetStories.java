@@ -491,6 +491,46 @@ public final class DataGridWidgetStories {
                     play.click(play.within(engineering).querySelector(".expanderIcon"));
                     play.waitFor(() -> play.expect(rows).toHaveLength(2));
                 })
+                // A grid with an expander column is a treegrid: its rows say their level and whether
+                // they are expanded, and on a row Right expands it (or, expanded, moves into its
+                // cells), and Left collapses it (or, collapsed or a leaf, goes up to its parent)
+                .story("TreeKeys", InteractiveCellGrids::expanderGrid)
+                .withPlay(play -> {
+                    final Query rows = play.querySelectorAll(ROW);
+                    play.waitFor(() -> play.expect(rows).toHaveLength(2));
+                    play.expect(play.querySelector(SCROLLER)).toHaveAttribute("role", "treegrid");
+                    final Query engineering = InteractiveCellGrids.rowOf(play, "Engineering");
+                    play.expect(engineering).toHaveAttribute("aria-level", "1");
+                    play.expect(engineering).toHaveAttribute("aria-expanded", "false");
+
+                    play.click(play.getByText("Engineering"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(rows).toHaveLength(4));
+                    play.expect(engineering).toHaveAttribute("aria-expanded", "true");
+                    play.expect(engineering).toHaveFocus();
+
+                    play.keyboard("{ArrowDown}");
+                    final Query alice = InteractiveCellGrids.rowOf(play, "Alice Johnson");
+                    play.waitFor(() -> play.expect(alice).toHaveFocus());
+                    play.expect(alice).toHaveAttribute("aria-level", "2");
+                    play.expect(alice).not().toHaveAttribute("aria-expanded");
+
+                    // A leaf: Left goes up to its parent, then Left collapses the parent
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(engineering).toHaveFocus());
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(rows).toHaveLength(2));
+                    play.expect(engineering).toHaveAttribute("aria-expanded", "false");
+                    play.expect(engineering).toHaveFocus();
+
+                    // Right expands it again, and Right again, now it is expanded, moves into its
+                    // first cell (its expander's)
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(rows).toHaveLength(4));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(play.within(engineering).querySelector("[data-col=\"0\"]"))
+                            .toHaveFocus());
+                })
                 // CommandLinkCell: its open button runs the command without selecting the row,
                 // while a click on its text selects the row
                 .story("CommandLinkColumn", InteractiveCellGrids::commandLinkGrid)

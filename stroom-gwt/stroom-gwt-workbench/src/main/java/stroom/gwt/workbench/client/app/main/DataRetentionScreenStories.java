@@ -236,7 +236,7 @@ public final class DataRetentionScreenStories {
                     play.click(play.findByTitle("Expand All Results"));
                     play.findByText("LONG_FEED");
                     // Ascending by Rule Age -> 30 Days (rule 1) before 5 Years (rule 2)
-                    final Query rows = play.querySelector("tbody");
+                    final Query rows = play.within(impactGrid(play)).querySelector(".data-grid__body");
                     play.click(play.getByText("Rule Age"));
                     play.waitFor(() -> play.expect("the first feed", () -> firstFeed(rows)).toBe("TEST"));
                     // Descending flips it
@@ -253,10 +253,9 @@ public final class DataRetentionScreenStories {
                     // so the toggle isn't needed; the rule and type rows show the subtotal (42 + 8)
                     play.waitFor(() -> play.expect(play.getAllByText("50").count())
                             .toBeGreaterThanOrEqual(1));
-                    // The full column set, behind an expander column.
-                    // GWT's sortable headers have role="button", so the headers
-                    // are the table's <th> cells
-                    play.expect(play.querySelectorAll("thead th").textContents()).toEqual(List.of(
+                    // The full column set, behind an expander column
+                    play.expect(play.within(impactGrid(play)).querySelectorAll(StroomDom.GRID_HEADER_CELL)
+                            .textContents()).toEqual(List.of(
                             "", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
                     // An active rule with no deletes still shows, as a 0 count row.
                     // GWT builds the rows from the fetched rules' active rules,
@@ -299,7 +298,12 @@ public final class DataRetentionScreenStories {
         play.findByTitle(RUN_QUERY);
     }
 
-    // GWT's grid rows are <tr> elements with no role attribute
+    // The impact summary's grid (the rules grid is on the screen too), found by its count column
+    private static Query impactGrid(final Play play) {
+        return play.getByText("Stream Delete Count", StroomDom.GRID_HEADER_TEXT).closest(".data-grid");
+    }
+
+    // A grid row
     private static Query row(final Play play, final String text) {
         return play.getAllByText(text).nth(0).closest(StroomDom.GRID_ROW);
     }

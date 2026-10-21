@@ -857,6 +857,23 @@ interactive header cells, the context menu, copy, export and AI.
   * Found: `DescriptionBuilder` closed spans with `</span` (see `ISSUES.md`, Fixed), which the old
     grid's tables hid.
 
+* **Trees** (2026-10-21): the five grids with an expander column, with all their columns as before:
+  `ProcessorListPresenter`, `TaskManagerListPresenter`, `MarkerListPresenter`,
+  `ConfigPropertyClusterValuesListPresenter` and `DataRetentionImpactPresenter`.
+  `TreeRowHandler` takes a `DataGridView`.
+  * **Tree grid semantics.** A grid with an `ExpanderCell` column is an ARIA `treegrid`: rows carry
+    `aria-level` and, unless they're leaves, `aria-expanded`. On a row, Right expands a collapsed
+    row (else enters the cells), and Left collapses an expanded one (else goes to its parent row).
+    The grid expands and collapses through the expander column's own `FieldUpdater`, so each
+    presenter's tree logic is unchanged, as is the expander column's look.
+    `Widgets/Data Grid/DataGridWidget` `TreeKeys` shows it.
+  * The marker list's summary rows span five columns with `setRowSpans` (the presenter used to set a
+    `td`'s colspan after drawing) and are keyed by severity.
+  * Found: `TreeRowHandler` narrows the expander column once rows arrive. `MyDataGrid` filled its
+    columns later, on attach, but the new grid sizes them before the first rows, so the space given
+    up was left as a gap at the right (Server Tasks' Info column stopped 199px short). The handler
+    now asks the grid to give spare width to the fill columns (`resizeTableToFitColumns(true)`).
+
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.

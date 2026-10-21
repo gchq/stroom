@@ -273,6 +273,10 @@ class DataGridKeyboard<R> {
                 return true;
             case KeyCodes.KEY_RIGHT:
                 handled(event);
+                // A treegrid's row: Right expands a collapsed row, and otherwise moves into its cells
+                if (column < 0 && grid.setTreeRowExpanded(rowIndex, true)) {
+                    return true;
+                }
                 final int right = nextColumn(row, column);
                 if (right >= 0) {
                     focusCell(rowIndex, right);
@@ -282,6 +286,13 @@ class DataGridKeyboard<R> {
                 handled(event);
                 if (column >= 0) {
                     focusCell(rowIndex, previousColumn(row, column));
+                } else if (!grid.setTreeRowExpanded(rowIndex, false)) {
+                    // A treegrid's row: Left collapses an expanded row, and otherwise moves to its
+                    // parent row (choosing it, as Up and Down do)
+                    final int parent = grid.getTreeParentRow(rowIndex);
+                    if (parent >= 0) {
+                        move(parent, false, false);
+                    }
                 }
                 return true;
             case KeyCodes.KEY_SPACE:
