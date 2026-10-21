@@ -163,7 +163,7 @@
     {"feed":"ACME"}
     ~~~~~~~~
 #32 ELICITATION
-    ElicitationRecord[kind=ELICITATION, status=ACCEPTED, server=stroom, tool=null, message=Which filter?, schema={type=object, properties={filter={type=string, enum=[31, 32]}}}, expiresMs=1767226200000, content={filter=31}]
+    ElicitationRecord[kind=ELICITATION, status=ACCEPTED, server=stroom, tool=null, message=Which filter?, schema={type=object, properties={filter={type=string, enum=[31, 32]}}}, expiresMs=1767226200000, content={filter=31}, callId=null]
 #33 TOOL_RESULT
     ToolResultRecord[callId=call-5, tool=stroom__describe_filter, error=false, text=Filter 31 reads ACME, and is enabled., path=null, chars=36, durationMs=9000, userActions=null]
     Exported as:

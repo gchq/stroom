@@ -72,6 +72,9 @@ class TestMcpElicitations {
             messages.put(message.getId(), message);
             return message;
         });
+        Mockito.when(aiDao.getMessages(CHAT_ID)).thenAnswer(inv -> messages.values().stream()
+                .sorted(Comparator.comparingInt(AiChatMessage::getId))
+                .toList());
         Mockito.when(aiDao.getMessagesSince(Mockito.anyInt(), Mockito.anyInt())).thenAnswer(inv ->
                 messages.values().stream()
                         .filter(message -> message.getId() > (int) inv.getArgument(1))
@@ -252,9 +255,120 @@ class TestMcpElicitations {
     void askUsersOwnFormThatCanNeverBeShownIsDeclined() {
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
 
-        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1),
+        assertThat(elicitations.askUser(CHAT_ID, "ask_user", null, "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1),
                 FORM).action())
                 .isEqualTo(Action.DECLINE);
+    }
+
+    @Test
+    void askUsersQuestionsStopTheRunUntilTheyAreAnsweredAndTheCallIsGivenTheAnswerWhenMadeAgain() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 1);
+        question();
+
+        // No thread waits: the run stops, however long the user takes.
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOfSatisfying(AiChatRunManager.WaitingForUserException.class, e ->
+                        assertThat(e.getStopReason()).isEqualTo(AiChatRunStopReason.NEEDS_ANSWERS));
+        assertThat(elicitations.waitingCount()).isZero();
+        final AiChatMessage card = cardFor("c1");
+        assertThat(JsonUtil.readValue(card.getMessage(), ElicitationRecord.class).expiresMs())
+                .isEqualTo(Long.MAX_VALUE);
+        // Made again before it is answered (e.g. the run was resumed), it stops again, without asking twice.
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        assertThat(messages.values()).filteredOn(m -> m.getMessageType() == AiMessageType.ELICITATION).hasSize(1);
+
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(new AiChatRun(9, CHAT_ID,
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null)));
+        // The run is to be carried on.
+        assertThat(elicitations.answer(CHAT_ID, card.getId(), "ACCEPT", Map.of("feed", "ACME"))).isTrue();
+
+        final ElicitResult result = elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM);
+        assertThat(result.action()).isEqualTo(Action.ACCEPT);
+        assertThat(result.content()).isEqualTo(Map.of("feed", "ACME"));
+    }
+
+    @Test
+    void askUsersQuestionsCanBeAnsweredAfterTheirRunHasEnded() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        // E.g. it was stopped, or the user's session ended.
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.empty());
+
+        assertThat(elicitations.answer(CHAT_ID, cardFor("c1").getId(), "DECLINE", null)).isTrue();
+        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM).action())
+                .isEqualTo(Action.DECLINE);
+    }
+
+    @Test
+    void askUsersQuestionsCannotBeAnsweredOnceTheUserHasAskedSomethingElse() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final AiChatMessage card = cardFor("c1");
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.empty());
+        question();
+
+        assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "ACCEPT", Map.of("feed", "ACME")))
+                .hasMessageContaining("no longer waiting");
+        assertThat(JsonUtil.readValue(messages.get(card.getId()).getMessage(), ElicitationRecord.class).status())
+                .isEqualTo(ElicitationRecord.Status.CANCELLED);
+    }
+
+    @Test
+    void askUsersQuestionsCannotBeAnsweredWhileAnotherRunIsWorking() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(run));
+
+        assertThatThrownBy(() -> elicitations.answer(CHAT_ID, cardFor("c1").getId(), "ACCEPT",
+                Map.of("feed", "ACME")))
+                .hasMessageContaining("no longer waiting");
+    }
+
+    @Test
+    void askUsersQuestionsPutAsideByAMessageAreNotAnswered() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+
+        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "c1", "Which feed?", FORM).action())
+                .isEqualTo(Action.CANCEL);
+    }
+
+    @Test
+    void anMcpServersFormIsNotAnsweredAsIfItsRunHadStopped() {
+        // Its tool call waits for it, so it is never carried on.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND,
+                ElicitationRecord.Status.PENDING, "fastmcp", null, "Which feed?", FORM, Long.MAX_VALUE, null, null);
+        final AiChatMessage card = aiDao.storeMessage(CHAT_ID, AiMessageType.ELICITATION,
+                JsonUtil.writeValueAsString(record, false));
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null))
+                .hasMessageContaining("no longer waiting");
+    }
+
+    // Adds a question from the user to the chat.
+    private void question() {
+        aiDao.storeMessage(CHAT_ID, AiMessageType.USER_MESSAGE, "Onboard this feed");
+    }
+
+    private AiChatMessage cardFor(final String callId) {
+        return messages.values().stream()
+                .filter(m -> m.getMessageType() == AiMessageType.ELICITATION)
+                .filter(m -> callId.equals(JsonUtil.readValue(m.getMessage(), ElicitationRecord.class).callId()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private McpElicitations elicitations(final StroomDuration timeout, final int maxPerNode) {

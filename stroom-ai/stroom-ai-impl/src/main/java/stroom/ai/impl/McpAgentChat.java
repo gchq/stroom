@@ -642,10 +642,15 @@ class McpAgentChat {
         }
         final List<AiChatMessage> turn = history.subList(question + 1, history.size());
         final Set<String> answered = new HashSet<>();
+        // Calls that asked the user questions and stopped the run to wait for the answers (ask_user).
+        final Set<String> askedTheUser = new HashSet<>();
         ToolApprovalRequest approval = null;
         for (final AiChatMessage message : turn) {
             if (message.getMessageType() == AiMessageType.TOOL_RESULT) {
                 NullSafe.consume(read(message, ToolResultRecord.class), result -> answered.add(result.callId()));
+            } else if (message.getMessageType() == AiMessageType.ELICITATION) {
+                NullSafe.consume(read(message, ElicitationRecord.class), record ->
+                        NullSafe.consume(record.callId(), askedTheUser::add));
             } else if (message.getMessageType() == AiMessageType.APPROVAL_REQUEST) {
                 final ToolApprovalRequest request = read(message, ToolApprovalRequest.class);
                 if (request != null && ToolApprovalRequest.KIND.equals(request.kind())) {
@@ -676,8 +681,12 @@ class McpAgentChat {
                             .orElse(null);
             final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
             final String result;
-            if (decided != null && decided.decision() == Decision.ALLOWED) {
-                LOGGER.debug(() -> "Running approved tool '" + call.tool() + "' in chatId=" + chatId);
+            // A call that asked the user questions is made again, and given their answer (or stops the run again if
+            // they still haven't answered).
+            if (askedTheUser.contains(call.callId())
+                || (decided != null && decided.decision() == Decision.ALLOWED)) {
+                LOGGER.debug(() -> "Running tool '" + call.tool() + "' as the user has answered, in chatId="
+                                   + chatId);
                 // Said on the working line as when the call was made, with what it gets to as it runs.
                 final String progress = toolCallProgressMessage(call.rationale(), request);
                 taskContext.info(() -> progress);
@@ -1278,6 +1287,9 @@ class McpAgentChat {
             LOGGER.debug(() -> "Tool '" + toolName + "' given up on for chatId=" + chatId + " as the run was stopped");
             return ToolResult.text("Error calling tool '" + toolName + "': the user stopped the chat before it "
                                    + "finished (its server may still finish what it started).");
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // The run stops until the user answers (e.g. ask_user's questions), and makes the call again then.
+            throw e;
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' failed for chatId=" + chatId, e);
             return ToolResult.text("Error calling tool '" + toolName + "': "

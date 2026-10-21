@@ -50,15 +50,21 @@ public final class ChatUserQuestions implements UserQuestions {
         return !runManagerProvider.get().isUnattended(chatId);
     }
 
-    /// Asks the user questions as a form in the chat, and waits for their answer.
+    /// Asks the user questions as a form in the chat. Asked in a tool call, the run stops until they answer, however
+    /// long they take, and the call is made again then, and given the answer (see [McpElicitations#askUser]).
     ///
     /// @param toolName The tool asking, which says how the questions are shown.
+    /// @param callId   The id of the tool call asking, or null if it has none (it then waits for the answer).
     /// @param intro    What the questions are for.
     /// @param form     The questions, as an MCP form's schema.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user does not answer in
-    /// time, or the run is stopped.
+    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user sent a message
+    /// instead, or the run is stopped.
+    /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
     @Override
-    public ElicitResult ask(final String toolName, final String intro, final Map<String, Object> form) {
-        return elicitationsProvider.get().askUser(chatId, toolName, intro, form);
+    public ElicitResult ask(final String toolName,
+                            final String callId,
+                            final String intro,
+                            final Map<String, Object> form) {
+        return elicitationsProvider.get().askUser(chatId, toolName, callId, intro, form);
     }
 }

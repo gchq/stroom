@@ -50,8 +50,8 @@ class TestAskUserTool {
 
     @Test
     void theQuestionsAreAskedAsAFormAndTheAnswersGoToTheModel() {
-        Mockito.when(elicitations.askUser(Mockito.eq(CHAT_ID), Mockito.eq("ask_user"), Mockito.anyString(),
-                        Mockito.any()))
+        Mockito.when(elicitations.askUser(Mockito.eq(CHAT_ID), Mockito.eq("ask_user"), Mockito.any(),
+                        Mockito.anyString(), Mockito.any()))
                 .thenReturn(new ElicitResult(Action.ACCEPT,
                         Map.of("q1", "A Social element, if there is one", "q2", "3.4.2"), null));
 
@@ -59,7 +59,8 @@ class TestAskUserTool {
 
         @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, Object>> form =
                 ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(elicitations).askUser(Mockito.eq(CHAT_ID), Mockito.eq("ask_user"),
+        // With the call's id, so the run can stop until the user answers, and carry on from the call.
+        Mockito.verify(elicitations).askUser(Mockito.eq(CHAT_ID), Mockito.eq("ask_user"), Mockito.eq("1"),
                 Mockito.eq("A few decisions before I save the translation"), form.capture());
         @SuppressWarnings("unchecked") final Map<String, Map<String, Object>> properties =
                 (Map<String, Map<String, Object>>) form.getValue().get("properties");
@@ -84,12 +85,12 @@ class TestAskUserTool {
 
     @Test
     void declinedOrUnansweredQuestionsSaySo() {
-        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString(),
-                Mockito.any())).thenReturn(new ElicitResult(Action.DECLINE, null, null));
+        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.anyString(), Mockito.any())).thenReturn(new ElicitResult(Action.DECLINE, null, null));
         assertThat(run(ARGUMENTS)).contains("chose not to answer");
 
-        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString(),
-                Mockito.any())).thenReturn(new ElicitResult(Action.CANCEL, null, null));
+        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.anyString(), Mockito.any())).thenReturn(new ElicitResult(Action.CANCEL, null, null));
         assertThat(run(ARGUMENTS)).contains("were not answered").contains("Don't carry on as if they had");
     }
 

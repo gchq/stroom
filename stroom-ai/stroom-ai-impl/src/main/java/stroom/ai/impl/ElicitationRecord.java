@@ -29,6 +29,9 @@ import java.util.Map;
 /// @param schema    The form, as a flat JSON schema.
 /// @param expiresMs When it stops waiting for an answer.
 /// @param content   The user's answer, once accepted. It goes to the server, never to the model.
+/// @param callId    For questions from Stroom AI's own agent (ask_user), the id of the tool call that asked: the run
+///                  stops while they wait, and carries on from that call when they are answered. Null for a form from
+///                  an MCP server, whose call waits for the answer.
 public record ElicitationRecord(String kind,
                                 Status status,
                                 String server,
@@ -36,13 +39,14 @@ public record ElicitationRecord(String kind,
                                 String message,
                                 Map<String, Object> schema,
                                 long expiresMs,
-                                Map<String, Object> content) {
+                                Map<String, Object> content,
+                                String callId) {
 
     public static final String KIND = "ELICITATION";
 
     /// @return A copy with a new status and answer.
     public ElicitationRecord answered(final Status newStatus, final Map<String, Object> answer) {
-        return new ElicitationRecord(kind, newStatus, server, tool, message, schema, expiresMs, answer);
+        return new ElicitationRecord(kind, newStatus, server, tool, message, schema, expiresMs, answer, callId);
     }
 
     // --------------------------------------------------------------------------------
