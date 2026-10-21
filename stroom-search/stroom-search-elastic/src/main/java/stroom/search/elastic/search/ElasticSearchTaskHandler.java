@@ -219,18 +219,22 @@ public class ElasticSearchTaskHandler {
         return CompletableFuture.allOf(futures);
     }
 
-    private void searchSlice(final ElasticIndexDoc elasticIndex,
-                             final OpenAIModelDoc rerankModel,
-                             final ElasticQueryParams queryParams,
-                             final Highlight highlightBuilder,
-                             final Coprocessors coprocessors,
-                             final ResultStore resultStore,
-                             final ValuesConsumer valuesConsumer,
-                             final ErrorConsumer errorConsumer,
-                             final AtomicLong hitCount,
-                             final ElasticsearchClient elasticClient,
-                             final int slice,
-                             final TaskContext taskContext) {
+    /// Runs a scrolling search for a single slice of the index, passing each batch of hits to the values
+    /// consumer until the results are exhausted or the task is terminated. Package-private for testing.
+    ///
+    /// Errors are passed to `errorConsumer` rather than thrown.
+    void searchSlice(final ElasticIndexDoc elasticIndex,
+                     final OpenAIModelDoc rerankModel,
+                     final ElasticQueryParams queryParams,
+                     final Highlight highlightBuilder,
+                     final Coprocessors coprocessors,
+                     final ResultStore resultStore,
+                     final ValuesConsumer valuesConsumer,
+                     final ErrorConsumer errorConsumer,
+                     final AtomicLong hitCount,
+                     final ElasticsearchClient elasticClient,
+                     final int slice,
+                     final TaskContext taskContext) {
         try {
             final long scrollSeconds = elasticSearchConfigProvider.get().getScrollDuration().getDuration().getSeconds();
             final Time scrollTime = Time.of(t -> t.time(String.format("%ds", scrollSeconds)));
@@ -332,16 +336,16 @@ public class ElasticSearchTaskHandler {
     /**
      * Receive a batch of search hits and send each one to the values consumer
      */
-    private void processResultBatch(final FieldIndex fieldIndex,
-                                    final Set<String> rerankScoreFieldNames,
-                                    final ElasticIndexDoc elasticIndex,
-                                    final ElasticQueryParams queryParams,
-                                    final OpenAIModelDoc rerankModel,
-                                    final ResultStore resultStore,
-                                    final ValuesConsumer valuesConsumer,
-                                    final ErrorConsumer errorConsumer,
-                                    final AtomicLong hitCount,
-                                    final List<Hit<ObjectNode>> searchHits) {
+    void processResultBatch(final FieldIndex fieldIndex,
+                            final Set<String> rerankScoreFieldNames,
+                            final ElasticIndexDoc elasticIndex,
+                            final ElasticQueryParams queryParams,
+                            final OpenAIModelDoc rerankModel,
+                            final ResultStore resultStore,
+                            final ValuesConsumer valuesConsumer,
+                            final ErrorConsumer errorConsumer,
+                            final AtomicLong hitCount,
+                            final List<Hit<ObjectNode>> searchHits) {
         try {
             // Map rerank fields to document IDs to relevance scores, to determine whether each reranked hit
             // meets the relevance score threshold.
@@ -447,7 +451,12 @@ public class ElasticSearchTaskHandler {
         }
     }
 
-    private String getFieldBaseName(final String fieldName) {
+    /// Package-private for testing.
+    ///
+    /// @param fieldName The full field name, e.g. `content.vector`.
+    /// @return The field name without its last dot-delimited segment, e.g. `content`, or `null` if the name
+    /// has no such segment.
+    static String getFieldBaseName(final String fieldName) {
         final Matcher matcher = RERANK_VECTOR_FIELD_NAME_PATTERN.matcher(fieldName);
         if (matcher.matches()) {
             return matcher.group(1);
@@ -456,7 +465,13 @@ public class ElasticSearchTaskHandler {
         return null;
     }
 
-    private String getSuffixedFieldName(final String fieldName, final String targetSuffix) {
+    /// Package-private for testing.
+    ///
+    /// @param fieldName    The full field name, e.g. `content.vector`.
+    /// @param targetSuffix The suffix to replace the last segment with, including any leading dot.
+    /// @return The base name of `fieldName` with `targetSuffix` appended, or `null` if `fieldName` has no
+    /// base name.
+    static String getSuffixedFieldName(final String fieldName, final String targetSuffix) {
         final String baseName = getFieldBaseName(fieldName);
         if (baseName != null) {
             return baseName + targetSuffix;
@@ -543,7 +558,7 @@ public class ElasticSearchTaskHandler {
      * @return {@code null} if the field is absent, a single native value, or a {@link List} of native
      * values when the field (or the nested objects it spans) yields more than one value.
      */
-    private Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
+    static Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
         if (fieldName == null || searchHitMap == null || searchHitMap.isEmpty()) {
             return null;
         }
@@ -571,9 +586,9 @@ public class ElasticSearchTaskHandler {
      * Recursively collects the native values for {@code fieldPath} from a map of fields that is either
      * the top-level hit fields or the contents of a single nested object.
      */
-    private void collectFieldValues(final Map<String, JsonValue> fields,
-                                    final String fieldPath,
-                                    final List<Object> out) {
+    static void collectFieldValues(final Map<String, JsonValue> fields,
+                                   final String fieldPath,
+                                   final List<Object> out) {
         if (fields == null || fieldPath == null) {
             return;
         }
@@ -613,7 +628,7 @@ public class ElasticSearchTaskHandler {
      *
      * @return the split index, or {@code -1} if no nested container prefix is present
      */
-    private int findNestedSplit(final Map<String, JsonValue> fields, final String fieldPath) {
+    static int findNestedSplit(final Map<String, JsonValue> fields, final String fieldPath) {
         int idx = fieldPath.lastIndexOf(FIELD_PATH_SEPARATOR);
         while (idx > 0) {
             final String prefix = fieldPath.substring(0, idx);
@@ -629,7 +644,7 @@ public class ElasticSearchTaskHandler {
      * @return true if the value is a non-empty array containing at least one object (the shape used by
      * Elasticsearch to group the values of a {@code nested} field).
      */
-    private boolean isArrayOfObjects(final JsonValue value) {
+    private static boolean isArrayOfObjects(final JsonValue value) {
         if (value == null || value.getValueType() != JsonValue.ValueType.ARRAY) {
             return false;
         }
@@ -641,7 +656,7 @@ public class ElasticSearchTaskHandler {
      * Adds the native representation of a leaf field's value(s) to {@code out}. Elasticsearch always
      * returns field values as an array, but this also tolerates a bare scalar defensively.
      */
-    private void addLeafValues(final JsonValue value, final List<Object> out) {
+    private static void addLeafValues(final JsonValue value, final List<Object> out) {
         if (value == null) {
             return;
         }
@@ -665,7 +680,7 @@ public class ElasticSearchTaskHandler {
      * Collapses the collected values into the shape expected by the caller: {@code null} for no values,
      * the single value, or the list itself for multiple values.
      */
-    private Object toFieldResult(final List<Object> values) {
+    private static Object toFieldResult(final List<Object> values) {
         if (values.isEmpty()) {
             return null;
         } else if (values.size() == 1) {
@@ -679,7 +694,7 @@ public class ElasticSearchTaskHandler {
      * Returns the first value of a resolved field as a String, whether the field yielded a single value
      * or a list of values.
      */
-    private String firstStringValue(final Object fieldValue) {
+    static String firstStringValue(final Object fieldValue) {
         if (fieldValue == null) {
             return null;
         }
@@ -691,7 +706,12 @@ public class ElasticSearchTaskHandler {
         return String.valueOf(fieldValue);
     }
 
-    private Object jsonValueToNative(final JsonValue jsonValue) {
+    /// Package-private for testing.
+    ///
+    /// @param jsonValue The JSON value to convert.
+    /// @return The native Java representation of `jsonValue`, i.e. a `Boolean`, `Long`, `Double` or
+    /// `String`, or `null` for a JSON null.
+    static Object jsonValueToNative(final JsonValue jsonValue) {
         if (jsonValue == null) {
             return null;
         }
