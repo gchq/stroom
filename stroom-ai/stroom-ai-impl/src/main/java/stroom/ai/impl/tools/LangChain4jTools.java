@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.BooleanSchema;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
@@ -146,6 +147,9 @@ public final class LangChain4jTools {
             } catch (final ToolSessionException e) {
                 // The tool needs something the session doesn't have, e.g. a chat's history.
                 return ToolResult.error("Error: " + e.getMessage());
+            } catch (final AiChatRunManager.WaitingForUserException e) {
+                // The run stops until the user answers (e.g. ask_user's questions), and makes the call again then.
+                throw e;
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Built-in tool '" + name + "' failed", e);
                 return ToolResult.error("Error running built-in tool '" + name + "': "

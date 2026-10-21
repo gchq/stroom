@@ -76,11 +76,11 @@ class TestToolCallContext {
     @Test
     void aChatsQuestionsAreAskedAsAFormInTheChatWhileTheUserIsWatching() {
         final ElicitResult answer = new ElicitResult(Action.ACCEPT, Map.of("q", "yes"));
-        Mockito.when(elicitations.askUser(5, "ask_user", "Intro", Map.of())).thenReturn(answer);
+        Mockito.when(elicitations.askUser(5, "ask_user", "c1", "Intro", Map.of())).thenReturn(answer);
         final UserQuestions questions = contexts.forChat(5).userQuestions();
 
         assertThat(questions.canAsk()).isTrue();
-        assertThat(questions.ask("ask_user", "Intro", Map.of())).isSameAs(answer);
+        assertThat(questions.ask("ask_user", "c1", "Intro", Map.of())).isSameAs(answer);
 
         Mockito.when(runManager.isUnattended(5)).thenReturn(true);
         assertThat(questions.canAsk()).isFalse();
@@ -102,7 +102,7 @@ class TestToolCallContext {
                 .isInstanceOf(ToolSessionException.class)
                 .hasMessage("ls can only be used in a chat.");
         assertThat(context.userQuestions().canAsk()).isFalse();
-        assertThat(context.userQuestions().ask("ask_user", "Intro", Map.of()).action()).isEqualTo(Action.DECLINE);
+        assertThat(context.userQuestions().ask("ask_user", "c1", "Intro", Map.of()).action()).isEqualTo(Action.DECLINE);
         assertThat(context.timeLimit()).isEmpty();
         assertThat(context.runContext()).isEmpty();
     }

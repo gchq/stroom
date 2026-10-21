@@ -225,8 +225,8 @@ final class ModelEvaluationWorld {
         Mockito.when(aiDao.getAgentMode(Mockito.anyInt())).thenReturn(AiAgentMode.AGENT);
         final McpElicitations elicitations = Mockito.mock(McpElicitations.class);
         // A question for the user ends the run: the report shows what was asked.
-        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString(),
-                Mockito.any())).thenReturn(new ElicitResult(Action.CANCEL, null, null));
+        Mockito.when(elicitations.askUser(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.anyString(), Mockito.any())).thenReturn(new ElicitResult(Action.CANCEL, null, null));
         final SecurityContext securityContext = securityContext();
         final ExplorerNodeService explorerNodeService = explorerNodeService();
         final Executor executor = runnable -> Thread.ofVirtual().start(runnable);

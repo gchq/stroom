@@ -106,7 +106,8 @@ class AskUserTool extends AbstractBuiltInTool {
         }
         final String intro = NullSafe.nonBlankStringElse(NullSafe.trim(stringArg(request, INTRO_ARG)),
                 DEFAULT_INTRO);
-        final ElicitResult result = context.userQuestions().ask(NAME, intro, form(questions));
+        // In a chat, the run stops until the user answers, and the call is made again then, with the answer.
+        final ElicitResult result = context.userQuestions().ask(NAME, request.id(), intro, form(questions));
         final String text = switch (result.action()) {
             case ACCEPT -> answers(questions, NullSafe.map(result.content()));
             case DECLINE -> "The user chose not to answer these questions. Don't ask them again now: carry on with "
