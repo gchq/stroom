@@ -280,6 +280,17 @@ class TestWorkspaceTools {
         // Literal by default.
         assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event .0 \"}"))
                 .isEqualTo("No lines match.");
+        // A literal miss that looks like a regular expression says how it was searched, so it isn't taken as an answer.
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10|event 20\"}"))
+                .startsWith("No lines match. The pattern was searched for as literal text, but it looks like a "
+                            + "regular expression")
+                .contains("regex: true");
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event 10|event 20\","
+                             + "\"out\":\"/outputs/none.log\"}"))
+                .startsWith("Wrote 0 matching line(s) to /outputs/none.log. The pattern was searched for as literal "
+                            + "text");
+        assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"no such text\"}"))
+                .isEqualTo("No lines match.");
         assertThat(run(tool, "{\"path\":\"/outputs/events.log\",\"pattern\":\"event [12]0 \","
                              + "\"regex\":true}"))
                 .contains("10: INFO event 10")

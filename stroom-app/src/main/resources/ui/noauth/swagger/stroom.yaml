@@ -11544,6 +11544,7 @@ components:
           - NEEDS_APPROVAL
           - APPROVAL_EXPIRED
           - NEEDS_INPUT
+          - NEEDS_ANSWERS
         unattended:
           type: boolean
     AiChatSearchHit:

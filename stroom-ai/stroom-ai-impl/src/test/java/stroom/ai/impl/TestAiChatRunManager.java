@@ -159,6 +159,19 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testARunThatStopsForQuestionsSaysSo() {
+        Mockito.when(runDao.compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.WAITING_FOR_USER),
+                any(), any())).thenReturn(true);
+
+        runManager.execute(run, r -> {
+            throw new AiChatRunManager.WaitingForUserException("needs answers", AiChatRunStopReason.NEEDS_ANSWERS);
+        }, () -> false);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), eq(List.of(AiChatRunStatus.RUNNING)),
+                eq(AiChatRunStatus.WAITING_FOR_USER), eq(AiChatRunStopReason.NEEDS_ANSWERS), isNull());
+    }
+
+    @Test
     void testContinueRun() {
         final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
                 AiChatRunStopReason.NEEDS_APPROVAL, 0L, null, false, null);

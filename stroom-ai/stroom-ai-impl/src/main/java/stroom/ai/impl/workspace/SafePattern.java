@@ -26,7 +26,12 @@ import java.util.regex.PatternSyntaxException;
 /// backtracks badly is stopped at the tool call's time limit.
 public final class SafePattern {
 
-    static final int MAX_PATTERN_LENGTH = 200;
+    /// The longest a pattern (or the text to find) may be, in characters.
+    public static final int MAX_PATTERN_LENGTH = 200;
+    // What a regular expression usually has that text to find literally seldom does: an alternation, a repeated
+    // wildcard, a character class or escape, or an anchor at either end.
+    private static final Pattern REGEX_LIKE = Pattern.compile(
+            "\\||\\.[*+?]|\\\\[dDsSwWb]|\\[[^\\]]+\\]|^\\^|\\$$");
 
     private final String literal;
     private final boolean ignoreCase;
@@ -64,6 +69,12 @@ public final class SafePattern {
             throw new WorkspaceException("'" + text + "' is not a valid regular expression: "
                                          + e.getDescription() + ".");
         }
+    }
+
+    /// @return True if this is a literal search for text that looks like a regular expression (e.g.
+    /// {@code error|warn}), which may well have been meant as one.
+    public boolean isLiteralThatLooksLikeRegex() {
+        return pattern == null && REGEX_LIKE.matcher(literal).find();
     }
 
     /// @param line A line of text.
