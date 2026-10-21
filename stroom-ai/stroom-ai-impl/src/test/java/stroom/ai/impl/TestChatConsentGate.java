@@ -131,11 +131,11 @@ class TestChatConsentGate {
     @Test
     void questionsAreAskedAsAFormInTheChatWhileTheUserIsWatching() {
         final ElicitResult answer = new ElicitResult(Action.ACCEPT, Map.of("q", "yes"));
-        Mockito.when(elicitations.askUser(CHAT_ID, "ask_user", "Intro", Map.of())).thenReturn(answer);
+        Mockito.when(elicitations.askUser(CHAT_ID, "ask_user", "c1", "Intro", Map.of())).thenReturn(answer);
         final UserQuestions questions = gate.userQuestions(SESSION);
 
         assertThat(questions.canAsk()).isTrue();
-        assertThat(questions.ask("ask_user", "Intro", Map.of())).isSameAs(answer);
+        assertThat(questions.ask("ask_user", "c1", "Intro", Map.of())).isSameAs(answer);
 
         Mockito.when(runManager.isUnattended(CHAT_ID)).thenReturn(true);
         assertThat(questions.canAsk()).isFalse();

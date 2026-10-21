@@ -499,8 +499,11 @@ public class AskStroomAIService {
     public Boolean answerElicitation(final AnswerAiElicitationRequest request) {
         final int chatId = NullSafe.getOrElse(request.getAiChat(), AiChat::getId, 0);
         aiService.verifyOwnership(chatId);
-        mcpElicitationsProvider.get().answer(chatId, request.getMessageId(), request.getAction(),
-                request.getAnswer());
+        // Questions from Stroom AI's own agent stopped the run to wait for the answer, so it carries on now.
+        if (mcpElicitationsProvider.get().answer(chatId, request.getMessageId(), request.getAction(),
+                request.getAnswer())) {
+            carryOn(chatId);
+        }
         return true;
     }
 
@@ -737,10 +740,11 @@ public class AskStroomAIService {
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
             // A message sent instead of answering a request for approval denies the calls, with the message as
-            // the reason, and the run carries on with it.
+            // the reason, and the run carries on with it. Questions it stopped for are put aside the same way.
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, snapshotId, message);
             toolApprovalService.pending(chatId).ifPresent(pending ->
                     toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
+            mcpElicitationsProvider.get().supersedePending(chatId);
             carryOn(chatId);
             return true;
         }

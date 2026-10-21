@@ -236,11 +236,9 @@ class TestScriptedChatRuns {
 
     @Test
     void askUserShowsAFormThatTheUserAnswers() {
-        // The user answers the form as soon as it is shown: the first in their own words.
-        store.onStored(AiMessageType.ELICITATION, form -> elicitations.answer(CHAT_ID, form.getId(), "ACCEPT",
-                Map.of("q1", "Production", "q2", "the last 3 days")));
         ask("Find the failed logons.");
-        final ScriptedChatModel model = new ScriptedChatModel(
+
+        run(new ScriptedChatModel(
                 ScriptedChatModel.toolCalls("A couple of questions first.",
                         ScriptedChatModel.call("call-1", "ask_user", "{\"intro\":\"Before I search\","
                                                                      + "\"questions\":["
@@ -249,14 +247,19 @@ class TestScriptedChatRuns {
                                                                      + "\"recommended\":\"Production\"},"
                                                                      + "{\"question\":\"How far back?\","
                                                                      + "\"options\":[\"24 hours\",\"7 days\"]}"
-                                                                     + "]}")),
-                ScriptedChatModel.answer("Searching Production for the last 3 days."));
-
-        run(model, McpToolset.EMPTY);
+                                                                     + "]}"),
+                        // In the same step, so not reached before the run stops: it isn't stored, so the next
+                        // run carries on as if the model hadn't made it.
+                        ScriptedChatModel.call("call-2", "read_turn", "{}"))), McpToolset.EMPTY);
+        // The user answers, however long after: the first in their own words.
+        answerForm("ACCEPT", Map.of("q1", "Production", "q2", "the last 3 days"));
+        run(new ScriptedChatModel(ScriptedChatModel.answer("Searching Production for the last 3 days.")),
+                McpToolset.EMPTY);
 
         assertMatchesReference("ask-user-form",
-                "ask_user shows its questions as a form (an ELICITATION card), waits for the user's answers and "
-                + "gives them to the model.");
+                "ask_user shows its questions as a form (an ELICITATION card), and the run stops, holding nothing, "
+                + "until the user answers. The next run makes the call again, which gives the model the answers. "
+                + "A later call of the same step, never reached, is left out.");
     }
 
     @Test
@@ -426,6 +429,20 @@ class TestScriptedChatRuns {
                 .flatMap(request -> request.toolSpecifications().stream())
                 .filter(specification -> !isBuiltIn(specification.name()))
                 .forEach(specification -> mcpToolsOffered.putIfAbsent(specification.name(), specification));
+    }
+
+    // The user answers the form the run stopped for, as the run waits for it.
+    private void answerForm(final String action, final Map<String, String> answer) {
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(new AiChatRun(1, CHAT_ID,
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null)));
+        final AiChatMessage form = store.messages().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .reduce((first, second) -> second)
+                .orElseThrow();
+        final boolean carryOn = elicitations.answer(CHAT_ID, form.getId(), action, answer);
+        happened.append("The user answers the form: ").append(action).append(carryOn
+                ? ", and the run carries on"
+                : "").append("\n");
     }
 
     // The user answers the run's request for approval of its tool calls.

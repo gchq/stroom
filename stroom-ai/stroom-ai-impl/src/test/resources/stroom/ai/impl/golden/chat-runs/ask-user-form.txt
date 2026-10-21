@@ -1,10 +1,12 @@
 # ask-user-form
 
-ask_user shows its questions as a form (an ELICITATION card), waits for the user's answers and gives them to the model.
+ask_user shows its questions as a form (an ELICITATION card), and the run stops, holding nothing, until the user answers. The next run makes the call again, which gives the model the answers. A later call of the same step, never reached, is left out.
 
 == What happened ==
 The user asks: Find the failed logons.
-Run 1: answered: Searching Production for the last 3 days.
+Run 1: stopped to wait for the user (Questions in chat 7 need answers)
+The user answers the form: ACCEPT, and the run carries on
+Run 2: answered: Searching Production for the last 3 days.
 
 == Stored messages ==
 #1 USER_MESSAGE (turn 1)
@@ -48,7 +50,8 @@ Run 1: answered: Searching Production for the last 3 days.
       "content" : {
         "q1" : "Production",
         "q2" : "the last 3 days"
-      }
+      },
+      "callId" : "call-1"
     }
   First stored as ELICITATION:
     {
@@ -76,7 +79,8 @@ Run 1: answered: Searching Production for the last 3 days.
         },
         "required" : [ "q1", "q2" ]
       },
-      "expiresMs" : "<time>"
+      "expiresMs" : "<time>",
+      "callId" : "call-1"
     }
 #5 TOOL_RESULT (turn 1)
     {
@@ -113,7 +117,6 @@ Tools offered: ask_user, memory, propose_query, read_turn
 [1] USER
     Find the failed logons.
 [2] AI
-    A couple of questions first.
     Calls ask_user as call-1 with {"intro":"Before I search","questions":[{"question":"Which environment?","options":["Production","Test"],"recommended":"Production"},{"question":"How far back?","options":["24 hours","7 days"]}]}
 [3] TOOL RESULT for call-1 (ask_user)
     The user answered:

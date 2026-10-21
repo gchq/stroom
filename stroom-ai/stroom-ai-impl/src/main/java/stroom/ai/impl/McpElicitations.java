@@ -100,20 +100,54 @@ public class McpElicitations {
         return handle(chatId, server, null, request);
     }
 
-    /// Asks the user questions for Stroom AI's own agent (its ask_user tool), as a form shown in the chat, and
-    /// waits for their answer, as for a form from an MCP server.
+    /// Asks the user questions for Stroom AI's own agent (its ask_user tool), as a form shown in the chat.
+    ///
+    /// Asked in a tool call of the chat's run, the run doesn't wait for the answer: it stops, giving up its thread,
+    /// and carries on from the call when the user answers (see [#answer]), however long that takes. The call is then
+    /// made again, and given the answer. Asked outside a tool call, it waits, as for a form from an MCP server.
     ///
     /// @param chatId  The chat.
     /// @param tool    The tool asking, which says how the chat shows the form.
+    /// @param callId  The id of the tool call asking, or null if it isn't asked in one.
     /// @param message What the questions are for.
     /// @param schema  The questions, as a form.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user does not answer in
-    /// time, or the run is stopped.
+    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user sent a message
+    /// instead, or the run was stopped.
+    /// @throws AiChatRunManager.WaitingForUserException if the run is to stop until the user answers.
     public ElicitResult askUser(final int chatId,
                                 final String tool,
+                                final String callId,
                                 final String message,
                                 final Map<String, Object> schema) {
-        return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
+        if (callId == null) {
+            return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
+        }
+        // Asked before the run stopped: the answer, if there is one now.
+        final ElicitationRecord asked = findForCall(chatId, callId).flatMap(McpElicitations::read).orElse(null);
+        if (asked != null) {
+            return switch (asked.status()) {
+                case ACCEPTED -> new ElicitResult(Action.ACCEPT, asked.content());
+                case DECLINED -> new ElicitResult(Action.DECLINE, null);
+                case CANCELLED, EXPIRED, SUPERSEDED -> new ElicitResult(Action.CANCEL, null);
+                case PENDING -> throw waitForAnswers(chatId);
+            };
+        }
+        final String problem = ElicitationSchema.check(message, schema);
+        if (problem != null) {
+            // Declined, as the form can never be shown as it is, and asking again would fail the same way.
+            warn(chatId, "A form from " + STROOM_AI + " was declined, as " + problem + ".");
+            return new ElicitResult(Action.DECLINE, null);
+        }
+        // It waits for as long as the user takes, as nothing is held while it does.
+        aiDao.storeMessage(chatId, AiMessageType.ELICITATION, JsonUtil.writeValueAsString(
+                new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, STROOM_AI, tool, message, schema,
+                        Long.MAX_VALUE, null, callId), false));
+        throw waitForAnswers(chatId);
+    }
+
+    private static AiChatRunManager.WaitingForUserException waitForAnswers(final int chatId) {
+        return new AiChatRunManager.WaitingForUserException("Questions in chat " + chatId + " need answers",
+                AiChatRunStopReason.NEEDS_ANSWERS);
     }
 
     private ElicitResult handle(final int chatId,
@@ -142,7 +176,7 @@ public class McpElicitations {
             final AtomicBoolean stop = runManager.stopFlag(chatId);
             final long expiresMs = System.currentTimeMillis() + config.getElicitationTimeout().toMillis();
             final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, server,
-                    tool, request.message(), request.requestedSchema(), expiresMs, null);
+                    tool, request.message(), request.requestedSchema(), expiresMs, null, null);
             final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
                     JsonUtil.writeValueAsString(record, false));
             // The chat needs the user, but the run keeps its thread, so it is not carried on by anything else.
@@ -169,9 +203,11 @@ public class McpElicitations {
     /// @param messageId The ELICITATION message.
     /// @param action    ACCEPT, DECLINE or CANCEL.
     /// @param answer    For ACCEPT, each field's value as text (a choice of several as a JSON list).
+    /// @return True if the run stopped to wait for the answer, so is to be carried on now (questions from Stroom AI's
+    /// own agent); false if the tool call that asked is waiting for it.
     /// @throws RuntimeException If the form has already been answered or has expired, or the answer does not fit
     ///                          the form.
-    void answer(final int chatId, final int messageId, final String action, final Map<String, String> answer) {
+    boolean answer(final int chatId, final int messageId, final String action, final Map<String, String> answer) {
         final AiChatMessage message = find(chatId, messageId)
                 .orElseThrow(() -> new RuntimeException("There is no form " + messageId + " in this chat."));
         final ElicitationRecord record = read(message)
@@ -182,12 +218,14 @@ public class McpElicitations {
         if (System.currentTimeMillis() > record.expiresMs()) {
             throw new RuntimeException("This form has expired.");
         }
-        // E.g. the node running the tool has stopped.
-        final boolean toolWaiting = runDao.getActive(chatId)
-                .filter(run -> run.getStatus() == AiChatRunStatus.WAITING_FOR_USER
-                               && run.getStopReason() == AiChatRunStopReason.NEEDS_INPUT)
-                .isPresent();
-        if (!toolWaiting) {
+        // The run stopped to wait for questions from Stroom AI's own agent; a form from an MCP server has its tool
+        // call waiting for it.
+        final boolean parked = record.callId() != null;
+        final boolean canAnswer = parked
+                ? canCarryOn(chatId, messageId)
+                : isWaiting(chatId, AiChatRunStopReason.NEEDS_INPUT);
+        // E.g. the node running the tool has stopped, or the user has asked something else since.
+        if (!canAnswer) {
             aiDao.compareAndSetMessageText(messageId, message.getMessage(),
                     JsonUtil.writeValueAsString(record.answered(Status.CANCELLED, null), false));
             throw new RuntimeException("The tool that asked is no longer waiting for an answer.");
@@ -205,6 +243,7 @@ public class McpElicitations {
         }
         LOGGER.info(() -> "Form " + messageId + " from '" + record.server() + "' in chatId=" + chatId + ": "
                           + answered.status());
+        return parked;
     }
 
     /// Puts aside the forms in a chat that are waiting for answers, as the user has sent a message instead: the tools
@@ -281,6 +320,36 @@ public class McpElicitations {
                 return new ElicitResult(Action.CANCEL, null);
             }
         }
+    }
+
+    // True if the chat's run is waiting for the user, for the reason given.
+    private boolean isWaiting(final int chatId, final AiChatRunStopReason reason) {
+        return runDao.getActive(chatId)
+                .filter(run -> run.getStatus() == AiChatRunStatus.WAITING_FOR_USER && run.getStopReason() == reason)
+                .isPresent();
+    }
+
+    // True if the answer to questions a run stopped for can carry the chat on: its run is waiting for them, or has
+    // ended (e.g. it was stopped, or the user's session ended) while they are part of the chat's latest question,
+    // so a new run can carry on from them.
+    private boolean canCarryOn(final int chatId, final int messageId) {
+        if (runDao.getActive(chatId).isPresent()) {
+            return isWaiting(chatId, AiChatRunStopReason.NEEDS_ANSWERS);
+        }
+        final int latestQuestionId = aiDao.getMessages(chatId).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.USER_MESSAGE)
+                .mapToInt(AiChatMessage::getId)
+                .max()
+                .orElse(Integer.MAX_VALUE);
+        return messageId > latestQuestionId;
+    }
+
+    // The questions a tool call asked, in a run that stopped to wait for the answers.
+    private Optional<AiChatMessage> findForCall(final int chatId, final String callId) {
+        return aiDao.getMessages(chatId).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .filter(message -> read(message).map(record -> callId.equals(record.callId())).orElse(false))
+                .reduce((first, second) -> second);
     }
 
     private Optional<AiChatMessage> find(final int chatId, final int messageId) {

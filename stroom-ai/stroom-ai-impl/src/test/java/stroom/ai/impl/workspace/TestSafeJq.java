@@ -57,15 +57,7 @@ class TestSafeJq {
             "stderr",
             "input_filename",
             "halt",
-            "halt_error",
-            "test(\"a\")",
-            "match(\"(a+)+$\")",
-            "capture(\"(?<x>a)\")",
-            "[scan(\"a\")]",
-            "split(\"a\"; null)",
-            "sub(\"a\"; \"b\")",
-            "gsub(\"a\"; \"b\")",
-            "[splits(\"a\")]"})
+            "halt_error"})
     void testUnsafeFunctionsAreNotAvailable(final String query) {
         assertThatThrownBy(() -> run(query, MAPPER.getNodeFactory().textNode("aaaa")))
                 .isInstanceOf(WorkspaceException.class);
@@ -113,7 +105,10 @@ class TestSafeJq {
     void testBadQueries() {
         assertThatThrownBy(() -> SafeJq.compile("")).isInstanceOf(WorkspaceException.class);
         assertThatThrownBy(() -> SafeJq.compile(".[")).hasMessageContaining("not a valid jq query");
-        assertThatThrownBy(() -> SafeJq.compile(".a".repeat(1_001))).hasMessageContaining("at most 2000");
+        assertThatThrownBy(() -> SafeJq.compile(".a".repeat(5_001))).hasMessageContaining("at most 10000");
+        // A long query, e.g. one that rebuilds a large document, is allowed.
+        assertThat(run("[" + "1,".repeat(3_000) + "1] | length", MAPPER.getNodeFactory().nullNode()))
+                .containsExactly("3001");
     }
 
     private static List<String> run(final String query, final JsonNode input) {

@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafeJq;
+import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -66,9 +67,9 @@ class JqTool extends AbstractWorkspaceTool {
                         .general(" (one JSON value, or one per line), e.g. '.events[] | select(.severity == "
                                  + "\"high\") | .host'. Each result is one line of JSON.")
                         .chatOnly(" Give out to write the results to a file.")
-                        .general(" Regular expression functions (test, match, sub...) are not available")
-                        .chatOnly("; use grep or table for those")
-                        .general(".")
+                        .general(" Regular expression functions (test, match, capture, sub, gsub...) take "
+                                 + "Java regular expressions of up to " + SafePattern.MAX_PATTERN_LENGTH
+                                 + " characters.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The JSON file.")
