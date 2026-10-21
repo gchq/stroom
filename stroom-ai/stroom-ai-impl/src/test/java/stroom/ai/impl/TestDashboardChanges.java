@@ -27,8 +27,10 @@ import stroom.query.api.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -333,5 +335,53 @@ class TestDashboardChanges {
                 "Change 2 (add_column): the table already has a column 'UserId'. Give another name, or use "
                 + "edit_column.",
                 "Change 3 (edit_column): the table already has a column 'EventType'.");
+    }
+
+    @Test
+    void manyColumnsCanBeAddedInOneProposal() {
+        // Splitting a large change over two proposals doesn't work: the second is proposed against the dashboard
+        // as it was before the first was applied, so it must fit in one.
+        final List<Map<String, Object>> adds = IntStream.rangeClosed(1, 30)
+                .mapToObj(i -> Map.<String, Object>of("op", "add_column", "name", "Field" + i,
+                        "expression", "${Field" + i + "}"))
+                .toList();
+
+        final Checked checked = DashboardChanges.check(DashboardChanges.parse(adds), COLUMNS);
+
+        assertThat(checked.problems()).isEmpty();
+        assertThat(checked.changes()).hasSize(30);
+    }
+
+    @Test
+    void manyColumnsCanBeHiddenInOneProposal() {
+        final List<String> columns = IntStream.rangeClosed(1, 30).mapToObj(i -> "Field" + i).toList();
+        final List<Map<String, Object>> hides = columns.stream()
+                .map(column -> Map.<String, Object>of("op", "hide_column", "column", column))
+                .toList();
+
+        final Checked checked = DashboardChanges.check(DashboardChanges.parse(hides), columns);
+
+        assertThat(checked.problems()).isEmpty();
+        assertThat(checked.changes()).hasSize(30);
+    }
+
+    @Test
+    void asManyTablesAsAllowedCanEachBeSetUp() {
+        // The tool's description suggests a tab per category: add_table, its columns and a filter. MAX_TABLES
+        // tables, each with one column and a filter, should fit in one proposal.
+        final List<Map<String, Object>> changes = new ArrayList<>();
+        for (int i = 1; i <= DashboardChanges.MAX_TABLES; i++) {
+            changes.add(Map.of("op", "add_table", "name", "Category " + i));
+            changes.add(Map.of("op", "add_column", "table", "Category " + i, "name", "EventType",
+                    "expression", "${EventType}"));
+            changes.add(Map.of("op", "filter", "table", "Category " + i, "column", "EventType",
+                    "filter", "Type" + i));
+        }
+
+        final Checked checked = DashboardChanges.check(DashboardChanges.parse(changes), COLUMNS, "Table",
+                List.of("Table"));
+
+        assertThat(checked.problems()).isEmpty();
+        assertThat(checked.changes()).hasSize(DashboardChanges.MAX_TABLES * 3);
     }
 }

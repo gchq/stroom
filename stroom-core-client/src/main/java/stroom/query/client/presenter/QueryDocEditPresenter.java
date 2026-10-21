@@ -48,7 +48,6 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
-import stroom.util.shared.diff.LineDiff;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonPanel;
@@ -158,7 +157,8 @@ public class QueryDocEditPresenter
             event.setHandled(QUERY_NOT_EDITABLE);
             return;
         }
-        if (!LineDiff.diff(event.getBaseQuery(), queryEditPresenter.getQuery()).isIdentical()) {
+        // A change proposed before others were applied can still be put on top of them.
+        if (!queryEditPresenter.canApplyCodeChange(event.getBaseQuery(), event.getProposedQuery())) {
             event.setHandled(QUERY_CHANGED);
             return;
         }

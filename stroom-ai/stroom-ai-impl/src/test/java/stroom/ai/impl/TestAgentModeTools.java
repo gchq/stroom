@@ -142,6 +142,8 @@ class TestAgentModeTools {
             Map.entry("xslt_lookups", false),
             // Only offers the user a button: the user applies the change to the dashboard, unsaved.
             Map.entry("propose_dashboard_change", false),
+            // Only offers the user a button: the user applies the change to the Documentation tab, unsaved.
+            Map.entry("propose_documentation_change", false),
             Map.entry("config_properties", false),
             Map.entry("elastic_index_templates", false)));
 

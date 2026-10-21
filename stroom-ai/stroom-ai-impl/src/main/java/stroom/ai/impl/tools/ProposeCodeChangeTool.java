@@ -194,6 +194,17 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     /// @throws WorkspaceException if the edits aren't a list of replacements, or the text one replaces isn't in
     ///                            the code exactly once.
     static String applyEdits(final String current, final Object edits) {
+        return applyEdits(current, edits, "the element's code");
+    }
+
+    /// @param current The text as it is.
+    /// @param edits   The model's edits argument: a list of objects each with the text to replace and its
+    ///                replacement.
+    /// @param what    What the text is, for the errors, e.g. "the documentation".
+    /// @return The text with the edits made, in order, each to the text as the edits before it left it.
+    /// @throws WorkspaceException if the edits aren't a list of replacements, or the text one replaces isn't in
+    ///                            the text exactly once.
+    static String applyEdits(final String current, final Object edits, final String what) {
         if (!(edits instanceof final List<?> list) || list.isEmpty()) {
             throw new WorkspaceException("Give " + EDITS_ARG + " as a list of objects, each with " + OLD_TEXT_ARG
                                          + " and " + NEW_TEXT_ARG + ".");
@@ -211,14 +222,14 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
             }
             final int index = code.indexOf(oldText);
             if (index < 0) {
-                throw new WorkspaceException(which + "'s text to replace isn't in the element's code"
+                throw new WorkspaceException(which + "'s text to replace isn't in " + what
                                              + (i > 0
                         ? " (as the edits before it left it)"
-                        : "") + ". Read the code again and give text exactly as it is there.");
+                        : "") + ". Read it again and give text exactly as it is there.");
             }
             if (code.indexOf(oldText, index + 1) >= 0) {
-                throw new WorkspaceException(which + "'s text to replace appears more than once in the element's "
-                                             + "code. Give more of it, so it appears once.");
+                throw new WorkspaceException(which + "'s text to replace appears more than once in " + what
+                                             + ". Give more of it, so it appears once.");
             }
             code = code.substring(0, index) + newText + code.substring(index + oldText.length());
         }

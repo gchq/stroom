@@ -346,23 +346,28 @@ public class AskStroomAIService {
         // follows its progress by polling, so the request returns straight away. A message sent while a run is
         // working steers that run instead.
         boolean resendTab = false;
-        if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
-            // What the user sees in their attached tab is kept now, as the user, and recorded on the question.
+        if (request.getMessage() != null) {
+            // What the user sees in their attached tab is kept now, as the user, and recorded on the question, or on
+            // the message that steers the run (the tab may have changed since the question, e.g. by applying a
+            // change the run proposed, and later proposals must be made against it as it is now).
             final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
             resendTab = tab.resend();
-            runManager.start(chatId, run -> {
-                aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(), request.getMessage());
-                chatTitler.nameFromQuestion(chatId, request.getMessage());
-                answerQuestion(chatId, request);
-            });
+            if (!steer(chatId, request.getMessage(), tab.snapshotId())) {
+                runManager.start(chatId, run -> {
+                    aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(),
+                            request.getMessage());
+                    chatTitler.nameFromQuestion(chatId, request.getMessage());
+                    answerQuestion(chatId, request);
+                });
+            }
         }
 
         // The answer (if there is a question) is delivered by polling.
         return new AskStroomAiResponse(null, resendTab);
     }
 
-    /// Keeps what the user sees in their attached tab, sent with a question. A tab that can't be kept is left out,
-    /// and the question is asked without it.
+    /// Keeps what the user sees in their attached tab, sent with a question or a message that steers a run. A tab
+    /// that can't be kept is left out, and the message is sent without it.
     private TabSnapshots.Stored storeTabSnapshot(final int chatId, final AiTabSnapshot snapshot) {
         if (tabSnapshots == null || snapshot == null) {
             return TabSnapshots.Stored.NONE;
@@ -689,11 +694,14 @@ public class AskStroomAIService {
         }
     }
 
-    /// @return True if the message is the one an attachment belongs to, so goes with it. A question refers to the
-    /// snapshot of the tab it was asked with, which other questions may share, so the snapshot is kept when a
-    /// question is removed (it goes with the chat, or once its retention ends).
+    /// @return True if the message is the one an attachment belongs to, so goes with it. A question, or a message
+    /// that steers a run, refers to the snapshot of the tab it was sent with, which other messages may share, so the
+    /// snapshot is kept when the message is removed (it goes with the chat, or once its retention ends).
     static boolean isAttachmentMessage(final AiChatMessage message) {
-        return message.getAttachmentId() != null && message.getMessageType() != AiMessageType.USER_MESSAGE;
+        return message.getAttachmentId() != null
+               && message.getMessageType() != AiMessageType.USER_MESSAGE
+               && message.getMessageType() != AiMessageType.STEER_MESSAGE
+               && !message.getMessageType().isQueuedSteer();
     }
 
     /**
@@ -710,11 +718,11 @@ public class AskStroomAIService {
 
     /**
      * If the chat has a run working on a question, stores the message for the run to pick up at its next safe
-     * point.
+     * point, with the snapshot of the tab the user attached sent with it.
      *
      * @return True if the message was given to a run, false if there is no run to give it to.
      */
-    private boolean steer(final int chatId, final String message) {
+    private boolean steer(final int chatId, final String message, final Integer snapshotId) {
         final AiChatRun active = runDao.getActive(chatId).orElse(null);
         if (active == null || active.getStatus() == AiChatRunStatus.STOPPING) {
             return false;
@@ -723,14 +731,14 @@ public class AskStroomAIService {
             && active.getStopReason() == AiChatRunStopReason.NEEDS_INPUT) {
             // A tool is waiting for the user to fill in a form, holding the run's thread. A message sent instead
             // puts the form aside, so the tool is told it wasn't answered, and the run carries on with the message.
-            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, snapshotId, message);
             mcpElicitationsProvider.get().supersedePending(chatId);
             return true;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
             // A message sent instead of answering a request for approval denies the calls, with the message as
             // the reason, and the run carries on with it.
-            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, snapshotId, message);
             toolApprovalService.pending(chatId).ifPresent(pending ->
                     toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
             carryOn(chatId);
@@ -738,7 +746,7 @@ public class AskStroomAIService {
         }
         // Queued until the run's current step finishes, unless the user sends it now.
         final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.QUEUED_STEER_MESSAGE,
-                message);
+                snapshotId, message);
         if (runDao.getActive(chatId).isEmpty()) {
             // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
             aiService.deleteMessage(steerMessage.getId());

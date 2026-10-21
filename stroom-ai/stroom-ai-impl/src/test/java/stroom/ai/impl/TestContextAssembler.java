@@ -501,6 +501,18 @@ class TestContextAssembler {
     }
 
     @Test
+    void testASteerSentWithTheTabSaysTheTabMayHaveChanged() {
+        final List<AiChatMessage> history = List.of(
+                message(10, AiMessageType.USER_MESSAGE, "q"),
+                new AiChatMessage(11, 1, 0L, AiMessageType.STEER_MESSAGE, 42, "now map the domain", 10, null));
+
+        final List<ChatMessage> replay = ContextAssembler.currentTurn(history);
+
+        assertThat(((UserMessage) replay.getFirst()).singleText()).isEqualTo(
+                McpAgentChat.STEER_PREFIX + "now map the domain\n\n" + McpAgentChat.STEER_TAB_NOTE);
+    }
+
+    @Test
     void testCurrentTurnIsReplayedAsTheModelsStepsWithWhatItSaid() {
         final List<AiChatMessage> history = List.of(
                 message(10, AiMessageType.USER_MESSAGE, "q"),
@@ -612,11 +624,13 @@ class TestContextAssembler {
     }
 
     @Test
-    void theModelIsToldThatQuestionsBelongInItsAnswerNotInFoldedAwayActivity() {
-        // A question written in reasoning or alongside tool calls is folded away in the chat, so goes unseen.
+    void theModelIsToldThatQuestionsBelongInAskUserOrItsAnswerNotAlongsideToolCalls() {
+        // What the model writes alongside tool calls is shown in the chat, but a question there goes unanswered
+        // while it carries on calling tools.
         assertThat(ContextAssembler.TOOL_GUIDANCE)
-                .contains("are folded away in the chat")
-                .contains("in your answer at the end of the turn, or ask it with ask_user")
+                .contains("What you write alongside tool calls is shown in the chat as you work")
+                .doesNotContain("folded away")
+                .contains("with ask_user, or in your answer at the end of the turn, and then wait for them")
                 .contains("Never ask a question and carry on calling tools in the same turn");
     }
 }

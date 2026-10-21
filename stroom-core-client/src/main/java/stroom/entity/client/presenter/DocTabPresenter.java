@@ -355,6 +355,24 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                 : null;
     }
 
+    /// Switches to this document's Documentation tab and gives its editor, making it and giving it the document
+    /// if the tab hasn't been shown yet.
+    ///
+    /// @return The Documentation tab's editor, or null if this document has no Documentation tab, or hasn't been
+    /// read yet.
+    public MarkdownEditPresenter showDocumentationEditor() {
+        final TabData documentationTab = commonTabsMap.get(CommonDocLinkTab.DOCUMENTATION);
+        if (documentationTab == null || !tabContentProvider.hasTab(documentationTab) || getEntity() == null) {
+            return null;
+        }
+        final PresenterWidget<?> presenter = tabContentProvider.getPresenter(documentationTab, this);
+        if (!(presenter instanceof final MarkdownEditPresenter markdownEditPresenter)) {
+            return null;
+        }
+        selectTab(documentationTab);
+        return markdownEditPresenter;
+    }
+
     public void setDefaultTab(final TabData defaultTab) {
         this.defaultTab = defaultTab;
     }

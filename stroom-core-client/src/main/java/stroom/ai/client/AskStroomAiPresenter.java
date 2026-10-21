@@ -200,7 +200,7 @@ public class AskStroomAiPresenter
     private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
     private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
-    private static final String WORKING_MESSAGE_ID = "ai-working-message";
+    private static final String WORKING_MESSAGE_ID = AiConversationEntries.WORKING_MESSAGE_ID;
     private static final String WORKING_TEXT_ID = "ai-working-text";
     // On what the model said alongside its tool calls, while the Working line shows it.
     private static final String SHOWN_AS_PROGRESS_CLASS = "ai-message--shown-as-progress";
@@ -225,7 +225,7 @@ public class AskStroomAiPresenter
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
     // On an applied code change's Undo apply button: the tool result message the action is in.
     private static final String USER_ACTION_UNDO_ATTRIBUTE = "data-user-action-undo";
-    // A tool result's buttons are shown in a card of their own, outside the turn's activity.
+    // A tool result's buttons are shown in a card of their own, outside the tool call's entry.
     private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
     private static final SafeHtml PRE = SafeHtmlUtils.fromSafeConstant("pre");
     private static final String CHAT_ID_ATTRIBUTE = "data-chat-id";
@@ -258,7 +258,7 @@ public class AskStroomAiPresenter
     // The tool Stroom AI's agent asks the user questions with.
     private static final String ASK_USER_TOOL = "ask_user";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
-    private static final String LIVE_ANSWER_ID = "ai-live-answer";
+    private static final String LIVE_ANSWER_ID = AiConversationEntries.LIVE_ANSWER_ID;
     private static final int STREAMING_POLL_MS = 500;
     private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
     private static final int BOTTOM_TOLERANCE_PX = 40;
@@ -379,14 +379,12 @@ public class AskStroomAiPresenter
     // Stroom's document types, for the icons of documents attached from the Explorer tree, once fetched.
     private DocumentTypes documentTypes;
     private boolean fetchingDocumentTypes;
-    // Each turn's reasoning and tool calls, grouped above its answer.
-    private final AiActivityGroups activityGroups = new AiActivityGroups();
     // The day of the last message added, for day dividers.
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
     private boolean followBottom = true;
-    // What the model said alongside its latest tool calls, kept out of its turn's activity group while the Working
-    // line shows it, or null once it is shown there.
+    // What the model said alongside its latest tool calls, kept hidden in the conversation while the Working line
+    // shows it, or null once it is shown.
     private AiChatMessage interimShownAsProgress;
     // Where the conversation was scrolled to last, to tell the user scrolling up from content growing below.
     private int lastScrollTop;
@@ -396,6 +394,7 @@ public class AskStroomAiPresenter
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
     private final DocumentTypeCache documentTypeCache;
+    private final AiDocumentationChanges aiDocumentationChanges;
     // The document tab the user is on, which they can attach to the chat; while the chat's own tab is selected, the
     // one they were on before.
     private TabData currentTab;
@@ -434,7 +433,8 @@ public class AskStroomAiPresenter
                                 final ContentManager contentManager,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final DocumentTypeCache documentTypeCache) {
+                                final DocumentTypeCache documentTypeCache,
+                                final AiDocumentationChanges aiDocumentationChanges) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
@@ -450,6 +450,7 @@ public class AskStroomAiPresenter
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         this.documentTypeCache = documentTypeCache;
+        this.aiDocumentationChanges = aiDocumentationChanges;
 
         getView().setModelRefSelection(docSelectionBoxPresenter.getView());
         docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
@@ -2303,8 +2304,8 @@ public class AskStroomAiPresenter
 
     /**
      * Shows the steps a tool's result says are the user's, as buttons in a card of their own (so they are not
-     * hidden in the turn's activity). Everything in it was written by Stroom, which checked each step; the server's
-     * own text only appears in "Do first" conditions, as plain text.
+     * hidden in the tool call's entry). Everything in it was written by Stroom, which checked each step; the
+     * server's own text only appears in "Do first" conditions, as plain text.
      */
     private void appendUserActionsCard(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
         final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
@@ -2393,6 +2394,10 @@ public class AskStroomAiPresenter
                 dashboardChangeRow(row, messageId, json, status, pending);
                 return;
             }
+            if (UserActionsUi.APPLY_DOCUMENTATION_CHANGE.equals(action)) {
+                documentationChangeRow(row, messageId, json, request, status, pending);
+                return;
+            }
             // A classic dashboard is shown as what Stroom builds from the StroomQL, rather than the StroomQL.
             final JSONArray outline = UserActionsUi.CREATE_DASHBOARD.equals(action)
                     ? AiToolMessages.getArray(AiToolMessages.getString(json, "newDashboard"), "outline")
@@ -2465,6 +2470,89 @@ public class AskStroomAiPresenter
                         new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
             }
         }
+    }
+
+    /// The rest of a proposed documentation change's row: the compact diff, and a button to review and apply it,
+    /// or, once applied, one to undo it, unless the Documentation tab has been edited since.
+    private void documentationChangeRow(final HtmlBuilder row,
+                                        final int messageId,
+                                        final String json,
+                                        final String proposed,
+                                        final String status,
+                                        final boolean pending) {
+        final String base = AiToolMessages.getString(AiToolMessages.getString(json, "codeChange"), "baseCode");
+        if (base != null && proposed != null) {
+            row.append(CodeDiffCardRenderer.render(LineDiff.diff(base, proposed)));
+        }
+        final String actionId = NullSafe.string(AiToolMessages.getString(json, "id"));
+        if (pending) {
+            row.elem(UserActionsUi.buttonText(UserActionsUi.APPLY_DOCUMENTATION_CHANGE), BUTTON,
+                    Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                    new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
+                    new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            return;
+        }
+        row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
+                Attribute.className("ai-approval-reason"));
+        if (UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_DOCUMENTATION_CHANGE, status)) {
+            if (aiDocumentationChanges.isUndoWithdrawn(messageId, actionId)) {
+                row.div(text -> text.append(AppliedDocumentationChanges.UNDO_WITHDRAWN),
+                        Attribute.className("ai-approval-reason"));
+            } else {
+                row.elem(UserActionsUi.UNDO_APPLY, BUTTON,
+                        Attribute.className("allow-focus ai-approval-button"),
+                        new Attribute(USER_ACTION_UNDO_ATTRIBUTE, String.valueOf(messageId)),
+                        new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            }
+        }
+    }
+
+    /// @return A proposed documentation change, as the chat shows it, or null if it isn't there.
+    private AiDocumentationChanges.Change documentationChange(final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return null;
+        }
+        return new AiDocumentationChanges.Change(currentChat.getId(), messageId, actionId,
+                docRef(AiToolMessages.getString(json, "doc")),
+                AiToolMessages.getString(AiToolMessages.getString(json, "codeChange"), "baseCode"),
+                AiToolMessages.getString(json, "request"));
+    }
+
+    /// Opens the document on its Documentation tab and reviews a proposed change to it, from which the user can
+    /// apply it to the tab's editor, unsaved. Applying it is checked and recorded by the server first.
+    private void onReviewDocumentationChange(final int messageId, final String actionId) {
+        final AiDocumentationChanges.Change change = documentationChange(messageId, actionId);
+        if (change == null) {
+            return;
+        }
+        aiDocumentationChanges.review(this, this, change, () -> {
+            showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED);
+            // Fetch the note of what was done.
+            pollAfterAnswer();
+        });
+    }
+
+    /// Undoes a proposed documentation change the user applied, putting back the text the Documentation tab held,
+    /// if it still holds the applied text. The server checks Edit and records it first.
+    private void onUndoDocumentationChange(final Element button, final int messageId, final String actionId) {
+        final AiDocumentationChanges.Change change = documentationChange(messageId, actionId);
+        if (change == null) {
+            return;
+        }
+        button.setAttribute("disabled", "disabled");
+        aiDocumentationChanges.undo(this, this, change,
+                // Withdraw the button.
+                () -> showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED),
+                result -> {
+                    if (!result.isDone()) {
+                        button.removeAttribute("disabled");
+                        AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+                        return;
+                    }
+                    showUserActionStatus(messageId, actionId, "PENDING", result.getMessage());
+                    pollAfterAnswer();
+                });
     }
 
     /// The rest of a revised query's row: the query as it will be applied, and the Apply to query button, or, once
@@ -2816,6 +2904,10 @@ public class AskStroomAiPresenter
             onUndoDashboardChange(button, messageId, actionId);
             return;
         }
+        if (UserActionsUi.APPLY_DOCUMENTATION_CHANGE.equals(AiToolMessages.getString(json, "action"))) {
+            onUndoDocumentationChange(button, messageId, actionId);
+            return;
+        }
         final String codeChange = AiToolMessages.getString(json, "codeChange");
         final DocRef pipeline = docRef(AiToolMessages.getString(codeChange, "pipeline"));
         final String elementId = AiToolMessages.getString(codeChange, "element");
@@ -2865,6 +2957,11 @@ public class AskStroomAiPresenter
         if (UserActionsUi.APPLY_QUERY_CHANGE.equals(action)) {
             // Applied by the Query's tab, once the server allows it.
             onApplyQueryChange(messageId, actionId);
+            return;
+        }
+        if (UserActionsUi.APPLY_DOCUMENTATION_CHANGE.equals(action)) {
+            // Nothing is done until the user applies it in the review.
+            onReviewDocumentationChange(messageId, actionId);
             return;
         }
         button.setAttribute("disabled", "disabled");
@@ -3224,8 +3321,6 @@ public class AskStroomAiPresenter
             final AskStroomAiRequest request = new AskStroomAiRequest(
                     currentChat, config, data, message, getView().getAgentMode(),
                     AiTabSnapshots.toSend(tabSnapshot, lastSentTabHashes.get(chatId)));
-            // A message sent while the chat is working steers it, and its tab isn't kept.
-            final boolean asQuestion = !currentRunActive;
             // Clear context so follow-up messages don't re-attach the same data.
             this.data = null;
             requestInFlight = true;
@@ -3234,7 +3329,8 @@ public class AskStroomAiPresenter
                         requestInFlight = false;
                         if (response != null && response.isTabSnapshotNeeded()) {
                             lastSentTabHashes.remove(chatId);
-                        } else if (tabSnapshot != null && asQuestion) {
+                        } else if (tabSnapshot != null) {
+                            // Kept with the message, whether it is a question or steers the chat's run.
                             lastSentTabHashes.put(chatId, tabSnapshot.getHash());
                         }
                         // Poll to get the properly typed, persisted messages. Also picks up a partial
@@ -3480,7 +3576,7 @@ public class AskStroomAiPresenter
                 child.removeFromParent();
             } else if (NullSafe.isNonBlankString(idStr)) {
                 // Not always just a number, e.g. the steps a message left to the user.
-                final int id = AiActivityGroups.messageIdOf(idStr);
+                final int id = AiConversationEntries.messageIdOf(idStr);
                 if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
                     child.removeFromParent();
                     renderedMessages.remove(id);
@@ -3488,7 +3584,6 @@ public class AskStroomAiPresenter
             }
             child = next;
         }
-        activityGroups.removeFrom(fromMessageId, keepFirst);
         refreshOverview();
         removeLiveAnswer();
         // Don't leave a day divider with nothing after it.
@@ -3813,43 +3908,32 @@ public class AskStroomAiPresenter
         decorateStroomLinks(messageElement);
 
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
-        if (AiActivityGroups.isActivity(msg.getMessageType())) {
-            if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
-                // The text being written is now stored, so is shown in its place, after what was said before.
-                removeLiveAnswer();
-                showInterimInActivity();
-            }
-            final Element existingEntry = activityGroups.findEntry(messageId);
-            if (existingEntry != null) {
-                existingEntry.getParentElement().replaceChild(messageElement, existingEntry);
-            } else {
-                final AiChatMessage question = renderedMessages.get(msg.getTurnId());
-                activityGroups.add(markdownContainer, msg, messageElement, question != null
-                        ? question.getCreateTimeMs()
-                        : 0);
-                keepProgressInPlace(markdownContainer);
-            }
-            if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
-                appendUserActionsCard(markdownContainer, msg, nowMs);
-            } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
-                       && findInConversation(WORKING_MESSAGE_ID) != null) {
-                // While the agent works, shown once the Working line moves on from it (see updateWorkingMessage).
-                interimShownAsProgress = msg;
-                messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
-            }
+        if (msg.getMessageType() == AiMessageType.TOOL_RESULT
+            && findMessageElement(markdownContainer, messageId) == null
+            && AiConversationEntries.addResultToCall(markdownContainer, messageElement, msg.getMessage())) {
+            // Shown in its call's entry.
+            appendUserActionsCard(markdownContainer, msg, nowMs);
+            keepProgressInPlace(markdownContainer);
             return;
         }
-        if (msg.getMessageType() == AiMessageType.AI_RESPONSE || msg.getMessageType() == AiMessageType.ERROR) {
-            // The answer is here, so the turn's work is done.
-            activityGroups.finish(msg.getTurnId(), msg.getCreateTimeMs());
+        if (msg.getMessageType() == AiMessageType.TOOL_CALL) {
+            AiConversationEntries.markCall(messageElement, AiToolMessages.getString(msg.getMessage(), "callId"));
+        } else if (msg.getMessageType() == AiMessageType.THINKING) {
+            // Reasoning that has arrived replaces the live view of it.
+            AiConversationEntries.removeLiveThinking(markdownContainer);
+        } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
+                   || msg.getMessageType() == AiMessageType.AI_RESPONSE
+                   || msg.getMessageType() == AiMessageType.ERROR) {
+            // The text being written is now stored, so is shown in its place, after what was said before.
             removeLiveAnswer();
         }
-        if (msg.getMessageType() == AiMessageType.ELICITATION
+        if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
+            || msg.getMessageType() == AiMessageType.ELICITATION
             || msg.getMessageType() == AiMessageType.APPROVAL_REQUEST
             || msg.getMessageType() == AiMessageType.AI_RESPONSE
             || msg.getMessageType() == AiMessageType.ERROR) {
-            // What the model said comes before what it asks the user, and before its answer.
-            showInterimInActivity();
+            // What the model said before comes before what it says now, what it asks the user, and its answer.
+            showInterimInConversation();
         }
         Element existing = findMessageElement(markdownContainer, messageId);
         if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE || isSteer(msg))) {
@@ -3867,9 +3951,18 @@ public class AskStroomAiPresenter
             // Answered, so no longer grows as it is filled in.
             unwatchPrompt();
         }
+        if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
+            appendUserActionsCard(markdownContainer, msg, nowMs);
+        } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
+                   && findInConversation(WORKING_MESSAGE_ID) != null) {
+            // While the agent works, shown once the Working line moves on from it (see updateWorkingMessage).
+            interimShownAsProgress = msg;
+            messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
+        }
         if (msg.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
             showUndoOnLatestCompaction();
         }
+        keepProgressInPlace(markdownContainer);
     }
 
     /**
@@ -3995,7 +4088,6 @@ public class AskStroomAiPresenter
         unwatchPrompt();
         refreshOverview();
         interimShownAsProgress = null;
-        activityGroups.clear();
         contextUsage = null;
         getView().setContextMeter(null, null, null);
         lastRenderedDay = null;
@@ -4584,7 +4676,7 @@ public class AskStroomAiPresenter
                                       final long timeMs,
                                       final long nowMs) {
         hb.elem(details -> {
-            // Lined up with the turns' activity lines ("Worked for ..."), so no icon.
+            // Lined up with the conversation's entries, so no icon.
             details.elem(summary ->
                             summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID)),
                     SUMMARY, Attribute.className("ai-message-header"));
@@ -4598,7 +4690,7 @@ public class AskStroomAiPresenter
     /**
      * Shows the answer and reasoning the model is writing now. The answer shows as an answer in progress at the
      * end of the conversation, and stays until the stored answer replaces it, as text the model writes alongside
-     * tool calls is worth seeing while they run. Reasoning shows in the turn's activity group.
+     * tool calls is worth seeing while they run. Reasoning shows as it is written, above the Working line.
      *
      * @param streaming The STREAMING_ANSWER and STREAMING_THINKING messages, or null.
      * @param complete  True if nothing more is coming.
@@ -4614,21 +4706,17 @@ public class AskStroomAiPresenter
                 final SafeHtml html = markdownConverter.convertUntrustedMarkdownToHtml(msg.getMessage());
                 if (msg.getMessageType() == AiMessageType.STREAMING_THINKING) {
                     thinking = true;
-                    final AiChatMessage question = renderedMessages.get(msg.getTurnId());
-                    activityGroups.showLiveThinking(markdownContainer, msg, html, question != null
-                            ? question.getCreateTimeMs()
-                            : 0);
+                    AiConversationEntries.showLiveThinking(markdownContainer, msg.getMessage(), html);
                 } else if (msg.getMessageType() == AiMessageType.STREAMING_ANSWER) {
                     showLiveAnswer(markdownContainer, html);
                 }
             }
         }
         if (!thinking) {
-            activityGroups.removeLiveThinking();
+            AiConversationEntries.removeLiveThinking(markdownContainer);
         }
         if (complete) {
             removeLiveAnswer();
-            activityGroups.finishAll();
         }
         keepProgressInPlace(markdownContainer);
         if (any) {
@@ -4661,27 +4749,11 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Keeps the line saying what is being done just below the work of the turn being worked on, so it stays above
-     * anything put to the user and anything they send while it works, and the answer being written at the end of
-     * the conversation, as messages arrive.
+     * Keeps the lines saying what is happening now at the end of the conversation as messages arrive, with the
+     * Working line last.
      */
     private void keepProgressInPlace(final Element markdownContainer) {
-        final Element working = findInConversation(WORKING_MESSAGE_ID);
-        if (working != null && working.getParentElement() == markdownContainer) {
-            final Element group = activityGroups.getLatestUnfinished();
-            if (group != null && group.getParentElement() == markdownContainer) {
-                if (group.getNextSibling() != working) {
-                    markdownContainer.insertAfter(working, group);
-                }
-            } else if (working != markdownContainer.getLastChild()) {
-                markdownContainer.appendChild(working);
-            }
-        }
-        final Element live = findInConversation(LIVE_ANSWER_ID);
-        if (live != null && live.getParentElement() == markdownContainer
-            && live != markdownContainer.getLastChild()) {
-            markdownContainer.appendChild(live);
-        }
+        AiConversationEntries.keepProgressAtEnd(markdownContainer);
     }
 
     private void removeLiveAnswer() {
@@ -4738,19 +4810,23 @@ public class AskStroomAiPresenter
         // What the model said is shown on the Working line until the line moves on to its next step, so it isn't
         // shown twice.
         if (interimShownAsProgress != null
-            && (workingMessage == null
-                || !AiChatTexts.isShownAsProgress(workingText(workingMessage), interimShownAsProgress.getMessage()))) {
-            showInterimInActivity();
+            && !AiConversationEntries.isLeftToWorkingLine(interimShownAsProgress.getMessageType(),
+                interimShownAsProgress.getMessage(),
+                workingMessage != null
+                        ? workingText(workingMessage)
+                        : null)) {
+            showInterimInConversation();
         }
     }
 
-    /// Shows what the model said alongside its latest tool calls in its turn's activity group, if it was kept
-    /// out while the Working line showed it.
-    private void showInterimInActivity() {
+    /// Shows what the model said alongside its latest tool calls in its place in the conversation, if it was
+    /// hidden while the Working line showed it.
+    private void showInterimInConversation() {
         if (interimShownAsProgress == null) {
             return;
         }
-        final Element element = activityGroups.findEntry(String.valueOf(interimShownAsProgress.getId()));
+        final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
+                String.valueOf(interimShownAsProgress.getId()));
         interimShownAsProgress = null;
         if (element != null) {
             element.removeClassName(SHOWN_AS_PROGRESS_CLASS);

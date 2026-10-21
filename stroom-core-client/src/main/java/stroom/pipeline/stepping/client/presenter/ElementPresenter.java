@@ -390,8 +390,24 @@ public class ElementPresenter
                && !readOnly;
     }
 
+    /// Works out what a proposed change makes of the element's current code: the proposed code if the
+    /// editor holds the code it was proposed against, or the current code with the change put on top of
+    /// the changes applied since, if it doesn't touch the lines they changed (see
+    /// [CodeChangeApplier#rebase(String, String)]).
+    ///
+    /// @param baseCode     The code the change was proposed against. Line endings are ignored.
+    /// @param proposedCode The whole proposed code.
+    /// @return The whole code to apply, or null if the change can't be applied to the current code.
+    public String rebaseCodeChange(final String baseCode, final String proposedCode) {
+        if (!canApplyCodeChange()) {
+            return null;
+        }
+        return codeChangeApplier.rebase(baseCode, proposedCode);
+    }
+
     /// Applies a proposed change to the element's code in its editor, as an unsaved edit, but only if
-    /// the editor still holds the code the change was proposed against. Nothing is saved.
+    /// the editor still holds the code the change was proposed against, or the change can be put on
+    /// top of the changes applied since. Nothing is saved.
     ///
     /// @param baseCode     The code the change was proposed against. Line endings are ignored.
     /// @param proposedCode The whole proposed code.

@@ -519,8 +519,17 @@ public class QueryEditPresenter
         return editorPresenter.getText();
     }
 
+    /// @param baseQuery     The query a change was proposed against.
+    /// @param proposedQuery The whole revised query.
+    /// @return True if the editor holds the query the change was proposed against, or the change can be put on top
+    /// of the changes applied since (see [CodeChangeApplier#rebase(String, String)]).
+    public boolean canApplyCodeChange(final String baseQuery, final String proposedQuery) {
+        return codeChangeApplier.rebase(baseQuery, proposedQuery) != null;
+    }
+
     /// Applies a revised query proposed in the AI chat to the editor, unsaved, keeping the editor's undo history, if
-    /// the editor still holds the query it was proposed against.
+    /// the editor still holds the query it was proposed against, or the change can be put on top of the changes
+    /// applied since.
     ///
     /// @param baseQuery     The query the change was proposed against.
     /// @param proposedQuery The whole revised query.
