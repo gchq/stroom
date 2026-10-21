@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -835,6 +836,36 @@ class TestAskStroomAIService {
 
         assertThat(response.getNewMessages()).extracting(AiChatMessage::getId).containsExactly(3);
         assertThat(response.getStreamingMessages()).containsExactly(streamed);
+    }
+
+    @Test
+    void testPollMessages_aRunSeenWaitingForTheUserComesWithWhatItAsked() {
+        // Seen: a form asked while a poll was being answered was never shown. The poll read the messages before
+        // the form was stored, and the run once it was waiting for the user, so the client stopped polling.
+        // Here the run asks between the poll's two reads, whichever comes first.
+        final AiChatMessage form = message(8, AiMessageType.ELICITATION, "{\"status\":\"PENDING\"}");
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
+        final AtomicInteger reads = new AtomicInteger();
+        Mockito.when(runDao.getLatest(1)).thenAnswer(invocation -> Optional.of(reads.getAndIncrement() == 0
+                ? running
+                : waiting));
+        Mockito.when(runDao.interruptStale(Mockito.anyLong())).thenReturn(List.of());
+        Mockito.when(aiService.getMessagesSince(1, 2)).thenAnswer(invocation -> reads.getAndIncrement() == 0
+                ? List.of()
+                : List.of(form));
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
+        Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
+
+        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false, null));
+
+        // Either the run is seen still running, so the client polls again, or the form comes with it.
+        if (response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
+            assertThat(response.getNewMessages()).contains(form);
+        } else {
+            assertThat(response.isComplete()).isFalse();
+        }
     }
 
     @Test
