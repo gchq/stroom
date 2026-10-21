@@ -174,12 +174,12 @@ public final class UserGroupsScreenStories {
                     // GWT's sortable headers have role="button", not "columnheader", so their names are
                     // read from the header cells' name holders
                     final Play master = masterGrid(play);
-                    final Value<List<String>> names = master.querySelectorAll(".dataGridSortableHeaderNameHolder")
+                    final Value<List<String>> names = master.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the first three column headings", () -> trimmed(names.get()).subList(0, 3))
                             .toEqual(List.of("/", "Display Name", "Full Name"));
                     play.expect(master.getByText("Display Name").closest(StroomDom.GRID_HEADER_CELL))
-                            .toHaveClass("dataGridSortedHeaderAscending");
+                            .toHaveAttribute("aria-sort", "ascending");
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);

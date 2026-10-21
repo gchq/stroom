@@ -1075,6 +1075,14 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 **Reported.**
 
+* In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
+  Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
+  the suite's default, passes them.
+* `stroom-gwt-suite` (the live-app crawler, not run here): `seed-import.mjs`, `probe-newfield.mjs`,
+  `probe-stepping.mjs`, `lib/context.mjs` (a grid row), `lib/cycle.mjs:1632` and `crawl.mjs:514`
+  look for grids only as `.dataGridWidget` tables (`tbody tr`), which no screen draws since the
+  grids' switch; they want `[role=grid]`, `[role=row][data-row]` as the other scripts do.
+
 * Scheduled processes (an analytic rule's or report's Schedules) and the execution schedule
   manager list by Name **descending** by default (`new CriteriaFieldSort(NAME, true, true)`: the
   second argument is `desc`), which looks like a slip for ascending. The default is now shown in
@@ -2005,6 +2013,12 @@ Reported by the suite and found not to be bugs, kept so they aren't reported aga
 * #33: a Report has duplicate notification settings it doesn't use. Unused shared code, not a
   missing tab.
 * #34: `UserPermissionsReportPlugin` adds a Security menu item that never appears. Unused code.
+* A thin splitter right beside a grid has the grid's rows within 12px of it, where WCAG 2.5.8
+  wants a 24px circle round an undersized target (a splitter is 7px) clear of other targets. The
+  new grid's rows are focusable, so `TargetSpacing` sees them; `MyDataGrid`'s were as clickable,
+  but not focusable, so it didn't. Accepted (2026-10-21, the user): there is no practical way to
+  keep a splitter clear of the content it divides, and a row is a full-width target.
+  `Widgets/Layout/SplitPaneContent` `TableAndEditor` leaves the grid's rows out of its check.
 * A press on a grid's tick box ends in no `click`: `TickBoxCell` acts on mousedown and redraws
   itself, so the element pressed is gone by mouseup. Both grids do it with real input (checked on
   `Widgets/Cell Renderers/TickBoxCell` `InGrid`), so switching grids changed nothing. Stories that want to know a tick happened should listen for mousedown.

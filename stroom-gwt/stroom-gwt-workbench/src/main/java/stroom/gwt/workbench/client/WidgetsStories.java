@@ -40,7 +40,6 @@ import stroom.gwt.workbench.client.widgets.datagrid.BenchmarkStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridKeyboardStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowStateStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowUpdateStories;
-import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridWidgetStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
@@ -227,7 +226,6 @@ public final class WidgetsStories {
         // Widgets/Tabs/LinkTabsWidget
         LinkTabsWidgetStories.addTo(registry);
         // Widgets/Data Grid/DataGrid
-        DataGridStories.addTo(registry);
         // Widgets/Data Grid/DataGridWidget
         DataGridWidgetStories.addTo(registry);
         // Widgets/Data Grid/Benchmark

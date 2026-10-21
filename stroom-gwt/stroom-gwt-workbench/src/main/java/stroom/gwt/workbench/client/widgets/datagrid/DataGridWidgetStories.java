@@ -85,7 +85,7 @@ public final class DataGridWidgetStories {
     private static final String ROW = ".data-grid__body [data-row]";
     private static final String GRID_ROW = ".data-grid__row";
     private static final String HEADER_CELLS = "[role=\"columnheader\"]";
-    private static final String KEYBOARD_ROW_CLASS = "dataGridKeyboardSelectedRow";
+    private static final String KEYBOARD_ROW_CLASS = "data-grid__row--keyboard";
 
     // Field names of the sortable columns
     private static final String NAME_FIELD = "Name";
@@ -352,7 +352,7 @@ public final class DataGridWidgetStories {
                 })
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(4));
-                    play.expect(play.querySelector(GRID)).toHaveClass("multiline");
+                    play.expect(play.querySelector(GRID)).toHaveClass("data-grid--multiline");
                     play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                 })
                 // Row column spans: as MarkerListPresenter spans its summary rows

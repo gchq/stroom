@@ -41,10 +41,15 @@
    --contain (a long page in natural mode), --selectable (it has a selection model), --no-header,
    --dragging, --resizing, --scroll-timeline (the thumbs follow scroll-driven animations).
 
-   The grid also carries the old grid's classes (dataGridWidget, dataGridEvenRow, dataGridCell and
-   so on), so the rules other stylesheets give them (colours, padding, cells' own looks) reach it,
-   and MyDataGrid's multiline and allow-header-selection. They go once MyDataGrid does (the design's
-   phase 4).
+   Modifiers of a row: --even and --odd (its stripe), --selected, --keyboard (the keyboard's row),
+   --probe. Of a header cell: --sortable. Of a cell: --keyboard (the keyboard's row's first cell),
+   and the alignments above. A sortable header's title is data-grid__sort, holding
+   data-grid__sort-name and the sort icon. The grid's own --multiline (cells wrap) and
+   --header-selection (header text can be selected).
+
+   Until the design's phase 4 the grid also carried MyDataGrid's classes (dataGridWidget,
+   dataGridEvenRow, dataGridCell and so on), whose rules were celltable/DataGrid.css's. Those rules
+   are here now, under these names; that sheet keeps only what cell tables and other widgets share.
 
    The widget sets these custom properties on the grid:
      --data-grid__columns          the grid-template-columns value, e.g. "22px 200px 340px"
@@ -59,6 +64,10 @@
     height: 100%;
     overflow: hidden;
     outline: none;
+}
+
+.data-grid input {
+    margin: 0;
 }
 
 /* The only scroller. Its own scrollbars are hidden; overlay thumbs are drawn instead. */
@@ -123,9 +132,63 @@
 .data-grid__header-cell {
     min-width: 0;
     align-content: center;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) 0 var(--row__padding--horizontal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+    cursor: default;
+    vertical-align: middle;
 }
 
-.data-grid:not(.allow-header-selection) .data-grid__header-cell {
+.data-grid__header-cell.center-align {
+    text-align: center;
+}
+
+.data-grid__header-cell.right-align {
+    text-align: right;
+}
+
+.data-grid__header-cell * {
+    font-weight: 500;
+}
+
+.data-grid__header-cell--sortable {
+    cursor: pointer;
+}
+
+/* A column headed by an icon (or two), e.g. a tick box column's */
+.data-grid__header-cell--sortable .single-icon-column-header,
+.data-grid__header-cell--sortable .two-icon-column-header,
+.data-grid__header-cell--sortable .single-icon-column-header .svgCell-icon,
+.data-grid__header-cell--sortable .two-icon-column-header .svgCell-icon {
+    cursor: pointer;
+}
+
+.data-grid__header-cell .single-icon-column-header,
+.data-grid__header-cell .two-icon-column-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.data-grid__header-cell:has(.single-icon-column-header),
+.data-grid__header-cell:has(.two-icon-column-header) {
+    text-decoration: none;
+}
+
+/* A sortable header's title: its name, then its sort icon (DataGridSortIcon) */
+.data-grid__sort {
+    display: flex;
+    gap: 5px;
+    padding: 0 !important;
+}
+
+.data-grid__sort-name:hover {
+    text-decoration: underline;
+}
+
+.data-grid:not(.data-grid--header-selection) .data-grid__header-cell {
     user-select: none;
 }
 
@@ -139,19 +202,59 @@
     cursor: default;
 }
 
+/* Stripes. The row states (mouse over, selected, focus) are data-grid.css's */
+.data-grid__row--even {
+    background-color: var(--row__background-color--even);
+}
+
+.data-grid__row--odd {
+    background-color: var(--row__background-color--odd);
+}
+
+.data-grid__row--selected {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+.data-grid__row--odd:hover,
+.data-grid__row--even:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.data-grid__row--selected:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
 /* Cells: vertically centred unless multi-line or explicitly aligned. */
 .data-grid__cell {
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: text;
+    vertical-align: middle;
 }
 
 .data-grid__cell > div {
     min-width: 0;
 }
 
-.multiline .data-grid__cell,
+/* A header's and a cell's content: the row padding, and an ellipsis for what doesn't fit */
+.data-grid__header-cell > div,
+.data-grid__cell > div {
+    text-overflow: ellipsis;
+    overflow-x: hidden;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal) var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.data-grid--multiline .data-grid__header-cell > div,
+.data-grid--multiline .data-grid__cell > div {
+    white-space: normal;
+}
+
+.data-grid--multiline .data-grid__cell,
 .data-grid__cell.data-grid__cell--valign-top {
     justify-content: flex-start;
 }

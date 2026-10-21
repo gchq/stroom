@@ -267,13 +267,13 @@ public final class DataGridKeyboardStories {
             focused[0] = box.element().get();
             focused[0].focus();
         });
-        play.waitFor(() -> play.expect(row(play, "Bravo")).toHaveClass("dataGridKeyboardSelectedRow"));
+        play.waitFor(() -> play.expect(row(play, "Bravo")).toHaveClass("data-grid__row--keyboard"));
         play.expect("the box focused is still the row's", () -> isConnected(focused[0])).toBe(true);
         play.expect(box).toHaveFocus();
         // Enter opens its list, whose filter takes the focus out of the grid; the box says it is open
         play.keyboard("{Enter}");
         play.waitFor(() -> play.expect(play.screen().getByRole("listbox")).toBeVisible());
-        play.waitFor(() -> play.expect(row(play, "Bravo")).not().toHaveClass("dataGridKeyboardSelectedRow"));
+        play.waitFor(() -> play.expect(row(play, "Bravo")).not().toHaveClass("data-grid__row--keyboard"));
         play.expect("the box opened is still the row's", () -> isConnected(focused[0])).toBe(true);
         play.expect(box).toHaveAttribute("aria-expanded", "true");
         play.keyboard("{Escape}");

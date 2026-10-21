@@ -191,7 +191,7 @@ public final class DictionaryEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
                     play.click(tab(play, "Imports"));
-                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    final Play grid = play.within(play.findByText("Document Name").closest(".data-grid"));
                     play.waitFor(() -> play.expect(grid.getByTitle("Open Dictionary 'Cities'.")).toBeInTheDocument());
                     expectNoProblems(play);
                 })
@@ -200,7 +200,7 @@ public final class DictionaryEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
                     play.click(tab(play, "Imports"));
-                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    final Play grid = play.within(play.findByText("Document Name").closest(".data-grid"));
                     play.waitFor(() -> play.expect(grid.getByTitle("Open Dictionary 'Cities'.")).toBeInTheDocument());
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     expectNoProblems(play);
@@ -213,7 +213,7 @@ public final class DictionaryEditorStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
                     play.click(tab(play, "Imports"));
-                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    final Play grid = play.within(play.findByText("Document Name").closest(".data-grid"));
                     // The imported dictionary is a command link (hasOpenLink) that opens the doc.
                     // Its 'open' button, named for what it opens, runs it
                     play.click(grid.getByRole("button", "Open Dictionary 'Cities'."));

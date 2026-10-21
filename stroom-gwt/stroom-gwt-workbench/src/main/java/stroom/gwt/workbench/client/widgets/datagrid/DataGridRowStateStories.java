@@ -21,7 +21,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.ComponentStories;
@@ -49,9 +48,9 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The looks of a data grid's rows in each of their states: Stroom's current grid ([MyDataGrid])
-/// beside the new one ([DataGridWidget], whose states are `data-grid.css`), in the light and dark
-/// themes and the comfortable and compact densities (a story each, as the page doesn't scroll).
+/// The looks of a data grid's ([DataGridWidget]'s) rows in each of their states (`data-grid.css`), in
+/// the light and dark themes and the comfortable and compact densities (a story each, as the page
+/// doesn't scroll).
 ///
 /// The grid's columns are those of Stroom's grids with controls in their cells: a tick box and a
 /// value spinner (as `ProcessorListPresenter`'s), and a text field and a selection box (as
@@ -64,8 +63,7 @@ import java.util.List;
 /// selected for real, through the grid's selection model.
 ///
 /// The keyboard focus is shown on a row, or on a cell holding a control that uses the arrow keys
-/// (here the Path text field), where the new grid's keyboard puts it; the current grid shows the
-/// same glow for both.
+/// (here the Path text field), where the grid's keyboard puts it.
 public final class DataGridRowStateStories {
 
     // The id of the style element holding the copied rules
@@ -96,9 +94,9 @@ public final class DataGridRowStateStories {
     // --------------------------------------------------------------------------------
     // Play
 
-    // Checks the new grid's rows: the current grid's are Stroom's as they are
+    // Checks the grid's rows
     private static void playSection(final Play play, final Section section) {
-        final String testId = section.testId(true);
+        final String testId = section.testId();
         play.waitFor(() -> play.expect(play.getByTestId(testId)).toBeInTheDocument());
         // Each row says whether it is selected
         play.waitFor(() -> play.expect(section.title + " selected rows",
@@ -158,14 +156,11 @@ public final class DataGridRowStateStories {
         return section(section);
     }
 
-    // The section's theme and density, holding the current grid beside the new one (each row's
-    // label says its state)
+    // The section's theme and density, holding the grid (each row's label says its state)
     private static Widget section(final Section section) {
         final FlowPanel panel = StoryPanels.column(8,
                 StoryPanels.note(section.title, "#aaa", "0.9rem"),
-                StoryPanels.row(16,
-                        StoryPanels.column(4, StoryPanels.note("Current", "#aaa", "0.8rem"), currentGrid(section)),
-                        StoryPanels.column(4, StoryPanels.note("New", "#aaa", "0.8rem"), newGrid(section))));
+                newGrid(section));
         panel.addStyleName(section.theme.getCssClass());
         panel.addStyleName(section.density);
         panel.getElement().getStyle().setProperty("background", "var(--page__background-color)");
@@ -175,21 +170,7 @@ public final class DataGridRowStateStories {
         return panel;
     }
 
-    // Stroom's current grid, with a row for each state
-    private static Widget currentGrid(final Section section) {
-        final MyDataGrid<RowState> grid = new MyDataGrid<>(new SimpleEventBus());
-        grid.setAccessibleName(section.title + ", current");
-        addColumns(grid::addResizableColumn, grid::addColumn, grid::addColumn);
-        final MultiSelectionModelImpl<RowState> selectionModel = grid.addDefaultSelectionModel(true);
-        selectionModel.setSelectedItems(selectedStates());
-        grid.setRowData(List.of(RowState.values()));
-        grid.setRowCount(RowState.values().length);
-        // Each time the rows are drawn, they are put in their states again
-        grid.addRedrawHandler(() -> applyStates(grid.getElement()));
-        return framed(grid, section.testId(false));
-    }
-
-    // The new grid, with a row for each state, put in their states once drawn
+    // The grid, with a row for each state, put in their states once drawn
     private static Widget newGrid(final Section section) {
         final DataGridWidget<RowState> grid = new DataGridWidget<>(new SimpleEventBus());
         grid.setAccessibleName(section.title + ", new");
@@ -206,7 +187,7 @@ public final class DataGridRowStateStories {
                 });
             }
         });
-        return framed(grid, section.testId(true));
+        return framed(grid, section.testId());
     }
 
     // The columns of Stroom's grids with controls in their cells, added by the grid's own methods
@@ -356,27 +337,23 @@ public final class DataGridRowStateStories {
         }
     }-*/;
 
-    // The grid's body rows: the current grid's (GWT gives each the __gwt_row attribute) or the new
-    // one's
+    // The grid's body rows
     private static native NodeList<Element> bodyRows(Element container) /*-{
-        return container.querySelectorAll('tr[__gwt_row], [role="row"][data-row]');
+        return container.querySelectorAll('[role="row"][data-row]');
     }-*/;
 
-    // A row's cell in a column: the current grid's (a td) or the new one's
+    // A row's cell in a column
     private static native Element rowCell(Element row, int column) /*-{
-        return row.tagName === 'TR'
-            ? row.cells[column]
-            : row.querySelector(':scope > [data-col="' + column + '"]');
+        return row.querySelector(':scope > [data-col="' + column + '"]');
     }-*/;
 
     private static native int countSelected(Element container) /*-{
-        return container.querySelectorAll('tr[__gwt_row][aria-selected="true"], '
-            + '[role="row"][data-row][aria-selected="true"]').length;
+        return container.querySelectorAll('[role="row"][data-row][aria-selected="true"]').length;
     }-*/;
 
     // The body row of the grid in the container whose first cell's text is the text given
     private static native Element rowWithText(Element container, String text) /*-{
-        var rows = container.querySelectorAll('tr[__gwt_row], [role="row"][data-row]');
+        var rows = container.querySelectorAll('[role="row"][data-row]');
         for (var i = 0; i < rows.length; i++) {
             var first = rows[i].querySelector('td, [data-col]');
             if (first && first.textContent.trim() === text) {
@@ -436,10 +413,8 @@ public final class DataGridRowStateStories {
             this.density = density;
         }
 
-        private String testId(final boolean dataGridBlock) {
-            return name().toLowerCase().replace('_', '-') + (dataGridBlock
-                    ? "-new"
-                    : "-current");
+        private String testId() {
+            return name().toLowerCase().replace('_', '-') + "-new";
         }
     }
 

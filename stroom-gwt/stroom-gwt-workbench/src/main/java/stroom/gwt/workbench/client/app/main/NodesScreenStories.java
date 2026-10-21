@@ -120,8 +120,8 @@ public final class NodesScreenStories {
                                     .withJsonBodyContaining("{\"sortList\": [{\"id\": \"URL\", \"desc\": false}]}")
                                     .toSpyMatcher()));
                     // Ping has no withSorting in GWT, so its header isn't sortable.
-                    // The headers are <th> elements (no role attribute), marked sortable with GWT's
-                    // 'dataGridSortableHeader' class
+                    // A sortable header is marked with the grid's
+                    // 'data-grid__header-cell--sortable' class
                     play.expect(play.getByText("Ping (ms)").closest(StroomDom.GRID_HEADER_CELL))
                             .not().toHaveClass(StroomDom.SORTABLE_HEADER);
                     play.expect(play.getByText("Name").closest(StroomDom.GRID_HEADER_CELL))

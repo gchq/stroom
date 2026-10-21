@@ -204,8 +204,7 @@ public final class JobsScreenStories {
                     showDataRetentionNodes(play);
                     play.findByText("node3");
                     // Multi-select the two CRON nodes: select node1, then Ctrl-mousedown node3.
-                    // A selected row has GWT's 'dataGridSelectedRow' class, not
-                    // aria-selected="true"
+                    // A selected row has the grid's 'data-grid__row--selected' class
                     play.fireEvent().mouseDown(play.getByText("node1"));
                     play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
                     play.fireEvent().mouseDown(play.getByText("node3"), EventInit.create().ctrlKey());

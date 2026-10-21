@@ -42,10 +42,10 @@ public final class StroomDom {
     public static final String GRID_HEADER_TEXT = "th, th *, [data-hcol], [data-hcol] *";
     /// What holds a cell's text in either grid, for `getByText(text, GRID_CELL_TEXT)`.
     public static final String GRID_CELL_TEXT = "td *, [data-col] *";
-    /// The class of a selected `MyDataGrid` or `DataGridWidget` row.
-    public static final String SELECTED_ROW = "dataGridSelectedRow";
-    /// The class of the header of a column that can be sorted.
-    public static final String SORTABLE_HEADER = "dataGridSortableHeader";
+    /// The class of a selected `DataGridWidget` row.
+    public static final String SELECTED_ROW = "data-grid__row--selected";
+    /// The class of the header of a grid column that can be sorted.
+    public static final String SORTABLE_HEADER = "data-grid__header-cell--sortable";
     /// The text box of Stroom's `SelectionBox` (a drop-down), which opens its list when clicked.
     public static final String SELECTION_BOX = ".selection-box__input";
     /// The placeholder of a `QuickFilter`'s text box, which has no label.

@@ -113,7 +113,7 @@ public class DataGridWidget<R> extends Widget
     private static final String DATA_ROW = GridHtml.DATA_ROW;
     private static final String DATA_COL = GridHtml.DATA_COL;
     private static final String DATA_HCOL = GridHtml.DATA_HCOL;
-    private static final String KEYBOARD_CELL_CLASS_NAME = "dataGridKeyboardSelectedCell";
+    private static final String KEYBOARD_CELL_CLASS_NAME = "data-grid__cell--keyboard";
     private static final double FALLBACK_ROW_HEIGHT = 24;
     // Natural pages with more rows than this let the browser skip laying out the rows out of view
     // (data-grid--contain, see DataGridWidget.css)
@@ -221,7 +221,7 @@ public class DataGridWidget<R> extends Widget
 
         final Document doc = Document.get();
         final Element root = doc.createDivElement();
-        root.setClassName("data-grid dataGridWidget allow-header-selection");
+        root.setClassName("data-grid data-grid--header-selection");
 
         // The scroller is the grid as far as ARIA is concerned, and takes keyboard focus, so a grid
         // can always be scrolled from the keyboard. Key events bubble from it to the root, where they
@@ -229,7 +229,7 @@ public class DataGridWidget<R> extends Widget
         scroller = div(doc, "data-grid__scroller");
         scroller.setAttribute("role", "grid");
         scroller.setTabIndex(0);
-        head = div(doc, "data-grid__head dataGridHeaderBackground");
+        head = div(doc, "data-grid__head");
         headerRow = div(doc, "data-grid__header-row");
         headerRow.setAttribute("role", "row");
         head.appendChild(headerRow);
@@ -689,7 +689,7 @@ public class DataGridWidget<R> extends Widget
     public void setMultiLine(final boolean multiLine) {
         if (this.multiLine != multiLine) {
             this.multiLine = multiLine;
-            setStyleName("multiline", multiLine);
+            setStyleName("data-grid--multiline", multiLine);
             scheduleRender();
         }
     }
@@ -752,7 +752,7 @@ public class DataGridWidget<R> extends Widget
     /// @param allowHeaderSelection Whether header text can be selected and the header menu shown.
     public void setAllowHeaderSelection(final boolean allowHeaderSelection) {
         this.allowHeaderSelection = allowHeaderSelection;
-        setStyleName("allow-header-selection", allowHeaderSelection);
+        setStyleName("data-grid--header-selection", allowHeaderSelection);
     }
 
     /// @return Whether header text can be selected and the header menu shown.
@@ -1643,7 +1643,7 @@ public class DataGridWidget<R> extends Widget
             final Map<Integer, Integer> spans = rowSpans != null && row != null
                     ? rowSpans.getSpans(row, absIndex)
                     : Collections.emptyMap();
-            final String cellsHtml = html.cells(row, absIndex, selected, even, spans).asString();
+            final String cellsHtml = html.cells(row, absIndex, spans).asString();
             if (!cellsHtml.equals(rendered.html)) {
                 final int focusedColumn = getFocusedColumn(rendered.element);
                 rendered.element.setInnerHTML(cellsHtml);
@@ -1660,13 +1660,13 @@ public class DataGridWidget<R> extends Widget
 
         final StringBuilder classes = new StringBuilder("data-grid__row ");
         classes.append(even
-                ? "dataGridEvenRow"
-                : "dataGridOddRow");
+                ? "data-grid__row--even"
+                : "data-grid__row--odd");
         if (selected) {
-            classes.append(" dataGridSelectedRow");
+            classes.append(" data-grid__row--selected");
         }
         if (keyboard) {
-            classes.append(" dataGridKeyboardSelectedRow");
+            classes.append(" data-grid__row--keyboard");
         }
         if (rowStyles != null && row != null) {
             final String extra = rowStyles.getStyleNames(row, absIndex);
@@ -1779,9 +1779,9 @@ public class DataGridWidget<R> extends Widget
         // before there are rows is taken again once they arrive.
         final boolean hasRows = pageState.getRowDataSize() > 0;
         final double height = measureRowHeight(hasRows
-                ? html.cells(pageState.getRow(0), getPageStart(), false, true, Collections.emptyMap())
+                ? html.cells(pageState.getRow(0), getPageStart(), Collections.emptyMap())
                 .asString()
-                : "<div class=\"data-grid__cell dataGridCell\"><div>X</div></div>");
+                : "<div class=\"data-grid__cell\"><div>X</div></div>");
         if (hasRows) {
             measuredRowHeight = height;
         }
@@ -1794,7 +1794,7 @@ public class DataGridWidget<R> extends Widget
     // natural rows are, so virtual rows line up with them exactly.
     private double measureRowHeight(final String cellsHtml) {
         final Element probe = Document.get().createDivElement();
-        probe.setClassName("data-grid__row data-grid__row--probe dataGridEvenRow");
+        probe.setClassName("data-grid__row data-grid__row--probe data-grid__row--even");
         probe.setInnerHTML(cellsHtml);
         body.appendChild(probe);
         final double height = DataGridDom.getHeight(probe);

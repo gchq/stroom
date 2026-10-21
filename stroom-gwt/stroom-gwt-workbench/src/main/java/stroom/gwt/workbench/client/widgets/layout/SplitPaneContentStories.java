@@ -84,8 +84,9 @@ public final class SplitPaneContentStories {
                     play.waitFor(() -> play.expect("the editor's growth",
                             () -> editorWidth.get() - editorBefore.get()).toBeCloseTo(-50, 0));
                     // A splitter is narrower than 24px, so nothing else clickable may be within 12px
-                    // of its centre (WCAG 2.5.8): the pager's buttons and the editor's gutter aren't
-                    play.expect(TargetSpacing.crowding(splitter)).toEqual(List.of());
+                    // of its centre (WCAG 2.5.8): the pager's buttons and the editor's gutter aren't.
+                    // The grid's rows are, which is accepted (full-width targets; see ISSUES.md)
+                    play.expect(TargetSpacing.crowding(splitter, grid)).toEqual(List.of());
                 })
                 // A regular splitter (a 7px gap) beside Stroom's table and code editor (the real
                 // input check presses it with the mouse)

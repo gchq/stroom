@@ -34,9 +34,8 @@
    and bottom), a mouse-over that fades in, and no pressed look (pressing a row selects it there and
    then).
 
-   The rows also carry the old grid's classes (dataGridEvenRow, dataGridSelectedRow and so on), so
-   celltable/DataGrid.css's row rules reach them too; these come after it and override its hover on
-   selected rows and its blurred focus glow.
+   A cell's own styles (from its column) dataGridDisabledCell, for a row that is switched off, and
+   dataGridAlertText, for text that warns, are also given their colours here.
 */
 
 /* Mouse over: a row that isn't selected fades into the hovered colour. A selected row shows no
@@ -52,12 +51,7 @@
     color: var(--row__text-color--selected);
 }
 
-/* Keyboard focus only: a click selects the row, which says where it is. The old glow is drawn for
-   any focus inside the row, so it is removed */
-.data-grid .data-grid__row:focus-within {
-    box-shadow: none;
-}
-
+/* Keyboard focus only: a click selects the row, which says where it is */
 .data-grid .data-grid__row:focus,
 .data-grid .data-grid__cell:focus,
 .data-grid .data-grid__header-cell:focus {
@@ -78,6 +72,25 @@
 .data-grid .data-grid__row[aria-selected="true"]:has(:focus-visible),
 .data-grid .data-grid__row[aria-selected="true"]:focus-visible {
     background-color: var(--row__background-color--selected--focussed);
+}
+
+/* A disabled row (an item switched off, e.g. a disabled rule, job or node) has its text greyed;
+   its tick boxes, spinners and icons still work, so are drawn as usual. A control that really
+   can't be used shows its own disabled look */
+.dataGridDisabledCell {
+    color: var(--text-color--disabled);
+}
+
+.data-grid__row--selected .dataGridDisabledCell {
+    color: var(--text-color--disabled--selected);
+}
+
+.dataGridAlertText {
+    color: var(--text-color--red);
+}
+
+.data-grid__row--selected .dataGridAlertText {
+    color: var(--row__text-color--red--selected);
 }
 
 /* Forced colours (e.g. Windows high contrast) replace the rows' fills with the page's colour and

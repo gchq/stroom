@@ -17,7 +17,6 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.data.client.presenter.FeedRefCell;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.feed.client.CopyFeedUrlEvent;
 import stroom.feed.client.OpenFeedEvent;
 import stroom.gwt.workbench.client.StoryPanels;
@@ -28,6 +27,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -136,7 +136,7 @@ public final class FeedRefCellStories {
         final Spy onOpen = context.fn(ON_OPEN);
         eventBus.addHandler(OpenFeedEvent.getType(), event -> onOpen.call(event.getName()));
         final FeedRefCell<String> cell = cell(eventBus, true);
-        final MyDataGrid<String> grid = new MyDataGrid<>(eventBus::fireEvent);
+        final DataGridWidget<String> grid = new DataGridWidget<>(eventBus::fireEvent);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

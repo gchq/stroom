@@ -134,7 +134,7 @@ public final class UserTabScreenStories {
                     play.waitFor(() -> play.expect(play.getByText("TEST_FEED")).toBeInTheDocument());
                     // The permission's display value, with Permission and Inherited Permission apart
                     play.expect(play.getByText("Edit")).toBeInTheDocument();
-                    final Play grid = play.within(play.getByText("Edit").closest(".dataGridWidget"));
+                    final Play grid = play.within(play.getByText("Edit").closest(".data-grid"));
                     play.expect(grid.getAllByRole("columnheader").textContents())
                             .toEqual(List.of("Document", "Permission", "Inherited Permission", "Path"));
                     SecurityPlays.expectNoProblems(play);
@@ -146,7 +146,7 @@ public final class UserTabScreenStories {
                     play.waitFor(() -> play.expect(play.getAllByText("Administrators").count()).toBeGreaterThan(0));
                     // GWT's sortable headers have role="button", not "columnheader", so the headings are
                     // read from the header cells' name holders
-                    final Value<List<String>> headings = play.querySelectorAll(".dataGridSortableHeaderNameHolder")
+                    final Value<List<String>> headings = play.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the headings", () -> trimmed(headings.get())).toContain("Display Name");
                     play.expect("the headings", () -> trimmed(headings.get())).not().toContain("Group");

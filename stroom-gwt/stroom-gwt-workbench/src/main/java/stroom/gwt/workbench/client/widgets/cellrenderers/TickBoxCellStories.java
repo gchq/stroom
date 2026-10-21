@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.widgets.cellrenderers;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -27,6 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
@@ -54,7 +54,7 @@ public final class TickBoxCellStories {
     private static final String TICKED = "Ticked";
     private static final String HALF_TICKED = "Half-Ticked";
     private static final String NOT_TICKED = "Not Ticked";
-    private static final String HEADER_TICK_BOX = "th .tick-box";
+    private static final String HEADER_TICK_BOX = "[data-hcol] .tick-box";
 
     private TickBoxCellStories() {
         // Static utility
@@ -123,7 +123,7 @@ public final class TickBoxCellStories {
 
     /// @return The tick box in the row with the name.
     private static Query rowTickBox(final Play play, final String name) {
-        return play.within(play.getByText(name).closest("tr")).querySelector(".tick-box");
+        return play.within(play.getByText(name).closest("[role='row']")).querySelector(".tick-box");
     }
 
     /// A grid of [#NAMES] with a tick box column, as Stroom's list presenters build them.
@@ -133,7 +133,7 @@ public final class TickBoxCellStories {
     private static Widget grid(final StoryContext context, final boolean updatable, final String... ticked) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Set<String> selected = new LinkedHashSet<>(List.of(ticked));
-        final MyDataGrid<String> grid = new MyDataGrid<>(new SimpleEventBus());
+        final DataGridWidget<String> grid = new DataGridWidget<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
 

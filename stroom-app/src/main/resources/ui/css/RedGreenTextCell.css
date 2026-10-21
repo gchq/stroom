@@ -10,15 +10,15 @@
     color:var(--text-color--red);
 }
 
-.dataGridDisabledCell.dataGridSelectedRowCell .redGreenCell__green,
-.dataGridDisabledCell.dataGridSelectedRowCell .redGreenCell__red,
+.data-grid__row--selected .dataGridDisabledCell .redGreenCell__green,
+.data-grid__row--selected .dataGridDisabledCell .redGreenCell__red,
 .dataGridDisabledCell .redGreenCell__green,
 .dataGridDisabledCell .redGreenCell__red {
     color:var(--text-color--disabled);
 }
 
 /* Not enough contrast on blue bg to use red and green */
-.dataGridSelectedRowCell .redGreenCell__green,
-.dataGridSelectedRowCell .redGreenCell__red {
+.data-grid__row--selected .redGreenCell__green,
+.data-grid__row--selected .redGreenCell__red {
     color:var(--text-color);
 }

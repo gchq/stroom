@@ -52,6 +52,6 @@
 	opacity: var(--disabled-opacity);
 }
 
-.stroom-theme-dark .dataGridSelectedRowCell .svgCell-icon svg {
+.stroom-theme-dark .data-grid__row--selected .svgCell-icon svg {
     color: white !important;
 }

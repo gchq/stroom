@@ -604,8 +604,8 @@
 /* Colour all text in a trace-list row red when the trace has any errored span (TraceRoot.error).
    Targets the cells (and their content) so it overrides the columns' own text colours; the themed
    --text-color--red keeps it legible in both light and dark themes. */
-.trace-row--error .dataGridCell,
-.trace-row--error .dataGridCell * {
+.trace-row--error .data-grid__cell,
+.trace-row--error .data-grid__cell * {
     color: var(--text-color--red);
 }
 

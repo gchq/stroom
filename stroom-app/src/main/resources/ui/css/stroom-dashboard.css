@@ -62,7 +62,7 @@
 .stroom-dashboard-table {
 }
 
-.stroom-dashboard-table .dataGridCell > div {
+.stroom-dashboard-table .data-grid__cell > div {
 	text-overflow: ellipsis;
 	overflow-x: hidden;
 	padding: 0;

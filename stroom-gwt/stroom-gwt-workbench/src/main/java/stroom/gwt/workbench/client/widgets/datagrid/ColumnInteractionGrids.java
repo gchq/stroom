@@ -76,7 +76,7 @@ final class ColumnInteractionGrids {
     private static final String HANDLE = ".data-grid__resize-handle";
     private static final String MOVE_GHOST = ".data-grid__move-ghost";
     private static final String MOVE_LINE = ".data-grid__move-line";
-    private static final String KEYBOARD_ROW_CLASS = "dataGridKeyboardSelectedRow";
+    private static final String KEYBOARD_ROW_CLASS = "data-grid__row--keyboard";
 
     private static final int MENU_ROWS = 500;
     private static final String ASK_AI = "Ask Stroom AI About";

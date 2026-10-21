@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -41,9 +40,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// Which of a grid's rows are drawn again when its rows change, as Stroom's screens change them, for
-/// the current grid ([MyDataGrid]) and the new one ([DataGridWidget]): a row drawn again has its
-/// cells replaced, so a control in it loses its focus and anything typed in it but not yet saved.
+/// Which of a [DataGridWidget]'s rows are drawn again when its rows change, as Stroom's screens change
+/// them: a row drawn again has its cells replaced, so a control in it loses its focus and anything
+/// typed in it but not yet saved. (The old grid, `MyDataGrid`, since removed, drew every row again.)
 ///
 /// The rows arrive as a refresh from the server brings them: new objects, equal to the old ones
 /// (they compare equal on every field) where nothing changed. The scenarios: ticking a row's tick
@@ -75,60 +74,44 @@ public final class DataGridRowUpdateStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Data Grid/DataGridRowUpdates", DataGridRowUpdateStories.class)
                 .layout(StoryLayout.PADDED)
-                .story("CurrentGrid", context -> render(false))
-                .withPlay(play -> playUpdates(play, false))
-                .story("NewGrid", context -> render(true))
-                .withPlay(play -> playUpdates(play, true));
+                .story("NewGrid", context -> render())
+                .withPlay(DataGridRowUpdateStories::playUpdates);
     }
 
     // --------------------------------------------------------------------------------
     // Plays
 
-    private static void playUpdates(final Play play, final boolean newGrid) {
+    private static void playUpdates(final Play play) {
         play.waitFor(() -> play.expect(play.getByTestId(REDRAWN)).toHaveTextContent(REDRAWN_PREFIX + "none"));
 
         // Ticking a row's box: its field updater saves the change, and the screen refreshes
         play.click(control(play, "Charlie", ENABLED_COLUMN, "[role='checkbox']"));
-        expectRedrawn(play, newGrid
-                ? "Charlie"
-                : "Alpha, Bravo, Charlie, Delta, Echo");
+        expectRedrawn(play, "Charlie");
 
         // A poll that changes nothing
         play.run("poll, nothing changed", () -> poll.accept(null));
-        expectRedrawn(play, newGrid
-                ? "none"
-                : "Alpha, Bravo, Charlie, Delta, Echo");
+        expectRedrawn(play, "none");
 
         // Text typed in Echo's field but not saved, which has the focus, as a poll changes Alpha
         play.click(control(play, "Echo", PATH_COLUMN, "input"));
         play.type(control(play, "Echo", PATH_COLUMN, "input"), "/typed");
         play.run("poll, Alpha changed", () -> poll.accept("Alpha"));
-        expectRedrawn(play, newGrid
-                ? "Alpha"
-                : "Alpha, Bravo, Charlie, Delta, Echo");
-        // The typed text is kept by both (the cell keeps it while unsaved); the new grid keeps the
-        // field itself, so it keeps the focus, where the current grid's is replaced, losing it
+        expectRedrawn(play, "Alpha");
+        // The typed text is kept, and the field itself, so it keeps the focus
         play.waitFor(() -> play.expect(control(play, "Echo", PATH_COLUMN, "input")).toHaveValue("/echo/typed"));
-        if (newGrid) {
-            play.expect(control(play, "Echo", PATH_COLUMN, "input")).toHaveFocus();
-        } else {
-            play.expect(control(play, "Echo", PATH_COLUMN, "input")).not().toHaveFocus();
-        }
+        play.expect(control(play, "Echo", PATH_COLUMN, "input")).toHaveFocus();
 
-        // Choosing a row with a click draws it again (its cells show it chosen); the current grid
-        // also draws again the row the keyboard was on (Alpha, the first)
+        // Choosing a row with a click draws none again: being chosen is the row's class, not its cells'
         play.click(control(play, "Bravo", 0, "*"));
-        expectRedrawn(play, newGrid
-                ? "Bravo"
-                : "Alpha, Bravo");
+        play.waitFor(() -> play.expect(play.getByText("Bravo").closest("[role='row']"))
+                .toHaveAttribute("aria-selected", "true"));
+        expectRedrawn(play, "none");
 
         // Text typed in Delta's field, as a poll changes Delta itself
         play.click(control(play, "Delta", PATH_COLUMN, "input"));
         play.type(control(play, "Delta", PATH_COLUMN, "input"), "/typed");
         play.run("poll, Delta changed", () -> poll.accept("Delta"));
-        expectRedrawn(play, newGrid
-                ? "Delta"
-                : "Alpha, Bravo, Charlie, Delta, Echo");
+        expectRedrawn(play, "Delta");
     }
 
     private static void expectRedrawn(final Play play, final String names) {
@@ -136,9 +119,8 @@ public final class DataGridRowUpdateStories {
     }
 
     private static Query control(final Play play, final String name, final int column, final String selector) {
-        final Query row = play.within(play.getByTestId(GRID)).getByText(name).closest("tr, [role='row']");
-        return play.within(row).querySelector("td:nth-child(" + (column + 1) + ") " + selector + ", [data-col='"
-                                              + column + "'] " + selector);
+        final Query row = play.within(play.getByTestId(GRID)).getByText(name).closest("[role='row']");
+        return play.within(row).querySelector("[data-col='" + column + "'] " + selector);
     }
 
     // --------------------------------------------------------------------------------
@@ -146,7 +128,7 @@ public final class DataGridRowUpdateStories {
 
     // A grid of rows with a tick box and a text field, the note of the rows drawn again, and the
     // poll the plays run
-    private static Widget render(final boolean newGrid) {
+    private static Widget render() {
         final List<Row> rows = new ArrayList<>();
         for (final String name : NAMES) {
             rows.add(new Row(name, true, "/" + name.toLowerCase()));
@@ -168,9 +150,7 @@ public final class DataGridRowUpdateStories {
             markCells(frame.getElement());
         });
 
-        final Grid grid = newGrid
-                ? new NewGrid()
-                : new CurrentGrid();
+        final Grid grid = new NewGrid();
         // A refresh: the rows again, each a new object
         final Runnable refresh = () -> {
             final List<Row> copies = new ArrayList<>();
@@ -334,36 +314,6 @@ public final class DataGridRowUpdateStories {
     private interface Updater<C> {
 
         void update(int index, Row row, C value);
-    }
-
-    private static final class CurrentGrid implements Grid {
-
-        private final MyDataGrid<Row> grid = new MyDataGrid<>(new SimpleEventBus());
-
-        @Override
-        public void addColumns(final Updater<TickBoxState> enabledUpdater, final Updater<String> pathUpdater) {
-            grid.addResizableColumn(DataGridUtil.textColumnBuilder((Row row) -> row.name).build(), "Name", 100);
-            grid.addColumn(enabledColumn(enabledUpdater), "Enabled", 70);
-            grid.addColumn(pathColumn(pathUpdater), "Path", 200);
-        }
-
-        @Override
-        public void setRows(final List<Row> rows) {
-            grid.setRowData(0, rows);
-            grid.setRowCount(rows.size());
-        }
-
-        @Override
-        public void onSelect(final Runnable runnable) {
-            grid.addDefaultSelectionModel(false).addSelectionHandler(event -> runnable.run());
-        }
-
-        @Override
-        public Widget asWidget() {
-            grid.setWidth("100%");
-            grid.setHeight("100%");
-            return grid;
-        }
     }
 
     private static final class NewGrid implements Grid {

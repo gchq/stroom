@@ -20,7 +20,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
@@ -82,7 +81,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
+        cellTable = new MyCellTable<>(MyCellTable.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menu");
 
         // Sink events.

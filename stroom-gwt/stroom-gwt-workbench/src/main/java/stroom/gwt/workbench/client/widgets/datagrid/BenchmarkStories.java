@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.datagrid;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -36,16 +35,16 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// A harness for comparing the new [DataGridWidget] with `MyDataGrid`: performance, and the
-/// behaviour the design's Phase 0 measures (where the keyboard row and the scroll position end up
+/// A harness for measuring [DataGridWidget] (it compared it with `MyDataGrid`, since removed):
+/// performance, and the behaviour the design's Phase 0 measures (where the keyboard row and the scroll position end up
 /// when new data arrives).
 ///
 /// The story shows an empty frame and does nothing on its own. It puts a `dgBench` object on the
-/// page's window with synchronous operations (set up a grid of either kind with N rows, send the
+/// page's window with synchronous operations (set up a grid, natural or virtual, with N rows, send the
 /// rows again, change some rows, select a row, resize a column, scroll), each of which renders,
 /// forces layout and returns the time it took in milliseconds. A script drives it, repeating each
-/// operation and timing the next painted frame as well. Both grids get the same five columns and
-/// the same generated rows.
+/// operation and timing the next painted frame as well. The grid gets five columns and generated
+/// rows.
 ///
 /// For the behaviour measurements, `replace` sends different data as a presenter would,
 /// `rebuildColumns` removes and re-adds every column as the dashboard does on a settings change,
@@ -57,9 +56,7 @@ public final class BenchmarkStories {
 
     // The grid under test. Static, as the window functions are static.
     private static SimplePanel host;
-    private static Widget grid;
-    private static MyDataGrid<Person> oldGrid;
-    private static DataGridWidget<Person> newGrid;
+    private static DataGridWidget<Person> grid;
     private static MultiSelectionModelImpl<Person> selectionModel;
     private static List<Person> rows;
 
@@ -89,33 +86,21 @@ public final class BenchmarkStories {
     // --------------------------------------------------------------------------------
     // Operations, called from the page. Each returns the milliseconds it took to render and lay out.
 
-    /// @param kind      `old`, `new` or `virtual`.
+    /// @param kind      `new` (natural) or `virtual`.
     /// @param rowCount  The number of rows, all on one page.
     /// @param selection Whether to add a multi-select selection model.
     private static double setup(final String kind, final int rowCount, final boolean selection) {
         host.clear();
-        oldGrid = null;
-        newGrid = null;
         selectionModel = null;
         rows = DataGridRows.generatedPeople(rowCount);
         final int pageSize = Math.max(rowCount, 1);
 
         final double start = now();
-        if ("old".equals(kind)) {
-            oldGrid = new MyDataGrid<>(new SimpleEventBus(), pageSize);
-            addColumns(oldGrid::addResizableColumn);
-            if (selection) {
-                selectionModel = oldGrid.addDefaultSelectionModel(true);
-            }
-            grid = oldGrid;
-        } else {
-            newGrid = new DataGridWidget<>(new SimpleEventBus(), pageSize);
-            newGrid.setVirtual("virtual".equals(kind));
-            addColumns(newGrid::addResizableColumn);
-            if (selection) {
-                selectionModel = newGrid.addDefaultSelectionModel(true);
-            }
-            grid = newGrid;
+        grid = new DataGridWidget<>(new SimpleEventBus(), pageSize);
+        grid.setVirtual("virtual".equals(kind));
+        addColumns(grid);
+        if (selection) {
+            selectionModel = grid.addDefaultSelectionModel(true);
         }
         grid.setWidth("100%");
         grid.setHeight("100%");
@@ -163,11 +148,7 @@ public final class BenchmarkStories {
     /// Resize the Name column, as one frame of a column drag does.
     private static double resize(final int width) {
         final double start = now();
-        if (oldGrid != null) {
-            oldGrid.resizeColumn(1, width);
-        } else {
-            newGrid.resizeColumn(1, width);
-        }
+        grid.resizeColumn(1, width);
         flushAndLayout();
         return now() - start;
     }
@@ -204,41 +185,26 @@ public final class BenchmarkStories {
     /// Remove every column and add them again, as the dashboard's `updateColumns` does.
     private static double rebuildColumns() {
         final double start = now();
-        if (oldGrid != null) {
-            while (oldGrid.getColumnCount() > 0) {
-                oldGrid.removeColumn(oldGrid.getColumn(0));
-            }
-            addColumns(oldGrid::addResizableColumn);
-            oldGrid.resizeTableToFitColumns();
-        } else {
-            while (newGrid.getColumnCount() > 0) {
-                newGrid.removeColumn(newGrid.getColumn(0));
-            }
-            addColumns(newGrid::addResizableColumn);
-            newGrid.resizeTableToFitColumns();
+        while (grid.getColumnCount() > 0) {
+            grid.removeColumn(grid.getColumn(0));
         }
+        addColumns(grid);
+        grid.resizeTableToFitColumns();
         flushAndLayout();
         return now() - start;
     }
 
     /// Move the keyboard row, as a key press does.
     private static void keyboard(final int index, final boolean stealFocus) {
-        if (oldGrid != null) {
-            oldGrid.setKeyboardSelectedRow(index, stealFocus);
-            oldGrid.flush();
-        } else {
-            newGrid.setKeyboardSelectedRow(index, stealFocus);
-            newGrid.flush();
-        }
+        grid.setKeyboardSelectedRow(index, stealFocus);
+        grid.flush();
     }
 
     /// @return A description of the grid's state: the keyboard row it reports, the row showing the
     /// keyboard row style, the row with the focus, the number of selected rows and the scroll
     /// position, e.g. `kb=5 styled=5 focused=5 selected=1 scrollTop=0`.
     private static String state() {
-        final int keyboardRow = oldGrid != null
-                ? oldGrid.getKeyboardSelectedRow()
-                : newGrid.getKeyboardSelectedRow();
+        final int keyboardRow = grid.getKeyboardSelectedRow();
         int selected = 0;
         if (selectionModel != null) {
             selected = selectionModel.getSelectedItems().size();
@@ -251,20 +217,15 @@ public final class BenchmarkStories {
                + " scrollTop=" + (scroller != null
                 ? scroller.getScrollTop()
                 : 0)
-               + " rows=" + (oldGrid != null
-                ? oldGrid.getVisibleItemCount()
-                : newGrid.getVisibleItemCount());
+               + " rows=" + grid.getVisibleItemCount();
     }
 
     private static native String styledKeyboardRow(Element root) /*-{
-        var row = root.querySelector(".dataGridKeyboardSelectedRow");
+        var row = root.querySelector(".data-grid__row--keyboard");
         if (!row) {
             return "none";
         }
-        if (row.hasAttribute("data-row")) {
-            return row.getAttribute("data-row");
-        }
-        return String(row.sectionRowIndex);
+        return row.getAttribute("data-row");
     }-*/;
 
     private static native String focusedRow(Element root) /*-{
@@ -276,21 +237,14 @@ public final class BenchmarkStories {
             if (el.hasAttribute && el.hasAttribute("data-row")) {
                 return el.getAttribute("data-row");
             }
-            if (el.tagName === "TR" && el.parentElement && el.parentElement.tagName === "TBODY") {
-                return String(el.sectionRowIndex);
-            }
             el = el.parentElement;
         }
         return "grid";
     }-*/;
 
-    /// @return The grid's scrolling element: the new grid's scroller, or the first element in the
-    /// old grid that scrolls vertically.
+    /// @return The grid's scrolling element.
     private static Element scroller() {
-        if (newGrid != null) {
-            return findByClass(newGrid.getElement(), "data-grid__scroller");
-        }
-        return findScroller(oldGrid.getElement());
+        return findByClass(grid.getElement(), "data-grid__scroller");
     }
 
     /// @return The number of elements in the grid.
@@ -301,21 +255,12 @@ public final class BenchmarkStories {
     // --------------------------------------------------------------------------------
 
     private static void setRowData(final List<Person> values) {
-        if (oldGrid != null) {
-            oldGrid.setRowData(0, values);
-            oldGrid.setRowCount(values.size(), true);
-        } else {
-            newGrid.setRowData(0, values);
-            newGrid.setRowCount(values.size(), true);
-        }
+        grid.setRowData(0, values);
+        grid.setRowCount(values.size(), true);
     }
 
     private static void flushAndLayout() {
-        if (oldGrid != null) {
-            oldGrid.flush();
-        } else {
-            newGrid.flush();
-        }
+        grid.flush();
         // Reading a size forces style and layout, so the time includes them.
         grid.getElement().getOffsetHeight();
         final Element scroller = scroller();
@@ -324,24 +269,24 @@ public final class BenchmarkStories {
         }
     }
 
-    private static void addColumns(final ColumnAdder adder) {
-        adder.add(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
+    private static void addColumns(final DataGridWidget<Person> grid) {
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("ID").rightAligned().build(),
                 60);
-        adder.add(DataGridUtil.textColumnBuilder(Person::getName).build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(),
                 DataGridUtil.headingBuilder("Name").build(),
                 200);
-        adder.add(DataGridUtil.textColumnBuilder(Person::getRole).build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getRole).build(),
                 DataGridUtil.headingBuilder("Role").build(),
                 120);
-        adder.add(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getAge()))
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getAge()))
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Age").rightAligned().build(),
                 70);
-        adder.add(DataGridUtil.textColumnBuilder(Person::getActiveText).centerAligned().build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getActiveText).centerAligned().build(),
                 DataGridUtil.headingBuilder("Active").centerAligned().build(),
                 80);
     }
@@ -361,22 +306,6 @@ public final class BenchmarkStories {
 
     // The descendant, no taller than the grid, that scrolls vertically the furthest: the old grid's
     // body scroller. GWT's resize detectors also scroll, but are far taller than the grid.
-    private static native Element findScroller(Element root) /*-{
-        var best = null;
-        var bestRange = 0;
-        var all = root.querySelectorAll("*");
-        for (var i = 0; i < all.length; i++) {
-            var el = all[i];
-            var style = $wnd.getComputedStyle(el);
-            var range = el.scrollHeight - el.clientHeight;
-            if ((style.overflowY === "auto" || style.overflowY === "scroll") && style.visibility !== "hidden"
-                && el.clientHeight <= root.clientHeight && range > bestRange) {
-                best = el;
-                bestRange = range;
-            }
-        }
-        return best;
-    }-*/;
 
     private static native double now() /*-{
         return $wnd.performance.now();
@@ -421,14 +350,4 @@ public final class BenchmarkStories {
             })
         };
     }-*/;
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// Adds a resizable column to either grid.
-    private interface ColumnAdder {
-
-        void add(Column<Person, ?> column, Header<?> header, int width);
-    }
 }

@@ -179,7 +179,7 @@ public final class AskStroomAiDialogStories {
                     play.waitFor(() -> play.expect(screen.getAllByText("Result set").count())
                             .toSatisfy("more than none", count -> ((Integer) count) > 0));
                     // The grid has no grid role, so it is found by its class
-                    final Play grid = play.within(screen.findByText("ALPHA").closest(".dataGridWidget"));
+                    final Play grid = play.within(screen.findByText("ALPHA").closest(".data-grid"));
                     play.expect(grid.getByText("Feed")).toBeInTheDocument();
                     play.expect(grid.getByText("ALPHA")).toBeInTheDocument();
                     // The pager's range is separate labels (with no-break spaces), so its text is

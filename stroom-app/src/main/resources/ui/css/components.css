@@ -1671,9 +1671,9 @@
 .cellTableSelectedRow .findCell-tags,
 .cellTableSelectedRow .findCell-path,
 .cellTableSelectedRow .findCell-uuid,
-.dataGridSelectedRow .findCell-tags,
-.dataGridSelectedRow .findCell-path,
-.dataGridSelectedRow .findCell-uuid {
+.data-grid__row--selected .findCell-tags,
+.data-grid__row--selected .findCell-path,
+.data-grid__row--selected .findCell-uuid {
     color: inherit;
 }
 
@@ -1776,16 +1776,16 @@
 
 /* Shown on hover, and on the row with keyboard focus so keyboard users see them too; the same
    whether the row is disabled or not */
-.dataGridKeyboardSelectedRow:focus-within .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .docRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .commandLinkContainer .svg-image,
-.dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridCell:hover .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .commandLinkContainer .svg-image,
+.data-grid__cell:hover .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__cell:hover .docRefLinkContainer .svg-image.hoverIcon,
 .userRefLinkContainer:hover .svg-image.hoverIcon,
 .docRefLinkContainer:hover .svg-image.hoverIcon,
 .commandLinkContainer:hover .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .userRefLinkContainer .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .userRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .docRefLinkContainer .svg-image,
 .dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .docRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .commandLinkContainer:hover .svg-image {
@@ -2199,27 +2199,27 @@
     background-color: var(--row__background-color--hovered);
 }
 
-.dataGridWidget .dashboard-table-filter-cell {
+.data-grid .dashboard-table-filter-cell {
     display: none;
     position: relative;
     width: 100%;
 }
 
-.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+.data-grid.showValueFilters .dashboard-table-filter-cell {
     display: block;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text {
+.data-grid .dashboard-table-filter-cell-text {
     padding-right: 25px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+.data-grid .dashboard-table-filter-cell-text-disabled {
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
 
-.dataGridWidget .dashboard-table-filter-cell-buttons {
+.data-grid .dashboard-table-filter-cell-buttons {
     position: absolute;
     display: flex;
     height: 100%;
@@ -2229,7 +2229,7 @@
     padding: 5px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-disable-button {
+.data-grid .dashboard-table-filter-cell-disable-button {
     display: flex;
     position: relative;
     width: 22px;

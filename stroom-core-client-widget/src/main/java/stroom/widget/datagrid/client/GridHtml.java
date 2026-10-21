@@ -79,20 +79,9 @@ final class GridHtml<R> {
             final boolean sorted = sortIndex >= 0;
             final boolean ascending = sorted && sortList.get(sortIndex).isAscending();
 
-            final StringBuilder classes = new StringBuilder("data-grid__header-cell dataGridHeader");
-            if (i == 0) {
-                classes.append(" dataGridFirstColumnHeader");
-            }
-            if (i == count - 1) {
-                classes.append(" dataGridLastColumnHeader");
-            }
+            final StringBuilder classes = new StringBuilder("data-grid__header-cell");
             if (sortable) {
-                classes.append(" dataGridSortableHeader");
-            }
-            if (sorted) {
-                classes.append(ascending
-                        ? " dataGridSortedHeaderAscending"
-                        : " dataGridSortedHeaderDescending");
+                classes.append(" data-grid__header-cell--sortable");
             }
             if (header != null && header.getHeaderStyleNames() != null) {
                 classes.append(' ').append(header.getHeaderStyleNames());
@@ -112,8 +101,8 @@ final class GridHtml<R> {
             if (header != null) {
                 final Context context = new Context(0, i, header.getKey());
                 if (sortable) {
-                    sb.appendHtmlConstant("<div class=\"dataGridSortableHeaderOuterDiv\">"
-                                          + "<div class=\"dataGridSortableHeaderNameHolder\">");
+                    sb.appendHtmlConstant("<div class=\"data-grid__sort\">"
+                                          + "<div class=\"data-grid__sort-name\">");
                     header.render(context, sb);
                     sb.appendHtmlConstant("</div>");
                     if (sorted) {
@@ -131,15 +120,12 @@ final class GridHtml<R> {
 
     /// @param row      The row, or `null` for a placeholder.
     /// @param absIndex The row's absolute index.
-    /// @param selected Whether the row is selected.
-    /// @param even     Whether the row is an even one, for striping.
     /// @param spans    Column index to the number of columns that cell spans (R-R9).
-    /// @return The row's cells. The keyboard cell's class is not included; the grid sets it on the
-    /// element, as it depends on the focus.
+    /// @return The row's cells. They don't depend on the row's state (selected, striped), which is
+    /// the row's classes, so a change of state doesn't rewrite them. The keyboard cell's class is
+    /// not included either; the grid sets it on the element, as it depends on the focus.
     SafeHtml cells(final R row,
                    final int absIndex,
-                   final boolean selected,
-                   final boolean even,
                    final Map<Integer, Integer> spans) {
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         final int count = columnModel.size();
@@ -151,19 +137,7 @@ final class GridHtml<R> {
             final Column<R, ?> column = columnModel.getColumn(i);
             final Context context = new Context(absIndex, i, keys.apply(row, absIndex));
 
-            final StringBuilder classes = new StringBuilder("data-grid__cell dataGridCell ");
-            classes.append(even
-                    ? "dataGridEvenRowCell"
-                    : "dataGridOddRowCell");
-            if (selected) {
-                classes.append(" dataGridSelectedRowCell");
-            }
-            if (i == 0) {
-                classes.append(" dataGridFirstColumn");
-            }
-            if (i == count - 1) {
-                classes.append(" dataGridLastColumn");
-            }
+            final StringBuilder classes = new StringBuilder("data-grid__cell");
             appendAlignment(classes, column.getHorizontalAlignment(), column.getVerticalAlignment());
             if (row != null) {
                 final String cellStyles = column.getCellStyleNames(context, row);
@@ -201,7 +175,7 @@ final class GridHtml<R> {
     void cellCopy(final R row, final int absIndex, final int index, final SafeHtmlBuilder sb) {
         final Column<R, ?> column = columnModel.getColumn(index);
         final Context context = new Context(absIndex, index, keys.apply(row, absIndex));
-        final StringBuilder classes = new StringBuilder("data-grid__cell dataGridCell");
+        final StringBuilder classes = new StringBuilder("data-grid__cell");
         appendAlignment(classes, column.getHorizontalAlignment(), column.getVerticalAlignment());
         final String cellStyles = column.getCellStyleNames(context, row);
         if (cellStyles != null && !cellStyles.isEmpty()) {

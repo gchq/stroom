@@ -24,7 +24,6 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -99,7 +98,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         this.pagerView = pagerView;
 
         rowStyles = new ColumnValueRowStyles(userPreferencesManager);
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
+        cellTable = new MyCellTable<>(MyCellTable.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menu");
         cellTable.setRowStyles(rowStyles);
 

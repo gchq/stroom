@@ -41,7 +41,7 @@ public final class UserRefSelectionBoxStories {
     private static final String ON_CHANGE = "onChange";
     // Delays the users' search, to show the "Loading…" state
     private static final int FIND_DELAY_MILLIS = 150;
-    private static final String SELECTED_ROW = "[role=dialog] .dataGridSelectedRow";
+    private static final String SELECTED_ROW = "[role=dialog] .data-grid__row--selected";
 
     private UserRefSelectionBoxStories() {
         // Static utility

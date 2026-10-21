@@ -923,8 +923,34 @@ interactive header cells, the context menu, copy, export and AI.
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.
 
-* **The removals wait** for the other sessions' work to finish (no screen uses `MyDataGrid` now).
-  The §8 fixes don't remove anything, so they go first:
+* **The removals** (2026-10-21, at the user's word), in two steps, each compared with full
+  screenshots in both themes:
+  * **The old grid.** `MyDataGrid`, `ResizeHandle`, `MoveHandle`, `MyDataGridAiSupport` and
+    `DataGridSelectionEventManager` are gone. The page size constant the cell tables borrowed is
+    `MyCellTable.DEFAULT_LIST_PAGE_SIZE`. The workbench's `Widgets/Data Grid/DataGrid` stories (the
+    old grid's own, each with a `DataGridWidget` counterpart) went with it; the stories that set the
+    two grids side by side (Behaviour's `…Old`, Row Updates' `CurrentGrid`, Row States' current
+    grid, the benchmark's `old` kind) keep only the new grid's half; the cell renderer, view state
+    and split pane stories use `DataGridWidget`, their plays its keys (a row's buttons are reached
+    with Right, not Tab). `DataGridView` stays, with one implementation, as the shared helpers take
+    it. None of the forked `cellview` classes could go: `MyCellTable` and the selection models
+    still use them all.
+  * **The old class names.** The grid no longer carries `MyDataGrid`'s classes. Its own are BEM
+    throughout: rows `data-grid__row--even`, `--odd`, `--selected`, `--keyboard`; header cells
+    `--sortable`, with a sortable header's title `data-grid__sort` and `data-grid__sort-name`; the
+    keyboard's cell `data-grid__cell--keyboard`; the grid's `data-grid--multiline` and
+    `--header-selection`. The rules `celltable/DataGrid.css` gave the old names (padding, header
+    text, stripes, the sortable header's title) are `DataGridWidget.css`'s under these; the
+    disabled and alert text colours (`dataGridDisabledCell`, `dataGridAlertText`, a column's own
+    cell styles, unchanged) are `data-grid.css`'s; and the cell styles that keyed off the old row
+    classes (percent bar, red and green text, SVG icons, a disabled spinner, the find cell, the
+    dashboard's filter row, conditional formatting, pathways' error rows) key off these.
+    `DataGrid.css` keeps only what other widgets share: a cell table's cell padding and sortable
+    header, and the glass and handles of a drag (`DefaultStyle`). A cell's HTML no longer depends
+    on its row's state, so selecting a row no longer rewrites its cells. Two old rules didn't
+    come: the focus glow (`data-grid.css` always overrode it) and `margin: 0` on every `select`
+    on the page (a slip in `.dataGridWidget input,select`).
+* **The §8 fixes** don't remove anything, so they went first:
   * D2 (PageUp) and D4 (Shift+arrows, Space) were built into `DataGridKeyboard`.
   * **D3** (2026-10-21): on macOS, Cmd does what Ctrl does: the row keys, a press on a row and a
     click on a header (`DataGridDom.isCtrl`, `SelectionRules.isCtrl`). Elsewhere the meta key is

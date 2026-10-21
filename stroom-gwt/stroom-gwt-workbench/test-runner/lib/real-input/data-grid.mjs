@@ -203,7 +203,7 @@ export const CHECKS = {
     const rowFitsCells = () => page.evaluate(() => {
       // The padded cell is the row's tallest: its content and the padding round it up to the cell.
       // The cells themselves stretch to the row, so can't be measured directly
-      const row = document.querySelector('.behaviour-grid-frame .dataGridEvenRow');
+      const row = document.querySelector('.behaviour-grid-frame .data-grid__row--even');
       const padded = row.querySelector('.behaviour-padded-cell');
       let natural = padded.getBoundingClientRect().height;
       for (let element = padded.parentElement; element !== row; element = element.parentElement) {

@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.widgets.datagrid;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -48,9 +47,9 @@ import java.util.function.IntSupplier;
 /// The behaviour baseline of design Phase 0, as stories with plays: what happens to the keyboard
 /// row, the focus and the scroll position when new data arrives (R-S12, R-D7).
 ///
-/// Each story is shown for `MyDataGrid` ("Old"), and for [DataGridWidget] in natural ("New") and
-/// virtual ("Virtual") mode, with the same play, so the new grid is held to what the old one does.
-/// The behaviour was measured on `MyDataGrid` first; the plays record it.
+/// Each story is shown for [DataGridWidget] in natural ("New") and virtual ("Virtual") mode, with
+/// the same play. The behaviour was measured on the old grid (`MyDataGrid`, since removed) first;
+/// the plays record it, so the grid is still held to it.
 ///
 /// The buttons send data as a presenter does: the same rows again (a poll with no change), every
 /// row's values changed (new row objects, so new keys), the first three rows only, and back.
@@ -64,7 +63,7 @@ public final class BehaviourStories {
     private static final String RESTORE = "Send all rows";
     private static final String REBUILD = "Rebuild columns";
     private static final String OUTSIDE = "Somewhere else";
-    private static final String GRID_ROWS = ".dataGridEvenRow, .dataGridOddRow";
+    private static final String GRID_ROWS = ".data-grid__row--even, .data-grid__row--odd";
     private static final String FRAME_CLASS = "behaviour-grid-frame";
     private static final String PADDED_CLASS = "behaviour-padded-cell";
 
@@ -78,14 +77,10 @@ public final class BehaviourStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Data Grid/Behaviour", BehaviourStories.class)
                 .layout(StoryLayout.PADDED)
-                .story("KeyboardRowOld", context -> frame("old"))
-                .withPlay(BehaviourStories::keyboardRowPlay)
                 .story("KeyboardRowNew", context -> frame("new"))
                 .withPlay(BehaviourStories::keyboardRowPlay)
                 .story("KeyboardRowVirtual", context -> frame("virtual"))
                 .withPlay(BehaviourStories::keyboardRowPlay)
-                .story("ScrollPositionOld", context -> frame("old"))
-                .withPlay(BehaviourStories::scrollPositionPlay)
                 .story("ScrollPositionNew", context -> frame("new"))
                 .withPlay(BehaviourStories::scrollPositionPlay)
                 .story("ScrollPositionVirtual", context -> frame("virtual"))
@@ -94,8 +89,6 @@ public final class BehaviourStories {
                 .withPlay(BehaviourStories::headerFollowsDensityPlay)
                 .story("RowsFollowDensityVirtual", context -> frame("virtual-padded"))
                 .withPlay(BehaviourStories::rowsFollowDensityPlay)
-                .story("LoadedOnEveryLoadOld", context -> frame("old-loaded"))
-                .withPlay(BehaviourStories::loadedOnEveryLoadPlay)
                 .story("LoadedOnEveryLoadNew", context -> frame("new-loaded"))
                 .withPlay(BehaviourStories::loadedOnEveryLoadPlay);
     }
@@ -256,14 +249,14 @@ public final class BehaviourStories {
     }-*/;
 
     private static native int rowHeight(Element root) /*-{
-        return Math.round(root.querySelector(".dataGridEvenRow").getBoundingClientRect().height);
+        return Math.round(root.querySelector(".data-grid__row--even").getBoundingClientRect().height);
     }-*/;
 
     // Whether the first row's height is that of its tallest cell, the padded one: its content and
     // the padding round it up to the cell, to the pixel. (The cells stretch to the row, so can't
     // be measured themselves.)
     private static native boolean rowFitsCells(Element root) /*-{
-        var row = root.querySelector(".dataGridEvenRow");
+        var row = root.querySelector(".data-grid__row--even");
         var padded = row.querySelector(".behaviour-padded-cell");
         var natural = padded.getBoundingClientRect().height;
         for (var el = padded.parentElement; el !== row; el = el.parentElement) {
@@ -275,9 +268,9 @@ public final class BehaviourStories {
 
     /// @return The index among the grid's rows of the one styled as the keyboard row, or -1.
     private static native int keyboardRow(Element root) /*-{
-        var rows = root.querySelectorAll(".dataGridEvenRow, .dataGridOddRow");
+        var rows = root.querySelectorAll(".data-grid__row--even, .data-grid__row--odd");
         for (var i = 0; i < rows.length; i++) {
-            if (rows[i].classList.contains("dataGridKeyboardSelectedRow")) {
+            if (rows[i].classList.contains("data-grid__row--keyboard")) {
                 return i;
             }
         }
@@ -286,7 +279,7 @@ public final class BehaviourStories {
 
     /// @return The index among the grid's rows of the one containing the focus, or -1.
     private static native int focusedRow(Element root) /*-{
-        var rows = root.querySelectorAll(".dataGridEvenRow, .dataGridOddRow");
+        var rows = root.querySelectorAll(".data-grid__row--even, .data-grid__row--odd");
         var active = $doc.activeElement;
         for (var i = 0; i < rows.length; i++) {
             if (active && rows[i].contains(active)) {
@@ -320,9 +313,7 @@ public final class BehaviourStories {
 
     private static Widget frame(final String kind) {
         final List<Person> rows = DataGridRows.generatedPeople(ROWS);
-        final GridAdapter grid = kind.startsWith("old")
-                ? new OldGrid()
-                : new NewGrid(kind.startsWith("virtual"), kind.endsWith("padded"));
+        final GridAdapter grid = new NewGrid(kind.startsWith("virtual"), kind.endsWith("padded"));
         // Counts the grid's LOADED events, from the first rows on
         final Label loaded = new Label();
         if (kind.endsWith("loaded")) {
@@ -404,7 +395,7 @@ public final class BehaviourStories {
     // --------------------------------------------------------------------------------
 
 
-    /// The operations the stories need, on either grid.
+    /// The operations the stories need on the grid.
     private interface GridAdapter {
 
         Widget widget();
@@ -420,49 +411,10 @@ public final class BehaviourStories {
     // --------------------------------------------------------------------------------
 
 
-    /// Adds a resizable column to either grid.
+    /// Adds a resizable column to the grid.
     private interface ColumnAdder {
 
         void add(Column<Person, ?> column, Header<?> header, int width);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static final class OldGrid implements GridAdapter {
-
-        private final MyDataGrid<Person> grid = new MyDataGrid<>(new SimpleEventBus(), ROWS);
-
-        private OldGrid() {
-            grid.setWidth("100%");
-            grid.setHeight("100%");
-            grid.addDefaultSelectionModel(true);
-            addColumns(grid::addResizableColumn);
-        }
-
-        @Override
-        public Widget widget() {
-            return grid;
-        }
-
-        @Override
-        public void setRows(final List<Person> rows) {
-            grid.setRowData(0, rows);
-            grid.setRowCount(rows.size(), true);
-        }
-
-        @Override
-        public void rebuildColumns() {
-            removeAll(grid::getColumnCount, () -> grid.removeColumn(grid.getColumn(0)));
-            addColumns(grid::addResizableColumn);
-            grid.resizeTableToFitColumns();
-        }
-
-        @Override
-        public HandlerRegistration addLoadingStateChangeHandler(final LoadingStateChangeEvent.Handler handler) {
-            return grid.addLoadingStateChangeHandler(handler);
-        }
     }
 
 

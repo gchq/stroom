@@ -130,7 +130,7 @@ export const CHECKS = {
   // keeps stepping while held, committing when let go; a real finger's tap steps once (the grid
   // hands a cell its events after the browser has handled them, so a held finger doesn't repeat)
   'widgets-cell-renderers-valuespinnercell--arrows-step-and-commit': async (page) => {
-    const row = page.locator('tr', { hasText: 'Alpha' });
+    const row = page.locator('[role="row"]', { hasText: 'Alpha' });
     const field = row.getByRole('spinbutton');
     const box = await row.locator(INCREASE).boundingBox();
     const up = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -156,7 +156,7 @@ export const CHECKS = {
   // The grid spinner's keys, pressed for real while its field has the focus (clicked in its text,
   // clear of the arrows)
   'widgets-cell-renderers-valuespinnercell--keys-while-focused': async (page) => {
-    const field = page.locator('tr', { hasText: 'Bravo' }).getByRole('spinbutton');
+    const field = page.locator('[role="row"]', { hasText: 'Bravo' }).getByRole('spinbutton');
     await field.click({ position: { x: 10, y: 12 } });
     // The grid hands the cell its key events a moment after they happen, so wait for each value
     await pressFor(page, field, 'End', '100', 'End goes to the maximum');
