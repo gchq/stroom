@@ -430,15 +430,19 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         return fieldName == null || !fieldName.startsWith("_");
     }
 
+    /// Record the value of an index name variable, if the current field is one. Variables are only taken from
+    /// fields that are direct children of the document root, so a field of the same name in a nested map or
+    /// array is ignored. A variable may only be given a value once per document.
     private void storeIndexNameVariableValue(final String value) {
-        try {
-            if (!value.isEmpty() && indexNameVariables.contains(currentDocFieldName)) {
-                currentDocIndexNameVariables.put(currentDocFieldName, value);
+        // Values are written within the document root map when the depth is 1
+        if (currentDepth == 1
+            && !value.isEmpty()
+            && indexNameVariables.contains(currentDocFieldName)) {
+            final String existingValue = currentDocIndexNameVariables.putIfAbsent(currentDocFieldName, value);
+            if (existingValue != null) {
+                fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document",
+                        new IllegalArgumentException());
             }
-        } catch (final IllegalArgumentException e) {
-            fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document", e);
-        } catch (final Exception e) {
-            fatalError("Unexpected error parsing index name variable value", e);
         }
     }
 
