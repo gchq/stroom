@@ -253,6 +253,23 @@ the new data grid, which copes (rows with one key are told apart by position). F
 * `stroom-core-client/src/main/java/stroom/dashboard/client/query/SelectionHandlersPresenter.java`
   (`onCopy`)
 
+### The task summary loses its selection when a count changes
+
+**Reproduced** (workbench story `App/Main/ProcessorTaskSummary`). In an 'Active Tasks' tab, select a
+summary row (e.g. a pipeline's Processing tasks) and press the summary's Refresh after another task
+of that group has started: the row is no longer selected and the task list below is emptied. On a
+refresh `ProcessorTaskSummaryPresenter.changeData` selects the row again only if
+`data.getValues().contains(selected)`, but `ProcessorTaskSummary.equals` compares the `count` as
+well as the group (pipeline, feed, priority and status), so a changed count is a different row. As
+the counts are what changes between refreshes, the selection rarely survives one. Fix: find the row
+again by its group (e.g. a key of pipeline, feed, priority and status, which the new grid's key
+provider can share) and select the new row, rather than comparing whole rows. The story's
+`RefreshWithChangedCount` says how to make it the regression test.
+
+* `stroom-core-client/src/main/java/stroom/data/client/presenter/ProcessorTaskSummaryPresenter.java`
+  (`refresh`, `changeData`)
+* `stroom-core-shared/src/main/java/stroom/processor/shared/ProcessorTaskSummary.java` (`equals`)
+
 ### Two workbench stories fail now and then under load
 
 **Reproduced** (October 2026). Each fails sometimes in a full `workbenchTest` run and passes when
@@ -1057,6 +1074,11 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 ## Smaller oddities
 
 **Reported.**
+
+* A pathway's constraints list heads its value column "Type" (`ConstraintListPresenter.addValueColumn`),
+  a copy of the column before it.
+* `SelectionBoxCell` looks for its grid with `closest('table')`, so in a grid drawn with divs (the
+  new `DataGridWidget`) its check for the focus falling back into the grid never finds it.
 
 * Rename hides its dialog before the request is sent, and the document permission dialogs
   close once a failed change is dismissed, so both lose what was entered if the request fails.
@@ -1911,6 +1933,14 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   tab but the first went into an overflow menu, which never opened, as `FloorMapDockPresenter` didn't
   pass on the bar's `ShowMenuEvent`. The view adds its class instead, and the presenter passes the
   event on, so all three tabs show (`App/Editors/FloorMapMap` `Groups` checks them).
+* **Removing a statistic store's last custom roll-up left the list empty.** The list always has the
+  no roll-up permutation (`State.addNoRollUpPerm`, added when the list is shown), but Remove didn't put
+  it back. It does now (`StatisticsCustomMaskListPresenter.onRemove`). Its story,
+  `RemovingTheLastRollUpReSeedsIt`, had passed only because its click ticked a box instead of
+  choosing the row, so nothing was removed; with the new grid the click chooses the row.
+* **The stepping XPath filters list's Ignore Case tick box could be ticked but did nothing** (an
+  editable `TickBoxCell` with no field updater). It is read only, as such columns are elsewhere.
+* **`JobNodeListPresenter` added its default selection model twice.** It adds it once.
 * **A selection box that can't be typed in showed the page's colour, not an input's.** Its text box
   is hidden (`opacity: 0`), and the value drawn over it was transparent, so the box showed what was
   behind it (darker than a text box in the dark theme), and when disabled it kept its border. The

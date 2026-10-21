@@ -106,14 +106,16 @@ public final class StatisticStoreEditorStories {
                 .story("CustomRollUpsEditable", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the Custom Roll-ups tab, as 'CustomRollUpsEditable' shows it
                 .story("CustomRollUpsReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -180,8 +182,9 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
                     // The headers are found by their text in the <th> cells
-                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
-                    play.expect(play.getByText("user", "th, th *")).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(play.getByText("host", StroomDom.GRID_HEADER_TEXT))
+                            .toBeInTheDocument());
+                    play.expect(play.getByText("user", StroomDom.GRID_HEADER_TEXT)).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByRole("button", "New Roll-up Permutation"));
@@ -205,9 +208,9 @@ public final class StatisticStoreEditorStories {
                 .story("RemovingTheLastRollUpReSeedsIt", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    // The rows are the grid's <tr>s
+                    // The grid's rows (either grid's)
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1));
-                    play.click(play.querySelectorAll(StroomDom.GRID_ROW + " td").nth(0));
+                    play.click(play.querySelectorAll("tr[__gwt_row] td, .data-grid__row[data-row] [data-col]").nth(0));
                     play.click(play.getByRole("button", "Remove Selected Roll-up Permutation"));
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1));
                     DocumentEditors.expectNoProblems(play);

@@ -187,12 +187,12 @@ public final class JobsScreenStories {
                 // GWT's JobListPresenter.changeData inserts an empty row before the first advanced job
                 .story("AdvancedGap", context -> render(context, FIXTURES))
                 .withPlay(play -> {
-                    final Query firstAdvanced = play.findByText("Property Cache Reload").closest("tr");
+                    final Query firstAdvanced = play.findByText("Property Cache Reload").closest(StroomDom.GRID_ROW);
                     // The inserted row is a real row with no job in it
                     play.expect("the text of the row above", () -> previousRowText(firstAdvanced.element().get()))
                             .toBe("");
                     // The non-advanced jobs above it still carry their text
-                    final Query above = play.getByText("Data Retention").closest("tr");
+                    final Query above = play.getByText("Data Retention").closest(StroomDom.GRID_ROW);
                     play.expect("the text of the 'Data Retention' row", () -> rowText(above.element().get()))
                             .not().toBe("");
                     expectNoProblems(play);
@@ -289,23 +289,26 @@ public final class JobsScreenStories {
                     final Play screen = play.screen();
                     showDataRetentionNodes(play);
                     play.findByText("0 0 * * ?");
-                    // Pressing a row's text gives its row the keyboard focus
+                    // Pressing a row's text gives its row the focus. The grid is one tab stop: its
+                    // buttons aren't tab stops, but are reached with Right from the row, a cell
+                    // holding a button giving the button the focus
                     play.click(play.getByText("node1"));
                     play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
                     final Query openNode = play.getByRole("button", OPEN_NODE1);
                     final Query editSchedule = play.getByRole("button", editSchedule("node1"));
-                    play.expect(openNode).toHaveAttribute("tabindex", "0");
-                    play.expect(editSchedule).toHaveAttribute("tabindex", "0");
-                    // Another row's buttons are reached by moving to the row first
-                    play.expect(play.getByRole("button",
-                                    "Open node 'node2' and job 'Data Retention' on the Nodes screen."))
-                            .toHaveAttribute("tabindex", "-1");
-                    play.tab();
-                    play.expect(openNode).toHaveFocus();
+                    play.expect(openNode).toHaveAttribute("tabindex", "-1");
+                    play.expect(editSchedule).toHaveAttribute("tabindex", "-1");
+                    // Enabled's tick box, then the Node column's Open button
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(openNode).toHaveFocus());
                     play.keyboard(" ");
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
-                    play.tab();
-                    play.expect(editSchedule).toHaveFocus();
+                    // On past Node State and Type to the Schedule column's Edit button
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(editSchedule).toHaveFocus());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());
                     // The keys pressed a button, so the row's selection is unchanged
@@ -324,7 +327,7 @@ public final class JobsScreenStories {
     // GWT's grid rows are <tr> elements with no role attribute (their role is
     // implicit), so a cell's row is its closest <tr>, not its closest [role="row"]
     private static Query row(final Play play, final String text) {
-        return play.getByText(text).closest("tr");
+        return play.getByText(text).closest(StroomDom.GRID_ROW);
     }
 
     // Selects Data Retention and waits for its nodes, with their states. The enabled nodes are a

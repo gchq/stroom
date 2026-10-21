@@ -142,7 +142,8 @@ public final class IndexEditorStories {
                     play.expect(play.getByRole("button", "Delete Selected Index Shards"))
                             .toHaveAttribute("aria-disabled", "true");
                     // Shards are selected with their row's tick box
-                    play.click(play.within(play.getByText("2024-01").closest("tr")).querySelector(".tick-box"));
+                    play.click(play.within(play.getByText("2024-01").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Flush Selected Index Shards"))
                             .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.getByRole("button", "Delete Selected Index Shards"))

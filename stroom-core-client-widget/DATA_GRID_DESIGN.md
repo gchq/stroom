@@ -811,6 +811,34 @@ interactive header cells, the context menu, copy, export and AI.
     `setTypedHandler` (new, as the old manager's) and `DataGridWidget.isInRows`; the selection
     following the focus it had asked for is every single-choice grid's.
 
+* **Editable lists** (2026-10-21): 15 grids with tick boxes, spinners and select-all headers, switched
+  by type: `NodeJobListPresenter`, `JobNodeListPresenter`, `NodeStatusListPresenter`,
+  `IndexShardPresenter`, `ColumnSelectionPresenter`, `NodeGroupStateListPresenter`,
+  `StatisticsCustomMaskListPresenter`, `UserListPresenter`, `ConstraintListPresenter`,
+  `NodeGroupListPresenter`, `ContentTemplateListPresenter`, `DataRetentionPolicyListPresenter`,
+  `XPathListPresenter`, `DocRefSelectionPresenter`, and `ProcessorTaskSummaryPresenter` (given
+  stories first, `App/Main/ProcessorTaskSummary`).
+  * Key providers where a tick or refresh brings new, unequal rows: node groups and index shards
+    by id, content templates and retention rules by number (their position), constraints by name,
+    task summaries by their group (not their count).
+  * The select-all headers (anonymous `Header`s with an updater) work as they are: the new grid
+    gives header cells their events.
+  * `UserListPresenter.getDataGrid()` returns a `DataGridView`; `DocRefSelectionView.setDataWidget`
+    takes a `Widget`.
+  * The plays find rows, cells and headers with `StroomDom.GRID_ROW`, `GRID_HEADER_CELL`,
+    `GRID_HEADER_TEXT` and `GRID_CELL_TEXT` (new), which match either grid.
+  * Plays that followed `MyDataGrid`'s keyboard follow the agreed model: a row's buttons aren't tab
+    stops but are reached with Right (Jobs' `CommandLinksByKeyboard`), and each grid is one tab
+    stop, an empty one too, so its headers can be reached (User Groups' `ReadingOrder`).
+  * A clicked row has the focus, so its row actions' icons show, as the CSS has them on the row
+    with the focus.
+  * Found: removing a statistic store's last roll-up left the list empty (its story had passed only
+    because the old grid's click ticked a box), the XPath list's inert Ignore Case tick box, and the
+    task summary losing its selection when a count changes (the presenter compares whole rows; see
+    `ISSUES.md`).
+  * Held back: the floor map settings' Value Schema (`FloorMapSettingsPresenter`): its rows have no
+    stable id, it uses a selection model with no handler, and it restores focus through table rows.
+
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.

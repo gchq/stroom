@@ -152,7 +152,7 @@ public final class UserTabScreenStories {
                     play.expect("the headings", () -> trimmed(headings.get())).not().toContain("Group");
                     play.expect("the headings", () -> trimmed(headings.get())).not().toContain("Unique ID");
                     // The user/group icon column and the action menu
-                    final Query rowElement = play.getAllByText("Administrators").nth(0).closest("tr");
+                    final Query rowElement = play.getAllByText("Administrators").nth(0).closest(StroomDom.GRID_ROW);
                     final Play row = play.within(rowElement);
                     play.expect(row.getByTitle(StroomDom.ACTIONS_TITLE)).toBeInTheDocument();
                     play.expect(row.querySelector(".svgCell-icon")).toBeInTheDocument();
@@ -171,7 +171,8 @@ public final class UserTabScreenStories {
                             .toEqual(List.of("Granted", "Permission", "Description"));
                     play.expect(play.getByText("No application permission selected")).toBeInTheDocument();
                     // The explicit ANNOTATIONS is ticked; unticking it removes it
-                    play.click(play.within(play.getByText("Annotations").closest("tr")).querySelector(".tick-box"));
+                    play.click(play.within(play.getByText("Annotations").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/permission/app/v1/changeAppPermission")
                                     .withJsonBodyContaining("""

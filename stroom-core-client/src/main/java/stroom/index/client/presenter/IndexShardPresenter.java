@@ -24,7 +24,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -46,6 +45,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -73,7 +73,7 @@ public class IndexShardPresenter
     private static final String FLUSH_TITLE = "Flush Selected Index Shards";
     private static final String DELETE_TITLE = "Delete Selected Index Shards";
 
-    private final MyDataGrid<IndexShard> dataGrid;
+    private final DataGridWidget<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -101,7 +101,9 @@ public class IndexShardPresenter
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so the keyboard row survives a refresh
+        dataGrid.setKeyProvider(IndexShard::getId);
         dataGrid.setTableName("Index Shards");
         view.setDataWidget(dataGrid);
 

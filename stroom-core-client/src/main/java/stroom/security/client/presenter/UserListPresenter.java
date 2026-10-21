@@ -21,7 +21,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -43,6 +43,7 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -50,7 +51,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,7 +70,7 @@ public class UserListPresenter
 
     private final ClientSecurityContext securityContext;
     private final PagerView pagerView;
-    private final MyDataGrid<User> dataGrid;
+    private final DataGridWidget<User> dataGrid;
     private final MultiSelectionModelImpl<User> selectionModel;
     private final RestFactory restFactory;
     private final FindUserCriteria.Builder criteriaBuilder = new FindUserCriteria.Builder();
@@ -106,7 +106,7 @@ public class UserListPresenter
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
@@ -478,7 +478,7 @@ public class UserListPresenter
         return selectionModel;
     }
 
-    public DataGrid<User> getDataGrid() {
+    public DataGridView<User> getDataGrid() {
         return dataGrid;
     }
 

@@ -35,6 +35,13 @@ public final class StroomDom {
     /// `role="row"`) or of a `DataGridWidget` (`data-row`). A cell's row is
     /// `play.getByText(x).closest(GRID_ROW)`.
     public static final String GRID_ROW = "tr[__gwt_row], .data-grid__row[data-row]";
+    /// A column's header cell in either grid: a `MyDataGrid`'s `th` or a `DataGridWidget`'s
+    /// `[data-hcol]`. A header's cell is `play.getByText(x).closest(GRID_HEADER_CELL)`.
+    public static final String GRID_HEADER_CELL = "th, [data-hcol]";
+    /// What holds a header's text in either grid, for `getByText(name, GRID_HEADER_TEXT)`.
+    public static final String GRID_HEADER_TEXT = "th, th *, [data-hcol], [data-hcol] *";
+    /// What holds a cell's text in either grid, for `getByText(text, GRID_CELL_TEXT)`.
+    public static final String GRID_CELL_TEXT = "td *, [data-col] *";
     /// The class of a selected `MyDataGrid` or `DataGridWidget` row.
     public static final String SELECTED_ROW = "dataGridSelectedRow";
     /// The class of the header of a column that can be sorted.

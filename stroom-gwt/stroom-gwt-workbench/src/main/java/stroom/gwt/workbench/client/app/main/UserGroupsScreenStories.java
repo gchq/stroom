@@ -150,18 +150,18 @@ public final class UserGroupsScreenStories {
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
-                    // first button), its toolbar and its pager (and its grid, a div), the master's,
-                    // then Member Of's, then Members', with the splitter (named by the pane it
-                    // resizes) between each. A grid's row with the keyboard focus is followed by
-                    // its row's open buttons (row actions)
+                    // first button), its toolbar and its pager, then its grid, the master's, then
+                    // Member Of's, then Members', with the splitter (named by the pane it resizes)
+                    // between each. A grid is one tab stop: the row with the keyboard focus (named
+                    // by its text; its row actions are reached with Right), or, with no rows, the
+                    // grid itself, so its headers can still be reached (named by them here)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            FILTER, "Show Recent Filters", "Create Group", "First", "div",
-                            "Open group Administrators",
+                            FILTER, "Show Recent Filters", "Create Group", "First", "Administrators",
                             "Users and groups",
-                            FILTER, "Show Recent Filters", "Add to Group", "First",
+                            FILTER, "Show Recent Filters", "Add to Group", "First", "Display Name 1",
                             "Members",
-                            FILTER, "Show Recent Filters", "Add Member to Group", "First", "div",
-                            "Open user Alice Anderson", "Open user Alice A Anderson"));
+                            FILTER, "Show Recent Filters", "Add Member to Group", "First",
+                            "Alice Anderson Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
@@ -178,7 +178,7 @@ public final class UserGroupsScreenStories {
                             .textContents();
                     play.expect("the first three column headings", () -> trimmed(names.get()).subList(0, 3))
                             .toEqual(List.of("/", "Display Name", "Full Name"));
-                    play.expect(master.getByText("Display Name").closest("th"))
+                    play.expect(master.getByText("Display Name").closest(StroomDom.GRID_HEADER_CELL))
                             .toHaveClass("dataGridSortedHeaderAscending");
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
@@ -214,7 +214,7 @@ public final class UserGroupsScreenStories {
                     final Play screen = play.screen();
                     play.findAllByText("Administrators");
                     // Master row: no link to the User Groups screen (we're on it)
-                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(masterRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
                             "Show in Users"))).toBeVisible());
@@ -227,7 +227,8 @@ public final class UserGroupsScreenStories {
                     // The Members pane's rows have their own menu, which keeps the User Groups link
                     final Play members = play.within(play.getByText("Members of group \"Administrators\":")
                             .closest(".dock-container-vertical"));
-                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0).closest("tr"));
+                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0)
+                            .closest(StroomDom.GRID_ROW));
                     play.click(memberRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
                             "Show in User Groups"))).toBeVisible());
@@ -238,7 +239,7 @@ public final class UserGroupsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The item ends with three dots, not an ellipsis
                     play.click(screen.findByText("Copy User Groups and Permissions from..."));

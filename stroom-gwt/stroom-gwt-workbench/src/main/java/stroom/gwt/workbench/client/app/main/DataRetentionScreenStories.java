@@ -301,7 +301,7 @@ public final class DataRetentionScreenStories {
 
     // GWT's grid rows are <tr> elements with no role attribute
     private static Query row(final Play play, final String text) {
-        return play.getAllByText(text).nth(0).closest("tr");
+        return play.getAllByText(text).nth(0).closest(StroomDom.GRID_ROW);
     }
 
     private static Query menuItem(final Play screen, final String text) {
