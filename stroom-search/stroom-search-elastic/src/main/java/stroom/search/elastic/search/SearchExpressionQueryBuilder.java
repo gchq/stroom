@@ -45,7 +45,6 @@ import co.elastic.clients.json.JsonData;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import jakarta.inject.Provider;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,7 +66,10 @@ public class SearchExpressionQueryBuilder {
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
     private static final Pattern IPV4_ADDRESS_PATTERN =
-            Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
+            Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/(\\d{1,2}))?$");
+    private static final int IPV4_OCTET_COUNT = 4;
+    private static final int IPV4_MAX_OCTET = 255;
+    private static final int IPV4_MAX_PREFIX_LENGTH = 32;
     private static final Pattern IPV4_CIDR_PATTERN =
             Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
     private final Provider<AiService> aiServiceProvider;
@@ -536,19 +538,7 @@ public class SearchExpressionQueryBuilder {
      * conditions (EQUALS, IN and IN_DICTIONARY).
      */
     private FieldValue getIpV4Address(final Condition condition, final String fieldName, final String value) {
-        final Matcher ipAddressMatcher = IPV4_ADDRESS_PATTERN.matcher(value);
-        try {
-            if (ipAddressMatcher.matches()) {
-                InetAddress.getByAddress(new byte[]{
-                        Integer.valueOf(ipAddressMatcher.group(1)).byteValue(),
-                        Integer.valueOf(ipAddressMatcher.group(2)).byteValue(),
-                        Integer.valueOf(ipAddressMatcher.group(3)).byteValue(),
-                        Integer.valueOf(ipAddressMatcher.group(4)).byteValue()
-                });
-            } else {
-                throw new IllegalArgumentException();
-            }
-        } catch (final Exception e) {
+        if (!isValidIpV4Address(value)) {
             throw new IllegalArgumentException("Invalid IPv4 address format: " + value + " for field \"" +
                                                fieldName + "\"");
         }
@@ -560,6 +550,36 @@ public class SearchExpressionQueryBuilder {
                                                condition.getDisplayValue() + "\"");
         }
         return FieldValue.of(value);
+    }
+
+    /**
+     * @return True if the value is a dotted-decimal IPv4 address with each octet in the range 0-255 and,
+     * if CIDR notation is used, a prefix length in the range 0-32. Octets and prefix lengths with
+     * leading zeros (e.g. `01`) are rejected as they are ambiguous (decimal vs octal) and are not
+     * accepted by Elasticsearch.
+     */
+    private static boolean isValidIpV4Address(final String value) {
+        final Matcher ipAddressMatcher = IPV4_ADDRESS_PATTERN.matcher(value);
+        if (!ipAddressMatcher.matches()) {
+            return false;
+        }
+        for (int i = 1; i <= IPV4_OCTET_COUNT; i++) {
+            if (!isValidIpV4Number(ipAddressMatcher.group(i), IPV4_MAX_OCTET)) {
+                return false;
+            }
+        }
+        final String prefixLength = ipAddressMatcher.group(IPV4_OCTET_COUNT + 1);
+        return prefixLength == null || isValidIpV4Number(prefixLength, IPV4_MAX_PREFIX_LENGTH);
+    }
+
+    /**
+     * @return True if the string of ASCII digits has no leading zero and is no greater than the maximum.
+     */
+    private static boolean isValidIpV4Number(final String digits, final int max) {
+        if (digits.length() > 1 && digits.charAt(0) == '0') {
+            return false;
+        }
+        return Integer.parseInt(digits) <= max;
     }
 
     private FieldValue getNumber(final Condition condition, final String fieldName, final String value) {
