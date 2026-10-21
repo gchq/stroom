@@ -20,6 +20,7 @@ import stroom.util.shared.diff.LineDiff;
 import stroom.util.shared.diff.LineDiffResult;
 import stroom.util.shared.diff.LineReplacement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -32,11 +33,21 @@ import java.util.Objects;
 /// kept so the whole change can be undone at once, but only while the editor still holds the applied
 /// text. The changed lines are highlighted until the next edit by the user, or the next step.
 ///
+/// A change proposed against the code as it was before some of the applied changes can still be
+/// applied on top of them, as long as the editor holds the text they left and the change doesn't
+/// touch the lines they changed (see [#rebase(String, String)]).
+///
 /// This holds no GWT dependencies of its own, so it can be unit tested with a fake editor.
 public class CodeChangeApplier {
 
-    private final CodeEditor editor;
+    // How many applied changes are kept for putting later proposals on top of them.
+    static final int MAX_APPLIED_CHANGES = 20;
 
+    private final CodeEditor editor;
+    // The changes applied (and not undone), oldest first.
+    private final List<AppliedCodeChange> appliedChanges = new ArrayList<>();
+
+    // The change that "Undo apply" undoes, or null.
     private AppliedCodeChange appliedChange;
     private boolean applying;
     private boolean showingMarkers;
@@ -47,17 +58,60 @@ public class CodeChangeApplier {
         this.editor = Objects.requireNonNull(editor);
     }
 
-    /// Applies a proposed change if the editor still holds the code it was proposed against.
+    /// Applies a proposed change if the editor still holds the code it was proposed against, or that
+    /// code with changes applied here since, which the proposed change can be put on top of (see
+    /// [#rebase(String, String)]).
     ///
     /// @param baseCode     The code the change was proposed against. Line endings are ignored.
     /// @param proposedCode The whole proposed code.
-    /// @return [ApplyCodeChangeResult#CODE_CHANGED] if the editor's code is no longer the base code,
+    /// @return [ApplyCodeChangeResult#CODE_CHANGED] if the change can't be applied to the editor's code,
     /// otherwise as for [#apply(String)].
     public ApplyCodeChangeResult apply(final String baseCode, final String proposedCode) {
-        if (!LineDiff.diff(baseCode, editor.getCode()).isIdentical()) {
+        final String rebased = rebase(baseCode, proposedCode);
+        if (rebased == null) {
             return ApplyCodeChangeResult.CODE_CHANGED;
         }
-        return apply(proposedCode);
+        return apply(rebased);
+    }
+
+    /// Works out what a proposed change makes of the editor's current code.
+    ///
+    /// If the editor holds the code the change was proposed against, that is the proposed code. If it
+    /// holds that code with changes applied here since (and nothing else), it is the current code with the
+    /// proposed change put on top of them, as long as the proposed change doesn't touch the lines they
+    /// changed (see [LineDiff#rebase(String, String, String)]). Anything else, such as the user's own
+    /// edit, means the change was proposed against code that is no longer there.
+    ///
+    /// @param baseCode     The code the change was proposed against. Line endings are ignored.
+    /// @param proposedCode The whole proposed code.
+    /// @return The whole code the change makes of the editor's current code, or null if it can't be
+    /// applied to it.
+    public String rebase(final String baseCode, final String proposedCode) {
+        final String currentCode = editor.getCode();
+        if (sameLines(baseCode, currentCode)) {
+            return proposedCode;
+        }
+        // Walks back through the applied changes from the current code, to see if it is the base code
+        // with only those changes made to it.
+        String code = currentCode;
+        for (int i = appliedChanges.size() - 1; i >= 0; i--) {
+            final AppliedCodeChange change = appliedChanges.get(i);
+            if (!sameLines(change.getAppliedCode(), code)) {
+                return null;
+            }
+            code = change.getPreviousCode();
+            if (sameLines(baseCode, code)) {
+                final String rebased = LineDiff.rebase(baseCode, proposedCode, currentCode);
+                // So the parts the user rejects in a review are numbered as they are in the proposal.
+                if (rebased != null
+                    && LineDiff.diff(currentCode, rebased).getChangedBlocks().size()
+                       != LineDiff.diff(baseCode, proposedCode).getChangedBlocks().size()) {
+                    return null;
+                }
+                return rebased;
+            }
+        }
+        return null;
     }
 
     /// Applies a proposed change to the editor, replacing only the changed lines, and highlights the
@@ -77,6 +131,10 @@ public class CodeChangeApplier {
             return ApplyCodeChangeResult.NOT_READY;
         }
         appliedChange = new AppliedCodeChange(previousCode, editor.getCode(), diff);
+        appliedChanges.add(appliedChange);
+        if (appliedChanges.size() > MAX_APPLIED_CHANGES) {
+            appliedChanges.remove(0);
+        }
         final List<int[]> ranges = appliedChange.getChangedLineRanges();
         editor.setChangedLineMarkers(ranges);
         showingMarkers = !ranges.isEmpty();
@@ -101,6 +159,7 @@ public class CodeChangeApplier {
         if (!replaceLines(diff.getLineReplacements())) {
             return false;
         }
+        appliedChanges.remove(appliedChange);
         appliedChange = null;
         clearMarkers();
         return true;
@@ -151,6 +210,10 @@ public class CodeChangeApplier {
         }
         showingMarkers = false;
         keepMarkersForNextStep = false;
+    }
+
+    private static boolean sameLines(final String text1, final String text2) {
+        return LineDiff.splitLines(text1).equals(LineDiff.splitLines(text2));
     }
 
     private boolean replaceLines(final List<LineReplacement> replacements) {

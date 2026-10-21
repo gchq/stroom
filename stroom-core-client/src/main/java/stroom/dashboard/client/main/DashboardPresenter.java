@@ -1276,6 +1276,7 @@ public class DashboardPresenter
             query = null;
         }
 
+        final String descriptionBefore = getDescription();
         final TableComponentSettings before = TableChange.snapshot(component);
         final ExpressionOperator expressionBefore = query != null
                 ? query.getExpression()
@@ -1354,7 +1355,8 @@ public class DashboardPresenter
         if (undoKey != null && before != null) {
             appliedChanges.put(undoKey, new AppliedChanges(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
-                    added.values().stream().map(Component::getId).toList(), configsBefore, getDescription()));
+                    added.values().stream().map(Component::getId).toList(), configsBefore, descriptionBefore,
+                    getDescription()));
         }
         return null;
     }
@@ -1440,6 +1442,17 @@ public class DashboardPresenter
         components.remove(component.getId());
         dashboardContext.fireContextChangeEvent();
         enableQueryButtons();
+    }
+
+    /// @return For each set of changes applied with an undo key and not undone, the dashboard's description just
+    /// after them mapped to its description just before them, so a change proposed before them can be told from
+    /// one proposed against a dashboard changed some other way.
+    public Map<String, String> getAppliedChangeDescriptions() {
+        final Map<String, String> descriptions = new HashMap<>();
+        for (final AppliedChanges applied : appliedChanges.values()) {
+            descriptions.put(applied.descriptionAfter, applied.descriptionBefore);
+        }
+        return descriptions;
     }
 
     /// @param undoKey What applied changes are known by.
@@ -1579,8 +1592,8 @@ public class DashboardPresenter
 
     // Changes that have been applied: the table they changed and its settings before, the query whose expression
     // they set (if they did) and that expression before, the components they added, the name and settings of each
-    // other component they renamed or changed, and the dashboard's description just after, which it must still
-    // have for them to be undone.
+    // other component they renamed or changed, and the dashboard's description just before and just after, which it
+    // must still have for them to be undone.
     private static class AppliedChanges {
 
         private final String componentId;
@@ -1589,6 +1602,7 @@ public class DashboardPresenter
         private final ExpressionOperator expressionBefore;
         private final List<String> addedIds;
         private final Map<String, ComponentConfig> configsBefore;
+        private final String descriptionBefore;
         private final String descriptionAfter;
 
         private AppliedChanges(final String componentId,
@@ -1597,6 +1611,7 @@ public class DashboardPresenter
                        final ExpressionOperator expressionBefore,
                        final List<String> addedIds,
                        final Map<String, ComponentConfig> configsBefore,
+                       final String descriptionBefore,
                        final String descriptionAfter) {
             this.componentId = componentId;
             this.before = before;
@@ -1604,6 +1619,7 @@ public class DashboardPresenter
             this.expressionBefore = expressionBefore;
             this.addedIds = addedIds;
             this.configsBefore = configsBefore;
+            this.descriptionBefore = descriptionBefore;
             this.descriptionAfter = descriptionAfter;
         }
     }

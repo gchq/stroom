@@ -60,6 +60,66 @@ public final class LineDiff {
         return new LineDiffResult(oldLines, newLines, toBlocks(ops));
     }
 
+    /// Puts a change made to a text onto another version of that text (a three way merge by lines), e.g. to
+    /// apply a change proposed against some code to the code as it is now, after other changes were made to it.
+    ///
+    /// Each block of lines the change adds, removes or replaces in `base` is put at the same place in
+    /// `current`, as long as `current` left those lines of `base` alone. Blocks of the two that touch but
+    /// don't overlap are both kept, e.g. one changing a line and the other the next line. Two insertions at
+    /// the same place, or an insertion inside lines the other replaced, clash.
+    ///
+    /// @param base     The text the change was made to. Null is treated as empty.
+    /// @param proposed The changed text. Null is treated as empty.
+    /// @param current  The other version of `base`. Null is treated as empty.
+    /// @return `current` with the change from `base` to `proposed` put onto it, using the line break of
+    /// `current`, or null if the change clashes with the differences between `base` and `current`.
+    public static String rebase(final String base, final String proposed, final String current) {
+        final List<String> baseLines = splitLines(base);
+        final LineDiffResult change = diff(baseLines, splitLines(proposed));
+        final LineDiffResult other = diff(baseLines, splitLines(current));
+        final List<DiffBlock> changeBlocks = change.getChangedBlocks();
+        final List<DiffBlock> otherBlocks = other.getChangedBlocks();
+        for (final DiffBlock changeBlock : changeBlocks) {
+            for (final DiffBlock otherBlock : otherBlocks) {
+                if (clash(changeBlock, otherBlock)) {
+                    return null;
+                }
+            }
+        }
+
+        // Walks through the base lines, taking each changed block from whichever side changed it.
+        final List<String> merged = new ArrayList<>();
+        int basePos = 0;
+        int changeIndex = 0;
+        int otherIndex = 0;
+        while (changeIndex < changeBlocks.size() || otherIndex < otherBlocks.size()) {
+            final DiffBlock changeBlock = changeIndex < changeBlocks.size()
+                    ? changeBlocks.get(changeIndex)
+                    : null;
+            final DiffBlock otherBlock = otherIndex < otherBlocks.size()
+                    ? otherBlocks.get(otherIndex)
+                    : null;
+            final boolean takeChange = otherBlock == null
+                                       || (changeBlock != null && comesFirst(changeBlock, otherBlock));
+            final DiffBlock block;
+            final List<String> newLines;
+            if (takeChange) {
+                block = changeBlock;
+                newLines = change.getNewLines();
+                changeIndex++;
+            } else {
+                block = otherBlock;
+                newLines = other.getNewLines();
+                otherIndex++;
+            }
+            merged.addAll(baseLines.subList(basePos, block.getOldFrom()));
+            merged.addAll(newLines.subList(block.getNewFrom(), block.getNewTo()));
+            basePos = block.getOldTo();
+        }
+        merged.addAll(baseLines.subList(basePos, baseLines.size()));
+        return String.join(lineSeparatorOf(current), merged);
+    }
+
     /// @param text A text, or null.
     /// @return The line break it uses (`\r\n`, `\r` or `\n`), or `\n` if it has none.
     public static String lineSeparatorOf(final String text) {
@@ -101,6 +161,30 @@ public final class LineDiff {
         }
         lines.add(text.substring(lineStart));
         return lines;
+    }
+
+    // True if two changed blocks of the same base lines can't both be made: their base lines overlap, they
+    // insert at the same place, or one inserts inside the lines the other replaces.
+    private static boolean clash(final DiffBlock a, final DiffBlock b) {
+        final boolean aInserts = a.getOldCount() == 0;
+        final boolean bInserts = b.getOldCount() == 0;
+        if (aInserts && bInserts) {
+            return a.getOldFrom() == b.getOldFrom();
+        } else if (aInserts) {
+            return b.getOldFrom() < a.getOldFrom() && a.getOldFrom() < b.getOldTo();
+        } else if (bInserts) {
+            return a.getOldFrom() < b.getOldFrom() && b.getOldFrom() < a.getOldTo();
+        }
+        return a.getOldFrom() < b.getOldTo() && b.getOldFrom() < a.getOldTo();
+    }
+
+    // True if block a goes before block b in the merged text. Blocks that don't clash and start at the same
+    // base line are an insertion and a replacement, and the insertion goes before the lines replaced.
+    private static boolean comesFirst(final DiffBlock a, final DiffBlock b) {
+        if (a.getOldFrom() != b.getOldFrom()) {
+            return a.getOldFrom() < b.getOldFrom();
+        }
+        return a.getOldCount() == 0;
     }
 
     private static int[] toIds(final List<String> lines, final Map<String, Integer> ids) {
