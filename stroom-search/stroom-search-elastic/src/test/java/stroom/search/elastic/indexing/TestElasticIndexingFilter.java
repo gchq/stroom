@@ -85,6 +85,21 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testIndexNameVariableMissingLoggedOnce() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map><string key="other">x</string></map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .startsWith("Field '_year' not found in document");
+    }
+
+    @Test
     void testIndexNameVariableSpecifiedTwiceInDocumentRoot() {
         final ElasticIndexingFilter filter = createFilter("events-{_year}");
 
@@ -117,6 +132,24 @@ class TestElasticIndexingFilter {
         assertThat(harness.getErrors()).isEmpty();
         assertThat(bulkRequests.getFirst().operations().getFirst().create().index())
                 .isEqualTo("events-2023");
+    }
+
+    @Test
+    void testIndexNameVariableOnlyInNestedMapIsMissing() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map>
+                  <map key="nested"><string key="_year">1999</string></map>
+                  <string key="a">b</string>
+                </map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .startsWith("Field '_year' not found in document");
     }
 
     @Test
@@ -161,6 +194,22 @@ class TestElasticIndexingFilter {
 
         assertThat(harness.getMessages(Severity.FATAL_ERROR))
                 .containsExactly("Elasticsearch cluster ref has not been set");
+    }
+
+    @Test
+    void testFailureWhenBatchFullLoggedOnce() throws IOException {
+        // The batch is sent from endElement as soon as it is full, so the error must not be logged again there
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(new IOException("Connection refused"));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml(documents(1))))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Connection refused");
     }
 
     private ElasticIndexingFilter createFilter(final String indexName) {

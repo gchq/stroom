@@ -349,6 +349,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
+                    } catch (final LoggedException e) {
+                        // Already logged, so propagate without logging again
+                        throw e;
                     } catch (final Exception e) {
                         fatalError("Invalid end of object", e);
                     }
@@ -509,6 +512,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             }
         } catch (final JacksonException e) {
             fatalError("Failed to flush JSON to stream", e);
+        } catch (final LoggedException e) {
+            // Already logged, e.g. by a failed bulk request, so propagate without logging again
+            throw e;
         } catch (final Exception e) {
             fatalError(e.getMessage(), e);
         } finally {
