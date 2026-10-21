@@ -16,6 +16,9 @@
 
 package stroom.search.elastic.indexing;
 
+import stroom.pipeline.errorhandler.LoggedException;
+import stroom.util.shared.Severity;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// Unit tests for [ElasticIndexingFilter] that feed it JSON-in-XML SAX events and capture the bulk requests it
 /// sends to a mock Elasticsearch client.
@@ -81,6 +85,41 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testIndexNameVariableSpecifiedTwiceInDocumentRoot() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map>
+                  <string key="_year">2023</string>
+                  <string key="_year">2024</string>
+                  <string key="a">b</string>
+                </map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Index variable '_year' specified more than once in document");
+        assertThat(bulkRequests).isEmpty();
+    }
+
+    @Test
+    void testIndexNameVariableInNestedMapIsNotADuplicate() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <map key="nested"><string key="_year">1999</string></map>
+                  <array key="list"><map><string key="_year">1998</string></map></array>
+                  <string key="_year">2023</string>
+                  <string key="a">b</string>
+                </map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests.getFirst().operations().getFirst().create().index())
+                .isEqualTo("events-2023");
+    }
+
+    @Test
     void testDocumentWithOnlyIndexNameVariablesIsSkipped() {
         final ElasticIndexingFilter filter = createFilter("events-{_year}");
 
@@ -95,6 +134,21 @@ class TestElasticIndexingFilter {
         assertThat(ElasticIndexingFilterTestHarness.documentJsons(bulkRequests))
                 .singleElement()
                 .satisfies(json -> assertThat(json.strip()).isEqualTo("{\"a\":\"b\"}"));
+    }
+
+    @Test
+    void testIndexNameVariableOnlyTakenFromDocumentRoot() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <string key="_year">2023</string>
+                  <map key="nested"><string key="_year">1999</string></map>
+                  <string key="a">b</string>
+                </map>"""));
+
+        assertThat(bulkRequests.getFirst().operations().getFirst().create().index())
+                .isEqualTo("events-2023");
     }
 
     private ElasticIndexingFilter createFilter(final String indexName) {
