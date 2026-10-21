@@ -31,7 +31,9 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
@@ -96,10 +98,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private final ButtonView btnEdit;
 
+    // Button in view to replace the secret of a credential
+    private final ButtonView btnReplaceSecret;
+
     /**
      * Dialog to edit the credentials
      */
     private final Provider<CredentialEditPresenter> credentialEditPresenterProvider;
+
+    // Dialog to replace the secret of the credentials
+    private final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider;
 
     /**
      * Permissions client
@@ -132,12 +140,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     final PagerView view,
                                     final CredentialClient credentialClient,
                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
+                                    final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext,
                                     final ExpiryFormatter expiryFormatter) {
         super(eventBus, view);
         this.credentialClient = credentialClient;
         this.credentialEditPresenterProvider = credentialEditPresenterProvider;
+        this.replaceSecretPresenterProvider = replaceSecretPresenterProvider;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
@@ -152,6 +162,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         btnAdd = this.getView().addButton(SvgPresets.ADD);
         btnDelete = this.getView().addButton(SvgPresets.DELETE);
         btnEdit = this.getView().addButton(SvgPresets.EDIT);
+        btnReplaceSecret = this.getView().addButton(new Preset(SvgImage.PASSWORD, "Replace Secret", false));
 
         this.initColumns(dataGrid);
 
@@ -270,6 +281,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         btnAdd.addClickHandler(event -> handleAddButtonClick());
         btnDelete.addClickHandler(event -> handleDeleteButtonClick());
         btnEdit.addClickHandler(event -> handleEditButtonClick());
+        btnReplaceSecret.addClickHandler(event -> handleReplaceSecretButtonClick());
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -348,9 +360,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         if (cwp != null) {
             btnDelete.setEnabled(cwp.isDelete());
             btnEdit.setEnabled(cwp.isEdit());
+            btnReplaceSecret.setEnabled(cwp.isEdit());
         } else {
             btnDelete.setEnabled(false);
             btnEdit.setEnabled(false);
+            btnReplaceSecret.setEnabled(false);
         }
     }
 
@@ -416,6 +430,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);
+        }
+    }
+
+    // Opens the dialog to replace the secret of the selected credentials
+    private void handleReplaceSecretButtonClick() {
+        final CredentialWithPerms cwp = gridSelectionModel.getSelected();
+
+        // Check that the user can edit these credentials
+        if (cwp != null && cwp.isEdit()) {
+            replaceSecretPresenterProvider.get().show(cwp.getCredential(), this::afterEdit);
         }
     }
 }

@@ -2945,6 +2945,34 @@
         "tags" : [ "Credentials" ]
       }
     },
+    "/credentials/replaceSecret" : {
+      "post" : {
+        "operationId" : "replaceCredentialSecret",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReplaceSecretRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Credential"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Replaces the secret held by an existing credential",
+        "tags" : [ "Credentials" ]
+      }
+    },
     "/credentials/store" : {
       "post" : {
         "operationId" : "storeCredential",
@@ -17702,11 +17730,14 @@
           },
           "credentialType" : {
             "type" : "string",
-            "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE" ]
+            "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE", "KEY_STORE_FILE" ]
           },
           "expiryTimeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "keyStorePath" : {
+            "type" : "string"
           },
           "keyStoreType" : {
             "type" : "string",
@@ -20531,7 +20562,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE" ]
+              "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE", "KEY_STORE_FILE" ]
             },
             "uniqueItems" : true
           },
@@ -22872,6 +22903,26 @@
             "$ref" : "#/components/schemas/Val"
           }
         }
+      },
+      "KeyStoreFileSecret" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Secret"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "keyStorePassword" : {
+              "type" : "string"
+            },
+            "keyStorePath" : {
+              "type" : "string"
+            },
+            "keyStoreType" : {
+              "type" : "string",
+              "enum" : [ "JCEKS", "JKS", "PKCS12" ]
+            }
+          }
+        } ]
       },
       "KeyStoreSecret" : {
         "type" : "object",
@@ -26076,6 +26127,21 @@
           }
         } ]
       },
+      "ReplaceSecretRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expiryTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "secret" : {
+            "$ref" : "#/components/schemas/Secret"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "ReportDoc" : {
         "type" : "object",
         "properties" : {
@@ -27562,6 +27628,7 @@
           "mapping" : {
             "accessToken" : "#/components/schemas/AccessTokenSecret",
             "keyStore" : "#/components/schemas/KeyStoreSecret",
+            "keyStoreFile" : "#/components/schemas/KeyStoreFileSecret",
             "sshKey" : "#/components/schemas/SshKeySecret",
             "usernamePassword" : "#/components/schemas/UsernamePasswordSecret"
           },

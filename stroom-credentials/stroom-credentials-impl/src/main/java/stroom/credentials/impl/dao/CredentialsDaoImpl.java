@@ -188,6 +188,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 record.get(CREDENTIAL.UPDATE_USER),
                 getCredentialType(record.get(CREDENTIAL.CRENDENTIAL_TYPE)),
                 getKeyStoreType(record.get(CREDENTIAL.KEY_STORE_TYPE)),
+                record.get(CREDENTIAL.KEY_STORE_PATH),
                 record.get(CREDENTIAL.EXPIRY_TIME_MS));
     }
 
@@ -201,6 +202,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 record.get(CREDENTIAL.UPDATE_USER),
                 getCredentialType(record.get(CREDENTIAL.CRENDENTIAL_TYPE)),
                 getKeyStoreType(record.get(CREDENTIAL.KEY_STORE_TYPE)),
+                record.get(CREDENTIAL.KEY_STORE_PATH),
                 record.get(CREDENTIAL.EXPIRY_TIME_MS));
 
         final Secret secret = JsonUtil.readValue(record.get(CREDENTIAL.SECRET_JSON).data(), Secret.class);
@@ -233,6 +235,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 CREDENTIAL.UPDATE_USER,
                                 CREDENTIAL.CRENDENTIAL_TYPE,
                                 CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.KEY_STORE_PATH,
                                 CREDENTIAL.EXPIRY_TIME_MS)
                         .from(CREDENTIAL)
                         .where(CREDENTIAL.UUID.eq(uuid))
@@ -252,6 +255,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 CREDENTIAL.UPDATE_USER,
                                 CREDENTIAL.CRENDENTIAL_TYPE,
                                 CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.KEY_STORE_PATH,
                                 CREDENTIAL.EXPIRY_TIME_MS)
                         .from(CREDENTIAL)
                         .where(CREDENTIAL.NAME.eq(name))
@@ -279,6 +283,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 CREDENTIAL.UPDATE_USER,
                                 CREDENTIAL.CRENDENTIAL_TYPE,
                                 CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.KEY_STORE_PATH,
                                 CREDENTIAL.EXPIRY_TIME_MS,
                                 CREDENTIAL.SECRET_JSON,
                                 CREDENTIAL.KEY_STORE)
@@ -311,6 +316,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                     .set(CREDENTIAL.UPDATE_USER, credential.getUpdateUser())
                     .set(CREDENTIAL.CRENDENTIAL_TYPE, credentialType)
                     .set(CREDENTIAL.KEY_STORE_TYPE, keyStoreType)
+                    .set(CREDENTIAL.KEY_STORE_PATH, credential.getKeyStorePath())
                     .set(CREDENTIAL.EXPIRY_TIME_MS, credential.getExpiryTimeMs())
                     .set(CREDENTIAL.SECRET_JSON, json)
                     .set(CREDENTIAL.KEY_STORE, secret.keyStore())
@@ -328,6 +334,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                             CREDENTIAL.UPDATE_USER,
                             CREDENTIAL.CRENDENTIAL_TYPE,
                             CREDENTIAL.KEY_STORE_TYPE,
+                            CREDENTIAL.KEY_STORE_PATH,
                             CREDENTIAL.EXPIRY_TIME_MS,
                             CREDENTIAL.SECRET_JSON,
                             CREDENTIAL.KEY_STORE)
@@ -339,13 +346,70 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                             credential.getUpdateUser(),
                             credentialType,
                             keyStoreType,
+                            credential.getKeyStorePath(),
                             credential.getExpiryTimeMs(),
                             json,
                             secret.keyStore())
-                    .onDuplicateKeyUpdate()
-                    .set(CREDENTIAL.UUID, credential.getUuid())
+                    // No onDuplicateKeyUpdate() here. Name is unique, so a clash on name would
+                    // otherwise re-key another user's credential (and its secret) to this UUID.
                     .execute());
         }
+    }
+
+    @Override
+    public StoredSecret getStoredSecretByUuid(final String uuid) {
+        return JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                        .select(CREDENTIAL.UUID,
+                                CREDENTIAL.NAME,
+                                CREDENTIAL.CREATE_TIME_MS,
+                                CREDENTIAL.UPDATE_TIME_MS,
+                                CREDENTIAL.CREATE_USER,
+                                CREDENTIAL.UPDATE_USER,
+                                CREDENTIAL.CRENDENTIAL_TYPE,
+                                CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.KEY_STORE_PATH,
+                                CREDENTIAL.EXPIRY_TIME_MS,
+                                CREDENTIAL.SECRET_JSON,
+                                CREDENTIAL.KEY_STORE)
+                        .from(CREDENTIAL)
+                        .where(CREDENTIAL.UUID.eq(uuid))
+                        .fetchOptional())
+                .map(this::mapToStoredSecret)
+                .orElse(null);
+    }
+
+    @Override
+    public boolean updateCredential(final Credential credential) {
+        final int count = JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                .update(CREDENTIAL)
+                .set(CREDENTIAL.NAME, credential.getName())
+                .set(CREDENTIAL.UPDATE_TIME_MS, credential.getUpdateTimeMs())
+                .set(CREDENTIAL.UPDATE_USER, credential.getUpdateUser())
+                .set(CREDENTIAL.EXPIRY_TIME_MS, credential.getExpiryTimeMs())
+                .where(CREDENTIAL.UUID.eq(credential.getUuid()))
+                .execute());
+        return count > 0;
+    }
+
+    @Override
+    public boolean updateSecret(final StoredSecret secret) {
+        final Credential credential = secret.credential();
+        final String keyStoreType = credential.getKeyStoreType() == null
+                ? null
+                : credential.getKeyStoreType().name();
+        final JSON json = JSON.valueOf(JsonUtil.writeValueAsString(secret.secret()));
+        final int count = JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                .update(CREDENTIAL)
+                .set(CREDENTIAL.SECRET_JSON, json)
+                .set(CREDENTIAL.KEY_STORE, secret.keyStore())
+                .set(CREDENTIAL.KEY_STORE_TYPE, keyStoreType)
+                .set(CREDENTIAL.KEY_STORE_PATH, credential.getKeyStorePath())
+                .set(CREDENTIAL.EXPIRY_TIME_MS, credential.getExpiryTimeMs())
+                .set(CREDENTIAL.UPDATE_TIME_MS, credential.getUpdateTimeMs())
+                .set(CREDENTIAL.UPDATE_USER, credential.getUpdateUser())
+                .where(CREDENTIAL.UUID.eq(credential.getUuid()))
+                .execute());
+        return count > 0;
     }
 
     /**

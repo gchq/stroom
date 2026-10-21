@@ -18,9 +18,12 @@ package stroom.credentials.impl;
 
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.CredentialsResource;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class CredentialsModule extends AbstractModule {
 
@@ -29,5 +32,21 @@ public class CredentialsModule extends AbstractModule {
         bind(StoredSecrets.class).to(CredentialsService.class);
         bind(CredentialsResource.class).to(CredentialsResourceImpl.class);
         RestResourcesBinder.create(binder()).bind(CredentialsResourceImpl.class);
+
+        // After AdminAccountBootstrap (10) so the default owner, the Administrators group, exists
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(KeyStoreFileCredentialsBootstrapStartup.class, 8);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class KeyStoreFileCredentialsBootstrapStartup extends RunnableWrapper {
+
+        @Inject
+        KeyStoreFileCredentialsBootstrapStartup(final KeyStoreFileCredentialsBootstrap bootstrap) {
+            super(bootstrap::startup);
+        }
     }
 }
