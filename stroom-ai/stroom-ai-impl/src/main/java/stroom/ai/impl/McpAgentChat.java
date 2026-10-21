@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolUserAction;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
@@ -199,6 +200,7 @@ class McpAgentChat {
     private final ToolGroups.Activations toolGroupActivations;
     private final Provider<AiConfig> aiConfigProvider;
     private final UserActions userActions;
+    private final WorkspaceArguments workspaceArguments;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -212,8 +214,10 @@ class McpAgentChat {
                  final ToolGroups.Activations toolGroupActivations,
                  final Provider<AiConfig> aiConfigProvider,
                  final AiDao aiDao,
-                 final UserActions userActions) {
+                 final UserActions userActions,
+                 final WorkspaceArguments workspaceArguments) {
         this.userActions = userActions;
+        this.workspaceArguments = workspaceArguments;
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.toolGroupActivations = toolGroupActivations;
@@ -529,8 +533,19 @@ class McpAgentChat {
             runManager.markReadUntrustedServer(chatId);
         }
         final long startMs = System.currentTimeMillis();
-        final ToolResult toolResult = execute(tools, toolRequest, toolRequest.name(), chatId,
-                !isBuiltIn(toolRequest.name()));
+        // An MCP tool's arguments may name workspace files, whose content is put in before the call is sent, so the
+        // model need not write a large argument out. What the model wrote is what is stored and audited.
+        final WorkspaceArguments.Expansion expansion = isBuiltIn(toolRequest.name())
+                ? WorkspaceArguments.Expansion.unchanged(toolRequest.arguments())
+                : workspaceArguments.expand(chatId, toolRequest.arguments());
+        if (expansion.isExpanded()) {
+            // As for any other read of the files.
+            runManager.markTainted(chatId);
+        }
+        final ToolResult toolResult = expansion.error() != null
+                ? ToolResult.text("Error: " + expansion.error())
+                : execute(tools, withArguments(toolRequest, expansion), toolRequest.name(), chatId,
+                        !isBuiltIn(toolRequest.name()));
         final String result = toolResult.text();
         final long durationMs = System.currentTimeMillis() - startMs;
         runManager.addUsage(chatId, 0, 0, 1);
@@ -564,10 +579,28 @@ class McpAgentChat {
                         error, forModel, path, result.length(), durationMs, actions.isEmpty()
                         ? null
                         : actions), false));
-        auditLog.toolCall(ToolSession.chat(chatId), toolRequest.name(), toolRequest.arguments(), error
-                ? "Failed"
-                : "Run", !error, unattended);
+        // The arguments as the model wrote them, with the size of those sent if workspace files were put in.
+        final Long expandedArgumentChars = expansion.isExpanded()
+                ? (long) expansion.arguments().length()
+                : null;
+        auditLog.toolCall(ToolSession.chat(chatId), toolRequest.name(), toolRequest.arguments(),
+                expandedArgumentChars, error
+                        ? "Failed"
+                        : "Run", !error, unattended);
         return forModel;
+    }
+
+    /// @return The call as it is sent: with the workspace files its arguments name put in, if there were any.
+    private static ToolExecutionRequest withArguments(final ToolExecutionRequest toolRequest,
+                                                      final WorkspaceArguments.Expansion expansion) {
+        if (!expansion.isExpanded()) {
+            return toolRequest;
+        }
+        return ToolExecutionRequest.builder()
+                .id(toolRequest.id())
+                .name(toolRequest.name())
+                .arguments(expansion.arguments())
+                .build();
     }
 
     /**

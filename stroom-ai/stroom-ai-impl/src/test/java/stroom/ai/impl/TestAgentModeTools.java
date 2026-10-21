@@ -24,6 +24,7 @@ import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
@@ -211,7 +212,8 @@ class TestAgentModeTools {
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class),
                 new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
-                new UserActions(Mockito.mock(UserActionLookup.class)));
+                new UserActions(Mockito.mock(UserActionLookup.class)),
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = new ChatModel() {
             @Override

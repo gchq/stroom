@@ -93,6 +93,21 @@ class TestAiAuditLog {
     }
 
     @Test
+    void testToolCallWithWorkspaceFilesPutInKeepsTheReferenceAndRecordsTheSizeSent() {
+        final String arguments = "{\"mapping\":{\"$workspace\":\"/outputs/mapping.json\"}}";
+
+        auditLog.toolCall(ToolSession.chat(7), "t", arguments, 49_152L, "Run", true, false);
+
+        final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.TOOL_CALL_TYPE_ID), Mockito.anyString(),
+                action.capture());
+        assertThat(action.getValue().getArguments()).isEqualTo(arguments);
+        assertThat(action.getValue().getData())
+                .extracting(data -> data.getName() + "=" + data.getValue())
+                .containsExactly("ChatId=7", "Unattended=false", "ExpandedArgumentsChars=49152");
+    }
+
+    @Test
     void testToolCallInAnotherSessionNamesTheSessionAndCaller() {
         final ToolSession session = new ToolSession(ToolSession.Kind.MCP, "s1",
                 new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Desktop"));

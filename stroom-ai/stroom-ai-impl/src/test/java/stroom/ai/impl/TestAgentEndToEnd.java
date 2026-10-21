@@ -18,6 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
@@ -132,7 +134,8 @@ class TestAgentEndToEnd {
                 Mockito.mock(WorkspaceStore.class), Mockito.mock(ContextUsageTracker.class),
                 ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class), new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao),
-                AiConfig::new, aiDao, new UserActions(lookup));
+                AiConfig::new, aiDao, new UserActions(lookup),
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
     }
 
     @AfterEach

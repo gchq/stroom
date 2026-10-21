@@ -69,6 +69,7 @@ appConfig:
       maxQueryLength: 10000
       maxQueryRows: 10000
       maxStreamStoreReads: 500
+      maxToolArgumentBytes: 1048576
       maxUserBytes: 524288000
       queryTimeLimit: "PT2M"
       toolTimeLimit: "PT30S"
