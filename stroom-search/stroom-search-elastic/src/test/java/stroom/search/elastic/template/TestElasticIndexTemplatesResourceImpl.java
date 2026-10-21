@@ -87,13 +87,14 @@ class TestElasticIndexTemplatesResourceImpl {
 
     @BeforeEach
     void setUp() {
-        resource = new ElasticIndexTemplatesResourceImpl(
+        final ElasticIndexTemplateReader reader = new ElasticIndexTemplateReader(
                 () -> elasticIndexStore,
                 () -> elasticClusterStore,
                 () -> documentResourceHelper,
                 () -> securityContext,
                 () -> elasticClientCache,
                 () -> elasticIndexTemplateService);
+        resource = new ElasticIndexTemplatesResourceImpl(() -> reader);
     }
 
     @Test
