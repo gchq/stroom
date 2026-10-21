@@ -970,7 +970,7 @@ interactive header cells, the context menu, copy, export and AI.
     * `CriteriaUtil.setSortList` always sets the grid's list, empty too.
     * Of the 16 screens that call it, six had a default, and now declare it on the grid with the
       same order: Server Tasks (Age, descending), scheduled processes and the execution schedule
-      manager (Name, descending, as before; see `ISSUES.md`), scheduled process history (Execution
+      manager (Name, A to Z: it was Z to A, a slip the header showed, so the user had it changed), scheduled process history (Execution
       Time, descending, for the ID it used, which has no column), processor profiles and node
       groups (Name). The others had no sort but the grid's, and the criteria classes set none.
     * A default's case sensitivity is its column's. The schedules' Name defaults ignored case, so

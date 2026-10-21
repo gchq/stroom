@@ -270,8 +270,8 @@ public class ExecutionScheduleManager
             }
         };
         dataGrid.addResizableColumn(nameColumn, ExecutionScheduleFields.SCHEDULE_NAME, ColumnSizeConstants.DATE_COL);
-        // By name, ignoring case, unless another sort is chosen (descending, as the request's default was)
-        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, false));
+        // By name, A to Z, ignoring case, unless another sort is chosen
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, true));
     }
 
     private void createEnabledColumn() {

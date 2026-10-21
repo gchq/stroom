@@ -172,8 +172,8 @@ public class ScheduledProcessListPresenter
                         .withToolTip("The name for this execution schedule.")
                         .build(),
                 200);
-        // By name, ignoring case, unless another sort is chosen (descending, as the request's default was)
-        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, false));
+        // By name, A to Z, ignoring case, unless another sort is chosen
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, true));
 
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(this::getNodeNameAsSafeHtml)
