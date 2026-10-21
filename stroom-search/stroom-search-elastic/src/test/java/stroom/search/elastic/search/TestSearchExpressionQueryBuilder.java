@@ -161,6 +161,32 @@ class TestSearchExpressionQueryBuilder {
                 .hasMessage("Invalid IPv4 address format: 10.0.0.256 for field \"" + IP_FIELD + "\"");
     }
 
+    @Test
+    void testDictionaryNotSetWithoutValue() {
+        final ExpressionTerm term = ExpressionTerm.builder()
+                .field(KEYWORD_FIELD)
+                .condition(Condition.IN_DICTIONARY)
+                .build();
+
+        assertThatThrownBy(() -> buildSingleTerm(term))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Dictionary not set for field: " + KEYWORD_FIELD);
+    }
+
+    @Test
+    void testDictionaryWithoutValue() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"a"});
+        final ExpressionTerm term = ExpressionTerm.builder()
+                .field(KEYWORD_FIELD)
+                .condition(Condition.IN_DICTIONARY)
+                .docRef(DICTIONARY_REF)
+                .build();
+
+        // The Lucene builder only requires the dictionary reference, not a value
+        final List<Query> lines = assertDictionaryLines(buildSingleTerm(term), 1);
+        assertTerm(lines.getFirst(), KEYWORD_FIELD, "a");
+    }
+
     // --------------------------------------------------------------------------------
     // Parameter sources
     // --------------------------------------------------------------------------------
