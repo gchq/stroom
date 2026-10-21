@@ -66,6 +66,7 @@ public class ExecutionScheduleRunNowPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Run Now")

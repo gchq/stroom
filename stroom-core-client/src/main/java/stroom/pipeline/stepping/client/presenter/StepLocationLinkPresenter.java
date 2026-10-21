@@ -56,6 +56,7 @@ public class StepLocationLinkPresenter
             stepLocationPresenter.setStepLocation(stepLocation);
             ShowPopupEvent.builder(stepLocationPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .modal()
                     .caption("Set Location")
                     .onShow(e -> stepLocationPresenter.focus())
                     .onHideRequest(e -> {

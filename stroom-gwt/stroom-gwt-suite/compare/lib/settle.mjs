@@ -124,7 +124,7 @@ export async function waitForDialogs(page, { budget = 6_000, settleBudget = 4_00
 
 /**
  * Wait for a menu popup to be up and populated. GWT shows a menu's popup and renders its rows (a
- * cellTable whose rows are `.menuItem-outer`) into it, so this waits until at least `min` of those
+ * cellTable whose rows are `.menu__item`) into it, so this waits until at least `min` of those
  * rows are visible, rather than for the popup alone.
  */
 export async function waitForMenu(page, { budget = 4_000, label = 'main-menu', min = 1 } = {}) {

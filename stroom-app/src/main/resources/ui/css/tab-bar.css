@@ -35,7 +35,7 @@
     padding-top: 1px;
 }
 
-.dialog-content .tab-bar--link {
+.dialog__content .tab-bar--link {
     margin-bottom: var(--control__gap--vertical);
 }
 

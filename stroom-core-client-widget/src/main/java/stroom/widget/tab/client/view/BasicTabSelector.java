@@ -17,6 +17,7 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.menu.client.presenter.MenuOpener;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -42,7 +43,7 @@ public class BasicTabSelector extends AbstractTabSelector {
         element.appendChild(text);
         // A button showing every tab in a menu (the tab bar names it with the tabs it hides)
         element.setAttribute("role", "button");
-        element.setAttribute("aria-haspopup", "menu");
+        MenuOpener.mark(element);
         element.setAttribute("aria-label", "Show all tabs");
 
         setElement(element);

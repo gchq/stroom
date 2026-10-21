@@ -88,6 +88,7 @@ public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFiel
         //PopupSize.resizable(300, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> embeddingModelPresenter.focus())

@@ -38,7 +38,7 @@ await page.goto(gwt.baseUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 })
 await gwt.signInFully(page, credentials());
 await page.waitForTimeout(2_000);
 
-const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
   .filter((e) => e.offsetWidth).map((e) => e.textContent.trim()));
 const press = async (name) => {
   try {

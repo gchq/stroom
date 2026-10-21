@@ -114,6 +114,9 @@
   "app-editors-queryeditor--query-info-popup": [
     "target-size"
   ],
+  "app-editors-queryeditor--query-side-filter-has-no-include-exclude-tab": [
+    "target-size"
+  ],
   "app-editors-queryeditor--read-only": [
     "target-size"
   ],

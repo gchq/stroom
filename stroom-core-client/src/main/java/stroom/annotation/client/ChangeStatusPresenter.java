@@ -96,6 +96,7 @@ public class ChangeStatusPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(PopupSize.resizableX(500))
                 .caption("Change Status")
                 .onShow(e -> getView().focus())
@@ -139,6 +140,7 @@ public class ChangeStatusPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationStatusPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Status")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationStatusPresenter.focus())

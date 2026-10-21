@@ -492,9 +492,12 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
                 seekTo(event, 100.0);
                 break;
             case KeyCodes.KEY_ESCAPE:
-                // Dismiss the pill without moving focus (WCAG 1.4.13). Not
-                // preventDefault-ed: Escape may also mean "close the dialog I am
-                // in", and swallowing it here would trap the user.
+                // Dismiss the pill without moving focus (WCAG 1.4.13). Used up only
+                // when the pill is showing: otherwise Escape may also mean "close
+                // the dialog I am in", and swallowing it here would trap the user.
+                if (scrubTooltip.getStyleName().contains(SCRUB_TOOLTIP_VISIBLE)) {
+                    event.preventDefault();
+                }
                 scrubTooltipSuppressed = true;
                 showScrubTooltip(false);
                 break;

@@ -232,7 +232,8 @@ public final class ReportEditorStories {
     // The document picker in the form group with this label
     private static Query picker(final Play play, final String label) {
         return play.within(play.getByText(label, "label").closest(".form-group"))
-                .querySelector("[aria-haspopup]");
+                // The picker, not the help button (which opens a help popup)
+                .querySelector("[aria-haspopup]:not(.form-group__help)");
     }
 
     private static Query fileType(final Play play) {

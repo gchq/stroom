@@ -58,7 +58,7 @@ export function readRange(page) {
       return !!at && (at === el || el.contains(at) || at.contains(el));
     };
     // Scope to the topmost dialog when one is up, so the pager under it is never even considered.
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document;
     for (const pager of scope.querySelectorAll('.pager-paging')) {
       if (!(pager.offsetWidth > 0)) continue;

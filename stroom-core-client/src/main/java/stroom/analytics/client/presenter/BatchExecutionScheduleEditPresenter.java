@@ -119,6 +119,7 @@ public class BatchExecutionScheduleEditPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Batch Change Selected Schedules")
                 .fire();

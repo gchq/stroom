@@ -138,6 +138,7 @@ public class DataUploadPresenter
         //noinspection unused
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Upload")
                 .onShow(e -> onShow(feedDoc))

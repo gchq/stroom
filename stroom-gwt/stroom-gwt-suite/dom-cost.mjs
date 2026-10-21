@@ -86,7 +86,7 @@ async function closeTab(label) {
     if (r.value === 'closed') return true;
     if (r.value !== 'confirm') return false;
     // A dirty document asks before it goes. Nothing here edited anything, so this is GWT's own.
-    await page.locator('.dialog-popup button, .resizableDialog-popup button').filter({ hasText: /^(OK|Yes)/ })
+    await page.locator('.dialog button').filter({ hasText: /^(OK|Yes)/ })
       .first().click({ timeout: 3_000 }).catch(() => {});
     await page.waitForTimeout(500);
   }

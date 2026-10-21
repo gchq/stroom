@@ -91,11 +91,10 @@ public final class AppShellStories {
     private static final String NAVIGATION = ".navigation";
     // The document tabs' labels
     private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
-    // Menu items have no 'menuitem' role or aria-disabled; a disabled item has
-    // the 'menuItem-disabled' class
-    private static final String MENU_ITEM = ".menuItem-outer";
-    private static final String MENU_ITEM_DISABLED = "menuItem-disabled";
-    private static final String MENU_SHORTCUT = ".menuItem-shortcut";
+    // A menu item's row (MenuItemCell), inside the element with its role and aria-disabled
+    private static final String MENU_ITEM = ".menu__item";
+    private static final String MENU_ITEM_ROLE = ":is([role='menuitem'], [role='menuitemcheckbox'])";
+    private static final String MENU_SHORTCUT = ".menu__shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
     // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
@@ -301,7 +300,7 @@ public final class AppShellStories {
                     play.hover(menuItem(screen, "Help"));
                     final Query notConfigured = screen.findByRole("menuitem", "Help is not configured!");
                     play.expect(notConfigured).toHaveAttribute("aria-disabled", "true");
-                    play.expect(menuItem(screen, "Help is not configured!")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Help is not configured!")).toHaveAttribute("aria-disabled", "true");
                     expectNoProblems(play);
                 })
                 // The menu shows the keyboard shortcuts, and 'g' then 'u' opens the preferences
@@ -322,7 +321,12 @@ public final class AppShellStories {
                     play.expect(shortcuts(play)).toContain("Ctrl+Shift+F");
                     play.expect(shortcuts(play)).toContain("Ctrl+E");
                     play.expect(shortcuts(play)).toContain("Alt+L");
+                    // Escape closes the open sub menu, then the menu: while a menu is open, typed
+                    // letters go to its items (type-ahead) rather than to the shortcuts
                     play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.getAllByRole("menu")).toHaveLength(1));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     // GWT's key sequences complete on the keys' release, so
                     // the keys are pressed and released rather than only pressed
                     play.keyboard("gu");
@@ -713,9 +717,10 @@ public final class AppShellStories {
                     rightClick(play, navTree(play, "System").getByText("System"));
                     play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     for (final String name : List.of("Copy To...", "Move", "Rename", "Delete")) {
-                        play.waitFor(() -> play.expect(menuItem(screen, name)).toHaveClass(MENU_ITEM_DISABLED));
+                        play.waitFor(() -> play.expect(menuItem(screen, name))
+                                .toHaveAttribute("aria-disabled", "true"));
                     }
-                    play.expect(menuItem(screen, "Edit Permissions")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Edit Permissions")).not().toHaveAttribute("aria-disabled");
                     expectNoProblems(play);
                 })
                 // A tab's context menu, with positional enablement on the first of two tabs
@@ -740,12 +745,12 @@ public final class AppShellStories {
                             "Alt+L")) {
                         play.expect(shortcuts(play)).toContain(accelerator);
                     }
-                    play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Close Tabs to the Right")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move Tab to Start")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move Tab to End")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Save")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Save All Tabs")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Close Tabs to the Right")).not().toHaveAttribute("aria-disabled");
+                    play.expect(menuItem(screen, "Move Tab to Start")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Move Tab to End")).not().toHaveAttribute("aria-disabled");
+                    play.expect(menuItem(screen, "Save")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Save All Tabs")).toHaveAttribute("aria-disabled", "true");
                     play.click(menuItem(screen, "Close Other Tabs"));
                     play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
                     play.expect(tabs(play).nth(0)).toHaveTextContent(TextMatch.containing("Countries"));
@@ -1004,9 +1009,10 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Delete")).toHaveClass(MENU_ITEM_DISABLED));
-                    play.expect(menuItem(screen, "Rename")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Copy To...")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.waitFor(() -> play.expect(menuItem(screen, "Delete"))
+                            .toHaveAttribute("aria-disabled", "true"));
+                    play.expect(menuItem(screen, "Rename")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Copy To...")).not().toHaveAttribute("aria-disabled");
                     expectNoProblems(play);
                 })
                 // A deep link opens its document at start-up; Alt+W closes it
@@ -1134,7 +1140,7 @@ public final class AppShellStories {
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.fireEvent().mouseUp(play.getByText("Countries", TAB_LABEL), EventInit.create().button(2));
                     play.waitFor(() -> play.expect(menuItem(screen, "Locate in Explorer"))
-                            .not().toHaveClass(MENU_ITEM_DISABLED));
+                            .not().toHaveAttribute("aria-disabled"));
                     play.keyboard("{Escape}");
                     // The rule is Stroom's DocumentPluginRegistry.getExplorerDocRef,
                     // checked with the shell's registry (the Dictionary plugin is registered, no
@@ -1384,7 +1390,7 @@ public final class AppShellStories {
     }
 
     private static Query menuItem(final Play screen, final String title) {
-        return screen.querySelector(MENU_ITEM + "[title=\"" + title + "\"]");
+        return screen.querySelector(MENU_ITEM_ROLE + ":has(> " + MENU_ITEM + "[title=\"" + title + "\"])");
     }
 
     private static Supplier<List<String>> shortcuts(final Play play) {

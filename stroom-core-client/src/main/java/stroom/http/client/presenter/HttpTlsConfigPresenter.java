@@ -74,6 +74,7 @@ public class HttpTlsConfigPresenter
 //        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
 //                .popupSize(PopupSize.)
                 .caption("Edit HTTP TLS Configuration")
                 .onShow(e -> getView().focus())

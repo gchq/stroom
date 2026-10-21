@@ -59,19 +59,19 @@ public final class PopupContractStories {
     // The neighbour button's clicks, counted with a listener
     private static final String NEIGHBOUR_CLICK = "neighbourClick";
 
-    private static final String HELP_PANEL = ".help-popup";
-    private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-popup)";
+    private static final String HELP_PANEL = ".help-popup--markdown";
+    private static final String QUICK_FILTER_PANEL = ".help-popup:not(.help-popup--markdown)";
     // A quick filter's help button
     private static final String QUICK_FILTER_HELP = ".quick-filter__toolbar button[title='Quick Filter Syntax Help']";
-    // Stroom's menus and submenus are each a `simplePopup-popup` holding a cell table of
-    // `menuItem-outer` rows
-    private static final String MENU_PANEL = ".simplePopup-popup:has(.menuItem-outer)";
-    private static final String MENU_ROW = ".menuCellTable > tbody > tr";
+    // Stroom's menus and submenus are each a `popup` (`SimplePopup`) holding a cell table of
+    // `menu__item` rows
+    private static final String MENU_PANEL = ".popup--floating:has(.menu__item)";
+    private static final String MENU_ROW = ".menu > tbody > tr";
     // A row's content, which the menu's cell table handles mouse events on (not on the row)
-    private static final String MENU_ITEM = ".menuItem-outer";
-    private static final String MENU_TEXT = ".menuItem-text, .menuItem-simpleText";
-    private static final String OUTER_PANEL = ".simplePopup-popup:has(.cascade-outer-panel)";
-    private static final String INNER_PANEL = ".simplePopup-popup:has(.cascade-inner-panel)";
+    private static final String MENU_ITEM = ".menu__item";
+    private static final String MENU_TEXT = ".menu__text";
+    private static final String OUTER_PANEL = ".popup--floating:has(.cascade-outer-panel)";
+    private static final String INNER_PANEL = ".popup--floating:has(.cascade-inner-panel)";
 
     private static final List<PopupCase> CASES = cases();
     private static final PopupCase MENU_CASE = find("MenuPanel");
@@ -89,7 +89,9 @@ public final class PopupContractStories {
                 .opener(QUICK_FILTER_HELP)
                 .partners(QUICK_FILTER_HELP, QUICK_FILTER_HELP + " svg")
                 .panel(QUICK_FILTER_PANEL)
-                .insideTarget(QUICK_FILTER_PANEL));
+                .insideTarget(QUICK_FILTER_PANEL)
+                .placement(".quick-filter", PopupLocation.BELOW, 0,
+                        "QuickFilter — new PopupPosition(new Rect(quickFilter), PopupLocation.BELOW)"));
         cases.add(PopupCase.of("FormGroup help", PopupHarnesses::formGroup)
                 .opener("button.form-group__help")
                 // The button and the icon inside it
@@ -102,9 +104,9 @@ public final class PopupContractStories {
         cases.add(PopupCase.of("TypeFilter", PopupHarnesses::typeFilter)
                 .opener(".type-filter-trigger")
                 .partners(".type-filter-trigger")
-                // The type filter's list is also a `menuCellTable`, but without menu rows
-                .panel(".simplePopup-popup:has(.menuCellTable):not(:has(.menuItem-outer))")
-                .insideTarget(".simplePopup-popup:not(:has(.menuItem-outer)) .simplePopup-content")
+                // The type filter's list is also a `menu`, but without menu rows
+                .panel(".popup--floating:has(.menu):not(:has(.menu__item))")
+                .insideTarget(".popup--floating:not(:has(.menu__item)) .popupContent")
                 // Left out of EscapeCloses: Escape is handled by the popup's list, not the popup
                 // (TypeFilterSelectionEventManager.onClose → TypeFilterPresenter.escape() → hideSelf())
                 .storyCases(true, false)
@@ -114,7 +116,7 @@ public final class PopupContractStories {
                 .opener(".setting-block")
                 // The block and the label inside it
                 .partners(".setting-block", ".setting-block .gwt-Label")
-                .panel(".simplePopup-popup:has(.popover-body)")
+                .panel(".popup--floating:has(.popover-body)")
                 .insideTarget(".popover-body"));
         cases.add(PopupCase.of("SelectionBox", PopupHarnesses::selectionBox)
                 .opener(".svg-icon-box__icon")
@@ -133,9 +135,9 @@ public final class PopupContractStories {
                 .partners(".menu-harness-trigger")
                 .panel(MENU_PANEL)
                 // The panel's own content box, not a row — clicking a row runs its command
-                .insideTarget(MENU_PANEL + " .simplePopup-content")
+                .insideTarget(MENU_PANEL + " .popupContent")
                 // Left out of EscapeCloses: a menu's Escape (MenuViewImpl.escape() →
-                // MenuPresenter.hideAll()) is checked by EscapeClosesTheWholeMenuHierarchy
+                // MenuPresenter.escape()) is checked by EscapeClosesOneLevelAtATime
                 .storyCases(true, false)
                 // A Stroom menu shown with ShowMenuEvent is placed where the call site asks
                 .placement(".menu-harness-trigger", PopupLocation.BELOW, 0,
@@ -318,13 +320,15 @@ public final class PopupContractStories {
                 })
                 .story("PlacedOnItsRequestedSide", PopupContractStories::render)
                 .withPlay(PopupContractStories::placedOnItsRequestedSide)
-                .story("QuickFilterHelpUsesGwtsOwnOffset", PopupContractStories::render)
+                .story("QuickFilterHelpBelowTheFilter", PopupContractStories::render)
                 .withPlay(play -> {
                     final PopupCase c = find("QuickFilter help");
                     openPopup(play, c);
                     final String filter = c.within(".quick-filter");
-                    play.expect("left should be filter.left + 4",
-                                    () -> Math.abs(PopupDom.rect(c.getPanel())[0] - (PopupDom.rect(filter)[0] + 4)))
+                    // The shared help popup, placed by the positioner below the filter, lined up
+                    // with it (it was placed by hand, 4px in)
+                    play.expect("left should be filter.left",
+                                    () -> Math.abs(PopupDom.rect(c.getPanel())[0] - PopupDom.rect(filter)[0]))
                             .toBeLessThanOrEqual(1);
                     // Just below the filter, so clear of the buttons in it (a fixed 26px once
                     // covered the foot of its 24px help button)
@@ -357,11 +361,11 @@ public final class PopupContractStories {
                     play.expect("a menu must paint one border", () -> PopupDom.paintedBorders(rootMenu))
                             .toHaveLength(1);
                     play.expect(() -> PopupDom.paintedBorders(rootMenu).get(0))
-                            .toContain("simplePopup-background-behind");
-                    // And the first row sits 4px below the panel's top edge, the inset that the
-                    // submenu anchor's outset cancels
-                    play.expect("first-row inset should be 4px",
-                            () -> Math.abs(menuRow(0, 0)[1] - menu(0)[1] - 4)).toBeLessThanOrEqual(0.5);
+                            .toContain("popup--floating");
+                    // And the first row sits 6px below the panel's top edge (its border and the viewport's
+                    // padding), the inset that the submenu anchor's outset cancels
+                    play.expect("first-row inset should be 6px",
+                            () -> Math.abs(menuRow(0, 0)[1] - menu(0)[1] - 6)).toBeLessThanOrEqual(0.5);
                     closeAll(play);
                 })
                 .story("SubmenuAnchorIsClippedToItsMenu", PopupContractStories::render)
@@ -384,13 +388,19 @@ public final class PopupContractStories {
                     play.expect("the root menu itself must stay open", () -> menuRow(0, 0)[3] > 0).toBe(true);
                     closeAll(play);
                 })
-                .story("EscapeClosesTheWholeMenuHierarchy", PopupContractStories::render)
+                .story("EscapeClosesOneLevelAtATime", PopupContractStories::render)
                 .withPlay(play -> {
                     openNestedSubmenus(play);
+                    // Escape closes the menu with the focus and puts the focus back on the item that
+                    // opened it (the WAI-ARIA menu pattern), as Left does; in the root menu it
+                    // closes the menu
                     play.keyboard("{Escape}");
-                    // The innermost menu's popup takes Escape as its close action, and closes the
-                    // whole menu (it once closed only its own level)
-                    play.waitFor(() -> play.expect("Escape closes every level",
+                    play.waitFor(() -> play.expect("Escape should close just the deepest level",
+                            PopupContractStories::visibleMenus).toBe(2));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(1));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect("Escape in the root menu closes it",
                             PopupContractStories::visibleMenus).toBe(0));
                     closeAll(play);
                 })

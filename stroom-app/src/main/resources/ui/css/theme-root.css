@@ -348,6 +348,9 @@
     --dialog__border-color: rgba(var(--black-rgb), .3);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
     --dialog__border-radius: 8px;
+    /* A menu's items (5px) sit 6px in, so its corners are 11px, for the items and their focus ring
+       to follow them (menu.css) */
+    --menu__border-radius: 11px;
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
     --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
     --transparency__backdrop-filter: saturate(2) blur(20px);

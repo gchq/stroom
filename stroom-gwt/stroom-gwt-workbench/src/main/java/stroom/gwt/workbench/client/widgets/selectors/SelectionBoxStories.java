@@ -301,15 +301,8 @@ public final class SelectionBoxStories {
         play.click(play.querySelector(OPENER));
         play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
         final Play popup = play.screen().within(play.screen().querySelector(POPUP));
-        // The chrome Stroom wraps every popup in (SimplePopupLayout)
-        for (final String selector : new String[]{
-                ".popupContent",
-                ".simplePopup-container",
-                ".simplePopup-background-behind",
-                ".simplePopup-background",
-                ".simplePopup-content"}) {
-            play.expect(popup.querySelector(selector)).not().toBeNull();
-        }
+        // The look Stroom gives every popup (SimplePopupLayout): one element, in GWT's popupContent
+        play.expect(popup.querySelector(".popupContent > .popup > .selection-list")).not().toBeNull();
         // SelectionList's own three children, in order
         final Query list = popup.querySelector(".selection-list.dock-container-vertical");
         play.expect(list).not().toBeNull();

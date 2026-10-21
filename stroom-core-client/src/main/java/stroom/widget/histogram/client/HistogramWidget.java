@@ -402,15 +402,20 @@ public class HistogramWidget extends Composite {
         }
     }
 
+    private boolean isTooltipShowing() {
+        return tooltip != null && tooltip.getStyleName().contains("stroom-histogram-tooltip--visible");
+    }
+
     /**
      * Dismisses the hover tooltip on Escape.
      *
-     * <p>Deliberately does not consume the event: Escape usually also means
-     * "close the dialog or popup I am in", and swallowing it here would strand a
-     * user inside whatever contains the histogram.</p>
+     * <p>Escape that dismisses the tooltip is used up; with no tooltip showing it goes on, as it
+     * also means "close the dialog or popup I am in", and swallowing it here would strand a user
+     * inside whatever contains the histogram.</p>
      */
     private void onKeyDown(final KeyDownEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
+        if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE && isTooltipShowing()) {
+            event.preventDefault();
             hideTooltip();
         }
     }

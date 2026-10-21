@@ -179,36 +179,6 @@ body,table td,select {
 		;
 }
 
-.gwt-MenuBarPopup {
-	margin: 0px;
-	z-index: 100;
-}
-
-.gwt-MenuBar .gwt-MenuItem-selected {
-	background: #abcdf6;
-}
-
-.gwt-MenuBar-horizontal {
-	background: none;
-	border: none;
-}
-
-.gwt-MenuBar-horizontal .gwt-MenuItem {
-	padding: 0px 10px;
-	vertical-align: bottom;
-	color: white;
-}
-
-.gwt-MenuBar-vertical .subMenuIcon {
-	padding-right: 4px;
-	vertical-align: middle;
-}
-
-.gwt-MenuBar-vertical .subMenuIcon-selected {
-	vertical-align: middle;
-	background: #abcdf6;
-}
-
 .gwt-PopupPanel {
 	border: 1px solid black;
 	padding: 3px;

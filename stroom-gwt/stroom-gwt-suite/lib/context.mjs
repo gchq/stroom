@@ -26,7 +26,7 @@
 //   QueryPresenter / EditExpressionPresenter / SteppingPresenter / PipelineStructurePresenter
 //
 // The oracle is the same for all of them and needs no source reading beyond the registration: a
-// context handler that runs puts a MENU on the screen. GWT's menus are `.menuItem-outer` (the same
+// context handler that runs puts a MENU on the screen. GWT's menus are `.menu__item` (the same
 // ones `clickMenuItem` drives), so "a menu appeared that was not there before" is the whole check.
 //
 // Nothing here is ever a `fail`. Most elements have no context menu and are not supposed to: the
@@ -51,7 +51,7 @@ export const TARGETS = [
 ];
 
 /** How many menu items are on screen — the before/after of every check here. */
-export const menuCount = (page) => page.evaluate(() => document.querySelectorAll('.menuItem-outer').length).catch(() => 0);
+export const menuCount = (page) => page.evaluate(() => document.querySelectorAll('.menu__item').length).catch(() => 0);
 
 /**
  * The first target present on this screen, with a point to right-click. Skips anything inside a
@@ -97,9 +97,9 @@ export async function rightClick(page, target) {
   await page.mouse.click(target.x, target.y, { button: 'right' });
   await page.waitForTimeout(500);
   const after = await menuCount(page);
-  const items = after > before ? await page.evaluate(() => [...document.querySelectorAll('.menuItem-outer')]
+  const items = after > before ? await page.evaluate(() => [...document.querySelectorAll('.menu__item')]
     .filter((e) => e.offsetWidth > 0)
-    .map((e) => String((e.querySelector('.menuItem-text, .menuItem-simpleText') ?? e).textContent ?? '').replace(/\s+/g, ' ').trim())
+    .map((e) => String((e.querySelector('.menu__text') ?? e).textContent ?? '').replace(/\s+/g, ' ').trim())
     .filter(Boolean).slice(0, 12)).catch(() => []) : [];
   // Close it the way the framework expects, and check it went.
   if (after > before) {

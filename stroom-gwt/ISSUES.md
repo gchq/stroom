@@ -861,11 +861,12 @@ their cells have no name, and icon columns have empty headers. The quick filter'
 
 ### Menu buttons don't say they open a menu
 
-**Reported.** The buttons that open menus (toolbar buttons such as Add, the main menu, and the
-"..." action button in grid rows) have no `aria-haspopup="menu"` or `aria-expanded`, so a screen
-reader doesn't say that they open a menu or whether it is open. The menus themselves have roles
-now (see Fixed). Every place that fires `ShowMenuEvent` would need to mark its opener, so it is
-best done in `ShowMenuEvent` with a named opener rather than one place at a time.
+**Reported.** Most buttons that open menus now say so and whether the menu is open (see Fixed):
+`ShowMenuEvent.Builder.opener` with a button marked by `ToolbarButton.setOpensMenu` or
+`MenuOpener.mark`. Left: the "..." action button in grid rows (`ActionMenuCell`) and the hover
+action menus (`HoverActionMenuCell`), which are cells with no role that open on a mouse press only
+(the grids session), and the row action menus of the data retention rules
+(`DataRetentionPolicyListPresenter`) and content templates (`ContentTemplateListPresenter`).
 
 ### Controls with no accessible name
 
@@ -1519,6 +1520,33 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `SourceViewer` `HighlightedRange`.
 * The data upload sent the browser's `C:\fakepath\<name>` as the file name (`DataUploadPresenter`):
   `DataUploadDialog` `Upload`.
+* Dialogs, menus and help popups (session 3, `Widgets/Dialogs/Escape`, `PopupContract`,
+  `MenuPanel` and `QuickFilter` stories):
+  * Escape in a dialog went to the dialog before the widget with the focus, so a widget's own
+    Escape (a quick filter clearing, a date box's picker closing, a tree putting back a move, a
+    chart's tooltip going) closed the dialog instead. Now the widget has it first, and the dialog
+    closes only if no widget used it (`preventDefault()`); Escape from inside a dialog no longer
+    reaches the page behind (where a dashboard stops its query on Escape). A grid in a dialog no
+    longer swallows Escape (`AbstractSelectionEventManager.onClose` says whether it used it). The
+    password dialogs no longer send Cancel twice on Escape.
+  * Escape in a sub menu closed the whole menu; now it closes the sub menu and puts the focus back
+    on its parent item (the WAI-ARIA menu pattern), as Left does.
+  * Page Up did nothing in menus and grids (`AbstractSelectionEventManager`).
+  * A menu item was chosen on mouse down, so a press couldn't be taken back by moving off it (WCAG 2.5.2); it is now chosen when the button is let go over it (`real-input/menu.mjs`).
+  * A grid's information tooltip was given the focus but couldn't take it, so the keyboard couldn't scroll it; its content is a tab stop, in a dialog named "Information".
+  * A busy spinner (`SpinnerLarge`, e.g. a dialog's title bar) wasn't read by screen readers, as its status appeared with its text already in it; the text is now put in once it shows (`DialogTitle` `Busy`).
+  * A menu item with a sub menu didn't say whether it was open (`aria-expanded`).
+  * The quick filter's Recent Filters button and the tab bar's tab selector didn't say whether
+    their menus were open.
+  * The quick filter's syntax help was a popup of its own, not the shared help popup, so it
+    didn't put the focus back, nor say from its button that it opens or is open; every help popup
+    is now a `HelpPopup` (`help-popup`, BEM, `help-popup.css`), its button
+    `aria-haspopup="dialog"` with `aria-expanded`.
+  * Editing an item in a list that was deleted behind the (modeless) dialog threw on OK
+    (`indexOf` was -1: data retention rules, receive rules, content templates, conditional
+    formatting, selection handlers); now OK says it was deleted. The column filters, Edit Property
+    and conditional formatting write onto the column, element or table as it is now, not as it
+    was when the dialog opened, and say if it was removed.
 * Popups and menus (`PopupContract`, `InfoPopoverCell` and `SelectionBox` stories): help popups and
   an `InfoColumn`'s popover reopened on a second click instead of closing; `QuickFilter` needed two
   clicks to reopen its help; help popups ignored Escape; Escape closed only the innermost menu; a

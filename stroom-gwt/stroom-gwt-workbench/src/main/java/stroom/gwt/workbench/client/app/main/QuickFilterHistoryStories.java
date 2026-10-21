@@ -100,7 +100,7 @@ public final class QuickFilterHistoryStories {
                     // The menu is as wide as the filter, as a combo box's list is, and lined up
                     // with it, however long its filters
                     final Query box = play.querySelector(".quick-filter");
-                    final Query menu = screen.querySelector(".menuCellTable").closest(".simplePopup-container");
+                    final Query menu = screen.querySelector(".menu").closest(".popup");
                     play.expect("menu's left edge", () -> Math.abs(menu.left().get() - box.left().get()))
                             .toBeLessThanOrEqual(1);
                     play.expect("menu's width", () -> Math.abs(menu.width().get() - box.width().get()))

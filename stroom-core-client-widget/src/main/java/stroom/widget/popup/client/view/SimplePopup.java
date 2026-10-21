@@ -17,55 +17,50 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
+/// A popup with no title bar or buttons (`PopupType.POPUP`): a menu, a chooser, a filter's list,
+/// a tooltip. The BEM block `popup` (`popup.css`), its look on the popup itself (it was three
+/// elements inside it), with its content inside GWT's own `popupContent`.
+///
+/// A popup given a caption is a dialog that isn't modal, named by the caption (which isn't
+/// shown); one with none (a menu, whose content has its own role) has no role.
 public class SimplePopup extends AbstractPopupPanel {
 
-    private static final Binder binder = GWT.create(Binder.class);
+    private static final String ROLE = "role";
+    private static final String ARIA_LABEL = "aria-label";
 
-    @UiField
-    SimplePanel content;
-
-    /**
-     * Creates an empty dialog box. It should not be shown until its child
-     * widget has been added using {@link #add(Widget)}.
-     */
+    /// Creates a popup that closes itself when the user clicks outside it. It should not be shown
+    /// until its content has been set with [#setContent(Widget)].
+    ///
+    /// @param dialogEventHandler Told when the popup is asked to close.
     public SimplePopup(final DialogActionUiHandlers dialogEventHandler) {
         this(dialogEventHandler, true);
     }
 
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     */
+    /// Creates a popup. It should not be shown until its content has been set with
+    /// [#setContent(Widget)].
+    ///
+    /// @param dialogEventHandler Told when the popup is asked to close.
+    /// @param autoHide           Whether the popup closes itself when the user clicks outside it.
     public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide) {
         this(dialogEventHandler, autoHide, false);
     }
 
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     * @param modal    <code>true</code> if keyboard and mouse events for widgets not
-     *                 contained by the dialog should be ignored
-     */
+    /// Creates a popup. It should not be shown until its content has been set with
+    /// [#setContent(Widget)].
+    ///
+    /// @param dialogEventHandler Told when the popup is asked to close.
+    /// @param autoHide           Whether the popup closes itself when the user clicks outside it.
+    /// @param modal              Whether keyboard and mouse events for widgets not in the popup
+    ///                           should be ignored.
     public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide, final boolean modal) {
         super(dialogEventHandler, autoHide, modal);
-
-        setStyleName("simplePopup-popup");
-        setWidget(binder.createAndBindUi(this));
+        // Floating: hidden until PopupUtil has placed it
+        setStyleName("popup popup--floating");
     }
 
     @Override
@@ -73,14 +68,24 @@ public class SimplePopup extends AbstractPopupPanel {
         // No icon
     }
 
+    /// Names the popup, making it a dialog for screen readers. The caption isn't shown.
+    ///
+    /// @param text The popup's name, or null or blank for none (and no role).
     @Override
     public void setCaption(final String text) {
-        // N/A
+        final Element element = getElement();
+        if (NullSafe.isBlankString(text)) {
+            element.removeAttribute(ROLE);
+            element.removeAttribute(ARIA_LABEL);
+        } else {
+            element.setAttribute(ROLE, "dialog");
+            element.setAttribute(ARIA_LABEL, text);
+        }
     }
 
     @Override
     public void setContent(final Widget widget) {
-        content.setWidget(widget);
+        setWidget(widget);
     }
 
     @Override
@@ -88,12 +93,9 @@ public class SimplePopup extends AbstractPopupPanel {
         super.hide(autoClosed);
     }
 
-    /**
-     * This is overridden as we don't want popups to hide without the presenter
-     * to get a chance to do something about it. When hide occurs the presenter
-     * will be notified via the event and will then choose whether or not to
-     * force the popup to hide.
-     */
+    /// This is overridden as we don't want popups to hide without the presenter to get a chance to
+    /// do something about it. When hide occurs the presenter will be notified via the event and will
+    /// then choose whether or not to force the popup to hide.
     @Override
     public void hide(final boolean autoClosed) {
         if (dialogActionHandler != null) {
@@ -103,13 +105,5 @@ public class SimplePopup extends AbstractPopupPanel {
                 dialogActionHandler.onDialogAction(DialogAction.CLOSE);
             }
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface Binder extends UiBinder<Widget, SimplePopup> {
-
     }
 }

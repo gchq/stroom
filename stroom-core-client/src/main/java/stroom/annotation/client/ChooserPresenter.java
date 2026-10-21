@@ -69,11 +69,11 @@ public class ChooserPresenter<T>
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
         cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<T>(cellTable) {
             @Override
-            protected void onClose(final CellPreviewEvent<T> e) {
-                super.onClose(e);
+            protected boolean onClose(final CellPreviewEvent<T> e) {
                 HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true)
                         .action(DialogAction.CLOSE)
                         .fire();
+                return true;
             }
 
             @Override

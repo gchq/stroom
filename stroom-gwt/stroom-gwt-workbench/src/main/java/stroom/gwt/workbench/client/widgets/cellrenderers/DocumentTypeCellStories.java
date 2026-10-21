@@ -46,7 +46,7 @@ import java.util.Map;
 /// Stories for Stroom's [DocumentTypeCell].
 ///
 /// The cell is shown as Stroom's type filter (`TypeFilterPresenter`) shows it: as the one column of
-/// a [MyCellTable] with the `menuCellTable` class, one row per type, whose tick boxes are toggled by
+/// a [MyCellTable] with the `menu` class, one row per type, whose tick boxes are toggled by
 /// a [CheckListSelectionEventManager]. The cell's [DocumentTypeSelectionModel] gives each type's
 /// tick box state; a null state renders no tick box.
 public final class DocumentTypeCellStories {
@@ -139,7 +139,7 @@ public final class DocumentTypeCellStories {
         final List<DocumentType> types = new ArrayList<>(states.keySet());
 
         final MyCellTable<DocumentType> cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
+        cellTable.getElement().setClassName("menu");
         final DocumentTypeSelectionModel selectionModel = states::get;
         cellTable.addColumn(new Column<DocumentType, DocumentType>(new DocumentTypeCell(selectionModel)) {
             @Override

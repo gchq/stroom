@@ -72,7 +72,7 @@
             </form:FormGroup>
         </g:FlowPanel>
 
-        <g:FlowPanel styleName="dialog-buttons">
+        <g:FlowPanel styleName="dialog__buttons">
             <g:SimplePanel width="45%">
                 <b:Button ui:field="applySelectionButton" addStyleNames="allow-focus Button--contained-primary w-100" text="Apply to Selection"/>
             </g:SimplePanel>

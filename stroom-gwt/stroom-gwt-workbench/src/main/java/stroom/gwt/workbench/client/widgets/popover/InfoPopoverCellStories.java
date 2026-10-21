@@ -93,6 +93,13 @@ public final class InfoPopoverCellStories {
         // Open
         play.click(play.querySelector(ICON));
         play.waitFor(() -> play.expect(body.getByText(BODY)).toBeInTheDocument());
+        // A dialog (not modal) named "Information", its content a tab stop that has the focus, so
+        // the keyboard can scroll it
+        final Query dialog = body.getByRole("dialog", "Information");
+        play.expect(dialog).not().toHaveAttribute("aria-modal");
+        final Query content = play.within(dialog).querySelector(".info-tooltip");
+        play.expect(content).toHaveAttribute("tabindex", "0");
+        play.waitFor(() -> play.expect(content).toHaveFocus());
 
         // One outside click does both jobs: dismisses the popover AND presses the button
         play.click(neighbour);

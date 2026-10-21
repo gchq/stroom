@@ -277,7 +277,6 @@ public class DashboardPresenter
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .caption("Set Layout Constraints")
-                .modal(true)
                 .onShow(e -> presenter.getView().focus())
                 .onHide(e -> handlerRegistration.removeHandler())
                 .fire();

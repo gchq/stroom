@@ -115,7 +115,16 @@ public final class QuickFilterStories {
                 // The help ends with a link to the quick filter's documentation, which says what it
                 // is and, to screen readers, that it opens a new tab (gchq/stroom#5406)
                 .withPlay(play -> {
-                    play.click(play.getByTitle("Quick Filter Syntax Help"));
+                    final Query helpButton = play.getByTitle("Quick Filter Syntax Help");
+                    // The button says it opens a dialog, and whether it is open
+                    play.expect(helpButton).toHaveAttribute("aria-haspopup", "dialog");
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
+                    play.click(helpButton);
+                    // The shared help popup, a dialog named for what it helps with
+                    final Query help = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
+                    play.expect(help).toHaveClass("help-popup");
+                    play.expect(help).not().toHaveClass("quickFilter-tooltip");
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "true");
                     final Query docsLink = play.screen().findByRole("link",
                             "quick filter documentation (opens in new tab)");
                     play.expect(docsLink).toHaveAttribute("href", "https://gchq.github.io/stroom-docs/");
@@ -126,6 +135,8 @@ public final class QuickFilterStories {
                     play.expect(play.screen().getByText(TextMatch.containing("(opens in new tab)")))
                             .toHaveClass("sr-only");
                     play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
                 })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {
@@ -211,7 +222,7 @@ public final class QuickFilterStories {
                     play.click(play.getByTitle("Quick Filter Syntax Help"));
                     play.expect(play.screen().findByText("This filter was not applied")).toBeInTheDocument();
                     // In the popup (the box's screen reader text says it too)
-                    play.expect(play.screen().getByText(TextMatch.containing(REJECTION), ".quickFilter-tooltip *"))
+                    play.expect(play.screen().getByText(TextMatch.containing(REJECTION), ".help-popup *"))
                             .toBeInTheDocument();
                     play.keyboard("{Escape}");
                     // Clearing the box clears the error

@@ -206,8 +206,8 @@ const signatureOf = (node, state) => [
   state.fingerprint ?? '',
 ].join(' :: ');
 
-/** Is a menu popup up? `.menuItem-outer` is the shared "menu is populated" measure. */
-const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menuItem-outer')]
+/** Is a menu popup up? `.menu__item` is the shared "menu is populated" measure. */
+const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menu__item')]
   .some((e) => e.offsetWidth > 0 && e.offsetHeight > 0)).catch(() => false);
 
 const idOf = (node) => [node.kind, ...node.path].join(' / ');
@@ -479,17 +479,17 @@ async function survey() {
   // affordances that read as the application refusing input when it was the crawler asking the wrong
   // question. What is behind the glass is not an affordance of this node.
   const scope = await page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')]
+    const popups = [...document.querySelectorAll('.dialog')]
       .filter((e) => e.offsetWidth > 0);
     if (!popups.length) return 'body';
     popups[popups.length - 1].setAttribute('data-crawl-scope', '1');
     return '[data-crawl-scope="1"]';
   });
   // An open MENU is a scope too, and this is the second time that lesson has cost a run. Scoping to
-  // `.dialog-popup` alone fixed the 34 affordances read from behind a modal's glass; a menu is not a
+  // `.dialog` alone fixed the 34 affordances read from behind a modal's glass; a menu is not a
   // dialog, so `Add Column` and `History` were read from UNDER an open menu, reported as available, and
   // then failed their click — 13 `unclickable` that were the crawler's doing. `elementFromPoint` named
-  // the coverer as `div.menuItem-text`, which is what turned a theory into a fact.
+  // the coverer as `div.menu__text`, which is what turned a theory into a fact.
   //
   // Clicking a dashboard component tab in design mode opens that component's menu, so this is not an
   // artefact to suppress: those items are affordances, and the 27 `ShowMenuEvent` classes in the

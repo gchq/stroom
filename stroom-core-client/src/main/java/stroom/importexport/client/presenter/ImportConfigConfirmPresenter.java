@@ -169,6 +169,7 @@ public class ImportConfigConfirmPresenter extends
                 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Confirm Import")
                 .onShow(e -> getView().focus())

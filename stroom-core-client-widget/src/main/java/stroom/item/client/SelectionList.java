@@ -32,9 +32,9 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
+import stroom.widget.util.client.TypeAhead;
 import stroom.widget.util.client.TypedKey;
 
-import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -88,15 +88,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private static final String ROLE = "role";
     private static final String ROLE_NONE = "none";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
-    // How long a pause in typing starts what is typed to jump to an option again
-    private static final int TYPE_AHEAD_PAUSE_MILLIS = 500;
 
     private final QuickFilter quickFilter;
     private final SelectionEventManager<T, I> selectionEventManager;
-    // What has been typed to jump to an option (in a list with no quick filter), and when it was last
-    // typed to, so that a pause starts it again
-    private String typedPrefix = "";
-    private double lastTypedMillis;
+    // What has been typed to jump to an option (in a list with no quick filter)
+    private final TypeAhead typeAhead = new TypeAhead();
     private final FlowPanel links;
     private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
@@ -326,30 +322,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             quickFilter.type(text);
             return;
         }
-        final double now = Duration.currentTimeMillis();
-        typedPrefix = now - lastTypedMillis < TYPE_AHEAD_PAUSE_MILLIS
-                ? typedPrefix + text
-                : text;
-        lastTypedMillis = now;
-        // The same character typed again (e.g. "dd") goes on to the next option starting with it
-        final boolean repeated = isOneCharacterRepeated(typedPrefix);
-        final String prefix = (repeated
-                ? typedPrefix.substring(0, 1)
-                : typedPrefix).toLowerCase(Locale.ROOT);
         final List<I> items = cellTable.getVisibleItems();
-        final int current = Math.max(cellTable.getKeyboardSelectedRow(), 0);
-        // One character (or the same one again) moves on from the option with the focus; more
-        // characters keep to it while it still matches
-        final int start = repeated
-                ? current + 1
-                : current;
-        for (int i = 0; i < items.size(); i++) {
-            final int row = (start + i) % items.size();
-            final String label = NullSafe.string(items.get(row).getLabel()).toLowerCase(Locale.ROOT);
-            if (label.startsWith(prefix)) {
-                cellTable.setKeyboardSelectedRow(row, true);
-                return;
-            }
+        final int row = typeAhead.next(text,
+                cellTable.getKeyboardSelectedRow(),
+                items.size(),
+                i -> NullSafe.string(items.get(i).getLabel()));
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, true);
         }
     }
 
@@ -374,15 +353,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     // Whether the text is one character, perhaps typed more than once (e.g. "d" or "ddd")
-    private static boolean isOneCharacterRepeated(final String text) {
-        for (int i = 1; i < text.length(); i++) {
-            if (text.charAt(i) != text.charAt(0)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     // Chooses the option with the focus, as Enter does, which closes the list
     private void chooseKeyboardSelected() {
         final int row = cellTable.getKeyboardSelectedRow();
