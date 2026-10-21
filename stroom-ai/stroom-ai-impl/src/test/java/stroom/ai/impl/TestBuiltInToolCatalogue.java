@@ -100,6 +100,15 @@ class TestBuiltInToolCatalogue {
         GoldenFiles.assertMatches(CATALOGUE_FILE, sb.toString());
     }
 
+    @Test
+    void aToolProposesChangesToADocumentsDocumentation() {
+        // Seen in testing: asked to document a dashboard, the agent could not. document_documentation only reads
+        // a Documentation tab, and no built-in tool proposes a change to one, for any type of document.
+        assertThat(builtInTools.toolMap().keySet())
+                .extracting(ToolSpecification::name)
+                .contains("document_documentation", "propose_documentation_change");
+    }
+
     private void appendTool(final StringBuilder sb,
                             final ToolSpecification specification,
                             final Map<String, List<String>> offeredByMode) {

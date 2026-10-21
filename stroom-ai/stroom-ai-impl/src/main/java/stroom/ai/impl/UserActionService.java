@@ -36,7 +36,11 @@ import stroom.util.shared.diff.LineDiffResult;
 
 import jakarta.inject.Inject;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -59,6 +63,11 @@ public class UserActionService {
     static final String UNDO_COMMAND = "Undo applied code change";
     static final String APPLY_DASHBOARD_COMMAND = "Apply proposed dashboard change";
     static final String UNDO_DASHBOARD_COMMAND = "Undo applied dashboard change";
+    static final String APPLY_DOCUMENTATION_COMMAND = "Apply proposed documentation change";
+    static final String UNDO_DOCUMENTATION_COMMAND = "Undo applied documentation change";
+    /// Why a proposed documentation change can't be applied, as the documentation was saved since.
+    static final String DOCUMENTATION_CHANGED = "The documentation has been saved with other text since this was "
+                                                + "proposed. Ask again for a change to the current documentation.";
     private static final String NOT_IN_CHAT = "This action is not in the chat.";
 
     /// The most lines of each rejected part of a code change described to the model, on each side.
@@ -145,8 +154,8 @@ public class UserActionService {
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
             case UserActions.CREATE_DASHBOARD -> createDashboard(chatId, action);
-            case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE ->
-                applyCodeChange(chatId, message, result, action, rejected);
+            case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
+                 UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
@@ -183,14 +192,14 @@ public class UserActionService {
         if (!lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action) + ", so the change "
                                    + "can't be undone here. Use Ctrl+Z in the editor.";
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command(action, true), target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         final String outcome = "Undid the applied change, not saved";
         if (update(message, result, action.withStatus(Status.PENDING, outcome)) == null) {
             return new AiUserActionResult(false, "This has already changed. Try again.", null);
         }
-        auditLog.processed(ToolSession.chat(chatId), action.doc(), UNDO_COMMAND, target,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), command(action, true), target,
                 "Undid an applied change: " + lineCounts(action), true);
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I undid the "
                                                                      + "proposed change I had applied to "
@@ -261,16 +270,22 @@ public class UserActionService {
                                                final UserActionRecord action,
                                                final Set<Integer> rejected) {
         final String target = describeTarget(action);
+        final String command = command(action, false);
         if (action.doc() == null || action.codeChange() == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The document no longer exists, or you cannot see it.";
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
         if (!lookup.canEdit(action.doc())) {
             final String problem = "You don't have permission to edit " + describeDoc(action)
                                    + ", so the change can't be applied.";
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target, problem, false);
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, problem, false);
             return new AiUserActionResult(false, problem, null);
+        }
+        if (isStaleDocumentation(action)) {
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target, DOCUMENTATION_CHANGED,
+                    false);
+            return new AiUserActionResult(false, DOCUMENTATION_CHANGED, null);
         }
         final LineDiffResult proposed = LineDiff.diff(action.codeChange().baseCode(), action.request());
         final int parts = proposed.getChangedBlocks().size();
@@ -285,7 +300,7 @@ public class UserActionService {
             if (update(message, result, action.withStatus(Status.DONE, APPLIED)) == null) {
                 return new AiUserActionResult(false, "This has already been done.", null);
             }
-            auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target,
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target,
                     "Applied a proposed change, not saved: " + lineCounts(action), true);
             // So the model knows on its next turn (or now, if it is working).
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
@@ -305,7 +320,7 @@ public class UserActionService {
         if (update(message, result, action.withStatus(Status.DONE, outcome)) == null) {
             return new AiUserActionResult(false, "This has already been done.", null);
         }
-        auditLog.processed(ToolSession.chat(chatId), action.doc(), APPLY_COMMAND, target,
+        auditLog.processed(ToolSession.chat(chatId), action.doc(), command, target,
                 "Applied part of a proposed change, not saved: " + counts, true);
         aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied part of "
                                                                      + "the proposed change to " + target + " ("
@@ -447,14 +462,58 @@ public class UserActionService {
                 : doc.getType() + " '" + NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid()) + "'";
     }
 
-    /// @return True for a change to code (a stepping element's, or an open Query's) that the user applies to an
-    /// editor, unsaved, and can undo.
+    /// @return True for a change to code (a stepping element's, or an open Query's) or to a document's
+    /// documentation, that the user applies to an editor, unsaved, and can undo.
     private static boolean isCodeChange(final UserActionRecord action) {
         return UserActions.APPLY_CODE_CHANGE.equals(action.action())
-               || UserActions.APPLY_QUERY_CHANGE.equals(action.action());
+               || UserActions.APPLY_QUERY_CHANGE.equals(action.action())
+               || UserActions.APPLY_DOCUMENTATION_CHANGE.equals(action.action());
+    }
+
+    private static boolean isDocumentationChange(final UserActionRecord action) {
+        return UserActions.APPLY_DOCUMENTATION_CHANGE.equals(action.action());
+    }
+
+    /// @return The command a code or documentation change is audited as.
+    private static String command(final UserActionRecord action, final boolean undo) {
+        if (isDocumentationChange(action)) {
+            return undo
+                    ? UNDO_DOCUMENTATION_COMMAND
+                    : APPLY_DOCUMENTATION_COMMAND;
+        }
+        return undo
+                ? UNDO_COMMAND
+                : APPLY_COMMAND;
+    }
+
+    /// @return True if a documentation change was proposed against the documentation as saved (rather than the
+    /// tab's text as the user had it, which the browser checks) and that has since been saved with other text, or
+    /// can no longer be read.
+    private boolean isStaleDocumentation(final UserActionRecord action) {
+        final CodeChange change = action.codeChange();
+        if (!isDocumentationChange(action) || change.snapshotHash() != null) {
+            return false;
+        }
+        return lookup.savedDocumentation(action.doc())
+                .map(saved -> !change.baseHash().equals(sha256(saved)))
+                .orElse(true);
+    }
+
+    /// @param text Some text.
+    /// @return The SHA-256 of its UTF-8 bytes, as hex, as the proposing tools hash the text they proposed against.
+    static String sha256(final String text) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(text.getBytes(StandardCharsets.UTF_8)));
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 
     private static String describeTarget(final UserActionRecord action) {
+        if (isDocumentationChange(action)) {
+            return "the documentation of " + describeDoc(action);
+        }
         final CodeChange change = action.codeChange();
         if (change == null || change.pipeline() == null) {
             // A Query's, in its own tab.

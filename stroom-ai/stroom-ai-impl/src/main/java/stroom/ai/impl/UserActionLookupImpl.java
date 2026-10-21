@@ -137,6 +137,26 @@ public class UserActionLookupImpl implements UserActionLookup {
     }
 
     @Override
+    public Optional<String> savedDocumentation(final DocRef docRef) {
+        if (docRef == null || docRef.getType() == null) {
+            return Optional.empty();
+        }
+        final Object doc = read(docRef, docRef.getType(), Object.class);
+        if (doc == null) {
+            return Optional.empty();
+        }
+        try {
+            final Object description = doc.getClass().getMethod("getDescription").invoke(doc);
+            return Optional.of(description instanceof final String text
+                    ? text
+                    : "");
+        } catch (final ReflectiveOperationException | RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the documentation of " + docRef, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Set<String> tags(final DocRef docRef) {
         return explorerNodeService.getNode(docRef)
                 .map(ExplorerNode::getTags)

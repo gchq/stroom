@@ -85,10 +85,10 @@ public class ContextAssembler {
             the file with the workspace tools rather than reading it all.
             - Before calling tools, say in a sentence what you are about to do and why; the user sees it as \
             progress.
-            - Your reasoning, and what you write alongside tool calls, are folded away in the chat, so the user \
-            may not read them. Put anything they must read or answer (a question, a choice, a finding) in your \
-            answer at the end of the turn, or ask it with ask_user, and then wait for them. Never ask a question \
-            and carry on calling tools in the same turn.
+            - What you write alongside tool calls is shown in the chat as you work, but a question there goes \
+            unanswered while you carry on. Ask anything the user must answer (a question, a choice) with \
+            ask_user, or in your answer at the end of the turn, and then wait for them. Never ask a question and \
+            carry on calling tools in the same turn.
             - Only call tools that change things (create, update, delete, upload) when the user has asked for \
             that change.
             - Some calls need the user's approval. If the user denies one, don't try it again the same way: take \
@@ -115,6 +115,8 @@ public class ContextAssembler {
             in the same ask_user call.
             - To make a dashboard, use propose_dashboard. First ask, in one ask_user call, what its description \
             says to ask, leaving out what the request already answers.
+            - To write a document's documentation, use propose_documentation_change rather than giving the \
+            Markdown in your answer.
             - Folders can hold standing instructions: Documentation docs named AGENTS, which apply to their folder \
             and below (one at the top of the tree applies everywhere). They say how things are done there, e.g. \
             which field holds the acting user, XSLT style, how fields are mapped, how things are named, or which \
@@ -521,7 +523,7 @@ public class ContextAssembler {
             switch (message.getMessageType()) {
                 case STEER_MESSAGE -> {
                     step.end();
-                    messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + message.getMessage()));
+                    messages.add(new UserMessage(McpAgentChat.steerText(message)));
                 }
                 case TOOL_CALL -> {
                     final ToolCallRecord call = readRecord(message, ToolCallRecord.class);

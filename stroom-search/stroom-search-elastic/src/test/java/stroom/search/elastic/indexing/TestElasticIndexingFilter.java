@@ -856,6 +856,60 @@ class TestElasticIndexingFilter {
         Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
     }
 
+    /// Control case: with no failures, a document from each of two stream parts is sent to Elasticsearch.
+    @Test
+    void testDocumentFromEachStreamPartIsIndexed() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        filter.startProcessing();
+        parsePart(filter, documents(1));
+        parsePart(filter, documents(1));
+        filter.endProcessing();
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkSizesWhenSent).containsExactly(1, 1);
+    }
+
+    /// A bulk request rejected with a 403 (e.g. the account lacks `create_index`/`auto_configure` on the target
+    /// data stream) aborts the current stream part with a fatal error, and the pipeline goes on to the stream's
+    /// next part with the same filter. The filter resets its parsing state at each part, so later parts are still
+    /// indexed (seen: every later part silently dropped, with no request and no error).
+    @Test
+    void testDocumentsInLaterStreamPartsAreIndexedAfterABulkFailure() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenAnswer(invocation -> {
+                    final BulkRequest bulkRequest = invocation.getArgument(0);
+                    recordBulkRequest(bulkRequest);
+                    return bulkSizesWhenSent.size() == 1
+                            ? forbiddenResponse()
+                            : successResponse(bulkRequest.operations().size());
+                });
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        filter.startProcessing();
+        // What AbstractProcessorTaskExecutor.processNestedStreams sees, before it moves on to the next part.
+        assertThatThrownBy(() -> parsePart(filter, documents(1)))
+                .isInstanceOf(LoggedException.class);
+        assertThat(harness.getMessages(Severity.FATAL_ERROR)).isNotEmpty();
+        parsePart(filter, documents(1));
+        filter.endProcessing();
+
+        // One request for the rejected part 1 document and one for the part 2 document.
+        assertThat(bulkSizesWhenSent).containsExactly(1, 1);
+    }
+
+    // One part of a stream, as the pipeline gives each part to the filter.
+    private void parsePart(final ElasticIndexingFilter filter, final String content) {
+        filter.startStream();
+        try {
+            harness.parse(filter, jsonXml(content));
+        } finally {
+            filter.endStream();
+        }
+    }
+
     private ElasticIndexingFilter createFilter(final String indexName) {
         return harness.createFilter(
                 elasticClient,
@@ -900,6 +954,18 @@ class TestElasticIndexingFilter {
                 .errors(false)
                 .took(1L)
                 .items(items));
+    }
+
+    private static BulkResponse forbiddenResponse() {
+        return BulkResponse.of(b -> b
+                .errors(true)
+                .took(1L)
+                .items(BulkResponseItem.of(i -> i
+                        .operationType(OperationType.Create)
+                        .index(INDEX_NAME)
+                        .status(403)
+                        .error(e -> e.type("security_exception")
+                                .reason("action [indices:admin/auto_create] is unauthorized")))));
     }
 
     private static ElasticsearchException elasticsearchException(final int status) {

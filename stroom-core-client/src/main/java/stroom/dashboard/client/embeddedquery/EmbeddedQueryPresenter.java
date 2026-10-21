@@ -623,6 +623,13 @@ public class EmbeddedQueryPresenter
                     .build());
         }
 
+        if (getQuerySettings().getAutomate() == null) {
+            setSettings(getQuerySettings()
+                    .copy()
+                    .automate(Automate.builder().build())
+                    .build());
+        }
+
         // Fix legacy selection filters.
         setSettings(getQuerySettings()
                 .copy()
@@ -656,11 +663,13 @@ public class EmbeddedQueryPresenter
     private void updateQueryDoc(final QueryDoc queryDoc,
                                 final EmbeddedQueryComponentSettings settings) {
         if (queryDoc != null) {
-            if (settings.getQueryTablePreferences() == null &&
-                queryDoc.getQueryTablePreferences() != null) {
+            if (settings.getQueryTablePreferences() == null) {
+                // The query's own preferences, or the defaults if it has none.
                 setSettings(settings
                         .copy()
-                        .queryTablePreferences(queryDoc.getQueryTablePreferences())
+                        .queryTablePreferences(Objects.requireNonNullElseGet(
+                                queryDoc.getQueryTablePreferences(),
+                                () -> QueryTablePreferences.builder().build()))
                         .build());
             }
 

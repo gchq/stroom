@@ -19,12 +19,14 @@ package stroom.dashboard.client.event;
 
 import stroom.dashboard.client.table.TableChange;
 import stroom.docref.DocRef;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /// Asks the dashboards to do something with a change to a dashboard table proposed in the AI chat: say whether
@@ -101,8 +103,9 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     }
 
     /// Asks for a change to be applied to a table on a dashboard, unsaved: the dashboard is opened if it isn't
-    /// open, and it isn't applied if the dashboard has changed since it was proposed or can't be edited. It is
-    /// applied on top of any unsaved changes, as it was proposed against the dashboard with them.
+    /// open, and it isn't applied if the dashboard has changed since it was proposed (other than by changes the chat
+    /// applied) or can't be edited. It is applied on top of any unsaved changes, as it was proposed against the
+    /// dashboard with them.
     ///
     /// @param handlers      Where to fire it.
     /// @param dashboard     The dashboard.
@@ -167,18 +170,30 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     /// @param editable     True if the user can edit the dashboard.
     /// @param currentHash  The hash of the dashboard's settings now.
     /// @param proposedHash The hash of its settings when the change was proposed.
+    /// @param appliedFrom  For each change the chat applied to the dashboard (and that wasn't undone), the hash of
+    ///                     its settings just after the change mapped to the hash just before it. May be null.
     /// @return What to do. A change is applied to the dashboard as the user has it, unsaved changes included, as
-    /// those are what it was proposed against; never to a dashboard that has changed since it was proposed.
+    /// those are what it was proposed against, or on top of changes the chat applied since it was proposed (its
+    /// changes are applied all or none, so one that clashes with them still fails, saying why); never to a
+    /// dashboard that has been changed some other way since it was proposed.
     public static Decision decide(final boolean editable,
                                   final String currentHash,
-                                  final String proposedHash) {
+                                  final String proposedHash,
+                                  final Map<String, String> appliedFrom) {
         if (!editable) {
             return Decision.NOT_EDITABLE;
         }
-        if (currentHash == null || !currentHash.equalsIgnoreCase(proposedHash)) {
-            return Decision.CHANGED;
+        // Walks back from the dashboard now through the changes the chat applied, to the one proposed against.
+        // Each step goes back one change, so there are no more steps than changes (whatever loops they make).
+        final Map<String, String> applied = NullSafe.map(appliedFrom);
+        String hash = currentHash;
+        for (int step = 0; hash != null && step <= applied.size(); step++) {
+            if (hash.equalsIgnoreCase(proposedHash)) {
+                return Decision.APPLY;
+            }
+            hash = applied.get(hash);
         }
-        return Decision.APPLY;
+        return Decision.CHANGED;
     }
 
     /// @return The event's type.

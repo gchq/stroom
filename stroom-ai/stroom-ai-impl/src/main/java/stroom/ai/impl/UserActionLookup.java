@@ -38,6 +38,12 @@ public interface UserActionLookup {
     boolean canEdit(DocRef docRef);
 
     /// @param docRef A document.
+    /// @return Its documentation as saved: the `description` field its Documentation tab edits, or empty text if
+    /// it has none set. Empty if the type has no such field, or the document can't be read or the user may not
+    /// view it.
+    Optional<String> savedDocumentation(DocRef docRef);
+
+    /// @param docRef A document.
     /// @return The document's tags, empty if it has none or cannot be found.
     Set<String> tags(DocRef docRef);
 

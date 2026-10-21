@@ -71,6 +71,15 @@ class TestUserActionsUi {
     }
 
     @Test
+    void aDocumentationChangeIsReviewedAndCanBeUndoneOnceApplied() {
+        assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_DOCUMENTATION_CHANGE)).isEqualTo("Review and apply…");
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_DOCUMENTATION_CHANGE, "DONE")).isTrue();
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_DOCUMENTATION_CHANGE, "PENDING")).isFalse();
+        // Shown as a diff, not as code to copy.
+        assertThat(UserActionsUi.showsCode(UserActionsUi.APPLY_DOCUMENTATION_CHANGE)).isFalse();
+    }
+
+    @Test
     void aProposedQueryAndAnElasticsearchRequestAreShownAsCode() {
         assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_QUERY)).isTrue();
         // The dashboard's StroomQL.

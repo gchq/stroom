@@ -135,6 +135,12 @@ public class TabContentProvider<E>
     }
 
     /// @param tab A tab.
+    /// @return True if the tab has been added.
+    public boolean hasTab(final TabData tab) {
+        return tabProviders.containsKey(tab);
+    }
+
+    /// @param tab A tab.
     /// @return The presenter of the tab, if it has already been made and given the document, without making it.
     public PresenterWidget<?> getExistingPresenter(final TabData tab) {
         final TabProvider<E> provider = presenterCache.get(tab);

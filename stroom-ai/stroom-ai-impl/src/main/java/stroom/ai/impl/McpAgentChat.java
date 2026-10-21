@@ -122,6 +122,10 @@ class McpAgentChat {
      * Put before a message the user sent while the model was working, so the model knows when it was said.
      */
     static final String STEER_PREFIX = "[Sent by the user while you were working] ";
+    /// Put after a message the user sent while the model was working, if the tab they attached was sent with it.
+    static final String STEER_TAB_NOTE = "[Sent with the attached tab as the user has it now (it may have changed, "
+                                         + "e.g. by applying a change you proposed). Tools that read the tab, and "
+                                         + "changes you propose, use it now.]";
 
     /**
      * Chat messages holding content from tools or Stroom data, which could hold instructions planted by someone
@@ -678,6 +682,15 @@ class McpAgentChat {
                 null,
                 null,
                 NullSafe.get(info, McpToolInfo::briefDescription));
+    }
+
+    /// @param message A message the user sent to steer a run.
+    /// @return What the model is given of it: the message, saying it was sent while the model worked and, if the tab
+    /// the user attached was sent with it, that the tab may have changed.
+    static String steerText(final AiChatMessage message) {
+        return STEER_PREFIX + message.getMessage() + (message.getAttachmentId() != null
+                ? "\n\n" + STEER_TAB_NOTE
+                : "");
     }
 
     static ToolApprovalRequest approvalRequest(final List<PendingCall> pending,
@@ -1431,7 +1444,7 @@ class McpAgentChat {
                         && aiService.changeMessageType(chatId, message.getId(), AiChatRunManager.QUEUED_STEERS,
                         AiMessageType.STEER_MESSAGE))) {
                     LOGGER.debug(() -> "Picked up a steering message for chatId=" + chatId);
-                    steers.add(UserMessage.from(STEER_PREFIX + message.getMessage()));
+                    steers.add(UserMessage.from(steerText(message)));
                 }
             }
             return steers;

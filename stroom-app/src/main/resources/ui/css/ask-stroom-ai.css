@@ -736,8 +736,7 @@
     border-color: #d32f2f;
 }
 
-/* The progress line lines up with the turns' activity lines ("Worked for ..."), rather than being indented
-   like a message. */
+/* The progress line lines up with the turns' steps, rather than being indented like a message. */
 .ai-message.ai-message--working {
     padding-left: 0;
     padding-right: 0;
@@ -778,8 +777,7 @@
 .ai-message--working > summary::before,
 .ai-message--data > summary::before,
 .ai-message--thinking > summary::before,
-.ai-message--debug-detail > summary::before,
-.ai-activity > summary::before {
+.ai-message--debug-detail > summary::before {
     content: "";
     display: inline-block;
     flex: none;
@@ -797,8 +795,7 @@
 .ai-message--working[open] > summary::before,
 .ai-message--data[open] > summary::before,
 .ai-message--thinking[open] > summary::before,
-.ai-message--debug-detail[open] > summary::before,
-.ai-activity[open] > summary::before {
+.ai-message--debug-detail[open] > summary::before {
     transform: rotate(45deg);
     vertical-align: 3px;
 }
@@ -1017,57 +1014,19 @@
     }
 }
 
-/* ---- Activity group: a turn's reasoning and tool calls, above its answer ---- */
+/* ---- A turn's reasoning, tool calls and request detail, shown as compact steps between what is said ---- */
 
-.ai-activity {
-    padding: 4px 0;
-    margin: 4px 0;
-}
-
-.ai-activity > summary {
-    cursor: pointer;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: var(--ai-font-size--small);
-    color: var(--control__text-color--disabled);
-}
-
-.ai-activity > summary::-webkit-details-marker {
-    display: none;
-}
-
-.ai-activity > summary:hover {
-    color: var(--control__text-color);
-}
-
-.ai-activity-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.ai-activity-entries {
-    margin: 4px 0 0 5px;
-    padding-left: 10px;
+.ai-message.ai-message--tool,
+.ai-message.ai-message--memory,
+.ai-message.ai-message--thinking,
+.ai-message.ai-message--debug-detail {
+    margin: 0 0 0 5px;
+    padding: 2px 4px 2px 14px;
     border-left: 2px solid var(--control__border-color);
-}
-
-.ai-activity-entries > .ai-message {
-    margin: 2px 0;
-    padding: 2px 4px;
     font-size: var(--ai-font-size--small);
 }
 
-/* What the model said while working reads as Stroom AI speaking, not as a step it took. */
-.ai-activity-entries > .ai-message--interim {
-    margin: 6px 0;
-    padding: 4px 0;
-    font-size: inherit;
-}
-
-.ai-activity-entry--error .ai-entry-title {
+.ai-message--tool-error .ai-entry-title {
     color: var(--icon-colour__red, #d32f2f);
 }
 
@@ -1093,7 +1052,7 @@
     flex: 1;
 }
 
-.ai-activity-live > summary .ai-entry-title {
+.ai-message--live-thinking > summary .ai-entry-title {
     animation: ai-pulse 1.5s ease-in-out infinite;
 }
 
@@ -2048,11 +2007,6 @@ mark.ai-chat-list-hit {
     .askStroomAiViewImpl details::details-content {
         transition: none;
     }
-}
-
-/* A group closed for the user, e.g. when its turn is answered, closes at once (see AiActivityGroups). */
-.askStroomAiViewImpl details.ai-activity--close-at-once::details-content {
-    transition: none;
 }
 
 /* ---- A model's MCP Tool Servers tab: the selected server's tools ---- */

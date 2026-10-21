@@ -180,6 +180,13 @@ Needs: View (document)
 - nothing: REFUSED or limited: You don't have permission to view this document.
 - admin: runs (the same as with everything)
 
+## propose_documentation_change {"markdown":"# Test words\n\nThe words to look for.","summary":"Says what the words are.","uuid":"dictionary-uuid"}
+Needs: View (document)
+- everything: runs: The user has been shown the change to the documentation of Dictionary 'Test words' (+2 −0 lines, in 2 place(s)) as a diff, with a 'Review and apply' button. It was diffed against the documentation as …
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
 ## current_results {}
 Needs: Use (document)
 - everything: runs: Error running built-in tool 'current_results': Cannot invoke "stroom.ai.impl.TableDownloader$Downloaded.rows()" because "downloaded" is null

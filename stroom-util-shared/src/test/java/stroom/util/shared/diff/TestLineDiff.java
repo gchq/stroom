@@ -344,4 +344,73 @@ class TestLineDiff {
         // Kept when only some changes are made.
         assertThat(LineDiff.diff("a\r\nb", "a\r\nc").withChangesExcept(Set.of(), "\r\n")).isEqualTo("a\r\nc");
     }
+
+    @Test
+    void aChangeIsPutOntoAnotherVersionThatChangedOtherLines() {
+        final String base = "<a>\n  <b>1</b>\n  <c>2</c>\n</a>\n";
+        final String proposed = "<a>\n  <b>one</b>\n  <c>2</c>\n</a>\n";
+        final String current = "<a>\n  <b>1</b>\n  <c>two</c>\n</a>\n";
+
+        // The changed lines are next to each other, but don't overlap.
+        assertThat(LineDiff.rebase(base, proposed, current)).isEqualTo("<a>\n  <b>one</b>\n  <c>two</c>\n</a>\n");
+    }
+
+    @Test
+    void insertionsAndRemovalsArePutInTheRightPlaces() {
+        final String base = "1\n2\n3\n4\n5";
+        // Inserts after 1 and removes 5.
+        final String proposed = "1\nnew\n2\n3\n4";
+        // Removes 3 and appends 6.
+        final String current = "1\n2\n4\n5\n6";
+
+        assertThat(LineDiff.rebase(base, proposed, current)).isEqualTo("1\nnew\n2\n4\n6");
+    }
+
+    @Test
+    void anInsertionNextToReplacedLinesIsKept() {
+        final String base = "1\n2\n3";
+        // Inserts before 2, and after 2.
+        assertThat(LineDiff.rebase(base, "1\nnew\n2\n3", "1\ntwo\n3")).isEqualTo("1\nnew\ntwo\n3");
+        assertThat(LineDiff.rebase(base, "1\n2\nnew\n3", "1\ntwo\n3")).isEqualTo("1\ntwo\nnew\n3");
+    }
+
+    @Test
+    void overlappingChangesClash() {
+        final String base = "1\n2\n3\n4";
+        // Both change line 2.
+        assertThat(LineDiff.rebase(base, "1\nB\n3\n4", "1\nb\n3\n4")).isNull();
+        // Even the same way.
+        assertThat(LineDiff.rebase(base, "1\nb\n3\n4", "1\nb\n3\n4")).isNull();
+        // One replaces 2 and 3, the other 3 only.
+        assertThat(LineDiff.rebase(base, "1\nx\ny\n4", "1\n2\nz\n4")).isNull();
+        // Both insert after 2.
+        assertThat(LineDiff.rebase(base, "1\n2\nx\n3\n4", "1\n2\ny\n3\n4")).isNull();
+        // One inserts between 2 and 3, which the other replaces.
+        assertThat(LineDiff.rebase(base, "1\n2\nx\n3\n4", "1\ny\n4")).isNull();
+    }
+
+    @Test
+    void theCurrentLineSeparatorIsUsed() {
+        assertThat(LineDiff.rebase("a\nb\nc", "A\nb\nc", "a\r\nb\r\nC")).isEqualTo("A\r\nb\r\nC");
+        assertThat(LineDiff.rebase(null, "a", null)).isEqualTo("a");
+    }
+
+    @Test
+    void testRandomRebase() {
+        final Random random = new Random(456);
+        final String[] vocabulary = {"<a>", "</a>", "", "text", "  <c>x</c>"};
+        for (int run = 0; run < 5000; run++) {
+            final String base = String.join("\n", randomLines(random, vocabulary));
+            final String proposed = String.join("\n", randomLines(random, vocabulary));
+            final String current = String.join("\n", randomLines(random, vocabulary));
+
+            // With nothing to merge, either side is kept as it is.
+            assertThat(LineDiff.rebase(base, proposed, base)).as("run %s", run).isEqualTo(proposed);
+            assertThat(LineDiff.rebase(base, base, current)).as("run %s", run).isEqualTo(current);
+            // Merging is the same either way round.
+            assertThat(LineDiff.rebase(base, proposed, current))
+                    .as("run %s", run)
+                    .isEqualTo(LineDiff.rebase(base, current, proposed));
+        }
+    }
 }

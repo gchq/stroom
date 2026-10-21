@@ -61,7 +61,8 @@ import java.util.regex.Pattern;
 /// What the user saw in their attached tab when they asked a question (unsaved changes included), kept with the
 /// chat. Each snapshot is a folder of workspace files, `/tabs/<n>/`: one for each of its text parts (e.g.
 /// `code.xsl`, `query.sql`), the search requests behind any tables of results it shows (`searches.json`), and a
-/// record of it all (`snapshot.json`), whose file id is recorded on the question it was sent with.
+/// record of it all (`snapshot.json`), whose file id is recorded on the question, or message steering a run, it was
+/// sent with.
 ///
 /// A snapshot is only kept if the user can view the document shown, and each of its files records the document as
 /// its source, so the user's access is checked again whenever it is used. A snapshot that hasn't changed since the
@@ -179,21 +180,36 @@ public class TabSnapshots {
         }
     }
 
+    /// The tab as the user last sent it while asking the chat's latest question: the snapshot sent with the latest
+    /// message the user sent to steer the run answering it (once the run has picked it up), if one was sent with a
+    /// snapshot that may still be used, otherwise the one sent with the question. The tab may have changed while the
+    /// run worked (e.g. by the user applying a change it proposed), so later changes are proposed against the tab as
+    /// it is now.
+    ///
     /// @param chatId The chat.
-    /// @return The snapshot sent with the chat's latest question, if it was sent with one that may still be used.
+    /// @return The snapshot, if there is one that may still be used.
     public Optional<StoredTabSnapshot> forLatestQuestion(final int chatId) {
-        return aiService.getMessages(chatId).reversed().stream()
-                .filter(message -> message.getMessageType() == AiMessageType.USER_MESSAGE)
-                .findFirst()
-                .map(AiChatMessage::getAttachmentId)
-                .flatMap(this::read);
+        for (final AiChatMessage message : aiService.getMessages(chatId).reversed()) {
+            if (message.getMessageType() == AiMessageType.USER_MESSAGE) {
+                return read(message.getAttachmentId());
+            }
+            // Only once the run has picked the message up, so it is what the model has been told. Messages noting
+            // what the user did with a button in the chat have no snapshot.
+            if (message.getMessageType() == AiMessageType.STEER_MESSAGE) {
+                final Optional<StoredTabSnapshot> steered = read(message.getAttachmentId());
+                if (steered.isPresent()) {
+                    return steered;
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /// @param chatId The chat.
     /// @param docRef A document.
     /// @param part   The name of one of a snapshot's parts, e.g. [AiTabSnapshotPart#DATA].
-    /// @return The part as the user had it, unsaved, if the chat's latest question was sent with a snapshot of the
-    /// document with unsaved changes, and the snapshot has the part.
+    /// @return The part as the user had it, unsaved, if the tab last sent for the chat's latest question (see
+    /// [#forLatestQuestion(int)]) is a snapshot of the document with unsaved changes, and the snapshot has the part.
     public Optional<UnsavedPart> unsavedPart(final int chatId, final DocRef docRef, final String part) {
         if (docRef == null) {
             return Optional.empty();

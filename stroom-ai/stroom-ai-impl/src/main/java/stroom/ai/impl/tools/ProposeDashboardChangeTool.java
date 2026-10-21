@@ -221,7 +221,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                                           + "their target.")
                         .addProperty(CHANGES_ARG, ArraySchema.builder()
                                 .items(change)
-                                .description("The changes, applied in order.")
+                                .description("The changes, applied in order: at most "
+                                             + DashboardChanges.MAX_CHANGES + ", all in this one proposal.")
                                 .build())
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what the change does and why, shown with "
                                                         + "it.")

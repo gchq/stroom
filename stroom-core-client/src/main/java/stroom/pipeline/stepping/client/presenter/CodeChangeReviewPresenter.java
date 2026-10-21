@@ -113,13 +113,17 @@ public class CodeChangeReviewPresenter
     /// Shows the dialog to review a proposed change to a stepping element's code, applying it to the
     /// element's editor (unsaved) if the user chooses to.
     ///
-    /// If the user may not edit the element's document, or its code is no longer the code the change was
-    /// proposed against, the dialog says so and won't apply it. These are checked again when the user
-    /// applies it, before and after asking the approver.
+    /// If changes have been applied to the element's code since the change was proposed, the change is put
+    /// on top of them (see [ElementPresenter#rebaseCodeChange(String, String)]): the dialog shows the
+    /// current code against the result, and applies that.
+    ///
+    /// If the user may not edit the element's document, or the change can't be applied to its current code,
+    /// the dialog says so and won't apply it. These are checked again when the user applies it, before and
+    /// after asking the approver.
     ///
     /// @param element      The element whose code the change is for.
-    /// @param baseCode     The code the change was proposed against (shown on the left).
-    /// @param proposedCode The whole proposed code (shown on the right).
+    /// @param baseCode     The code the change was proposed against.
+    /// @param proposedCode The whole proposed code.
     /// @param editable     False if the user may not edit the element's document.
     /// @param approver     Asked before the change is applied (e.g. to check and record it on the server),
     ///                     or null to apply it straight away.
@@ -135,29 +139,37 @@ public class CodeChangeReviewPresenter
                                + (element.getElement() != null
                 ? " - " + element.getElement().getId()
                 : "");
+        // The change as it applies to the current code, if it can.
+        final String rebasedCode = element.rebaseCodeChange(baseCode, proposedCode);
+        final String shownCurrentCode = rebasedCode != null
+                ? element.getCode()
+                : baseCode;
+        final String shownProposedCode = rebasedCode != null
+                ? rebasedCode
+                : proposedCode;
         final ReviewHandler reviewHandler = (andStep, code, rejectedChanges, onProblem) -> {
-            final String problem = checkElement(element, baseCode, editable);
+            final String problem = checkElement(element, shownCurrentCode, editable);
             if (problem != null) {
                 onProblem.accept(problem);
             } else if (approver == null) {
-                onProblem.accept(applyToElement(element, baseCode, code, andStep, onApplied));
+                onProblem.accept(applyToElement(element, shownCurrentCode, code, andStep, onApplied));
             } else {
                 approver.approve(andStep, rejectedChanges, refusal -> onProblem.accept(refusal != null
                         ? refusal
-                        : applyToElement(element, baseCode, code, andStep, onApplied)));
+                        : applyToElement(element, shownCurrentCode, code, andStep, onApplied)));
             }
         };
 
-        show(caption, baseCode, proposedCode, element.getCodeMode(), true, reviewHandler);
+        show(caption, shownCurrentCode, shownProposedCode, element.getCodeMode(), true, reviewHandler);
 
-        final String problem = checkElement(element, baseCode, editable);
+        final String problem = checkElement(element, shownCurrentCode, editable);
         if (problem != null) {
             showProblem(problem);
         }
     }
 
     /// @param element  The element.
-    /// @param baseCode The code a change was proposed against.
+    /// @param baseCode The code a change is to be applied to.
     /// @param editable False if the user may not edit the element's document.
     /// @return Why a change to the element's code can't be applied, or null if it can.
     static String checkElement(final ElementPresenter element, final String baseCode, final boolean editable) {

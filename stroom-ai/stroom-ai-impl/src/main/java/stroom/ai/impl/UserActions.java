@@ -52,8 +52,8 @@ import java.util.regex.Pattern;
 /// Tool results carry data from Stroom, so their text may have been written to mislead. So:
 ///
 /// - only the actions named here are kept, each with typed arguments; any other entry is dropped. Those that
-///   create documents or change editors (e.g. create_query, create_dashboard and apply_code_change) are only kept
-///   when one of Stroom's own tools offers them;
+///   create documents or change editors (e.g. create_query, create_dashboard, apply_code_change and
+///   apply_documentation_change) are only kept when one of Stroom's own tools offers them;
 /// - each button's text is written by Stroom, from its own state, never from the server's `summary`;
 /// - a filter must exist, be on the pipeline named, and be disabled (to enable it) or enabled (to disable it);
 /// - an Elasticsearch request is only shown if it is one of three simple requests naming an index of the
@@ -81,6 +81,9 @@ public class UserActions {
     /// A change to a dashboard table that the agent proposed (only from Stroom's own propose_dashboard_change tool),
     /// which the button applies to the open dashboard, unsaved.
     public static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
+    /// Opens a review of a change to a document's Documentation tab that the agent proposed (only from Stroom's own
+    /// propose_documentation_change tool), which the user can apply to the tab's editor (unsaved) and undo.
+    public static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
     /// Opens Stroom's New Dashboard dialog with a suggested name; once created, the dashboard is given a query, a
     /// table and optionally a data preview, built from the StroomQL (only from Stroom's own propose_dashboard tool).
     public static final String CREATE_DASHBOARD = "create_dashboard";
@@ -204,6 +207,9 @@ public class UserActions {
                         : Optional.empty();
                 case APPLY_DASHBOARD_CHANGE -> builtIn.contains(map)
                         ? dashboardChange(id, map, expiresMs)
+                        : Optional.empty();
+                case APPLY_DOCUMENTATION_CHANGE -> builtIn.contains(map)
+                        ? documentationChange(id, map, expiresMs)
                         : Optional.empty();
                 case CREATE_DASHBOARD -> builtIn.contains(map)
                         ? createDashboard(id, map, expiresMs)
@@ -440,6 +446,42 @@ public class UserActions {
         final String label = "Change to Query '" + doc.getName() + "': +" + Objects.requireNonNullElse(added, 0)
                              + " −" + Objects.requireNonNullElse(removed, 0) + " lines";
         return Optional.of(new UserActionRecord(id, APPLY_QUERY_CHANGE, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, doc, proposed, List.of(), expiresMs, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, base, baseHash.toLowerCase(Locale.ROOT),
+                        string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
+                        Objects.requireNonNullElse(removed, 0))));
+    }
+
+    /// A button that opens a review of a change to the Documentation tab of a document that exists and the user may
+    /// view. Applying it needs Edit, which is checked when the user applies it. The code change it holds has no
+    /// pipeline or element.
+    private Optional<UserActionRecord> documentationChange(final String id,
+                                                           final Map<?, ?> map,
+                                                           final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String proposed = string(map.get("request"));
+        final String base = string(map.get("base"));
+        final String baseHash = string(map.get("base_hash"));
+        if (named == null
+            || proposed == null || proposed.length() > MAX_CODE_CHARS
+            || base == null || base.length() > MAX_CODE_CHARS
+            || baseHash == null || !HASH_PATTERN.matcher(baseHash).matches()) {
+            return Optional.empty();
+        }
+        final DocRef doc = lookup.find(named).orElse(null);
+        if (doc == null) {
+            return Optional.empty();
+        }
+        final Integer added = count(map.get("added"));
+        final Integer removed = count(map.get("removed"));
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Change the documentation of " + doc.getType() + " '" + doc.getName() + "': +"
+                             + Objects.requireNonNullElse(added, 0) + " −" + Objects.requireNonNullElse(removed, 0)
+                             + " lines";
+        return Optional.of(new UserActionRecord(id, APPLY_DOCUMENTATION_CHANGE, label,
                 NullSafe.isBlankString(summary)
                         ? null
                         : truncate(summary, MAX_DETAILS_CHARS),

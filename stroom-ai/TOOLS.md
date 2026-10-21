@@ -58,6 +58,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `propose_code_change` | Proposes a change to the XSLT or converter being stepped, tried by stepping | all | yes | | | View | yes (stepping tab, button) | `summarise_fix`, `step_pipeline` (part) |
 | `propose_dashboard` | Offers a button to create a dashboard from StroomQL | all | yes | | | Use | yes (button) | `verify_index` (part: it creates a dashboard) |
 | `propose_dashboard_change` | Proposes changes to the attached dashboard's tables and components | all | yes | | | View | yes (attached tab, button) | |
+| `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | all | yes | | | View | yes (button) | `write_documentation` (part: it writes a pipeline's or an index's) |
 | `propose_query` | Offers a button to create a StroomQL Query document | all | yes | | | Use | yes (button) | |
 | `propose_query_change` | Offers a button to change the query in the attached tab | all | yes | | | View, Use | yes (attached tab, button) | |
 | `read_document` | A document's content, or what a processor filter selects | all | yes | | Manage Processors | View | workspace | `describe_document` |
@@ -125,6 +126,9 @@ services directly as the user, and those listed here only read.
 * **`propose_code_change` and `summarise_fix`, `step_pipeline`**: the built-in offers the stepping user a button to
   apply a change it has tried by stepping; MCP steps by itself, proves a fix over every record and returns a diff
   with steps for applying it by hand.
+* **`propose_documentation_change` and `write_documentation`**: the built-in offers a button to review a change to
+  any document's Documentation tab (not a folder's or a Documentation document's) and apply it to the tab, unsaved;
+  MCP writes a pipeline's or an index's documentation itself, with its field mapping.
 * **`propose_dashboard` and `verify_index`**: the built-in offers a button and the user creates the dashboard; MCP
   creates a verification dashboard in its workspace folder after a confirmation.
 * **`elastic_index_templates` and `check_index_template`, `propose_index_template`**: MCP reads no templates from

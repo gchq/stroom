@@ -28,7 +28,12 @@ them. A user whose settings have no model, or a model that no longer exists, get
 everyone back on the defaults (model, prompts, dock position and so on), an administrator (Manage
 Properties) can use _Reset Everyone to Defaults…_ in the chat's **Settings**.
 
-Answers and reasoning stream into the chat as the model writes them.
+Answers and reasoning stream into the chat as the model writes them. Everything a turn does is shown in the
+conversation in the order it happens, none of it folded away: the model's reasoning, what it writes to the user
+alongside its tool calls, each tool call (with its result, expandable) and its answer. While the agent works, a
+_Working…_ line at the bottom of the conversation says what it is doing now; it goes once the run ends. What the
+model writes alongside its tool calls is shown on that line while it is the current step, and in its place in the
+conversation once the line moves on, so it isn't shown twice.
 
 Each chat has a mode, chosen beside the model:
 
@@ -163,7 +168,8 @@ _Steps for you_ card. The model can neither make nor click one.
 * From an MCP server, only four actions are shown: _Enable_ or _Disable_ a processor filter, _Open_ a
   document, and an Elasticsearch request for the cluster admin. Anything else is dropped.
 * Stroom's own tools add buttons that create documents or change what the user has open: _Create query…_,
-  _Create dashboard…_, _Apply to query_, _Apply to dashboard_ and _Review and apply_ (see _Attaching a tab_).
+  _Create dashboard…_, _Apply to query_, _Apply to dashboard_ and _Review and apply_ (see _Attaching a tab_, and
+  _Documentation_ below).
   An MCP server can't offer these, even by naming them.
 * A proposed query is shown as a code block with a copy button. A proposed classic dashboard is shown as a
   list of what its Query and Table will hold instead, as its StroomQL isn't what it will hold.
@@ -292,7 +298,9 @@ the agent is looking at without the user choosing it:
   (e.g. a pipeline's _Stepping_ view, with the selected element's input, output and code), and the tables of
   results shown. A tab that hasn't changed since the last question is sent as its hash only. The agent is
   given it as a snapshot in `/tabs/<n>/` with a note on the latest question; earlier questions keep a short
-  note of where theirs is.
+  note of where theirs is. A message that steers a run is sent with the tab too, and its snapshot is used from
+  then on (e.g. after the user applied a change the run proposed), the agent being told the tab may have
+  changed.
 * Attaching a tab moves the cursor to the input box and offers questions about it (see _Commands, prompts and
   uploads_). The tab's chip is set apart from the chips of attached documents and tables by a divider: the tab
   stays attached for every question, while documents and tables go with the next one.
@@ -347,6 +355,24 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
   small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the
   change is tried by stepping the record with it, and refused if it gives errors the current code doesn't.
 * `current_results` takes a snapshot of the rows of a table the tab shows.
+
+Each proposal is made against the tab as the user last sent it, and is applied only if the code, query or
+dashboard is still as it was then, or has since been changed only by proposals applied with the chat's buttons
+(e.g. two proposals in one answer can both be applied). A later code or query change is then merged line by
+line onto those changes, and refused if it touches lines they changed; the review dialog shows the current
+code against the merged result. A later dashboard change is applied to the dashboard as those changes left it,
+and fails as a whole, saying why, if one of its changes can't be made. Any other edit since the proposal (e.g.
+the user's own) means asking again for an up-to-date change.
+
+The agent can also propose documentation for any document, whichever tab is attached
+(`propose_documentation_change`): the Markdown on its Documentation tab, as a diff with _Review and apply_.
+The change is made to the tab's text as the user has it (unsaved edits included) if the attached tab is the
+document's, and otherwise to the documentation as saved. It needs View on the document to propose, and Edit to
+apply, checked when the user applies it (as is, for a change to the saved text, that it hasn't been saved with
+other text since). Applying opens the document if it isn't open, switches to its Documentation tab and puts
+the text in its editor, unsaved, for the user to save; _Undo apply_ puts back the text it held, while it still
+holds the applied text. Folders, Documentation documents (whose text is their content) and the Data Receipt
+Rules can't be given documentation this way.
 
 The agent can also offer new documents, whichever tab is attached, as buttons that open Stroom's own New
 Query or New Dashboard dialog with a suggested name. Nothing is created unless the user confirms the dialog,
@@ -586,8 +612,8 @@ All under `appConfig.ai` unless stated.
 | `workspace.maxEventBytes` | `1048576` | The largest source event `fetch_events` fetches, in bytes |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
-| `appConfig.askStroomAi.showToolCalls` | `true` | Shows tool calls in each turn's activity (only hides them when off) |
-| `appConfig.askStroomAi.showReasoning` | `true` | Shows the model's reasoning in each turn's activity |
+| `appConfig.askStroomAi.showToolCalls` | `true` | Shows tool calls in the conversation (only hides them when off) |
+| `appConfig.askStroomAi.showReasoning` | `true` | Shows the model's reasoning in the conversation |
 | `appConfig.askStroomAi.enableDebugDetail` | `true` | Keeps and shows each answer's request detail |
 
 The `appConfig.askStroomAi` settings are the defaults for each user's own settings, which they change in the

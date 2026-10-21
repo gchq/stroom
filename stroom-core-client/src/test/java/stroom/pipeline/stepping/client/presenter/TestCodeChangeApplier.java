@@ -223,6 +223,84 @@ class TestCodeChangeApplier {
         assertThat(editor.text).isEqualTo(code);
     }
 
+    @Test
+    void testSecondProposalAgainstTheCodeBeforeAnAppliedChangeIsAppliedOnTopOfIt() {
+        // Regression: two changes proposed against the same code (e.g. in the same answer, or with the chat's
+        // snapshot of the tab taken before the first was applied). Applying the first must not block the second
+        // when they change different lines: the second is applied on top of the first.
+        final String renamed = CODE.replace("match=\"User\"", "match=\"Person\"");
+        final String both = PROPOSED.replace("match=\"User\"", "match=\"Person\"");
+        final FakeEditor editor = new FakeEditor(CODE);
+        final CodeChangeApplier applier = new CodeChangeApplier(editor);
+
+        assertThat(applier.apply(CODE, PROPOSED)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        assertThat(applier.apply(CODE, renamed)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+
+        assertThat(editor.text).isEqualTo(both);
+    }
+
+    @Test
+    void testSecondProposalThatClashesWithAnAppliedChangeIsRefused() {
+        // The second change rewrites the line the first changed, so it can't be put on top of it.
+        final String clashing = CODE.replace("select=\"Email\"", "select=\"upper-case(Email)\"");
+        final FakeEditor editor = new FakeEditor(CODE);
+        final CodeChangeApplier applier = new CodeChangeApplier(editor);
+
+        assertThat(applier.apply(CODE, PROPOSED)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        assertThat(applier.apply(CODE, clashing)).isEqualTo(ApplyCodeChangeResult.CODE_CHANGED);
+
+        assertThat(editor.text).isEqualTo(PROPOSED);
+    }
+
+    @Test
+    void testThirdProposalAgainstTheOriginalCodeIsAppliedOnTopOfBoth() {
+        final String renamed = CODE.replace("match=\"User\"", "match=\"Person\"");
+        final String commented = CODE.replace("</xsl:stylesheet>", "<!-- done -->\n</xsl:stylesheet>");
+        final FakeEditor editor = new FakeEditor(CODE);
+        final CodeChangeApplier applier = new CodeChangeApplier(editor);
+
+        assertThat(applier.apply(CODE, PROPOSED)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        assertThat(applier.apply(CODE, renamed)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        assertThat(applier.apply(CODE, commented)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+
+        assertThat(editor.text).isEqualTo(PROPOSED.replace("match=\"User\"", "match=\"Person\"")
+                .replace("</xsl:stylesheet>", "<!-- done -->\n</xsl:stylesheet>"));
+        // Undo apply still undoes only the last change.
+        assertThat(applier.undo()).isTrue();
+        assertThat(editor.text).isEqualTo(PROPOSED.replace("match=\"User\"", "match=\"Person\""));
+        assertThat(applier.canUndo()).isFalse();
+    }
+
+    @Test
+    void testSecondProposalIsRefusedOnceTheUserEditedTheAppliedChange() {
+        final String renamed = CODE.replace("match=\"User\"", "match=\"Person\"");
+        final FakeEditor editor = new FakeEditor(CODE);
+        final CodeChangeApplier applier = new CodeChangeApplier(editor);
+
+        assertThat(applier.apply(CODE, PROPOSED)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        editor.text = editor.text + "\n<!-- edited -->";
+
+        assertThat(applier.rebase(CODE, renamed)).isNull();
+        assertThat(applier.apply(CODE, renamed)).isEqualTo(ApplyCodeChangeResult.CODE_CHANGED);
+        assertThat(editor.text).isEqualTo(PROPOSED + "\n<!-- edited -->");
+    }
+
+    @Test
+    void testUndoneChangeIsNotBuiltOn() {
+        final String renamed = CODE.replace("match=\"User\"", "match=\"Person\"");
+        final String other = PROPOSED.replace("</xsl:stylesheet>", "<!-- done -->\n</xsl:stylesheet>");
+        final FakeEditor editor = new FakeEditor(CODE);
+        final CodeChangeApplier applier = new CodeChangeApplier(editor);
+
+        assertThat(applier.apply(CODE, PROPOSED)).isEqualTo(ApplyCodeChangeResult.APPLIED);
+        assertThat(applier.undo()).isTrue();
+
+        // Proposed against the code the undone change made, which is no longer there.
+        assertThat(applier.rebase(PROPOSED, other)).isNull();
+        // Proposed against the code there now.
+        assertThat(applier.rebase(CODE, renamed)).isEqualTo(renamed);
+    }
+
 
     // --------------------------------------------------------------------------------
 
