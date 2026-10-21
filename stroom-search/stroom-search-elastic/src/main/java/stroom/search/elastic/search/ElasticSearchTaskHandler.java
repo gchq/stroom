@@ -72,6 +72,7 @@ import jakarta.json.JsonValue;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -423,6 +424,10 @@ public class ElasticSearchTaskHandler {
                             values[insertAt] = ValString.create(collectionValue.stream()
                                     .map(Object::toString)
                                     .collect(Collectors.joining(", ")));
+                        } else if (fieldValue instanceof final BigInteger bigIntegerValue) {
+                            // There is no Val type that can hold an integer beyond the range of a long
+                            // exactly, so represent it as its exact decimal string rather than lose precision.
+                            values[insertAt] = ValString.create(bigIntegerValue.toString());
                         } else {
                             values[insertAt] = Val.create(fieldValue);
                         }
@@ -730,8 +735,8 @@ public class ElasticSearchTaskHandler {
     /// Package-private for testing.
     ///
     /// @param jsonValue The JSON value to convert.
-    /// @return The native Java representation of `jsonValue`, i.e. a `Boolean`, `Long`, `Double` or
-    /// `String`, or `null` for a JSON null.
+    /// @return The native Java representation of `jsonValue`, i.e. a `Boolean`, `Long`, `BigInteger` (for
+    /// integers outside the range of a long), `Double` or `String`, or `null` for a JSON null.
     static Object jsonValueToNative(final JsonValue jsonValue) {
         if (jsonValue == null) {
             return null;
@@ -747,7 +752,12 @@ public class ElasticSearchTaskHandler {
             case NUMBER:
                 final JsonNumber jsonNumber = (JsonNumber) jsonValue;
                 if (jsonNumber.isIntegral()) {
-                    return jsonNumber.longValue();
+                    // An `unsigned_long` field may hold values beyond the range of a long, which
+                    // `longValue()` would silently truncate, so keep those as an exact BigInteger.
+                    final BigInteger bigInteger = jsonNumber.bigIntegerValue();
+                    return bigInteger.bitLength() < Long.SIZE
+                            ? bigInteger.longValue()
+                            : bigInteger;
                 } else {
                     return jsonNumber.doubleValue();
                 }
