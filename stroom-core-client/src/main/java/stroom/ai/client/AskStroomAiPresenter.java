@@ -365,6 +365,8 @@ public class AskStroomAiPresenter
     // Until when to keep polling even though the run is waiting for the user, as the user has just answered and
     // the run may not have carried on yet.
     private long keepPollingUntilMs;
+    // When polling first saw the run waiting for the user with nothing it asks shown yet, or 0.
+    private long waitingWithoutPromptSinceMs;
     // The rendered messages, by id, e.g. to edit a question or redraw an answered card.
     private final Map<Integer, AiChatMessage> renderedMessages = new HashMap<>();
     // Tables attached since the last message was sent, by their message id: shown above the input box, then in
@@ -3756,10 +3758,19 @@ public class AskStroomAiPresenter
             // still active or data is still coming down (the server reports both as not complete), or
             // while messages are still arriving.
             // A run waiting for the user (e.g. to approve something) does nothing until they answer, which starts
-            // polling again, so there is no need to keep asking.
-            final boolean waitingForUser = response.getRun() != null
-                                           && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER
-                                           && System.currentTimeMillis() > keepPollingUntilMs;
+            // polling again, so there is no need to keep asking, once what it asks is shown (see AiPolling).
+            final boolean runWaiting = response.getRun() != null
+                                       && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
+            final boolean promptShown = renderedMessages.values().stream()
+                    .anyMatch(AskStroomAiPresenter::isWaitingForAnswer);
+            final long nowMs = System.currentTimeMillis();
+            if (!runWaiting || promptShown) {
+                waitingWithoutPromptSinceMs = 0;
+            } else if (waitingWithoutPromptSinceMs == 0) {
+                waitingWithoutPromptSinceMs = nowMs;
+            }
+            final boolean waitingForUser = AiPolling.canStopForUser(runWaiting, promptShown,
+                    waitingWithoutPromptSinceMs, keepPollingUntilMs, nowMs);
             final boolean again = pollAgain;
             pollAgain = false;
             if (!waitingForUser && (again || requestInFlight || !response.isComplete() || hasNewMessages)) {
