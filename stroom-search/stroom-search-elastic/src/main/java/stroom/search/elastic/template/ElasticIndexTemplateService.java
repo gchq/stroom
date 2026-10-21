@@ -79,8 +79,8 @@ public class ElasticIndexTemplateService {
         final String templateTarget = Objects.requireNonNullElse(resolved.name(), indexName);
 
         final IndexTemplate indexTemplate = readIndexTemplate(templateTarget, elasticGet);
-        final List<ComponentTemplate> componentTemplates = indexTemplate.status() == Status.OK
-                ? readComponentTemplates(indexTemplate.body(), elasticGet)
+        final List<ComponentTemplate> componentTemplates = indexTemplate.getStatus() == Status.OK
+                ? readComponentTemplates(indexTemplate.getBody(), elasticGet)
                 : List.of();
 
         return new ElasticIndexTemplatesResponse(

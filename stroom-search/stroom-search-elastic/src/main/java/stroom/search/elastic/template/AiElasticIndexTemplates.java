@@ -76,11 +76,11 @@ public class AiElasticIndexTemplates implements ElasticIndexTemplates {
 
     private static IndexTemplates toIndexTemplates(final ElasticIndexTemplatesResponse response) {
         return new IndexTemplates(
-                response.indexName(),
-                response.resolvedName(),
-                response.resolveMessage(),
-                toIndexTemplate(response.indexTemplate()),
-                NullSafe.list(response.componentTemplates())
+                response.getIndexName(),
+                response.getResolvedName(),
+                response.getResolveMessage(),
+                toIndexTemplate(response.getIndexTemplate()),
+                NullSafe.list(response.getComponentTemplates())
                         .stream()
                         .map(AiElasticIndexTemplates::toComponentTemplate)
                         .toList());
@@ -92,31 +92,31 @@ public class AiElasticIndexTemplates implements ElasticIndexTemplates {
                     "No index template was read");
         }
         return new IndexTemplate(
-                toStatus(indexTemplate.status()),
-                indexTemplate.name(),
-                indexTemplate.body(),
-                NullSafe.list(indexTemplate.overlapping())
+                toStatus(indexTemplate.getStatus()),
+                indexTemplate.getName(),
+                indexTemplate.getBody(),
+                NullSafe.list(indexTemplate.getOverlapping())
                         .stream()
                         .map(AiElasticIndexTemplates::toOverlappingTemplate)
                         .toList(),
-                indexTemplate.message());
+                indexTemplate.getMessage());
     }
 
     private static OverlappingTemplate toOverlappingTemplate(
             final ElasticIndexTemplatesResponse.OverlappingTemplate overlapping) {
         return new OverlappingTemplate(
-                overlapping.name(),
-                overlapping.indexPatterns(),
-                overlapping.priority());
+                overlapping.getName(),
+                overlapping.getIndexPatterns(),
+                overlapping.getPriority());
     }
 
     private static ComponentTemplate toComponentTemplate(
             final ElasticIndexTemplatesResponse.ComponentTemplate componentTemplate) {
         return new ComponentTemplate(
-                componentTemplate.name(),
-                toStatus(componentTemplate.status()),
-                componentTemplate.body(),
-                componentTemplate.message());
+                componentTemplate.getName(),
+                toStatus(componentTemplate.getStatus()),
+                componentTemplate.getBody(),
+                componentTemplate.getMessage());
     }
 
     private static Status toStatus(final ElasticIndexTemplatesResponse.Status status) {

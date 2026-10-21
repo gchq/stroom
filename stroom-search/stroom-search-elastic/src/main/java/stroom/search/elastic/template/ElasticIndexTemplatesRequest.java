@@ -18,14 +18,49 @@ package stroom.search.elastic.template;
 
 import stroom.docref.DocRef;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/// Asks for the index template and component templates that apply to an Elastic Index doc's index.
-///
-/// @param indexDocRef The Elastic Index doc whose templates are wanted.
-@JsonInclude(Include.NON_NULL)
-public record ElasticIndexTemplatesRequest(@JsonProperty("indexDocRef") DocRef indexDocRef) {
+import java.util.Objects;
 
+/// Asks for the index template and component templates that apply to an Elastic Index doc's index.
+@JsonInclude(Include.NON_NULL)
+public class ElasticIndexTemplatesRequest {
+
+    @JsonProperty
+    private final DocRef indexDocRef;
+
+    /// @param indexDocRef The Elastic Index doc whose templates are wanted.
+    @JsonCreator
+    public ElasticIndexTemplatesRequest(@JsonProperty("indexDocRef") final DocRef indexDocRef) {
+        this.indexDocRef = indexDocRef;
+    }
+
+    /// @return The Elastic Index doc whose templates are wanted.
+    public DocRef getIndexDocRef() {
+        return indexDocRef;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ElasticIndexTemplatesRequest that = (ElasticIndexTemplatesRequest) o;
+        return Objects.equals(indexDocRef, that.indexDocRef);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(indexDocRef);
+    }
+
+    @Override
+    public String toString() {
+        return "ElasticIndexTemplatesRequest{" +
+               "indexDocRef=" + indexDocRef +
+               '}';
+    }
 }
