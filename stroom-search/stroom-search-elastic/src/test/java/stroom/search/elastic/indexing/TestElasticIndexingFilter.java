@@ -100,6 +100,22 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testInvalidJsonStructureLoggedAsFatalError() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        // A keyed value inside an array cannot be written as JSON, so the generator throws a JacksonException
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map><array key="tags"><string key="tag">a</string></array></map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .startsWith("Invalid string value 'a' for property 'tag'");
+    }
+
+    @Test
     void testIndexNameVariableSpecifiedTwiceInDocumentRoot() {
         final ElasticIndexingFilter filter = createFilter("events-{_year}");
 
