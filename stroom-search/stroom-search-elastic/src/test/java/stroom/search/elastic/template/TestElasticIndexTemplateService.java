@@ -72,20 +72,20 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000003", elastic);
 
-        assertThat(response.indexName()).isEqualTo("ecs-keycloak-v1-000003");
-        assertThat(response.resolvedName()).isEqualTo("ecs-keycloak-v1-000003");
-        assertThat(response.resolveMessage()).isNull();
-        final IndexTemplate indexTemplate = response.indexTemplate();
-        assertThat(indexTemplate.status()).isEqualTo(Status.OK);
-        assertThat(indexTemplate.name()).isEqualTo("ecs-keycloak-v1");
-        assertThat(json(indexTemplate.body())).isEqualTo(json(KEYCLOAK_TEMPLATE));
-        assertThat(indexTemplate.overlapping()).isEmpty();
-        assertThat(response.componentTemplates())
-                .extracting(ComponentTemplate::name, ComponentTemplate::status)
+        assertThat(response.getIndexName()).isEqualTo("ecs-keycloak-v1-000003");
+        assertThat(response.getResolvedName()).isEqualTo("ecs-keycloak-v1-000003");
+        assertThat(response.getResolveMessage()).isNull();
+        final IndexTemplate indexTemplate = response.getIndexTemplate();
+        assertThat(indexTemplate.getStatus()).isEqualTo(Status.OK);
+        assertThat(indexTemplate.getName()).isEqualTo("ecs-keycloak-v1");
+        assertThat(json(indexTemplate.getBody())).isEqualTo(json(KEYCLOAK_TEMPLATE));
+        assertThat(indexTemplate.getOverlapping()).isEmpty();
+        assertThat(response.getComponentTemplates())
+                .extracting(ComponentTemplate::getName, ComponentTemplate::getStatus)
                 .containsExactly(
                         tuple("ecs@mappings", Status.OK),
                         tuple("org-ilm", Status.OK));
-        assertThat(json(response.componentTemplates().getFirst().body()))
+        assertThat(json(response.getComponentTemplates().getFirst().getBody()))
                 .isEqualTo(json(componentTemplateBody("ecs@mappings")));
     }
 
@@ -105,8 +105,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-*", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("ecs-keycloak-v1-000002");
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-default");
+        assertThat(response.getResolvedName()).isEqualTo("ecs-keycloak-v1-000002");
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-default");
     }
 
     @Test
@@ -121,9 +121,9 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-*", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("ecs-keycloak-v1-000003");
-        assertThat(response.resolveMessage()).isNull();
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.OK);
+        assertThat(response.getResolvedName()).isEqualTo("ecs-keycloak-v1-000003");
+        assertThat(response.getResolveMessage()).isNull();
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.OK);
     }
 
     @Test
@@ -144,8 +144,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("ecs-keycloak-v1-000001");
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-keycloak-v1");
+        assertThat(response.getResolvedName()).isEqualTo("ecs-keycloak-v1-000001");
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-keycloak-v1");
     }
 
     @Test
@@ -165,10 +165,10 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("logs-app", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("logs-app");
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.OK);
-        assertThat(response.indexTemplate().name()).isEqualTo("logs");
-        assertThat(response.componentTemplates()).isEmpty();
+        assertThat(response.getResolvedName()).isEqualTo("logs-app");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.OK);
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("logs");
+        assertThat(response.getComponentTemplates()).isEmpty();
     }
 
     @Test
@@ -180,8 +180,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read(".ds-logs-app-*", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("logs-app");
-        assertThat(response.indexTemplate().name()).isEqualTo("logs");
+        assertThat(response.getResolvedName()).isEqualTo("logs-app");
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("logs");
     }
 
     @Test
@@ -196,9 +196,9 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1", elastic);
 
-        assertThat(response.resolvedName()).isNull();
-        assertThat(response.resolveMessage()).isNull();
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-keycloak-v1");
+        assertThat(response.getResolvedName()).isNull();
+        assertThat(response.getResolveMessage()).isNull();
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-keycloak-v1");
     }
 
     @Test
@@ -212,8 +212,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1*", elastic);
 
-        assertThat(response.resolvedName()).isNull();
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-keycloak-v1");
+        assertThat(response.getResolvedName()).isNull();
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-keycloak-v1");
         assertThat(elastic.calls()).doesNotContain("/ecs-keycloak-v1*/_settings/index.creation_date");
     }
 
@@ -227,10 +227,10 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1", elastic);
 
-        assertThat(response.resolvedName()).isNull();
-        assertThat(response.resolveMessage()).isEqualTo(FORBIDDEN_REASON);
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.OK);
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-keycloak-v1");
+        assertThat(response.getResolvedName()).isNull();
+        assertThat(response.getResolveMessage()).isEqualTo(FORBIDDEN_REASON);
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.OK);
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-keycloak-v1");
     }
 
     @Test
@@ -250,10 +250,10 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.indexTemplate().name()).isEqualTo("ecs-keycloak-v1");
-        assertThat(response.indexTemplate().overlapping()).containsExactly(
-                new OverlappingTemplate("ecs-default", List.of("ecs-*"), 100),
-                new OverlappingTemplate("catch-all", List.of("*"), 0));
+        assertThat(response.getIndexTemplate().getName()).isEqualTo("ecs-keycloak-v1");
+        assertThat(response.getIndexTemplate().getOverlapping()).containsExactly(
+                new OverlappingTemplate("ecs-default", List.of("ecs-*"), 100L),
+                new OverlappingTemplate("catch-all", List.of("*"), 0L));
     }
 
     @Test
@@ -265,12 +265,12 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("other-index", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("other-index");
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.NOT_FOUND);
-        assertThat(response.indexTemplate().name()).isNull();
-        assertThat(response.indexTemplate().body()).isNull();
-        assertThat(response.indexTemplate().message()).contains("other-index");
-        assertThat(response.componentTemplates()).isEmpty();
+        assertThat(response.getResolvedName()).isEqualTo("other-index");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.NOT_FOUND);
+        assertThat(response.getIndexTemplate().getName()).isNull();
+        assertThat(response.getIndexTemplate().getBody()).isNull();
+        assertThat(response.getIndexTemplate().getMessage()).contains("other-index");
+        assertThat(response.getComponentTemplates()).isEmpty();
     }
 
     @Test
@@ -282,10 +282,10 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.resolvedName()).isEqualTo("ecs-keycloak-v1-000001");
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.FORBIDDEN);
-        assertThat(response.indexTemplate().message()).isEqualTo(FORBIDDEN_REASON);
-        assertThat(response.componentTemplates()).isEmpty();
+        assertThat(response.getResolvedName()).isEqualTo("ecs-keycloak-v1-000001");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.FORBIDDEN);
+        assertThat(response.getIndexTemplate().getMessage()).isEqualTo(FORBIDDEN_REASON);
+        assertThat(response.getComponentTemplates()).isEmpty();
         assertThat(elastic.calls()).noneMatch(call -> call.startsWith("/_component_template"));
     }
 
@@ -296,8 +296,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.ERROR);
-        assertThat(response.indexTemplate().message()).isEqualTo("Bad Gateway from proxy");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.ERROR);
+        assertThat(response.getIndexTemplate().getMessage()).isEqualTo("Bad Gateway from proxy");
     }
 
     @Test
@@ -307,8 +307,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.ERROR);
-        assertThat(response.indexTemplate().message()).contains("401");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.ERROR);
+        assertThat(response.getIndexTemplate().getMessage()).contains("401");
     }
 
     @Test
@@ -318,8 +318,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.ERROR);
-        assertThat(response.indexTemplate().message()).contains("_index_template");
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.ERROR);
+        assertThat(response.getIndexTemplate().getMessage()).contains("_index_template");
     }
 
     @Test
@@ -341,8 +341,8 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1-000001", elastic);
 
-        assertThat(response.indexTemplate().status()).isEqualTo(Status.OK);
-        assertThat(response.componentTemplates()).containsExactly(
+        assertThat(response.getIndexTemplate().getStatus()).isEqualTo(Status.OK);
+        assertThat(response.getComponentTemplates()).containsExactly(
                 new ComponentTemplate("ecs@mappings",
                         Status.OK,
                         MAPPER.writeValueAsString(json(componentTemplateBody("ecs@mappings"))),
@@ -365,9 +365,9 @@ class TestElasticIndexTemplateService {
 
         final ElasticIndexTemplatesResponse response = service.read("ecs-keycloak-v1", elastic);
 
-        assertThat(response.componentTemplates())
+        assertThat(response.getComponentTemplates())
                 .singleElement()
-                .extracting(ComponentTemplate::status)
+                .extracting(ComponentTemplate::getStatus)
                 .isEqualTo(Status.NOT_FOUND);
     }
 

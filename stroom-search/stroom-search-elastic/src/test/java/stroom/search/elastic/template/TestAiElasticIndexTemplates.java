@@ -114,7 +114,7 @@ class TestAiElasticIndexTemplates {
                                 Status.OK,
                                 "ecs-keycloak",
                                 "{\"composed_of\":[\"ecs@mappings\",\"keycloak\"]}",
-                                List.of(new OverlappingTemplate("ecs", List.of("ecs-*"), 100)),
+                                List.of(new OverlappingTemplate("ecs", List.of("ecs-*"), 100L)),
                                 null),
                         List.of(new ComponentTemplate("ecs@mappings", Status.OK, "{\"template\":{}}", null),
                                 new ComponentTemplate("keycloak", Status.FORBIDDEN, null, "unauthorised"))));
