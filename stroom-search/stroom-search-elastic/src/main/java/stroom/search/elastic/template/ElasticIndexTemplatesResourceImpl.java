@@ -17,15 +17,10 @@
 package stroom.search.elastic.template;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.search.elastic.ElasticClientCache;
-import stroom.search.elastic.ElasticClusterStore;
-import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.template.ElasticIndexTemplateReader.ReadFailure;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -44,23 +39,12 @@ import java.util.Objects;
 @AutoLogged
 public class ElasticIndexTemplatesResourceImpl implements ElasticIndexTemplatesResource {
 
-    private final ElasticIndexTemplateReader reader;
+    private final Provider<ElasticIndexTemplateReader> readerProvider;
 
+    /// @param readerProvider Reads the templates.
     @Inject
-    public ElasticIndexTemplatesResourceImpl(
-            final Provider<ElasticIndexStore> elasticIndexStoreProvider,
-            final Provider<ElasticClusterStore> elasticClusterStoreProvider,
-            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-            final Provider<SecurityContext> securityContextProvider,
-            final Provider<ElasticClientCache> elasticClientCacheProvider,
-            final Provider<ElasticIndexTemplateService> elasticIndexTemplateServiceProvider) {
-        this.reader = new ElasticIndexTemplateReader(
-                elasticIndexStoreProvider,
-                elasticClusterStoreProvider,
-                documentResourceHelperProvider,
-                securityContextProvider,
-                elasticClientCacheProvider,
-                elasticIndexTemplateServiceProvider);
+    public ElasticIndexTemplatesResourceImpl(final Provider<ElasticIndexTemplateReader> readerProvider) {
+        this.readerProvider = readerProvider;
     }
 
     @Override
@@ -69,7 +53,7 @@ public class ElasticIndexTemplatesResourceImpl implements ElasticIndexTemplatesR
         final DocRef docRef = getIndexDocRef(request);
         try {
             // A PermissionException (403) for want of READ on the doc is left to its exception mapper
-            return reader.read(docRef);
+            return readerProvider.get().read(docRef);
         } catch (final ReadFailure e) {
             throw error(statusOf(e), e.getMessage());
         }
@@ -77,7 +61,7 @@ public class ElasticIndexTemplatesResourceImpl implements ElasticIndexTemplatesR
 
     private DocRef getIndexDocRef(final ElasticIndexTemplatesRequest request) {
         // A DocRef always has a type and UUID, else it would not have been deserialised
-        final DocRef docRef = NullSafe.get(request, ElasticIndexTemplatesRequest::indexDocRef);
+        final DocRef docRef = NullSafe.get(request, ElasticIndexTemplatesRequest::getIndexDocRef);
         if (docRef == null) {
             throw error(Status.BAD_REQUEST, "indexDocRef is required");
         }
