@@ -20,9 +20,11 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
+import stroom.sqlstore.api.TemporalEntryValidator;
 import stroom.sqlstore.api.UpdatableTemporalStore;
 import stroom.sqlstore.impl.UpdatableTemporalStoreDao;
 import stroom.sqlstore.shared.ChangeOperation;
@@ -36,17 +38,22 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
+import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record2;
 import org.jooq.Record3;
+import org.jooq.Record4;
 import org.jooq.SelectHavingStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -68,6 +75,25 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
     private static final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore UPDATABLE_TEMPORAL_STORE =
             stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE;
+
+    /**
+     * The most rows an unpaged read ({@link #fetchAll}, or {@link #find} without a page request)
+     * will return. Exceeding it is an error rather than a silent truncation, because every caller
+     * treats the list as the whole store - a Fact List missing entries would look complete. A caller
+     * that genuinely needs more must page.
+     */
+    static final int MAX_UNPAGED_ROWS = 100_000;
+
+    /// The longest page [#find] will return. A longer page request is refused rather than
+    /// shortened, because the caller would take a short page to mean it had reached the end.
+    static final int MAX_PAGE_LENGTH = MAX_UNPAGED_ROWS;
+
+    /// The fetch size that tells MySQL Connector/J to stream a result set a row at a time instead of
+    /// reading all of it into memory before returning the first row.
+    private static final int MYSQL_STREAMING_FETCH_SIZE = Integer.MIN_VALUE;
+
+    /** Rows read from the cursor at a time when streaming {@link #search} results. */
+    private static final int SEARCH_FETCH_BATCH_SIZE = 1_000;
 
     private final SqlStoreDbConnProvider sqlStoreDbConnProvider;
     private final ExpressionMapperFactory expressionMapperFactory;
@@ -144,65 +170,71 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                 .execute() > 0);
     }
 
+    /**
+     * Finds entries matching the criteria, a page at a time.
+     *
+     * <p>If the expression has a time term usable as a snapshot instant (see
+     * {@link #findSnapshotTerm}) the result is the latest version of each key at that instant, with
+     * {@code <} honoured as strictly before. Every other term - including further time terms,
+     * whether lower bounds or inside {@code OR}/{@code NOT} - filters rows as written. Without a
+     * snapshot term, every matching version is returned.</p>
+     *
+     * <p>Results are ordered by key then effective time so that paging is stable. Without a page
+     * request at most {@link #MAX_UNPAGED_ROWS} rows are returned, and more than that is an error; a
+     * page request may ask for at most {@link #MAX_PAGE_LENGTH}.</p>
+     */
     @Override
     public ResultPage<TemporalEntry> find(final String docUuid, final ExpressionCriteria criteria) {
         validateDocUuid(docUuid);
-        final Long queryTime = getQueryTime(criteria);
-        if (queryTime != null) {
+        final ExpressionTerm snapshotTerm = findSnapshotTerm(criteria);
+        final boolean paged = criteria.getPageRequest() != null && criteria.getPageRequest().getLength() != null;
+        if (paged && criteria.getPageRequest().getLength() > MAX_PAGE_LENGTH) {
+            throw new IllegalArgumentException("A page of at most " + MAX_PAGE_LENGTH
+                                               + " entries may be requested, not "
+                                               + criteria.getPageRequest().getLength() + ".");
+        }
+        // One more than wanted either way: for a page, so the result can say whether more follow; for
+        // an unpaged read, so that exceeding the cap is detected rather than silently truncated.
+        final int limit = paged
+                ? JooqUtil.getLimit(criteria.getPageRequest(), true)
+                : MAX_UNPAGED_ROWS + 1;
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+
+        final List<TemporalEntry> list;
+        if (snapshotTerm != null) {
             final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t1 =
                     UPDATABLE_TEMPORAL_STORE.as("t1");
-            final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t2 =
-                    UPDATABLE_TEMPORAL_STORE.as("t2");
-
-            final Condition condition = aliasedCondition(t2, criteria);
-
-            final SelectHavingStep<Record3<String, String, Long>> subquery = DSL.select(
-                            t2.DOC_UUID.as("sub_uuid"),
-                            t2.MAP_KEY.as("sub_key"),
-                            DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
-                    .from(t2)
-                    .where(t2.DOC_UUID.eq(docUuid))
-                    .and(condition)
-                    .and(t2.EFFECTIVE_TIME.le(queryTime))
-                    .groupBy(t2.DOC_UUID, t2.MAP_KEY);
-
-            final Table<Record3<String, String, Long>> subTable = subquery.asTable("sub");
-            final Field<String> subUuid = subTable.field("sub_uuid", String.class);
-            final Field<String> subKey = subTable.field("sub_key", String.class);
-            final Field<Long> maxTime = subTable.field("max_time", Long.class);
-
-            final List<TemporalEntry> list = JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
-                    .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME, t1.MAP_VALUE)
-                    .from(t1)
-                    .innerJoin(subTable)
-                    .on(t1.DOC_UUID.eq(subUuid))
-                    .and(t1.MAP_KEY.eq(subKey))
-                    .and(t1.EFFECTIVE_TIME.eq(maxTime))
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                    .fetch()
-                    .map(record -> new TemporalEntry(
-                            record.get(t1.MAP_NAME),
-                            record.get(t1.MAP_KEY),
-                            record.get(t1.EFFECTIVE_TIME),
-                            record.get(t1.MAP_VALUE))));
-            return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
+            final Table<Record3<String, String, Long>> subTable = snapshotSubquery(
+                    docUuid, criteria, snapshotTerm, true, false);
+            list = JooqUtil.contextResult(sqlStoreDbConnProvider, context ->
+                    selectSnapshotRows(context, t1, subTable, true)
+                            .orderBy(t1.MAP_KEY, t1.EFFECTIVE_TIME)
+                            .limit(limit)
+                            .offset(offset)
+                            .fetch()
+                            .map(record -> toEntry(record, t1)));
         } else {
             final Condition condition = condition(criteria);
-            final List<TemporalEntry> list = JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
+            list = JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
                     .selectFrom(UPDATABLE_TEMPORAL_STORE)
                     .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
                     .and(condition)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                    .orderBy(UPDATABLE_TEMPORAL_STORE.MAP_KEY, UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME)
+                    .limit(limit)
+                    .offset(offset)
                     .fetch()
                     .map(record -> new TemporalEntry(
                             record.getMapName(),
                             record.getMapKey(),
                             record.getEffectiveTime(),
                             record.getMapValue())));
-            return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
         }
+        if (!paged) {
+            checkUnpagedSize(list.size());
+        }
+        // Not createPageLimitedList: that takes the full list and applies the offset itself, and the
+        // offset has already been applied by the query, so every page after the first came back wrong.
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
@@ -265,7 +297,7 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         final Field<Long>   maxTime = subTable.field("max_time", Long.class);
 
         // Join the outer table to the subquery to retrieve the full rows.
-        return JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
+        final List<TemporalEntry> list = JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
                 .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME, t1.MAP_VALUE)
                 .from(t1)
                 .innerJoin(subTable)
@@ -273,12 +305,15 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                 .and(t1.MAP_KEY.eq(subKey))
                 .and(t1.EFFECTIVE_TIME.eq(maxTime))
                 .orderBy(t1.MAP_KEY.asc())
+                .limit(MAX_UNPAGED_ROWS + 1)
                 .fetch()
                 .map(record -> new TemporalEntry(
                         record.get(t1.MAP_NAME),
                         record.get(t1.MAP_KEY),
                         record.get(t1.EFFECTIVE_TIME),
                         record.get(t1.MAP_VALUE))));
+        checkUnpagedSize(list.size());
+        return list;
     }
 
     /**
@@ -359,19 +394,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                         switch (op.getType()) {
                             case UPSERT -> {
                                 final TemporalEntry entry = op.getEntry();
-                                if (entry == null) {
-                                    throw new IllegalArgumentException(
-                                            "UPSERT operation must have a non-null entry.");
-                                }
+                                validateTemporalEntry(entry);
                                 flushDeletes(trx, docUuid, deletes);
                                 upserts.add(entry);
                             }
                             case DELETE -> {
                                 final TemporalEntryId id = op.getId();
-                                if (id == null) {
-                                    throw new IllegalArgumentException(
-                                            "DELETE operation must have a non-null id.");
-                                }
+                                validateTemporalEntryId(id);
                                 flushUpserts(trx, docUuid, upserts);
                                 deletes.add(id);
                             }
@@ -440,29 +469,24 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
     /**
      * Executes a search query on the updatable temporal store and streams matching entries to the consumer.
-     * The method distinguishes between two query paths based on the presence of a query/lookup time:
+     * The method distinguishes between two query paths based on the presence of a snapshot time term:
      *
-     * <p><b>1. QueryTime Path (Temporal Lookup):</b>
-     * If a temporal query time boundary is present (e.g., from a lookup request at a specific point in time),
-     * the search retrieves the single most recent (effective) entry for each key that is valid at or
-     * before the specified time.
-     * <ul>
-     *   <li>A subquery is constructed over the aliased table <code>t2</code> to find the maximum effective
-     *       time (<code>max(effective_time)</code>) for each key in this document that is less than or
-     *       equal to the query time (<code>t2.effective_time &lt;= queryTime</code>).</li>
-     *   <li>The subquery is joined back onto the main table <code>t1</code> on matching document, keys and
-     *       effective times to fetch the corresponding value.</li>
-     *   <li>The returned {@link TemporalEntry} contains the actual <code>effective_time</code> matching the latest
-     *       available point in time resolved by the lookup.</li>
-     * </ul>
+     * <p><b>1. Snapshot path (temporal lookup):</b>
+     * If the expression has a time term usable as a snapshot instant (see {@link #findSnapshotTerm}),
+     * the search retrieves the single most recent entry for each key that is valid at or before that
+     * instant. Unlike {@link #find}, a {@code <} term is read as at-or-before: the framework turns a
+     * query's time range into {@code >= from AND < to}, and "the state as at {@code to}" must include
+     * an entry effective at exactly {@code to}. For the same reason a lower bound at or after the
+     * instant is the zero-width range the framework builds for "as at T", not a window, and is
+     * ignored. Every other term, including an earlier lower bound, filters the candidate rows.</p>
      *
-     * <p><b>2. Standard Path (Bulk/Unbounded Search):</b>
-     * If no query time is specified, a standard search is performed.
-     * <ul>
-     *   <li>It executes a direct SELECT query against the <code>UPDATABLE_TEMPORAL_STORE</code> table, filtering
-     *       using the expression criteria.</li>
-     *   <li>This returns all matching records across all historical time points.</li>
-     * </ul>
+     * <p><b>2. Standard path (bulk/unbounded search):</b>
+     * Without a snapshot term every matching row across all historical time points is returned.</p>
+     *
+     * <p>Rows are streamed from the database a row at a time rather than read into memory first, so
+     * memory use does not grow with the size of the store, and the consumer may stop the read
+     * part-way - for example on search termination - by throwing. While streaming, the connection can
+     * run nothing else, so the consumer must not use the database.</p>
      *
      * @param docUuid  UUID of the owning store document; must not be {@code null} or blank
      * @param criteria The criteria containing filters and optional query time.
@@ -474,83 +498,124 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                        final boolean includeValue,
                        final Consumer<TemporalEntry> consumer) {
         validateDocUuid(docUuid);
-        final Long queryTime = getQueryTime(criteria);
-        if (queryTime != null) {
-            // A bound at or after queryTime is not a window but the zero-width TimeRange the
-            // framework builds for "as at T" - `>= T AND < T` - which no row satisfies if read
-            // literally. Mirrors the guard in TemporalStateDb.searchAsAt.
-            final Long candidate = getNotBefore(criteria);
-            final Long notBefore = candidate != null && candidate < queryTime
-                    ? candidate
-                    : null;
+        final ExpressionTerm snapshotTerm = findSnapshotTerm(criteria);
+        if (snapshotTerm != null) {
             final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t1 =
                     UPDATABLE_TEMPORAL_STORE.as("t1");
-            final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t2 =
-                    UPDATABLE_TEMPORAL_STORE.as("t2");
+            final Table<Record3<String, String, Long>> subTable = snapshotSubquery(
+                    docUuid, criteria, snapshotTerm, false, true);
 
-            final Condition condition = aliasedCondition(t2, criteria);
-            // Narrowing the aggregate rather than filtering its result is the same answer and a
-            // cheaper one: the latest row in [notBefore, queryTime] is the latest row at or before
-            // queryTime whenever that row is in scope, and no row at all when it is not.
-            final SelectHavingStep<Record3<String, String, Long>> subquery = DSL.select(
-                            t2.DOC_UUID.as("sub_uuid"),
-                            t2.MAP_KEY.as("sub_key"),
-                            DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
-                    .from(t2)
-                    .where(t2.DOC_UUID.eq(docUuid))
-                    .and(condition)
-                    .and(t2.EFFECTIVE_TIME.le(queryTime))
-                    .and(notBefore == null
-                            ? DSL.noCondition()
-                            : t2.EFFECTIVE_TIME.ge(notBefore))
-                    .groupBy(t2.DOC_UUID, t2.MAP_KEY);
-
-            final Table<Record3<String, String, Long>> subTable = subquery.asTable("sub");
-            final Field<String> subUuid = subTable.field("sub_uuid", String.class);
-            final Field<String> subKey = subTable.field("sub_key", String.class);
-            final Field<Long> maxTime = subTable.field("max_time", Long.class);
-
-            //noinspection CodeBlock2Expr
-            JooqUtil.context(sqlStoreDbConnProvider, context -> context
-                    .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME,
-                            includeValue
-                                    ? t1.MAP_VALUE
-                                    : DSL.inline((String) null).as(t1.MAP_VALUE))
-                    .from(t1)
-                    .innerJoin(subTable)
-                    .on(t1.DOC_UUID.eq(subUuid))
-                    .and(t1.MAP_KEY.eq(subKey))
-                    .and(t1.EFFECTIVE_TIME.eq(maxTime))
-                    .fetch()
-                    .forEach(record -> {
-                        consumer.accept(new TemporalEntry(
-                                record.get(t1.MAP_NAME),
-                                record.get(t1.MAP_KEY),
-                                record.get(t1.EFFECTIVE_TIME),
-                                record.get(t1.MAP_VALUE)));
-                    }));
+            JooqUtil.context(sqlStoreDbConnProvider, context -> {
+                try (final Cursor<Record4<String, String, Long, String>> cursor =
+                        selectSnapshotRows(context, t1, subTable, includeValue)
+                                .fetchSize(MYSQL_STREAMING_FETCH_SIZE)
+                                .fetchLazy()) {
+                    streamTo(cursor, record -> toEntry(record, t1), consumer);
+                }
+            });
         } else {
             final Condition condition = condition(criteria);
 
-            //noinspection CodeBlock2Expr
-            JooqUtil.context(sqlStoreDbConnProvider, context -> context
-                    .select(UPDATABLE_TEMPORAL_STORE.MAP_NAME,
-                            UPDATABLE_TEMPORAL_STORE.MAP_KEY,
-                            UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME,
-                            includeValue
-                                    ? UPDATABLE_TEMPORAL_STORE.MAP_VALUE
-                                    : DSL.inline((String) null).as(UPDATABLE_TEMPORAL_STORE.MAP_VALUE))
-                    .from(UPDATABLE_TEMPORAL_STORE)
-                    .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
-                    .and(condition)
-                    .fetch()
-                    .forEach(record -> {
-                        consumer.accept(new TemporalEntry(
-                                record.get(UPDATABLE_TEMPORAL_STORE.MAP_NAME),
-                                record.get(UPDATABLE_TEMPORAL_STORE.MAP_KEY),
-                                record.get(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME),
-                                record.get(UPDATABLE_TEMPORAL_STORE.MAP_VALUE)));
-                    }));
+            JooqUtil.context(sqlStoreDbConnProvider, context -> {
+                try (final Cursor<Record4<String, String, Long, String>> cursor = context
+                        .select(UPDATABLE_TEMPORAL_STORE.MAP_NAME,
+                                UPDATABLE_TEMPORAL_STORE.MAP_KEY,
+                                UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME,
+                                includeValue
+                                        ? UPDATABLE_TEMPORAL_STORE.MAP_VALUE
+                                        : DSL.inline((String) null).as(UPDATABLE_TEMPORAL_STORE.MAP_VALUE))
+                        .from(UPDATABLE_TEMPORAL_STORE)
+                        .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
+                        .and(condition)
+                        .fetchSize(MYSQL_STREAMING_FETCH_SIZE)
+                        .fetchLazy()) {
+                    streamTo(cursor, record -> toEntry(record, UPDATABLE_TEMPORAL_STORE), consumer);
+                }
+            });
+        }
+    }
+
+    /**
+     * Builds the grouped subquery that finds, for each key in the document, the greatest effective
+     * time that satisfies the criteria and the snapshot bound.
+     *
+     * @param exactBounds          {@code true} to honour {@code <} as strictly before; {@code false}
+     *                             to read it as at-or-before, as {@link #search} does
+     * @param ignoreZeroWidthRange {@code true} to drop lower-bound conjuncts at or after the instant,
+     *                             as {@link #search} does
+     */
+    private Table<Record3<String, String, Long>> snapshotSubquery(final String docUuid,
+                                                                  final ExpressionCriteria criteria,
+                                                                  final ExpressionTerm snapshotTerm,
+                                                                  final boolean exactBounds,
+                                                                  final boolean ignoreZeroWidthRange) {
+        final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t2 =
+                UPDATABLE_TEMPORAL_STORE.as("t2");
+        final long instant = DateUtil.parseUnknownString(snapshotTerm.getValue());
+
+        final Set<ExpressionTerm> consumed = Collections.newSetFromMap(new IdentityHashMap<>());
+        consumed.add(snapshotTerm);
+        if (ignoreZeroWidthRange) {
+            consumed.addAll(zeroWidthLowerBounds(criteria, instant));
+        }
+        final Condition upperBound = exactBounds && snapshotTerm.getCondition() == ExpressionTerm.Condition.LESS_THAN
+                ? t2.EFFECTIVE_TIME.lt(instant)
+                : t2.EFFECTIVE_TIME.le(instant);
+
+        return DSL.select(
+                        t2.DOC_UUID.as("sub_uuid"),
+                        t2.MAP_KEY.as("sub_key"),
+                        DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
+                .from(t2)
+                .where(t2.DOC_UUID.eq(docUuid))
+                .and(aliasedCondition(t2, criteria, consumed))
+                .and(upperBound)
+                .groupBy(t2.DOC_UUID, t2.MAP_KEY)
+                .asTable("sub");
+    }
+
+    /** Joins the snapshot subquery back to the table for the full row of each key's latest version. */
+    private static org.jooq.SelectOnConditionStep<Record4<String, String, Long, String>> selectSnapshotRows(
+            final DSLContext context,
+            final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t1,
+            final Table<Record3<String, String, Long>> subTable,
+            final boolean includeValue) {
+        return context
+                .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME,
+                        includeValue
+                                ? t1.MAP_VALUE
+                                : DSL.inline((String) null).as(t1.MAP_VALUE))
+                .from(t1)
+                .innerJoin(subTable)
+                .on(t1.DOC_UUID.eq(subTable.field("sub_uuid", String.class)))
+                .and(t1.MAP_KEY.eq(subTable.field("sub_key", String.class)))
+                .and(t1.EFFECTIVE_TIME.eq(subTable.field("max_time", Long.class)));
+    }
+
+    private static TemporalEntry toEntry(final org.jooq.Record record,
+                                         final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t) {
+        return new TemporalEntry(
+                record.get(t.MAP_NAME),
+                record.get(t.MAP_KEY),
+                record.get(t.EFFECTIVE_TIME),
+                record.get(t.MAP_VALUE));
+    }
+
+    /** Reads the cursor a batch at a time, passing each row to the consumer. */
+    private static <R extends org.jooq.Record> void streamTo(final Cursor<R> cursor,
+                                                             final java.util.function.Function<R, TemporalEntry> mapper,
+                                                             final Consumer<TemporalEntry> consumer) {
+        while (cursor.hasNext()) {
+            for (final R record : cursor.fetchNext(SEARCH_FETCH_BATCH_SIZE)) {
+                consumer.accept(mapper.apply(record));
+            }
+        }
+    }
+
+    private static void checkUnpagedSize(final int rowCount) {
+        if (rowCount > MAX_UNPAGED_ROWS) {
+            throw new IllegalStateException("The request matches more than " + MAX_UNPAGED_ROWS
+                                            + " entries. Narrow it, or request it a page at a time.");
         }
     }
 
@@ -569,10 +634,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
     /**
      * As {@link #condition(ExpressionCriteria)} but against an aliased table, and additionally
-     * stripping the time term, which the caller applies itself as the temporal upper bound.
+     * leaving out the given terms, which the caller has already accounted for - the snapshot term it
+     * applies itself as the temporal upper bound, and any zero-width lower bound. Terms are matched
+     * by identity, so an identical term written elsewhere in the expression is kept.
      */
     private Condition aliasedCondition(final stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore t,
-                                       final ExpressionCriteria criteria) {
+                                       final ExpressionCriteria criteria,
+                                       final Set<ExpressionTerm> consumedTerms) {
         final ExpressionMapper localExpressionMapper = expressionMapperFactory.create();
         localExpressionMapper.map(UpdatableTemporalStore.KEY_FIELD,
                 t.MAP_KEY,
@@ -584,63 +652,42 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                 t.MAP_VALUE,
                 String::valueOf);
 
-        final ExpressionOperator expression = getFilteredExpression(criteria);
+        if (criteria == null || criteria.getExpression() == null) {
+            return DSL.noCondition();
+        }
+        final ExpressionOperator expression = ExpressionUtil.copyOperator(
+                criteria.getExpression(),
+                item -> {
+                    if (item instanceof final ExpressionTerm term) {
+                        return term.getField() != null
+                               && !consumedTerms.contains(term)
+                               && !UpdatableTemporalStore.MAP_FIELD.getFldName().equals(term.getField());
+                    }
+                    return true;
+                });
         return expression == null
                 ? DSL.noCondition()
                 : localExpressionMapper.apply(expression);
     }
 
     /**
-     * The "not before" instant, where the caller has bounded the snapshot below as well as above.
+     * The time term that makes this a snapshot read, or {@code null} for an ordinary one.
      *
-     * <p>Narrows "the state of each key at T" to "the state of each key at T, considering only what
-     * happened since". Without it the bound is not ignored but stripped by
-     * {@link #getFilteredExpression}, so a caller asking for {@code >= X AND <= Y} could be handed a
-     * row from before X — the defect {@code docs/temporal-store-parity-report.md} records.</p>
-     *
-     * <p>Mirrors {@code PlanBSearchHelper.getNotBefore} so the two stores stay interchangeable:
-     * {@code >} is treated as {@code >=}, the first parseable term wins, and its position in the
-     * expression tree is not considered.</p>
+     * <p>A snapshot term is an {@code EffectiveTime} term with {@code =}, {@code <=} or {@code <} and
+     * a parseable value, that is a conjunct of the whole expression: reachable from the root through
+     * enabled {@code AND} operators only. A time term inside {@code OR} or {@code NOT} does not bound
+     * the whole result, so treating it as the snapshot instant would change what the query means; it
+     * is left in place to filter rows like any other term. Where there are several candidates the
+     * first in document order wins, and the rest also stay in place as filters.</p>
      */
-    private Long getNotBefore(final ExpressionCriteria criteria) {
-        if (criteria == null || criteria.getExpression() == null) {
-            return null;
-        }
-        final List<ExpressionTerm> timeTerms = ExpressionUtil.terms(
-                criteria.getExpression(),
-                List.of(UpdatableTemporalStore.TIME_FIELD.getFldName()));
-
-        for (final ExpressionTerm term : timeTerms) {
-            if (UpdatableTemporalStore.TIME_FIELD.getFldName().equals(term.getField()) &&
-                    (term.getCondition() == ExpressionTerm.Condition.GREATER_THAN ||
-                    term.getCondition() == ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO)) {
-                try {
-                    return DateUtil.parseUnknownString(term.getValue());
-                } catch (final RuntimeException e) {
-                    // Ignore and keep checking
-                }
-            }
-        }
-        return null;
-    }
-
-    private Long getQueryTime(final ExpressionCriteria criteria) {
-        if (criteria == null || criteria.getExpression() == null) {
-            return null;
-        }
-        final List<ExpressionTerm> timeTerms = ExpressionUtil.terms(
-                criteria.getExpression(),
-                List.of(UpdatableTemporalStore.TIME_FIELD.getFldName()));
-
-        for (final ExpressionTerm term : timeTerms) {
-            if (UpdatableTemporalStore.TIME_FIELD.getFldName().equals(term.getField()) &&
-                    (term.getCondition() == ExpressionTerm.Condition.EQUALS ||
-                    term.getCondition() == ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO ||
-                    term.getCondition() == ExpressionTerm.Condition.LESS_THAN)) {
-                try {
-                    return DateUtil.parseUnknownString(term.getValue());
-                } catch (final RuntimeException e) {
-                    // Ignore and keep checking
+    static ExpressionTerm findSnapshotTerm(final ExpressionCriteria criteria) {
+        for (final ExpressionTerm term : conjunctTimeTerms(criteria)) {
+            final ExpressionTerm.Condition condition = term.getCondition();
+            if (condition == ExpressionTerm.Condition.EQUALS
+                || condition == ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO
+                || condition == ExpressionTerm.Condition.LESS_THAN) {
+                if (parseTime(term) != null) {
+                    return term;
                 }
             }
         }
@@ -648,23 +695,61 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
     }
 
     /**
-     * Copies the criteria expression with both the time term and the map term removed - the
-     * time bound is applied separately by the caller, and the map name is not a scoping field.
+     * Lower-bound time conjuncts at or after the snapshot instant. Together with the upper bound
+     * these form the zero-width {@code >= T AND < T} range the query framework builds for
+     * "as at T", which {@link #search} must not read literally.
      */
-    private ExpressionOperator getFilteredExpression(final ExpressionCriteria criteria) {
-        if (criteria == null || criteria.getExpression() == null) {
+    private static List<ExpressionTerm> zeroWidthLowerBounds(final ExpressionCriteria criteria,
+                                                             final long instant) {
+        return conjunctTimeTerms(criteria).stream()
+                .filter(term -> term.getCondition() == ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO
+                                || term.getCondition() == ExpressionTerm.Condition.GREATER_THAN)
+                .filter(term -> {
+                    final Long time = parseTime(term);
+                    return time != null && time >= instant;
+                })
+                .toList();
+    }
+
+    /** The enabled {@code EffectiveTime} terms reachable from the root through enabled ANDs only. */
+    private static List<ExpressionTerm> conjunctTimeTerms(final ExpressionCriteria criteria) {
+        final List<ExpressionTerm> terms = new ArrayList<>();
+        if (criteria != null) {
+            addConjunctTimeTerms(criteria.getExpression(), terms);
+        }
+        return terms;
+    }
+
+    private static void addConjunctTimeTerms(final ExpressionOperator operator,
+                                             final List<ExpressionTerm> terms) {
+        if (operator == null
+            || !operator.enabled()
+            || operator.op() != ExpressionOperator.Op.AND
+            || !operator.hasChildren()) {
+            return;
+        }
+        for (final ExpressionItem item : operator.getChildren()) {
+            if (item.enabled()) {
+                if (item instanceof final ExpressionTerm term) {
+                    if (UpdatableTemporalStore.TIME_FIELD.getFldName().equals(term.getField())) {
+                        terms.add(term);
+                    }
+                } else if (item instanceof final ExpressionOperator childOperator) {
+                    addConjunctTimeTerms(childOperator, terms);
+                }
+            }
+        }
+    }
+
+    private static Long parseTime(final ExpressionTerm term) {
+        if (term.getValue() == null || term.getValue().isBlank()) {
             return null;
         }
-        return ExpressionUtil.copyOperator(
-                criteria.getExpression(),
-                item -> {
-                    if (item instanceof final ExpressionTerm term) {
-                        return term.getField() != null
-                               && !UpdatableTemporalStore.TIME_FIELD.getFldName().equals(term.getField())
-                               && !UpdatableTemporalStore.MAP_FIELD.getFldName().equals(term.getField());
-                    }
-                    return true;
-                });
+        try {
+            return DateUtil.parseUnknownString(term.getValue());
+        } catch (final RuntimeException e) {
+            return null;
+        }
     }
 
     /**
@@ -692,30 +777,18 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         }
     }
 
+    // The rules are shared with every other write path - see TemporalEntryValidator.
     private void validateTemporalEntry(final TemporalEntry entry) {
-        if (entry == null) {
-            throw new IllegalArgumentException("Entry cannot be null.");
-        }
-        if (entry.getMap() == null || entry.getMap().isBlank()) {
-            throw new IllegalArgumentException("Map name must be defined and not empty.");
-        }
-        if (entry.getKey() == null || entry.getKey().isBlank()) {
-            throw new IllegalArgumentException("Key must be defined and not empty.");
-        }
-        if (entry.getEffectiveTimeMs() == null) {
-            throw new IllegalArgumentException("Effective time must be defined.");
-        }
+        throwIfInvalid(TemporalEntryValidator.entryProblem(entry));
     }
 
     private void validateTemporalEntryId(final TemporalEntryId id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Id cannot be null.");
-        }
-        if (id.getKey() == null || id.getKey().isBlank()) {
-            throw new IllegalArgumentException("Key must be defined and not empty.");
-        }
-        if (id.getEffectiveTimeMs() == null) {
-            throw new IllegalArgumentException("Effective time must be defined.");
+        throwIfInvalid(TemporalEntryValidator.idProblem(id));
+    }
+
+    private static void throwIfInvalid(final String problem) {
+        if (problem != null) {
+            throw new IllegalArgumentException("Invalid temporal entry: " + problem);
         }
     }
 }

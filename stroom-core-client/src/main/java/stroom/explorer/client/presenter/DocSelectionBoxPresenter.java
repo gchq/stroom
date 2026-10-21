@@ -88,13 +88,6 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         this.itemType = itemType;
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-    // Local addition: a pass-through to ExplorerPopupPresenter.setCaption, which was already
-    // public but unreachable through this wrapper because explorerPopupPresenter is private.
-    // Callers holding an ExplorerPopupPresenter directly have always been able to title the
-    // chooser ("Choose Dictionary", "Choose Dashboard", ...); callers holding a
-    // DocSelectionBoxPresenter were stuck with the default "Choose item". Purely additive, so
-    // upstream's version of this file can be taken wholesale as long as this method survives.
     /**
      * Sets the caption of the chooser popup this box opens.
      *

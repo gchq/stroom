@@ -17,6 +17,7 @@
 package stroom.event.logging.impl;
 
 import stroom.activity.api.CurrentActivity;
+import stroom.credentials.shared.SshKeySecret;
 import stroom.docref.HasName;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
@@ -267,6 +268,21 @@ class TestStroomEventLoggingServiceImpl {
                 .toList().size()).isEqualTo(0);
         assertThat(allData.stream().filter(data -> data.getValue().equals("false"))
                 .toList().size()).isEqualTo(1);
+    }
+
+    @Test
+    void testSshKeySecretIsRedacted() {
+        // The credentials resource is auto logged, so a stored or replaced SSH key secret
+        // passes through here and none of its secret parts may reach the audit log.
+        final List<Data> allData = stroomEventLoggingService.getDataItems(
+                new SshKeySecret("my-passphrase", "my-private-key", true, "my-known-hosts"));
+
+        assertThat(allData).anyMatch(data -> data.getName().equals("passphrase"));
+        assertThat(allData).anyMatch(data -> data.getName().equals("privateKey"));
+        assertThat(allData).noneMatch(data -> "my-passphrase".equals(data.getValue()));
+        assertThat(allData).noneMatch(data -> "my-private-key".equals(data.getValue()));
+        // Known hosts are not secret
+        assertThat(allData).anyMatch(data -> "my-known-hosts".equals(data.getValue()));
     }
 
     @Test

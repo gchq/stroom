@@ -594,14 +594,13 @@ public class SearchRequestFactory {
             return expression;
         }
 
-        // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. Upstream's `from` clause accepts only
-        // a string literal, so `from param('EventStore')` throws "Expected a token of type string"
-        // — which is why the client used to substitute param() references into the query text
-        // before sending it. That substitution was a blind String.replace, so it also rewrote
-        // matches inside quoted literals and comments, it had to escape the value for the literal
-        // it landed in, it existed in two copies, and it shifted every error offset the editor
-        // highlights. Resolving here removes all of that: the value travels as an ordinary Param
-        // and never touches the query text.
+        // The `from` clause accepts param('key') as well as a string literal, so
+        // `from param('EventStore')` resolves here rather than throwing "Expected a token of type
+        // string". The alternative, substituting param() references into the query text on the
+        // client before sending it, is a blind String.replace: it rewrites matches inside quoted
+        // literals and comments, has to escape the value for the literal it lands in, and shifts
+        // every error offset the editor highlights. Resolving here avoids all of that: the value
+        // travels as an ordinary Param and never touches the query text.
         //
         // Known gap, deliberately not addressed here: QueryServiceImpl.validateQuery builds its
         // request with no QueryContext, so paramMap is empty there and a query using param() in a
@@ -648,9 +647,9 @@ public class SearchRequestFactory {
                 throw new TokenException(functionGroup.getChildren().get(1), "Unexpected token");
             } else {
                 final AbstractToken child = functionGroup.getChildren().getFirst();
-                // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. Upstream accepts only a bare
-                // TokenType.STRING here, so param('EventStore') — the quoted form every caller
-                // actually writes — threw "Expected param name" in every position. A quoted token
+                // Quoted string tokens are accepted as well as a bare TokenType.STRING, because
+                // param('EventStore') — the quoted form every caller actually writes — would
+                // otherwise throw "Expected param name" in every position. A quoted token
                 // unescapes to the same key (QuotedStringToken.getUnescapedText), so accepting the
                 // quoted forms changes nothing but which spellings work. PARAM is deliberately not
                 // accepted: param(${x}) would read as a nested reference and resolve to the inner

@@ -144,18 +144,17 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local change: *creating* a document routes through
+// *Creating* a document routes through
 // plugin.getInitialisationHandler().showInitialisationDialog(...) rather than calling
 // plugin.open(...) directly, so a document type can require configuration before it is first
 // opened. The sole call site is in fireShowCreateDocumentDialogEvent below, and it is what makes
 // DocumentPlugin.getInitialisationHandler() do anything at all; FloorMap uses it to prompt for
-// its Facts/Events stores. Upstream calls open() directly - restoring that silently disables the
-// dialog for every document type that relies on it.
+// its Facts/Events stores. Calling open() directly there would silently disable the dialog for
+// every document type that relies on it.
 //
-// This banner said "opening a document" until 2026-09-04, which was wrong and dangerous to act on:
-// the handler's cancel path DELETES the document (see DocInitialisationHandler), so wiring this
-// into the open path would make cancelling the dialog destroy an existing document.
+// This applies to creating a document only, never to opening an existing one: the handler's
+// cancel path DELETES the document (see DocInitialisationHandler), so wiring this into the open
+// path would make cancelling the dialog destroy an existing document.
 @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 @Singleton
 public class DocumentPluginEventManager extends Plugin {

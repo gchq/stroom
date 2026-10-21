@@ -157,6 +157,7 @@ public class MetricDb extends AbstractDb<TemporalKey, Long> {
                     zoneId,
                     temporalIndex);
 
+            TemporalKeySerdeFactory.checkNotTerminatedString(settings.getKeySchema().getKeyType(), "metric");
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
                     doc,
                     settings.getKeySchema().getKeyType(),

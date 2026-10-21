@@ -105,12 +105,18 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     ResultPage<IndexFieldImpl> findFields(
             @Parameter(description = "criteria", required = true) FindFieldCriteria criteria);
 
+    /// Deletes every shard of the index on every node. Requires DELETE permission on the index.
+    ///
+    /// @param uuid The UUID of the index document.
+    /// @return The number of shards marked for deletion; zero if the index had none.
     @POST
     @Path("/{uuid}/reset")
     @Operation(
             summary = "Reset index contents (delete all shards across all nodes)",
+            description = "Requires DELETE permission on the index. Returns the number of shards "
+                          + "marked for deletion.",
             operationId = "resetIndex")
-    Boolean reset(@PathParam("uuid") String uuid);
+    Long reset(@PathParam("uuid") String uuid);
 
     @POST
     @Path("/addField")

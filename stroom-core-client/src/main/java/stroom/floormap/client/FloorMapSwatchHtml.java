@@ -247,25 +247,6 @@ public final class FloorMapSwatchHtml {
     /// hand-edited document injecting markup through the colour field, which is
     /// interpolated into trusted SVG.
     private static boolean isValidColour(final String colour) {
-        // Checked by hand rather than with a regex: this runs once per layer row on
-        // every Layers rebuild, and GWT does not emulate java.util.regex.Pattern,
-        // so a precompiled pattern is not an option here — String.matches would
-        // build a fresh JS RegExp on each call.
-        if (colour == null || colour.length() < 4 || colour.length() > 9) {
-            return false;
-        }
-        if (colour.charAt(0) != '#') {
-            return false;
-        }
-        for (int i = 1; i < colour.length(); i++) {
-            final char c = colour.charAt(i);
-            final boolean hex = (c >= '0' && c <= '9')
-                    || (c >= 'a' && c <= 'f')
-                    || (c >= 'A' && c <= 'F');
-            if (!hex) {
-                return false;
-            }
-        }
-        return true;
+        return TypeStyle.isValidColour(colour);
     }
 }
