@@ -1976,6 +1976,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   columns, so the width given up was left as a gap (Server Tasks' Info column, 199px short). The
   handler now has the grid give spare width to its fill columns. `App/Main/ServerTasksScreen`
   `FlatListDetails` checks it.
+* **A grid whose columns came after a fetch didn't fill its width in the new grid.** The grid
+  worked out its starting widths on its first layout, before the document create permissions
+  list had added any columns, so the Document Type column kept its declared 200px. The grid now
+  waits for columns before working them out. `TestColumnModel` and
+  `App/Main/DocumentCreatePermissionsGrid` `ToggleType` check it.
 
 ## Checked and not bugs
 
@@ -1991,6 +1996,9 @@ Reported by the suite and found not to be bugs, kept so they aren't reported aga
 * #33: a Report has duplicate notification settings it doesn't use. Unused shared code, not a
   missing tab.
 * #34: `UserPermissionsReportPlugin` adds a Security menu item that never appears. Unused code.
+* A press on a grid's tick box ends in no `click`: `TickBoxCell` acts on mousedown and redraws
+  itself, so the element pressed is gone by mouseup. Both grids do it with real input (checked on
+  `Widgets/Cell Renderers/TickBoxCell` `InGrid`), so switching grids changed nothing. Stories that want to know a tick happened should listen for mousedown.
 
 ## Checking a fix
 

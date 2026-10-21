@@ -167,7 +167,8 @@ public final class AnalyticRuleEditorStories {
                     // added a row with none)
                     play.expect(destinationType(dialog)).toHaveValue("Stream");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("Stream", StroomDom.GRID_CELL_TEXT))
+                            .toBeInTheDocument());
                     expectNoProblems(play);
                 })
                 // The notification dialog: its maximum is always shown, and switching the

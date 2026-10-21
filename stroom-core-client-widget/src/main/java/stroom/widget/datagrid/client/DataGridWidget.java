@@ -1316,6 +1316,11 @@ public class DataGridWidget<R> extends Widget
 
     private void render() {
         renderScheduled = false;
+        // Columns added after the grid was laid out (once a fetch returns) haven't been resolved
+        // by the resize observer, which saw none
+        if (!columnModel.isResolved() && isAttached()) {
+            columnModel.resolve(getElement().getClientWidth());
+        }
 
         final boolean effectiveVirtual = isEffectiveVirtual();
         int anchorRow = -1;

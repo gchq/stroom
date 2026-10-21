@@ -874,6 +874,23 @@ interactive header cells, the context menu, copy, export and AI.
     up was left as a gap at the right (Server Tasks' Info column stopped 199px short). The handler
     now asks the grid to give spare width to the fill columns (`resizeTableToFitColumns(true)`).
 
+* **Lists with their own selection manager** (2026-10-21): `ApiKeysListPresenter`,
+  `ScheduledProcessListPresenter`, `DocumentCreatePermissionsListPresenter` and
+  `AbstractNotificationListPresenter` (the analytic rule and report notifications). The three that
+  made a `DataGridSelectionEventManager` make the new grid's. API keys are keyed by id and
+  notifications by uuid, as their `equals` compares every field, so a tick or edit brings an
+  unequal row.
+  * A tick box acts on mousedown and redraws itself, so the element pressed is gone before the
+    click, in either grid, and the click never reaches the tick's ancestors. The document create
+    permissions stories reported the working set on a click; they now do on mousedown.
+  * Found: the document create permissions grid adds its columns once the document types are
+    fetched, after the grid was laid out, and the grid had resolved its widths with no columns, so
+    its fill column kept its declared width (the rows stopped at 270px). `ColumnModel.resolve`
+    now waits for columns, and the grid resolves when it draws as well as on a resize
+    (`TestColumnModel.testResolveWaitsForColumns`).
+  * `TypeFilterPresenter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
+    `DEFAULT_LIST_PAGE_SIZE` (for a `MyCellTable`, session 5); it moves when `MyDataGrid` goes.
+
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.

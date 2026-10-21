@@ -46,6 +46,19 @@ class TestColumnModel {
     }
 
     @Test
+    void testResolveWaitsForColumns() {
+        // A presenter that adds its columns once a fetch returns: the grid is laid out first
+        final ColumnModel<String> model = new ColumnModel<>();
+        assertThat(model.resolve(500)).isFalse();
+        assertThat(model.isResolved()).isFalse();
+
+        model.add("a", ColumnSizing.fixed(100));
+        model.add("b", ColumnSizing.fill(200));
+        assertThat(model.resolve(500)).isTrue();
+        assertThat(model.getWidths()).containsExactly(100, 400);
+    }
+
+    @Test
     void testColumnsAddedAfterResolveAreSizedImmediately() {
         final ColumnModel<String> model = new ColumnModel<>();
         model.add("a", ColumnSizing.fixed(100));

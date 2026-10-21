@@ -25,8 +25,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -43,6 +41,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SvgImageUtil;
@@ -70,7 +70,7 @@ public class ScheduledProcessListPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
-    private final MyDataGrid<ExecutionSchedule> dataGrid;
+    private final DataGridWidget<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -102,11 +102,11 @@ public class ScheduledProcessListPresenter
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
                 ExecutionScheduleFields.NAME, true, true);
         request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager =
-                new DataGridSelectionEventManager<>(
+        final DataGridWidgetSelectionEventManager<ExecutionSchedule> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(
                         dataGrid,
                         selectionModel,
                         false);

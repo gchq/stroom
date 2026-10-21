@@ -21,7 +21,6 @@ import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -42,6 +41,7 @@ import stroom.util.shared.Selection;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -81,7 +81,7 @@ public class ApiKeysListPresenter
     private final MultiSelectionModelImpl<HashedApiKey> selectionModel;
     //    private final DataGridSelectionEventManager<HashedApiKey> selectionEventManager;
 //    private final QuickFilterTimer timer = new QuickFilterTimer();
-    private final MyDataGrid<HashedApiKey> dataGrid;
+    private final DataGridWidget<HashedApiKey> dataGrid;
     private final UiConfigCache uiConfigCache;
 //    private final ToolbarButton addButton;
 //    private final ToolbarButton editButton;
@@ -109,8 +109,10 @@ public class ApiKeysListPresenter
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;
         this.pagerView = pagerView;
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("API Keys");
+        // A tick or refresh brings new rows (their equals compares every field), so keep the row by its id
+        this.dataGrid.setKeyProvider(HashedApiKey::getId);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
 //        this.selectionEventManager = new DataGridSelectionEventManager<>(
 //                dataGrid, selectionModel, false);

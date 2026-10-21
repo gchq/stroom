@@ -203,12 +203,13 @@ public final class ColumnModel<C> {
     }
 
     /// Work out the starting widths of all columns. Only does anything the first time it is called
-    /// with a width greater than zero.
+    /// with a width greater than zero and some columns: a grid whose columns come later (once a
+    /// fetch returns) is resolved when they do, so its fill columns fill it.
     ///
     /// @param outerWidth The grid's visible width in pixels.
     /// @return `true` if the widths were resolved by this call.
     public boolean resolve(final int outerWidth) {
-        if (isResolved() || outerWidth <= 0) {
+        if (isResolved() || outerWidth <= 0 || entries.isEmpty()) {
             return false;
         }
         initialOuterWidth = outerWidth;
