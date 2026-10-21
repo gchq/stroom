@@ -164,14 +164,16 @@ public class SearchExpressionQueryBuilder {
         // leaf query can be wrapped in one Elasticsearch `nested` query per level of nesting.
         final List<String> nestedPaths = getNestedPaths(fieldName);
 
-        // Validate the expression
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
+        // Validate the expression. For IN_DICTIONARY the dictionary reference, not the value, defines
+        // the terms to match, so build the dictionary query even if no value has been provided.
         if (Condition.IN_DICTIONARY.equals(condition)) {
             if (docRef == null || docRef.getUuid() == null) {
                 throw new IllegalArgumentException("Dictionary not set for field: " + field);
             }
+            return buildDictionaryQuery(condition, fieldName, docRef, elasticIndexField, nestedPaths);
+        }
+        if (value == null || value.isEmpty()) {
+            return null;
         }
 
         // Special case: if the expression is a wildcard, use the `exists` query
@@ -189,27 +191,26 @@ public class SearchExpressionQueryBuilder {
             elasticFieldType.equals(FieldType.LONG) ||
             elasticFieldType.equals(FieldType.INTEGER)) {
             return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getNumber, docRef);
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getNumber);
         } else if (elasticFieldType.equals(FieldType.FLOAT)) {
             return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getFloat, docRef);
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getFloat);
         } else if (elasticFieldType.equals(FieldType.DOUBLE)) {
             return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDouble, docRef);
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDouble);
         } else if (elasticFieldType.equals(FieldType.DATE)) {
             return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDate, docRef);
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getDate);
         } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
             return buildScalarQuery(
-                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getIpV4Address, docRef);
+                    condition, elasticIndexField, fieldName, nestedPaths, value, this::getIpV4Address);
         } else {
-            return buildStringQuery(condition, value, docRef, elasticIndexField, fieldName, nestedPaths);
+            return buildStringQuery(condition, value, elasticIndexField, fieldName, nestedPaths);
         }
     }
 
     private Query buildStringQuery(final Condition condition,
                                    final String expression,
-                                   final DocRef docRef,
                                    final ElasticIndexField indexField,
                                    final String fieldName,
                                    final List<String> nestedPaths) {
@@ -255,9 +256,6 @@ public class SearchExpressionQueryBuilder {
                     inQuery = buildQueryFn.apply(fieldName, expression);
                 }
                 return wrapInNested(nestedPaths, inQuery);
-            }
-            case IN_DICTIONARY -> {
-                return buildDictionaryQuery(condition, fieldName, docRef, indexField, nestedPaths);
             }
             default -> throw new UnsupportedOperationException(
                     "Unsupported condition '" + condition.getDisplayValue() + "' for " + indexField.getDisplayValue() +
@@ -326,8 +324,7 @@ public class SearchExpressionQueryBuilder {
             final String fieldName,
             final List<String> nestedPaths,
             final String rawValue,
-            final TriFunction<Condition, String, String, FieldValue> valueParser,
-            final DocRef docRef
+            final TriFunction<Condition, String, String, FieldValue> valueParser
     ) {
         final FieldValue fieldValue;
         final List<FieldValue> fieldValues;
@@ -403,9 +400,6 @@ public class SearchExpressionQueryBuilder {
                                 .gte(JsonData.of(fieldValues.get(0)))
                                 .lte(JsonData.of(fieldValues.get(1))))
                         )));
-            }
-            case IN_DICTIONARY -> {
-                return buildDictionaryQuery(condition, fieldName, docRef, indexField, nestedPaths);
             }
             default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                                                  indexField.getFldType().getDisplayValue() + " field type");
@@ -615,7 +609,14 @@ public class SearchExpressionQueryBuilder {
     }
 
     /**
-     * Loads the specified Dictionary from the doc store. Each line is combined with AND logic.
+     * Loads the specified Dictionary from the doc store and builds a query matching any of its lines,
+     * i.e. one sub-query per line, combined with OR logic (`should` clauses).
+     * <p>
+     * Each line is treated as a single value rather than being split into terms: numeric, date and
+     * IPv4 fields require the whole line to parse as one value, keyword fields match the whole line
+     * exactly (or as a wildcard pattern if it contains `*` or `?`), and text fields use a
+     * `query_string` query on the line, so multiple words on a line are evaluated using Elasticsearch
+     * query string syntax (whose default operator is OR) rather than being ANDed.
      * <p>
      * When the field is nested, the resulting combined query is wrapped in the appropriate chain of
      * `nested` queries. All lines target the same field (and therefore the same nesting paths), so a
