@@ -22,6 +22,8 @@ import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.ScriptedRunMemory;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.ScriptedRunTools;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiApprovalScope;
@@ -127,7 +129,8 @@ class TestScriptedChatRuns {
                     runManager),
             Mockito.mock(AiAuditLog.class),
             new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
-            new UserActions(userActionLookup));
+            new UserActions(userActionLookup),
+            new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
     private final StringBuilder happened = new StringBuilder();
     private final List<ChatRequest> requests = new ArrayList<>();
     private final Map<String, ToolSpecification> mcpToolsOffered = new LinkedHashMap<>();

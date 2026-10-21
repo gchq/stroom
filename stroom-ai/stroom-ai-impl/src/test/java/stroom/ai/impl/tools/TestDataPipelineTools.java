@@ -430,7 +430,7 @@ class TestDataPipelineTools {
         // A query that never finishes is stopped at the limit.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800),
-                        null, null, null, null, null), null,
+                        null, null, null, null, null, null), null,
                 null, null, null, null, null, null, null);
         Mockito.when(queryService.search(Mockito.any())).thenReturn(response(new QueryKey("q"), false, null));
         Mockito.clearInvocations(agentSearches);
@@ -441,7 +441,7 @@ class TestDataPipelineTools {
         // The longest query an administrator allows.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800), 20, null,
-                        null, null, null),
+                        null, null, null, null),
                         null, null, null, null, null,
                         null, null, null);
         assertThat(run(tool, "{\"query\":\"from x select a, b, c, d\"}"))
