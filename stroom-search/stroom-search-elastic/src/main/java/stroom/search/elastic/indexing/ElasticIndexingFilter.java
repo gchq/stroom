@@ -472,9 +472,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      */
     private void processDocument() {
         try {
-            if (currentDocPropertyCount > 0) {
-                jsonGenerator.flush();
+            // Always flush, even if the document is to be skipped, so that none of its buffered JSON is left
+            // in the generator to be prepended to the next document when the stream is reset
+            jsonGenerator.flush();
 
+            if (currentDocPropertyCount > 0) {
                 bulkOperations.add(BulkOperation.of(b -> b
                         .create(createOp -> {
                             createOp.index(formatIndexName());
