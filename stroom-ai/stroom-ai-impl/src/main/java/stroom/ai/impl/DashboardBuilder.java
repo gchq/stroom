@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.Dimension;
@@ -43,6 +44,7 @@ import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.impl.QueryService;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -150,6 +152,9 @@ public class DashboardBuilder {
                     .name("Query")
                     .settings(EmbeddedQueryComponentSettings.builder()
                             .reference(false)
+                            // The browser needs both to open the dashboard and run the query.
+                            .automate(Automate.builder().build())
+                            .queryTablePreferences(QueryTablePreferences.builder().build())
                             .embeddedQueryDoc(QueryDoc.builder()
                                     .uuid(UUID.randomUUID().toString())
                                     .name(name)

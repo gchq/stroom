@@ -251,4 +251,22 @@ class TestDashboardBuilder {
         assertThat(table.getExtractionPipeline()).isNull();
         assertThat(table.extractValues()).isFalse();
     }
+
+    @Test
+    void testStroomQlEmbeddedQueryHasWhatTheBrowserNeedsToOpenIt() {
+        // The browser's EmbeddedQueryPresenter reads `automate` without a null check when the dashboard is opened
+        // without queryOnOpen (`automate.isOpen()` in updateQueryDoc), and on each search calls
+        // `getQueryTablePreferences().copy()` (the QueryModel's preferences supplier). Unlike QueryPresenter, it
+        // doesn't default either, so both must be set, as the Embedded Query's own Settings dialog always sets them
+        // (BasicEmbeddedQuerySettingsPresenter.writeSettings).
+        final Built built = builder.build("Logons", "from \"My View\" select EventTime, User", "stroomql", true);
+
+        final EmbeddedQueryComponentSettings settings = (EmbeddedQueryComponentSettings) built.config()
+                .getComponents()
+                .getFirst()
+                .getSettings();
+        assertThat(settings.getAutomate()).isNotNull();
+        assertThat(settings.getQueryTablePreferences()).isNotNull();
+        assertThat(settings.getEmbeddedQueryDoc()).isNotNull();
+    }
 }

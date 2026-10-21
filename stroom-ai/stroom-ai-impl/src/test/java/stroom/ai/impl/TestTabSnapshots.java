@@ -216,6 +216,27 @@ class TestTabSnapshots {
     }
 
     @Test
+    void theTabSentWithAMessageThatSteersTheRunIsUsedOverTheQuestions() {
+        // Regression: the user applied a proposed change, then asked for another while the run was still working,
+        // so their message steered the run. The tab sent with it, holding the applied change, is the one a second
+        // change must be proposed against, not the tab as it was when the question was asked.
+        viewable.add(XSLT.getUuid());
+        final TabSnapshots.Stored asked = tabSnapshots.store(CHAT, xslt("<before/>", true, "h1"));
+        final TabSnapshots.Stored steered = tabSnapshots.store(CHAT, xslt("<applied/>", true, "h2"));
+        Mockito.when(aiService.getMessages(CHAT)).thenReturn(List.of(
+                question(asked.snapshotId()),
+                new AiChatMessage(11, CHAT, 0L, AiMessageType.STEER_MESSAGE, null,
+                        "(With a button in the chat) I applied the proposed change", 10, null),
+                new AiChatMessage(12, CHAT, 0L, AiMessageType.STEER_MESSAGE, steered.snapshotId(),
+                        "now also map the user's domain", 10, null)));
+
+        assertThat(tabSnapshots.forLatestQuestion(CHAT))
+                .hasValueSatisfying(snapshot -> assertThat(snapshot.id()).isEqualTo(steered.snapshotId()));
+        assertThat(tabSnapshots.unsavedPart(CHAT, XSLT, AiTabSnapshotPart.DATA))
+                .hasValueSatisfying(part -> assertThat(part.text()).isEqualTo("<applied/>"));
+    }
+
+    @Test
     void aSavedTabHasNoUnsavedParts() {
         viewable.add(XSLT.getUuid());
         final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, xslt("<saved/>", false, "h1"));

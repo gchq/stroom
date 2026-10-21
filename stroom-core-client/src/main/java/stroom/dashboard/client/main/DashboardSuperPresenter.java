@@ -45,7 +45,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.inject.Provider;
 
@@ -120,6 +122,16 @@ public class DashboardSuperPresenter
     /// has changed since the chat proposed a change to it.
     public String aiDashboardHash() {
         return AiTabSnapshotPart.hashText(dashboardPresenter.getDescription());
+    }
+
+    /// @return For each change the AI chat applied here and that hasn't been undone, the hash of the dashboard just
+    /// after it mapped to the hash just before it, so a change proposed before those can still be applied on top of
+    /// them (see [stroom.dashboard.client.event.ApplyDashboardChangeEvent#decide(boolean, String, String, Map)]).
+    public Map<String, String> aiAppliedChangeHashes() {
+        final Map<String, String> hashes = new HashMap<>();
+        dashboardPresenter.getAppliedChangeDescriptions().forEach((after, before) ->
+                hashes.put(AiTabSnapshotPart.hashText(after), AiTabSnapshotPart.hashText(before)));
+        return hashes;
     }
 
     // Each table's search requests, for the AI chat to take snapshots of their rows.

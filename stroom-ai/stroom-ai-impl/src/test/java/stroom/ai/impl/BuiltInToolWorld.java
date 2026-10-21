@@ -221,6 +221,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("xslt_lookups", "{\"uuids\":[\"xslt-uuid\"]}"),
             Map.entry("propose_dashboard_change", "{\"component\":\"table-1\",\"changes\":[{\"op\":\"hide_column\","
                                                   + "\"column\":\"UserId\"}],\"summary\":\"Hide the user.\"}"),
+            Map.entry("propose_documentation_change", json(Map.of("uuid", "dictionary-uuid",
+                    "markdown", "# Test words\n\nThe words to look for.", "summary", "Says what the words are."))),
             Map.entry("config_properties", "{\"mode\":\"get\",\"paths\":[\"stroom.ui.defaultMaxResults\"]}"),
             Map.entry("elastic_index_templates", "{\"uuid\":\"elastic-index-uuid\"}"));
 
