@@ -16,8 +16,9 @@ jobs:
     runs-on: ubuntu-slim
     steps:
 
+        # You must be a COLLABORATOR, MEMBER or OWNER to raise a PR, else it will be closed.
       - name: Close PRs from non-collaborators
-        id: check_author_association
+        id: close_pr
         if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,64 +30,23 @@ jobs:
           gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
           --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."
           
-          echo "::error::PR closed as author is not a collaborator."
+          echo "::error::PR ${PR} was closed as author is not a collaborator, member or owner."
           exit 1
-
-
-      - name: Check if author is a member of the "Stroom Administrators" org level team
-        id: check_team
-        env:
-          GH_TOKEN: ${{ github.token }}
-          AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: |
-          set -euo pipefail
-
-          response_file="$(mktemp)"
-          error_file="$(mktemp)"
-          trap 'rm -f "$response_file" "$error_file"' EXIT
-
-          if gh api --include --silent \
-              "orgs/gchq/teams/stroom-administrators/memberships/${AUTHOR}" \
-              >"${response_file}" 2>"${error_file}"; then
-            api_exit_code=0
-          else
-            api_exit_code=$?
-          fi
-
-          http_status_code="$(
-            awk '$1 ~ /^HTTP\// { status = $2 } END { print status }' \
-              "${response_file}"
-          )"
           
-          echo "api_exit_code: ${api_exit_code}, http_status_code: ${http_status_code}"
 
-          case "${http_status_code}" in
-            2*)
-              # The author is a member of "Stroom Administrators" team, so skip next step
-              echo "skip=true" >> "${GITHUB_OUTPUT}"
-              ;;
-            404)
-              # The author is not a team member, so continue with next step
-              echo "skip=false" >> "${GITHUB_OUTPUT}"
-              ;;
-            *)
-              # Something went wrong
-              echo "::error::Unable to determine team membership."
-              echo "gh exited with status ${api_exit_code}"
-              cat "${error_file}"
-              exit 1
-              ;;
-          esac
-
-
+        # You must be a MEMBER or OWNER to make changes to CI related files.
       - name: Look for changes to CI related files
-        # Don't run if we are a member of "Stroom Administrators" team
-        if: steps.check_team.outputs.skip != 'true'
+        id: check_ci_files
+        if: ${{ !contains(fromJSON('["MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
         run: |
           set -e
+          echo "PR: ${PR}, author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
+          
           # List all the files in the PR.
           # Check both the current and previous filenames to allow for renames.
           # If any file matches a pattern then exit with an error to indicate 
@@ -99,7 +59,7 @@ jobs:
 
             if [ -n "${files}" ]; then
               file_count=$(echo "${files}" | wc -l)
-              echo "Found $file_count file(s) for field ${json_field}"
+              echo "PR contains $file_count file(s) with field '${json_field}'"
 
               if echo "$files" | grep -Eq '^\.github/'; then
                 echo "::error::This PR modifies GH Workflow related files."
