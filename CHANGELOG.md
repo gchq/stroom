@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.1] - 2026-10-21
+
+* Bug **#5835** : Stop logging an ERROR on every run of the Table Builder analytic job for each rule with an empty or broken query. A WARN is now only logged if such a rule is preventing an existing store from being deleted.
+
+* Bug **#5819** : Replace the Lucene 8.11.4 `lucene-analyzers-common` dependency with `lucene-analysis-common:10.3.2` so that it matches the version of Lucene core.
+
+* Build : Split up java CI build to reduce memory use and to make checkstyle fail fast.
+
+* Dependency : Add missing jackson annotation dependencies.
+
+* Bug : Fix pooled byte buffer resource closure.
+
+* Bug **#5597** : Fix `TypeError: Cannot read properties of null` error when an embedded query with a visualisation returns no rows.
+
+
 ## [v7.13.0] - 2026-10-05
 
 * Bug **#5813** : Fix missing entity event handlers.
@@ -2581,7 +2596,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.1...HEAD
+[v7.13.1]: https://github.com/gchq/stroom/compare/v7.13.0...v7.13.1
 [v7.13.0]: https://github.com/gchq/stroom/compare/v7.13-beta.18...v7.13.0
 [v7.13-beta.18]: https://github.com/gchq/stroom/compare/v7.13-beta.17...v7.13-beta.18
 [v7.13-beta.17]: https://github.com/gchq/stroom/compare/v7.13-beta.16...v7.13-beta.17
