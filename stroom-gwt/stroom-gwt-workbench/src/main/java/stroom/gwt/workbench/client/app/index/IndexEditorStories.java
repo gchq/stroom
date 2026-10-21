@@ -46,7 +46,8 @@ import com.google.gwt.user.client.ui.Widget;
 /// the editor ([DocEditors#open]). The fields are `POST /index/v2/findFields` (the plays check the
 /// last request with the request spy), the shards `POST /index/v2/shard/find` and the volume groups
 /// `POST /index/volumeGroup/v2/find`; the Shards tab needs the `MANAGE_INDEX_SHARDS` app
-/// permission, set with the harness's app permissions.
+/// permission, set with the harness's app permissions. The Settings tab's Reset Data is
+/// `POST /index/v2/{uuid}/reset`, which replies with the number of shards marked for deletion.
 public final class IndexEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(LuceneIndexDoc.TYPE, "index-events", "Events Index");
@@ -83,6 +84,9 @@ public final class IndexEditorStories {
               "pageResponse": {"offset": 0, "length": 3, "total": 3, "exact": true}}""";
 
     private static final String FIND_FIELDS = "/index/v2/findFields";
+
+    // IndexResource.reset(): deletes the index's shards, replying with how many were marked
+    private static final String RESET = "/index/v2/index-events/reset";
 
     private static final RestFixtures FIXTURES = DocEditors.permissionRoutes(RestFixtures.builder())
             .get("/index/v2/index-events", RestReply.json(DOC))
@@ -238,7 +242,43 @@ public final class IndexEditorStories {
                     openSettings(play);
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
-                });
+                })
+                // Reset Data, once confirmed, deletes the index's shards and says how many were
+                // marked for deletion
+                .story("ResetData", context -> renderWithReset(context, "2"))
+                .withPlay(play -> resetData(play, "Index reset. 2 shards are marked for deletion."))
+                // Reset Data on an index with no shards says there were none to delete
+                .story("ResetDataNoShards", context -> renderWithReset(context, "0"))
+                .withPlay(play -> resetData(play, "Index reset. It had no shards to delete."));
+    }
+
+    // Presses Reset Data, accepts the confirmation and expects the reset request and an info alert
+    private static void resetData(final Play play, final String message) {
+        final Play screen = play.screen();
+        openSettings(play);
+        play.click(play.getByRole("button", StroomDom.button("Reset Data")));
+        final Play confirm = screen.within(screen.findByText(
+                        TextMatch.startingWith("This will remove all entries from the index."))
+                .closest(StroomDom.DIALOG));
+        play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                RequestMatcher.post(RESET).toSpyMatcher());
+        play.click(confirm.getByRole("button", StroomDom.button("OK")));
+        play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                RequestMatcher.post(RESET).toSpyMatcher()));
+        play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("INFO: " + message));
+        play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+        // Stroom's alert shows the message
+        play.expect(screen.findByText(message)).toBeInTheDocument();
+        DocEditors.expectNoUnhandledRequests(play);
+    }
+
+    // As render, with the reset's reply (the number of shards marked for deletion)
+    private static Widget renderWithReset(final StoryContext context, final String shardCount) {
+        final RestFixtures fixtures = RestFixtures.builder()
+                .post(RESET, RestReply.json(shardCount))
+                .build()
+                .followedBy(FIXTURES);
+        return render(context, false, false, fixtures);
     }
 
     // Opens the Settings tab and waits for its form
@@ -254,8 +294,15 @@ public final class IndexEditorStories {
     }
 
     private static Widget render(final StoryContext context, final boolean manageShards, final boolean readOnly) {
+        return render(context, manageShards, readOnly, FIXTURES);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final boolean manageShards,
+                                 final boolean readOnly,
+                                 final RestFixtures fixtures) {
         final IndexResource resource = GWT.create(IndexResource.class);
-        return DocEditors.render(context, FIXTURES, readOnly,
+        return DocEditors.render(context, fixtures, readOnly,
                 // The app permissions: Manage Index Shards or nothing
                 builder -> {
                     if (manageShards) {

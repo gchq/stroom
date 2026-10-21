@@ -266,6 +266,31 @@ run alone, so a step depends on timing:
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/dashboard/DashboardSearchStories.java`
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/datagrid/DataGridWidgetStories.java`
 
+### The Replace Secret dialog cuts its warning off
+
+**Reproduced** (screenshots of `App/Main/CredentialsScreen` `ReplaceSecret`, October 2026). The
+warning at the top of "Replace … Secret" ("The current secret of 'My Creds' will be discarded and
+cannot be recovered. Everything that uses this credential will use t…") runs on one line past the
+dialog's edge and is cut off, so the end of the warning, which says what happens, can't be read.
+Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help style).
+
+* `stroom-core-client/src/main/resources/stroom/credentials/client/view/ReplaceSecretViewImpl.ui.xml`
+  (the `warning` label)
+
+### A dialog's focus drops to the page when OK disables itself
+
+**Reproduced** (by `Widgets/Dialogs/Modal` `OkDisabledByItsRequest`, October 2026). When OK is
+pressed and its hide request disables OK (`DisablePopupEvent`, e.g. on failed validation) and then
+resets, OK rightly stays disabled, but the focus, which was on OK, is left on the page's body,
+outside the dialog (and its focus trap): `DialogButtonAction.keepFocus` puts it back only on the
+button it was taken from, and only once that is enabled again. A keyboard user is then lost until
+they click. The Cancel path is fine, as Cancel is enabled again. Fix: when the button stays
+disabled, give the focus to the dialog's next control (or its first tab stop). The story doesn't
+check the focus until then.
+
+* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/DialogButtonAction.java`
+  (`keepFocus`), used by `OkCancelContent.onDialogAction` and the other `*Content` classes
+
 ### A trace's operation list can't be scrolled with the keyboard
 
 **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
@@ -1886,6 +1911,13 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   tab but the first went into an overflow menu, which never opened, as `FloorMapDockPresenter` didn't
   pass on the bar's `ShowMenuEvent`. The view adds its class instead, and the presenter passes the
   event on, so all three tabs show (`App/Editors/FloorMapMap` `Groups` checks them).
+* **A selection box that can't be typed in showed the page's colour, not an input's.** Its text box
+  is hidden (`opacity: 0`), and the value drawn over it was transparent, so the box showed what was
+  behind it (darker than a text box in the dark theme), and when disabled it kept its border. The
+  value now draws the field's background, and when disabled the filled field with no border that
+  every disabled control has (`Widgets/Inputs/ViewStates`).
+* **The floor map settings' Value Schema table had no box round it.** Its toolbar and table now sit
+  in a control's box, as other forms' tables do.
 * **A percent bar cell didn't close its bar's `div`.** `PercentBarCell`'s template wrote
   `<div ... />`, which HTML doesn't take as closed, so the cell after it was put inside it. In
   `MyDataGrid`'s tables the browser closed it at the `td`'s end; in the new grid's cells (divs) the

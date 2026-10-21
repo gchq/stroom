@@ -26,10 +26,13 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.popup.client.event.DisablePopupEvent;
+import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DialogAction;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -45,6 +48,8 @@ public final class ModalStories {
     private static final String ON_OK = "onOk";
     private static final String ON_CANCEL = "onCancel";
     private static final String FAIL = "Fail the request";
+    private static final String DISABLE_OK = "Disable OK";
+    private static final String ENABLE_OK = "Enable OK";
 
     private ModalStories() {
         // Static utility
@@ -110,6 +115,64 @@ public final class ModalStories {
                     play.fireEvent().click(play.screen().getByRole("button", StroomDom.button(FAIL)));
                     play.expect(ok).toBeEnabled();
                     play.expect(ok).toHaveFocus();
+                })
+                // The content disables OK (DisablePopupEvent, as a form that isn't valid yet does).
+                // Every hide request disables both buttons and enables them again when it is reset;
+                // the reset must not enable an OK the content disabled (it once did). Here Cancel's
+                // request is vetoed (reset): OK stays disabled, Ctrl+Enter doesn't run it, and the
+                // focus goes back to Cancel rather than to the page's body. EnablePopupEvent then
+                // enables OK.
+                .story("OkDisabledSurvivesReset", context -> {
+                    final StoryPopups popups = StoryPopups.create(context);
+                    final Spy[] spies = spies(context);
+                    return DialogWidgets.button("Open modal", DialogWidgets.PRIMARY, event ->
+                            showOkGated(spies, popups, false));
+                })
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open modal")));
+                    final Query ok = play.screen().getByRole("button", StroomDom.button("OK"));
+                    final Query cancel = play.screen().getByRole("button", StroomDom.button("Cancel"));
+                    play.expect(ok).toBeEnabled();
+                    play.click(play.screen().getByRole("button", StroomDom.button(DISABLE_OK)));
+                    play.expect(ok).toBeDisabled();
+                    // Cancel's hide request is vetoed
+                    play.click(cancel);
+                    play.expect(play.spy(ON_CANCEL)).toHaveBeenCalledTimes(1);
+                    play.expect(cancel).toBeEnabled();
+                    play.expect(ok).toBeDisabled();
+                    // The focus stays in the dialog, on the button that was pressed
+                    play.expect(play.screen().querySelector(StroomDom.DIALOG + " :focus")).not().toBeNull();
+                    play.expect(cancel).toHaveFocus();
+                    play.keyboard("{Control>}{Enter}{/Control}");
+                    play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
+                    play.expect(ok).toBeDisabled();
+                    play.click(play.screen().getByRole("button", StroomDom.button(ENABLE_OK)));
+                    play.expect(ok).toBeEnabled();
+                    play.keyboard("{Control>}{Enter}{/Control}");
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
+                })
+                // OK's own request disables OK (e.g. the server found the form wasn't valid after
+                // all) and is reset: OK stays disabled, so Ctrl+Enter doesn't run it again
+                .story("OkDisabledByItsRequest", context -> {
+                    final StoryPopups popups = StoryPopups.create(context);
+                    final Spy[] spies = spies(context);
+                    return DialogWidgets.button("Open modal", DialogWidgets.PRIMARY, event ->
+                            showOkGated(spies, popups, true));
+                })
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open modal")));
+                    final Query ok = play.screen().getByRole("button", StroomDom.button("OK"));
+                    final Query cancel = play.screen().getByRole("button", StroomDom.button("Cancel"));
+                    play.click(ok);
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
+                    play.expect(ok).toBeDisabled();
+                    play.expect(cancel).toBeEnabled();
+                    // The focus should stay in the dialog, but it is left on the page's body:
+                    // DialogButtonAction.keepFocus only puts it back on the pressed button if that
+                    // button is enabled again, so that isn't checked here (a known bug)
+                    play.keyboard("{Control>}{Enter}{/Control}");
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
+                    play.expect(ok).toBeDisabled();
                 });
     }
 
@@ -142,6 +205,40 @@ public final class ModalStories {
                     } else {
                         onCancel.call();
                         event.hide();
+                    }
+                })
+                .fire();
+    }
+
+    // A dialog whose content disables and enables OK with its own buttons, as a form does while it
+    // isn't valid. Cancel's hide request is always vetoed (reset). If okDisablesOk, OK's request
+    // disables OK and is reset; otherwise OK closes the dialog.
+    private static void showOkGated(final Spy[] spies, final StoryPopups popups, final boolean okDisablesOk) {
+        final Spy onOk = spies[0];
+        final Spy onCancel = spies[1];
+        final FlowPanel content = new FlowPanel();
+        final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), content);
+        content.add(new InlineLabel("OK is allowed only while the form is valid."));
+        content.add(DialogWidgets.button(DISABLE_OK, DialogWidgets.SECONDARY, event ->
+                DisablePopupEvent.builder(presenter).action(DialogAction.OK).fire()));
+        content.add(DialogWidgets.button(ENABLE_OK, DialogWidgets.SECONDARY, event ->
+                EnablePopupEvent.builder(presenter).action(DialogAction.OK).fire()));
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Edit")
+                .modal()
+                .onHideRequest(event -> {
+                    if (event.isOk()) {
+                        onOk.call();
+                        if (okDisablesOk) {
+                            DisablePopupEvent.builder(presenter).action(DialogAction.OK).fire();
+                            event.reset();
+                        } else {
+                            event.hide();
+                        }
+                    } else {
+                        onCancel.call();
+                        event.reset();
                     }
                 })
                 .fire();

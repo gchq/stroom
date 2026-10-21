@@ -37,6 +37,7 @@ import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapInitStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapMapStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
@@ -312,6 +313,8 @@ public final class AppStories {
         FloorMapSettingsStories.addTo(registry);
         // App/Editors/FloorMapForms
         FloorMapFormsStories.addTo(registry);
+        // App/Editors/FloorMapInit
+        FloorMapInitStories.addTo(registry);
         // App/Editors/FloorMapMap
         FloorMapMapStories.addTo(registry);
         // App/Editors/FolderEditor

@@ -84,35 +84,43 @@ public final class FloorMapMapStories {
                       {"values": ["dave@hq", "400, 300", "person"], "depth": 0}]""",
             4));
 
-    // The facts query's result (the columns of the document's default value schema that the map
-    // reads): a meeting room, an area around the place where Alice, Bob and Carol stand, and a desk
-    // beside Dave, each effective since November 2023
-    private static final String FACTS = QueryFixtures.response(true, QueryFixtures.tableResult(
-            "table",
+    // The facts query's columns (those of the document's default value schema that the map reads)
+    private static final String FACT_COLUMNS =
             "[{\"id\": \"c-key\", \"name\": \"Key\"}, {\"id\": \"c-ms\", \"name\": \"Effective Time Ms\"},"
             + " {\"id\": \"c-type\", \"name\": \"type\"}, {\"id\": \"c-name\", \"name\": \"name\"},"
-            + " {\"id\": \"c-coords\", \"name\": \"coords\"}, {\"id\": \"c-geometry\", \"name\": \"geometry\"}]",
-            """
-                    [{"values": ["meeting-room", "1700000000000", "area", "Meeting Room", null,
-                        "[[0, 0], [200, 0], [200, 200], [0, 200]]"], "depth": 0},
-                      {"values": ["desk-1", "1700000000000", "desk", null, "[420, 300]", null], "depth": 0}]""",
-            2));
+            + " {\"id\": \"c-coords\", \"name\": \"coords\"}, {\"id\": \"c-geometry\", \"name\": \"geometry\"},"
+            + " {\"id\": \"c-fill\", \"name\": \"fill\"}]";
 
+    // The meeting room: an area around the place where Alice, Bob and Carol stand
+    private static final String MEETING_ROOM = """
+            {"values": ["meeting-room", "1700000000000", "area", "Meeting Room", null,
+                "[[0, 0], [200, 0], [200, 200], [0, 200]]", FILL], "depth": 0}""";
+
+    // A desk beside Dave
+    private static final String DESK = """
+            {"values": ["desk-1", "1700000000000", "desk", null, "[420, 300]", null, null], "depth": 0}""";
+
+    // The facts query's result: a meeting room and a desk, each effective since November 2023
+    private static final String FACTS = facts(MEETING_ROOM.replace("FILL", "null"), DESK);
+
+    // A desk whose key starts as a transform handle's id does (FloorMapJsonKeys.HANDLE_PREFIX)
+    private static final String HANDLE_KEY_DESK = """
+            {"values": ["__handle_rotate", "1700000000000", "desk", null, "[600, 100]", null, null], "depth": 0}""";
+
+    // The colour the document gives areas
+    private static final String AREA_COLOUR = "#00aa00";
+
+    // The document, with a colour for areas
+    private static final String DOC_WITH_AREA_COLOUR = DOC.replace("\"groups\": [",
+            "\"typeStyles\": [{\"type\": \"area\", \"colour\": \"" + AREA_COLOUR + "\"}],\n  \"groups\": [");
+
+    // An area fill that is markup, not a colour (as a JSON string)
+    private static final String BAD_FILL_JSON = "\"red\\\"/><script>alert(1)</script>\"";
     // The timeline's histogram and extent queries: no events in the range
     private static final String NO_ROWS = QueryFixtures.response(true,
             QueryFixtures.tableResult("table", "[]", "[]", 0));
 
-    private static final RestFixtures FIXTURES = QueryFixtures.resultStoreRoutes(
-                    DocEditors.docSelectionRoutes(DocEditors.permissionRoutes(RestFixtures.builder())))
-            .get("/floormap/v1/floormap-1", RestReply.json(DOC))
-            .put("/floormap/v1/floormap-1", request -> RestReply.json(request.getBody()))
-            .route(QueryFixtures.SEARCH.withJsonBodyContaining(
-                    "{\"searchRequestSource\": {\"componentName\": \"eventsTable\"}}"), RestReply.json(EVENTS))
-            .route(QueryFixtures.SEARCH.withJsonBodyContaining(
-                    "{\"searchRequestSource\": {\"componentName\": \"histogramTable\"}}"), RestReply.json(NO_ROWS))
-            .route(QueryFixtures.SEARCH.withJsonBodyContaining(
-                    "{\"searchRequestSource\": {\"componentName\": \"factsHistoryTable\"}}"), RestReply.json(FACTS))
-            .build();
+    private static final RestFixtures FIXTURES = fixtures(DOC, FACTS);
 
     // Grid-agnostic selectors: a row, and a cell
     private static final String ROW = "tr, [role=\"row\"]";
@@ -195,7 +203,75 @@ public final class FloorMapMapStories {
                     // Dave stands elsewhere, so is not in the cluster
                     play.expect(dialog.queryByText("dave")).toBeNull();
                     DocEditors.expectNoProblems(play);
+                })
+                // Pressing an object on the map selects it in the Tracking panel (showing the facts,
+                // as the desk is one) and tracks it
+                .story("SelectObject", FloorMapMapStories::render)
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Play tracking = play.within(play.querySelector(TRACKING_GRID));
+                    play.expect(tracking.queryByText("desk-1")).toBeNull();
+                    play.waitFor(() -> play.expect(play.querySelector("[id=\"__obj_desk-1\"]")).toBeInTheDocument());
+                    play.click(play.querySelector("[id=\"__obj_desk-1\"]"));
+                    play.waitFor(() -> play.expect(tracking.getAllByText("desk-1").nth(0).closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(tracking.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    DocEditors.expectNoProblems(play);
+                })
+                // An object whose key starts as a transform handle's id does (`__handle_`) is still an
+                // object: pressing it selects it, as any other (it was once taken for a handle and
+                // ignored)
+                .story("SelectObjectWithHandleKey", context -> render(context, fixtures(DOC,
+                        facts(MEETING_ROOM.replace("FILL", "null"), DESK, HANDLE_KEY_DESK))))
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Play tracking = play.within(play.querySelector(TRACKING_GRID));
+                    final String glyph = "[id=\"__obj___handle_rotate\"]";
+                    play.waitFor(() -> play.expect(play.querySelector(glyph)).toBeInTheDocument());
+                    play.click(play.querySelector(glyph));
+                    play.waitFor(() -> play.expect(tracking.getAllByText("__handle_rotate").nth(0).closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(tracking.querySelectorAll("." + StroomDom.SELECTED_ROW)).toHaveLength(1);
+                    DocEditors.expectNoProblems(play);
+                })
+                // An area's fill comes from the data, so one that isn't a hex colour (here markup) is
+                // ignored: the area is drawn in its type's colour, and no markup reaches the map
+                .story("BadAreaFill", context -> render(context, fixtures(DOC_WITH_AREA_COLOUR,
+                        facts(MEETING_ROOM.replace("FILL", BAD_FILL_JSON), DESK))))
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Query area = play.querySelector(
+                            "[id=\"__g___obj_meeting-room\"] polygon[pointer-events=\"none\"]");
+                    play.waitFor(() -> play.expect(area).toBeInTheDocument());
+                    play.expect(area).toHaveAttribute("fill", AREA_COLOUR);
+                    play.expect(play.screen().querySelector("svg script")).toBeNull();
+                    play.expect(play.screen().querySelector("[fill*=\"script\"]")).toBeNull();
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // The facts query's reply with these rows
+    private static String facts(final String... rows) {
+        return QueryFixtures.response(true, QueryFixtures.tableResult(
+                "table",
+                FACT_COLUMNS,
+                "[" + String.join(", ", rows) + "]",
+                rows.length));
+    }
+
+    // The tab's routes, for a document and the facts query's reply
+    private static RestFixtures fixtures(final String doc, final String facts) {
+        return QueryFixtures.resultStoreRoutes(
+                        DocEditors.docSelectionRoutes(DocEditors.permissionRoutes(RestFixtures.builder())))
+                .get("/floormap/v1/floormap-1", RestReply.json(doc))
+                .put("/floormap/v1/floormap-1", request -> RestReply.json(request.getBody()))
+                .route(QueryFixtures.SEARCH.withJsonBodyContaining(
+                        "{\"searchRequestSource\": {\"componentName\": \"eventsTable\"}}"), RestReply.json(EVENTS))
+                .route(QueryFixtures.SEARCH.withJsonBodyContaining(
+                        "{\"searchRequestSource\": {\"componentName\": \"histogramTable\"}}"), RestReply.json(NO_ROWS))
+                .route(QueryFixtures.SEARCH.withJsonBodyContaining(
+                        "{\"searchRequestSource\": {\"componentName\": \"factsHistoryTable\"}}"), RestReply.json(facts))
+                .build();
     }
 
     // Waits for the events query's people to reach the Tracking panel
@@ -213,8 +289,12 @@ public final class FloorMapMapStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
-        return DocEditors.render(context, FIXTURES, false, (harness, injector) -> {
+        return DocEditors.render(context, fixtures, false, (harness, injector) -> {
             final FloorMapMapPresenter presenter = injector.getFloorMapMapPresenter();
             // The tab checks every 10 seconds whether its facts are due a re-read, from when it
             // reads the document until it is closed (which a story never does)
