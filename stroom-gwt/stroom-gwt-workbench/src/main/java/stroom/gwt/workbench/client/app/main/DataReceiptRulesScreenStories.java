@@ -137,7 +137,7 @@ public final class DataReceiptRulesScreenStories {
                             "Whether this rule is enabled or disabled. A disabled rule will be ignored")))
                             .toBeInTheDocument();
                     // ...and no heading's tool tip just repeats its label
-                    final Query headerRow = play.querySelector("thead, .dg-head");
+                    final Query headerRow = play.querySelector("thead, .data-grid__head");
                     play.expect("a heading whose tool tip is its label", () -> headingEchoingItself(headerRow))
                             .toBe(false);
                     // Add a rule -> "Edit Rule" dialog (GWT's caption for an add too) -> name -> OK

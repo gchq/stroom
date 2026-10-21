@@ -174,32 +174,32 @@ Everything is in a single scroll container. Native sticky positioning replaces t
 and body tables.
 
 ```
-div.dg                       role=grid, tabindex, CSS vars: --dg-cols, --dg-row-h
- └ div.dg-scroller           overflow:auto; the only scroller
-    ├ div.dg-head            position:sticky; top:0; z-index
-    │  ├ div.dg-hrow         role=row (header cells, role=columnheader)
-    │  └ div.dg-hrow--extra  optional second header row (dashboard filter inputs)
-    ├ div.dg-spacer          virtual mode only: height = rowCount × rowH
-    └ div.dg-body            natural: normal flow; virtual: translateY(windowStart × rowH)
-       └ div.dg-row          role=row, data-row=<absolute index>, aria-rowindex, aria-selected
-          └ div.dg-cell      role=gridcell, data-col=<index>
- └ div.dg-empty              empty-table message (outside the rows)
- └ div.dg-resize-handle / dg-resize-line / dg-move-ghost / dg-move-line   (overlay layer)
+div.data-grid                       role=grid, tabindex, CSS vars: --data-grid__columns, --data-grid__row-height
+ └ div.data-grid__scroller           overflow:auto; the only scroller
+    ├ div.data-grid__head            position:sticky; top:0; z-index
+    │  ├ div.data-grid__header-row         role=row (header cells, role=columnheader)
+    │  └ div.data-grid__header-row--extra  optional second header row (dashboard filter inputs)
+    ├ div.data-grid__spacer          virtual mode only: height = rowCount × rowH
+    └ div.data-grid__body            natural: normal flow; virtual: translateY(windowStart × rowH)
+       └ div.data-grid__row          role=row, data-row=<absolute index>, aria-rowindex, aria-selected
+          └ div.data-grid__cell      role=gridcell, data-col=<index>
+ └ div.data-grid__empty              empty-table message (outside the rows)
+ └ div.data-grid__resize-handle / data-grid__resize-line / data-grid__move-ghost / data-grid__move-line   (overlay layer)
 ```
 
-* **Column template.** `--dg-cols` holds the template, e.g. `"22px 200px 340.5px"`.
-  * Header rows and body rows both use `display: grid; grid-template-columns: var(--dg-cols)`.
+* **Column template.** `--data-grid__columns` holds the template, e.g. `"22px 200px 340.5px"`.
+  * Header rows and body rows both use `display: grid; grid-template-columns: var(--data-grid__columns)`.
   * Resizing a column means writing one CSS custom property. No rows are re-rendered.
   * A column span is `grid-column: span N` (R-R9).
 * **Horizontal scroll.** Header and body are in the same scroller, so they always scroll together.
   No synchronisation code is needed.
 * **Scrollbars: overlay thumbs (decided, §10).** The thumbs float over the grid area as they do
   today, but are built more simply than GWT's `CustomScrollPanel`.
-  * `div.dg-scroller` stays a real native scroller (`overflow: auto`). Its own scrollbar is hidden
+  * `div.data-grid__scroller` stays a real native scroller (`overflow: auto`). Its own scrollbar is hidden
     with `scrollbar-width: none` and `::-webkit-scrollbar { display: none }`.
     * GWT's trick of making the scroller oversized and clipping it is not needed.
     * Wheel, trackpad, touch, keyboard and `scrollIntoView` scrolling all stay native.
-  * Two overlay tracks with thumbs (`div.dg-vbar`, `div.dg-hbar`) sit in an overlay layer above
+  * Two overlay tracks with thumbs (`div.data-grid__vbar`, `div.data-grid__hbar`) sit in an overlay layer above
     the scroller.
     * The vertical track starts below the sticky header.
     * Thumbs are positioned with `transform`, read once per `requestAnimationFrame` from `scroll` and
@@ -215,7 +215,7 @@ div.dg                       role=grid, tabindex, CSS vars: --dg-cols, --dg-row-
     even though only a few rows are rendered.
 * **Row height.**
   * Natural mode: rows are content-sized.
-  * Virtual mode: rows are fixed at `--dg-row-h` with `overflow: hidden`.
+  * Virtual mode: rows are fixed at `--data-grid__row-height` with `overflow: hidden`.
   * The default row height is **derived from the current density at runtime** (measured once from a
     probe row), not hard-coded. The density settings `--row__padding--vertical` and
     `.stroom-density-compact` change it.
@@ -240,7 +240,7 @@ The renderer is a small, explicit reconciler rather than a general diff:
 
    Rows that left the window are removed, or **recycled into a pool** in virtual mode.
 3. **Updates that only change state.** Selection, keyboard row, hover and focus never re-render
-   cells. They toggle a class on the row element (`dg-row--selected`, `dg-row--kbd`). The forked
+   cells. They toggle a class on the row element (`data-grid__row--selected`, `data-grid__row--kbd`). The forked
    `HasSelection.hasSelectionChanged` hack (`HasDataPresenter.java:898-913`) is no longer needed.
 4. **Batching.** Changes are coalesced into one `Scheduler.scheduleFinally` pass. This matches what
    `HasDataPresenter` does now: `flush()` forces the pass and is called from 67 places, so it must
@@ -299,7 +299,7 @@ mostly changing a type:
 * **Column objects.** Takes GWT `Column<R,C>` and `Header<H>` objects.
   * Existing `Cell<C>` implementations render through `Cell.render(Context, value, SafeHtmlBuilder)`
     and receive events through `Cell.onBrowserEvent(Context, parent, value, event, updater)`.
-  * `parent` is the `dg-cell` element.
+  * `parent` is the `data-grid__cell` element.
   * `ColumnBuilder`, `HeadingBuilder` and `DataGridUtil` keep working.
 * **`MyDataGrid` method set.** All the `MyDataGrid` methods listed in §5.12. The plan is to extract an
   interface `DataGridView<R>` that **both** widgets implement, so presenters can be switched by
@@ -348,7 +348,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | ID | Requirement | Source |
 | --- | --- | --- |
 | R-CR1 | Moving the pointer over a header shows a 10px resize handle on the right edge of the column under it. If the pointer is within 10px of the left edge and nearer the left than the right, and the previous column is resizable, the handle is on the previous column's right edge instead. If the hovered column is not resizable, the handle goes to the previous column if that one is resizable. | G `ResizeHandle.update :64-110` |
-| R-CR2 | Dragging the handle shows a 2px vertical guide line the full height of the grid. Columns **reflow live** while dragging (decided, §10; GWT applies the width on release). Each move is one `--dg-cols` write per animation frame. `HeadingListener.resizeColumn` is still called **once, on release**, so persisted settings are not written on every frame. Minimum width is the column's own minimum (R-CR7). | G `ResizeHandle` / changed |
+| R-CR2 | Dragging the handle shows a 2px vertical guide line the full height of the grid. Columns **reflow live** while dragging (decided, §10; GWT applies the width on release). Each move is one `--data-grid__columns` write per animation frame. `HeadingListener.resizeColumn` is still called **once, on release**, so persisted settings are not written on every frame. Minimum width is the column's own minimum (R-CR7). | G `ResizeHandle` / changed |
 | R-CR3 | New width = **rendered** width + drag distance, written back as the declared width. Rendered and declared widths are the same, because nothing is scaled (R-L4). | G |
 | R-CR4 | Double-clicking the handle sizes the column to fit its content: the largest of the header text and every rendered cell's text, whitespace collapsed, measured in an off-screen element with the grid's font (`dataGridCell-text-measurement`), plus padding. Never below 30. In virtual mode, measure rendered rows **plus** a sample taken from the data (§8, D5). | G `:699-716, getMinHeaderWidth :800-825` |
 | R-CR5 | `setAllowResize(boolean)` (grid-wide) and `ColSettings.resizable` (per column). | G |
@@ -390,14 +390,14 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 
 | ID | Requirement | Source |
 | --- | --- | --- |
-| R-R1 | Row classes: `dataGridEvenRow` / `dataGridOddRow`, `dataGridSelectedRow`, `dataGridKeyboardSelectedRow`, plus `RowStyles.getStyleNames(row, index)`. Cell classes: `dataGridCell`, `dataGridFirstColumn` / `dataGridLastColumn`, `dataGridKeyboardSelectedCell`, plus `Column.getCellStyleNames`. **Keep the legacy class names, at least alongside new `dg-*` ones**, so `app.css`, `dashboard.css`, conditional-formatting CSS and the regression suite keep working. | G fork `:2144-2200` |
+| R-R1 | Row classes: `dataGridEvenRow` / `dataGridOddRow`, `dataGridSelectedRow`, `dataGridKeyboardSelectedRow`, plus `RowStyles.getStyleNames(row, index)`. Cell classes: `dataGridCell`, `dataGridFirstColumn` / `dataGridLastColumn`, `dataGridKeyboardSelectedCell`, plus `Column.getCellStyleNames`. **Keep the legacy class names, at least alongside new `data-grid__*` ones**, so `app.css`, `dashboard.css`, conditional-formatting CSS and the regression suite keep working. | G fork `:2144-2200` |
 | R-R2 | `setRowStyles(RowStyles<R>)`. Classes can be generated at runtime (`ConditionalFormattingDynamicStyles`). | G |
 | R-R3 | Hover highlight in CSS (`--row__background-color--hovered`). The GWT check for "a floating element is over the row" (`:2021-2050`) is not needed with CSS `:hover`. | G |
 | R-R4 | By default cells do not wrap: `nowrap`, ellipsis, `user-select: text`. | G CSS |
 | R-R5 | `setMultiLine(boolean)` at runtime: adds or removes `multiline`; cells top-aligned and wrapping (header too). Turning it on in a virtual grid suspends virtualisation (§4.4). | G `:174` |
 | R-R6 | Per-cell inline style from a `Cell`'s HTML (dashboard wrap, colours, bold for grouped columns) is shown exactly as rendered. A cell that sets `white-space: normal` counts as wrapping for R-R5's virtual-suspend rule (declared on the column with `setWraps(boolean)`, not detected from the HTML; §4.4). | G `TablePresenter :862-875` |
 | R-R7 | `dataGridDisabledCell` (`enabledWhen`) styling, including on selected rows. | G |
-| R-R8 | `redraw()`, `redrawRow(index)`, `getRowElement(index)` (returns the `dg-row` element, or null if not rendered), `getVisibleItem(s)`, `getVisibleItemCount`. | G |
+| R-R8 | `redraw()`, `redrawRow(index)`, `getRowElement(index)` (returns the `data-grid__row` element, or null if not rendered), `getVisibleItem(s)`, `getVisibleItemCount`. | G |
 | R-R9 | **Column span per row** (`MarkerListPresenter` Summary rows span five columns). Provided by a `RowSpans` callback that returns a column → span map. | G fork / R |
 | R-R10 | Expander and tree cells (`ExpanderCell`: indent 20px per level, DOT / ARROW icons) work unchanged. An expander column width of `maxDepth×20+25`, or 0, is set by `TreeRowHandler` or the presenter, and the grid applies it immediately (R-L5). | G |
 
@@ -736,7 +736,7 @@ interactive header cells, the context menu, copy, export and AI.
   * Found: the new grid's sticky header is opaque (rows scroll under it) in the page's colour, but
     a list in a control's box (`.stroom-control`, e.g. a dictionary's imports), a dialog or a popup
     sits on that one's colour, where `MyDataGrid`'s transparent header showed it. Each of those now
-    sets `--dg-head__background-color`, which the header uses; the nearest round the grid wins. (A
+    sets `--data-grid__head-background-color`, which the header uses; the nearest round the grid wins. (A
     dialog's or popup's colour is painted by a layer behind its content, so can't be inherited.)
   * Two plays found header cells only as `th`.
   * Differences kept: a play's click on a row left it scrolled to a different place (the Solr field
@@ -781,6 +781,35 @@ interactive header cells, the context menu, copy, export and AI.
 * **Recorded again** on this branch (2026-10-21), with the dashboard and query tables on the new
   grid: 333 stories with grids. A second run matched it exactly. The first attempt didn't: the
   virtual tables' row height went stale on a density change (fixed above, `$entry`).
+* **After merging master's overlays work** (2026-10-21), the grid follows what its menus, dialogs
+  and popups set out:
+  * **BEM.** The grid's classes are one block, `data-grid` (`__scroller`, `__head`,
+    `__header-row`, `__header-cell`, `__content`, `__body`, `__row`, `__cell`, `__empty`,
+    `__track`, `__thumb`, `__resize-handle` and so on; modifiers such as `--virtual`), its custom
+    properties `--data-grid__columns`, `--data-grid__total-width`, `--data-grid__row-height`;
+    both stylesheets list the parts. They were `dg`, `dg-row`, `dg-hcell`. The old grid's classes
+    (`dataGridWidget`, `dataGridEvenRow`, `multiline`, `allow-header-selection` and so on) stay
+    until phase 4, and the `data-row`, `data-col`, `data-hcol` and `data-dg-no-select` attributes
+    are unchanged.
+  * **Forced colours.** A selected row is the system's Highlight and HighlightText, keyboard focus
+    an inset outline (the box-shadow ring isn't drawn in forced colours), a dimmed cell GrayText,
+    as the menu's items and the calendar's days. Before, neither the selection nor the focus
+    showed. Real input check on `Widgets/Data Grid/DataGridKeyboard/SingleSelection`.
+  * **`InputModality`.** Whether the focus the grid puts back after a redraw shows as keyboard
+    focus follows the page's last input (`InputModality`, as the menu's ring does), not only the
+    grid's own key presses.
+  * The header's colour in a dialog or popup keys off master's `dialog` and `popup` blocks
+    (`dialog-container` and `simplePopup-container` are gone).
+* **The second paged batch and the user picker** (2026-10-21), after the merge. Found:
+  * `InfoColumn` found its cell by walking up to a `td`, so in the new grid it went on to `<html>`:
+    the popup was placed against the page, and the page was its auto-hide partner, so a press on
+    another row's Info icon only closed the open one. It stops at a `td` or a `[data-col]` cell.
+  * `PercentBarCell`'s bar `div` wasn't closed (see `ISSUES.md`, Fixed).
+  * The user picker's keys play waited for the filter's first result, not its last, so Down went to
+    a row of a list still being filtered (`MyDataGrid`, drawing later, hid it).
+  * The picker uses `DataGridWidgetSelectionEventManager`'s `setMoveUpFromFirst` and
+    `setTypedHandler` (new, as the old manager's) and `DataGridWidget.isInRows`; the selection
+    following the focus it had asked for is every single-choice grid's.
 
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that

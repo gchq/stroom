@@ -15,19 +15,45 @@
  */
 
 /*
- * Layout for stroom.widget.datagrid.client.DataGridWidget.
- *
- * Colours, padding, fonts and row states come from the shared dataGrid* classes in DataGrid.css,
- * which the widget also emits. This file only adds the CSS grid layout, the sticky header, virtual
- * mode and the overlay scrollbars.
- *
- * The widget sets these variables on its root element:
- *   --dg-cols   the grid-template-columns value, e.g. "22px 200px 340px"
- *   --dg-total  the sum of the column widths, i.e. the table width
- *   --dg-row-h  the fixed row height in virtual mode
- */
+   The layout of the data grid (stroom.widget.datagrid.client.DataGridWidget): the CSS grid of its
+   columns, the sticky header, virtual mode, the overlay scrollbars and column resizing and moving.
+   Its states (mouse over, selected, focus) are data-grid.css's. Named BEM style (block,
+   block__element, block--modifier).
 
-.dg {
+   data-grid                       the grid
+     data-grid__scroller           the scrolling box (role grid)
+       data-grid__head             the sticky header
+         data-grid__header-row     (role row)
+           data-grid__header-cell  a column's header (role columnheader)
+       data-grid__content          as tall as all the rows, in virtual mode
+         data-grid__body           the rows drawn (role rowgroup)
+           data-grid__row          a row (role row); --probe: one drawn to measure a row's height
+             data-grid__cell       a cell (role gridcell); --align-right, --align-center,
+                                   --valign-top, --valign-middle, --valign-bottom
+       data-grid__empty            what shows with no rows; --text: setEmptyText's
+     data-grid__track              an overlay scrollbar's track (--vertical, --horizontal)
+       data-grid__thumb            its thumb (--active while dragged)
+     data-grid__resize-handle, data-grid__resize-line, data-grid__move-line, data-grid__move-ghost
+                                   column resizing and moving (ColumnInteractions)
+     data-grid__measure            a hidden box text is measured in (auto-fit)
+
+   Modifiers of the grid, none with an ARIA attribute: --virtual (only the rows in view are drawn),
+   --contain (a long page in natural mode), --selectable (it has a selection model), --no-header,
+   --dragging, --resizing, --scroll-timeline (the thumbs follow scroll-driven animations).
+
+   The grid also carries the old grid's classes (dataGridWidget, dataGridEvenRow, dataGridCell and
+   so on), so the rules other stylesheets give them (colours, padding, cells' own looks) reach it,
+   and MyDataGrid's multiline and allow-header-selection. They go once MyDataGrid does (the design's
+   phase 4).
+
+   The widget sets these custom properties on the grid:
+     --data-grid__columns          the grid-template-columns value, e.g. "22px 200px 340px"
+     --data-grid__total-width      the sum of the column widths, i.e. the table's width
+     --data-grid__row-height       a row's height in virtual mode (measured)
+     --data-grid__v-travel, --data-grid__h-travel   how far the thumbs move
+*/
+
+.data-grid {
     position: relative;
     width: 100%;
     height: 100%;
@@ -36,7 +62,7 @@
 }
 
 /* The only scroller. Its own scrollbars are hidden; overlay thumbs are drawn instead. */
-.dg-scroller {
+.data-grid__scroller {
     position: absolute;
     top: 0;
     right: 0;
@@ -46,113 +72,114 @@
     scrollbar-width: none;
 }
 
-.dg-scroller::-webkit-scrollbar {
+.data-grid__scroller::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
 }
 
 /* The header sticks to the top while scrolling vertically and moves with the rows horizontally. */
-.dg-head {
+.data-grid__head {
     position: sticky;
     top: 0;
     z-index: 2;
-    width: var(--dg-total, 100%);
+    width: var(--data-grid__total-width, 100%);
     min-height: 5px;
     /* Opaque, as the rows scroll under it: the colour of what the grid sits in (MyDataGrid's
        header, which no row passes under, is transparent) */
-    background-color: var(--dg-head__background-color, var(--page__background-color));
+    background-color: var(--data-grid__head-background-color, var(--page__background-color));
 }
 
-/* What a grid sits on, when it isn't the page: a dialog's or popup's colour is painted by a layer
-   behind its content, so can't be inherited. The nearest of these round the grid sets it. */
-.dialog-container {
-    --dg-head__background-color: var(--dialog__background-color);
+/* What a grid sits on, when it isn't the page: a dialog's colour is painted by a layer behind its
+   content (dialog__frame), and the elements between a popup and the grid are transparent, so
+   neither can be inherited. The nearest of these round the grid sets it. */
+.dialog {
+    --data-grid__head-background-color: var(--dialog__background-color);
 }
 
-.simplePopup-container {
-    --dg-head__background-color: var(--popup__background-color);
+.popup {
+    --data-grid__head-background-color: var(--popup__background-color);
 }
 
 /* A grid in a control's box, e.g. a list in a form, sits on the box's colour */
 .stroom-control {
-    --dg-head__background-color: var(--control__background-color);
+    --data-grid__head-background-color: var(--control__background-color);
 }
 
 .stroom-control:disabled,
 .stroom-control.disabled {
-    --dg-head__background-color: var(--control__background-color--disabled);
+    --data-grid__head-background-color: var(--control__background-color--disabled);
 }
 
-.dg-hrow,
-.dg-row {
+.data-grid__header-row,
+.data-grid__row {
     display: grid;
-    grid-template-columns: var(--dg-cols);
-    width: var(--dg-total, 100%);
+    grid-template-columns: var(--data-grid__columns);
+    width: var(--data-grid__total-width, 100%);
 }
 
 /* Centre header content vertically, as GWT's table header cells do. align-content keeps block
    layout, so long header text still gets an ellipsis. */
-.dg-hcell {
+.data-grid__header-cell {
     min-width: 0;
     align-content: center;
 }
 
-.dg:not(.allow-header-selection) .dg-hcell {
+.data-grid:not(.allow-header-selection) .data-grid__header-cell {
     user-select: none;
 }
 
-.dg-content {
+.data-grid__content {
     position: relative;
-    width: var(--dg-total, 100%);
+    width: var(--data-grid__total-width, 100%);
 }
 
-.dg-row {
+.data-grid__row {
     outline: none;
     cursor: default;
 }
 
 /* Cells: vertically centred unless multi-line or explicitly aligned. */
-.dg-cell {
+.data-grid__cell {
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-width: 0;
 }
 
-.dg-cell > div {
+.data-grid__cell > div {
     min-width: 0;
 }
 
-.multiline .dg-cell,
-.dg-cell.dg-valign-top {
+.multiline .data-grid__cell,
+.data-grid__cell.data-grid__cell--valign-top {
     justify-content: flex-start;
 }
 
-.dg-cell.dg-valign-middle {
+.data-grid__cell.data-grid__cell--valign-middle {
     justify-content: center;
 }
 
-.dg-cell.dg-valign-bottom {
+.data-grid__cell.data-grid__cell--valign-bottom {
     justify-content: flex-end;
 }
 
-.dg-cell.dg-align-right {
+.data-grid__cell.data-grid__cell--align-right {
     text-align: right;
 }
 
-.dg-cell.dg-align-center {
+.data-grid__cell.data-grid__cell--align-center {
     text-align: center;
 }
 
-.dg--selectable .dg-row {
+.data-grid--selectable .data-grid__row {
     cursor: pointer;
 }
 
 /*
  * Natural mode renders every row on the page, but the browser need only lay out and paint the rows
- * in view. On a long page (the grid adds dg--contain) content-visibility skips the others; until a
- * row has been laid out once it is assumed to be one line high (--dg-row-h, measured), after which
+ * in view. On a long page (the grid adds data-grid--contain) content-visibility skips the others; until a
+ * row has been laid out once it is assumed to be one line high (--data-grid__row-height, measured), after which
  * its real height is remembered (the 'auto'), so the scroll height settles to the true one. Their
  * focus shadow is inset, so the paint containment this implies doesn't clip it.
  *
@@ -160,40 +187,40 @@
  * paint containment draws each row from its own pixel-snapped origin, which can move text by a
  * pixel.
  */
-.dg--contain:not(.dg--virtual) .dg-row {
+.data-grid--contain:not(.data-grid--virtual) .data-grid__row {
     content-visibility: auto;
-    contain-intrinsic-block-size: auto var(--dg-row-h, 23px);
+    contain-intrinsic-block-size: auto var(--data-grid__row-height, 23px);
 }
 
 /* Virtual mode: every row is the same fixed height. */
-.dg--virtual .dg-body {
+.data-grid--virtual .data-grid__body {
     position: absolute;
     top: 0;
     left: 0;
     will-change: transform;
 }
 
-.dg--virtual .dg-row {
-    height: var(--dg-row-h, 24px);
+.data-grid--virtual .data-grid__row {
+    height: var(--data-grid__row-height, 24px);
     overflow: hidden;
 }
 
 /* The probe row measures a natural one-line row, so the fixed height above must not apply to it. */
-.dg .dg-row.dg-row--probe {
+.data-grid .data-grid__row.data-grid__row--probe {
     position: absolute;
     visibility: hidden;
     height: auto;
-    /* Nor the long-page placeholder height (dg--contain), which would be measured instead */
+    /* Nor the long-page placeholder height (data-grid--contain), which would be measured instead */
     content-visibility: visible;
 }
 
-.dg-empty {
+.data-grid__empty {
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     color: var(--text-color--disabled);
 }
 
 /* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */
-.dg-empty--text {
+.data-grid__empty--text {
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
     color: inherit;
 }
@@ -202,27 +229,26 @@
  * Overlay scrollbars. The tracks float over the grid; the visible part of the thumb is inset by a
  * transparent border, matching the application's webkit scrollbar style.
  */
-.dg-vtrack,
-.dg-htrack {
+.data-grid__track {
     position: absolute;
     z-index: 3;
     touch-action: none;
 }
 
-.dg-vtrack {
+.data-grid__track--vertical {
     right: 0;
     bottom: 0;
     width: 12px;
 }
 
-.dg-htrack {
+.data-grid__track--horizontal {
     left: 0;
     right: 0;
     bottom: 0;
     height: 12px;
 }
 
-.dg-thumb {
+.data-grid__thumb {
     position: absolute;
     top: 0;
     left: 0;
@@ -234,62 +260,62 @@
     transition: background-color .5s;
 }
 
-.dg-vtrack .dg-thumb {
+.data-grid__track--vertical .data-grid__thumb {
     width: 12px;
 }
 
-.dg-htrack .dg-thumb {
+.data-grid__track--horizontal .data-grid__thumb {
     height: 12px;
 }
 
 /*
- * Where the browser supports scroll-driven animations (the grid adds dg--scroll-timeline), the
+ * Where the browser supports scroll-driven animations (the grid adds data-grid--scroll-timeline), the
  * thumbs follow the scroller with no script. The scroller names its two scroll timelines, and the
  * root lets the thumbs, which are outside the scroller, see them. The grid sets how far each thumb
  * can travel.
  */
-.dg--scroll-timeline {
-    timeline-scope: --dg-v, --dg-h;
+.data-grid--scroll-timeline {
+    timeline-scope: --data-grid-v-scroll, --data-grid-h-scroll;
 }
 
-.dg--scroll-timeline .dg-scroller {
-    scroll-timeline-name: --dg-v, --dg-h;
+.data-grid--scroll-timeline .data-grid__scroller {
+    scroll-timeline-name: --data-grid-v-scroll, --data-grid-h-scroll;
     scroll-timeline-axis: block, inline;
 }
 
-.dg--scroll-timeline .dg-vtrack .dg-thumb {
-    animation: dg-thumb-v linear both;
-    animation-timeline: --dg-v;
+.data-grid--scroll-timeline .data-grid__track--vertical .data-grid__thumb {
+    animation: data-grid-thumb-v linear both;
+    animation-timeline: --data-grid-v-scroll;
 }
 
-.dg--scroll-timeline .dg-htrack .dg-thumb {
-    animation: dg-thumb-h linear both;
-    animation-timeline: --dg-h;
+.data-grid--scroll-timeline .data-grid__track--horizontal .data-grid__thumb {
+    animation: data-grid-thumb-h linear both;
+    animation-timeline: --data-grid-h-scroll;
 }
 
-@keyframes dg-thumb-v {
+@keyframes data-grid-thumb-v {
     from {
         transform: translateY(0);
     }
     to {
-        transform: translateY(var(--dg-v-travel, 0px));
+        transform: translateY(var(--data-grid__v-travel, 0px));
     }
 }
 
-@keyframes dg-thumb-h {
+@keyframes data-grid-thumb-h {
     from {
         transform: translateX(0);
     }
     to {
-        transform: translateX(var(--dg-h-travel, 0px));
+        transform: translateX(var(--data-grid__h-travel, 0px));
     }
 }
 
-.dg-thumb:hover {
+.data-grid__thumb:hover {
     background-color: var(--scrollbar-thumb__background-color--hover);
 }
 
-.dg-thumb.dg-thumb--active {
+.data-grid__thumb.data-grid__thumb--active {
     background-color: var(--scrollbar-thumb__background-color--active);
 }
 
@@ -299,7 +325,7 @@
  * move ghost float over the whole grid. Colours as MyDataGrid's resizeHandle, resizeLine,
  * moveHandle and moveLine.
  */
-.dg-resize-handle {
+.data-grid__resize-handle {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -311,8 +337,8 @@
     touch-action: none;
 }
 
-.dg-resize-line,
-.dg-move-line {
+.data-grid__resize-line,
+.data-grid__move-line {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -322,7 +348,7 @@
     pointer-events: none;
 }
 
-.dg-move-ghost {
+.data-grid__move-ghost {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -333,18 +359,18 @@
 }
 
 /* While a column is dragged, nothing in the grid is selected and the cursor stays put. */
-.dg--dragging,
-.dg--dragging * {
+.data-grid--dragging,
+.data-grid--dragging * {
     user-select: none;
 }
 
-.dg--resizing,
-.dg--resizing * {
+.data-grid--resizing,
+.data-grid--resizing * {
     cursor: col-resize !important;
 }
 
 /* Hidden copies of a column's header and cells, rendered unwrapped to size the column to fit. */
-.dg-measure {
+.data-grid__measure {
     position: absolute;
     top: 0;
     left: 0;
@@ -352,7 +378,7 @@
     pointer-events: none;
 }
 
-.dg-measure > * {
+.data-grid__measure > * {
     width: max-content;
     white-space: nowrap;
 }

@@ -36,6 +36,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /// The `App/Editors/FloorMapMap` stories, showing Stroom's real [FloorMapMapPresenter] (a Floor
 /// Map's read-only 'Map' tab: the map canvas, its timeline and its dock of Tracking, Layers and
 /// Groups panels) with fake REST replies, for its three lists: the Tracking panel's entities
@@ -160,10 +162,12 @@ public final class FloorMapMapStories {
                 .story("Groups", FloorMapMapStories::render)
                 .withPlay(play -> {
                     eventsShown(play);
-                    // The dock's tab bar loses its link tab bar classes (FloorMapDockViewImpl.ui.xml
-                    // sets its styleName), so it puts every tab but the first in its overflow menu,
-                    // which never opens (FloorMapDockPresenter doesn't pass on the tab bar's
-                    // ShowMenuEvent). So the play clicks the hidden Groups tab itself
+                    // The dock's tabs all fit, so all are shown (its tab bar once lost its own classes,
+                    // drew its overflow button huge and put every tab but the first in an overflow
+                    // menu that never opened)
+                    for (final String tab : List.of("Tracking", "Layers", "Groups")) {
+                        play.expect(play.getByText(tab, TAB_LABEL)).toBeVisible();
+                    }
                     play.click(play.getByText("Groups", TAB_LABEL));
                     final Query engineers = play.findByText("Engineers").closest(ROW);
                     play.waitFor(() -> play.expect(engineers).toHaveTextContent("2 of 2"));

@@ -308,7 +308,7 @@
 }
 
 .TablePresenter th span,
-.TablePresenter .dg-hcell span {
+.TablePresenter .data-grid__header-cell span {
     display: flex;
 }
 

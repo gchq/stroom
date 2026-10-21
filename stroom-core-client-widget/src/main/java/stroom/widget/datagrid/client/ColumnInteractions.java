@@ -55,9 +55,9 @@ final class ColumnInteractions {
     private static final int HALF_LINE_WIDTH = 1;
     private static final int MOVE_THRESHOLD = 10;
     private static final String DATA_HCOL = "data-hcol";
-    private static final String DRAGGING_CLASS_NAME = "dg--dragging";
-    private static final String RESIZING_CLASS_NAME = "dg--resizing";
-    private static final String MEASURE_CLASS_NAME = "dg-measure";
+    private static final String DRAGGING_CLASS_NAME = "data-grid--dragging";
+    private static final String RESIZING_CLASS_NAME = "data-grid--resizing";
+    private static final String MEASURE_CLASS_NAME = "data-grid__measure";
 
     private final DataGridWidget<?> grid;
     private final Element root;
@@ -104,10 +104,10 @@ final class ColumnInteractions {
         this.head = head;
 
         final Document doc = Document.get();
-        handle = div(doc, "dg-resize-handle");
-        resizeLine = div(doc, "dg-resize-line");
-        moveGhost = div(doc, "dg-move-ghost");
-        moveLine = div(doc, "dg-move-line");
+        handle = div(doc, "data-grid__resize-handle");
+        resizeLine = div(doc, "data-grid__resize-line");
+        moveGhost = div(doc, "data-grid__move-ghost");
+        moveLine = div(doc, "data-grid__move-line");
         head.appendChild(handle);
         root.appendChild(resizeLine);
         root.appendChild(moveGhost);

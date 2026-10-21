@@ -91,6 +91,10 @@ public final class UserRefSelectionBoxStories {
                     play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).toHaveValue("carol"));
                     play.expect(screen.getByRole("searchbox", filter)).toHaveFocus();
                     play.waitFor(() -> play.expect(screen.queryByText("Bob Brown")).toBeNull());
+                    // The list filtered by the whole text: Alice (shown for 'c' and 'ca') has gone too.
+                    // Down too soon would go to a row of a list still being filtered
+                    final Play dialog = screen.within(screen.getByRole("dialog"));
+                    play.waitFor(() -> play.expect(dialog.queryByText("Alice Anderson")).toBeNull());
                     // Down goes to the first row (the chosen user isn't shown), which Enter chooses
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).not().toHaveFocus());

@@ -41,8 +41,8 @@ import java.util.function.IntSupplier;
 final class OverlayScrollbars {
 
     private static final int MIN_THUMB_LENGTH = 28;
-    private static final String ACTIVE_CLASS_NAME = "dg-thumb--active";
-    private static final String SCROLL_TIMELINE_CLASS_NAME = "dg--scroll-timeline";
+    private static final String ACTIVE_CLASS_NAME = "data-grid__thumb--active";
+    private static final String SCROLL_TIMELINE_CLASS_NAME = "data-grid--scroll-timeline";
     private static final boolean SCROLL_TIMELINE = supportsScrollTimeline();
 
     private final Element root;
@@ -72,11 +72,11 @@ final class OverlayScrollbars {
         this.headerHeight = headerHeight;
 
         final Document doc = Document.get();
-        vTrack = div(doc, "dg-vtrack");
-        vThumb = div(doc, "dg-thumb");
+        vTrack = div(doc, "data-grid__track data-grid__track--vertical");
+        vThumb = div(doc, "data-grid__thumb");
         vTrack.appendChild(vThumb);
-        hTrack = div(doc, "dg-htrack");
-        hThumb = div(doc, "dg-thumb");
+        hTrack = div(doc, "data-grid__track data-grid__track--horizontal");
+        hThumb = div(doc, "data-grid__thumb");
         hTrack.appendChild(hThumb);
         root.appendChild(vTrack);
         root.appendChild(hTrack);
@@ -140,8 +140,8 @@ final class OverlayScrollbars {
 
         if (SCROLL_TIMELINE) {
             // The scroll-driven animations move the thumbs from 0 to their travel.
-            DataGridDom.setCssVariable(root, "--dg-v-travel", v.getTravel() + "px");
-            DataGridDom.setCssVariable(root, "--dg-h-travel", h.getTravel() + "px");
+            DataGridDom.setCssVariable(root, "--data-grid__v-travel", v.getTravel() + "px");
+            DataGridDom.setCssVariable(root, "--data-grid__h-travel", h.getTravel() + "px");
         }
         // Also place the thumbs directly. A running scroll-driven animation overrides this, but
         // where animations are turned off (e.g. the test runner's screenshots) it is what shows.

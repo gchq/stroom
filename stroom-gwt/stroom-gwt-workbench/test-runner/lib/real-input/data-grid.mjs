@@ -154,6 +154,48 @@ export const CHECKS = {
     await expectFocus(page, 'combobox Charlie', 'Shift+Tab comes back to the selection box');
   },
 
+  // Forced colours (e.g. Windows high contrast), emulated: a row chosen with a click is drawn in the
+  // system's Highlight colour, as the others aren't, and a row reached with Down (chosen too, as the
+  // selection follows the focus here) also shows the keyboard focus, an outline in HighlightText
+  // (box shadows, the usual ring, aren't drawn in forced colours)
+  'widgets-data-grid-datagridkeyboard--single-selection': async (page) => {
+    const row = (name) => page.locator(`${GRID} [role="row"][data-row]`, { hasText: name });
+    const style = (name) => row(name).evaluate((element) => {
+      const s = getComputedStyle(element);
+      return { background: s.backgroundColor, outlineStyle: s.outlineStyle, outlineWidth: s.outlineWidth,
+        outlineColor: s.outlineColor };
+    });
+    await page.emulateMedia({ forcedColors: 'active' });
+    try {
+      const system = await page.evaluate(() => {
+        const probe = document.createElement('div');
+        probe.style.cssText = 'forced-color-adjust: none; background-color: Highlight; color: HighlightText';
+        document.body.appendChild(probe);
+        const s = getComputedStyle(probe);
+        const colours = { highlight: s.backgroundColor, highlightText: s.color };
+        probe.remove();
+        return colours;
+      });
+
+      await row('Charlie').locator('[data-col]').first().click();
+      await waitFor(page, async () => (await style('Charlie')).background === system.highlight,
+          'a row chosen with a click is drawn in the Highlight colour');
+      assert.notEqual((await style('Alpha')).background, system.highlight, 'a row not chosen is not');
+
+      await pace(page);
+      await page.keyboard.press('ArrowDown');
+      await expectFocus(page, 'row Delta', 'Down moves to the next row');
+      await waitFor(page, async () => (await style('Delta')).background === system.highlight,
+          'the row moved to is chosen, drawn in the Highlight colour');
+      const focused = await style('Delta');
+      assert.equal(focused.outlineStyle, 'solid', 'keyboard focus shows as an outline');
+      assert.equal(focused.outlineWidth, '2px', 'the outline is 2px wide');
+      assert.equal(focused.outlineColor, system.highlightText, 'on a chosen row, in HighlightText');
+    } finally {
+      await page.emulateMedia({ forcedColors: 'none' });
+    }
+  },
+
   // A density change made by the page alone, with no key or click after it (as a preference change
   // arriving): the virtual rows' fixed height follows their cells' content, at both densities. The
   // play can't show this, as its own steps run the grid's pending work.

@@ -105,7 +105,7 @@ public class PercentBarCell extends AbstractCell<Number> {
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"percentBarCell percentBarCell-container\" title=\"{2}\">"
-                + "<div class=\"percentBarCell-bar {0}\" style=\"{1}\" />"
+                + "<div class=\"percentBarCell-bar {0}\" style=\"{1}\"></div>"
                 + "</div>")
         SafeHtml percentBar(final String thresholdClassName,
                             final SafeStyles widthStyle,

@@ -34,7 +34,7 @@ public final class StroomDom {
     /// The data rows of a `MyDataGrid`/`CellTable` (GWT marks each with `__gwt_row`; there is no
     /// `role="row"`) or of a `DataGridWidget` (`data-row`). A cell's row is
     /// `play.getByText(x).closest(GRID_ROW)`.
-    public static final String GRID_ROW = "tr[__gwt_row], .dg-row[data-row]";
+    public static final String GRID_ROW = "tr[__gwt_row], .data-grid__row[data-row]";
     /// The class of a selected `MyDataGrid` or `DataGridWidget` row.
     public static final String SELECTED_ROW = "dataGridSelectedRow";
     /// The class of the header of a column that can be sorted.

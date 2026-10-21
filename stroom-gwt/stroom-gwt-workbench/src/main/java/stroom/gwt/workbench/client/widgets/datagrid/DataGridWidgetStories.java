@@ -80,9 +80,10 @@ public final class DataGridWidgetStories {
     private static final String ON_ROW_DOUBLE_CLICK = "onRowDoubleClick";
 
     // The grid's markup
-    private static final String GRID = ".dg";
-    private static final String SCROLLER = ".dg-scroller";
-    private static final String ROW = ".dg-body [data-row]";
+    private static final String GRID = ".data-grid";
+    private static final String SCROLLER = ".data-grid__scroller";
+    private static final String ROW = ".data-grid__body [data-row]";
+    private static final String GRID_ROW = ".data-grid__row";
     private static final String HEADER_CELLS = "[role=\"columnheader\"]";
     private static final String KEYBOARD_ROW_CLASS = "dataGridKeyboardSelectedRow";
 
@@ -117,7 +118,7 @@ public final class DataGridWidgetStories {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(15));
                     play.expect(play.querySelectorAll(HEADER_CELLS)).toHaveLength(5);
                     // Natural mode by default
-                    play.expect(play.querySelector(GRID)).not().toHaveClass("dg--virtual");
+                    play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                 })
                 // Sortable columns: unsorted -> ascending -> descending -> unsorted
                 .story("SortableColumns", DataGridWidgetStories::sortableColumns)
@@ -202,7 +203,7 @@ public final class DataGridWidgetStories {
 
                     // Without a selection model rows carry no aria-selected at all
                     play.expect(play.querySelectorAll(ROW + "[aria-selected]")).toHaveLength(0);
-                    play.expect(row(play, 0).closest(".dg-row")).toHaveStyle("cursor", "default");
+                    play.expect(row(play, 0).closest(GRID_ROW)).toHaveStyle("cursor", "default");
                     play.expect(play.spy(ON_SELECTION_CHANGE)).not().toHaveBeenCalled();
                 })
                 // Controlled selection: the host sets the selection as well as reading it
@@ -228,13 +229,13 @@ public final class DataGridWidgetStories {
                     final Value<Double> gridHeight = play.querySelector(GRID).height();
                     play.waitFor(() -> play.expect("the grid's height", gridHeight::get).toBeGreaterThan(50));
 
-                    final Value<Element> firstRow = row(play, 0).closest(".dg-row").element();
+                    final Value<Element> firstRow = row(play, 0).closest(GRID_ROW).element();
                     play.expect("the first row contains the element at its centre",
                                     () -> isPaintedAt(firstRow.get()))
                             .toBe(true);
 
                     play.click(row(play, 0));
-                    play.waitFor(() -> play.expect(row(play, 0).closest(".dg-row"))
+                    play.waitFor(() -> play.expect(row(play, 0).closest(GRID_ROW))
                             .toHaveAttribute("aria-selected", "true"));
                 })
                 // Double-click a row: a double select of the selection model
@@ -277,7 +278,7 @@ public final class DataGridWidgetStories {
                     return sized(paged(grid), "320px", "900px");
                 })
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.querySelector(GRID)).toHaveClass("dg--virtual"));
+                    play.waitFor(() -> play.expect(play.querySelector(GRID)).toHaveClass("data-grid--virtual"));
                     final Query rows = play.querySelectorAll(ROW);
                     play.waitFor(() -> play.expect("the number of rows", () -> rows.count().get())
                             .toBeGreaterThan(5));
@@ -304,7 +305,7 @@ public final class DataGridWidgetStories {
                 .story("HeaderlessMultiColumn", DataGridWidgetStories::headerless)
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(4));
-                    play.expect(play.querySelector(".dg-head")).toHaveStyle("display", "none");
+                    play.expect(play.querySelector(".data-grid__head")).toHaveStyle("display", "none");
                 })
                 // The fill columns share the surplus width by weight
                 .story("ColumnFillWeights", context -> sized(paged(noteGrid(true)), "320px", "900px"))
@@ -330,7 +331,7 @@ public final class DataGridWidgetStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(ROW)).toHaveLength(4));
                     play.expect(play.querySelector(GRID)).toHaveClass("multiline");
-                    play.expect(play.querySelector(GRID)).not().toHaveClass("dg--virtual");
+                    play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                 })
                 // Row column spans: as MarkerListPresenter spans its summary rows
                 .story("RowColumnSpans", DataGridWidgetStories::rowColumnSpans)
@@ -338,8 +339,8 @@ public final class DataGridWidgetStories {
                     final Query rows = play.querySelectorAll(ROW);
                     play.waitFor(() -> play.expect("the number of rows", () -> rows.count().get())
                             .toBeGreaterThan(1));
-                    final Query spanned = play.within(rows.nth(0)).querySelectorAll(".dg-cell");
-                    final Query normal = play.within(rows.nth(1)).querySelectorAll(".dg-cell");
+                    final Query spanned = play.within(rows.nth(0)).querySelectorAll(".data-grid__cell");
+                    final Query normal = play.within(rows.nth(1)).querySelectorAll(".data-grid__cell");
                     // Unlike GWT's colspan, the covered cells are not rendered at all
                     play.expect(spanned).toHaveLength(1);
                     play.expect(normal).toHaveLength(3);
@@ -348,7 +349,7 @@ public final class DataGridWidgetStories {
                 // Switching between virtual and wrapped natural rendering keeps the top visible row
                 .story("VirtualMultiLineToggleKeepsPosition", DataGridWidgetStories::toggleKeepsPosition)
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.querySelector(GRID)).toHaveClass("dg--virtual"));
+                    play.waitFor(() -> play.expect(play.querySelector(GRID)).toHaveClass("data-grid--virtual"));
                     final Value<Element> scroller = play.querySelector(SCROLLER).element();
                     final Value<Element> firstRow = play.querySelector(ROW + "[data-row=\"0\"]").element();
                     // Rows are a fractional height (23.0625px at the default density), so use the
@@ -363,7 +364,7 @@ public final class DataGridWidgetStories {
 
                     play.click(play.getByRole("button", TOGGLE_MULTI_LINE));
                     play.waitFor(() -> {
-                        play.expect(play.querySelector(GRID)).not().toHaveClass("dg--virtual");
+                        play.expect(play.querySelector(GRID)).not().toHaveClass("data-grid--virtual");
                         play.expect("row 100's distance from the top of the view",
                                         () -> Math.abs(offsetInView(targetRow.element().get(), scroller.get())))
                                 .toBeLessThan(2);
@@ -399,20 +400,20 @@ public final class DataGridWidgetStories {
 
                     // A key at a time, each on the row the last moved the focus to
                     play.keyboard("{ArrowDown}");
-                    play.waitFor(() -> play.expect(row(play, 1).closest(".dg-row")).toHaveFocus());
+                    play.waitFor(() -> play.expect(row(play, 1).closest(GRID_ROW)).toHaveFocus());
                     play.keyboard("{ArrowDown}");
-                    play.waitFor(() -> play.expect(row(play, 2).closest(".dg-row")).toHaveClass(KEYBOARD_ROW_CLASS));
-                    play.expect(row(play, 2).closest(".dg-row")).toHaveFocus();
+                    play.waitFor(() -> play.expect(row(play, 2).closest(GRID_ROW)).toHaveClass(KEYBOARD_ROW_CLASS));
+                    play.expect(row(play, 2).closest(GRID_ROW)).toHaveFocus();
                     expectSelected(play, grid, 2);
 
                     play.keyboard("{Control>}{ArrowDown}{/Control}");
-                    play.waitFor(() -> play.expect(row(play, 3).closest(".dg-row")).toHaveClass(KEYBOARD_ROW_CLASS));
+                    play.waitFor(() -> play.expect(row(play, 3).closest(GRID_ROW)).toHaveClass(KEYBOARD_ROW_CLASS));
                     expectSelected(play, grid, 2);
                     play.keyboard("{Enter}");
                     expectSelected(play, grid, 3);
 
                     play.keyboard("{End}");
-                    play.waitFor(() -> play.expect(row(play, 14).closest(".dg-row")).toHaveClass(KEYBOARD_ROW_CLASS));
+                    play.waitFor(() -> play.expect(row(play, 14).closest(GRID_ROW)).toHaveClass(KEYBOARD_ROW_CLASS));
                     expectSelected(play, grid, 14);
                 })
 
@@ -466,7 +467,7 @@ public final class DataGridWidgetStories {
                     // Several polls rewrite the row; the spinner still has the focus
                     play.sleep(1000);
                     play.expect(play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
-                                    .querySelector(".dg-cell[data-col=\"2\"]"))
+                                    .querySelector(".data-grid__cell[data-col=\"2\"]"))
                             .not().toHaveTextContent("Poll 0");
                     play.expect(input).toHaveFocus();
 
@@ -942,12 +943,12 @@ public final class DataGridWidgetStories {
 
     /// The first cell of the row with the given page index.
     private static Query row(final Play play, final int index) {
-        return play.querySelector(ROW + "[data-row=\"" + index + "\"] .dg-cell");
+        return play.querySelector(ROW + "[data-row=\"" + index + "\"] .data-grid__cell");
     }
 
     /// The Name cell (the second column) of the first row.
     private static Query firstName(final Play play) {
-        return play.querySelector(ROW + "[data-row=\"0\"] .dg-cell[data-col=\"1\"]");
+        return play.querySelector(ROW + "[data-row=\"0\"] .data-grid__cell[data-col=\"1\"]");
     }
 
     private static Query headerCell(final Play play, final int index) {

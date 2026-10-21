@@ -288,7 +288,7 @@ public final class BenchmarkStories {
     /// old grid that scrolls vertically.
     private static Element scroller() {
         if (newGrid != null) {
-            return findByClass(newGrid.getElement(), "dg-scroller");
+            return findByClass(newGrid.getElement(), "data-grid__scroller");
         }
         return findScroller(oldGrid.getElement());
     }

@@ -29,6 +29,7 @@ import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
 import stroom.widget.datagrid.client.model.VirtualWindow;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
@@ -83,7 +84,7 @@ import java.util.Set;
 ///
 /// * Header and rows live in one native scroller; the header is `position: sticky`, so header and
 ///   body always scroll horizontally together.
-/// * Column widths are a single CSS variable (`--dg-cols`) used as `grid-template-columns` by every
+/// * Column widths are a single CSS variable (`--data-grid__columns`) used as `grid-template-columns` by every
 ///   row, so resizing a column never re-renders rows.
 /// * Rows are rendered to HTML strings and cached by key. A row's DOM is only written when its HTML
 ///   actually changes.
@@ -112,7 +113,7 @@ public class DataGridWidget<R> extends Widget
     private static final String KEYBOARD_CELL_CLASS_NAME = "dataGridKeyboardSelectedCell";
     private static final double FALLBACK_ROW_HEIGHT = 24;
     // Natural pages with more rows than this let the browser skip laying out the rows out of view
-    // (dg--contain, see DataGridWidget.css)
+    // (data-grid--contain, see DataGridWidget.css)
     private static final int CONTAIN_ROW_THRESHOLD = 200;
 
     private final HasHandlers globalEventBus;
@@ -158,9 +159,6 @@ public class DataGridWidget<R> extends Widget
     private HeadingListener headingListener;
     private LoadingState loadingState;
     private final DataGridKeyboard<R> keyboard;
-    // Whether the last input in the grid was a key (not a press), so that the focus the grid puts
-    // back shows as keyboard focus only after a key
-    private boolean lastInputKeyboard;
 
     private boolean multiLine;
     private boolean virtual;
@@ -208,26 +206,28 @@ public class DataGridWidget<R> extends Widget
             scheduleRender();
         });
         this.html = new GridHtml<>(columnModel, headers, sortList, this::getKey);
+        // Before the first input the grid puts the focus back after (see refocus)
+        InputModality.install();
 
         final Document doc = Document.get();
         final Element root = doc.createDivElement();
-        root.setClassName("dg dataGridWidget allow-header-selection");
+        root.setClassName("data-grid dataGridWidget allow-header-selection");
 
         // The scroller is the grid as far as ARIA is concerned, and takes keyboard focus, so a grid
         // can always be scrolled from the keyboard. Key events bubble from it to the root, where they
         // are handled.
-        scroller = div(doc, "dg-scroller");
+        scroller = div(doc, "data-grid__scroller");
         scroller.setAttribute("role", "grid");
         scroller.setTabIndex(0);
-        head = div(doc, "dg-head dataGridHeaderBackground");
-        headerRow = div(doc, "dg-hrow");
+        head = div(doc, "data-grid__head dataGridHeaderBackground");
+        headerRow = div(doc, "data-grid__header-row");
         headerRow.setAttribute("role", "row");
         head.appendChild(headerRow);
-        content = div(doc, "dg-content");
-        body = div(doc, "dg-body");
+        content = div(doc, "data-grid__content");
+        body = div(doc, "data-grid__body");
         body.setAttribute("role", "rowgroup");
         content.appendChild(body);
-        empty = div(doc, "dg-empty");
+        empty = div(doc, "data-grid__empty");
         content.appendChild(empty);
         scroller.appendChild(head);
         scroller.appendChild(content);
@@ -693,7 +693,7 @@ public class DataGridWidget<R> extends Widget
     /// @param hideHeader Whether to hide the header row.
     public void setHideHeader(final boolean hideHeader) {
         this.hideHeader = hideHeader;
-        setStyleName("dg--no-header", hideHeader);
+        setStyleName("data-grid--no-header", hideHeader);
         scheduleRender();
     }
 
@@ -777,7 +777,7 @@ public class DataGridWidget<R> extends Widget
     ///
     /// @param text Text to show when there are no rows, or `null` for none.
     public void setEmptyText(final String text) {
-        empty.addClassName("dg-empty--text");
+        empty.addClassName("data-grid__empty--text");
         setEmptyMessage(text);
     }
 
@@ -832,7 +832,7 @@ public class DataGridWidget<R> extends Widget
         if (selectionModel != null) {
             selectionModelRegistration = selectionModel.addSelectionChangeHandler(e -> scheduleRender());
         }
-        setStyleName("dg--selectable", selectionModel != null);
+        setStyleName("data-grid--selectable", selectionModel != null);
         scheduleRender();
     }
 
@@ -1242,7 +1242,7 @@ public class DataGridWidget<R> extends Widget
         resolveKeyboardRow();
         final int[] dirty = pageState.takeDirtyRows();
         final boolean modeChanged = renderedVirtual == null || renderedVirtual != effectiveVirtual;
-        setStyleName("dg--virtual", effectiveVirtual);
+        setStyleName("data-grid--virtual", effectiveVirtual);
         renderedVirtual = effectiveVirtual;
         renderRows(structureChanged || modeChanged, dirty);
 
@@ -1310,8 +1310,8 @@ public class DataGridWidget<R> extends Widget
     }
 
     private void applyWidths() {
-        DataGridDom.setCssVariable(getElement(), "--dg-cols", columnModel.toGridTemplate());
-        DataGridDom.setCssVariable(getElement(), "--dg-total", columnModel.getTotalWidth() + "px");
+        DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
+        DataGridDom.setCssVariable(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
     }
 
     // --------------------------------------------------------------------------------
@@ -1416,7 +1416,7 @@ public class DataGridWidget<R> extends Widget
         final int end;
         if (effectiveVirtual) {
             final double rowH = getOneLineRowHeight();
-            DataGridDom.setCssVariable(getElement(), "--dg-row-h", rowH + "px");
+            DataGridDom.setCssVariable(getElement(), "--data-grid__row-height", rowH + "px");
             final VirtualWindow window = VirtualWindow.compute(
                     scroller.getScrollTop(),
                     Math.max(0, scroller.getClientHeight() - getHeaderHeight()),
@@ -1433,10 +1433,10 @@ public class DataGridWidget<R> extends Widget
             content.getStyle().clearHeight();
             body.getStyle().clearProperty("transform");
             final boolean contain = rows.size() > CONTAIN_ROW_THRESHOLD;
-            setStyleName("dg--contain", contain);
+            setStyleName("data-grid--contain", contain);
             if (contain) {
                 // The height assumed for rows not yet laid out
-                DataGridDom.setCssVariable(getElement(), "--dg-row-h", getOneLineRowHeight() + "px");
+                DataGridDom.setCssVariable(getElement(), "--data-grid__row-height", getOneLineRowHeight() + "px");
             }
         }
 
@@ -1517,7 +1517,7 @@ public class DataGridWidget<R> extends Widget
             }
         }
 
-        final StringBuilder classes = new StringBuilder("dg-row ");
+        final StringBuilder classes = new StringBuilder("data-grid__row ");
         classes.append(even
                 ? "dataGridEvenRow"
                 : "dataGridOddRow");
@@ -1639,7 +1639,7 @@ public class DataGridWidget<R> extends Widget
         final double height = measureRowHeight(hasRows
                 ? html.cells(pageState.getRow(0), getPageStart(), false, true, Collections.emptyMap())
                 .asString()
-                : "<div class=\"dg-cell dataGridCell\"><div>X</div></div>");
+                : "<div class=\"data-grid__cell dataGridCell\"><div>X</div></div>");
         if (hasRows) {
             measuredRowHeight = height;
         }
@@ -1652,7 +1652,7 @@ public class DataGridWidget<R> extends Widget
     // natural rows are, so virtual rows line up with them exactly.
     private double measureRowHeight(final String cellsHtml) {
         final Element probe = Document.get().createDivElement();
-        probe.setClassName("dg-row dg-row--probe dataGridEvenRow");
+        probe.setClassName("data-grid__row data-grid__row--probe dataGridEvenRow");
         probe.setInnerHTML(cellsHtml);
         body.appendChild(probe);
         final double height = DataGridDom.getHeight(probe);
@@ -1908,13 +1908,11 @@ public class DataGridWidget<R> extends Widget
             return;
         }
         if (BrowserEvents.KEYDOWN.equals(event.getType())) {
-            lastInputKeyboard = true;
             if (keyboard.onKeyDown(event)) {
                 return;
             }
         }
         if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-            lastInputKeyboard = false;
             keyboard.onMouseDown(target);
         }
         if (BrowserEvents.CONTEXTMENU.equals(event.getType())) {
@@ -2095,10 +2093,11 @@ public class DataGridWidget<R> extends Widget
     }
 
     // Gives an element the focus without scrolling, showing it as keyboard focus (:focus-visible)
-    // only if the last input was a key: the browser would otherwise show the focus put back after
-    // a press redraws the pressed cell (dropping the focus) as keyboard focus
+    // only if the last input on the page was a key (InputModality, as the menu asks): the browser
+    // would otherwise show the focus put back after a press redraws the pressed cell (dropping the
+    // focus) as keyboard focus
     private void refocus(final Element element) {
-        DataGridDom.focusWithoutScroll(element, lastInputKeyboard);
+        DataGridDom.focusWithoutScroll(element, InputModality.isKeyboard());
     }
 
     static int parseInt(final String value) {

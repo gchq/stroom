@@ -16,7 +16,7 @@
 
 // The data grid geometry baseline (stroom-core-client-widget/DATA_GRID_DESIGN.md, Phase 0): what
 // is measured of each data grid in a story, and how a later measurement is compared with it. Used
-// by ../grid-geometry.mjs. Covers both MyDataGrid (a pair of tables) and DataGridWidget (.dg), so a
+// by ../grid-geometry.mjs. Covers both MyDataGrid (a pair of tables) and DataGridWidget (.data-grid), so a
 // screen measured with the old grid can be compared after it switches to the new one.
 
 // How far a measurement may move before it counts as changed, in pixels
@@ -41,18 +41,18 @@ export function measureGrids(maxRows) {
   const grids = [];
 
   // DataGridWidget: one element with its header and rows
-  for (const root of document.querySelectorAll('.dg')) {
+  for (const root of document.querySelectorAll('.data-grid')) {
     if (!visible(root)) {
       continue;
     }
-    const head = root.querySelector('.dg-head');
-    const headerCells = [...root.querySelectorAll('.dg-hrow > .dg-hcell')];
+    const head = root.querySelector('.data-grid__head');
+    const headerCells = [...root.querySelectorAll('.data-grid__header-row > .data-grid__header-cell')];
     grids.push({
       kind: 'new',
       headers: headerCells.map(text),
       headerHeight: head && visible(head) ? round(head.getBoundingClientRect().height) : 0,
       columnWidths: headerCells.map((cell) => Math.round(cell.getBoundingClientRect().width)),
-      rowHeights: [...root.querySelectorAll('.dg-body > .dg-row')].slice(0, maxRows)
+      rowHeights: [...root.querySelectorAll('.data-grid__body > .data-grid__row')].slice(0, maxRows)
         .map((row) => round(row.getBoundingClientRect().height)),
     });
   }
@@ -60,7 +60,7 @@ export function measureGrids(maxRows) {
   // MyDataGrid: a header table and a body table, inside a common root
   for (const thead of document.querySelectorAll('thead')) {
     const headerCells = [...thead.querySelectorAll('th.dataGridHeader')];
-    if (headerCells.length === 0 || !visible(thead) || thead.closest('.dg')) {
+    if (headerCells.length === 0 || !visible(thead) || thead.closest('.data-grid')) {
       continue;
     }
     // The nearest ancestor that also holds the body table

@@ -319,7 +319,7 @@ public final class DataGridRowStateStories {
                 var rule = rules[i];
                 if (rule.selectorText !== undefined) {
                     var selector = rule.selectorText;
-                    if ((selector.indexOf('dataGrid') >= 0 || selector.indexOf('.dg') >= 0)
+                    if ((selector.indexOf('dataGrid') >= 0 || selector.indexOf('.data-grid') >= 0)
                         && selector.search(pseudo) >= 0) {
                         text += selector.replace(pseudo, '.pseudo-$1') + ' {' + rule.style.cssText + '}\n';
                     }

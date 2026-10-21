@@ -281,7 +281,7 @@ public class DataGridWidgetSelectionEventManager<T>
     }
 
     private static boolean isCell(final Element element) {
-        return element.hasClassName("dg-cell");
+        return element.hasClassName("data-grid__cell");
     }
 
     private void doSelect(final T row, final SelectionType selectionType) {

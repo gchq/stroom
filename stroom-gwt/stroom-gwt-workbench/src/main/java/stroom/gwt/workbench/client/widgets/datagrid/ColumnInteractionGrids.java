@@ -72,10 +72,10 @@ final class ColumnInteractionGrids {
     private static final String ON_FILTER_CHANGE = "onFilterChange";
 
     private static final String HEADER_CELLS = "[role=\"columnheader\"]";
-    private static final String ROW = ".dg-body [data-row]";
-    private static final String HANDLE = ".dg-resize-handle";
-    private static final String MOVE_GHOST = ".dg-move-ghost";
-    private static final String MOVE_LINE = ".dg-move-line";
+    private static final String ROW = ".data-grid__body [data-row]";
+    private static final String HANDLE = ".data-grid__resize-handle";
+    private static final String MOVE_GHOST = ".data-grid__move-ghost";
+    private static final String MOVE_LINE = ".data-grid__move-line";
     private static final String KEYBOARD_ROW_CLASS = "dataGridKeyboardSelectedRow";
 
     private static final int MENU_ROWS = 500;
@@ -326,7 +326,7 @@ final class ColumnInteractionGrids {
     }
 
     static void contextMenuPlay(final Play play) {
-        final Query nameCell = play.querySelector(ROW + "[data-row=\"2\"] .dg-cell[data-col=\"1\"]");
+        final Query nameCell = play.querySelector(ROW + "[data-row=\"2\"] .data-grid__cell[data-col=\"1\"]");
         play.waitFor(() -> play.expect(nameCell).toBeInTheDocument());
         play.rightClick(nameCell);
         play.waitFor(() -> play.expect(play.spy(ON_ROW_CONTEXT)).toHaveBeenCalledWith(2));
@@ -391,7 +391,7 @@ final class ColumnInteractionGrids {
 
     /// The number of the column's cells whose content is wider than the cell.
     private static int truncatedCells(final Play play, final int column) {
-        final Element grid = play.querySelector(".dg").element().get();
+        final Element grid = play.querySelector(".data-grid").element().get();
         int truncated = 0;
         final NodeList<Element> divs = grid.getElementsByTagName("div");
         for (int i = 0; i < divs.getLength(); i++) {

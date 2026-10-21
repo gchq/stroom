@@ -181,7 +181,7 @@ public final class BehaviourStories {
 
     /// The first cell of a row: GWT's grid only responds to a press on a cell, not on the row.
     private static Query row(final Play play, final int index) {
-        return play.within(play.querySelectorAll(GRID_ROWS).nth(index)).querySelector("td, .dg-cell");
+        return play.within(play.querySelectorAll(GRID_ROWS).nth(index)).querySelector("td, .data-grid__cell");
     }
 
     /// Fires a button's click without the press moving the focus, as data arriving from a poll
@@ -219,13 +219,13 @@ public final class BehaviourStories {
     }-*/;
 
     private static native int headerHeight(Element root) /*-{
-        return root.querySelector(".dg-head").offsetHeight;
+        return root.querySelector(".data-grid__head").offsetHeight;
     }-*/;
 
     // Whether the header's fixed height is its row's height, to the pixel
     private static native boolean headerFitsRow(Element root) /*-{
-        var head = root.querySelector(".dg-head");
-        var row = root.querySelector(".dg-hrow");
+        var head = root.querySelector(".data-grid__head");
+        var row = root.querySelector(".data-grid__header-row");
         return Math.abs(head.offsetHeight - row.getBoundingClientRect().height) < 1;
     }-*/;
 

@@ -266,27 +266,6 @@ run alone, so a step depends on timing:
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/dashboard/DashboardSearchStories.java`
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/datagrid/DataGridWidgetStories.java`
 
-### A floor map's Layers and Groups panels can't be opened
-
-**Reproduced** (by the `App/Editors/FloorMapMap` stories, October 2026). The dock beside the floor
-map (Map tab, and the Editor tab's) has Tracking, Layers and Groups tabs, but only the first can be
-reached:
-
-* `FloorMapDockViewImpl.ui.xml` gives its `LinkTabBar` `styleName="..."`, which replaces the
-  `tab-bar tab-bar--link` classes the bar sets for itself (every other use says `addStyleNames`).
-  Without them the bar's overflow button's arrow is drawn at about 1656×1430px, a large white shape
-  over the dock and most of its lists' columns, and the bar, making room for it, decides only the
-  first tab fits and puts the others in its overflow menu.
-* `FloorMapDockPresenter` never passes the bar's `ShowMenuEvent` on to the event bus (as e.g.
-  `DataRetentionPresenter` does), so that overflow menu never opens, by mouse or keyboard.
-
-Fix: `addStyleNames` in the view, and register the show menu handler in the presenter. The Groups
-story clicks the hidden tab's label directly until then (its comment says so).
-
-* `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapDockViewImpl.ui.xml`
-  (line 23)
-* `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapDockPresenter.java`
-
 ### A trace's operation list can't be scrolled with the keyboard
 
 **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
@@ -1901,6 +1880,17 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   size, border, padding, colours, focus), but for a text area's cursor, now the text cursor as on every
   other text area. Workbench: `App/Main/AnnotationEditor`, `App/Editors/DashboardEditor`
   `TableIncludeExcludeFilter`, `Widgets/Data Grid/DataGrid` `Pager`.
+* **A floor map's Layers and Groups panels couldn't be opened.** The dock beside the map (its Map
+  and Editor tabs) gave its `LinkTabBar` a `styleName`, which replaced the bar's own classes, so its
+  overflow button's arrow was drawn huge (a large white shape over the dock and its lists) and every
+  tab but the first went into an overflow menu, which never opened, as `FloorMapDockPresenter` didn't
+  pass on the bar's `ShowMenuEvent`. The view adds its class instead, and the presenter passes the
+  event on, so all three tabs show (`App/Editors/FloorMapMap` `Groups` checks them).
+* **A percent bar cell didn't close its bar's `div`.** `PercentBarCell`'s template wrote
+  `<div ... />`, which HTML doesn't take as closed, so the cell after it was put inside it. In
+  `MyDataGrid`'s tables the browser closed it at the `td`'s end; in the new grid's cells (divs) the
+  next column's cell was nested in the bar's, so screen readers lost the cell (axe
+  `aria-required-parent`, the volume status lists). It now closes it.
 * **A full-screen workbench story was 48px taller than the window.** `ScreenHarness` made a screen
   `100vh` tall inside `StroomThemeDecorator`'s 24px padding, so its bottom 48px was off-screen and a
   play's click there scrolled the page. Screens now take `StroomThemeDecorator.CANVAS_HEIGHT`

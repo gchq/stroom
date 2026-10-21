@@ -296,7 +296,7 @@ final class InteractiveCellGrids {
 
     /// The grid row containing the text.
     static Query rowOf(final Play play, final String text) {
-        return play.getByText(text).closest(".dg-row");
+        return play.getByText(text).closest(".data-grid__row");
     }
 
     private static DataGridWidget<Person> grid() {

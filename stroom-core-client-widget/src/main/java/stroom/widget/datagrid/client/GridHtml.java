@@ -79,7 +79,7 @@ final class GridHtml<R> {
             final boolean sorted = sortIndex >= 0;
             final boolean ascending = sorted && sortList.get(sortIndex).isAscending();
 
-            final StringBuilder classes = new StringBuilder("dg-hcell dataGridHeader");
+            final StringBuilder classes = new StringBuilder("data-grid__header-cell dataGridHeader");
             if (i == 0) {
                 classes.append(" dataGridFirstColumnHeader");
             }
@@ -151,7 +151,7 @@ final class GridHtml<R> {
             final Column<R, ?> column = columnModel.getColumn(i);
             final Context context = new Context(absIndex, i, keys.apply(row, absIndex));
 
-            final StringBuilder classes = new StringBuilder("dg-cell dataGridCell ");
+            final StringBuilder classes = new StringBuilder("data-grid__cell dataGridCell ");
             classes.append(even
                     ? "dataGridEvenRowCell"
                     : "dataGridOddRowCell");
@@ -201,7 +201,7 @@ final class GridHtml<R> {
     void cellCopy(final R row, final int absIndex, final int index, final SafeHtmlBuilder sb) {
         final Column<R, ?> column = columnModel.getColumn(index);
         final Context context = new Context(absIndex, index, keys.apply(row, absIndex));
-        final StringBuilder classes = new StringBuilder("dg-cell dataGridCell");
+        final StringBuilder classes = new StringBuilder("data-grid__cell dataGridCell");
         appendAlignment(classes, column.getHorizontalAlignment(), column.getVerticalAlignment());
         final String cellStyles = column.getCellStyleNames(context, row);
         if (cellStyles != null && !cellStyles.isEmpty()) {
@@ -247,16 +247,16 @@ final class GridHtml<R> {
                                         final HorizontalAlignmentConstant horizontal,
                                         final VerticalAlignmentConstant vertical) {
         if (HasHorizontalAlignment.ALIGN_RIGHT.equals(horizontal)) {
-            classes.append(" dg-align-right");
+            classes.append(" data-grid__cell--align-right");
         } else if (HasHorizontalAlignment.ALIGN_CENTER.equals(horizontal)) {
-            classes.append(" dg-align-center");
+            classes.append(" data-grid__cell--align-center");
         }
         if (HasVerticalAlignment.ALIGN_TOP.equals(vertical)) {
-            classes.append(" dg-valign-top");
+            classes.append(" data-grid__cell--valign-top");
         } else if (HasVerticalAlignment.ALIGN_BOTTOM.equals(vertical)) {
-            classes.append(" dg-valign-bottom");
+            classes.append(" data-grid__cell--valign-bottom");
         } else if (HasVerticalAlignment.ALIGN_MIDDLE.equals(vertical)) {
-            classes.append(" dg-valign-middle");
+            classes.append(" data-grid__cell--valign-middle");
         }
     }
 }
