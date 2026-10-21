@@ -237,20 +237,17 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .map(field -> {
                     final String fieldName = field.getKey();
                     final FieldMapping fieldMeta = field.getValue();
-                    String nativeType = getFieldTypeFromMapping(fieldName, field.getValue());
+                    final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
+                            fieldName, fieldMeta, fieldMappings);
+                    if (effectiveFieldMeta == null) {
+                        // Alias whose target field could not be found, so ignore
+                        return null;
+                    }
 
+                    final String nativeType = getFieldTypeFromMapping(fieldName, effectiveFieldMeta);
                     if (nativeType == null) {
                         // If field type is null, this is a system field, so ignore
                         return null;
-                    } else if (Kind.Alias.jsonValue().equals(nativeType)) {
-                        // Determine the mapping type of the field the alias is referring to
-                        try {
-                            final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
-                            final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
-                            nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                        } catch (final Exception e) {
-                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                        }
                     }
 
                     try {
@@ -258,7 +255,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final FieldType elasticFieldType =
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
-                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
+                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(effectiveFieldMeta));
                     } catch (final UnsupportedTypeException e) {
                         LOGGER.debug(e::getMessage, e);
                         return null;
@@ -301,6 +298,32 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return null;
     }
 
+    /// Resolves the mapping that determines a field's type and whether it is indexed.
+    /// For an alias field this is the mapping of the field the alias refers to; for any other field it is
+    /// the field's own mapping.
+    ///
+    /// @param fieldName     the full name of the field
+    /// @param fieldMeta     the field's own mapping
+    /// @param fieldMappings all field mappings for the index, keyed by full field name
+    /// @return the effective mapping, or `null` if the field is an alias whose target cannot be found
+    private FieldMapping resolveEffectiveFieldMapping(final String fieldName,
+                                                      final FieldMapping fieldMeta,
+                                                      final Map<String, FieldMapping> fieldMappings) {
+        final String nativeType = getFieldTypeFromMapping(fieldName, fieldMeta);
+        if (!Kind.Alias.jsonValue().equals(nativeType)) {
+            return fieldMeta;
+        }
+
+        final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
+        final FieldMapping targetFieldMeta = aliasPath != null
+                ? fieldMappings.get(aliasPath)
+                : null;
+        if (targetFieldMeta == null) {
+            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+        }
+        return targetFieldMeta;
+    }
+
     private String getAliasPathFromMapping(final String fieldName, final FieldMapping fieldMeta) {
         final Optional<Property> firstFieldMapping = fieldMeta.mapping().values().stream().findFirst();
 
@@ -329,22 +352,19 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
-                String nativeType = getFieldTypeFromMapping(key, fieldMeta);
                 final String fieldName = fieldMeta.fullName();
-                final boolean indexed = fieldIsIndexed(fieldMeta);
+                final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(
+                        fieldName, fieldMeta, fieldMappings);
+                if (effectiveFieldMeta == null) {
+                    // Alias whose target field could not be found, so ignore
+                    return;
+                }
 
+                final String nativeType = getFieldTypeFromMapping(key, effectiveFieldMeta);
                 if (nativeType == null) {
                     return;
-                } else if (Kind.Alias.jsonValue().equals(nativeType)) {
-                    // Determine the mapping type of the field the alias is referring to
-                    try {
-                        final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
-                        final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
-                        nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
-                    } catch (final Exception e) {
-                        LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                    }
                 }
+                final boolean indexed = fieldIsIndexed(effectiveFieldMeta);
 
                 final FieldType type = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
                 final ElasticIndexField field = ElasticIndexField
