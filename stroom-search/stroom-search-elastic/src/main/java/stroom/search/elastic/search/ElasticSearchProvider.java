@@ -63,6 +63,7 @@ import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
 import co.elastic.clients.elasticsearch._types.mapping.NumberPropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
+import co.elastic.clients.elasticsearch._types.mapping.PropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
@@ -464,23 +465,22 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return mappings;
     }
 
-    /**
-     * Registers a field and, if it is an {@code object} or {@code nested} container, recursively registers
-     * each of its descendant fields under their full dotted path.
-     * <p>
-     * Container fields are retained (rather than merely descended into) so that their native type stays
-     * discoverable downstream; this is what allows {@code nested} containers such as {@code user} and
-     * {@code user.address} to be identified when a query targets a deeply nested field like
-     * {@code user.address.city}. Container types that are not usable as data source fields (e.g. plain
-     * {@code object}) are filtered out later during native type resolution.
-     *
-     * @param fullName the full (dot-delimited) name of the field
-     * @param property the field's mapping property
-     * @param out      the accumulating map of field name to field mapping
-     */
-    private static void registerField(final String fullName,
-                                      final Property property,
-                                      final NavigableMap<String, FieldMapping> out) {
+    /// Registers a field and, if it is an `object` or `nested` container, recursively registers
+    /// each of its descendant fields under their full dotted path. Any multi-fields defined on the field
+    /// (e.g. `user.id.keyword`) are also registered.
+    ///
+    /// Container fields are retained (rather than merely descended into) so that their native type stays
+    /// discoverable downstream; this is what allows `nested` containers such as `user` and
+    /// `user.address` to be identified when a query targets a deeply nested field like
+    /// `user.address.city`. Container types that are not usable as data source fields (e.g. plain
+    /// `object`) are filtered out later during native type resolution.
+    ///
+    /// @param fullName the full (dot-delimited) name of the field
+    /// @param property the field's mapping property
+    /// @param out      the accumulating map of field name to field mapping
+    static void registerField(final String fullName,
+                              final Property property,
+                              final NavigableMap<String, FieldMapping> out) {
         // The synthesised FieldMapping only needs to carry the property; every downstream reader (type
         // resolution, alias lookup, indexed detection) reads the mapping value, not its key.
         out.putIfAbsent(fullName, FieldMapping.of(fm -> fm
@@ -488,10 +488,25 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .mapping(leafName(fullName), property)));
 
         // Recurse into the children of object / nested containers, expanding each to its full dotted path.
-        // Multi-fields (Property.fields(), e.g. `title.keyword`) are deliberately NOT traversed: they are
-        // not part of the returned `_source` and must not be selectable by the user.
         getChildProperties(property).forEach((childLeafName, childProperty) ->
                 registerField(fullName + FIELD_PATH_SEPARATOR + childLeafName, childProperty, out));
+
+        // Register multi-fields (e.g. `title.keyword`). Although they are not part of `_source`, search
+        // results are read via the `fields` API, which does return multi-field values, and they are
+        // commonly used for exact-match queries against analysed `text` fields.
+        getMultiFieldProperties(property).forEach((multiFieldLeafName, multiFieldProperty) ->
+                registerField(fullName + FIELD_PATH_SEPARATOR + multiFieldLeafName, multiFieldProperty, out));
+    }
+
+    /**
+     * @return the multi-fields defined on a property (e.g. a `keyword` sub-field of a `text` field), or an
+     * empty map if the property has none.
+     */
+    private static Map<String, Property> getMultiFieldProperties(final Property property) {
+        if (property._get() instanceof final PropertyBase propertyBase) {
+            return NullSafe.map(propertyBase.fields());
+        }
+        return Map.of();
     }
 
     /**
