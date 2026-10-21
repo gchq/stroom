@@ -26,6 +26,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.MockIndexFieldCache;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -46,10 +47,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -132,6 +137,776 @@ class TestSearchExpressionQueryBuilder {
         addField(DENSE_VECTOR_FIELD, FieldType.DENSE_VECTOR, "dense_vector");
     }
 
+    // --------------------------------------------------------------------------------
+    // Scalar (numeric, date and IP) field types
+    // --------------------------------------------------------------------------------
+
+    @ParameterizedTest(name = "{0} {1}")
+    @MethodSource("scalarTypeConditionMatrix")
+    void testScalarFieldConditions(final ScalarCase scalarCase, final Condition condition) {
+        final String field = scalarCase.field();
+        final Query query;
+        if (Condition.IN_DICTIONARY.equals(condition)) {
+            when(wordListProvider.getWords(DICTIONARY_REF))
+                    .thenReturn(new String[]{scalarCase.value1(), scalarCase.value2()});
+            query = buildSingleTerm(dictionaryTerm(field));
+        } else if (Condition.IN.equals(condition) || Condition.BETWEEN.equals(condition)) {
+            query = buildSingleTerm(field, condition, scalarCase.value1() + ", " + scalarCase.value2());
+        } else {
+            query = buildSingleTerm(field, condition, scalarCase.value1());
+        }
+
+        switch (condition) {
+            case EQUALS -> assertTerm(query, field, scalarCase.expected1());
+            case NOT_EQUALS -> assertTerm(assertNegated(query), field, scalarCase.expected1());
+            case IN -> {
+                assertThat(query.isTerms()).isTrue();
+                assertThat(query.terms().field()).isEqualTo(field);
+                assertThat(query.terms().terms().value())
+                        .extracting(FieldValue::_get)
+                        .containsExactly(scalarCase.expected1(), scalarCase.expected2());
+            }
+            case GREATER_THAN -> {
+                final UntypedRangeQuery range = assertRange(query, field);
+                assertThat(rangeValue(range.gt())).isEqualTo(scalarCase.expected1());
+                assertThat(range.gte()).isNull();
+                assertThat(range.lt()).isNull();
+                assertThat(range.lte()).isNull();
+            }
+            case GREATER_THAN_OR_EQUAL_TO -> {
+                final UntypedRangeQuery range = assertRange(query, field);
+                assertThat(rangeValue(range.gte())).isEqualTo(scalarCase.expected1());
+                assertThat(range.gt()).isNull();
+                assertThat(range.lt()).isNull();
+                assertThat(range.lte()).isNull();
+            }
+            case LESS_THAN -> {
+                final UntypedRangeQuery range = assertRange(query, field);
+                assertThat(rangeValue(range.lt())).isEqualTo(scalarCase.expected1());
+                assertThat(range.gt()).isNull();
+                assertThat(range.gte()).isNull();
+                assertThat(range.lte()).isNull();
+            }
+            case LESS_THAN_OR_EQUAL_TO -> {
+                final UntypedRangeQuery range = assertRange(query, field);
+                assertThat(rangeValue(range.lte())).isEqualTo(scalarCase.expected1());
+                assertThat(range.gt()).isNull();
+                assertThat(range.gte()).isNull();
+                assertThat(range.lt()).isNull();
+            }
+            case BETWEEN -> {
+                final UntypedRangeQuery range = assertRange(query, field);
+                assertThat(rangeValue(range.gte())).isEqualTo(scalarCase.expected1());
+                assertThat(rangeValue(range.lte())).isEqualTo(scalarCase.expected2());
+                assertThat(range.gt()).isNull();
+                assertThat(range.lt()).isNull();
+            }
+            case IN_DICTIONARY -> {
+                final List<Query> lines = assertDictionaryLines(query, 2);
+                assertTerm(lines.get(0), field, scalarCase.expected1());
+                assertTerm(lines.get(1), field, scalarCase.expected2());
+            }
+            default -> throw new IllegalStateException("Unexpected condition " + condition);
+        }
+    }
+
+    @ParameterizedTest(name = "{0} {1}")
+    @MethodSource("scalarTypeUnsupportedConditionMatrix")
+    void testScalarFieldUnsupportedConditions(final ScalarCase scalarCase, final Condition condition) {
+        final FieldType fieldType = ((ElasticIndexField) indexFieldCache.get(null, scalarCase.field())).getFldType();
+
+        assertThatThrownBy(() -> buildSingleTerm(scalarCase.field(), condition, scalarCase.value1()))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+                            fieldType.getDisplayValue() + " field type");
+    }
+
+    @Test
+    void testFloatValueIsWidenedFromFloatPrecision() {
+        final Query query = buildSingleTerm(FLOAT_FIELD, Condition.EQUALS, "1.1");
+
+        // The value is parsed as a float and then widened to a double
+        assertTerm(query, FLOAT_FIELD, (double) 1.1F);
+    }
+
+    @Test
+    void testIntegerFieldAcceptsNegativeNumbers() {
+        assertTerm(buildSingleTerm(INTEGER_FIELD, Condition.EQUALS, "-5"), INTEGER_FIELD, -5L);
+    }
+
+    @Test
+    void testDateFieldRelativeExpression() {
+        final long before = System.currentTimeMillis();
+        final Query query = buildSingleTerm(DATE_FIELD, Condition.GREATER_THAN, "now()");
+        final long after = System.currentTimeMillis();
+
+        final UntypedRangeQuery range = assertRange(query, DATE_FIELD);
+        assertThat((Long) rangeValue(range.gt())).isBetween(before, after);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Condition.class, names = {"EQUALS", "IN"})
+    void testIpCidrAllowedForEqualityConditions(final Condition condition) {
+        final Query query = buildSingleTerm(IP_FIELD, condition, "10.0.0.0/8");
+
+        if (Condition.EQUALS.equals(condition)) {
+            assertTerm(query, IP_FIELD, "10.0.0.0/8");
+        } else {
+            assertThat(query.isTerms()).isTrue();
+            assertThat(query.terms().terms().value())
+                    .extracting(FieldValue::_get)
+                    .containsExactly("10.0.0.0/8");
+        }
+    }
+
+    @Test
+    void testIpCidrAllowedInDictionary() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"10.0.0.0/8"});
+
+        final List<Query> lines = assertDictionaryLines(buildSingleTerm(dictionaryTerm(IP_FIELD)), 1);
+
+        assertTerm(lines.getFirst(), IP_FIELD, "10.0.0.0/8");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Condition.class, names = {
+            "NOT_EQUALS",
+            "GREATER_THAN",
+            "GREATER_THAN_OR_EQUAL_TO",
+            "LESS_THAN",
+            "LESS_THAN_OR_EQUAL_TO"})
+    void testIpCidrRejectedForNonEqualityConditions(final Condition condition) {
+        assertThatThrownBy(() -> buildSingleTerm(IP_FIELD, condition, "10.0.0.0/8"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("CIDR notation is only supported for EQUALS and IN operators")
+                .hasMessageContaining("\"10.0.0.0/8\"")
+                .hasMessageContaining(condition.getDisplayValue());
+    }
+
+    @Test
+    void testIpCidrRejectedForBetween() {
+        assertThatThrownBy(() -> buildSingleTerm(IP_FIELD, Condition.BETWEEN, "10.0.0.0/8, 10.0.0.255"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("CIDR notation is only supported");
+    }
+
+    // --------------------------------------------------------------------------------
+    // String (text, keyword, boolean, etc.) field types
+    // --------------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    void testFullTextFieldEquals(final String field) {
+        final Query query = buildSingleTerm(field, Condition.EQUALS, "some value*");
+
+        assertQueryString(query, field, "some value*");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    void testFullTextFieldNotEquals(final String field) {
+        final Query query = buildSingleTerm(field, Condition.NOT_EQUALS, "true");
+
+        assertQueryString(assertNegated(query), field, "true");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    void testFullTextFieldInSingleValue(final String field) {
+        final Query query = buildSingleTerm(field, Condition.IN, "alpha");
+
+        assertQueryString(query, field, "alpha");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {TEXT_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    void testFullTextFieldInMultipleValues(final String field) {
+        final Query query = buildSingleTerm(field, Condition.IN, "alpha, beta ,,gamma");
+
+        assertThat(query.isBool()).isTrue();
+        final List<Query> should = query.bool().should();
+        assertThat(should).hasSize(3);
+        assertQueryString(should.get(0), field, "alpha");
+        assertQueryString(should.get(1), field, "beta");
+        assertQueryString(should.get(2), field, "gamma");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {TEXT_FIELD, KEYWORD_FIELD, BOOLEAN_FIELD, WILDCARD_FIELD})
+    void testStringFieldMatchesRegex(final String field) {
+        final Query query = buildSingleTerm(field, Condition.MATCHES_REGEX, "ab+c.*");
+
+        assertThat(query.isRegexp()).isTrue();
+        assertThat(query.regexp().field()).isEqualTo(field);
+        assertThat(query.regexp().value()).isEqualTo("ab+c.*");
+    }
+
+    @Test
+    void testTextFieldInDictionary() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"one", "two words"});
+
+        final List<Query> lines = assertDictionaryLines(buildSingleTerm(dictionaryTerm(TEXT_FIELD)), 2);
+
+        assertQueryString(lines.get(0), TEXT_FIELD, "one");
+        assertQueryString(lines.get(1), TEXT_FIELD, "two words");
+    }
+
+    @Test
+    void testKeywordFieldEqualsExactMatch() {
+        assertTerm(buildSingleTerm(KEYWORD_FIELD, Condition.EQUALS, "abc"), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testKeywordFieldEqualsQuotedValueStripsQuotes() {
+        // Quoting allows wildcard characters to be matched literally
+        assertTerm(buildSingleTerm(KEYWORD_FIELD, Condition.EQUALS, "\"a*b\""), KEYWORD_FIELD, "a*b");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ab*", "a?c", "*bc"})
+    void testKeywordFieldEqualsWildcard(final String value) {
+        assertWildcard(buildSingleTerm(KEYWORD_FIELD, Condition.EQUALS, value), KEYWORD_FIELD, value);
+    }
+
+    @Test
+    void testKeywordFieldNotEquals() {
+        final Query query = buildSingleTerm(KEYWORD_FIELD, Condition.NOT_EQUALS, "abc");
+
+        assertTerm(assertNegated(query), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testKeywordFieldInSingleValue() {
+        assertTerm(buildSingleTerm(KEYWORD_FIELD, Condition.IN, "abc"), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testKeywordFieldInMultipleValues() {
+        final Query query = buildSingleTerm(KEYWORD_FIELD, Condition.IN, "abc, d*f, \"g?h\"");
+
+        assertThat(query.isBool()).isTrue();
+        final List<Query> should = query.bool().should();
+        assertThat(should).hasSize(3);
+        assertTerm(should.get(0), KEYWORD_FIELD, "abc");
+        assertWildcard(should.get(1), KEYWORD_FIELD, "d*f");
+        assertTerm(should.get(2), KEYWORD_FIELD, "g?h");
+    }
+
+    @Test
+    void testKeywordFieldInDictionary() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"abc", "d*f", "\"g?h\""});
+
+        final List<Query> lines = assertDictionaryLines(buildSingleTerm(dictionaryTerm(KEYWORD_FIELD)), 3);
+
+        assertTerm(lines.get(0), KEYWORD_FIELD, "abc");
+        assertWildcard(lines.get(1), KEYWORD_FIELD, "d*f");
+        assertTerm(lines.get(2), KEYWORD_FIELD, "g?h");
+    }
+
+    @Test
+    void testDictionaryWithNoWords() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[0]);
+
+        assertDictionaryLines(buildSingleTerm(dictionaryTerm(KEYWORD_FIELD)), 0);
+    }
+
+    @ParameterizedTest(name = "{0} {1}")
+    @MethodSource("stringTypeUnsupportedConditionMatrix")
+    void testStringFieldUnsupportedConditions(final String field, final Condition condition) {
+        assertThatThrownBy(() -> buildSingleTerm(field, condition, "abc"))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageStartingWith("Unsupported condition '" + condition.getDisplayValue() + "' for ")
+                .hasMessageEndingWith(" field type");
+    }
+
+    // --------------------------------------------------------------------------------
+    // Dense vector fields
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void testDenseVectorFieldEquals() {
+        final SearchExpressionQueryBuilder builder = createBuilderWithVectorModel();
+        final ElasticQueryParams params = builder.buildQuery(and(term(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats")));
+
+        final Query query = singleMust(params.getQuery());
+        assertThat(query.isKnn()).isTrue();
+        assertThat(query.knn().field()).isEqualTo(DENSE_VECTOR_FIELD);
+        assertThat(query.knn().queryVector()).containsExactly(0.25F, 0.5F);
+        assertThat(params.getKnnFieldQueries()).containsExactlyEntriesOf(Map.of(DENSE_VECTOR_FIELD, "cats"));
+    }
+
+    @Test
+    void testDenseVectorFieldNotEquals() {
+        final SearchExpressionQueryBuilder builder = createBuilderWithVectorModel();
+        final ElasticQueryParams params = builder.buildQuery(
+                and(term(DENSE_VECTOR_FIELD, Condition.NOT_EQUALS, "cats")));
+
+        final Query inner = assertNegated(singleMust(params.getQuery()));
+        assertThat(inner.isKnn()).isTrue();
+        assertThat(inner.knn().field()).isEqualTo(DENSE_VECTOR_FIELD);
+    }
+
+    @Test
+    void testDenseVectorFieldWithoutModel() {
+        assertThatThrownBy(() -> buildSingleTerm(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Vector embedding model is not defined in data source " + INDEX_NAME);
+    }
+
+    @Test
+    void testDenseVectorFieldEmbeddingFailure() {
+        final EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModel.embed(any(String.class))).thenThrow(new IllegalStateException("boom"));
+        final SearchExpressionQueryBuilder builder = createBuilderWithVectorModel(embeddingModel);
+
+        assertThatThrownBy(() -> builder.buildQuery(and(term(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats"))))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Failed to create vector embeddings for field " + DENSE_VECTOR_FIELD + ". boom")
+                .hasCauseInstanceOf(IllegalStateException.class);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Special values (wildcard, empty, whitespace)
+    // --------------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            ID_FIELD, INTEGER_FIELD, LONG_FIELD, FLOAT_FIELD, DOUBLE_FIELD, DATE_FIELD, IP_FIELD,
+            TEXT_FIELD, KEYWORD_FIELD, BOOLEAN_FIELD})
+    void testEqualsStarIsExistsQuery(final String field) {
+        final Query query = buildSingleTerm(field, Condition.EQUALS, " * ");
+
+        assertThat(query.isExists()).isTrue();
+        assertThat(query.exists().field()).isEqualTo(field);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            ID_FIELD, INTEGER_FIELD, LONG_FIELD, FLOAT_FIELD, DOUBLE_FIELD, DATE_FIELD, IP_FIELD,
+            TEXT_FIELD, KEYWORD_FIELD, BOOLEAN_FIELD})
+    void testNotEqualsStarIsNegatedExistsQuery(final String field) {
+        final Query inner = assertNegated(buildSingleTerm(field, Condition.NOT_EQUALS, "*"));
+
+        assertThat(inner.isExists()).isTrue();
+        assertThat(inner.exists().field()).isEqualTo(field);
+    }
+
+    @Test
+    void testInStarOnTextFieldIsNotExistsQuery() {
+        // Only EQUALS and NOT_EQUALS treat a lone `*` as an exists query
+        assertQueryString(buildSingleTerm(TEXT_FIELD, Condition.IN, "*"), TEXT_FIELD, "*");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void testEmptyValueIsIgnored(final String value) {
+        final Query query = buildQuery(and(term(LONG_FIELD, Condition.EQUALS, value)));
+
+        assertEmptyBool(query);
+    }
+
+    @Test
+    void testNullValueIsIgnored() {
+        final Query query = buildQuery(and(term(TEXT_FIELD, Condition.EQUALS, null)));
+
+        assertEmptyBool(query);
+    }
+
+    @Test
+    void testDelimiterOnlyStringValueIsIgnored() {
+        final Query query = buildQuery(and(term(TEXT_FIELD, Condition.EQUALS, " , , ")));
+
+        assertEmptyBool(query);
+    }
+
+    @Test
+    void testFieldAndValueAreTrimmed() {
+        assertTerm(buildSingleTerm("  " + LONG_FIELD + " ", Condition.EQUALS, "  42 "), LONG_FIELD, 42L);
+    }
+
+    @Test
+    void testInIgnoresEmptyTokens() {
+        final Query query = buildSingleTerm(LONG_FIELD, Condition.IN, "1,, 2 ,");
+
+        assertThat(query.terms().terms().value())
+                .extracting(FieldValue::_get)
+                .containsExactly(1L, 2L);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Operators
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void testNullExpressionIsMatchAll() {
+        assertThat(buildQuery(null).isMatchAll()).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Op.class)
+    void testEmptyOperatorIsMatchAll(final Op op) {
+        assertThat(buildQuery(ExpressionOperator.builder().op(op).build()).isMatchAll()).isTrue();
+    }
+
+    @Test
+    void testDisabledRootOperatorIsMatchAll() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .enabled(false)
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .build();
+
+        assertThat(buildQuery(expression).isMatchAll()).isTrue();
+    }
+
+    @Test
+    void testOperatorWithOnlyDisabledTermsIsMatchAll() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(disabled(term(LONG_FIELD, Condition.EQUALS, "1")))
+                .addTerm(disabled(term(TEXT_FIELD, Condition.EQUALS, "abc")))
+                .build();
+
+        assertThat(buildQuery(expression).isMatchAll()).isTrue();
+    }
+
+    @Test
+    void testOperatorWithOnlyEmptyChildOperatorsIsMatchAll() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder().op(Op.OR).build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .addOperator(ExpressionOperator.builder().build())
+                        .build())
+                .build();
+
+        assertThat(buildQuery(expression).isMatchAll()).isTrue();
+    }
+
+    @Test
+    void testDisabledTermsAreSkipped() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addTerm(disabled(term(LONG_FIELD, Condition.EQUALS, "2")))
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "3"))
+                .build();
+
+        final List<Query> must = buildQuery(expression).bool().must();
+        assertThat(must).hasSize(2);
+        assertTerm(must.get(0), LONG_FIELD, 1L);
+        assertTerm(must.get(1), LONG_FIELD, 3L);
+    }
+
+    @Test
+    void testDisabledChildOperatorIsSkipped() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addOperator(ExpressionOperator.builder()
+                        .enabled(false)
+                        .op(Op.OR)
+                        .addTerm(term(LONG_FIELD, Condition.EQUALS, "2"))
+                        .build())
+                .build();
+
+        final List<Query> must = buildQuery(expression).bool().must();
+        assertThat(must).hasSize(1);
+        assertTerm(must.getFirst(), LONG_FIELD, 1L);
+    }
+
+    @Test
+    void testEmptyChildOperatorIsSkipped() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addOperator(ExpressionOperator.builder().op(Op.OR).build())
+                .build();
+
+        final List<Query> must = buildQuery(expression).bool().must();
+        assertThat(must).hasSize(1);
+        assertTerm(must.getFirst(), LONG_FIELD, 1L);
+    }
+
+    @Test
+    void testAndOperator() {
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.AND)
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "abc"))
+                .build()).bool();
+
+        assertThat(bool.should()).isEmpty();
+        assertThat(bool.mustNot()).isEmpty();
+        assertThat(bool.must()).hasSize(2);
+        assertTerm(bool.must().get(0), LONG_FIELD, 1L);
+        assertTerm(bool.must().get(1), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testOrOperator() {
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "abc"))
+                .build()).bool();
+
+        assertThat(bool.must()).isEmpty();
+        assertThat(bool.mustNot()).isEmpty();
+        assertThat(bool.should()).hasSize(2);
+        assertTerm(bool.should().get(0), LONG_FIELD, 1L);
+        assertTerm(bool.should().get(1), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testNotOperator() {
+        final BoolQuery bool = buildQuery(ExpressionOperator.builder()
+                .op(Op.NOT)
+                .addTerm(term(LONG_FIELD, Condition.EQUALS, "1"))
+                .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "abc"))
+                .build()).bool();
+
+        assertThat(bool.must()).isEmpty();
+        assertThat(bool.should()).isEmpty();
+        assertThat(bool.mustNot()).hasSize(2);
+        assertTerm(bool.mustNot().get(0), LONG_FIELD, 1L);
+        assertTerm(bool.mustNot().get(1), KEYWORD_FIELD, "abc");
+    }
+
+    @Test
+    void testNestedOperators() {
+        // AND(id = 1, OR(tag = a, NOT(count > 5)), timestamp < DATE_1)
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .op(Op.AND)
+                .addTerm(term(ID_FIELD, Condition.EQUALS, "1"))
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "a"))
+                        .addOperator(ExpressionOperator.builder()
+                                .op(Op.NOT)
+                                .addTerm(term(INTEGER_FIELD, Condition.GREATER_THAN, "5"))
+                                .build())
+                        .build())
+                .addTerm(term(DATE_FIELD, Condition.LESS_THAN, DATE_1))
+                .build();
+
+        final List<Query> must = buildQuery(expression).bool().must();
+        assertThat(must).hasSize(3);
+        assertTerm(must.get(0), ID_FIELD, 1L);
+        assertThat(rangeValue(assertRange(must.get(2), DATE_FIELD).lt())).isEqualTo(DATE_1_MS);
+
+        final List<Query> should = must.get(1).bool().should();
+        assertThat(should).hasSize(2);
+        assertTerm(should.get(0), KEYWORD_FIELD, "a");
+
+        final List<Query> mustNot = should.get(1).bool().mustNot();
+        assertThat(mustNot).hasSize(1);
+        assertThat(rangeValue(assertRange(mustNot.getFirst(), INTEGER_FIELD).gt())).isEqualTo(5L);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Nested fields
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void testNestedFieldOneLevel() {
+        addField("user", FieldType.NESTED, "nested");
+        addField("user.name", FieldType.TEXT, "text");
+
+        final Query query = buildSingleTerm("user.name", Condition.EQUALS, "bob");
+
+        final Query leaf = assertNestedPaths(query, "user");
+        assertQueryString(leaf, "user.name", "bob");
+    }
+
+    @Test
+    void testNestedFieldSeveralLevels() {
+        addField("a", FieldType.NESTED, "nested");
+        addField("a.b", FieldType.NESTED, "nested");
+        addField("a.b.c", FieldType.NESTED, "nested");
+        addField("a.b.c.d", FieldType.LONG, "long");
+
+        final Query query = buildSingleTerm("a.b.c.d", Condition.EQUALS, "7");
+
+        final Query leaf = assertNestedPaths(query, "a", "a.b", "a.b.c");
+        assertTerm(leaf, "a.b.c.d", 7L);
+    }
+
+    @Test
+    void testNestedFieldSkipsObjectAncestors() {
+        addField("a", FieldType.NESTED, "nested");
+        addField("a.b", FieldType.TEXT, "object");
+        addField("a.b.c", FieldType.NESTED, "nested");
+        addField("a.b.c.d", FieldType.KEYWORD, "keyword");
+
+        final Query query = buildSingleTerm("a.b.c.d", Condition.EQUALS, "x");
+
+        final Query leaf = assertNestedPaths(query, "a", "a.b.c");
+        assertTerm(leaf, "a.b.c.d", "x");
+    }
+
+    @Test
+    void testNestedFieldSkipsUnknownAncestors() {
+        // `a` is not in the field cache at all
+        addField("a.b", FieldType.NESTED, "nested");
+        addField("a.b.c", FieldType.KEYWORD, "keyword");
+
+        final Query query = buildSingleTerm("a.b.c", Condition.EQUALS, "x");
+
+        final Query leaf = assertNestedPaths(query, "a.b");
+        assertTerm(leaf, "a.b.c", "x");
+    }
+
+    @Test
+    void testObjectFieldIsNotNested() {
+        addField("obj", FieldType.TEXT, "object");
+        addField("obj.value", FieldType.LONG, "long");
+
+        assertTerm(buildSingleTerm("obj.value", Condition.EQUALS, "3"), "obj.value", 3L);
+    }
+
+    @Test
+    void testMultiFieldUnderNestedField() {
+        addField("user", FieldType.NESTED, "nested");
+        addField("user.name", FieldType.TEXT, "text");
+        addField("user.name.keyword", FieldType.KEYWORD, "keyword");
+
+        final Query query = buildSingleTerm("user.name.keyword", Condition.EQUALS, "bob");
+
+        final Query leaf = assertNestedPaths(query, "user");
+        assertTerm(leaf, "user.name.keyword", "bob");
+    }
+
+    @Test
+    void testNestedFieldNotEqualsNegatesOutsideNested() {
+        addNestedUserFields();
+
+        final Query inner = assertNegated(buildSingleTerm("user.age", Condition.NOT_EQUALS, "30"));
+
+        assertTerm(assertNestedPaths(inner, "user"), "user.age", 30L);
+    }
+
+    @Test
+    void testNestedFieldExists() {
+        addNestedUserFields();
+
+        final Query query = buildSingleTerm("user.age", Condition.EQUALS, "*");
+
+        final Query leaf = assertNestedPaths(query, "user");
+        assertThat(leaf.isExists()).isTrue();
+        assertThat(leaf.exists().field()).isEqualTo("user.age");
+    }
+
+    @Test
+    void testNestedFieldNotExists() {
+        addNestedUserFields();
+
+        final Query inner = assertNegated(buildSingleTerm("user.age", Condition.NOT_EQUALS, "*"));
+
+        final Query leaf = assertNestedPaths(inner, "user");
+        assertThat(leaf.isExists()).isTrue();
+    }
+
+    @Test
+    void testNestedFieldScalarIn() {
+        addNestedUserFields();
+
+        final Query leaf = assertNestedPaths(buildSingleTerm("user.age", Condition.IN, "1,2"), "user");
+
+        assertThat(leaf.isTerms()).isTrue();
+        assertThat(leaf.terms().terms().value()).extracting(FieldValue::_get).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void testNestedFieldRange() {
+        addNestedUserFields();
+
+        final Query leaf = assertNestedPaths(buildSingleTerm("user.age", Condition.BETWEEN, "1,2"), "user");
+
+        final UntypedRangeQuery range = assertRange(leaf, "user.age");
+        assertThat(rangeValue(range.gte())).isEqualTo(1L);
+        assertThat(rangeValue(range.lte())).isEqualTo(2L);
+    }
+
+    @Test
+    void testNestedFieldStringIn() {
+        addNestedUserFields();
+
+        final Query leaf = assertNestedPaths(buildSingleTerm("user.role", Condition.IN, "a,b"), "user");
+
+        // The whole OR is wrapped once, rather than each term individually
+        assertThat(leaf.bool().should()).hasSize(2);
+        assertTerm(leaf.bool().should().get(0), "user.role", "a");
+        assertTerm(leaf.bool().should().get(1), "user.role", "b");
+    }
+
+    @Test
+    void testNestedFieldRegex() {
+        addNestedUserFields();
+
+        final Query leaf = assertNestedPaths(buildSingleTerm("user.role", Condition.MATCHES_REGEX, "a.*"), "user");
+
+        assertThat(leaf.isRegexp()).isTrue();
+        assertThat(leaf.regexp().field()).isEqualTo("user.role");
+    }
+
+    @Test
+    void testNestedFieldInDictionary() {
+        addNestedUserFields();
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"a", "b"});
+
+        final Query query = buildSingleTerm(dictionaryTerm("user.role"));
+
+        // The combined dictionary query is wrapped once
+        final Query leaf = assertNestedPaths(query, "user");
+        final List<Query> lines = assertDictionaryLines(leaf, 2);
+        assertTerm(lines.get(0), "user.role", "a");
+        assertTerm(lines.get(1), "user.role", "b");
+    }
+
+    // --------------------------------------------------------------------------------
+    // Invalid input
+    // --------------------------------------------------------------------------------
+
+    @ParameterizedTest
+    @ValueSource(strings = {ID_FIELD, INTEGER_FIELD, LONG_FIELD})
+    void testUnparseableWholeNumber(final String field) {
+        for (final String value : List.of("abc", "1.5", "1e3", "12abc")) {
+            assertThatThrownBy(() -> buildSingleTerm(field, Condition.EQUALS, value))
+                    .isInstanceOf(NumberFormatException.class)
+                    .hasMessage("Expected a numeric value for field \"" + field +
+                                "\" but was given string \"" + value + "\"");
+        }
+    }
+
+    @Test
+    void testUnparseableFloat() {
+        assertThatThrownBy(() -> buildSingleTerm(FLOAT_FIELD, Condition.EQUALS, "abc"))
+                .isInstanceOf(NumberFormatException.class)
+                .hasMessage("Expected a decimal (float) value for field \"" + FLOAT_FIELD +
+                            "\" but was given string \"abc\"");
+    }
+
+    @Test
+    void testUnparseableDouble() {
+        assertThatThrownBy(() -> buildSingleTerm(DOUBLE_FIELD, Condition.GREATER_THAN, "1.2.3"))
+                .isInstanceOf(NumberFormatException.class)
+                .hasMessage("Expected a decimal (double) value for field \"" + DOUBLE_FIELD +
+                            "\" but was given string \"1.2.3\"");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"not a date", "2021-13-45T00:00:00.000Z", "yesterday"})
+    void testUnparseableDate(final String value) {
+        assertThatThrownBy(() -> buildSingleTerm(DATE_FIELD, Condition.EQUALS, value))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Expected a standard date value for field \"" + DATE_FIELD +
+                            "\" but was given string \"" + value + "\"");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"abc", "1.2.3", "1.2.3.4.5", "1234.1.1.1", "1.2.3.a", "::1"})
+    void testUnparseableIpAddress(final String value) {
+        assertThatThrownBy(() -> buildSingleTerm(IP_FIELD, Condition.EQUALS, value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid IPv4 address format: " + value + " for field \"" + IP_FIELD + "\"");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "256.1.1.1", "1.256.1.1", "1.1.256.1", "1.1.1.256", "1.2.3.999", "999.999.999.999",
@@ -159,6 +934,76 @@ class TestSearchExpressionQueryBuilder {
         assertThatThrownBy(() -> buildSingleTerm(dictionaryTerm(IP_FIELD)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid IPv4 address format: 10.0.0.256 for field \"" + IP_FIELD + "\"");
+    }
+
+    @Test
+    void testUnparseableValueInList() {
+        assertThatThrownBy(() -> buildSingleTerm(LONG_FIELD, Condition.IN, "1, two, 3"))
+                .isInstanceOf(NumberFormatException.class)
+                .hasMessageContaining("\"two\"");
+    }
+
+    @Test
+    void testUnparseableDictionaryWord() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"1", "two"});
+
+        assertThatThrownBy(() -> buildSingleTerm(dictionaryTerm(LONG_FIELD)))
+                .isInstanceOf(NumberFormatException.class)
+                .hasMessageContaining("\"two\"");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1", "1,2,3", "1,,"})
+    void testBetweenWithWrongNumberOfValues(final String value) {
+        final int count = (int) Arrays.stream(value.split(",")).filter(s -> !s.isBlank()).count();
+
+        assertThatThrownBy(() -> buildSingleTerm(LONG_FIELD, Condition.BETWEEN, value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Two values needed for between query. Only " + count + " provided");
+    }
+
+    @Test
+    void testUnknownField() {
+        assertThatThrownBy(() -> buildSingleTerm("nope", Condition.EQUALS, "x"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Field not found in index: nope");
+    }
+
+    @Test
+    void testNonElasticField() {
+        indexFieldCache.put("other", mock(IndexField.class));
+
+        assertThatThrownBy(() -> buildSingleTerm("other", Condition.EQUALS, "x"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Field not found in index: other");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "   "})
+    void testFieldNotSet(final String field) {
+        assertThatThrownBy(() -> buildSingleTerm(field, Condition.EQUALS, "x"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Field not set");
+    }
+
+    @Test
+    void testNullField() {
+        assertThatThrownBy(() -> buildSingleTerm(null, Condition.EQUALS, "x"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Field not set");
+    }
+
+    @Test
+    void testDictionaryNotSet() {
+        final ExpressionTerm term = ExpressionTerm.builder()
+                .field(KEYWORD_FIELD)
+                .condition(Condition.IN_DICTIONARY)
+                .value("dict")
+                .build();
+
+        assertThatThrownBy(() -> buildSingleTerm(term))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Dictionary not set for field: " + KEYWORD_FIELD);
     }
 
     @Test

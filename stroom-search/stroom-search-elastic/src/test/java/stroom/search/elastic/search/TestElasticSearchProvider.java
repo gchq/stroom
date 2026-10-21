@@ -38,6 +38,8 @@ import co.elastic.clients.elasticsearch.indices.GetMappingResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -46,6 +48,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -54,6 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -160,6 +164,76 @@ class TestElasticSearchProvider {
     }
 
     @Test
+    void testRegisterField_nestedWithinNested() {
+        final Property user = Property.of(p -> p.nested(n -> n
+                .properties("Address", Property.of(a -> a.nested(an -> an
+                        .properties("City", Property.of(c -> c.keyword(kw -> kw))))))));
+
+        final NavigableMap<String, FieldMapping> out = new TreeMap<>();
+        ElasticSearchProvider.registerField("User", user, out);
+
+        assertThat(out).containsOnlyKeys("User", "User.Address", "User.Address.City");
+        assertThat(getKind(out, "User.Address")).isEqualTo(Kind.Nested);
+        assertThat(out.get("User.Address.City").fullName()).isEqualTo("User.Address.City");
+    }
+
+    @Test
+    void testGetDataSourceFields_aliasResolvesToTargetType() throws IOException {
+        givenMapping("""
+                {
+                  "EventTime": { "type": "date" },
+                  "Timestamp": { "type": "alias", "path": "EventTime" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(
+                        tuple("EventTime", FieldType.DATE, true),
+                        tuple("Timestamp", FieldType.DATE, true));
+    }
+
+    @Test
+    void testGetFieldsMap_aliasResolvesToTargetType() throws IOException {
+        givenMapping("""
+                {
+                  "EventTime": { "type": "date" },
+                  "Timestamp": { "type": "alias", "path": "EventTime" }
+                }""");
+
+        final ElasticIndexField alias = elasticSearchProvider.getFieldsMap(createIndex()).get("Timestamp");
+
+        assertThat(alias).isNotNull();
+        assertThat(alias.getFldType()).isEqualTo(FieldType.DATE);
+        assertThat(alias.getNativeType()).isEqualTo("date");
+        assertThat(alias.isIndexed()).isTrue();
+    }
+
+    @Test
+    void testGetDataSourceFields_aliasToMissingTargetDropped() throws IOException {
+        givenMapping("""
+                {
+                  "Broken": { "type": "alias", "path": "DoesNotExist" },
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("Name");
+    }
+
+    @Test
+    void testGetFieldsMap_aliasToMissingTargetDropped() throws IOException {
+        givenMapping("""
+                {
+                  "Broken": { "type": "alias", "path": "DoesNotExist" },
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()))
+                .containsOnlyKeys("Name");
+    }
+
+    @Test
     void testGetDataSourceFields_aliasToNonIndexedTargetNotQueryable() throws IOException {
         givenMapping("""
                 {
@@ -192,6 +266,61 @@ class TestElasticSearchProvider {
         assertThat(alias.isIndexed()).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"keyword", "text", "boolean", "date", "long", "integer", "double", "scaled_float", "ip"})
+    void testGetDataSourceFields_indexFalseNotQueryable(final String nativeType) throws IOException {
+        givenMapping("""
+                {
+                  "Indexed": { "type": "%s" },
+                  "IndexedExplicitly": { "type": "%s", "index": true },
+                  "NotIndexed": { "type": "%s", "index": false }
+                }""".formatted(nativeType, nativeType, nativeType));
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::queryable)
+                .containsExactly(
+                        tuple("Indexed", true),
+                        tuple("IndexedExplicitly", true),
+                        tuple("NotIndexed", false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"keyword", "text", "boolean", "date", "long", "integer", "double", "scaled_float", "ip"})
+    void testGetFieldsMap_indexFalseNotIndexed(final String nativeType) throws IOException {
+        givenMapping("""
+                {
+                  "Indexed": { "type": "%s" },
+                  "NotIndexed": { "type": "%s", "index": false }
+                }""".formatted(nativeType, nativeType));
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        assertThat(fieldsMap.get("Indexed").isIndexed()).isTrue();
+        assertThat(fieldsMap.get("NotIndexed").isIndexed()).isFalse();
+        assertThat(fieldsMap.get("NotIndexed").getNativeType()).isEqualTo(nativeType);
+    }
+
+    @Test
+    void testGetFieldsMap_otherTypesAssumedIndexed() throws IOException {
+        // The `index` parameter is only inspected for common data types; all others are assumed indexed
+        givenMapping("""
+                {
+                  "Constant": { "type": "constant_keyword", "value": "foo" },
+                  "Pattern": { "type": "wildcard" },
+                  "Vector": { "type": "dense_vector", "dims": 3, "index": false },
+                  "Version": { "type": "version" }
+                }""");
+
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()).values())
+                .extracting(ElasticIndexField::getFldName, ElasticIndexField::getFldType,
+                        ElasticIndexField::isIndexed)
+                .containsExactlyInAnyOrder(
+                        tuple("Constant", FieldType.KEYWORD, true),
+                        tuple("Pattern", FieldType.KEYWORD, true),
+                        tuple("Vector", FieldType.DENSE_VECTOR, true),
+                        tuple("Version", FieldType.INTEGER, true));
+    }
+
     @Test
     void testGetDataSourceFields_dateNanosIndexFalseNotQueryable() throws IOException {
         givenMapping("""
@@ -219,10 +348,327 @@ class TestElasticSearchProvider {
     }
 
     @Test
+    void testGetDataSourceFields_unsupportedTypesDropped() throws IOException {
+        givenMapping("""
+                {
+                  "Blob": { "type": "binary" },
+                  "Labels": { "type": "flattened" },
+                  "Location": { "type": "geo_point" },
+                  "Name": { "type": "keyword" },
+                  "Range": { "type": "integer_range" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("Name");
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()))
+                .containsOnlyKeys("Name");
+    }
+
+    @Test
+    void testGetDataSourceFields_objectDroppedNestedKeptNotQueryable() throws IOException {
+        givenMapping("""
+                {
+                  "Host": {
+                    "properties": {
+                      "Name": { "type": "keyword" }
+                    }
+                  },
+                  "User": {
+                    "type": "nested",
+                    "properties": {
+                      "Id": { "type": "keyword" },
+                      "Address": {
+                        "type": "nested",
+                        "properties": {
+                          "City": { "type": "keyword" }
+                        }
+                      }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(
+                        tuple("Host.Name", FieldType.KEYWORD, true),
+                        tuple("User", FieldType.NESTED, false),
+                        tuple("User.Address", FieldType.NESTED, false),
+                        tuple("User.Address.City", FieldType.KEYWORD, true),
+                        tuple("User.Id", FieldType.KEYWORD, true));
+    }
+
+    @Test
+    void testGetFieldsMap_objectDroppedNestedKept() throws IOException {
+        givenMapping("""
+                {
+                  "Host": {
+                    "type": "object",
+                    "properties": {
+                      "Name": { "type": "keyword" }
+                    }
+                  },
+                  "User": {
+                    "type": "nested",
+                    "properties": {
+                      "Id": { "type": "keyword" }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()).values())
+                .extracting(ElasticIndexField::getFldName, ElasticIndexField::getFldType,
+                        ElasticIndexField::getNativeType)
+                .containsExactlyInAnyOrder(
+                        tuple("Host.Name", FieldType.KEYWORD, "keyword"),
+                        tuple("User", FieldType.NESTED, "nested"),
+                        tuple("User.Id", FieldType.KEYWORD, "keyword"));
+    }
+
+    @Test
+    void testGetDataSourceFields_multiFields() throws IOException {
+        givenMapping("""
+                {
+                  "Message": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": { "type": "keyword", "ignore_above": 256 },
+                      "length": { "type": "token_count", "analyzer": "standard" }
+                    }
+                  },
+                  "Status": {
+                    "type": "keyword",
+                    "fields": {
+                      "text": { "type": "text" }
+                    }
+                  }
+                }""");
+
+        // token_count is unsupported, so is dropped
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(
+                        tuple("Message", FieldType.TEXT, true),
+                        tuple("Message.keyword", FieldType.KEYWORD, true),
+                        tuple("Status", FieldType.KEYWORD, true),
+                        tuple("Status.text", FieldType.TEXT, true));
+    }
+
+    @Test
+    void testGetDataSourceFields_mergedAcrossIndicesFirstDefinitionWins() throws IOException {
+        givenMappingResponse("""
+                {
+                  "index-a": {
+                    "mappings": {
+                      "properties": {
+                        "OnlyInA": { "type": "long" },
+                        "Shared": { "type": "keyword" }
+                      }
+                    }
+                  },
+                  "index-b": {
+                    "mappings": {
+                      "properties": {
+                        "OnlyInB": { "type": "ip" },
+                        "Shared": { "type": "text" }
+                      }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType)
+                .containsExactly(
+                        tuple("OnlyInA", FieldType.LONG),
+                        tuple("OnlyInB", FieldType.IPV4_ADDRESS),
+                        tuple("Shared", FieldType.KEYWORD));
+    }
+
+    @Test
+    void testGetDataSourceFields_indexWithoutMappings() throws IOException {
+        givenMappingResponse("""
+                {
+                  "index-a": { "mappings": {} },
+                  "index-b": {
+                    "mappings": {
+                      "properties": {
+                        "Name": { "type": "keyword" }
+                      }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("Name");
+    }
+
+    @Test
+    void testGetDataSourceFields_caseInsensitiveOrder() throws IOException {
+        givenMapping("""
+                {
+                  "zulu": { "type": "keyword" },
+                  "Bravo": { "type": "keyword" },
+                  "alpha": { "type": "keyword" },
+                  "Charlie": { "type": "keyword" },
+                  "@timestamp": { "type": "date" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("@timestamp", "alpha", "Bravo", "Charlie", "zulu");
+    }
+
+    @Test
+    void testGetDataSourceFields_unknownTypeIgnored() throws IOException {
+        // A type the client does not know about is deserialised as a custom property, which is not supported
+        givenMapping("""
+                {
+                  "Future": { "type": "some_future_type" },
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("Name");
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()))
+                .containsOnlyKeys("Name");
+    }
+
+    @Test
+    void testGetDataSourceFields_noClusterRef() {
+        final ElasticIndexDoc index = ElasticIndexDoc.builder()
+                .uuid(INDEX_REF.getUuid())
+                .indexName(INDEX_NAME)
+                .build();
+
+        assertThat(elasticSearchProvider.getDataSourceFields(index)).isEmpty();
+        assertThat(elasticSearchProvider.getFieldsMap(index)).isEmpty();
+        verifyNoInteractions(elasticClusterStore, elasticClientCache);
+    }
+
+    @Test
+    void testGetDataSourceFields_clientFailure() throws IOException {
+        givenClient();
+        when(elasticIndicesClient.getMapping(any(GetMappingRequest.class)))
+                .thenThrow(new IOException("Connection refused"));
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex())).isEmpty();
+    }
+
+    @Test
+    void testGetDataSourceFields_clientCacheFailure() {
+        final ElasticClusterDoc cluster = createCluster();
+        when(elasticClusterStore.readDocument(CLUSTER_REF)).thenReturn(cluster);
+        when(elasticClientCache.contextResult(eq(cluster.getConnection()), any()))
+                .thenThrow(new IllegalStateException("Unable to resolve credentials"));
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex())).isEmpty();
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex())).isEmpty();
+    }
+
+    @Test
+    void testGetDataSourceFields_missingCluster() {
+        when(elasticClusterStore.readDocument(CLUSTER_REF)).thenReturn(null);
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex())).isEmpty();
+    }
+
+    @Test
+    void testGetFields() throws IOException {
+        givenMapping("""
+                {
+                  "Count": { "type": "integer" },
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getFields(createIndex()))
+                .extracting(ElasticIndexField::getFldName, ElasticIndexField::getFldType,
+                        ElasticIndexField::getNativeType, ElasticIndexField::isIndexed)
+                .containsExactlyInAnyOrder(
+                        tuple("Count", FieldType.INTEGER, "integer", true),
+                        tuple("Name", FieldType.KEYWORD, "keyword", true));
+    }
+
+    @Test
+    void testGetIndexField() throws IOException {
+        givenIndexDoc();
+        givenMapping("""
+                {
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getIndexField(INDEX_REF, "Name"))
+                .isInstanceOf(ElasticIndexField.class)
+                .extracting(field -> field.getFldType())
+                .isEqualTo(FieldType.KEYWORD);
+    }
+
+    @Test
+    void testGetIndexField_missingIndex() {
+        assertThat(elasticSearchProvider.getIndexField(INDEX_REF, "Name")).isNull();
+    }
+
+    @Test
+    void testGetFieldCount() throws IOException {
+        givenUseAsRead();
+        givenIndexDoc();
+        givenMapping("""
+                {
+                  "Count": { "type": "integer" },
+                  "Location": { "type": "geo_point" },
+                  "Name": { "type": "keyword" }
+                }""");
+
+        assertThat(elasticSearchProvider.getFieldCount(INDEX_REF)).isEqualTo(2);
+    }
+
+    @Test
     void testGetFieldCount_missingIndex() {
         givenUseAsRead();
 
         assertThat(elasticSearchProvider.getFieldCount(INDEX_REF)).isZero();
+    }
+
+    @Test
+    void testGetTimeField() {
+        givenUseAsRead();
+        when(elasticIndexStore.readDocument(INDEX_REF))
+                .thenReturn(createIndex().copy().timeField("EventTime").build());
+
+        final Optional<QueryField> timeField = elasticSearchProvider.getTimeField(INDEX_REF);
+
+        assertThat(timeField).isPresent();
+        assertThat(timeField.get().getFldName()).isEqualTo("EventTime");
+        assertThat(timeField.get().getFldType()).isEqualTo(FieldType.DATE);
+    }
+
+    @Test
+    void testGetTimeField_whitespace() {
+        givenUseAsRead();
+        when(elasticIndexStore.readDocument(INDEX_REF))
+                .thenReturn(createIndex().copy().timeField("  ").build());
+
+        assertThat(elasticSearchProvider.getTimeField(INDEX_REF)).isEmpty();
+    }
+
+    @Test
+    void testGetTimeField_defaultedWhenNotSet() {
+        givenUseAsRead();
+        // The index document defaults a null or empty time field to `@timestamp`
+        when(elasticIndexStore.readDocument(INDEX_REF))
+                .thenReturn(createIndex().copy().timeField(null).build());
+
+        assertThat(elasticSearchProvider.getTimeField(INDEX_REF))
+                .map(QueryField::getFldName)
+                .hasValue("@timestamp");
+    }
+
+    @Test
+    void testGetTimeField_missingIndex() {
+        givenUseAsRead();
+
+        assertThat(elasticSearchProvider.getTimeField(INDEX_REF)).isEmpty();
     }
 
     private void givenUseAsRead() {

@@ -16,10 +16,12 @@
 
 package stroom.search.elastic.search;
 
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -57,6 +59,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -121,6 +124,171 @@ class TestElasticSearchTaskHandlerWireMock {
         if (client != null) {
             client.close();
         }
+    }
+
+    @Test
+    void testSearchRequest_singleSlice() throws IOException {
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("")));
+
+        searchSlice(index(1, 250), 0);
+
+        final JsonNode body = singleRequestBody(RequestMethod.POST, SEARCH_PATH);
+        assertThat(body.get("_source").asBoolean())
+                .isFalse();
+        assertThat(body.get("size").asInt())
+                .isEqualTo(250);
+        assertThat(body.has("slice"))
+                .as("No slice should be requested for a single slice search")
+                .isFalse();
+        assertThat(body.has("highlight"))
+                .isFalse();
+        assertThat(requestedFields(body))
+                .containsExactlyInAnyOrder("host", "user.name", "count");
+        assertThat(body.at("/query/match_all").isObject())
+                .isTrue();
+        assertThat(singleRequest(RequestMethod.POST, SEARCH_PATH).queryParameter("scroll").firstValue())
+                .isEqualTo("60s");
+        verify(errorConsumer, never()).add(any(Throwable.class));
+    }
+
+    @Test
+    void testSearchRequest_multipleSlices() throws IOException {
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("")));
+
+        searchSlice(index(3, 100), 1);
+
+        final JsonNode body = singleRequestBody(RequestMethod.POST, SEARCH_PATH);
+        assertThat(body.at("/slice/id").asText())
+                .isEqualTo("1");
+        assertThat(body.at("/slice/max").asInt())
+                .isEqualTo(3);
+        assertThat(body.get("size").asInt())
+                .isEqualTo(100);
+    }
+
+    @Test
+    void testSearchRequest_highlight() throws IOException {
+        highlight = true;
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("""
+                {"_index": "test-index", "_id": "1", "fields": {"host": ["web01"]},
+                 "highlight": {"host": ["<em>web01</em>"]}}""")));
+        stubScrollPages(searchResponse(""));
+
+        searchSlice(index(1, 10), 0);
+
+        final JsonNode body = singleRequestBody(RequestMethod.POST, SEARCH_PATH);
+        assertThat(body.get("highlight").toString())
+                .contains("\"host\"");
+        verify(resultStore).addHighlights(Set.of("<em>web01</em>"));
+    }
+
+    @Test
+    void testScrollsUntilEmptyPage() throws IOException {
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("""
+                {"_index": "test-index", "_id": "1",
+                 "fields": {"host": ["web01"], "user": [{"name": ["Alice"]}], "count": [1]}},
+                {"_index": "test-index", "_id": "2",
+                 "fields": {"host": ["web02"], "count": [2]}}""")));
+        stubScrollPages(
+                searchResponse("""
+                        {"_index": "test-index", "_id": "3",
+                         "fields": {"user": [{"name": ["Bob"]}, {"name": ["Carol"]}], "count": [3]}}"""),
+                searchResponse("""
+                        {"_index": "test-index", "_id": "4", "fields": {"host": ["web04"]}}"""),
+                searchResponse(""));
+
+        final AtomicLong hitCount = searchSlice(index(1, 2), 0);
+
+        assertThat(captureRows(4))
+                .containsExactly(
+                        new Val[]{ValString.create("web01"), ValString.create("Alice"), ValLong.create(1)},
+                        new Val[]{ValString.create("web02"), null, ValLong.create(2)},
+                        new Val[]{null, ValString.create("Bob, Carol"), ValLong.create(3)},
+                        new Val[]{ValString.create("web04"), null, null});
+        assertThat(hitCount)
+                .hasValue(4);
+
+        final List<LoggedRequest> scrollRequests = requests(RequestMethod.POST, SCROLL_PATH);
+        assertThat(scrollRequests)
+                .hasSize(3);
+        for (final LoggedRequest scrollRequest : scrollRequests) {
+            final JsonNode body = JSON_MAPPER.readTree(scrollRequest.getBodyAsString());
+            assertThat(body.get("scroll_id").asText())
+                    .isEqualTo(SCROLL_ID);
+            assertThat(body.get("scroll").asText())
+                    .isEqualTo("60s");
+        }
+        assertScrollCleared();
+        verify(errorConsumer, never()).add(any(Throwable.class));
+    }
+
+    @Test
+    void testEmptyInitialPage() {
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("")));
+
+        final AtomicLong hitCount = searchSlice(index(1, 10), 0);
+
+        verify(valuesConsumer, never()).accept(any());
+        assertThat(hitCount)
+                .hasValue(0);
+        assertThat(requests(RequestMethod.POST, SCROLL_PATH))
+                .isEmpty();
+        assertScrollCleared();
+    }
+
+    @Test
+    void testSearchErrorResponse_badRequest() {
+        stubSearch(ElasticWireMock.elasticResponse(400, """
+                {
+                  "error": {
+                    "root_cause": [{"type": "query_shard_exception", "reason": "bad query"}],
+                    "type": "search_phase_execution_exception",
+                    "reason": "all shards failed"
+                  },
+                  "status": 400
+                }"""));
+
+        searchSlice(index(1, 10), 0);
+
+        final Throwable error = captureError();
+        assertThat(error)
+                .hasMessageContaining("search_phase_execution_exception");
+        verify(valuesConsumer, never()).accept(any());
+        assertThat(requests(RequestMethod.POST, SCROLL_PATH))
+                .isEmpty();
+    }
+
+    @Test
+    void testSearchErrorResponse_serverError() {
+        // A non-Elasticsearch error body, e.g. from a proxy in front of the cluster
+        stubSearch(WireMock.aResponse()
+                .withStatus(500)
+                .withHeader("Content-Type", "text/plain")
+                .withBody("Internal Server Error"));
+
+        searchSlice(index(1, 10), 0);
+
+        assertThat(captureError())
+                .isNotNull();
+        verify(valuesConsumer, never()).accept(any());
+    }
+
+    @Test
+    void testScrollErrorResponse() {
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("""
+                {"_index": "test-index", "_id": "1", "fields": {"host": ["web01"]}}""")));
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(SCROLL_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(500, """
+                        {"error": {"type": "search_context_missing_exception", "reason": "No search context"},
+                         "status": 500}""")));
+
+        searchSlice(index(1, 10), 0);
+
+        // The first page is still delivered before the scroll fails
+        assertThat(captureRows(1))
+                .hasSize(1);
+        assertThat(captureError())
+                .hasMessageContaining("search_context_missing_exception");
     }
 
     @Test
@@ -191,6 +359,67 @@ class TestElasticSearchTaskHandlerWireMock {
         assertThat(captureError())
                 .hasMessageContaining("search_context_missing_exception");
         assertScrollCleared();
+    }
+
+    @Test
+    void testTerminatedBeforeFirstPage() {
+        when(taskContext.isTerminated()).thenReturn(true);
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("""
+                {"_index": "test-index", "_id": "1", "fields": {"host": ["web01"]}}""")));
+        stubScrollPages(searchResponse(""));
+
+        final AtomicLong hitCount = searchSlice(index(1, 10), 0);
+
+        verify(valuesConsumer, never()).accept(any());
+        assertThat(hitCount)
+                .hasValue(0);
+        assertThat(requests(RequestMethod.POST, SCROLL_PATH))
+                .isEmpty();
+        assertScrollCleared();
+    }
+
+    @Test
+    void testTerminatedAfterFirstPage() {
+        when(taskContext.isTerminated()).thenReturn(false, true);
+        stubSearch(ElasticWireMock.elasticResponse(200, searchResponse("""
+                {"_index": "test-index", "_id": "1", "fields": {"host": ["web01"]}}""")));
+        stubScrollPages(
+                searchResponse("""
+                        {"_index": "test-index", "_id": "2", "fields": {"host": ["web02"]}}"""),
+                searchResponse("""
+                        {"_index": "test-index", "_id": "3", "fields": {"host": ["web03"]}}"""),
+                searchResponse(""));
+
+        final AtomicLong hitCount = searchSlice(index(1, 10), 0);
+
+        // The page fetched before termination was noticed is discarded, and no further pages are requested
+        assertThat(captureRows(1))
+                .containsExactly(new Val[]{ValString.create("web01"), null, null});
+        assertThat(hitCount)
+                .hasValue(1);
+        assertThat(requests(RequestMethod.POST, SCROLL_PATH))
+                .hasSize(1);
+        assertScrollCleared();
+    }
+
+    @Test
+    void testMissingRerankScoreField() {
+        final OpenAIModelDoc rerankModel = OpenAIModelDoc.builder()
+                .uuid("model-uuid")
+                .name("model")
+                .build();
+        final ElasticQueryParams queryParams = queryParams();
+        queryParams.addKnnFieldQuery("content.vector", "some text");
+
+        handler().searchSlice(index(1, 10), rerankModel, queryParams, null, coprocessors, resultStore,
+                valuesConsumer, errorConsumer, new AtomicLong(), client, 0, taskContext);
+
+        assertThat(captureError())
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("content.score");
+        assertThat(ELASTIC.getAllServeEvents())
+                .as("No request should be made")
+                .isEmpty();
     }
 
     private AtomicLong searchSlice(final ElasticIndexDoc index, final int slice) {
