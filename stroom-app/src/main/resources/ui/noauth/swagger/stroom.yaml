@@ -13524,7 +13524,6 @@ components:
           - DOUBLE_ARROW
           - DOWN
           - DOWNLOAD
-          - DROP_DOWN
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -13586,6 +13585,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - NOT_ALLOWED
           - OK
           - OO
           - OPEN
@@ -18053,7 +18053,6 @@ components:
           - DOUBLE_ARROW
           - DOWN
           - DOWNLOAD
-          - DROP_DOWN
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
@@ -18115,6 +18114,7 @@ components:
           - MONITORING
           - MOVE
           - NODES
+          - NOT_ALLOWED
           - OK
           - OO
           - OPEN
@@ -23230,6 +23230,8 @@ components:
           - "OFF"
         editorTheme:
           type: string
+        enableCharacterKeyShortcuts:
+          type: boolean
         enableTransparency:
           type: boolean
         font:
@@ -23238,6 +23240,12 @@ components:
           type: string
         hideConditionalStyles:
           type: boolean
+        keyBindings:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
         theme:
           type: string
         timeZone:
