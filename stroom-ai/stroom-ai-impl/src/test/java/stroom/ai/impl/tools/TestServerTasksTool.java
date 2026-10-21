@@ -276,7 +276,7 @@ class TestServerTasksTool {
         throwing.add("node3");
         silent.add("node4");
         fixture.setLimits(new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null,
-                null, null, null, null, null));
+                null, null, null, null, null, null));
         task("node1", "1", null, "Data Processor", "alice", MINUTE, "");
 
         final String result = run("{}");

@@ -28,6 +28,10 @@ import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolUserAction;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
+import stroom.ai.impl.workspace.WorkspaceException;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
@@ -57,16 +61,21 @@ import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,9 +94,12 @@ class TestMcpAgentChat {
     private final ContextUsageTracker usageTracker = Mockito.mock(ContextUsageTracker.class);
     private final UserActionLookup userActionLookup = Mockito.mock(UserActionLookup.class);
     private final UserActions userActions = new UserActions(userActionLookup);
+    private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
+    private final WorkspaceArguments workspaceArguments = new WorkspaceArguments(chatWorkspace);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog, new ModelStreamer(aiService),
-            new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions);
+            new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
+            workspaceArguments);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -101,6 +113,10 @@ class TestMcpAgentChat {
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
+        // Workspace files named in arguments are read within the workspace's limits.
+        Mockito.when(chatWorkspace.limits()).thenReturn(new AiWorkspaceConfig());
+        Mockito.when(chatWorkspace.withTimeLimit(Mockito.any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(0).get());
     }
 
     private final List<ChatMessage> messages = List.of(
@@ -478,7 +494,8 @@ class TestMcpAgentChat {
         final McpAgentChat cappedChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                workspaceArguments);
         final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
                 .id("1")
                 .name("search")
@@ -544,7 +561,8 @@ class TestMcpAgentChat {
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                workspaceArguments);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -610,7 +628,8 @@ class TestMcpAgentChat {
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
+                workspaceArguments);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -690,7 +709,73 @@ class TestMcpAgentChat {
         assertThat(approval.calls()).extracting(ToolApprovalRequest.PendingCall::callId).containsExactly("2", "3");
         assertThat(approval.calls().getFirst().arguments()).isEqualTo("{\"q\":2}");
         assertThat(approval.allowForChat()).isTrue();
-        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", "{\"q\":1}", "Run", true, false);
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", "{\"q\":1}", null, "Run", true, false);
+    }
+
+    @Test
+    void aWorkspaceFileNamedInAnMcpToolsArgumentsIsPutInButTheReferenceIsKept(@TempDir final Path tempDir)
+            throws IOException {
+        final Path mapping = Files.writeString(tempDir.resolve("mapping.json"), "{\"mapping\":{\"a\":\"b\"}}");
+        final WorkspacePath path = WorkspacePath.parse("/outputs/mapping.json");
+        Mockito.when(chatWorkspace.size(7, path)).thenReturn(Files.size(mapping));
+        Mockito.when(chatWorkspace.localFile(7, path)).thenReturn(mapping);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("saved"))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final String arguments = "{\"query\":{\"$workspace\":\"/outputs/mapping.json\",\"jq\":\".mapping\"}}";
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments(arguments)
+                        .build())),
+                AiMessage.from("Saved."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // The server is sent the part of the file, as JSON.
+        final ArgumentCaptor<CallToolRequest> sent = ArgumentCaptor.forClass(CallToolRequest.class);
+        Mockito.verify(client).callTool(sent.capture());
+        assertThat(sent.getValue().arguments()).isEqualTo(Map.of("query", Map.of("a", "b")));
+        // The stored call and the audit keep the reference the model wrote, with the size of what was sent.
+        final ArgumentCaptor<String> call = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_CALL), call.capture());
+        assertThat(JsonUtil.readValue(call.getValue(), ToolCallRecord.class).arguments()).isEqualTo(arguments);
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", arguments,
+                (long) "{\"query\":{\"a\":\"b\"}}".length(), "Run", true, false);
+        // As for any other read of the file.
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
+    void aWorkspaceFileThatCantBePutInIsTheCallsErrorAndTheServerIsNotCalled() {
+        final WorkspacePath path = WorkspacePath.parse("/outputs/gone.json");
+        Mockito.when(chatWorkspace.size(7, path))
+                .thenThrow(new WorkspaceException("There is no file /outputs/gone.json."));
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final McpToolset toolset = toolset(client, searchTool());
+        final String arguments = "{\"query\":\"$workspace:/outputs/gone.json\"}";
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments(arguments)
+                        .build())),
+                AiMessage.from("It has gone."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(client, Mockito.never()).callTool(Mockito.any());
+        final ArgumentCaptor<String> result = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_RESULT),
+                result.capture());
+        final ToolResultRecord record = JsonUtil.readValue(result.getValue(), ToolResultRecord.class);
+        assertThat(record.error()).isTrue();
+        assertThat(record.text()).isEqualTo("Error: query: There is no file /outputs/gone.json.");
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", arguments, null, "Failed", false, false);
     }
 
     @Test
@@ -707,7 +792,8 @@ class TestMcpAgentChat {
                 .thenReturn(new ApprovalOutcome(ApprovalOutcome.Status.ALLOWED, null, null));
         final McpAgentChat answeredAtOnce = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, gate, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
+                workspaceArguments);
         final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
                 ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build())));
 

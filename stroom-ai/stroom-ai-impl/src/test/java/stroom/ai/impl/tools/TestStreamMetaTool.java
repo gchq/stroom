@@ -167,7 +167,7 @@ class TestStreamMetaTool {
         rows.add(row(4, DAY_2, Map.of()));
         storeAttributes.put(4L, Map.of("Raw Size", "400"));
         fixture.setLimits(new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, null, 1,
-                null));
+                null, null));
 
         final String result = run("{\"feeds\":[\"WINDOWS-EVENTS\"],\"attributes\":[\"Raw Size\"]}");
 
