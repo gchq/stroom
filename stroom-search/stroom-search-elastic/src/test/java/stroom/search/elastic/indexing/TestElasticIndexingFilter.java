@@ -151,6 +151,18 @@ class TestElasticIndexingFilter {
                 .isEqualTo("events-2023");
     }
 
+    @Test
+    void testNullClusterLoggedOnce() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setCluster(null);
+
+        assertThatThrownBy(filter::startProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Elasticsearch cluster ref has not been set");
+    }
+
     private ElasticIndexingFilter createFilter(final String indexName) {
         return harness.createFilter(
                 elasticClient,
