@@ -36,6 +36,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Label;
@@ -90,7 +91,11 @@ public final class DataGridKeyboardStories {
                 .withPlay(DataGridKeyboardStories::playEditing)
                 // Up from the first row into the column headers, and back
                 .story("Headers", context -> render(context, true))
-                .withPlay(DataGridKeyboardStories::playHeaders);
+                .withPlay(DataGridKeyboardStories::playHeaders)
+                // A selection box given the focus, and then opened, is left as it is: the grid
+                // doesn't draw its row again for the focus coming or going
+                .story("SelectionBoxStaysPut", context -> render(context, false))
+                .withPlay(DataGridKeyboardStories::playSelectionBoxStaysPut);
     }
 
     // --------------------------------------------------------------------------------
@@ -249,6 +254,33 @@ public final class DataGridKeyboardStories {
     }
 
     // A column's header, by column (its name changes as it is sorted, taking the sort's position)
+    private static void playSelectionBoxStaysPut(final Play play) {
+        play.waitFor(() -> play.expect(row(play, "Bravo")).toBeInTheDocument());
+        final Query box = control(play, "Bravo", ROLE_COLUMN, "[role='combobox']");
+        final Element[] focused = new Element[1];
+        // As a click on it would, which the grid follows (its keyboard row becomes Bravo's)
+        play.run("focus Bravo's box", () -> {
+            focused[0] = box.element().get();
+            focused[0].focus();
+        });
+        play.waitFor(() -> play.expect(row(play, "Bravo")).toHaveClass("dataGridKeyboardSelectedRow"));
+        play.expect("the box focused is still the row's", () -> isConnected(focused[0])).toBe(true);
+        play.expect(box).toHaveFocus();
+        // Enter opens its list, whose filter takes the focus out of the grid; the box says it is open
+        play.keyboard("{Enter}");
+        play.waitFor(() -> play.expect(play.screen().getByRole("listbox")).toBeVisible());
+        play.waitFor(() -> play.expect(row(play, "Bravo")).not().toHaveClass("dataGridKeyboardSelectedRow"));
+        play.expect("the box opened is still the row's", () -> isConnected(focused[0])).toBe(true);
+        play.expect(box).toHaveAttribute("aria-expanded", "true");
+        play.keyboard("{Escape}");
+        play.waitFor(() -> play.expect(play.screen().queryByRole("listbox")).toBeNull());
+        expectFocus(play, box);
+    }
+
+    private static native boolean isConnected(Element element) /*-{
+        return !!element && element.isConnected;
+    }-*/;
+
     private static Query header(final Play play, final int column) {
         return play.within(play.getByTestId(GRID)).querySelector("[role='columnheader'][data-hcol='" + column + "']");
     }

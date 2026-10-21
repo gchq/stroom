@@ -17,7 +17,6 @@
 package stroom.floormap.client.presenter;
 
 import stroom.cell.textfield.client.TextFieldCell;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
@@ -40,16 +39,16 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -58,7 +57,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /// Presenter for the *Settings* tab of a [FloorMapDoc].
@@ -96,9 +97,13 @@ public class FloorMapSettingsPresenter
     private final SelectionBox<ValueFormat> valueFormatListBox;
 
     // Value Schema grid
-    private final MyDataGrid<FloorMapFieldMapping> schemaGrid;
+    private final DataGridWidget<FloorMapFieldMapping> schemaGrid;
     private final ListDataProvider<FloorMapFieldMapping> schemaDataProvider;
-    private final SingleSelectionModel<FloorMapFieldMapping> schemaSelectionModel;
+    private final MultiSelectionModelImpl<FloorMapFieldMapping> schemaSelectionModel;
+    // Each mapping's row key, by identity: an edit's replacement takes the key of the mapping it
+    // replaces. Cleared when a document is read
+    private final Map<FloorMapFieldMapping, Integer> rowKeys = new IdentityHashMap<>();
+    private int nextRowKey;
 
     // Held so that onRead can push the read-only state into them: the cells render
     // `disabled` when read-only, rather than looking editable while the field updaters
@@ -148,25 +153,15 @@ public class FloorMapSettingsPresenter
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
-        schemaGrid = new MyDataGrid<>(this);
-        schemaSelectionModel = new SingleSelectionModel<>();
-        schemaGrid.setSelectionModel(schemaSelectionModel);
-        // Note for anyone tempted to set KeyboardSelectionPolicy.DISABLED here: don't.
-        // An earlier revision did, to remove a stray tab stop — GWT marks the
-        // keyboard-selected cell's wrapper div `tabindex="0"`, and as the selected cell
-        // moves that stop can land before the control being tabbed away from, sending
-        // focus backwards. Disabling the policy does give a clean row-major tab order,
-        // but it also switches off the table's arrow-key and space handling, and this
-        // grid's Remove button is enabled solely by schemaSelectionModel — so row
-        // selection became mouse-only and Remove stopped being operable by keyboard at
-        // all. A worse bargain than the tab order it bought.
-        //
-        // Note also that MyDataGrid's empty keyboard handler does NOT apply to this
-        // grid: it is installed by the two-arg setSelectionModel override, and the
-        // one-arg call above goes straight to AbstractHasData, so the policy here is
-        // GWT's own ENABLED default with GWT's DefaultKeyboardSelectionHandler live.
-        // The stray tab stop is the pre-existing behaviour of every Stroom grid, not
-        // something this feature introduced.
+        schemaGrid = new DataGridWidget<>(this);
+        schemaGrid.setTableName("Value Schema");
+        // An edit replaces a mapping with a new one, so rows are keyed by the mapping they
+        // started as (see rowKey), not by their values, and keep their row (and focus)
+        schemaGrid.setKeyProvider(this::rowKey);
+        // One row at a time: the selection (which enables Remove) follows the keyboard's row
+        schemaSelectionModel = new MultiSelectionModelImpl<>();
+        schemaGrid.setSelectionModel(schemaSelectionModel,
+                new DataGridWidgetSelectionEventManager<>(schemaGrid, schemaSelectionModel, false));
         schemaDataProvider = new ListDataProvider<>();
         schemaDataProvider.addDataDisplay(schemaGrid);
         initSchemaColumns();
@@ -321,14 +316,16 @@ public class FloorMapSettingsPresenter
             // unnotified path.
             //
             // Do NOT add refreshGrid() back here. The flush above marks only this row and
-            // replaces just its children; refreshGrid()'s setRowData(0, list) covers the
-            // whole range, which sends GWT down its replaceAllChildren path and destroys
-            // every row's DOM. The focus guard below depends on the difference: a control
+            // redraws just its cells; refreshGrid()'s setRowData(0, list) covers the
+            // whole range and redraws every row's. The focus guard below depends on the difference: a control
             // in another row survives a single-row redraw and keeps focus, and only
             // because of that can restoreSchemaFocusAfterRedraw leave it alone.
+            // The replacement takes the replaced mapping's key. The replaced one keeps it too: the
+            // grid may draw the row once more before the list change reaches it
+            rowKeys.put(updated, rowKey(list.get(index)));
             list.set(index, updated);
             onChange();
-            // The redraw replaces the row element, destroying the control being edited and
+            // The redraw replaces the row's cells, destroying the control being edited and
             // dropping focus to <body>. Without this a keyboard user was ejected from the
             // grid after every single edit and had to tab all the way back in.
             restoreSchemaFocusAfterRedraw(index, schemaGrid.getColumnIndex(column));
@@ -358,11 +355,11 @@ public class FloorMapSettingsPresenter
         if (rowIndex < 0 || rowIndex >= schemaGrid.getVisibleItemCount()) {
             return;
         }
-        final TableRowElement row = schemaGrid.getRowElement(rowIndex);
+        final Element row = schemaGrid.getRowElement(rowIndex);
         if (row == null) {
             return;
         }
-        final TableCellElement cell = row.getCells().getItem(columnIndex);
+        final Element cell = cellOf(row, columnIndex);
         if (cell == null) {
             return;
         }
@@ -371,6 +368,22 @@ public class FloorMapSettingsPresenter
         // reports whether it found anything — a silent no-op here would look exactly like
         // a working restore.
         FloorMapAria.focusFirstFocusable(cell);
+    }
+
+    // The row's cell for a column (the grid marks each cell with its column's index)
+    private static Element cellOf(final Element row, final int columnIndex) {
+        final String column = String.valueOf(columnIndex);
+        for (Element cell = row.getFirstChildElement(); cell != null; cell = cell.getNextSiblingElement()) {
+            if (column.equals(cell.getAttribute("data-col"))) {
+                return cell;
+            }
+        }
+        return null;
+    }
+
+    // A mapping's row key: the first time it is seen, the next number
+    private Integer rowKey(final FloorMapFieldMapping mapping) {
+        return rowKeys.computeIfAbsent(mapping, unused -> nextRowKey++);
     }
 
     /// Returns the document's currently focused element, or `null` if nothing is
@@ -420,8 +433,8 @@ public class FloorMapSettingsPresenter
         //noinspection unused e
         registerHandler(factsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
         //noinspection unused e
-        registerHandler(schemaSelectionModel.addSelectionChangeHandler(
-                e -> removeButton.setEnabled(schemaSelectionModel.getSelectedObject() != null)));
+        registerHandler(schemaSelectionModel.addSelectionHandler(
+                e -> removeButton.setEnabled(schemaSelectionModel.getSelected() != null)));
     }
 
     /// Handles the *Add* button click by creating a new
@@ -447,7 +460,7 @@ public class FloorMapSettingsPresenter
     /// is cleared, the remove button is disabled, the grid is refreshed, and the
     /// document is marked as dirty via [#onChange()].
     private void onRemoveMapping() {
-        final FloorMapFieldMapping selected = schemaSelectionModel.getSelectedObject();
+        final FloorMapFieldMapping selected = schemaSelectionModel.getSelected();
         if (selected != null) {
             final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
             list.remove(selected);
@@ -459,7 +472,7 @@ public class FloorMapSettingsPresenter
     }
 
     /// Synchronises the schema [ListDataProvider]'s list with the
-    /// [MyDataGrid] widget, updating both the displayed rows and the total
+    /// [DataGridWidget] widget, updating both the displayed rows and the total
     /// row count so the grid reflects the current state of the data provider.
     private void refreshGrid() {
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
@@ -515,12 +528,14 @@ public class FloorMapSettingsPresenter
         // Value Schema
         final List<FloorMapFieldMapping> schema =
                 new ArrayList<>(floorMapDoc.getValueSchema());
+        // A new document's mappings: forget the old ones' keys
+        rowKeys.clear();
         schemaDataProvider.setList(schema);
         setSchemaCellsReadOnly(readOnly);
         refreshGrid();
 
         addButton.setEnabled(!readOnly);
-        removeButton.setEnabled(!readOnly && schemaSelectionModel.getSelectedObject() != null);
+        removeButton.setEnabled(!readOnly && schemaSelectionModel.getSelected() != null);
 
         // Keep an Editor-tab area-support upgrade visible in the schema grid: the
         // document just read may predate the upgrade (it is only persisted on
@@ -650,7 +665,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the data grid widget that displays the Value Schema mappings.
         ///
-        /// @param grid the [MyDataGrid] widget
+        /// @param grid the [DataGridWidget] widget
         void setSchemaGrid(Widget grid);
     }
 }

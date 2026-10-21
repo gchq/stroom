@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.editors;
 import stroom.docref.DocRef;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
 import stroom.floormap.shared.FloorMapDoc;
-import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -33,7 +32,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Arrays;
 
 /// The `App/Editors/FloorMapSettings` stories, showing Stroom's real [FloorMapSettingsPresenter] (a
 /// Floor Map's 'Settings' tab) with fake REST replies, for its Value Schema grid: a row per field
@@ -107,32 +105,31 @@ public final class FloorMapSettingsStories {
                             .toHaveAttribute("aria-expanded", "false");
                     DocEditors.expectNoProblems(play);
                 })
-                // Home and End open a row's list at its first and last role, as the widget's do
-                .story("HomeAndEndOpenAtTheEnds", context -> render(context, false))
+                // On a row's box, Home and End are the grid's (the agreed grid keys): the row's last
+                // cell (the Default field's cell) and back to its first (the box); no list opens
+                .story("HomeAndEndMoveAlongTheRow", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Query role = screen.findByRole("combobox", TEMPERATURE_ROLE);
-                    final String[] roles = Arrays.stream(Role.values()).map(Role::name).toArray(String[]::new);
                     play.run("focus the box", () -> role.element().get().focus());
                     play.keyboard("{End}");
-                    play.waitFor(() -> play.expect(screen.getByRole("option", roles[roles.length - 1])).toHaveFocus());
-                    play.keyboard("{Escape}");
-                    play.waitFor(() -> play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull());
-                    play.waitFor(() -> play.expect(role).toHaveFocus());
+                    play.waitFor(() -> play.expect("the focused element's column",
+                            FloorMapSettingsStories::focusedColumn).toBe("3"));
+                    play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull();
                     play.keyboard("{Home}");
-                    play.waitFor(() -> play.expect(screen.getByRole("option", roles[0])).toHaveFocus());
-                    play.keyboard("{Escape}");
-                    play.waitFor(() -> play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull());
+                    play.waitFor(() -> play.expect(role).toHaveFocus());
+                    play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull();
                     play.expect(role).toHaveValue("CUSTOM");
                     DocEditors.expectNoProblems(play);
                 })
-                // Escape closes the list, keeping the role, with the focus back on the box
+                // Alt+Down opens the list (Down alone is the grid's: the next row), and Escape
+                // closes it, keeping the role, with the focus back on the box
                 .story("EscapeKeepsTheRole", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Query role = screen.findByRole("combobox", TEMPERATURE_ROLE);
                     play.run("focus the box", () -> role.element().get().focus());
-                    play.keyboard("{ArrowDown}");
+                    play.keyboard("{Alt>}{ArrowDown}{/Alt}");
                     play.waitFor(() -> play.expect(screen.getByRole("listbox", TEMPERATURE_ROLE)).toBeVisible());
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(screen.queryByRole("listbox", TEMPERATURE_ROLE)).toBeNull());
@@ -155,6 +152,13 @@ public final class FloorMapSettingsStories {
                     DocEditors.expectNoProblems(play);
                 });
     }
+
+    // The grid column (data-col) of the cell holding the focus, or null
+    private static native String focusedColumn() /*-{
+        var active = $doc.activeElement;
+        var cell = active && active.closest ? active.closest("[data-col]") : null;
+        return cell ? cell.getAttribute("data-col") : null;
+    }-*/;
 
     private static Widget render(final StoryContext context, final boolean readOnly) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);

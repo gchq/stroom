@@ -1981,6 +1981,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   list had added any columns, so the Document Type column kept its declared 200px. The grid now
   waits for columns before working them out. `TestColumnModel` and
   `App/Main/DocumentCreatePermissionsGrid` `ToggleType` check it.
+* **A selection box in the new grid was replaced as it took the focus, and again as its list
+  opened.** The grid drew the row again for a cell that had handled an event (whether or not the
+  cell had changed) and for the keyboard row's look, which isn't in the cells. The open box was
+  replaced, so it didn't read as expanded and its list was placed off to one side (the floor map
+  settings' Value Schema). `Widgets/Data Grid/DataGridKeyboard` `SelectionBoxStaysPut` checks it.
 
 ## Checked and not bugs
 

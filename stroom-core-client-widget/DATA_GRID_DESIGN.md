@@ -888,6 +888,34 @@ interactive header cells, the context menu, copy, export and AI.
     its fill column kept its declared width (the rows stopped at 270px). `ColumnModel.resolve`
     now waits for columns, and the grid resolves when it draws as well as on a resize
     (`TestColumnModel.testResolveWaitsForColumns`).
+* **The last three** (2026-10-21):
+  * The meta browser (`AbstractMetaListPresenter`, and so the stream list, the relation list and
+    stepping's list): its own `DataGridSelectionEventManager` becomes the new grid's (its select-all
+    handler included). The relation list narrows its expander column once rows arrive, so it
+    gives the width back to the fill columns, as `TreeRowHandler` does.
+  * The import confirmation (`ImportConfigConfirmPresenter`): one page of up to 100,000 items,
+    now `setVirtual(true)`, so only the rows in view are drawn (`MyDataGrid` drew them all).
+  * The floor map settings' Value Schema (`FloorMapSettingsPresenter`): an edit replaces a mapping
+    with a new, unequal one, so rows are keyed by the mapping they started as (an identity map
+    of numbers; a replacement takes the key of the mapping it replaces). Its `SingleSelectionModel`
+    becomes the single-select `MultiSelectionModelImpl` with the new grid's manager, so the
+    agreed keys work (Enter/F2 edits, Tab between control cells, Remove follows the row). Its
+    focus restore after an edit finds the cell by `data-col`, not through table rows. The old
+    mapping keeps its key too, as the grid may draw the row once more before the list change
+    reaches it (dropping it gave the row a new key, and so a new element, losing the focus).
+  * Its plays follow the agreed keys on a selection box: Enter, Space or Alt+Down open the list,
+    while Down, Home and End are the grid's (next row, first and last cells). Home and End no
+    longer open the list at its ends (`HomeAndEndOpenAtTheEnds` became
+    `HomeAndEndMoveAlongTheRow`).
+  * **Two grid fixes** (`Widgets/Data Grid/DataGridKeyboard` `SelectionBoxStaysPut`):
+    * A cell's event forgot its row's HTML (so the next draw wrote the row again) whenever the
+      cell handled it, in case the cell had rewritten itself. A selection box handles its own
+      focus, so focusing one replaced it at once. The HTML is now forgotten only if the cell's
+      content changed.
+    * The keyboard row coming or going rebuilt the row's cells, although its class isn't in
+      them. A selection box marks itself open, and its list's filter takes the focus out of the
+      grid; the redraw for that replaced the open box, so it never read as expanded and its list
+      was placed against a box no longer in the page. Only the class changes now.
   * `TypeFilterPresenter` and `ColumnValuesFilterPresenter` use only `MyDataGrid`'s
     `DEFAULT_LIST_PAGE_SIZE` (for a `MyCellTable`, session 5); it moves when `MyDataGrid` goes.
 

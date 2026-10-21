@@ -1610,11 +1610,11 @@ public class DataGridWidget<R> extends Widget
 
         if (dataChanged
             || rendered.selected != selected
-            || rendered.keyboard != keyboard
             || rendered.even != even
             || rendered.index != index) {
             // The keyboard cell's class is set on the element below, not written in the HTML, so the
-            // focus coming and going never rewrites a row (which would lose a click's target).
+            // focus coming and going never rewrites a row (which would lose a click's target, or a
+            // control's open list, e.g. a selection box's, whose focus has left the grid).
             final Map<Integer, Integer> spans = rowSpans != null && row != null
                     ? rowSpans.getSpans(row, absIndex)
                     : Collections.emptyMap();
@@ -1627,10 +1627,10 @@ public class DataGridWidget<R> extends Widget
                     resetFocus(rendered.element, row, absIndex, focusedColumn);
                 }
             }
-            final Element firstCell = rendered.element.getFirstChildElement();
-            if (firstCell != null) {
-                UIObject.setStyleName(firstCell, KEYBOARD_CELL_CLASS_NAME, keyboard);
-            }
+        }
+        final Element firstCell = rendered.element.getFirstChildElement();
+        if (firstCell != null) {
+            UIObject.setStyleName(firstCell, KEYBOARD_CELL_CLASS_NAME, keyboard);
         }
 
         final StringBuilder classes = new StringBuilder("data-grid__row ");
@@ -2075,12 +2075,15 @@ public class DataGridWidget<R> extends Widget
         if (!canceled && cellContent != null && columnIndex < columnModel.size()) {
             final Column<R, ?> column = columnModel.getColumn(columnIndex);
             if (consumesEvent(column.getCell(), type)) {
+                final String before = cellContent.getInnerHTML();
                 column.onBrowserEvent(context, cellContent, value, event);
                 // A cell may rewrite its own DOM when it handles an event (e.g. TickBoxCell shows
                 // the new tick at once), so the stored HTML no longer matches the row. Forget it,
                 // so the row is written again the next time it is rendered, as GWT would redraw it.
+                // Only if it did: a cell that just took the focus (a selection box) would otherwise
+                // be replaced by the redraw the focus brings, taking the focus with it.
                 final RenderedRow rendered = renderedRowsByIndex.get(rowIndex);
-                if (rendered != null) {
+                if (rendered != null && !before.equals(cellContent.getInnerHTML())) {
                     rendered.html = null;
                 }
             }
