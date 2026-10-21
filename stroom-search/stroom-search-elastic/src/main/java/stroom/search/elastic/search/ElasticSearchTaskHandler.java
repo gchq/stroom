@@ -295,32 +295,36 @@ public class ElasticSearchTaskHandler {
                     ObjectNode.class);
             final String scrollId = searchResponse.scrollId();
 
-            // Retrieve the initial result batch
-            List<Hit<ObjectNode>> searchHits = searchResponse.hits().hits();
-            long totalHitCount = 0L;
+            try {
+                // Retrieve the initial result batch
+                List<Hit<ObjectNode>> searchHits = searchResponse.hits().hits();
+                long totalHitCount = 0L;
 
-            // Continue requesting results until we have all results
-            while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
-                totalHitCount += searchHits.size();
-                processResultBatch(fieldIndex, rerankScoreFieldNames, elasticIndex, queryParams, rerankModel,
-                        resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
+                // Continue requesting results until we have all results
+                while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
+                    totalHitCount += searchHits.size();
+                    processResultBatch(fieldIndex, rerankScoreFieldNames, elasticIndex, queryParams, rerankModel,
+                            resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
-                final long totalHits = totalHitCount;
-                taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
+                    final long totalHits = totalHitCount;
+                    taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
 
-                final ScrollResponse<ObjectNode> scrollResponse = elasticClient.scroll(s -> s
-                                .scrollId(scrollId)
-                                .scroll(scrollTime),
-                        ObjectNode.class
-                );
+                    final ScrollResponse<ObjectNode> scrollResponse = elasticClient.scroll(s -> s
+                                    .scrollId(scrollId)
+                                    .scroll(scrollTime),
+                            ObjectNode.class
+                    );
 
-                searchHits = scrollResponse.hits().hits();
+                    searchHits = scrollResponse.hits().hits();
+                }
+
+                LOGGER.info("Search completed for index doc {}, {} hits returned",
+                        elasticIndex.getName(), totalHitCount);
+            } finally {
+                // Always close the scroll context, whether we finished streaming results, were terminated or
+                // failed part way through, so it does not hold resources on the cluster until it expires.
+                clearScroll(elasticClient, scrollId);
             }
-
-            LOGGER.info("Search completed for index doc {}, {} hits returned", elasticIndex.getName(), totalHitCount);
-
-            // Close the scroll context as we're done streaming results
-            elasticClient.clearScroll(s -> s.scrollId(scrollId));
         } catch (final UncheckedInterruptedException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
@@ -330,6 +334,23 @@ public class ElasticSearchTaskHandler {
             for (final Throwable ex : e.getSuppressed()) {
                 error(errorConsumer, ex);
             }
+        }
+    }
+
+    /// Clears the scroll context identified by `scrollId`, if there is one.
+    ///
+    /// A failure to clear the scroll is logged rather than thrown. It must not mask any error from the search
+    /// itself, nor be reported as a search failure when the search succeeded. The cluster will release the
+    /// scroll context anyway once its keep-alive expires.
+    private void clearScroll(final ElasticsearchClient elasticClient, final String scrollId) {
+        if (scrollId == null) {
+            return;
+        }
+        try {
+            elasticClient.clearScroll(s -> s.scrollId(scrollId));
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.warn(() -> LogUtil.message("Failed to clear Elasticsearch scroll context: {}",
+                    e.getMessage()), e);
         }
     }
 
