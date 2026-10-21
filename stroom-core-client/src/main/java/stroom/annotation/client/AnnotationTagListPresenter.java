@@ -22,12 +22,12 @@ import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -44,7 +44,7 @@ import java.util.function.Function;
 
 public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final MyDataGrid<AnnotationTag> dataGrid;
+    private final DataGridWidget<AnnotationTag> dataGrid;
     private final MultiSelectionModelImpl<AnnotationTag> selectionModel;
     private final AnnotationResourceClient annotationResourceClient;
 
@@ -58,7 +58,7 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Annotation Tags");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

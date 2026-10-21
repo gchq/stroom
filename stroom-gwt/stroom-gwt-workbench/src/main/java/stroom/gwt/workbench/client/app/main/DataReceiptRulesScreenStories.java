@@ -137,7 +137,7 @@ public final class DataReceiptRulesScreenStories {
                             "Whether this rule is enabled or disabled. A disabled rule will be ignored")))
                             .toBeInTheDocument();
                     // ...and no heading's tool tip just repeats its label
-                    final Query headerRow = play.querySelector("thead");
+                    final Query headerRow = play.querySelector("thead, .dg-head");
                     play.expect("a heading whose tool tip is its label", () -> headingEchoingItself(headerRow))
                             .toBe(false);
                     // Add a rule -> "Edit Rule" dialog (GWT's caption for an add too) -> name -> OK
@@ -168,7 +168,7 @@ public final class DataReceiptRulesScreenStories {
                     play.findByText("System");
                     // The field columns are sortable, sorted by name ascending to start with.
                     // GWT has no aria-sort; the sorted header shows a sort icon
-                    final Query nameHeader = play.getByText("Name", "th *").closest("th");
+                    final Query nameHeader = play.getByText("Name", "th *, [data-hcol] *").closest("th, [data-hcol]");
                     final Query grid = nameHeader.closest(".dataGridWidget");
                     play.expect(play.within(nameHeader).querySelector(".column-sortIcon")).not().toBeNull();
                     play.expect("the field order", () -> fieldOrder(grid.element().get()))

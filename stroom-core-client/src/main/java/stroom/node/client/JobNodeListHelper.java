@@ -25,7 +25,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.ColumnBuilder;
-import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.DataGridView;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobNodeChangeEvent;
 import stroom.job.shared.BatchScheduleRequest;
@@ -409,7 +409,7 @@ public class JobNodeListHelper {
                 .build();
     }
 
-    public void addEnabledTickBoxColumn(final MyDataGrid<JobNodeAndInfo> dataGrid,
+    public void addEnabledTickBoxColumn(final DataGridView<JobNodeAndInfo> dataGrid,
                                         final boolean isSortable) {
 
         final ColumnBuilder<JobNodeAndInfo, TickBoxState, TickBoxCell> builder =
@@ -434,7 +434,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.ENABLED_COL);
     }
 
-    public void addTypeColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addTypeColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(JobNodeListHelper::buildJobTypeStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -445,7 +445,7 @@ public class JobNodeListHelper {
                 80);
     }
 
-    public void addNodeStateColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addNodeStateColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(
                                 (final JobNodeAndInfo jobNodeAndInfo) -> {
@@ -464,7 +464,7 @@ public class JobNodeListHelper {
                 80);
     }
 
-    public void addScheduleColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addScheduleColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         final Column<JobNodeAndInfo, CommandLink> scheduleColumn = DataGridUtil.commandLinkColumnBuilder(
                         buildOpenScheduleCommandLinkFunc())
                 .enabledWhen(this::isJobNodeEnabled)
@@ -478,7 +478,7 @@ public class JobNodeListHelper {
                 200);
     }
 
-    public void addLastExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addLastExecutedColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getLastExecutedTimeAsStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -490,7 +490,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
-    public void addNextExecutedColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addNextExecutedColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::getNextScheduledTimeAsStr)
                         .enabledWhen(this::isJobNodeEnabled)
@@ -502,7 +502,7 @@ public class JobNodeListHelper {
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
-    public void addActionColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
+    public void addActionColumn(final DataGridView<JobNodeAndInfo> dataGrid) {
 
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(

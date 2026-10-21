@@ -146,7 +146,13 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
                     // Update the tick image immediately.
                     final SafeHtml html = appearance.getHTML(state, clickable);
+                    final Element active = activeElement();
+                    final boolean focused = active != parent && parent.isOrHasChild(active);
                     parent.setInnerHTML(html.asString());
+                    // A tick box with the focus (a grid keyboard's, ticked with Space) keeps it
+                    if (focused) {
+                        focusTickBox(parent);
+                    }
                 }
 
                 // Save the new value. However, if the cell depends on the
@@ -164,6 +170,19 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             }
         }
     }
+
+    private static native Element activeElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    // Focuses the tick box drawn in the cell, keeping it the grid's tab stop
+    private static native void focusTickBox(Element parent) /*-{
+        var tickBox = parent.querySelector('[role="checkbox"]');
+        if (tickBox) {
+            tickBox.tabIndex = 0;
+            tickBox.focus({ preventScroll: true });
+        }
+    }-*/;
 
     /// @return Whether the tick can be changed by clicking it (or pressing Enter or Space).
     public boolean isClickable() {

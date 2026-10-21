@@ -22,8 +22,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -43,6 +41,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -71,7 +71,7 @@ public class AccountsListPresenter
     private final Provider<EditAccountPresenter> editAccountPresenterProvider;
     private final MultiSelectionModelImpl<Account> selectionModel;
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
-    private final MyDataGrid<Account> dataGrid;
+    private final DataGridWidget<Account> dataGrid;
     private final ToolbarButton addButton;
     private final ToolbarButton editButton;
     private final ToolbarButton deleteButton;
@@ -93,11 +93,13 @@ public class AccountsListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
-        this.dataGrid = new MyDataGrid<>(this, 1000);
+        this.dataGrid = new DataGridWidget<>(this, 1000);
+        // Rows keyed by id, so a row whose values change is still the same row
+        this.dataGrid.setKeyProvider(Account::getId);
         this.dataGrid.setTableName("Accounts");
         this.selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid, selectionModel, false);
+        final DataGridWidgetSelectionEventManager<Account> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 

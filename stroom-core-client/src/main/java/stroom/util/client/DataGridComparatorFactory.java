@@ -16,6 +16,7 @@
 
 package stroom.util.client;
 
+import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.NullSafe;
@@ -23,7 +24,6 @@ import stroom.util.shared.NullSafe;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
-import com.google.gwt.user.cellview.client.DataGrid;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,12 +35,12 @@ import java.util.function.Function;
 
 public class DataGridComparatorFactory<T> {
 
-    private final DataGrid<T> dataGrid;
+    private final DataGridView<T> dataGrid;
     private final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap;
     private final List<String> defaultSortFields;
 
     private DataGridComparatorFactory(
-            final DataGrid<T> dataGrid,
+            final DataGridView<T> dataGrid,
             final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap,
             final List<String> defaultSortFields) {
         this.dataGrid = dataGrid;
@@ -81,7 +81,7 @@ public class DataGridComparatorFactory<T> {
         return Objects.requireNonNullElseGet(combinedComparator, CompareUtil::noOpComparator);
     }
 
-    public static <T> Builder<T> builder(final DataGrid<T> dataGrid) {
+    public static <T> Builder<T> builder(final DataGridView<T> dataGrid) {
         return new Builder<>(dataGrid);
     }
 
@@ -91,11 +91,11 @@ public class DataGridComparatorFactory<T> {
 
     public static class Builder<T> {
 
-        private final DataGrid<T> dataGrid;
+        private final DataGridView<T> dataGrid;
         private final Map<String, Function<T, ? extends Comparable<?>>> fieldNameToExtractorMap = new HashMap<>();
         private final List<String> defaultSortFields = new ArrayList<>();
 
-        public Builder(final DataGrid<T> dataGrid) {
+        public Builder(final DataGridView<T> dataGrid) {
             this.dataGrid = dataGrid;
         }
 

@@ -1,0 +1,235 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.widget.datagrid.client;
+
+import stroom.widget.datagrid.client.model.ScrollThumb;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.IntSupplier;
+
+/// The scrollbar thumbs [DataGridWidget] draws over its rows (design section 4.2).
+///
+/// The grid's scroller is a native one with its own scrollbars hidden, so wheel, touch, keyboard
+/// and `scrollIntoView` scrolling all stay native. These thumbs show where the view is and can be
+/// dragged; a press on a track pages by one view towards it. The vertical track starts below the
+/// sticky header.
+///
+/// Where the browser supports CSS scroll-driven animations, the thumbs follow the scroll position
+/// with no script, so [#update()] need only be called when the content or the grid's size changes,
+/// and once a scroll has ended. Elsewhere it must be called as the grid scrolls.
+final class OverlayScrollbars {
+
+    private static final int MIN_THUMB_LENGTH = 28;
+    private static final String ACTIVE_CLASS_NAME = "dg-thumb--active";
+    private static final String SCROLL_TIMELINE_CLASS_NAME = "dg--scroll-timeline";
+    private static final boolean SCROLL_TIMELINE = supportsScrollTimeline();
+
+    private final Element root;
+
+    private final Element scroller;
+    private final IntSupplier headerHeight;
+    private final Element vTrack;
+    private final Element vThumb;
+    private final Element hTrack;
+    private final Element hThumb;
+    private final List<JavaScriptObject> listeners = new ArrayList<>();
+
+    // Drag state, set while a thumb is being dragged.
+    private ScrollThumb dragThumb;
+    private boolean dragVertical;
+    private double dragStartPointer;
+    private double dragStartPosition;
+
+    /// Create the tracks and thumbs and add them to the grid.
+    ///
+    /// @param root         The grid's root element, which the tracks are added to.
+    /// @param scroller     The grid's scroller.
+    /// @param headerHeight Supplies the height in pixels of the sticky header.
+    OverlayScrollbars(final Element root, final Element scroller, final IntSupplier headerHeight) {
+        this.root = root;
+        this.scroller = scroller;
+        this.headerHeight = headerHeight;
+
+        final Document doc = Document.get();
+        vTrack = div(doc, "dg-vtrack");
+        vThumb = div(doc, "dg-thumb");
+        vTrack.appendChild(vThumb);
+        hTrack = div(doc, "dg-htrack");
+        hThumb = div(doc, "dg-thumb");
+        hTrack.appendChild(hThumb);
+        root.appendChild(vTrack);
+        root.appendChild(hTrack);
+        if (SCROLL_TIMELINE) {
+            root.addClassName(SCROLL_TIMELINE_CLASS_NAME);
+        }
+    }
+
+    /// @return Whether the thumbs follow scrolling by themselves, so [#update()] need not be called
+    /// as the grid scrolls.
+    boolean followsScroll() {
+        return SCROLL_TIMELINE;
+    }
+
+    private static Element div(final Document doc, final String className) {
+        final Element element = doc.createDivElement();
+        element.setClassName(className);
+        return element;
+    }
+
+    /// Start listening for pointer events. Call when the grid is attached.
+    void attach() {
+        listeners.add(DataGridDom.addListener(vTrack, "pointerdown", false, e -> onTrackPointerDown(e, true)));
+        listeners.add(DataGridDom.addListener(hTrack, "pointerdown", false, e -> onTrackPointerDown(e, false)));
+        listeners.add(DataGridDom.addListener(vThumb, "pointermove", false, this::onThumbPointerMove));
+        listeners.add(DataGridDom.addListener(hThumb, "pointermove", false, this::onThumbPointerMove));
+        listeners.add(DataGridDom.addListener(vThumb, "pointerup", false, this::onThumbPointerUp));
+        listeners.add(DataGridDom.addListener(hThumb, "pointerup", false, this::onThumbPointerUp));
+    }
+
+    /// Stop listening for pointer events. Call when the grid is detached.
+    void detach() {
+        for (final JavaScriptObject handle : listeners) {
+            DataGridDom.removeListener(handle);
+        }
+        listeners.clear();
+        dragThumb = null;
+    }
+
+    /// @param element An element.
+    /// @return Whether the element is part of the scrollbars.
+    boolean contains(final Element element) {
+        return vTrack.isOrHasChild(element) || hTrack.isOrHasChild(element);
+    }
+
+    /// Size and place the thumbs for the scroller's current size and scroll position.
+    void update() {
+        final ScrollThumb v = verticalThumb();
+        final ScrollThumb h = horizontalThumb();
+
+        vTrack.getStyle().setTop(headerHeight.getAsInt(), Unit.PX);
+        vTrack.getStyle().setProperty("display", v.isVisible()
+                ? ""
+                : "none");
+        vThumb.getStyle().setHeight(v.getLength(), Unit.PX);
+
+        hTrack.getStyle().setProperty("display", h.isVisible()
+                ? ""
+                : "none");
+        hThumb.getStyle().setWidth(h.getLength(), Unit.PX);
+
+        if (SCROLL_TIMELINE) {
+            // The scroll-driven animations move the thumbs from 0 to their travel.
+            DataGridDom.setCssVariable(root, "--dg-v-travel", v.getTravel() + "px");
+            DataGridDom.setCssVariable(root, "--dg-h-travel", h.getTravel() + "px");
+        }
+        // Also place the thumbs directly. A running scroll-driven animation overrides this, but
+        // where animations are turned off (e.g. the test runner's screenshots) it is what shows.
+        vThumb.getStyle().setProperty("transform", "translateY(" + v.getPosition() + "px)");
+        hThumb.getStyle().setProperty("transform", "translateX(" + h.getPosition() + "px)");
+    }
+
+    private ScrollThumb verticalThumb() {
+        final int header = headerHeight.getAsInt();
+        final int viewport = scroller.getClientHeight() - header;
+        return ScrollThumb.compute(scroller.getScrollTop(),
+                viewport,
+                scroller.getScrollHeight() - header,
+                viewport,
+                MIN_THUMB_LENGTH);
+    }
+
+    private ScrollThumb horizontalThumb() {
+        final int viewport = scroller.getClientWidth();
+        return ScrollThumb.compute(scroller.getScrollLeft(),
+                viewport,
+                scroller.getScrollWidth(),
+                viewport,
+                MIN_THUMB_LENGTH);
+    }
+
+    private static native boolean supportsScrollTimeline() /*-{
+        return !!($wnd.CSS && $wnd.CSS.supports && $wnd.CSS.supports("animation-timeline: scroll()")
+            && $wnd.CSS.supports("timeline-scope: --a"));
+    }-*/;
+
+    private void onTrackPointerDown(final NativeEvent event, final boolean vertical) {
+        event.preventDefault();
+        event.stopPropagation();
+        final Element target = Element.as(event.getEventTarget());
+        final Element thumb = vertical
+                ? vThumb
+                : hThumb;
+        if (thumb.isOrHasChild(target)) {
+            dragVertical = vertical;
+            dragThumb = vertical
+                    ? verticalThumb()
+                    : horizontalThumb();
+            dragStartPointer = vertical
+                    ? event.getClientY()
+                    : event.getClientX();
+            dragStartPosition = dragThumb.getPosition();
+            thumb.addClassName(ACTIVE_CLASS_NAME);
+            DataGridDom.setPointerCapture(thumb, DataGridDom.getPointerId(event));
+        } else if (vertical) {
+            // A press on the track pages by one view towards it.
+            final int page = scroller.getClientHeight() - headerHeight.getAsInt();
+            final boolean before = event.getClientY() < vThumb.getAbsoluteTop();
+            scroller.setScrollTop(scroller.getScrollTop() + (before
+                    ? -page
+                    : page));
+        } else {
+            final int page = scroller.getClientWidth();
+            final boolean before = event.getClientX() < hThumb.getAbsoluteLeft();
+            scroller.setScrollLeft(scroller.getScrollLeft() + (before
+                    ? -page
+                    : page));
+        }
+    }
+
+    private void onThumbPointerMove(final NativeEvent event) {
+        if (dragThumb == null) {
+            return;
+        }
+        final double pointer = dragVertical
+                ? event.getClientY()
+                : event.getClientX();
+        final double scroll = dragThumb.scrollForPosition(dragStartPosition + pointer - dragStartPointer);
+        if (dragVertical) {
+            scroller.setScrollTop((int) Math.round(scroll));
+        } else {
+            scroller.setScrollLeft((int) Math.round(scroll));
+        }
+    }
+
+    private void onThumbPointerUp(final NativeEvent event) {
+        if (dragThumb != null) {
+            final Element thumb = dragVertical
+                    ? vThumb
+                    : hThumb;
+            thumb.removeClassName(ACTIVE_CLASS_NAME);
+            DataGridDom.releasePointerCapture(thumb, DataGridDom.getPointerId(event));
+            dragThumb = null;
+        }
+    }
+}

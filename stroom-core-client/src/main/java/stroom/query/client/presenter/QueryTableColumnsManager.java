@@ -142,33 +142,17 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                 HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
 
                             } else if (isFilterButton) {
-                                currentFilterColIndex = colIndex;
-                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
-                                        .getDataSupplier(column, null);
-                                columnValuesFilterPresenter.show(
-                                        () -> button,
-                                        th,
-                                        column,
-                                        () -> dataSupplier,
-                                        hideEvent -> resetFilterColIndex(),
-                                        column.getColumnValueSelection(),
-                                        QueryTableColumnsManager.this);
-
-                            } else if (isDiableFilterButton) {
-                                final FilterCellManager filterCellManager = tablePresenter.getFilterCellManager();
-                                if (filterCellManager != null) {
-                                    final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
-                                    builder.enabled(!builder.build().isEnabled());
-                                    filterCellManager.setColumnFilter(column, builder.build());
-                                }
+                                showValuesFilter(column, colIndex, th, button);
                             }
+                            // The filter's disable button acts on its own click (FilterCell), so
+                            // that Enter and Space work it too: here it only must not open the menu
 
                             if (currentMenuColIndex == colIndex) {
                                 HideMenuEvent.builder().fire(queryTableColumnsManager);
 
                             } else if (!isFilterButton && !isDiableFilterButton) {
                                 currentMenuColIndex = colIndex;
-                                final List<Item> menuItems = getMenuItems(column);
+                                final List<Item> menuItems = getMenuItems(column, colIndex, th);
 
                                 Rect relativeRect = new Rect(th);
                                 relativeRect = relativeRect.grow(3);
@@ -443,7 +427,25 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         this.columnsStartIndex = columnsStartIndex;
     }
 
-    private List<Item> getMenuItems(final Column column) {
+    // Shows the column's values filter below its header's filter icon (the icon or the column
+    // menu's Filter Values item)
+    private void showValuesFilter(final Column column,
+                                  final int colIndex,
+                                  final Element th,
+                                  final Element button) {
+        currentFilterColIndex = colIndex;
+        final ColumnValuesDataSupplier dataSupplier = tablePresenter.getDataSupplier(column, null);
+        columnValuesFilterPresenter.show(
+                () -> button,
+                th,
+                column,
+                () -> dataSupplier,
+                hideEvent -> resetFilterColIndex(),
+                column.getColumnValueSelection(),
+                this);
+    }
+
+    private List<Item> getMenuItems(final Column column, final int colIndex, final Element th) {
         final List<Item> menuItems = new ArrayList<>();
 
 //        // Create rename menu.
@@ -460,6 +462,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 //        menuItems.add(createFilterMenu(column));
         // Add column filter menu item.
         menuItems.add(createColumnFilterMenu(column));
+        // The values filter, as the header's filter icon opens it, for the keyboard
+        menuItems.add(createValuesFilterMenu(column, colIndex, th));
 
         // Create move menu.
         menuItems.add(createMoveFirstMenu(column));
@@ -665,6 +669,18 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .highlight(column.getColumnFilter() != null
                            && ((column.getColumnFilter().getFilter() != null
                                 && !column.getColumnFilter().getFilter().trim().isEmpty())))
+                .build();
+    }
+
+    private Item createValuesFilterMenu(final Column column, final int colIndex, final Element th) {
+        return new IconMenuItem.Builder()
+                .priority(5)
+                .icon(SvgImage.VALUE_FILTER)
+                .text("Filter Values")
+                .command(() -> showValuesFilter(column, colIndex, th,
+                        ElementUtil.findChild(th, "column-valueFilterIcon")))
+                .highlight(column.getColumnValueSelection() != null
+                           && column.getColumnValueSelection().isEnabled())
                 .build();
     }
 

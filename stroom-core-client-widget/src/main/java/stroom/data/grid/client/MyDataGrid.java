@@ -73,7 +73,7 @@ import java.util.List;
 // Used by FloorMapClusterPresenter ("No members match the search and filters") and by
 // AbstractQueryDataPresenter via QueryResultTablePresenter. Upstream has no equivalent, so
 // dropping it breaks both call sites at compile time.
-public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
+public class MyDataGrid<R> extends DataGrid<R> implements DataGridView<R>, NativePreviewHandler {
 
     public static final DefaultResources RESOURCES = GWT.create(DefaultResources.class);
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
@@ -855,6 +855,18 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     @Override
     public TableSectionElement getTableHeadElement() {
         return super.getTableHeadElement();
+    }
+
+    @Override
+    public Element getHeaderCellElement(final int column) {
+        final TableSectionElement head = getTableHeadElement();
+        if (head == null || head.getRows().getLength() == 0) {
+            return null;
+        }
+        final TableRowElement row = head.getRows().getItem(0);
+        return column >= 0 && column < row.getCells().getLength()
+                ? row.getCells().getItem(column)
+                : null;
     }
 
     private double getMinHeaderWidth(final int colNo, final Element tempDiv) {

@@ -406,7 +406,7 @@ public final class ScreenHarness {
         content.setStyleName(CONTENT_STYLE);
         content.getElement().getStyle().setProperty("position", "relative");
         content.getElement().getStyle().setProperty("width", "100%");
-        content.getElement().getStyle().setProperty("height", "100vh");
+        content.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
         final Widget widget = presenter.getWidget();
         widget.getElement().getStyle().setProperty("position", "absolute");
         widget.getElement().getStyle().setProperty("inset", "0");

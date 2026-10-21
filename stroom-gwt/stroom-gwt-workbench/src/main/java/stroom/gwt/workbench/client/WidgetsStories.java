@@ -35,7 +35,13 @@ import stroom.gwt.workbench.client.widgets.cellrenderers.SvgCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.TickBoxCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.UserRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.ValueSpinnerCellStories;
+import stroom.gwt.workbench.client.widgets.datagrid.BehaviourStories;
+import stroom.gwt.workbench.client.widgets.datagrid.BenchmarkStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridKeyboardStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowStateStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowUpdateStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridWidgetStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DurationPickerStories;
@@ -219,6 +225,17 @@ public final class WidgetsStories {
         LinkTabsWidgetStories.addTo(registry);
         // Widgets/Data Grid/DataGrid
         DataGridStories.addTo(registry);
+        // Widgets/Data Grid/DataGridWidget
+        DataGridWidgetStories.addTo(registry);
+        // Widgets/Data Grid/Benchmark
+        BenchmarkStories.addTo(registry);
+        BehaviourStories.addTo(registry);
+        // Widgets/Data Grid/DataGridRowStates
+        DataGridRowStateStories.addTo(registry);
+        // Widgets/Data Grid/DataGridKeyboard
+        DataGridKeyboardStories.addTo(registry);
+        // Widgets/Data Grid/DataGridRowUpdates
+        DataGridRowUpdateStories.addTo(registry);
         // Widgets/Cell Renderers/DocRefCell
         DocRefCellStories.addTo(registry);
         // Widgets/Cell Renderers/DocumentTypeCell

@@ -141,9 +141,9 @@ public final class UserAccessScreenStories {
                     // GWT selects the first user when the list loads
                     // (UserAccessListPresenter.changeData), so Alice's sessions are shown at once. The
                     // sessions are fetched for the selected subject
-                    play.expect(play.within(play.getByText("Alice Smith").closest("tr")).getByText("alice"))
-                            .toBeInTheDocument();
-                    play.expect(play.getByText("Alice Smith").closest("tr")).toHaveClass(StroomDom.SELECTED_ROW);
+                    final Query aliceRow = play.getByText("Alice Smith").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(aliceRow).getByText("alice")).toBeInTheDocument();
+                    play.expect(aliceRow).toHaveClass(StroomDom.SELECTED_ROW);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/userAccess/v1/sessions").withQuery("subjectId=alice")
                                     .toSpyMatcher()));

@@ -230,6 +230,76 @@ behind by changes to Stroom, and one is a contrast failure in Stroom's help popu
 * `stroom-app/src/main/resources/ui/css/components.css` (`.infoTable code`) and `theme-dark.css`
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/query/FieldFixture.java`
 
+### A dictionary's word list ignores its secondary sort orders
+
+**Confirmed.** `WordListPresenter.buildComparator` is given a primary comparator and the ones to
+break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
+`thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
+tie on that column, e.g. words of one type stay in whatever order they came in. Fix: chain
+`subsequentComparator`.
+
+* `stroom-core-client/src/main/java/stroom/dictionary/client/presenter/WordListPresenter.java`
+  (`buildComparator`)
+
+### A duplicated selection handler has the same id as its original
+
+**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersPresenter.onCopy`) copies the
+handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
+(`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
+may be confused by anything that finds a handler by id. Found while giving the list a row key for
+the new data grid, which copes (rows with one key are told apart by position). Fix: give the copy
+`RandomId.createId(5)`.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/query/SelectionHandlersPresenter.java`
+  (`onCopy`)
+
+### Two workbench stories fail now and then under load
+
+**Reproduced** (October 2026). Each fails sometimes in a full `workbenchTest` run and passes when
+run alone, so a step depends on timing:
+
+* `App/Editors/DashboardEditor` `TableFilterDrivesQuery`: "matched red" not found after the second
+  query. The play clicks the Table Filter's values as soon as "red" appears, so a click may land
+  before the list is ready.
+* `Widgets/Data Grid/DataGridWidget` `ValueSpinnerColumn`.
+
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/dashboard/DashboardSearchStories.java`
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/datagrid/DataGridWidgetStories.java`
+
+### A floor map's Layers and Groups panels can't be opened
+
+**Reproduced** (by the `App/Editors/FloorMapMap` stories, October 2026). The dock beside the floor
+map (Map tab, and the Editor tab's) has Tracking, Layers and Groups tabs, but only the first can be
+reached:
+
+* `FloorMapDockViewImpl.ui.xml` gives its `LinkTabBar` `styleName="..."`, which replaces the
+  `tab-bar tab-bar--link` classes the bar sets for itself (every other use says `addStyleNames`).
+  Without them the bar's overflow button's arrow is drawn at about 1656×1430px, a large white shape
+  over the dock and most of its lists' columns, and the bar, making room for it, decides only the
+  first tab fits and puts the others in its overflow menu.
+* `FloorMapDockPresenter` never passes the bar's `ShowMenuEvent` on to the event bus (as e.g.
+  `DataRetentionPresenter` does), so that overflow menu never opens, by mouse or keyboard.
+
+Fix: `addStyleNames` in the view, and register the show menu handler in the presenter. The Groups
+story clicks the hidden tab's label directly until then (its comment says so).
+
+* `stroom-core-client/src/main/resources/stroom/floormap/client/view/FloorMapDockViewImpl.ui.xml`
+  (line 23)
+* `stroom-core-client/src/main/java/stroom/floormap/client/presenter/FloorMapDockPresenter.java`
+
+### A trace's operation list can't be scrolled with the keyboard
+
+**Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
+operation list (`#operationList`, built by `TraceOverviewWidget`) is taller than its pane, it
+scrolls, but nothing in it can take the focus, so a keyboard user can't scroll it
+(`scrollable-region-focusable`). Seen once the workbench's screens fitted the window (see Fixed), which
+made the pane shorter; any short enough window shows it in Stroom. Baselined for
+`App/Main/TracesScreen` `Traces` in `test-runner/a11y-baseline.json`. Fix: make the list (or its
+rows) focusable, ideally with the keys of a tree, as the rows expand.
+
+* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceOverviewWidget.java`
+  (`appendOperationList`)
+
 ## Controls that stay enabled but do nothing
 
 **Reported.**
@@ -1803,6 +1873,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   size, border, padding, colours, focus), but for a text area's cursor, now the text cursor as on every
   other text area. Workbench: `App/Main/AnnotationEditor`, `App/Editors/DashboardEditor`
   `TableIncludeExcludeFilter`, `Widgets/Data Grid/DataGrid` `Pager`.
+* **A full-screen workbench story was 48px taller than the window.** `ScreenHarness` made a screen
+  `100vh` tall inside `StroomThemeDecorator`'s 24px padding, so its bottom 48px was off-screen and a
+  play's click there scrolled the page. Screens now take `StroomThemeDecorator.CANVAS_HEIGHT`
+  (`calc(100vh - 48px)`), as does `VisualisationAssetsStories`' frame. Every screen story's
+  screenshot changed once.
 
 ## Checked and not bugs
 

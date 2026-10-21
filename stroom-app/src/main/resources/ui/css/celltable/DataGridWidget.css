@@ -1,0 +1,358 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Layout for stroom.widget.datagrid.client.DataGridWidget.
+ *
+ * Colours, padding, fonts and row states come from the shared dataGrid* classes in DataGrid.css,
+ * which the widget also emits. This file only adds the CSS grid layout, the sticky header, virtual
+ * mode and the overlay scrollbars.
+ *
+ * The widget sets these variables on its root element:
+ *   --dg-cols   the grid-template-columns value, e.g. "22px 200px 340px"
+ *   --dg-total  the sum of the column widths, i.e. the table width
+ *   --dg-row-h  the fixed row height in virtual mode
+ */
+
+.dg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: none;
+}
+
+/* The only scroller. Its own scrollbars are hidden; overlay thumbs are drawn instead. */
+.dg-scroller {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+.dg-scroller::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* The header sticks to the top while scrolling vertically and moves with the rows horizontally. */
+.dg-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    width: var(--dg-total, 100%);
+    min-height: 5px;
+    /* Opaque, as the rows scroll under it: the colour of what the grid sits in (MyDataGrid's
+       header, which no row passes under, is transparent) */
+    background-color: var(--dg-head__background-color, var(--page__background-color));
+}
+
+/* What a grid sits on, when it isn't the page: a dialog's or popup's colour is painted by a layer
+   behind its content, so can't be inherited. The nearest of these round the grid sets it. */
+.dialog-container {
+    --dg-head__background-color: var(--dialog__background-color);
+}
+
+.simplePopup-container {
+    --dg-head__background-color: var(--popup__background-color);
+}
+
+/* A grid in a control's box, e.g. a list in a form, sits on the box's colour */
+.stroom-control {
+    --dg-head__background-color: var(--control__background-color);
+}
+
+.stroom-control:disabled,
+.stroom-control.disabled {
+    --dg-head__background-color: var(--control__background-color--disabled);
+}
+
+.dg-hrow,
+.dg-row {
+    display: grid;
+    grid-template-columns: var(--dg-cols);
+    width: var(--dg-total, 100%);
+}
+
+/* Centre header content vertically, as GWT's table header cells do. align-content keeps block
+   layout, so long header text still gets an ellipsis. */
+.dg-hcell {
+    min-width: 0;
+    align-content: center;
+}
+
+.dg:not(.allow-header-selection) .dg-hcell {
+    user-select: none;
+}
+
+.dg-content {
+    position: relative;
+    width: var(--dg-total, 100%);
+}
+
+.dg-row {
+    outline: none;
+    cursor: default;
+}
+
+/* Cells: vertically centred unless multi-line or explicitly aligned. */
+.dg-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.dg-cell > div {
+    min-width: 0;
+}
+
+.multiline .dg-cell,
+.dg-cell.dg-valign-top {
+    justify-content: flex-start;
+}
+
+.dg-cell.dg-valign-middle {
+    justify-content: center;
+}
+
+.dg-cell.dg-valign-bottom {
+    justify-content: flex-end;
+}
+
+.dg-cell.dg-align-right {
+    text-align: right;
+}
+
+.dg-cell.dg-align-center {
+    text-align: center;
+}
+
+.dg--selectable .dg-row {
+    cursor: pointer;
+}
+
+/*
+ * Natural mode renders every row on the page, but the browser need only lay out and paint the rows
+ * in view. On a long page (the grid adds dg--contain) content-visibility skips the others; until a
+ * row has been laid out once it is assumed to be one line high (--dg-row-h, measured), after which
+ * its real height is remembered (the 'auto'), so the scroll height settles to the true one. Their
+ * focus shadow is inset, so the paint containment this implies doesn't clip it.
+ *
+ * Short pages don't need it, and leaving it off keeps their rows pixel-identical to MyDataGrid's:
+ * paint containment draws each row from its own pixel-snapped origin, which can move text by a
+ * pixel.
+ */
+.dg--contain:not(.dg--virtual) .dg-row {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto var(--dg-row-h, 23px);
+}
+
+/* Virtual mode: every row is the same fixed height. */
+.dg--virtual .dg-body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+}
+
+.dg--virtual .dg-row {
+    height: var(--dg-row-h, 24px);
+    overflow: hidden;
+}
+
+/* The probe row measures a natural one-line row, so the fixed height above must not apply to it. */
+.dg .dg-row.dg-row--probe {
+    position: absolute;
+    visibility: hidden;
+    height: auto;
+    /* Nor the long-page placeholder height (dg--contain), which would be measured instead */
+    content-visibility: visible;
+}
+
+.dg-empty {
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+    color: var(--text-color--disabled);
+}
+
+/* setEmptyText: as MyDataGrid's empty text, a label with .form-padding */
+.dg-empty--text {
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
+    color: inherit;
+}
+
+/*
+ * Overlay scrollbars. The tracks float over the grid; the visible part of the thumb is inset by a
+ * transparent border, matching the application's webkit scrollbar style.
+ */
+.dg-vtrack,
+.dg-htrack {
+    position: absolute;
+    z-index: 3;
+    touch-action: none;
+}
+
+.dg-vtrack {
+    right: 0;
+    bottom: 0;
+    width: 12px;
+}
+
+.dg-htrack {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 12px;
+}
+
+.dg-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    border: 4px solid var(--scrollbar-thumb__border-color);
+    border-radius: 12px;
+    background-clip: content-box;
+    background-color: var(--scrollbar-thumb__background-color);
+    transition: background-color .5s;
+}
+
+.dg-vtrack .dg-thumb {
+    width: 12px;
+}
+
+.dg-htrack .dg-thumb {
+    height: 12px;
+}
+
+/*
+ * Where the browser supports scroll-driven animations (the grid adds dg--scroll-timeline), the
+ * thumbs follow the scroller with no script. The scroller names its two scroll timelines, and the
+ * root lets the thumbs, which are outside the scroller, see them. The grid sets how far each thumb
+ * can travel.
+ */
+.dg--scroll-timeline {
+    timeline-scope: --dg-v, --dg-h;
+}
+
+.dg--scroll-timeline .dg-scroller {
+    scroll-timeline-name: --dg-v, --dg-h;
+    scroll-timeline-axis: block, inline;
+}
+
+.dg--scroll-timeline .dg-vtrack .dg-thumb {
+    animation: dg-thumb-v linear both;
+    animation-timeline: --dg-v;
+}
+
+.dg--scroll-timeline .dg-htrack .dg-thumb {
+    animation: dg-thumb-h linear both;
+    animation-timeline: --dg-h;
+}
+
+@keyframes dg-thumb-v {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(var(--dg-v-travel, 0px));
+    }
+}
+
+@keyframes dg-thumb-h {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(var(--dg-h-travel, 0px));
+    }
+}
+
+.dg-thumb:hover {
+    background-color: var(--scrollbar-thumb__background-color--hover);
+}
+
+.dg-thumb.dg-thumb--active {
+    background-color: var(--scrollbar-thumb__background-color--active);
+}
+
+/*
+ * Column resize and move (ColumnInteractions). The resize handle sits in the sticky header, on the
+ * edge of the column under the pointer, and scrolls with the columns. The guide lines and the
+ * move ghost float over the whole grid. Colours as MyDataGrid's resizeHandle, resizeLine,
+ * moveHandle and moveLine.
+ */
+.dg-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    z-index: 1;
+    background-color: #A49AED;
+    opacity: 0.3;
+    cursor: col-resize;
+    touch-action: none;
+}
+
+.dg-resize-line,
+.dg-move-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    z-index: 4;
+    background-color: #A49AED;
+    pointer-events: none;
+}
+
+.dg-move-ghost {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 4;
+    background-color: gray;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* While a column is dragged, nothing in the grid is selected and the cursor stays put. */
+.dg--dragging,
+.dg--dragging * {
+    user-select: none;
+}
+
+.dg--resizing,
+.dg--resizing * {
+    cursor: col-resize !important;
+}
+
+/* Hidden copies of a column's header and cells, rendered unwrapped to size the column to fit. */
+.dg-measure {
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.dg-measure > * {
+    width: max-content;
+    white-space: nowrap;
+}

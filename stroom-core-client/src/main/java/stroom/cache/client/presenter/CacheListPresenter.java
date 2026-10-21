@@ -21,7 +21,6 @@ import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CellIcon;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -31,6 +30,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheIdentity;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -77,7 +77,9 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
 
-        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>(this);
+        final DataGridWidget<CacheIdentity> dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by name, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(CacheIdentity::getCacheName);
         dataGrid.setTableName("Caches");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -134,7 +136,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    private void addIconButtonColumn(final MyDataGrid<CacheIdentity> dataGrid,
+    private void addIconButtonColumn(final DataGridWidget<CacheIdentity> dataGrid,
                                      final CellIcon cellIcon,
                                      final BiConsumer<String, NativeEvent> action) {
         final ActionCell<String> cell = new stroom.cell.info.client.ActionCell<String>(

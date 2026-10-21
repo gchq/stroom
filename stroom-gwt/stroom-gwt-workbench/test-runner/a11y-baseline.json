@@ -388,6 +388,12 @@
   "app-main-manageactivitydialog--validation-blocks-save": [
     "scrollable-region-focusable"
   ],
+  "app-main-quickfilterhistory--no-recent-filters": [
+    "target-size"
+  ],
+  "app-main-quickfilterhistory--recent-filters-fail-to-load": [
+    "target-size"
+  ],
   "app-main-resultstoresdialog--settings": [
     "scrollable-region-focusable"
   ],
@@ -399,6 +405,9 @@
   ],
   "app-main-topbar--keyboard": [
     "button-name"
+  ],
+  "app-main-tracesscreen--traces": [
+    "scrollable-region-focusable"
   ],
   "app-main-visualisationassets--upload-deduplicates-name": [
     "aria-required-parent",

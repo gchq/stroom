@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -148,7 +149,7 @@ public final class VisualisationAssetsStories {
 
         // The toolbar above the tab's content, as the document's tab shows them, filling the page
         final FlowPanel frame = new FlowPanel();
-        frame.getElement().getStyle().setProperty("height", "100vh");
+        frame.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
         frame.getElement().getStyle().setProperty("display", "flex");
         frame.getElement().getStyle().setProperty("flexDirection", "column");
         harness.add(frame);

@@ -242,6 +242,26 @@ A few stories' final states still vary between runs (e.g. which row ends up sele
 left by the play), so expect a handful of small differences even without a change; run the diff
 again to check a surprising one.
 
+## Data grid geometry
+
+`grid-geometry.mjs` measures every data grid in the stories (`MyDataGrid` or the new
+`DataGridWidget`): its header height, column widths and first ten row heights, at the default and
+compact densities, once each story's play has finished. It is the size baseline for switching
+screens to the new grid (`stroom-core-client-widget/DATA_GRID_DESIGN.md`):
+
+```bash
+# Against a running workbench (workbenchServe), from this directory
+node grid-geometry.mjs --url http://localhost:6008 --record grid-geometry.json
+# After switching a screen: report any grid whose sizes changed (exits 1 if any did)
+node grid-geometry.mjs --url http://localhost:6008 --compare grid-geometry.json
+```
+
+`grid-geometry.json` is the baseline, recorded with every screen still on `MyDataGrid` (359 grids
+in 284 stories). Both densities are set explicitly, as the workbench's own preferences are compact.
+`--filter` picks the stories by title prefix (default `App/`). Sizes may move by half a pixel
+(heights) or a pixel (widths) before they count as changed; `lib/grid-geometry.mjs` measures and
+compares them.
+
 ## Leak check
 
 `-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory
@@ -313,6 +333,8 @@ or `src/test/resources/presenter-coverage-evidence.json` names a story whose pla
   [Accessibility check](#accessibility-check)).
 * `screenshot-diff.mjs` - compares a run's screenshots with the baseline (see
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
+* `grid-geometry.mjs` - records or compares the sizes of the stories' data grids (see
+  [Data grid geometry](#data-grid-geometry)); `lib/grid-geometry.mjs` measures and compares them.
 * `lib/` - story selection, deciding a story's
   outcome (and retrying it), the shared browser (relaunched if it stops), screenshot file names,
   deadlines, the leak check, the accessibility check, the real input checks and the JUnit XML

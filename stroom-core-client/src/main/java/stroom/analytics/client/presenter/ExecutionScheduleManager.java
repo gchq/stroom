@@ -32,8 +32,6 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -55,6 +53,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -87,7 +87,7 @@ public class ExecutionScheduleManager
 
     public static final String TAB_TYPE = "ExecutionScheduleManager";
 
-    private final MyDataGrid<ExecutionSchedule> dataGrid;
+    private final DataGridWidget<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -128,11 +128,11 @@ public class ExecutionScheduleManager
         this.expressionValidator = expressionValidator;
 
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Execution Schedules");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
-            = new DataGridSelectionEventManager<>(
+        final DataGridWidgetSelectionEventManager<ExecutionSchedule> selectionEventManager
+            = new DataGridWidgetSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
                 true);

@@ -49,6 +49,8 @@
 @import url("celltable/ExplorerTree.css");
 @import url("celltable/Menu.css");
 @import url("celltable/DataGrid.css");
+@import url("celltable/DataGridWidget.css");
+@import url("data-grid.css");
 @import url("calendar.css");
 @import url("date-time-view.css");
 @import url("date-time-box.css");

@@ -1,0 +1,78 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The states of the data grid's rows, cells and column headers
+   (stroom.widget.datagrid.client.DataGridWidget, whose layout is celltable/DataGridWidget.css).
+
+   dg              the grid
+     dg-row        a row (role row)
+       dg-cell     a cell (role gridcell)
+     [role="columnheader"]   a column's header
+
+   States come from ARIA attributes and pseudo-classes: a selected row is [aria-selected="true"],
+   and keyboard focus is :focus-visible on a row, cell, control or header (DataGridKeyboard).
+
+   Rows are tight, so these differ from the menu's items (menu.css): full width with square corners
+   (a run of selected rows is one block), the focus ring drawn inside the row, cell or header (one
+   drawn outside would cover the rows next to it, and the scrolling box would cut it off at the top
+   and bottom), and no pressed look (pressing a row selects it there and then).
+
+   The rows also carry the old grid's classes (dataGridEvenRow, dataGridSelectedRow and so on), so
+   celltable/DataGrid.css's row rules reach them too; these come after it and override its hover on
+   selected rows and its blurred focus glow.
+*/
+
+/* Mouse over: a row that isn't selected fades into the hovered colour. A selected row shows no
+   mouse-over, as there is nothing more to choose */
+.dg .dg-row:not([aria-selected="true"]):hover {
+    background-color: var(--row__background-color--hovered);
+    transition: var(--hover__transition);
+}
+
+/* Selected, under the mouse or not */
+.dg .dg-row[aria-selected="true"] {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+/* Keyboard focus only: a click selects the row, which says where it is. The old glow is drawn for
+   any focus inside the row, so it is removed */
+.dg .dg-row:focus-within {
+    box-shadow: none;
+}
+
+.dg .dg-row:focus,
+.dg .dg-cell:focus,
+.dg [role="columnheader"]:focus {
+    outline: none;
+}
+
+/* The focused row, cell or header: the focus border and a 2px band of the focus ring's colour,
+   both inside it. A focused cell's row keeps its fill and has no ring of its own */
+.dg .dg-row:focus-visible,
+.dg .dg-cell:focus-visible,
+.dg [role="columnheader"]:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--focus-border), inset 0 0 0 3px var(--focus-ring__color);
+}
+
+/* A selected row with the focus (on it or a cell) takes the selected-and-focused colour, which the
+   focus border stands out from by 3:1 in both themes (the plain selected colour is too near it in
+   the dark theme) */
+.dg .dg-row[aria-selected="true"]:has(:focus-visible),
+.dg .dg-row[aria-selected="true"]:focus-visible {
+    background-color: var(--row__background-color--selected--focussed);
+}
