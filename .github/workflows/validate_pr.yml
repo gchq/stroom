@@ -90,7 +90,7 @@ jobs:
           # List all the files in the PR.
           # Check both the current and previous filenames to allow for renames.
           # If any file matches a pattern then exit with an error to indicate 
-          that the PR should be rejected or checked with greater caution.
+          # that the PR should be rejected or checked with greater caution.
           
           for json_field in filename previous_filename; do
             files=$(gh api --paginate \
