@@ -46,12 +46,10 @@ public class QueryNodeResolverImpl implements QueryNodeResolver {
         this.planBDocumentTypes = planBDocumentTypes;
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. This method is upstream's; the change here
-    // is that it applies to every registered Plan B document type rather than to PlanBDoc alone,
-    // because this fork adds one (FloorMapEventStoreDoc). origin/master's version tests
-    // `PlanBDoc.TYPE.equals(...)` and returns null for anything else, so an incoming version will
-    // silently stop pinning our store's queries — which is not an error but a quiet change to
-    // reading stale snapshots instead of live data. Keep this side, or re-apply the generalisation.
+    // This applies to every registered Plan B document type rather than to PlanBDoc alone, because
+    // FloorMapEventStoreDoc is one too. Testing only `PlanBDoc.TYPE.equals(...)` and returning null
+    // for anything else would silently stop pinning that store's queries — not an error but a quiet
+    // change to reading stale snapshots instead of live data.
     //
     // Behaviour for PlanBDoc is deliberately untouched: the shared-file-store test below is guarded
     // so it cannot apply to it.

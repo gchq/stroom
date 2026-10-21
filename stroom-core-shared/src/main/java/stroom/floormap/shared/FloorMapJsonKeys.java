@@ -53,14 +53,19 @@ public final class FloorMapJsonKeys {
     /// ID prefix applied to SVG `<g>` wrapper elements in the canvas.
     ///
     /// Each map object is rendered inside a `<g>` whose ID is
-    /// `SVG_GROUP_PREFIX + objectKey`. The click-detection logic uses
-    /// this prefix to distinguish wrapper groups (ignored) from the actual
-    /// clickable shape elements (whose IDs are the raw object keys).
-    ///
-    /// The prefix uses a double-underscore convention (`"__g_"`) to
-    /// avoid collisions with user-chosen object keys — users are unlikely to
-    /// name objects starting with `"__"`.
+    /// `SVG_GROUP_PREFIX + objectDomId(objectKey)`. The click-detection logic
+    /// ignores wrapper groups; only the shape inside, whose ID is
+    /// [#objectDomId], identifies the object.
     public static final String SVG_GROUP_PREFIX = "__g_";
+
+    /// ID prefix applied to the shape that represents a map object in the canvas.
+    ///
+    /// Object keys come from user data - event entity ids among them - so they cannot be used as
+    /// DOM ids directly: a key such as `__handle_rotate` would be taken for a transform handle,
+    /// `__cluster_x` for a cluster, and any key could clash with an id elsewhere on the page.
+    /// Every object's DOM id is therefore this prefix plus its key, and the hit-test accepts only
+    /// ids carrying it. No other canvas element's id starts with it, whatever the key.
+    public static final String OBJECT_PREFIX = "__obj_";
 
     /// ID prefix applied to the selection transform handles (scale/rotate) drawn
     /// over the current selection in edit mode. The mousedown hit-test checks
@@ -83,5 +88,25 @@ public final class FloorMapJsonKeys {
 
     private FloorMapJsonKeys() {
         // Utility class
+    }
+
+    /// The DOM id for the shape that represents a map object.
+    ///
+    /// @param objectKey the object's key, as it appears in the data
+    /// @return [#OBJECT_PREFIX] followed by the key
+    public static String objectDomId(final String objectKey) {
+        return OBJECT_PREFIX + objectKey;
+    }
+
+    /// The object key behind a DOM id written by [#objectDomId], or `null` if the id is not
+    /// an object's - a wrapper group, handle, cluster glyph or anything else.
+    ///
+    /// @param domId an element's id; may be `null`
+    /// @return the object key, or `null`
+    public static String objectKeyFromDomId(final String domId) {
+        if (domId == null || !domId.startsWith(OBJECT_PREFIX) || domId.length() == OBJECT_PREFIX.length()) {
+            return null;
+        }
+        return domId.substring(OBJECT_PREFIX.length());
     }
 }

@@ -47,11 +47,10 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local audit-trail fix: the default ExportEventAction is populated with the converted criteria,
-// so a download that throws before the file exists still records WHAT was requested. Upstream
-// builds an empty ExportEventAction, which is schema-valid (every Export child is optional) but
-// records only that a download was attempted. If upstream fixes the same gap, prefer theirs.
+// The default ExportEventAction is populated with the converted criteria, so a download that
+// throws before the file exists still records WHAT was requested. An empty ExportEventAction
+// would be schema-valid (every Export child is optional) but would record only that a download
+// was attempted.
 public class DataDownloadResourceImpl implements DataDownloadResource {
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
@@ -72,9 +71,19 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
     @Override
     public Response downloadZip(final FindMetaCriteria criteria) {
 
-        // Convert once and reuse for both the default and the enriched action.
-        final Criteria loggedCriteria = stroomEventLoggingServiceProvider.get()
-                .convertExpressionCriteria("Meta", criteria);
+        // Convert once and reuse for both the default and the enriched action. The conversion
+        // happens before the logged work starts, so a failure here must not escape unlogged:
+        // it is held and rethrown inside the logged work, which records the failed attempt.
+        Criteria convertedCriteria = null;
+        RuntimeException conversionFailure = null;
+        try {
+            convertedCriteria = stroomEventLoggingServiceProvider.get()
+                    .convertExpressionCriteria("Meta", criteria);
+        } catch (final RuntimeException e) {
+            conversionFailure = e;
+        }
+        final Criteria loggedCriteria = convertedCriteria;
+        final RuntimeException criteriaConversionFailure = conversionFailure;
 
         return stroomEventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
@@ -84,13 +93,19 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
                 // verbatim if the download throws before the file exists, and an
                 // empty Export would then say only that a download was attempted —
                 // valid against the schema (every Export child is optional) but
-                // useless for audit.
-                .withDefaultEventAction(ExportEventAction.builder()
-                        .withSource(MultiObject.builder()
-                                .addCriteria(loggedCriteria)
+                // useless for audit. Empty is still the fallback when the criteria
+                // themselves could not be converted.
+                .withDefaultEventAction(loggedCriteria == null
+                        ? ExportEventAction.builder().build()
+                        : ExportEventAction.builder()
+                                .withSource(MultiObject.builder()
+                                        .addCriteria(loggedCriteria)
+                                        .build())
                                 .build())
-                        .build())
                 .withComplexLoggedResult(eventAction -> {
+                    if (criteriaConversionFailure != null) {
+                        throw criteriaConversionFailure;
+                    }
                     try {
                         final ResourceGeneration resourceGeneration = dataServiceProvider.get().download(criteria);
                         final ResourceStore resourceStore = resourceStoreProvider.get();

@@ -17,13 +17,16 @@
 ext.moduleName = 'stroom.credentials.impl'
 
 dependencies {
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-credentials:stroom-credentials-impl-db')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-common')
@@ -32,16 +35,20 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-mock')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')
     testImplementation project(':stroom-resource:stroom-resource-impl')
     testImplementation project(':stroom-security:stroom-security-mock')

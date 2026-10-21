@@ -68,11 +68,6 @@ import com.google.gwt.view.client.SelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local addition: setEmptyText(String), which renders placeholder text in the empty-table area.
-// Used by FloorMapClusterPresenter ("No members match the search and filters") and by
-// AbstractQueryDataPresenter via QueryResultTablePresenter. Upstream has no equivalent, so
-// dropping it breaks both call sites at compile time.
 public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     public static final DefaultResources RESOURCES = GWT.create(DefaultResources.class);
@@ -1257,6 +1252,10 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         }
     }
 
+    /// Sets placeholder text to render in the empty-table area, e.g. "No members match the search
+    /// and filters".
+    ///
+    /// @param text the text to show when the table has no rows; null clears it
     public void setEmptyText(final String text) {
         if (text == null) {
             emptyTableWidget.setWidget(null);

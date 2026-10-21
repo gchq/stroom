@@ -23,6 +23,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.sqlstore.api.TemporalEntryValidator;
 import stroom.sqlstore.api.UpdatableTemporalStore;
 import stroom.sqlstore.impl.UpdatableTemporalStoreProvider;
 import stroom.sqlstore.shared.ApplyChangesRequest;
@@ -79,6 +80,20 @@ public class SqlStoreFilter extends AbstractXMLFilter {
     private boolean insideFrom = false;
     private boolean insideTo = false;
     private boolean haveSeenXmlInValueElement = false;
+
+    /**
+     * How many elements deep we are inside the current {@code <value>}, not counting the
+     * {@code <value>} itself. Only an end tag at depth zero closes the value, so a nested element
+     * that happens to be called {@code value} is copied into the payload rather than ending it.
+     */
+    private int valueElementDepth = 0;
+
+    /**
+     * Namespace declarations seen inside a {@code <value>} before its first child element starts.
+     * SAX reports a prefix mapping before the element that declares it, and the transformer that
+     * serialises the value is only created by that element, so these are held and replayed into it.
+     */
+    private final List<PrefixMapping> pendingPrefixMappings = new ArrayList<>();
 
     private final StringBuilder mapBuffer = new StringBuilder();
     private final StringBuilder keyBuffer = new StringBuilder();
@@ -154,6 +169,12 @@ public class SqlStoreFilter extends AbstractXMLFilter {
             if (!haveSeenXmlInValueElement) {
                 haveSeenXmlInValueElement = true;
                 initTransformerHandler();
+                if (transformerHandler != null) {
+                    for (final PrefixMapping prefixMapping : pendingPrefixMappings) {
+                        transformerHandler.startPrefixMapping(prefixMapping.prefix(), prefixMapping.uri());
+                    }
+                }
+                pendingPrefixMappings.clear();
                 if (!characterBuffer.isEmpty()) {
                     final char[] chars = characterBuffer.toString().toCharArray();
                     if (transformerHandler != null) {
@@ -161,6 +182,7 @@ public class SqlStoreFilter extends AbstractXMLFilter {
                     }
                 }
             }
+            valueElementDepth++;
             if (transformerHandler != null) {
                 transformerHandler.startElement(uri, localName, qName, atts);
             }
@@ -194,6 +216,8 @@ public class SqlStoreFilter extends AbstractXMLFilter {
                 insideValue = true;
                 currentValue = null;
                 haveSeenXmlInValueElement = false;
+                valueElementDepth = 0;
+                pendingPrefixMappings.clear();
                 characterBuffer.setLength(0);
             }
         }
@@ -205,7 +229,8 @@ public class SqlStoreFilter extends AbstractXMLFilter {
                            final String localName,
                            final String qName) throws SAXException {
         LOGGER.trace("SqlStoreFilter.endElement({}, {}, {})", uri, localName, qName);
-        if (insideValue && !localName.equalsIgnoreCase("value")) {
+        if (insideValue && valueElementDepth > 0) {
+            valueElementDepth--;
             if (transformerHandler != null) {
                 transformerHandler.endElement(uri, localName, qName);
             }
@@ -280,8 +305,12 @@ public class SqlStoreFilter extends AbstractXMLFilter {
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
         LOGGER.trace("SqlStoreFilter.startPrefixMapping()");
-        if (insideValue && transformerHandler != null) {
-            transformerHandler.startPrefixMapping(prefix, uri);
+        if (insideValue) {
+            if (transformerHandler != null) {
+                transformerHandler.startPrefixMapping(prefix, uri);
+            } else {
+                pendingPrefixMappings.add(new PrefixMapping(prefix, uri));
+            }
         }
         super.startPrefixMapping(prefix, uri);
     }
@@ -387,6 +416,14 @@ public class SqlStoreFilter extends AbstractXMLFilter {
             error("Key is missing for reference entry in map: " + mapName);
             return;
         }
+        final String keyProblem = TemporalEntryValidator.keyProblem(key);
+        if (keyProblem != null) {
+            // Rejected here, per entry, by the same rules the store applies, so that one bad key does
+            // not fail its whole batch.
+            error("Invalid key for reference entry in map: " + mapName + " - " + keyProblem
+                  + " The entry has been skipped.");
+            return;
+        }
 
         try {
             // Resolves nothing but the map name's validity; the write itself is batched.
@@ -433,6 +470,8 @@ public class SqlStoreFilter extends AbstractXMLFilter {
         currentValue = null;
         characterBuffer.setLength(0);
         haveSeenXmlInValueElement = false;
+        valueElementDepth = 0;
+        pendingPrefixMappings.clear();
     }
 
     private void error(final String message) {
@@ -443,5 +482,14 @@ public class SqlStoreFilter extends AbstractXMLFilter {
     private void error(final String message, final Throwable e) {
         LOGGER.error("SqlStoreFilter.error({}, {})", message, e.getMessage(), e);
         errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(), message, e);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /** A namespace declaration held until the transformer that will receive it exists. */
+    private record PrefixMapping(String prefix, String uri) {
+
     }
 }

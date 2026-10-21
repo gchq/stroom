@@ -68,6 +68,33 @@ class TestStoreImplAuditUser {
         public UserRef getUserRef() {
             throw new AuthenticationException("Expecting a stroom user identity");
         }
+
+        @Override
+        public boolean isProcessingUser() {
+            return true;
+        }
+    }
+
+    /**
+     * A {@link SecurityContext} for an identity that is not the processing user, but that cannot be
+     * resolved to a stroom user either.
+     */
+    private static class UnresolvableUserSecurityContext extends MockSecurityContext {
+
+        @Override
+        public UserIdentity getUserIdentity() {
+            return () -> "someone@example.com";
+        }
+
+        @Override
+        public UserRef getUserRef() {
+            throw new AuthenticationException("Expecting a stroom user identity");
+        }
+
+        @Override
+        public boolean isProcessingUser() {
+            return false;
+        }
     }
 
     /**
@@ -129,6 +156,19 @@ class TestStoreImplAuditUser {
         final Store<DictionaryDoc> store = createStore(persistence, new NoUserSecurityContext());
 
         // Not having a user at all remains an error, as distinct from running as the processing user.
+        assertThatThrownBy(() -> store.createDocument("dict1"))
+                .isInstanceOf(AuthenticationException.class);
+    }
+
+    /**
+     * Regression test: every {@link AuthenticationException} became a null audit user, not just the
+     * processing user's, so any identity that failed to resolve could write a document unattributed.
+     */
+    @Test
+    void create_asUnresolvableNonProcessingUser_fails() {
+        final Persistence persistence = mock(Persistence.class);
+        final Store<DictionaryDoc> store = createStore(persistence, new UnresolvableUserSecurityContext());
+
         assertThatThrownBy(() -> store.createDocument("dict1"))
                 .isInstanceOf(AuthenticationException.class);
     }

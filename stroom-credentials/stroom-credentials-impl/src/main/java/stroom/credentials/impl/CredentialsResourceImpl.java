@@ -21,8 +21,10 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.PutCredentialRequest;
+import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -83,6 +85,15 @@ public class CredentialsResourceImpl implements CredentialsResource {
         LOGGER.debug("Storing credentials '{}'", request);
         credentialsServiceProvider.get().storeCredentials(request);
         return request.getCredential();
+    }
+
+    // Logged as an update of the credential. The request (holding the secret) is not logged.
+    @AutoLogged(OperationType.UPDATE)
+    @Override
+    public Credential replaceSecret(final ReplaceSecretRequest request) {
+        // Never log the request itself as it holds the secret
+        LOGGER.debug("Replacing secret for credential '{}'", request.getUuid());
+        return credentialsServiceProvider.get().replaceSecret(request);
     }
 
     @Override
