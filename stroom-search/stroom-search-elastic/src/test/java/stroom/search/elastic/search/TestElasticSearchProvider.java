@@ -17,12 +17,15 @@
 package stroom.search.elastic.search;
 
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.security.api.SecurityContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -47,6 +50,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -152,6 +156,39 @@ class TestElasticSearchProvider {
         // First definition wins, but multi-fields from a later definition are still added
         assertThat(getKind(out, "Name")).isEqualTo(Kind.Keyword);
         assertThat(out).containsOnlyKeys("Name", "Name.keyword");
+    }
+
+    @Test
+    void testGetDataSourceFields_aliasToNonIndexedTargetNotQueryable() throws IOException {
+        givenMapping("""
+                {
+                  "Payload": { "type": "keyword", "index": false },
+                  "PayloadAlias": { "type": "alias", "path": "Payload" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::queryable)
+                .containsExactly(
+                        tuple("Payload", false),
+                        tuple("PayloadAlias", false));
+        assertThat(elasticSearchProvider.getFieldsMap(createIndex()).get("PayloadAlias").isIndexed())
+                .isFalse();
+    }
+
+    @Test
+    void testGetFieldsMap_aliasToNonIndexedTargetNotIndexed() throws IOException {
+        givenMapping("""
+                {
+                  "Payload": { "type": "keyword", "index": false },
+                  "PayloadAlias": { "type": "alias", "path": "Payload" }
+                }""");
+
+        final ElasticIndexField alias = elasticSearchProvider.getFieldsMap(createIndex()).get("PayloadAlias");
+
+        assertThat(alias).isNotNull();
+        assertThat(alias.getFldType()).isEqualTo(FieldType.KEYWORD);
+        assertThat(alias.getNativeType()).isEqualTo("keyword");
+        assertThat(alias.isIndexed()).isFalse();
     }
 
     private void givenUseAsRead() {
