@@ -87,6 +87,17 @@ public final class SelectionRules {
         }
     }
 
+    /// Whether a key or press counts as one with Ctrl held (design deviation D3): Ctrl, or on macOS
+    /// Cmd, which does there what Ctrl does elsewhere.
+    ///
+    /// @param ctrlKey Whether Ctrl is held.
+    /// @param metaKey Whether the meta key (Cmd on macOS, Windows elsewhere) is held.
+    /// @param mac     Whether the browser is on macOS.
+    /// @return Whether to act as for Ctrl.
+    public static boolean isCtrl(final boolean ctrlKey, final boolean metaKey, final boolean mac) {
+        return ctrlKey || (mac && metaKey);
+    }
+
     /// Work out where a keyboard move lands, skipping rows that cannot be selected.
     ///
     /// @param rows       The rows on the current page, in display order.

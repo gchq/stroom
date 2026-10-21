@@ -214,12 +214,12 @@ class DataGridKeyboard<R> {
         if (editing) {
             return onEditingKeyDown(event, rowIndex);
         }
-        if (event.getAltKey() || event.getMetaKey()) {
+        if (event.getAltKey() || DataGridDom.isOtherMeta(event)) {
             return false;
         }
         final int keyCode = event.getKeyCode();
         final boolean shift = event.getShiftKey();
-        final boolean ctrl = event.getCtrlKey();
+        final boolean ctrl = DataGridDom.isCtrl(event);
         if (tabbingControls && column >= 0) {
             if (keyCode == KeyCodes.KEY_TAB && !ctrl) {
                 return onEditingTab(event, rowIndex);
@@ -344,7 +344,7 @@ class DataGridKeyboard<R> {
 
     // A key on the scrolling box: a row key moves from the keyboard row, as on the row itself
     private boolean onScrollerKeyDown(final NativeEvent event) {
-        if (grid.getVisibleItemCount() == 0 || event.getAltKey() || event.getMetaKey()) {
+        if (grid.getVisibleItemCount() == 0 || event.getAltKey() || DataGridDom.isOtherMeta(event)) {
             return false;
         }
         header = false;
@@ -352,7 +352,7 @@ class DataGridKeyboard<R> {
         editing = false;
         final int rowIndex = Math.max(0, grid.getKeyboardSelectedRow());
         final boolean shift = event.getShiftKey();
-        final boolean ctrl = event.getCtrlKey();
+        final boolean ctrl = DataGridDom.isCtrl(event);
         switch (event.getKeyCode()) {
             case KeyCodes.KEY_UP:
                 handled(event);
@@ -397,7 +397,7 @@ class DataGridKeyboard<R> {
     // column's menu. Keys on a control in the header, e.g. a filter's text box or button, are left
     // to it
     private boolean onHeaderKeyDown(final NativeEvent event, final Element target) {
-        if (!target.hasAttribute(GridHtml.DATA_HCOL) || event.getAltKey() || event.getMetaKey()) {
+        if (!target.hasAttribute(GridHtml.DATA_HCOL) || event.getAltKey() || DataGridDom.isOtherMeta(event)) {
             return false;
         }
         final int keyCode = event.getKeyCode();

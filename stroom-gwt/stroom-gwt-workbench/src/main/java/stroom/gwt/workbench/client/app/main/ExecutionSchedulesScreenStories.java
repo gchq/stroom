@@ -313,8 +313,9 @@ public final class ExecutionSchedulesScreenStories {
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the first fetch's sort list", () -> firstSortList(requests))
                             .toEqual(List.of(Map.of("id", "Name", "desc", true, "ignoreCase", true))));
-                    // A request default only: no header shows a sort icon
-                    play.expect(play.querySelector(".column-sortIcon")).toBeNull();
+                    // The grid's default (D10): the Schedule Name header shows it
+                    play.expect(play.getByText("Schedule Name", StroomDom.GRID_HEADER_TEXT)
+                            .closest(StroomDom.GRID_HEADER_CELL)).toHaveAttribute("aria-sort", "descending");
                     expectNoErrors(play);
                 })
                 // A schedule naming a node that no longer exists

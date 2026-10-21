@@ -171,6 +171,26 @@ class TestColumnModel {
     }
 
     @Test
+    void testInsertPositionNotPastAnyNonMovableColumn() {
+        // Design deviation D6: a fixed column in the middle of the table also bounds a move
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("tick", ColumnSizing.fixed(100));
+        model.add("b", ColumnSizing.resizable(100));
+        model.add("c", ColumnSizing.resizable(100));
+        model.add("icon", ColumnSizing.fixed(100));
+        model.add("e", ColumnSizing.resizable(100));
+        model.add("f", ColumnSizing.resizable(100));
+
+        // "b" dragged to the far right stops before "icon"
+        assertThat(model.insertPosition(1, 1000)).isEqualTo(3);
+        // "f" dragged to the far left stops after "icon"
+        assertThat(model.insertPosition(5, 10)).isEqualTo(4);
+        // Moves within a run are unchanged
+        assertThat(model.insertPosition(2, 140)).isEqualTo(1);
+        assertThat(model.insertPosition(4, 1000)).isEqualTo(6);
+    }
+
+    @Test
     void testVersionsChange() {
         final ColumnModel<String> model = new ColumnModel<>();
         final int structure = model.getStructureVersion();

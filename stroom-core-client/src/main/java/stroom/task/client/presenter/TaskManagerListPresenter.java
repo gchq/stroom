@@ -85,6 +85,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -157,7 +158,6 @@ public class TaskManagerListPresenter
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
-        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
@@ -360,14 +360,13 @@ public class TaskManagerListPresenter
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                 ColumnSizeConstants.DATE_COL);
 
-        // Age.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
-                        .withSorting(FindTaskProgressCriteria.FIELD_AGE)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_AGE,
-                ColumnSizeConstants.SMALL_COL);
+        // Age. The oldest first, unless another sort is chosen
+        final Column<TaskProgress, SafeHtml> ageColumn = DataGridUtil.htmlColumnBuilder(getColouredCellFunc(
+                        taskProgress -> ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                .withSorting(FindTaskProgressCriteria.FIELD_AGE)
+                .build();
+        dataGrid.addResizableColumn(ageColumn, FindTaskProgressCriteria.FIELD_AGE, ColumnSizeConstants.SMALL_COL);
+        dataGrid.setDefaultSort(new ColumnSortInfo(ageColumn, false));
 
         // Info
         dataGrid.addAutoResizableColumn(

@@ -35,7 +35,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
@@ -53,13 +52,13 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -99,9 +98,7 @@ public class ScheduledProcessListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
-                ExecutionScheduleFields.NAME, true, true);
-        request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
+        request = ExecutionScheduleRequest.builder().build();
         dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
@@ -165,15 +162,18 @@ public class ScheduledProcessListPresenter
                         .build(),
                 80);
 
+        final Column<ExecutionSchedule, String> nameColumn = DataGridUtil.textColumnBuilder(ExecutionSchedule::getName)
+                .withSorting(ExecutionScheduleFields.NAME, true)
+                .enabledWhen(ExecutionSchedule::isEnabled)
+                .build();
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ExecutionSchedule::getName)
-                        .withSorting(ExecutionScheduleFields.NAME, false)
-                        .enabledWhen(ExecutionSchedule::isEnabled)
-                        .build(),
+                nameColumn,
                 DataGridUtil.headingBuilder(ExecutionScheduleFields.NAME)
                         .withToolTip("The name for this execution schedule.")
                         .build(),
                 200);
+        // By name, ignoring case, unless another sort is chosen (descending, as the request's default was)
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, false));
 
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(this::getNodeNameAsSafeHtml)

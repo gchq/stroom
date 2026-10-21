@@ -30,7 +30,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.datagrid.client.DataGridWidget;
@@ -40,13 +39,14 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.function.Consumer;
 
 public class ScheduledProcessHistoryListPresenter
@@ -74,9 +74,7 @@ public class ScheduledProcessHistoryListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
-                ExecutionHistoryFields.ID, true, true);
-        request = ExecutionHistoryRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
+        request = ExecutionHistoryRequest.builder().build();
         dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Scheduled Process History");
         dataGrid.setMultiLine(true);
@@ -103,16 +101,18 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void addColumns() {
+        final Column<ExecutionHistory, String> executionTimeColumn = DataGridUtil.textColumnBuilder(
+                        DataGridUtil.toStringFunc(ExecutionHistory::getExecutionTimeMs, dateTimeFormatter::format))
+                .withSorting(ExecutionHistoryFields.EXECUTION_TIME, false)
+                .build();
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
-                                ExecutionHistory::getExecutionTimeMs,
-                                dateTimeFormatter::format))
-                        .withSorting(ExecutionHistoryFields.EXECUTION_TIME, false)
-                        .build(),
+                executionTimeColumn,
                 DataGridUtil.headingBuilder(ExecutionHistoryFields.EXECUTION_TIME)
                         .withToolTip("The time it was actually executed.")
                         .build(),
                 ColumnSizeConstants.DATE_COL);
+        // The latest first, unless another sort is chosen
+        dataGrid.setDefaultSort(new ColumnSortInfo(executionTimeColumn, false));
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(

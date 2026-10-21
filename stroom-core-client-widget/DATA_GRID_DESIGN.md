@@ -923,6 +923,34 @@ interactive header cells, the context menu, copy, export and AI.
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.
 
+* **The removals wait** for the other sessions' work to finish (no screen uses `MyDataGrid` now).
+  The §8 fixes don't remove anything, so they go first:
+  * D2 (PageUp) and D4 (Shift+arrows, Space) were built into `DataGridKeyboard`.
+  * **D3** (2026-10-21): on macOS, Cmd does what Ctrl does: the row keys, a press on a row and a
+    click on a header (`DataGridDom.isCtrl`, `SelectionRules.isCtrl`). Elsewhere the meta key is
+    still left to the browser. `TestSelectionRules.testCmdActsAsCtrlOnlyOnMacOs`, and
+    `Widgets/Data Grid/DataGridKeyboard` `CmdActsAsCtrlOnMac` (which stubs the platform).
+  * **D6** (2026-10-21): `ColumnModel.insertPosition` keeps a column within the run of movable
+    columns it is in, not only after the leading fixed ones
+    (`TestColumnModel.testInsertPositionNotPastAnyNonMovableColumn`).
+  * **D11** (2026-10-21): `DataGridComparatorFactory` compares text ignoring case for a column
+    that says so (`OrderByColumn.isIgnoreCase`), as the server does
+    (`TestDataGridComparatorFactory`).
+  * **D7 and D10** (2026-10-21), together: D7 alone would send an empty sort on a screen's first
+    fetch too, dropping the default sorts presenters put only on the request.
+    * `DataGridWidget.setDefaultSort` shows the default from the start (no event) and puts it back,
+      with an event, when a click leaves nothing sorted (`SortCycle.orDefault`).
+      `Widgets/Data Grid/DataGridWidget` `DefaultSort`.
+    * `CriteriaUtil.setSortList` always sets the grid's list, empty too.
+    * Of the 16 screens that call it, six had a default, and now declare it on the grid with the
+      same order: Server Tasks (Age, descending), scheduled processes and the execution schedule
+      manager (Name, descending, as before; see `ISSUES.md`), scheduled process history (Execution
+      Time, descending, for the ID it used, which has no column), processor profiles and node
+      groups (Name). The others had no sort but the grid's, and the criteria classes set none.
+    * A default's case sensitivity is its column's. The schedules' Name defaults ignored case, so
+      their Name columns now do too (a click on Name sorts ignoring case, as the default does), and
+      the first fetch's request is as before.
+
 ---
 
 ## 10. Decisions

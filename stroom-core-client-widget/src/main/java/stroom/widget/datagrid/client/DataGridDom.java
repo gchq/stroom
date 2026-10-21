@@ -16,6 +16,8 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.widget.datagrid.client.model.SelectionRules;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -268,6 +270,27 @@ final class DataGridDom {
     static native double getOffsetTop(Element element) /*-{
         return element.offsetTop;
     }-*/;
+
+    /// @return Whether the browser is on macOS (or another Apple system), where Cmd does what Ctrl
+    /// does elsewhere.
+    static native boolean isMac() /*-{
+        var nav = $wnd.navigator;
+        var platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || "";
+        return /mac|iphone|ipad/i.test(platform);
+    }-*/;
+
+    /// @param event A key or mouse event.
+    /// @return Whether it counts as one with Ctrl held: Ctrl, or Cmd on macOS (design deviation D3).
+    static boolean isCtrl(final NativeEvent event) {
+        return SelectionRules.isCtrl(event.getCtrlKey(), event.getMetaKey(), isMac());
+    }
+
+    /// @param event A key event.
+    /// @return Whether the meta key is held for itself, not standing in for Ctrl (as Cmd does on
+    /// macOS): such keys are left to the browser and the system.
+    static boolean isOtherMeta(final NativeEvent event) {
+        return event.getMetaKey() && !isMac();
+    }
 
 
     // --------------------------------------------------------------------------------

@@ -139,7 +139,23 @@ public final class ColumnModel<C> {
             }
             left += width;
         }
-        return Math.max(pos, firstMovableIndex());
+        // A column moves only within the run of movable columns it is in: never past a column that
+        // can't be moved, wherever that is in the table (design deviation D6)
+        int lowest = 0;
+        for (int i = fromIndex - 1; i >= 0; i--) {
+            if (!entries.get(i).sizing.isMovable()) {
+                lowest = i + 1;
+                break;
+            }
+        }
+        int highest = count;
+        for (int i = fromIndex + 1; i < count; i++) {
+            if (!entries.get(i).sizing.isMovable()) {
+                highest = i;
+                break;
+            }
+        }
+        return Math.min(Math.max(pos, lowest), highest);
     }
 
     /// Work out which column edge a resize handle should be on for a pointer over the header,

@@ -219,7 +219,7 @@ public class DataGridWidgetSelectionEventManager<T>
                     doubleClick,
                     false,
                     allowMultiSelect,
-                    nativeEvent.getCtrlKey(),
+                    DataGridDom.isCtrl(nativeEvent),
                     nativeEvent.getShiftKey()));
         }
     }

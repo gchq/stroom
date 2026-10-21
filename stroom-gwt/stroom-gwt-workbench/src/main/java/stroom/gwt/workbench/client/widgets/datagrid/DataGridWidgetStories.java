@@ -140,6 +140,28 @@ public final class DataGridWidgetStories {
                     play.expect(headerCell(play, 3)).toHaveAttribute("aria-sort", "none");
                     play.expect(play.spy(ON_SORT_CHANGE)).toHaveBeenCalledTimes(3);
                 })
+                // A default sort (R-H4b, D10): shown from the start, without a sort event, and back
+                // when a click leaves nothing sorted, with one
+                .story("DefaultSort", DataGridWidgetStories::defaultSort)
+                .withPlay(play -> {
+                    final Query age = play.getByText(AGE_FIELD, HEADER_CELLS + " *");
+                    play.waitFor(() -> play.expect(firstName(play)).toHaveTextContent("Olivia Martin"));
+                    play.expect(headerCell(play, 1)).toHaveAttribute("aria-sort", "descending");
+                    play.expect(play.spy(ON_SORT_CHANGE)).not().toHaveBeenCalled();
+
+                    play.click(age);
+                    play.waitFor(() -> play.expect(headerCell(play, 3)).toHaveAttribute("aria-sort", "ascending"));
+                    play.expect(headerCell(play, 1)).toHaveAttribute("aria-sort", "none");
+                    play.click(age);
+                    play.waitFor(() -> play.expect(headerCell(play, 3)).toHaveAttribute("aria-sort", "descending"));
+
+                    // The third click would leave nothing sorted: the default comes back
+                    play.click(age);
+                    play.waitFor(() -> play.expect(headerCell(play, 1)).toHaveAttribute("aria-sort", "descending"));
+                    play.expect(headerCell(play, 3)).toHaveAttribute("aria-sort", "none");
+                    play.waitFor(() -> play.expect(firstName(play)).toHaveTextContent("Olivia Martin"));
+                    play.expect(play.spy(ON_SORT_CHANGE)).toHaveBeenLastCalledWith(1);
+                })
                 // With pager: 5 rows per page
                 .story("Pager", DataGridWidgetStories::pager)
                 .withPlay(play -> play.waitFor(() -> play.expect(play.querySelectorAll(ROW))
@@ -585,6 +607,30 @@ public final class DataGridWidgetStories {
         });
         grid.setRowData(new ArrayList<>(original));
         return sized(paged(grid), "320px", null);
+    }
+
+    // The sortable grid with a default sort, Name descending, which its first rows are sorted by
+    private static Widget defaultSort(final StoryContext context) {
+        final DataGridWidget<Person> grid = personGrid();
+        final List<Person> original = DataGridRows.people();
+        addSortableColumns(grid);
+        grid.setDefaultSort(new ColumnSortInfo(grid.getColumn(1), false));
+        final Spy onSortChange = context.fn(ON_SORT_CHANGE);
+        grid.addColumnSortHandler(event -> {
+            grid.setRowData(0, sortedBy(original, grid));
+            onSortChange.call(event.getColumnSortList().size());
+        });
+        grid.setRowData(sortedBy(original, grid));
+        return sized(paged(grid), "320px", null);
+    }
+
+    private static List<Person> sortedBy(final List<Person> original, final DataGridWidget<Person> grid) {
+        final List<Person> rows = new ArrayList<>(original);
+        final Comparator<Person> comparator = comparator(grid.getColumnSortList());
+        if (comparator != null) {
+            rows.sort(comparator);
+        }
+        return rows;
     }
 
     private static Widget pager(final StoryContext context) {

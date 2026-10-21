@@ -269,7 +269,7 @@ public final class ServerTasksScreenStories {
                             .toBeLessThan(20);
                     expectNoProblems(play);
                 })
-                // The first fetch sorts by Age descending (TaskManagerListPresenter's constructor)
+                // The first fetch sorts by Age descending, the grid's default sort, which the header shows
                 .story("DefaultSortIsAgeDescending", context -> render(context, FIXTURES, null))
                 .withPlay(play -> {
                     play.findAllByRole("row");
@@ -278,8 +278,9 @@ public final class ServerTasksScreenStories {
                                     .withJsonBodyContaining("{\"criteria\": {\"sortList\": "
                                             + "[{\"id\": \"Age\", \"desc\": true, \"ignoreCase\": false}]}}")
                                     .toSpyMatcher()));
-                    // A request default, not a grid one: no header has a sort indicator
-                    play.expect(play.querySelector(".column-sortIcon")).toBeNull();
+                    // The grid's default (D10): the Age header shows it
+                    play.expect(play.getByText("Age", StroomDom.GRID_HEADER_TEXT).closest(StroomDom.GRID_HEADER_CELL))
+                            .toHaveAttribute("aria-sort", "descending");
                     expectNoProblems(play);
                 });
     }

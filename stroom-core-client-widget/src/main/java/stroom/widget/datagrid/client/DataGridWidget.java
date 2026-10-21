@@ -126,6 +126,9 @@ public class DataGridWidget<R> extends Widget
     private final Map<Column<R, ?>, Header<?>> headers = new HashMap<>();
     private final Set<Column<R, ?>> wrappingColumns = new HashSet<>();
     private final ColumnSortList sortList;
+    // The screen's default sort (R-H4b, D10): shown from the start, and restored when a click
+    // leaves the sort list empty
+    private final List<SortEntry<Column<?, ?>>> defaultSort = new ArrayList<>();
     private final GridHtml<R> html;
 
     private final PageState<R> pageState;
@@ -636,21 +639,43 @@ public class DataGridWidget<R> extends Widget
         sortList.clear();
     }
 
+    /// Declare the screen's default sort (requirement R-H4b, design deviation D10): the order the
+    /// data has when nothing else is chosen. If nothing is sorted yet it is shown in the header at
+    /// once, without a sort event (the first fetch reads the sort list). Whenever a click leaves
+    /// the sort list empty (the third click on the only sorted column), the default comes back,
+    /// with a sort event, so the header always shows the order the data is in.
+    ///
+    /// @param defaultSort The default sort, primary column first. Empty for none.
+    public void setDefaultSort(final ColumnSortInfo... defaultSort) {
+        this.defaultSort.clear();
+        for (final ColumnSortInfo info : defaultSort) {
+            this.defaultSort.add(new SortEntry<>(info.getColumn(), info.isAscending()));
+        }
+        if (sortList.size() == 0) {
+            setSortList(this.defaultSort);
+        }
+    }
+
+    // Replaces the sort list's entries, primary column first
+    private void setSortList(final List<SortEntry<Column<?, ?>>> entries) {
+        // ColumnSortList.push inserts at the front, so push in reverse.
+        sortList.clear();
+        for (int i = entries.size() - 1; i >= 0; i--) {
+            final SortEntry<Column<?, ?>> entry = entries.get(i);
+            sortList.push(new ColumnSortInfo(entry.getColumn(), entry.isAscending()));
+        }
+    }
+
     private void onHeaderSortClick(final Column<R, ?> column, final boolean ctrl) {
         final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
         for (int i = 0; i < sortList.size(); i++) {
             final ColumnSortInfo info = sortList.get(i);
             current.add(new SortEntry<>(info.getColumn(), info.isAscending()));
         }
-        final List<SortEntry<Column<?, ?>>> next =
-                SortCycle.next(current, column, column.isDefaultSortAscending(), ctrl);
-
-        // ColumnSortList.push inserts at the front, so push in reverse.
-        sortList.clear();
-        for (int i = next.size() - 1; i >= 0; i--) {
-            final SortEntry<Column<?, ?>> entry = next.get(i);
-            sortList.push(new ColumnSortInfo(entry.getColumn(), entry.isAscending()));
-        }
+        final List<SortEntry<Column<?, ?>>> next = SortCycle.orDefault(
+                SortCycle.next(current, column, column.isDefaultSortAscending(), ctrl),
+                defaultSort);
+        setSortList(next);
         ColumnSortEvent.fire(this, sortList);
     }
 
@@ -1278,7 +1303,7 @@ public class DataGridWidget<R> extends Widget
         }
         final Column<R, ?> col = columnModel.getColumn(column);
         if (col.isSortable()) {
-            onHeaderSortClick(col, event.getCtrlKey());
+            onHeaderSortClick(col, DataGridDom.isCtrl(event));
         } else {
             showHeaderMenu(column, event);
         }
@@ -2170,7 +2195,7 @@ public class DataGridWidget<R> extends Widget
                 shouldSort = header.onPreviewColumnSortEvent(context, headerContent, event);
             }
             if (shouldSort) {
-                onHeaderSortClick(column, event.getCtrlKey());
+                onHeaderSortClick(column, DataGridDom.isCtrl(event));
             }
         }
     }

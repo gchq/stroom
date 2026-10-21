@@ -50,10 +50,9 @@ public final class CriteriaUtil {
      */
     public static void setSortList(final BaseCriteria criteria,
                                    final ColumnSortList columnSortList) {
-        final List<CriteriaFieldSort> sortList = createSortList(columnSortList);
-        if (!sortList.isEmpty()) {
-            criteria.setSortList(sortList);
-        }
+        // Even when empty (design deviation D7): the old sort mustn't stay in effect once the header
+        // shows none. A grid with a default sort (setDefaultSort) is never left empty.
+        criteria.setSortList(createSortList(columnSortList));
     }
 
     public static PageRequest createPageRequest(final Range range) {

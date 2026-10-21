@@ -22,6 +22,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -95,7 +96,10 @@ public final class DataGridKeyboardStories {
                 // A selection box given the focus, and then opened, is left as it is: the grid
                 // doesn't draw its row again for the focus coming or going
                 .story("SelectionBoxStaysPut", context -> render(context, false))
-                .withPlay(DataGridKeyboardStories::playSelectionBoxStaysPut);
+                .withPlay(DataGridKeyboardStories::playSelectionBoxStaysPut)
+                // On macOS, Cmd does what Ctrl does (design deviation D3)
+                .story("CmdActsAsCtrlOnMac", context -> render(context, true))
+                .withPlay(DataGridKeyboardStories::playCmdActsAsCtrlOnMac);
     }
 
     // --------------------------------------------------------------------------------
@@ -276,6 +280,29 @@ public final class DataGridKeyboardStories {
         play.waitFor(() -> play.expect(play.screen().queryByRole("listbox")).toBeNull());
         expectFocus(play, box);
     }
+
+    private static void playCmdActsAsCtrlOnMac(final Play play) {
+        play.run("pretend to be on macOS", DataGridKeyboardStories::pretendToBeOnMac);
+        enterGrid(play);
+        play.keyboard("{ArrowDown}");
+        expectSelected(play, "Bravo");
+        // Cmd+Down moves without choosing, as Ctrl+Down does
+        play.keyboard("{Meta>}{ArrowDown}{/Meta}");
+        expectFocus(play, row(play, "Charlie"));
+        expectSelected(play, "Bravo");
+        play.keyboard(" ");
+        expectSelected(play, "Bravo, Charlie");
+        // Cmd+click adds a row, as Ctrl+click does
+        play.fireEvent().mouseDown(play.within(row(play, "Echo")).getByText("Echo"),
+                EventInit.create().metaKey().button(0));
+        expectSelected(play, "Bravo, Charlie, Echo");
+    }
+
+    // The grid asks the browser which system it is on
+    private static native void pretendToBeOnMac() /*-{
+        Object.defineProperty($wnd.navigator, "platform", {get: function () { return "MacIntel"; }});
+        Object.defineProperty($wnd.navigator, "userAgentData", {get: function () { return undefined; }});
+    }-*/;
 
     private static native boolean isConnected(Element element) /*-{
         return !!element && element.isConnected;

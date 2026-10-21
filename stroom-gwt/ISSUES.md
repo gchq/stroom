@@ -1075,6 +1075,10 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 **Reported.**
 
+* Scheduled processes (an analytic rule's or report's Schedules) and the execution schedule
+  manager list by Name **descending** by default (`new CriteriaFieldSort(NAME, true, true)`: the
+  second argument is `desc`), which looks like a slip for ascending. The default is now shown in
+  the Name header (D10), so it shows. Kept as it was; worth confirming.
 * After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
   `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListPresenter`).

@@ -155,6 +155,17 @@ class TestSelectionRules {
         return selection;
     }
 
+    @Test
+    void testCmdActsAsCtrlOnlyOnMacOs() {
+        // Ctrl is Ctrl everywhere
+        assertThat(SelectionRules.isCtrl(true, false, false)).isTrue();
+        assertThat(SelectionRules.isCtrl(true, false, true)).isTrue();
+        // Cmd (meta) stands in for it on macOS only (design deviation D3)
+        assertThat(SelectionRules.isCtrl(false, true, true)).isTrue();
+        assertThat(SelectionRules.isCtrl(false, true, false)).isFalse();
+        assertThat(SelectionRules.isCtrl(false, false, true)).isFalse();
+    }
+
     private static SelectionType type(final boolean allowMulti, final boolean ctrl, final boolean shift) {
         return new SelectionType(false, false, allowMulti, ctrl, shift);
     }
