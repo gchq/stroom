@@ -25,6 +25,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.InfoResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import org.apache.hc.core5.http.HttpHost;
@@ -53,8 +54,7 @@ class TestElasticClientFactory {
     private static final String PASSWORD = "changeit";
     private static final String API_KEY = "ZW5jb2RlZEtleQ==";
 
-    // The minimum the Elasticsearch Java client needs to parse an info response. The product header is
-    // checked by the client, which refuses to talk to anything that does not claim to be Elasticsearch.
+    // The minimum the Elasticsearch Java client needs to parse an info response
     private static final String INFO_RESPONSE = """
             {
               "name" : "node-1",
@@ -353,12 +353,8 @@ class TestElasticClientFactory {
         return WireMock.get(WireMock.urlEqualTo("/")).willReturn(infoResponse());
     }
 
-    private static com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder infoResponse() {
-        return WireMock.aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withHeader("X-Elastic-Product", "Elasticsearch")
-                .withBody(INFO_RESPONSE.getBytes(StandardCharsets.UTF_8));
+    private static ResponseDefinitionBuilder infoResponse() {
+        return ElasticWireMock.elasticResponse(200, INFO_RESPONSE);
     }
 
     private static HttpTlsConfiguration.Builder trustStoreTls() {

@@ -22,8 +22,10 @@ import stroom.util.shared.Severity;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.OperationType;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,6 +73,160 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testScalarValues() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <string key="str">hello</string>
+                  <number key="int">42</number>
+                  <number key="dec">-1.5e3</number>
+                  <boolean key="yes">true</boolean>
+                  <boolean key="no">false</boolean>
+                  <null key="nothing"/>
+                </map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests).hasSize(1);
+        assertDocuments("""
+                {"str":"hello","int":42,"dec":-1.5e3,"yes":true,"no":false,"nothing":null}""");
+    }
+
+    @Test
+    void testArraysAndNestedMaps() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <array key="tags">
+                    <string>a</string>
+                    <string>b</string>
+                    <number>3</number>
+                  </array>
+                  <map key="user">
+                    <string key="name">jbloggs</string>
+                    <map key="address">
+                      <string key="town">Bristol</string>
+                    </map>
+                  </map>
+                  <array key="items">
+                    <map><number key="id">1</number></map>
+                    <map><number key="id">2</number></map>
+                  </array>
+                </map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertDocuments("""
+                {
+                  "tags": ["a", "b", 3],
+                  "user": {"name": "jbloggs", "address": {"town": "Bristol"}},
+                  "items": [{"id": 1}, {"id": 2}]
+                }""");
+    }
+
+    @Test
+    void testEmptyValuesAreOmitted() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <string key="emptyString"></string>
+                  <number key="emptyNumber"/>
+                  <boolean key="emptyBoolean"/>
+                  <string key="kept">value</string>
+                </map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertDocuments("""
+                {"kept":"value"}""");
+    }
+
+    @Test
+    void testWhitespaceOnlyStringIsKept() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map><string key="spaces">   </string><string key="tab">\t</string></map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertDocuments("""
+                {"spaces":"   ","tab":"\\t"}""");
+    }
+
+    @Test
+    void testUnparseableBooleanIsFalse() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map><boolean key="flag">yes</boolean><boolean key="upper">TRUE</boolean></map>"""));
+
+        assertDocuments("""
+                {"flag":false,"upper":true}""");
+    }
+
+    @Test
+    void testUnderscoreFieldsAreNotWritten() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map><string key="_hidden">x</string><string key="visible">y</string></map>"""));
+
+        assertDocuments("""
+                {"visible":"y"}""");
+    }
+
+    @Test
+    void testMultipleDocuments() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map><number key="n">1</number></map>
+                <map><number key="n">2</number></map>
+                <map><number key="n">3</number></map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests).hasSize(1);
+        assertDocuments("""
+                {"n":1}""", """
+                {"n":2}""", """
+                {"n":3}""");
+        assertThat(bulkRequests.getFirst().operations())
+                .allSatisfy(operation -> {
+                    assertThat(operation.isCreate()).isTrue();
+                    assertThat(operation.create().index()).isEqualTo(INDEX_NAME);
+                    assertThat(operation.create().pipeline()).isNull();
+                });
+    }
+
+    @Test
+    void testDocumentsSpanningMultipleParses() {
+        // Each record/part of a stream arrives as a separate XML document, but they share the batch
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml("<map><string key=\"part\">one</string></map>"));
+        harness.parse(filter, jsonXml("<map><string key=\"part\">two</string></map>"));
+        filter.endProcessing();
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests).hasSize(1);
+        assertDocuments("""
+                {"part":"one"}""", """
+                {"part":"two"}""");
+    }
+
+    @Test
+    void testDocumentWithNoValuesIsSkipped() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml("""
+                <map><string key="empty"></string></map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests).isEmpty();
+    }
+
+    @Test
     void testDocumentWithNoValuesDoesNotCorruptNextDocument() {
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
 
@@ -82,6 +238,191 @@ class TestElasticIndexingFilter {
         assertThat(ElasticIndexingFilterTestHarness.documentJsons(bulkRequests))
                 .singleElement()
                 .satisfies(json -> assertThat(json.strip()).isEqualTo("{\"a\":\"b\"}"));
+    }
+
+    @Test
+    void testBatchSizeExactlyReached() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(2);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(2)));
+        // The batch is sent as soon as it is full, without waiting for the end of processing
+        assertThat(bulkSizesWhenSent).containsExactly(2);
+        filter.endProcessing();
+
+        // No empty batch is sent at the end
+        assertThat(bulkSizesWhenSent).containsExactly(2);
+        assertThat(harness.getErrors()).isEmpty();
+    }
+
+    @Test
+    void testBatchSizeExceededByOne() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(2);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(3)));
+        assertThat(bulkSizesWhenSent).containsExactly(2);
+        filter.endProcessing();
+
+        assertThat(bulkSizesWhenSent).containsExactly(2, 1);
+        assertDocuments("""
+                {"n":0}""", """
+                {"n":1}""", """
+                {"n":2}""");
+    }
+
+    @Test
+    void testFinalPartialBatchFlushedAtEnd() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(3);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(7)));
+        assertThat(bulkSizesWhenSent).containsExactly(3, 3);
+        filter.endProcessing();
+
+        assertThat(bulkSizesWhenSent).containsExactly(3, 3, 1);
+        assertThat(ElasticIndexingFilterTestHarness.documentJsons(bulkRequests)).hasSize(7);
+    }
+
+    @Test
+    void testNoDocumentsSendsNothing() throws IOException {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml(""));
+
+        Mockito.verify(elasticClient, Mockito.never()).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getErrors()).isEmpty();
+    }
+
+    @Test
+    void testIngestPipelineApplied() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setIngestPipeline("my-pipeline");
+
+        harness.process(filter, jsonXml(documents(2)));
+
+        assertThat(bulkRequests.getFirst().operations())
+                .extracting(operation -> operation.create().pipeline())
+                .containsExactly("my-pipeline", "my-pipeline");
+    }
+
+    @Test
+    void testEmptyIngestPipelineIgnored() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setIngestPipeline("");
+
+        harness.process(filter, jsonXml(documents(1)));
+
+        assertThat(bulkRequests.getFirst().operations().getFirst().create().pipeline()).isNull();
+    }
+
+    @Test
+    void testRefreshAfterEachBatch() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setRefreshAfterEachBatch(true);
+        filter.setBatchSize(1);
+
+        harness.process(filter, jsonXml(documents(2)));
+
+        assertThat(bulkRequests)
+                .hasSize(2)
+                .extracting(BulkRequest::refresh)
+                .containsOnly(Refresh.True);
+    }
+
+    @Test
+    void testNoRefreshByDefault() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml(documents(1)));
+
+        assertThat(bulkRequests.getFirst().refresh()).isEqualTo(Refresh.False);
+    }
+
+    @Test
+    void testIndexNameVariables() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}-{type}");
+
+        harness.process(filter, jsonXml("""
+                <map>
+                  <number key="_year">2023</number>
+                  <string key="type">auth</string>
+                  <string key="user">jbloggs</string>
+                </map>
+                <map>
+                  <string key="type">file</string>
+                  <number key="_year">2024</number>
+                </map>"""));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkRequests.getFirst().operations())
+                .extracting(operation -> operation.create().index())
+                .containsExactly("events-2023-auth", "events-2024-file");
+        // Variables starting with an underscore are only used in the index name
+        assertDocuments("""
+                {"type":"auth","user":"jbloggs"}""", """
+                {"type":"file"}""");
+    }
+
+    @Test
+    void testIndexNameVariableFromBoolean() {
+        final ElasticIndexingFilter filter = createFilter("flags-{flag}");
+
+        harness.process(filter, jsonXml("""
+                <map><boolean key="flag">true</boolean></map>"""));
+
+        assertThat(bulkRequests.getFirst().operations().getFirst().create().index())
+                .isEqualTo("flags-true");
+    }
+
+    @Test
+    void testIndexNameVariableMissing() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map><string key="other">x</string></map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .first()
+                .isEqualTo("Field '_year' not found in document when building index name with pattern: "
+                           + "'events-{_year}'");
+        assertThat(bulkRequests).isEmpty();
+    }
+
+    @Test
+    void testIndexNameVariableNotCarriedOverToNextDocument() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map><string key="_year">2023</string><string key="a">1</string></map>
+                <map><string key="a">2</string></map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .first()
+                .asString()
+                .startsWith("Field '_year' not found in document");
+    }
+
+    @Test
+    void testIndexNameVariableWithEmptyOrNullValue() {
+        final ElasticIndexingFilter filter = createFilter("events-{_year}");
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("""
+                <map><string key="_year"></string><null key="_year"/><string key="a">1</string></map>""")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .first()
+                .asString()
+                .startsWith("Field '_year' not found in document");
     }
 
     @Test
@@ -186,6 +527,16 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testIndexNameWithUnclosedBraceIsUsedLiterally() {
+        final ElasticIndexingFilter filter = createFilter("events-{year");
+
+        harness.process(filter, jsonXml(documents(1)));
+
+        assertThat(bulkRequests.getFirst().operations().getFirst().create().index())
+                .isEqualTo("events-{year");
+    }
+
+    @Test
     void testIndexNameVariableOnlyTakenFromDocumentRoot() {
         final ElasticIndexingFilter filter = createFilter("events-{_year}");
 
@@ -201,6 +552,29 @@ class TestElasticIndexingFilter {
     }
 
     @Test
+    void testMissingIndexName() {
+        final ElasticIndexingFilter filter = createFilter("");
+
+        assertThatThrownBy(filter::startProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .contains("Index name has not been set");
+    }
+
+    @Test
+    void testNullCluster() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setCluster(null);
+
+        assertThatThrownBy(filter::startProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .contains("Elasticsearch cluster ref has not been set");
+    }
+
+    @Test
     void testNullClusterLoggedOnce() {
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
         filter.setCluster(null);
@@ -210,6 +584,244 @@ class TestElasticIndexingFilter {
 
         assertThat(harness.getMessages(Severity.FATAL_ERROR))
                 .containsExactly("Elasticsearch cluster ref has not been set");
+    }
+
+    @Test
+    void testMissingClusterDocument() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        Mockito.when(harness.getElasticClusterStore().readDocument(harness.getClusterRef())).thenReturn(null);
+
+        assertThatThrownBy(filter::startProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getErrors())
+                .isNotEmpty()
+                .allSatisfy(error -> assertThat(error.severity()).isEqualTo(Severity.FATAL_ERROR));
+    }
+
+    @Test
+    void testRootMustBeArray() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter,
+                "<map xmlns=\"" + ElasticIndexingFilterTestHarness.JSON_NAMESPACE + "\"/>"))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Expected an array at start of document, got 'map' instead");
+    }
+
+    @Test
+    void testValueDirectlyInOuterArray() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml("<string>x</string>")))
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Expected an end array to close the document, got 'string' instead");
+    }
+
+    @Test
+    void testMaxNestedElementDepth() {
+        final ElasticIndexingFilter filter = harness.createFilter(
+                elasticClient,
+                ElasticIndexingFilterTestHarness.indexingConfig(2, RETRY_COUNT),
+                INDEX_NAME);
+
+        filter.startProcessing();
+        // Depth 2 is allowed
+        harness.parse(filter, jsonXml("<map><map key=\"a\"><string key=\"b\">c</string></map></map>"));
+        assertThat(harness.getErrors()).isEmpty();
+
+        assertThatThrownBy(() -> harness.parse(filter, jsonXml(
+                "<map><map key=\"a\"><array key=\"b\"><string>c</string></array></map></map>")))
+                .isInstanceOf(LoggedException.class);
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Maximum nested element depth of 2 exceeded");
+    }
+
+    @Test
+    void testOverloadedExceptionIsRetried() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(elasticsearchException(429))
+                .thenAnswer(invocation -> {
+                    final BulkRequest bulkRequest = invocation.getArgument(0);
+                    recordBulkRequest(bulkRequest);
+                    return successResponse(bulkRequest.operations().size());
+                });
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml(documents(2)));
+
+        Mockito.verify(elasticClient, Mockito.times(2)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(ElasticIndexingFilterTestHarness.documentJsons(bulkRequests)).hasSize(2);
+    }
+
+    @Test
+    void testOverloadedExceptionRetriesExhausted() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(elasticsearchException(429));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        // The first attempt plus the configured number of retries
+        Mockito.verify(elasticClient, Mockito.times(RETRY_COUNT + 1))
+                .bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .startsWith("Indexing failed to complete after " + RETRY_COUNT + " retries: ")
+                .contains("es_rejected_execution_exception");
+    }
+
+    @Test
+    void testRetryCountResetBetweenBatches() throws IOException {
+        // Each batch gets the full number of retries, rather than sharing them
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(elasticsearchException(429))
+                .thenThrow(elasticsearchException(429))
+                .thenReturn(successResponse(1))
+                .thenThrow(elasticsearchException(429))
+                .thenThrow(elasticsearchException(429))
+                .thenReturn(successResponse(1));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        harness.process(filter, jsonXml(documents(2)));
+
+        Mockito.verify(elasticClient, Mockito.times(6)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getErrors()).isEmpty();
+    }
+
+    @Test
+    void testOverloadedItemsAreRetried() throws IOException {
+        // One document was indexed and the other rejected, so the indexed one is deleted before retrying
+        final BulkResponse partialResponse = BulkResponse.of(b -> b
+                .errors(true)
+                .took(1L)
+                .items(
+                        BulkResponseItem.of(i -> i
+                                .operationType(OperationType.Create)
+                                .index(INDEX_NAME)
+                                .id("doc-1")
+                                .status(201)),
+                        BulkResponseItem.of(i -> i
+                                .operationType(OperationType.Create)
+                                .index(INDEX_NAME)
+                                .status(429)
+                                .error(e -> e.type("es_rejected_execution_exception").reason("busy")))));
+        final List<BulkRequest> requests = new ArrayList<>();
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenAnswer(invocation -> {
+                    requests.add(snapshot(invocation.getArgument(0)));
+                    return switch (requests.size()) {
+                        case 1 -> partialResponse;
+                        case 2 -> successResponse(1);
+                        default -> successResponse(2);
+                    };
+                });
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        harness.process(filter, jsonXml(documents(2)));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(requests).hasSize(3);
+        final BulkOperation deleteOperation = requests.get(1).operations().getFirst();
+        assertThat(requests.get(1).operations()).hasSize(1);
+        assertThat(deleteOperation.isDelete()).isTrue();
+        assertThat(deleteOperation.delete().index()).isEqualTo(INDEX_NAME);
+        assertThat(deleteOperation.delete().id()).isEqualTo("doc-1");
+        // The whole batch is resent
+        assertThat(requests.get(2).operations()).hasSize(2);
+    }
+
+    @Test
+    void testPartialFailureIsFatal() throws IOException {
+        final BulkResponse partialResponse = BulkResponse.of(b -> b
+                .errors(true)
+                .took(1L)
+                .items(BulkResponseItem.of(i -> i
+                        .operationType(OperationType.Create)
+                        .index(INDEX_NAME)
+                        .status(400)
+                        .error(e -> e.type("mapper_parsing_exception").reason("bad field")))));
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class))).thenReturn(partialResponse);
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        // Not retried
+        Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .startsWith("Bulk indexing request failed: ")
+                .contains("mapper_parsing_exception");
+    }
+
+    @Test
+    void testElasticsearchExceptionIsFatal() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(elasticsearchException(500));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getErrors())
+                .singleElement()
+                .satisfies(error -> {
+                    assertThat(error.severity()).isEqualTo(Severity.FATAL_ERROR);
+                    assertThat(error.message()).startsWith("Indexing failed to complete after 0 retries: ");
+                    assertThat(error.throwable()).isInstanceOf(ElasticsearchException.class);
+                });
+    }
+
+    @Test
+    void testIOExceptionIsFatal() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(new IOException("Connection refused"));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Connection refused");
+    }
+
+    @Test
+    void testLongErrorMessageIsTruncated() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(new IOException("x".repeat(10_000)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .singleElement()
+                .asString()
+                .hasSize(4096);
     }
 
     @Test
@@ -226,6 +838,22 @@ class TestElasticIndexingFilter {
 
         assertThat(harness.getMessages(Severity.FATAL_ERROR))
                 .containsExactly("Connection refused");
+    }
+
+    @Test
+    void testBatchDiscardedAfterFailure() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenThrow(new IOException("failed"));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(1)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        // A second end does not resend the failed batch
+        filter.endProcessing();
+        Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
     }
 
     private ElasticIndexingFilter createFilter(final String indexName) {
