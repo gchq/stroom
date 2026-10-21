@@ -292,7 +292,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (currentDepth == 1) {
                             enterDocumentRoot();
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid start of object", e);
                     }
                     break;
@@ -301,7 +301,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         incrementDepth();
                         writeFieldName();
                         jsonGenerator.writeStartArray();
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid start of array", e);
                     }
                     break;
@@ -375,7 +375,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid string value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -391,7 +391,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid boolean value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -404,7 +404,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             currentDocPropertyCount++;
                         }
                         storeIndexNameVariableValue("");
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid null value for property '" + currentDocFieldName + "'", e);
                     }
                     break;
@@ -419,7 +419,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (final IOException e) {
+                    } catch (final IOException | JacksonException e) {
                         fatalError("Invalid number value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
