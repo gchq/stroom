@@ -289,7 +289,7 @@ public class AiChatRunManager {
             // Give up the thread and the slot until the user answers (S8).
             LOGGER.debug(() -> "Run " + run.getId() + " is waiting for the user: " + e.getMessage());
             if (!runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.RUNNING),
-                    AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_APPROVAL, null)) {
+                    AiChatRunStatus.WAITING_FOR_USER, e.getStopReason(), null)) {
                 // A stop was asked for while it worked.
                 stopped(run, null);
             }
@@ -587,16 +587,31 @@ public class AiChatRunManager {
         }
     }
 
-    /// Thrown when a question is asked in a chat that is still working on an earlier one.
     /// Thrown by a run's work when it has to wait for the user (e.g. to approve tool calls), to give up its thread
     /// and its place in the limits until they answer.
     public static class WaitingForUserException extends RuntimeException {
 
+        private final AiChatRunStopReason stopReason;
+
+        /// @param message Why the run waits, for the log.
         public WaitingForUserException(final String message) {
+            this(message, AiChatRunStopReason.NEEDS_APPROVAL);
+        }
+
+        /// @param message    Why the run waits, for the log.
+        /// @param stopReason What the run waits for, as the chat shows it, e.g. [AiChatRunStopReason#NEEDS_ANSWERS].
+        public WaitingForUserException(final String message, final AiChatRunStopReason stopReason) {
             super(message);
+            this.stopReason = stopReason;
+        }
+
+        /// @return What the run waits for.
+        public AiChatRunStopReason getStopReason() {
+            return stopReason;
         }
     }
 
+    /// Thrown when a question is asked in a chat that is still working on an earlier one.
     public static class AiChatBusyException extends RuntimeException {
 
         public AiChatBusyException(final int chatId) {

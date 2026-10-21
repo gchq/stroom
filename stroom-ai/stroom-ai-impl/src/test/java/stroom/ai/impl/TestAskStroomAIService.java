@@ -35,6 +35,7 @@ import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AnswerAiApprovalRequest;
+import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
@@ -744,6 +745,51 @@ class TestAskStroomAIService {
         assertThat(service().answerApproval(answer)).isTrue();
 
         Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAnsweringQuestionsTheRunStoppedForCarriesItOn() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "find the failed logons")));
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+        Mockito.when(mcpElicitations.answer(1, 20, "ACCEPT", Map.of("q1", "Production"))).thenReturn(true);
+
+        assertThat(service().answerElicitation(new AnswerAiElicitationRequest(chat, 20, "ACCEPT",
+                Map.of("q1", "Production")))).isTrue();
+
+        Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAnsweringAFormAToolWaitsForDoesNotCarryOnTheRun() {
+        // The tool's call is still working, and carries on with the answer.
+        Mockito.when(mcpElicitations.answer(1, 20, "DECLINE", null)).thenReturn(false);
+
+        assertThat(service().answerElicitation(new AnswerAiElicitationRequest(chat, 20, "DECLINE", null)))
+                .isTrue();
+
+        Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAMessageSentInsteadOfAnsweringQuestionsPutsThemAside() {
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "find the failed logons")));
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "just production"));
+
+        // The run carries on: the call that asked is told they weren't answered, and the model reads the message.
+        final InOrder inOrder = Mockito.inOrder(aiService, mcpElicitations, runManager);
+        inOrder.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, null, "just production");
+        inOrder.verify(mcpElicitations).supersedePending(1);
+        inOrder.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
     }
 
     @Test

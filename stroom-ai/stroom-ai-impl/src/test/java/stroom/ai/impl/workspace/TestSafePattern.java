@@ -17,6 +17,8 @@
 package stroom.ai.impl.workspace;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
 
@@ -35,6 +37,22 @@ class TestSafePattern {
         assertThat(pattern.find("A.B")).isFalse();
         assertThat(SafePattern.of("a.b", false, true).find("XA.BY")).isTrue();
         assertThat(SafePattern.of("A.b", false, true).find("xa.by")).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"System|Environment", "error.*host", "a.+b", "\\d+ events", "host[12]", "^ERROR",
+            "done$", "\\bword"})
+    void testALiteralThatLooksLikeARegexIsSaidToBeOne(final String text) {
+        assertThat(SafePattern.of(text, false, false).isLiteralThatLooksLikeRegex()).isTrue();
+        assertThat(SafePattern.of(text, false, true).isLiteralThatLooksLikeRegex()).isTrue();
+        // Only a literal search may have been meant otherwise.
+        assertThat(SafePattern.of(text, true, false).isLiteralThatLooksLikeRegex()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"event 30", "host=fw0", "a.b", "1.2.3.4", "C:\\Temp", "[]", "cost $5", "x^2"})
+    void testOrdinaryTextIsNotSaidToBeARegex(final String text) {
+        assertThat(SafePattern.of(text, false, false).isLiteralThatLooksLikeRegex()).isFalse();
     }
 
     @Test

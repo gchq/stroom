@@ -260,9 +260,9 @@ class TestWorkspaceArguments {
         file("/outputs/a.json", "{\"a\":\"text\"}");
 
         final Expansion expansion = workspaceArguments.expand(CHAT_ID,
-                "{\"a\":{\"$workspace\":\"/outputs/a.json\",\"jq\":\".a | test(\\\"x\\\")\"}}");
+                "{\"a\":{\"$workspace\":\"/outputs/a.json\",\"jq\":\".a | tonumber\"}}");
 
-        assertThat(expansion.error()).startsWith("a: The jq query failed").contains("test is not available");
+        assertThat(expansion.error()).startsWith("a: The jq query failed");
     }
 
     @Test

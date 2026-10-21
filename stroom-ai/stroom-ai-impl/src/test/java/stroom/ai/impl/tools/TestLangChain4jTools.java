@@ -16,9 +16,11 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.shared.AiChatRunStopReason;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestLangChain4jTools {
 
@@ -145,6 +148,15 @@ class TestLangChain4jTools {
             throw new IllegalStateException("kaboom");
         }).execute(request("{}"), 4)).isEqualTo("Error running built-in tool 't': kaboom");
         assertThat(executor((call, context) -> null).execute(request("{}"), 4)).isEmpty();
+    }
+
+    @Test
+    void theExecutorLetsTheRunStopToWaitForTheUser() {
+        // E.g. ask_user's questions: the run stops until they are answered, and makes the call again then.
+        assertThatThrownBy(() -> executor((call, context) -> {
+            throw new AiChatRunManager.WaitingForUserException("Questions need answers",
+                    AiChatRunStopReason.NEEDS_ANSWERS);
+        }).execute(request("{}"), 4)).isInstanceOf(AiChatRunManager.WaitingForUserException.class);
     }
 
     @Test

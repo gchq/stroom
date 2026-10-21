@@ -151,10 +151,13 @@ class GrepTool extends AbstractWorkspaceTool {
             if (writer != null) {
                 writer.close();
                 workspace.write(out, temp, sourceDocUuid);
-                return ToolResult.text("Wrote " + matches + " matching line(s) to " + out + ".");
+                return ToolResult.text("Wrote " + matches + " matching line(s) to " + out + "."
+                                       + (matches == 0
+                        ? literalNote(pattern)
+                        : ""));
             }
             if (matches == 0) {
-                return ToolResult.text("No lines match.");
+                return ToolResult.text("No lines match." + literalNote(pattern));
             }
             final int shown = (int) sb.toString().lines().count();
             return ToolResult.text(sb.toString().strip() + (matches > shown
@@ -168,5 +171,14 @@ class GrepTool extends AbstractWorkspaceTool {
                 ChatWorkspace.deleteQuietly(temp);
             }
         }
+    }
+
+    /// @return What to add when nothing matched, if the text was searched for literally but looks like a regular
+    /// expression, so the model doesn't take the miss for an answer.
+    private static String literalNote(final SafePattern pattern) {
+        return pattern.isLiteralThatLooksLikeRegex()
+                ? " The pattern was searched for as literal text, but it looks like a regular expression: to search "
+                  + "with it as one, call grep again with regex: true."
+                : "";
     }
 }

@@ -16567,7 +16567,7 @@
           },
           "stopReason" : {
             "type" : "string",
-            "enum" : [ "USER", "SIGN_OUT", "SESSION_EXPIRED", "TOKEN_EXPIRED", "RUN_LIMIT", "NODE_LOST", "TERMINATED", "ACCOUNT_DISABLED", "EDITED", "NEEDS_APPROVAL", "APPROVAL_EXPIRED", "NEEDS_INPUT" ]
+            "enum" : [ "USER", "SIGN_OUT", "SESSION_EXPIRED", "TOKEN_EXPIRED", "RUN_LIMIT", "NODE_LOST", "TERMINATED", "ACCOUNT_DISABLED", "EDITED", "NEEDS_APPROVAL", "APPROVAL_EXPIRED", "NEEDS_INPUT", "NEEDS_ANSWERS" ]
           },
           "unattended" : {
             "type" : "boolean"

@@ -36,13 +36,16 @@ import java.util.concurrent.atomic.AtomicLong;
 ///
 /// - no access to the environment ({@code env}, {@code $ENV}), other input ({@code input}, {@code inputs}),
 ///   debugging output or modules;
-/// - no regular expression functions, as their matching cannot be stopped part way (use grep or the table tool);
+/// - regular expression functions ({@code test}, {@code match}, {@code sub}...) match through [SafeJqRegex], so a
+///   pattern that backtracks badly is stopped at the time limit;
 /// - every built-in function checks the tool call's time limit, and counts towards a limit on the work a query may
 ///   do, so a query that loops or builds something huge is stopped.
 public final class SafeJq {
 
     /// The most built-in function calls and outputs a query may make.
     static final long MAX_OPERATIONS = 5_000_000;
+    /// The longest a query may be, in characters: long enough for a query that rebuilds a large document.
+    static final int MAX_QUERY_LENGTH = 10_000;
 
     private static final Set<String> BLOCKED = Set.of(
             "env/0",
@@ -56,24 +59,7 @@ public final class SafeJq {
             "stderr/0",
             "halt/0",
             "halt_error/0",
-            "halt_error/1",
-            "_match_impl/3",
-            "_sub_impl/3",
-            "test/1",
-            "test/2",
-            "match/1",
-            "match/2",
-            "capture/1",
-            "capture/2",
-            "scan/1",
-            "scan/2",
-            "split/2",
-            "splits/1",
-            "splits/2",
-            "sub/2",
-            "sub/3",
-            "gsub/2",
-            "gsub/3");
+            "halt_error/1");
 
     private static final Scope ROOT_SCOPE = createRootScope();
     private static final ThreadLocal<AtomicLong> OPERATIONS = new ThreadLocal<>();
@@ -85,6 +71,10 @@ public final class SafeJq {
     private static Scope createRootScope() {
         final Scope builtins = Scope.newEmptyScope();
         BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, builtins);
+        // The built-ins jq's regular expression functions are defined on, replaced by ones that can be stopped. As
+        // jq's own definitions look them up by name, they use these.
+        builtins.addFunction("_match_impl/3", SafeJqRegex::match);
+        builtins.addFunction("_sub_impl/3", SafeJqRegex::sub);
         final Scope scope = Scope.newEmptyScope();
         for (final Map.Entry<String, Function> entry : builtins.getLocalFunctions().entrySet()) {
             final String key = entry.getKey();
@@ -116,12 +106,12 @@ public final class SafeJq {
     private static Function blocked(final String key) {
         final String name = key.substring(0, key.indexOf('/'));
         return (scope, args, in, path, output, version) -> {
-            throw new JsonQueryException(name + " is not available here. Use grep or the table tool to match "
-                                         + "patterns.");
+            throw new JsonQueryException(name + " is not available here.");
         };
     }
 
-    private static void tick() {
+    /// Counts one step of a query's work, stopping it if it has done too much or run out of time.
+    static void tick() {
         final AtomicLong operations = OPERATIONS.get();
         if (operations != null && operations.incrementAndGet() > MAX_OPERATIONS) {
             throw new WorkspaceException("The jq query did too much work and was stopped. Make it simpler, or "
@@ -139,8 +129,8 @@ public final class SafeJq {
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give a jq query, e.g. '.events[] | .host'.");
         }
-        if (query.length() > 2_000) {
-            throw new WorkspaceException("The jq query may be at most 2000 characters.");
+        if (query.length() > MAX_QUERY_LENGTH) {
+            throw new WorkspaceException("The jq query may be at most " + MAX_QUERY_LENGTH + " characters.");
         }
         try {
             return JsonQuery.compile(query, Versions.JQ_1_6);

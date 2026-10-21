@@ -822,7 +822,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Runs a jq query on a JSON file in the workspace (one JSON value, or one per line), e.g. '.events[] | select(.severity == "high") | .host'. Each result is one line of JSON. Give out to write the results to a file. Regular expression functions (test, match, sub...) are not available; use grep or table for those.
+Runs a jq query on a JSON file in the workspace (one JSON value, or one per line), e.g. '.events[] | select(.severity == "high") | .host'. Each result is one line of JSON. Give out to write the results to a file. Regular expression functions (test, match, capture, sub, gsub...) take Java regular expressions of up to 200 characters.
 
 ### Parameters
 

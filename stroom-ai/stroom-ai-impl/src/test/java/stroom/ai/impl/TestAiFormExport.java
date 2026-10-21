@@ -64,7 +64,7 @@ class TestAiFormExport {
     void aFieldWithoutChoicesOrATitleIsShownByName() {
         final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.ACCEPTED, "acme-mcp",
                 null, null, Map.of("type", "object", "properties", Map.of("feed", Map.of("type", "string"))),
-                0L, Map.of("feed", "ACME-EVENTS"));
+                0L, Map.of("feed", "ACME-EVENTS"), null);
 
         assertThat(AiFormExport.body(JsonUtil.writeValueAsString(record, false))).isEqualTo("""
                 From acme-mcp: answered
@@ -93,7 +93,7 @@ class TestAiFormExport {
                 "default", "Keep surveying"));
         final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, status, "Stroom AI",
                 "ask_user", "Onboarding Fortigate from its existing data.",
-                Map.of("type", "object", "properties", properties), 0L, answer);
+                Map.of("type", "object", "properties", properties), 0L, answer, null);
         return JsonUtil.writeValueAsString(record, false);
     }
 }
