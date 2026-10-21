@@ -139,6 +139,12 @@ class TestHttpAsyncClientUtil {
     }
 
     @Test
+    void testCreateDefaultTlsStrategy() {
+        assertThat(HttpAsyncClientUtil.createDefaultTlsStrategy())
+                .isNotNull();
+    }
+
+    @Test
     void testCreateRoutePlanner_noProxy() {
         assertThat(HttpAsyncClientUtil.createRoutePlanner(null))
                 .isNull();

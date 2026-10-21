@@ -106,10 +106,10 @@ public class ElasticClientFactory {
             connectionManager
                     .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
                     .setMaxConnTotal(elasticClientConfig.getMaxConnections());
-            if (httpClientConfiguration.getTlsConfiguration() != null) {
-                connectionManager.setTlsStrategy(
-                        HttpAsyncClientUtil.createTlsStrategy(httpClientConfiguration.getTlsConfiguration()));
-            }
+            // Always replace the client's default TLS strategy, as that does not verify hostnames
+            connectionManager.setTlsStrategy(httpClientConfiguration.getTlsConfiguration() != null
+                    ? HttpAsyncClientUtil.createTlsStrategy(httpClientConfiguration.getTlsConfiguration())
+                    : HttpAsyncClientUtil.createDefaultTlsStrategy());
         });
 
         final HttpProxyConfiguration proxyConfiguration = httpClientConfiguration.getProxyConfiguration();

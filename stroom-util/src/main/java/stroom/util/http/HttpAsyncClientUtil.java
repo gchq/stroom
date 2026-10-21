@@ -27,12 +27,14 @@ import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.routing.HttpRoutePlanner;
 import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
 import org.apache.hc.core5.ssl.PrivateKeyStrategy;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 
 import java.io.IOException;
@@ -83,12 +85,31 @@ public final class HttpAsyncClientUtil {
         if (NullSafe.hasItems(tlsConfiguration.getSupportedCiphers())) {
             builder.setCiphers(toArray(tlsConfiguration.getSupportedCiphers()));
         }
-        if (!tlsConfiguration.isVerifyHostname()) {
-            builder.setHostVerificationPolicy(HostnameVerificationPolicy.CLIENT)
-                    .setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        }
+        // Always set the hostname verifier explicitly and verify on the client side. The default (BUILTIN)
+        // policy relies on JSSE endpoint identification, which httpclient5 5.6.1 sets on the SSL parameters
+        // after they have been applied to the engine, so for async clients the hostname is never checked.
+        builder.setHostVerificationPolicy(HostnameVerificationPolicy.CLIENT)
+                .setHostnameVerifier(tlsConfiguration.isVerifyHostname()
+                        ? new DefaultHostnameVerifier()
+                        : NoopHostnameVerifier.INSTANCE);
 
         return builder.buildAsync();
+    }
+
+    /// Creates a TLS strategy for when there is no TLS configuration, i.e. one that trusts the JVM's default
+    /// CAs and verifies hostnames.
+    ///
+    /// Use this rather than relying on the async client's own default, which does not verify hostnames with
+    /// some versions of httpclient5 (see [#createTlsStrategy(HttpTlsConfiguration)]).
+    ///
+    /// @return A TLS strategy to pass to `PoolingAsyncClientConnectionManagerBuilder.setTlsStrategy()`.
+    public static TlsStrategy createDefaultTlsStrategy() {
+        return ClientTlsStrategyBuilder
+                .create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .setHostVerificationPolicy(HostnameVerificationPolicy.CLIENT)
+                .setHostnameVerifier(new DefaultHostnameVerifier())
+                .buildAsync();
     }
 
     /// Creates an SSL context holding the key and trust material named in the TLS configuration.
