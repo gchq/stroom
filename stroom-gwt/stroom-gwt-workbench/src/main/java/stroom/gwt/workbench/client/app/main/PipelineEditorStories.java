@@ -943,9 +943,8 @@ public final class PipelineEditorStories {
                     play.click(play.findByText("xslt"));
                     play.findByText("Inherited Ref");
                     // The 'Inherited From' column names the ancestor the reference comes from.
-                    // The grid's rows are <tr> elements
-                    play.expect(play.within(play.getByText("Inherited Ref").closest("tr")).getByText("Parent"))
-                            .toBeInTheDocument();
+                    final Query inheritedRow = play.getByText("Inherited Ref").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(inheritedRow).getByText("Parent")).toBeInTheDocument();
                     // Select the row and Remove it: it stays, struck through (a cell class)
                     play.click(play.getByText("REF_FEED"));
                     play.click(play.getByTitle("Remove Selected Pipeline Reference"));

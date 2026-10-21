@@ -98,7 +98,7 @@ public final class CredentialsScreenStories {
     private static final String REPLACE_SECRET_TITLE = "Replace Selected Credential's Secret";
     private static final String SECRET_HIDDEN =
             "The secret is set but cannot be shown. Use Replace Secret to set a new one.";
-    private static final String ROW = "tr, [role=\"row\"]";
+    private static final String ROW = StroomDom.GRID_ROW;
 
     private CredentialsScreenStories() {
         // Static utility

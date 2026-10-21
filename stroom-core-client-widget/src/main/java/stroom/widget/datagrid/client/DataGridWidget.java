@@ -158,6 +158,8 @@ public class DataGridWidget<R> extends Widget
     private RowSpans<R> rowSpans;
     private HeadingListener headingListener;
     private LoadingState loadingState;
+    // Whether data or the row count changed since the loading state was last fired
+    private boolean loadingStateUpdated;
     private final DataGridKeyboard<R> keyboard;
 
     private boolean multiLine;
@@ -1096,9 +1098,17 @@ public class DataGridWidget<R> extends Widget
         } else {
             state = LoadingState.PARTIALLY_LOADED;
         }
-        if (state != loadingState) {
-            loadingState = state;
-            fireEvent(new LoadingStateChangeEvent(state));
+        loadingState = state;
+        loadingStateUpdated = true;
+    }
+
+    // As GWT's HasDataPresenter: the loading state is fired once for each change of data or row
+    // count, when it is drawn, even if it is unchanged. Screens rely on a LOADED for every load, e.g.
+    // to choose the first row or check what was loaded after a refresh of the same page.
+    private void fireLoadingState() {
+        if (loadingStateUpdated) {
+            loadingStateUpdated = false;
+            fireEvent(new LoadingStateChangeEvent(loadingState));
         }
     }
 
@@ -1266,6 +1276,7 @@ public class DataGridWidget<R> extends Widget
         }
         updateTabStops();
         updateScrollbars();
+        fireLoadingState();
     }
 
     // As GWT's HasDataPresenter: a keyboard row moved since the last render takes its row's key;

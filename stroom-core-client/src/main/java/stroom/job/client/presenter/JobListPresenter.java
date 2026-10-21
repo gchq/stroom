@@ -21,7 +21,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -33,6 +32,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +66,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        final MyDataGrid<JobWrapper> dataGrid = new MyDataGrid<>(this);
+        final DataGridWidget<JobWrapper> dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Jobs");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -128,7 +128,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private void initColumns(final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
-                             final MyDataGrid<JobWrapper> dataGrid) {
+                             final DataGridWidget<JobWrapper> dataGrid) {
         final Function<JobWrapper, Boolean> function = ref -> ref.getJob().isEnabled();
         final Function<JobWrapper, TickBoxState> stateFunction = TickBoxState.createTickBoxFunc(function);
 

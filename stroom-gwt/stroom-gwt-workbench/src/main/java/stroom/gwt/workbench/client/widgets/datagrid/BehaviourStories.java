@@ -28,12 +28,16 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -89,7 +93,11 @@ public final class BehaviourStories {
                 .story("HeaderFollowsDensityNew", context -> frame("new"))
                 .withPlay(BehaviourStories::headerFollowsDensityPlay)
                 .story("RowsFollowDensityVirtual", context -> frame("virtual-padded"))
-                .withPlay(BehaviourStories::rowsFollowDensityPlay);
+                .withPlay(BehaviourStories::rowsFollowDensityPlay)
+                .story("LoadedOnEveryLoadOld", context -> frame("old-loaded"))
+                .withPlay(BehaviourStories::loadedOnEveryLoadPlay)
+                .story("LoadedOnEveryLoadNew", context -> frame("new-loaded"))
+                .withPlay(BehaviourStories::loadedOnEveryLoadPlay);
     }
 
     // --------------------------------------------------------------------------------
@@ -178,6 +186,24 @@ public final class BehaviourStories {
         play.waitFor(() -> play.expect("the first row's height is as it was",
                 () -> rowHeight(grid.get()) == before.get()).toBe(true));
     }
+
+    /// The grid says it has loaded (`LoadingStateChangeEvent`, LOADED) each time rows arrive, even the
+    /// same rows on the same page, as GWT's grid does: screens act on it after every load, e.g. to
+    /// choose the first row or check what was loaded after a refresh.
+    private static void loadedOnEveryLoadPlay(final Play play) {
+        play.waitFor(() -> play.expect(row(play, 5)).toBeInTheDocument());
+        play.waitFor(() -> play.expect("the loads counted", BehaviourStories::loadedCount).toBeGreaterThan(0));
+        final Value<Integer> before = play.capture("the loads counted", BehaviourStories::loadedCount);
+        clickKeepingFocus(play, SAME);
+        play.waitFor(() -> play.expect("the loads counted", () -> loadedCount() - before.get()).toBe(1));
+        clickKeepingFocus(play, SAME);
+        play.waitFor(() -> play.expect("the loads counted", () -> loadedCount() - before.get()).toBe(2));
+    }
+
+    private static native int loadedCount() /*-{
+        var label = $doc.querySelector("[data-testid='loaded']");
+        return label ? parseInt(label.getAttribute("data-count"), 10) : 0;
+    }-*/;
 
     /// The first cell of a row: GWT's grid only responds to a press on a cell, not on the row.
     private static Query row(final Play play, final int index) {
@@ -294,9 +320,22 @@ public final class BehaviourStories {
 
     private static Widget frame(final String kind) {
         final List<Person> rows = DataGridRows.generatedPeople(ROWS);
-        final GridAdapter grid = "old".equals(kind)
+        final GridAdapter grid = kind.startsWith("old")
                 ? new OldGrid()
                 : new NewGrid(kind.startsWith("virtual"), kind.endsWith("padded"));
+        // Counts the grid's LOADED events, from the first rows on
+        final Label loaded = new Label();
+        if (kind.endsWith("loaded")) {
+            loaded.getElement().setAttribute("data-testid", "loaded");
+            loaded.getElement().setAttribute("data-count", "0");
+            grid.addLoadingStateChangeHandler(event -> {
+                if (event.getLoadingState() == LoadingState.LOADED) {
+                    final int count = Integer.parseInt(loaded.getElement().getAttribute("data-count")) + 1;
+                    loaded.getElement().setAttribute("data-count", String.valueOf(count));
+                    loaded.setText("Loaded " + count + " times");
+                }
+            });
+        }
         grid.setRows(rows);
 
         final SimplePanel gridFrame = new SimplePanel(grid.widget());
@@ -317,6 +356,9 @@ public final class BehaviourStories {
         final FlowPanel panel = new FlowPanel();
         panel.add(gridFrame);
         panel.add(buttons);
+        if (kind.endsWith("loaded")) {
+            panel.add(loaded);
+        }
         return panel;
     }
 
@@ -370,6 +412,8 @@ public final class BehaviourStories {
         void setRows(List<Person> rows);
 
         void rebuildColumns();
+
+        HandlerRegistration addLoadingStateChangeHandler(LoadingStateChangeEvent.Handler handler);
     }
 
 
@@ -413,6 +457,11 @@ public final class BehaviourStories {
             removeAll(grid::getColumnCount, () -> grid.removeColumn(grid.getColumn(0)));
             addColumns(grid::addResizableColumn);
             grid.resizeTableToFitColumns();
+        }
+
+        @Override
+        public HandlerRegistration addLoadingStateChangeHandler(final LoadingStateChangeEvent.Handler handler) {
+            return grid.addLoadingStateChangeHandler(handler);
         }
     }
 
@@ -462,6 +511,11 @@ public final class BehaviourStories {
             removeAll(grid::getColumnCount, () -> grid.removeColumn(grid.getColumn(0)));
             addColumns(grid::addResizableColumn);
             grid.resizeTableToFitColumns();
+        }
+
+        @Override
+        public HandlerRegistration addLoadingStateChangeHandler(final LoadingStateChangeEvent.Handler handler) {
+            return grid.addLoadingStateChangeHandler(handler);
         }
     }
 }

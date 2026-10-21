@@ -24,8 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -35,6 +33,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -56,7 +56,7 @@ public class ScheduledProcessHistoryListPresenter
             GWT.create(ExecutionScheduleResource.class);
 
     private final RestFactory restFactory;
-    private final MyDataGrid<ExecutionHistory> dataGrid;
+    private final DataGridWidget<ExecutionHistory> dataGrid;
     private final MultiSelectionModelImpl<ExecutionHistory> selectionModel;
     private RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
     private final DateTimeFormatter dateTimeFormatter;
@@ -77,12 +77,12 @@ public class ScheduledProcessHistoryListPresenter
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
                 ExecutionHistoryFields.ID, true, true);
         request = ExecutionHistoryRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Scheduled Process History");
         dataGrid.setMultiLine(true);
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager =
-                new DataGridSelectionEventManager<>(
+        final DataGridWidgetSelectionEventManager<ExecutionHistory> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(
                         dataGrid,
                         selectionModel,
                         false);

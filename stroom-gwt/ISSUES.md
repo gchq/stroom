@@ -1075,6 +1075,14 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 **Reported.**
 
+* After editing a processor profile's period, Remove does nothing until another row is chosen: the
+  edit replaces the row with an unequal copy, but the selection keeps the old one, which
+  `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListPresenter`).
+* `DocumentUserPermissionsListPresenter` asks the document type cache for its columns
+  (`setupColumns`) before its grid is created; with the cache already filled it would add them to
+  a null grid.
+* The activity chooser highlights the current activity with an object from another fetch
+  (`ManageActivityPresenter.setSelected`), which a grid comparing rows can't match.
 * A pathway's constraints list heads its value column "Type" (`ConstraintListPresenter.addValueColumn`),
   a copy of the column before it.
 * `SelectionBoxCell` looks for its grid with `closest('table')`, so in a grid drawn with divs (the
@@ -1948,6 +1956,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   every disabled control has (`Widgets/Inputs/ViewStates`).
 * **The floor map settings' Value Schema table had no box round it.** Its toolbar and table now sit
   in a control's box, as other forms' tables do.
+* **App permission summaries wrote a broken closing tag.** `DescriptionBuilder` closed its plain
+  spans with `</span` (no `>`), so the markup after it was swallowed. In `MyDataGrid`'s tables the
+  browser recovered at the `td`'s end; in the new grid the next column's cell went inside it (axe
+  `aria-required-parent`, `App/Main/AppPermissionsScreen`). It also wrote the permission details
+  pane.
 * **A percent bar cell didn't close its bar's `div`.** `PercentBarCell`'s template wrote
   `<div ... />`, which HTML doesn't take as closed, so the cell after it was put inside it. In
   `MyDataGrid`'s tables the browser closed it at the `td`'s end; in the new grid's cells (divs) the

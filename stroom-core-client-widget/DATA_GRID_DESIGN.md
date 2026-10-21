@@ -839,6 +839,24 @@ interactive header cells, the context menu, copy, export and AI.
   * Held back: the floor map settings' Value Schema (`FloorMapSettingsPresenter`): its rows have no
     stable id, it uses a selection model with no handler, and it restores focus through table rows.
 
+* **Multi-line lists** (2026-10-21): 13 grids, all `setMultiLine(true)`: `PropertyListPresenter`,
+  `ProfilePeriodListPresenter`, `FeedDependencyListPresenter`, `PipelineReferenceListPresenter`,
+  `ManageGlobalPropertyListPresenter`, `ActivityListPresenter`, `CredentialsListPresenter`,
+  `ContentStoreContentPackListPresenter`, `DocumentUserPermissionsListPresenter`,
+  `AppUserPermissionsListPresenter`, `ScheduledProcessHistoryListPresenter`,
+  `AppPermissionsEditPresenter`, `JobListPresenter`.
+  * Key providers where an edit, refresh or node reply brings new rows: profile periods by uuid,
+    pipeline properties by element and name, activities by id, global properties by name,
+    content packs by their pack.
+  * Three made their own `DataGridSelectionEventManager` (no setters); they make the new grid's.
+  * **Parity fix:** the grid fires its `LoadingStateChangeEvent` once for each change of data or row
+    count, when it draws, as GWT's `HasDataPresenter` does, not only when the state changes. The
+    content store runs its cache lookup, upgrade check and first-row choice on every LOADED, and
+    a refresh of the same page brought none. `Widgets/Data Grid/Behaviour` `LoadedOnEveryLoadOld`
+    and `…New` show both grids do it.
+  * Found: `DescriptionBuilder` closed spans with `</span` (see `ISSUES.md`, Fixed), which the old
+    grid's tables hid.
+
 **Phase 4: clean-up.** Remove `MyDataGrid`, `ResizeHandle`, `MoveHandle` and
 `DataGridSelectionEventManager`'s DOM coupling. Remove the forked `cellview` classes that
 `MyCellTable` does not need. Then apply the §8 fixes (D2, D3, D4, D6, D7, D10, D11), one change each.
