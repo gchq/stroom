@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
+import stroom.search.elastic.ElasticClientConfig;
 import stroom.search.elastic.ElasticClientFactory;
+import stroom.search.elastic.ResolvedElasticConnection;
+import stroom.util.http.HttpClientConfiguration;
+import stroom.util.http.HttpProxyConfiguration;
+import stroom.util.http.HttpTlsConfiguration;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.apache.hc.core5.http.HttpHost;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,5 +64,29 @@ public class TestElasticClientFactory {
         assertThat(host)
                 .as("No host is returned for an invalid URL")
                 .isNull();
+    }
+
+    @Test
+    void testCreateWithTlsProxyAndApiKey() throws Exception {
+        final HttpClientConfiguration httpClientConfiguration = HttpClientConfiguration.builder()
+                .tlsConfiguration(HttpTlsConfiguration.builder()
+                        .verifyHostname(false)
+                        .trustSelfSignedCertificates(true)
+                        .build())
+                .proxyConfiguration(HttpProxyConfiguration.builder()
+                        .host("proxy.example.com")
+                        .port(8080)
+                        .build())
+                .build();
+        final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                List.of("https://localhost:9200"),
+                "encodedKey==",
+                httpClientConfiguration);
+
+        try (final ElasticsearchClient client = new ElasticClientFactory()
+                .create(connection, new ElasticClientConfig())) {
+            assertThat(client)
+                    .isNotNull();
+        }
     }
 }
