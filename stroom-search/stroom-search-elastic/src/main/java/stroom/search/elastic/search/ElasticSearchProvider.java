@@ -55,6 +55,7 @@ import stroom.util.shared.ResultPage;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ExpandWildcard;
 import co.elastic.clients.elasticsearch._types.mapping.BooleanProperty;
+import co.elastic.clients.elasticsearch._types.mapping.DateNanosProperty;
 import co.elastic.clients.elasticsearch._types.mapping.DateProperty;
 import co.elastic.clients.elasticsearch._types.mapping.FieldAliasProperty;
 import co.elastic.clients.elasticsearch._types.mapping.FieldMapping;
@@ -406,6 +407,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     return !Boolean.FALSE.equals(((BooleanProperty) mappingInstance).index());
                 } else if (mappingInstance instanceof DateProperty) {
                     return !Boolean.FALSE.equals(((DateProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof DateNanosProperty) {
+                    return !Boolean.FALSE.equals(((DateNanosProperty) mappingInstance).index());
                 } else if (mappingInstance instanceof NumberPropertyBase) {
                     return !Boolean.FALSE.equals(((NumberPropertyBase) mappingInstance).index());
                 } else if (mappingInstance instanceof IpProperty) {

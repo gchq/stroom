@@ -44,6 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -189,6 +190,32 @@ class TestElasticSearchProvider {
         assertThat(alias.getFldType()).isEqualTo(FieldType.KEYWORD);
         assertThat(alias.getNativeType()).isEqualTo("keyword");
         assertThat(alias.isIndexed()).isFalse();
+    }
+
+    @Test
+    void testGetDataSourceFields_dateNanosIndexFalseNotQueryable() throws IOException {
+        givenMapping("""
+                {
+                  "Time": { "type": "date_nanos", "index": false }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
+                .containsExactly(tuple("Time", FieldType.DATE, false));
+    }
+
+    @Test
+    void testGetFieldsMap_dateNanosIndexFalseNotIndexed() throws IOException {
+        givenMapping("""
+                {
+                  "Indexed": { "type": "date_nanos" },
+                  "NotIndexed": { "type": "date_nanos", "index": false }
+                }""");
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        assertThat(fieldsMap.get("Indexed").isIndexed()).isTrue();
+        assertThat(fieldsMap.get("NotIndexed").isIndexed()).isFalse();
     }
 
     @Test
