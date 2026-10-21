@@ -286,6 +286,23 @@ class TestElasticClientFactory {
     }
 
     @Test
+    void testServiceUnavailableNotRetriedByClient() {
+        // Callers apply their own retry logic, so the HTTP client must not retry a 503 (or 429) itself
+        httpsServer.stubFor(WireMock.get(WireMock.urlEqualTo("/"))
+                .willReturn(ElasticWireMock.elasticResponse(503, """
+                        {"error":{"type":"unavailable_shards_exception","reason":"unavailable"},"status":503}""")));
+
+        final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                List.of(localhostUrl()),
+                null,
+                httpClientConfiguration(trustStoreTls().build()));
+
+        assertThatThrownBy(() -> info(connection))
+                .isInstanceOf(Exception.class);
+        httpsServer.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo("/")));
+    }
+
+    @Test
     void testProxy() throws IOException {
         // Plain HTTP so that the proxy sees the request rather than an opaque CONNECT tunnel
         final WireMockServer elasticServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
