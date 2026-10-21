@@ -75,7 +75,9 @@
     gap: 5px;
 }
 
+/* Centred in the title bar, in line with the title and the window options button */
 .dialog__spinner {
+    align-self: center;
     width: 22px;
     height: 22px;
 }
