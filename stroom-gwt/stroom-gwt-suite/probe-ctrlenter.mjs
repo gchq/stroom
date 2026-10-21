@@ -46,7 +46,7 @@ await settle(1800);
 console.log(`dialogs: ${JSON.stringify(await dialogCaptions(page))}`);
 console.log(JSON.stringify(await page.evaluate(() => {
   const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
   if (!top) return null;
   return {
@@ -76,7 +76,7 @@ await settle(1800);
 console.log(`dialogs after OK: ${JSON.stringify(await dialogCaptions(page))}`);
 console.log(`feedback after OK: ${JSON.stringify(await page.evaluate(() => {
   const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
   return top ? { feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => n(e.textContent)).filter(Boolean), invalid: top.querySelectorAll('.invalid').length } : null;
 }))}`);

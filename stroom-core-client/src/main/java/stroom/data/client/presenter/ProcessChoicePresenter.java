@@ -42,6 +42,7 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Create Processors")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

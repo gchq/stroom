@@ -18,6 +18,7 @@ package stroom.widget.form.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.help.client.HelpPopup;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 import stroom.widget.util.client.MouseUtil;
 
@@ -47,6 +48,7 @@ class FormGroupHelpButton extends ButtonBase {
         setTitle("Click for help");
         // FocusWidget.onAttach replaces a tab index of -1 with 0, so -2 keeps it out of the tab order
         getElement().setTabIndex(-2);
+        HelpPopup.markOpener(getElement());
         sinkEvents(Event.ONMOUSEDOWN);
         addClickHandler(event -> showHelpPopup());
         setVisible(false);

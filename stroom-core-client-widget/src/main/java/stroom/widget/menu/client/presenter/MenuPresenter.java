@@ -46,9 +46,10 @@ public class MenuPresenter
         implements MenuUiHandlers {
 
     private static final int HORIZONTAL_PADDING = 2;
-    private static final int VERTICAL_PADDING = 4;
-    private static final String ITEM_TEXT_CLASS = "menuItem-text";
-    private static final String SIMPLE_ITEM_TEXT_CLASS = "menuItem-simpleText";
+    // How far a menu's items sit in from its top edge (its border and its viewport's padding, menu.css),
+    // so that a sub menu's first item lines up with the item that opened it
+    private static final int VERTICAL_PADDING = 6;
+    private static final String ITEM_TEXT_CLASS = "menu__text";
 
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
@@ -120,7 +121,7 @@ public class MenuPresenter
                         // Set the current presenter telling us that the
                         // popup is showing.
                         currentMenu = presenter;
-                        currentItem = menuItem;
+                        setCurrentItem(menuItem);
 
                         final Rect dialog = new Rect(getWidget().getElement());
                         final Rect selection = new Rect(element);
@@ -137,16 +138,13 @@ public class MenuPresenter
                                 .onHideRequest(e -> {
                                     if (!e.isAutoClose() && !e.isOk()) {
                                         // Escape, which the sub menu's popup takes as its close
-                                        // action: close the whole menu, as Escape in the root
-                                        // menu does
-                                        currentMenu = null;
-                                        currentItem = null;
+                                        // action: close the sub menu, as Escape in it does
                                         presenter.escape();
                                     } else {
                                         presenter.hideChildren(e.isAutoClose(), e.isOk());
                                         presenter.hideSelf(e.isAutoClose(), e.isOk());
                                         currentMenu = null;
-                                        currentItem = null;
+                                        setCurrentItem(null);
                                     }
                                 })
                                 .fire();
@@ -178,7 +176,7 @@ public class MenuPresenter
             return false;
         }
         for (final String name : className.split(" ")) {
-            if (ITEM_TEXT_CLASS.equals(name) || SIMPLE_ITEM_TEXT_CLASS.equals(name)) {
+            if (ITEM_TEXT_CLASS.equals(name)) {
                 return true;
             }
         }
@@ -275,7 +273,13 @@ public class MenuPresenter
             currentMenu.hideSelf(autoClose, ok);
             currentMenu = null;
         }
-        currentItem = null;
+        setCurrentItem(null);
+    }
+
+    // The item whose sub menu is open, or null for none
+    private void setCurrentItem(final MenuItem item) {
+        currentItem = item;
+        getView().setOpenItem(item);
     }
 
     private void hideParent(final boolean autoClose, final boolean ok) {
@@ -287,9 +291,15 @@ public class MenuPresenter
         }
     }
 
+    /// Closes this menu: a sub menu closes and puts the focus back on the item that opened it, as
+    /// Left does (the WAI-ARIA menu pattern); the root menu closes with any sub menus.
     @Override
     public void escape() {
-        hideAll(true, false);
+        if (parent != null) {
+            focusParent(true);
+        } else {
+            hideAll(true, false);
+        }
     }
 
     public void hideAll(final boolean autoClose, final boolean ok) {
@@ -370,5 +380,10 @@ public class MenuPresenter
         ///
         /// @param id The id of the element that names the menu, or null or empty for none.
         void setLabelledBy(String id);
+
+        /// Says which item's sub menu is open (`aria-expanded` on the items that have one).
+        ///
+        /// @param item The item whose sub menu is open, or null for none.
+        void setOpenItem(Item item);
     }
 }

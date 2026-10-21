@@ -160,7 +160,7 @@ final class DashboardPlays {
     /// @param text   The item's text.
     /// @return An item of a menu of plain items (`SimpleMenuItem`, e.g. Add Component's).
     static Query simpleMenuItem(final Play screen, final String text) {
-        return screen.findByText(text, ".menuItem-simpleText");
+        return screen.findByText(text, ".menu__text");
     }
 
     /// @param screen  The play of the page's body.

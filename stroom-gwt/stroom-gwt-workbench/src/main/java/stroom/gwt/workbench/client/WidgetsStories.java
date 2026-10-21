@@ -50,6 +50,7 @@ import stroom.gwt.workbench.client.widgets.dateandtime.TimePickerStories;
 import stroom.gwt.workbench.client.widgets.dialogs.AlertDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogTitleStories;
+import stroom.gwt.workbench.client.widgets.dialogs.EscapeStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ExplorerDropdownPopupStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ModalStories;
 import stroom.gwt.workbench.client.widgets.dialogs.PromptDialogStories;
@@ -167,6 +168,8 @@ public final class WidgetsStories {
         DialogTitleStories.addTo(registry);
         // Widgets/Dialogs/Modal
         ModalStories.addTo(registry);
+        // Widgets/Dialogs/Escape
+        EscapeStories.addTo(registry);
         // Widgets/Dialogs/ExplorerDropdownPopup
         ExplorerDropdownPopupStories.addTo(registry);
         // Widgets/Dialogs/PromptDialog

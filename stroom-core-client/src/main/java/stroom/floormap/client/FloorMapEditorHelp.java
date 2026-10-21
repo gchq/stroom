@@ -19,6 +19,7 @@ package stroom.floormap.client;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.help.client.HelpPopup;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -58,6 +59,7 @@ public final class FloorMapEditorHelp {
         final ToolbarButton helpButton = toolbar.button(SvgImage.HELP_OUTLINE, name, null);
         // Showing help leaves the focus where it was
         helpButton.setFocusOnMouseDown(false);
+        HelpPopup.markOpener(helpButton.getElement());
         helpButton.setOnClick(() -> ShowHelpEvent.builder(helpButton.getElement())
                 .withContent(new SafeHtmlBuilder()
                         .appendHtmlConstant("<h4>")

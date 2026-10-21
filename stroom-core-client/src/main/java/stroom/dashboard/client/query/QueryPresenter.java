@@ -483,6 +483,7 @@ public class QueryPresenter
                 processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
                 ShowPopupEvent.builder(processorLimitsPresenter)
                         .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .modal()
                         .caption("Process Search Results")
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {

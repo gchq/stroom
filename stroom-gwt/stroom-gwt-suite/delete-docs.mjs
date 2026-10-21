@@ -85,7 +85,7 @@ for (const name of targets) {
     if (!(await clickMenuItem(page, 'Delete'))) throw new Error('no Delete item');
     await page.waitForTimeout(800);
     // A confirm dialog: OK to proceed.
-    const d = page.locator('.resizableDialog-popup, .dialog-popup').last();
+    const d = page.locator('.dialog').last();
     if (await d.isVisible().catch(() => false)) {
       await d.getByText('OK', { exact: true }).first().click().catch(() => {});
       await page.waitForTimeout(1500);

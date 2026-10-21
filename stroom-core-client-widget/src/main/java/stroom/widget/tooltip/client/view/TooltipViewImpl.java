@@ -30,6 +30,8 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     public TooltipViewImpl() {
         content = new HTML();
         content.setStyleName("info-tooltip");
+        // A tab stop, so that the focus the popup gives it lands, and the keyboard can scroll it
+        content.getElement().setTabIndex(0);
     }
 
     @Override

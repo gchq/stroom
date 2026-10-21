@@ -123,6 +123,7 @@ public class DocumentUserCreatePermissionsEditPresenter
         getView().setUser(userRef);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Set Document Create Permissions")

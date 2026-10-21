@@ -340,7 +340,21 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private void filterColumn(final Column column) {
         tableFilterPresenter.show(column, (oldField, newField) -> {
-            replaceColumn(oldField, newField);
+            // The dialog isn't modal, so the column may have been changed or removed while it was
+            // open: the filters go on the column as it is now
+            final Column current = getColumns().stream()
+                    .filter(c -> c.getId().equals(oldField.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (current == null) {
+                AlertEvent.fireWarn(this, "The column '" + oldField.getName() + "' was removed while its "
+                                          + "filter was being edited, so the filter can't be kept.", null);
+                return;
+            }
+            replaceColumn(current, current.copy()
+                    .columnFilter(newField.getColumnFilter())
+                    .filter(newField.getFilter())
+                    .build());
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {

@@ -42,8 +42,7 @@ import java.util.List;
 /// a pane.
 public final class SplitPaneContentStories {
 
-    private static final String MENU_ITEM_TEXT = ".menuItem-text";
-    private static final String MENU_ITEM_DISABLED = "menuItem-disabled";
+    private static final String MENU_ITEM_TEXT = ".menu__text";
 
     // Spy names
     private static final String ON_RESIZED = "onResized";
@@ -220,12 +219,12 @@ public final class SplitPaneContentStories {
                             .toHaveTextContent(TextMatch.containing("Alt+M"));
                     play.expect(menuItem(screen, "Maximise Content"))
                             .not().toHaveTextContent(TextMatch.containing("Alt"));
-                    play.expect(menuItem(screen, "Restore Pane Sizes")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Restore Pane Sizes")).toHaveAttribute("aria-disabled", "true");
                     play.click(screen.getByText("Maximise Content", MENU_ITEM_TEXT));
                     play.expect(paneWidth(play.getByTestId("properties"))).toBe(0);
                     play.rightClick(splitter);
-                    play.expect(menuItem(screen, "Restore Pane Sizes")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Maximise Content")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Restore Pane Sizes")).not().toHaveAttribute("aria-disabled");
+                    play.expect(menuItem(screen, "Maximise Content")).toHaveAttribute("aria-disabled", "true");
                     play.click(screen.getByText("Restore Pane Sizes", MENU_ITEM_TEXT));
                     play.expect(paneWidth(play.getByTestId("properties"))).toBe(300);
                     play.rightClick(splitter);
@@ -278,7 +277,7 @@ public final class SplitPaneContentStories {
 
     // A menu item (its outer element), by its text
     private static Query menuItem(final Play screen, final String text) {
-        return screen.getByText(text, MENU_ITEM_TEXT).closest(".menuItem-outer");
+        return screen.getByText(text, MENU_ITEM_TEXT).closest(":is([role='menuitem'], [role='menuitemcheckbox'])");
     }
 
     // The height of the pane a widget fills

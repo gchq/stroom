@@ -287,7 +287,16 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private void filterColumn(final Column column) {
         columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         columnFilterPresenter.show(column, (oldColumn, newColumn) -> {
-            final List<Column> newColumns = replaceColumns(getColumns(), oldColumn, newColumn);
+            // The dialog isn't modal, so the column may have been changed or removed while it was
+            // open: the filter goes on the column as it is now
+            final Column current = findColumn(getColumns(), oldColumn.getId());
+            if (current == null) {
+                fireColumnRemoved(oldColumn);
+                return;
+            }
+            final List<Column> newColumns = replaceColumns(getColumns(), current, current.copy()
+                    .columnFilter(newColumn.getColumnFilter())
+                    .build());
             tablePresenter.setPreferredColumns(newColumns);
             tablePresenter.onColumnFilterChange();
         });
@@ -305,6 +314,19 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         columns.remove(column);
         columns.add(column);
         tablePresenter.setPreferredColumns(columns);
+    }
+
+    // The column with the id, or null if there is none
+    private static Column findColumn(final List<Column> columns, final String id) {
+        return columns.stream()
+                .filter(column -> column.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void fireColumnRemoved(final Column column) {
+        AlertEvent.fireWarn(this, "The column '" + column.getName() + "' was removed while its filter "
+                                  + "was being edited, so the filter can't be kept.", null);
     }
 
     private List<Column> replaceColumns(final List<Column> sourceColumns,
@@ -773,15 +795,19 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                     ShowPopupEvent.builder(rulesPresenter)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .popupSize(popupSize)
-                            .modal(true)
                             .caption("Settings")
                             .onShow(e -> rulesPresenter.focus())
                             .onHideRequest(e -> {
                                 if (e.isOk()) {
                                     if (rulesPresenter.validate()) {
+                                        // The dialog isn't modal, so the table may have changed
+                                        // while it was open: the rules go on its preferences as
+                                        // they are now
+                                        final QueryTablePreferences current =
+                                                tablePresenter.getQueryTablePreferences();
                                         final QueryTablePreferences updated = rulesPresenter
-                                                .write(queryTablePreferences);
-                                        if (!Objects.equals(updated, queryTablePreferences)) {
+                                                .write(current);
+                                        if (!Objects.equals(updated, current)) {
                                             tablePresenter.setQueryTablePreferences(updated);
                                             tablePresenter.onChange();
                                             tablePresenter.refresh();

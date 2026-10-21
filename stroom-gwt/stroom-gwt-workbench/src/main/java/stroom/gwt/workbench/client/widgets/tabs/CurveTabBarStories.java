@@ -62,8 +62,8 @@ public final class CurveTabBarStories {
     private static final String OVERFLOWED = ".tab-bar__tab[style*='visibility: hidden']";
     // The selector is only made visible when some tabs overflow
     private static final String SELECTOR_SHOWN = ".tab-bar__selector[style*='visibility: visible']";
-    // Each menu item's content is a `menuItem-outer` (the item, with `role="menuitem"`, is its cell)
-    private static final String MENU_ITEM = ".menuItem-outer";
+    // Each menu item's content is a `menu__item` (the item, with `role="menuitem"`, is its cell)
+    private static final String MENU_ITEM = ".menu__item";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
 
     private CurveTabBarStories() {
@@ -181,7 +181,7 @@ public final class CurveTabBarStories {
         // The menu is a popup on the page's body, not in the canvas.
         play.click(selector);
         play.waitFor(() -> play.expect(play.screen().querySelectorAll(MENU_ITEM)).toHaveLength(manyTabs().size()));
-        final Query boldLabel = play.screen().querySelector(".menuItem-text b");
+        final Query boldLabel = play.screen().querySelector(".menu__text b");
         play.expect(boldLabel).not().toBeNull();
 
         // Clicking an overflowed (bold) tab selects it and brings it into view
@@ -210,7 +210,7 @@ public final class CurveTabBarStories {
         // The selector menu lists only the non-hidden tabs
         play.click(play.querySelector(".tab-bar__selector"));
         play.waitFor(() -> play.expect(play.screen().querySelectorAll(MENU_ITEM)).toHaveLength(shownCount));
-        play.expect(play.screen().queryByText("SECRET_FEED", ".menuItem-text")).toBeNull();
+        play.expect(play.screen().queryByText("SECRET_FEED", ".menu__text")).toBeNull();
     }
 
     private static void playOverflowAlgorithm(final Play play) {

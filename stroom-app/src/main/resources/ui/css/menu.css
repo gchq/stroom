@@ -1,0 +1,218 @@
+/*
+ * Copyright 2010 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+/*
+   The menu (stroom.widget.menu.client.presenter.MenuViewImpl, its rows drawn by MenuItemCell).
+   Named BEM style (block, block__element, block--modifier).
+
+   menu__viewport          the scrolling box holding the table, with room for a focus ring
+   menu                    the table (role menu); --fixed-width for a menu given a width
+     menu__item            an item's row, inside the element with its role (menuitem or
+                           menuitemcheckbox) and aria-disabled, which gives the disabled look;
+                           --highlight for an item drawn bold, --info for an information row
+       menu__icon, menu__text, menu__shortcut, menu__arrow (it has a sub menu)
+     menu__separator, menu__group-heading
+
+   --fixed-width, --keyboard, --highlight and --info are modifiers with no ARIA attribute.
+   The type filter and column values filter lists borrow the block for their table (the grids
+   session), as do the cell table's own classes here (cellTableCell).
+*/
+
+.menu .cellTableCell > div {
+    padding: 0;
+}
+
+/* The cell's focusable element (with the item's role) doesn't clip the item's focus ring; the item
+   cuts its own text short */
+.menu__viewport .menu .cellTableCell > div {
+    overflow: visible;
+}
+
+/* Room round the items for the focus ring (it is 5px), which the scrolling would otherwise clip.
+   The popup holding a menu has no padding of its own, so its items sit 6px in (with its border) */
+.menu__viewport {
+    padding: 5px;
+}
+
+.popup:has(> .popupContent > .menu__viewport) {
+    padding: 0;
+    border-radius: var(--menu__border-radius);
+}
+
+/* The table's rows show nothing themselves (not the cell table's selected, hover or focus looks):
+   each item draws its own, with rounded corners */
+.menu__viewport .menu tr,
+.menu__viewport .menu tr:hover,
+.menu__viewport .menu tr:focus-within {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.menu__separator {
+    border-top: 1px solid var(--menu-separator__color);
+    cursor: default;
+    margin: var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.menu__group-heading {
+    padding: 6px 0 3px 6px;
+    opacity: 0.8;
+    font-size: var(--font-size-13);
+    text-transform: uppercase;
+    display: block;
+    cursor: default;
+}
+
+.menu__item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: var(--row__gap--horizontal);
+    border: 1px solid transparent;
+    border-radius: 5px;
+    min-width: 180px;
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+/* The highlighted item (the one the keyboard or the mouse is on). The mouse over it changes
+   nothing more */
+.menu__viewport .cellTableSelectedRow .menu__item {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+/* Pressed: the mouse button held down on the item (it is chosen when let go over it) */
+.menu__viewport .cellTableSelectedRow [role]:not([aria-disabled="true"]) > .menu__item:active {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+/* Keyboard focus: the focus border and ring used elsewhere (as a tree item's), over the items
+   next to it. Only while the keyboard is in use (menu--keyboard, a modifier with no ARIA
+   attribute, set by MenuViewImpl): the menu moves the focus itself as the mouse moves, so the
+   browser's :focus-visible can't tell */
+.menu__viewport [role]:focus {
+    outline: none;
+}
+
+.menu__viewport .menu--keyboard [role]:focus > .menu__item {
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
+}
+
+/* An information row, read and not chosen (disabled, but not greyed) */
+.menu__item--info {
+    cursor: default;
+    color: var(--text-color);
+}
+
+/* A disabled item is greyed, but not its highlight or focus ring, which stay as clear as any
+   other item's */
+[aria-disabled="true"] > .menu__item:not(.menu__item--info) {
+    cursor: default;
+}
+
+[aria-disabled="true"] > .menu__item:not(.menu__item--info) > * {
+    opacity: var(--disabled-opacity);
+}
+
+.menu__item--highlight .menu__text {
+    font-weight: bold;
+    color: var(--menu-item__text-color--highlighted);
+}
+
+.menu__icon {
+    display: flex;
+    color: var(--icon-colour__grey);
+}
+
+.menu__icon svg {
+    width: var(--icon-width);
+    height: var(--icon-height);
+}
+
+.menu__text {
+    white-space: nowrap;
+    flex-grow: 1;
+}
+
+/* A menu given a fixed width (ShowMenuEvent.Builder.width), e.g. a quick filter's recent filters:
+   laid out to that width, with text too long for it cut short (its tooltip has the whole text) */
+.menu--fixed-width {
+    table-layout: fixed;
+}
+
+.menu--fixed-width .menu__text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu__shortcut {
+    padding-left: 15px;
+    white-space: nowrap;
+    text-align: right;
+    flex-grow: 1;
+    /* Stolen from editor.css */
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
+    font-size: 94%;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    margin-top: -0.1em;
+}
+
+.menu__arrow {
+    display: flex;
+}
+
+.menu__arrow svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the item's fill, draw its transparent border in
+   the text colour and drop its focus ring (a box shadow). So the border takes the menu's own colour,
+   the highlighted item the system's Highlight and HighlightText (kept, rather than forced), and the
+   keyboard focus an outline, 2px out so it stands apart from the Highlight fill */
+@media (forced-colors: active) {
+    .menu__item {
+        border-color: Canvas;
+    }
+
+    .menu__viewport .cellTableSelectedRow .menu__item,
+    .menu__viewport .cellTableSelectedRow [role]:not([aria-disabled="true"]) > .menu__item:active {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        border-color: Highlight;
+        color: HighlightText;
+    }
+
+    .menu__viewport .cellTableSelectedRow .menu__item * {
+        color: HighlightText;
+    }
+
+    .menu__viewport .menu--keyboard [role]:focus > .menu__item {
+        box-shadow: none;
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+
+    .menu__separator {
+        border-top-color: CanvasText;
+    }
+}

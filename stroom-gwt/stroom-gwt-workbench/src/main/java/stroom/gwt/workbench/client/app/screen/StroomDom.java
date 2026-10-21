@@ -28,9 +28,9 @@ public final class StroomDom {
 
     /// A dialog of any popup type (Stroom's `Dialog` and `ResizableDialog`, which have no
     /// `role="dialog"`), e.g. `screen.within(screen.findByText("Caption").closest(StroomDom.DIALOG))`.
-    public static final String DIALOG = ".dialog-container";
+    public static final String DIALOG = ".dialog__container";
     /// A dialog's caption.
-    public static final String DIALOG_TITLE = ".dialog-titleText";
+    public static final String DIALOG_TITLE = ".dialog__title";
     /// The data rows of a `MyDataGrid`/`CellTable` (GWT marks each with `__gwt_row`; there is no
     /// `role="row"`) or of a `DataGridWidget` (`data-row`). A cell's row is
     /// `play.getByText(x).closest(GRID_ROW)`.
@@ -49,7 +49,7 @@ public final class StroomDom {
     public static final String LINK_TAB_LABEL = ".tab-bar--link .tab-bar__label";
     /// The text of an item of a menu (`MenuItemCell`), shown on the page's body. The item itself
     /// (the cell's focusable div) has `role="menuitem"`.
-    public static final String MENU_ITEM_TEXT = ".menuItem-text";
+    public static final String MENU_ITEM_TEXT = ".menu__text";
     /// The file input of a `CustomFileUpload` (Stroom's file chooser), which it hides behind its
     /// 'Choose File' button. `play.upload(...)` chooses a file in it all the same.
     public static final String FILE_INPUT = "input[type='file']";

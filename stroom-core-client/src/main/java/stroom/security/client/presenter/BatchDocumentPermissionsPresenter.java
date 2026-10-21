@@ -229,6 +229,7 @@ public class BatchDocumentPermissionsPresenter
                 .build();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Change Permissions")
                 .onHideRequest(e -> {

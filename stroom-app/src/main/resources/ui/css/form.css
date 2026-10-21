@@ -210,36 +210,3 @@
 .form-group__description-row--disabled code {
     color: var(--code-color--disabled);
 }
-
-/* The help popup (HelpManager) that a form group's help button opens */
-.help-popup {
-    /* width: 500px; */
-    max-width: 700px;
-    border-width: 2px;
-    border-color: var(--heading-color);
-    border-style: solid;
-    border-radius: 6px;
-}
-
-.markdown.help-popup .popupContent {
-    margin: 5px;
-    font-weight: 400;
-}
-
-.markdown.help-popup .popupContent div,
-.markdown.help-popup .popupContent span,
-.markdown.help-popup .popupContent p,
-.markdown.help-popup .popupContent b,
-.markdown.help-popup .popupContent i {
-    font-weight: 400;
-    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
-    font-size: var(--font-size-12);
-    line-height: 1.3em;
-}
-
-.markdown.help-popup .popupContent h4 {
-    font-weight: 500;
-    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
-    font-size: var(--font-size-13);
-    line-height: 1.6em;
-}

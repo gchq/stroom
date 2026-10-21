@@ -106,6 +106,7 @@ public abstract class AbstractSelectionEventManager<T>
                         handledEvent(event);
                         break;
                     case MOVE_PAGE_UP:
+                        onMovePageUp(event);
                         handledEvent(event);
                         break;
                     case MOVE_START:
@@ -125,8 +126,11 @@ public abstract class AbstractSelectionEventManager<T>
                         handledEvent(event);
                         break;
                     case CLOSE:
-                        onClose(event);
-                        handledEvent(event);
+                        // Escape that the table doesn't use goes on to the popup or dialog
+                        // holding it, which closes
+                        if (onClose(event)) {
+                            handledEvent(event);
+                        }
                         break;
                     case EXECUTE:
                         onExecute(event);
@@ -148,6 +152,9 @@ public abstract class AbstractSelectionEventManager<T>
             }
         } else if (BrowserEvents.MOUSEDOWN.equals(type)) {
             onMouseDown(event);
+
+        } else if (BrowserEvents.MOUSEUP.equals(type)) {
+            onMouseUp(event);
 
         } else if (BrowserEvents.MOUSEMOVE.equals(type)) {
             onMouseMove(event);
@@ -255,7 +262,13 @@ public abstract class AbstractSelectionEventManager<T>
     protected void onMoveLeft(final CellPreviewEvent<T> e) {
     }
 
-    protected void onClose(final CellPreviewEvent<T> e) {
+    /// Called for Escape on a row.
+    ///
+    /// @param e The key down event.
+    /// @return Whether Escape was used; if not, it goes on to whatever holds the table (e.g. a
+    /// dialog, which closes).
+    protected boolean onClose(final CellPreviewEvent<T> e) {
+        return false;
     }
 
     protected void onExecute(final CellPreviewEvent<T> e) {
@@ -285,6 +298,13 @@ public abstract class AbstractSelectionEventManager<T>
                 onExecute(e);
             }
         }
+    }
+
+    /// Called for a mouse button let go over a row, if the table receives `mouseup` (it must sink
+    /// it). Does nothing unless overridden.
+    ///
+    /// @param e The mouse up event.
+    protected void onMouseUp(final CellPreviewEvent<T> e) {
     }
 
     protected void onMouseMove(final CellPreviewEvent<T> e) {

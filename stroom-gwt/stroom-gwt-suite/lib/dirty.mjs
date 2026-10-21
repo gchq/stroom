@@ -40,7 +40,7 @@ export function readSave(page) {
     const un = (t) => { const s = norm(t); return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     // The document's toolbar, NOT a dialog's — a dirty check is about the tab underneath.
     const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0
-      && !b.closest('.dialog-popup, .resizableDialog-popup'));
+      && !b.closest('.dialog'));
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');
     if (!save) return null;
@@ -66,11 +66,11 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
      * all, and their views stayed `needs-value` for want of anyone looking. In that scope the topmost
      * dialog IS the form.
      */
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1] ?? null;
     const inDialog = (e) => (inDialogScope
       ? !(top && top.contains(e))
-      : !!e.closest('.dialog-popup, .resizableDialog-popup'));
+      : !!e.closest('.dialog'));
     /**
      * An ACE editor's text, enough of it to tell a change by. This used to be the empty string,
      * which made the editor the one field whose `value` check could never pass — so the ace
@@ -200,7 +200,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     if (!out.length) {
       const solo = [...document.querySelectorAll('.ace_content')]
         .find((e) => e.offsetWidth > 100 && e.offsetHeight > 40
-          && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog-popup, .resizableDialog-popup')));
+          && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog')));
       if (solo) {
         const tab = norm([...document.querySelectorAll('.tab-bar--link .tab-bar__tab[aria-selected="true"] .tab-bar__label, .tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label')]
           .find((e) => e.offsetWidth > 0)?.textContent) || 'the editor';
@@ -250,16 +250,16 @@ export async function nudge(page, f) {
     await page.mouse.move(f.x, f.y);
     await page.mouse.down();
     await page.mouse.up();
-    const opened = await page.waitForFunction(() => [...document.querySelectorAll('.dialog-titleText')]
+    const opened = await page.waitForFunction(() => [...document.querySelectorAll('.dialog__title')]
       .some((e) => e.offsetWidth > 0 && e.textContent.trim() === 'Choose item'), null, { timeout: 3_000 })
       .then(() => true).catch(() => false);
     if (!opened) return null;
     await page.waitForTimeout(500);
     const pick = await page.evaluate((current) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const title = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0)
+      const title = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0)
         .filter((e) => e.textContent.trim() === 'Choose item').pop();
-      const dialog = title?.closest('.dialog-container, .resizableDialog-popup, .dialog-popup');
+      const dialog = title?.closest('.dialog__container, .dialog');
       const branch = new Set(['Folder', 'System', 'Favourites', 'Git Repo', null]);
       const row = [...(dialog?.querySelectorAll('.explorerCell') ?? [])].find((e) => e.offsetWidth > 0
         && !branch.has(e.querySelector('.explorerCell-icon')?.getAttribute('title') ?? null)
@@ -269,8 +269,8 @@ export async function nudge(page, f) {
       // The row's middle: nearer its start is the expander or the icon, which don't select it.
       return { x: r.x + r.width / 2, y: r.y + r.height / 2, text: norm(row.textContent) };
     }, f.value ?? '');
-    const button = (name) => page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
-      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]')
+    const button = (name) => page.locator('.dialog__title', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]')
       .getByRole('button', { name, exact: true }).last();
     if (!pick) {
       await button('Cancel').click({ timeout: 2_000 }).catch(() => {});
@@ -278,8 +278,8 @@ export async function nudge(page, f) {
     }
     // Clicked as an element, not at the point read: the dialog is still settling when it is read,
     // and a click at that point left the box as it was.
-    const dialog = page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
-      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]');
+    const dialog = page.locator('.dialog__title', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(concat(" ", @class, " "), " dialog__container ")][1]');
     await dialog.locator('.explorerCell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
     await page.waitForTimeout(400);
     await button('OK').click({ timeout: 2_000 }).catch(() => {});

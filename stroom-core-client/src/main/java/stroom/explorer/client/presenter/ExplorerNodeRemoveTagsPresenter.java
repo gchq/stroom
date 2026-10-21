@@ -117,6 +117,7 @@ public class ExplorerNodeRemoveTagsPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> getView().focus())

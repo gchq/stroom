@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.query;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
@@ -257,6 +258,12 @@ public class SelectionHandlersPresenter
     private void edit(final ComponentSelectionHandler existingRule) {
         edit(existingRule, "Edit Selection Handler", rule -> {
             final int index = selectionHandlers.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The selection handler was deleted while it was being edited, "
+                                          + "so the changes can't be kept.", null);
+                return;
+            }
             selectionHandlers.remove(index);
             selectionHandlers.add(index, rule);
 

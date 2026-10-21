@@ -127,6 +127,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                 final PopupSize popupSize = PopupSize.resizable(650, popupHeight);
                 ShowPopupEvent.builder(docRefSelectionPresenter)
                         .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .modal()
                         .popupSize(popupSize)
                         .caption("Save Pipeline: " + pipeline.getName())
                         .onHideRequest(e -> {

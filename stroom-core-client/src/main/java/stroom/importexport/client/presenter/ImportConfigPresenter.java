@@ -90,6 +90,7 @@ public class ImportConfigPresenter
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Import")
                 .onShow(e -> getView().focus())
