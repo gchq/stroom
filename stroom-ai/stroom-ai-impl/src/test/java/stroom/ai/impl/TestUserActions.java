@@ -232,6 +232,34 @@ class TestUserActions {
     }
 
     @Test
+    void aDocumentationChangeButtonIsOfferedForADashboard() {
+        // Seen in testing: asked to document a dashboard, the agent could not, as the only way to write a
+        // Documentation tab is the MCP server's, which writes a pipeline's or an XSLT's. No action of Stroom's
+        // own puts proposed Markdown on a document's Documentation tab, so this one is dropped.
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        final Map<String, Object> change = new HashMap<>();
+        change.put("id", "docs-1");
+        change.put("action", "apply_documentation_change");
+        change.put("doc", doc("Dashboard", OTHER_UUID, "Something else"));
+        change.put("request", "# Logons\n\nWho logged on, from where, over the last day.");
+        change.put("base", "");
+        change.put("base_hash", "a".repeat(64));
+        change.put("summary", "Says what the dashboard shows.");
+
+        // From an MCP server, it is dropped, as other changes to documents are.
+        assertThat(userActions.check(List.of(change), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo("apply_documentation_change");
+            assertThat(action.doc()).isEqualTo(dashboard);
+            assertThat(action.label()).contains("Dashboard 'Logons'").doesNotContain("Something else");
+            assertThat(action.request()).isEqualTo("# Logons\n\nWho logged on, from where, over the last day.");
+        });
+    }
+
+    @Test
     void aDashboardChangeButtonNeedsADashboardTheUserCanSeeAndGoodChanges() {
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.empty());
         assertThat(userActions.check(null, List.of(dashboardChange("d1")), NOW)).isEmpty();

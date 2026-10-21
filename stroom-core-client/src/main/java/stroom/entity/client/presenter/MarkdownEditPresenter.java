@@ -189,6 +189,25 @@ public class MarkdownEditPresenter
         updateMarkdownOnIFramePresenter();
     }
 
+    /// Puts text in the editor as an edit the user hasn't saved (e.g. documentation proposed in the AI chat), so
+    /// the document is marked as changed. Nothing is saved.
+    ///
+    /// @param rawMarkdown The text.
+    /// @return False if the editor is read only, so the text wasn't put in it.
+    public boolean setEditedText(final String rawMarkdown) {
+        if (readOnly) {
+            return false;
+        }
+        setText(rawMarkdown);
+        DirtyEvent.fire(this, true);
+        return true;
+    }
+
+    /// @return True if the user may not edit the text.
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
     private void updateEditState() {
         final String rawMarkdown = markdownPreviewPresenter.getText();
         // No content do default to edit mode

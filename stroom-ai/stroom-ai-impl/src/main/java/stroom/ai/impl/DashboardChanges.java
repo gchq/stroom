@@ -93,7 +93,10 @@ public final class DashboardChanges {
     public static final String DESCENDING = "descending";
     /// A sort direction that stops sorting by the column.
     public static final String NONE = "none";
-    public static final int MAX_CHANGES = 20;
+    /// The most changes one proposal may make: enough for its tables with their columns and filters.
+    public static final int MAX_CHANGES = 100;
+    /// The most conditions a formatting rule may have.
+    public static final int MAX_RULE_CONDITIONS = 20;
     /// The longest a name, expression or filter may be.
     public static final int MAX_TEXT = 1_000;
     /// The deepest group level, or the furthest position or sort priority, that may be given.
@@ -113,7 +116,10 @@ public final class DashboardChanges {
             throw new IllegalArgumentException("Give changes as a list of operations, each with an op.");
         }
         if (list.size() > MAX_CHANGES) {
-            throw new IllegalArgumentException("Give at most " + MAX_CHANGES + " changes at once.");
+            throw new IllegalArgumentException("Give at most " + MAX_CHANGES + " changes at once. Leave out "
+                                               + "changes that aren't needed rather than splitting them over "
+                                               + "proposals: a later proposal can't be applied after an earlier "
+                                               + "one.");
         }
         final List<Change> changes = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
@@ -413,8 +419,9 @@ public final class DashboardChanges {
         ExpressionOperator expression = stored;
         if (expression == null) {
             if (!(map.get("conditions") instanceof final List<?> conditions) || conditions.isEmpty()
-                || conditions.size() > MAX_CHANGES) {
-                throw new IllegalArgumentException(prefix + "add_format_rule needs conditions: up to " + MAX_CHANGES
+                || conditions.size() > MAX_RULE_CONDITIONS) {
+                throw new IllegalArgumentException(prefix + "add_format_rule needs conditions: up to "
+                                                   + MAX_RULE_CONDITIONS
                                                    + ", each with a column, a condition and (for most) a value.");
             }
             final String match = NullSafe.nonBlankStringElse(text(map, "match", prefix), "all");

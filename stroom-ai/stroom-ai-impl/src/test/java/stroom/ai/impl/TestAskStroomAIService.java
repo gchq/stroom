@@ -371,6 +371,11 @@ class TestAskStroomAIService {
         assertThat(AskStroomAIService.isAttachmentMessage(
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, 5, "q", 2, null))).isFalse();
         assertThat(AskStroomAIService.isAttachmentMessage(message(3, AiMessageType.AI_RESPONSE, "a"))).isFalse();
+        // A message steering a run refers to the snapshot of the tab sent with it, which isn't its own.
+        assertThat(AskStroomAIService.isAttachmentMessage(
+                new AiChatMessage(4, 1, 0L, AiMessageType.STEER_MESSAGE, 5, "s", 2, null))).isFalse();
+        assertThat(AskStroomAIService.isAttachmentMessage(
+                new AiChatMessage(5, 1, 0L, AiMessageType.QUEUED_STEER_MESSAGE, 5, "s", 2, null))).isFalse();
     }
 
     // Runs a new run's work straight away, ignoring the failure to answer with mocks.
@@ -394,7 +399,8 @@ class TestAskStroomAIService {
 
         Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
         Mockito.verify(aiService, Mockito.never())
-                .storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.STEER_MESSAGE), Mockito.anyString());
+                .storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.STEER_MESSAGE), Mockito.any(),
+                        Mockito.anyString());
     }
 
     @Test
@@ -409,7 +415,7 @@ class TestAskStroomAIService {
         // Kept for the run to read, and the form put aside, so the tool that asked carries on (unanswered) and the
         // run reads the message next.
         final InOrder inOrder = Mockito.inOrder(aiService, mcpElicitations);
-        inOrder.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "use ACME");
+        inOrder.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, null, "use ACME");
         inOrder.verify(mcpElicitations).supersedePending(1);
         // Nothing is denied, and the run is not carried on, as the tool's thread is still working on it.
         Mockito.verifyNoInteractions(toolApprovalService);
@@ -421,13 +427,31 @@ class TestAskStroomAIService {
     void testAskStroomAi_steersAnActiveRun() {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
-        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday"))
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, null, "also check yesterday"))
                 .thenReturn(message(9, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday"));
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "also check yesterday"));
 
         // It waits for the run's current step to finish.
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday");
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, null, "also check yesterday");
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_theTabSentWithASteerIsKeptAndRecordedOnIt() {
+        // Regression: the tab may have changed since the question (e.g. by applying a change the run proposed), so a
+        // later change must be proposed against the tab as it is when the user steers the run.
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+        final AiTabSnapshot tab = new AiTabSnapshot(new DocRef("XSLT", "x-uuid", "Event translation"),
+                "Event translation", "XSLT", true, List.of(), List.of(), null, "hash2");
+        Mockito.when(tabSnapshots.store(1, tab)).thenReturn(new TabSnapshots.Stored(43, false));
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, 43, "now map the domain"))
+                .thenReturn(message(9, AiMessageType.QUEUED_STEER_MESSAGE, "now map the domain"));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "now map the domain", null, tab));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, 43, "now map the domain");
         Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
     }
 
@@ -436,7 +460,7 @@ class TestAskStroomAIService {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
         // Active when checked, but gone once the message has been stored.
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.empty());
-        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "late"))
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, null, "late"))
                 .thenReturn(message(9, AiMessageType.QUEUED_STEER_MESSAGE, "late"));
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "late"));
@@ -748,7 +772,7 @@ class TestAskStroomAIService {
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "no, use the other name"));
 
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "no, use the other name");
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, null, "no, use the other name");
         Mockito.verify(toolApprovalService).denyAll(request, "The user sent a message instead: no, use the other "
                                                              + "name");
         Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());

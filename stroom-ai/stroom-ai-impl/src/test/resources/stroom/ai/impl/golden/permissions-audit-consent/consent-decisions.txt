@@ -30,6 +30,7 @@
 - propose_code_change (read-only, reads untrusted content): RUN in every situation
 - propose_dashboard (read-only, reads only trusted content): RUN in every situation
 - propose_dashboard_change (read-only, reads untrusted content): RUN in every situation
+- propose_documentation_change (read-only, reads untrusted content): RUN in every situation
 - propose_query (read-only, reads only trusted content): RUN in every situation
 - propose_query_change (read-only, reads untrusted content): RUN in every situation
 - read_document (read-only, reads untrusted content): RUN in every situation

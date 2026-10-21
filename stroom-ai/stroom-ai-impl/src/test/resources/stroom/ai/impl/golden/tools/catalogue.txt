@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 46
+Built-in tools: 47
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (46 tool(s))
+### AGENT (47 tool(s))
 ask_user
 config_properties
 current_results
@@ -32,6 +32,7 @@ processor_tasks
 propose_code_change
 propose_dashboard
 propose_dashboard_change
+propose_documentation_change
 propose_query
 propose_query_change
 read_document
@@ -52,7 +53,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (42 tool(s))
+### ASK (43 tool(s))
 ask_user
 config_properties
 current_results
@@ -78,6 +79,7 @@ processor_tasks
 propose_code_change
 propose_dashboard
 propose_dashboard_change
+propose_documentation_change
 propose_query
 propose_query_change
 read_document
@@ -96,7 +98,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (42 tool(s))
+### PLAN (43 tool(s))
 ask_user
 config_properties
 current_results
@@ -122,6 +124,7 @@ processor_tasks
 propose_code_change
 propose_dashboard
 propose_dashboard_change
+propose_documentation_change
 propose_query
 propose_query_change
 read_document
@@ -1221,7 +1224,7 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
 {
   "properties" : {
     "changes" : {
-      "description" : "The changes, applied in order.",
+      "description" : "The changes, applied in order: at most 100, all in this one proposal.",
       "items" : {
         "properties" : {
           "bold" : {
@@ -1357,6 +1360,59 @@ While the tab the user attached is a dashboard, proposes a change to one of its 
     }
   },
   "required" : [ "component", "changes", "summary" ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_documentation_change
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Proposes a change to the documentation of a Stroom document given its UUID: the Markdown on its Documentation tab. Use it whenever the user asks you to write, document or improve a document's documentation, rather than writing the Markdown out in your answer. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it to the Documentation tab's editor, unsaved, for them to save. Read the current documentation first (document_documentation) and the document itself, so what you write is accurate. Give either edits (best for small changes) or the whole revised Markdown, keeping what needn't change exactly as it is.
+
+### Parameters
+
+{
+  "properties" : {
+    "edits" : {
+      "description" : "Replacements made to the current documentation, in order. Give this or markdown, not both.",
+      "items" : {
+        "properties" : {
+          "newText" : {
+            "description" : "The text to replace it with.",
+            "type" : "string"
+          },
+          "oldText" : {
+            "description" : "Text to replace, exactly as it is in the documentation, and appearing only once in it.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "oldText", "newText" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "markdown" : {
+      "description" : "The whole proposed Markdown. Give this or edits, not both.",
+      "type" : "string"
+    },
+    "summary" : {
+      "description" : "A sentence saying what the change does and why, shown with the diff.",
+      "type" : "string"
+    },
+    "uuid" : {
+      "description" : "The document's UUID.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "uuid", "summary" ],
   "type" : "object"
 }
 

@@ -490,6 +490,75 @@ class TestUserActionService {
     }
 
     @Test
+    void aDocumentationChangeIsAppliedAndUndoneWithEditOnTheDocument() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        storeResult(documentationChange(Status.PENDING, "snap-hash"));
+
+        final AiUserActionResult applied = service.doUserAction(CHAT, MESSAGE, "docs-1");
+
+        assertThat(applied.isDone()).isTrue();
+        assertThat(applied.getMessage()).isEqualTo("Applied, not saved");
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.APPLY_DOCUMENTATION_COMMAND),
+                Mockito.eq("the documentation of Dashboard 'Logons'"),
+                Mockito.eq("Applied a proposed change, not saved: +1 −1 lines"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.eq("(With a button in the chat) I applied the proposed change to the documentation of "
+                           + "Dashboard 'Logons' (+1 −1 lines). It is not saved."));
+        // Proposed against the tab's text as the user had it, which only the browser can check.
+        Mockito.verify(lookup, Mockito.never()).savedDocumentation(Mockito.any());
+
+        storeResult(documentationChange(Status.DONE, "snap-hash"));
+        assertThat(service.undoUserAction(CHAT, MESSAGE, "docs-1").isDone()).isTrue();
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.UNDO_DOCUMENTATION_COMMAND),
+                Mockito.eq("the documentation of Dashboard 'Logons'"),
+                Mockito.eq("Undid an applied change: +1 −1 lines"), Mockito.eq(true));
+    }
+
+    @Test
+    void aDocumentationChangeIsNotAppliedWithoutEdit() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(false);
+        storeResult(documentationChange(Status.PENDING, "snap-hash"));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "docs-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("You don't have permission to edit Dashboard 'Logons'");
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.APPLY_DOCUMENTATION_COMMAND), Mockito.anyString(),
+                Mockito.contains("permission"), Mockito.eq(false));
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+    }
+
+    @Test
+    void aDocumentationChangeToTheSavedTextIsNotAppliedOnceThatHasChanged() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+
+        // Saved with other text since it was proposed.
+        Mockito.when(lookup.savedDocumentation(DASHBOARD)).thenReturn(Optional.of("Someone else's text"));
+        storeResult(documentationChange(Status.PENDING, null));
+        final AiUserActionResult stale = service.doUserAction(CHAT, MESSAGE, "docs-1");
+        assertThat(stale.isDone()).isFalse();
+        assertThat(stale.getMessage()).isEqualTo(UserActionService.DOCUMENTATION_CHANGED);
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.APPLY_DOCUMENTATION_COMMAND), Mockito.anyString(),
+                Mockito.eq(UserActionService.DOCUMENTATION_CHANGED), Mockito.eq(false));
+
+        // No longer readable.
+        Mockito.when(lookup.savedDocumentation(DASHBOARD)).thenReturn(Optional.empty());
+        assertThat(service.doUserAction(CHAT, MESSAGE, "docs-1").isDone()).isFalse();
+
+        // As it was proposed against.
+        Mockito.when(lookup.savedDocumentation(DASHBOARD)).thenReturn(Optional.of("Old text"));
+        assertThat(service.doUserAction(CHAT, MESSAGE, "docs-1").isDone()).isTrue();
+    }
+
+    @Test
     void undoingAnAppliedDashboardChangeIsRecordedAndOffersTheChangeAgain() {
         Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
         final String stored = storeResult(dashboardChange().withStatus(Status.DONE,
@@ -601,6 +670,16 @@ class TestUserActionService {
         return new UserActionRecord("code-1", UserActions.APPLY_CODE_CHANGE, "Change to XSLT 'Event translation'",
                 null, null, null, XSLT, proposed, List.of(), Long.MAX_VALUE, status, null, null,
                 new UserActionRecord.CodeChange(PIPELINE, "xsltFilter", base, "0".repeat(64), "h", 1, 2));
+    }
+
+    // A documentation change, proposed against the attached tab's text (with the snapshot's hash) or, with no
+    // snapshot hash, against the documentation as saved.
+    private static UserActionRecord documentationChange(final Status status, final String snapshotHash) {
+        return new UserActionRecord("docs-1", UserActions.APPLY_DOCUMENTATION_CHANGE,
+                "Change the documentation of Dashboard 'Logons': +1 −1 lines", null, null, null, DASHBOARD,
+                "New text", List.of(), Long.MAX_VALUE, status, null, null,
+                new UserActionRecord.CodeChange(null, null, "Old text", UserActionService.sha256("Old text"),
+                        snapshotHash, 1, 1));
     }
 
     private static UserActionRecord dashboardChange() {

@@ -446,6 +446,28 @@
 ## propose_dashboard_change {"component":"table-1","changes":[{"op":"hide_column","column":"UserId"}],"summary":"Hide the user."}
 (nothing recorded)
 
+## propose_documentation_change {"markdown":"# Test words\n\nThe words to look for.","summary":"Says what the words are.","uuid":"dictionary-uuid"}
+- audit: documentViewed(1, DocRef{type='Dictionary', uuid='dictionary-uuid', name='Test words'}, "Proposed a change to its documentation with the propose_documentation_change tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Dictionary 'Test words' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Proposed a change to its documentation with the propose_documentation_change tool"
+      } ],
+      "id" : "dictionary-uuid",
+      "name" : "Test words",
+      "type" : "Dictionary"
+    } ],
+    "outcome" : {
+      "description" : "Proposed a change to its documentation with the propose_documentation_change tool",
+      "success" : true
+    }
+  }
+
 ## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
 (nothing recorded)
 
