@@ -321,7 +321,12 @@ public final class AppShellStories {
                     play.expect(shortcuts(play)).toContain("Ctrl+Shift+F");
                     play.expect(shortcuts(play)).toContain("Ctrl+E");
                     play.expect(shortcuts(play)).toContain("Alt+L");
+                    // Escape closes the open sub menu, then the menu: while a menu is open, typed
+                    // letters go to its items (type-ahead) rather than to the shortcuts
                     play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.getAllByRole("menu")).toHaveLength(1));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     // GWT's key sequences complete on the keys' release, so
                     // the keys are pressed and released rather than only pressed
                     play.keyboard("gu");

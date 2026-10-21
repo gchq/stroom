@@ -55,6 +55,8 @@ public final class MenuPanelStories {
     // The highlighted row is the cell table's keyboard-selected row.
     private static final String ACTIVE_ROW = ".menu tr[class*='KeyboardSelectedRow']";
     private static final String NO_ACTION = "(no action yet)";
+    // Longer than the pause in typing that starts type-ahead again (TypeAhead, half a second)
+    private static final int TYPE_AHEAD_PAUSE_MILLIS = 600;
     private static final String ON_CHOSEN = "onChosen";
     private static final String OPTIONS_ID = "menuPanelStories-options";
 
@@ -236,6 +238,55 @@ public final class MenuPanelStories {
                     // Activate the highlighted "Open"
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.getByText("Open", "strong")).toBeInTheDocument());
+                })
+                // Typing a character goes to the next item starting with it (the WAI-ARIA menu's
+                // type-ahead), rather than the letters being movement keys
+                .story("TypeAhead", context -> demo(context, "Open Menu (then type)",
+                        "Type-ahead — open the menu then type an item's first letters",
+                        true,
+                        result -> Arrays.asList(
+                                MenuWidgets.icon("Open", SvgImage.OPEN, () -> result.accept("Open")).build(),
+                                MenuWidgets.icon("Save", SvgImage.SAVE, () -> result.accept("Save")).build(),
+                                MenuWidgets.simple("Save As…", () -> result.accept("Save As")),
+                                MenuWidgets.icon("Reload", SvgImage.REFRESH, () -> result.accept("Reload")).build(),
+                                MenuWidgets.separator(),
+                                MenuWidgets.iconDisabled("Print", SvgImage.CANCEL).build(),
+                                MenuWidgets.separator(),
+                                MenuWidgets.simple("Close", () -> result.accept("Close")))))
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
+                    final Query menu = play.screen().findByRole("menu");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Open"))
+                            .toHaveFocus());
+                    // A letter goes to the next item starting with it, and the same letter again to
+                    // the one after
+                    play.keyboard("s");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Save"))
+                            .toHaveFocus());
+                    play.keyboard("s");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Save As…"))
+                            .toHaveFocus());
+                    // A pause starts again; letters typed together match more of the text
+                    play.sleep(TYPE_AHEAD_PAUSE_MILLIS);
+                    play.keyboard("re");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Reload"))
+                            .toHaveFocus());
+                    // A disabled item is gone to, as the arrow keys do, so it is read out
+                    play.sleep(TYPE_AHEAD_PAUSE_MILLIS);
+                    play.keyboard("p");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Print"))
+                            .toHaveFocus());
+                    // W is a letter here, not a movement key: no item starts with it, so the focus stays
+                    play.sleep(TYPE_AHEAD_PAUSE_MILLIS);
+                    play.keyboard("w");
+                    play.expect(play.within(menu).getByRole("menuitem", "Print")).toHaveFocus();
+                    // Then Enter chooses the item typed to
+                    play.sleep(TYPE_AHEAD_PAUSE_MILLIS);
+                    play.keyboard("c");
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Close"))
+                            .toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.getByText("Close", "strong")).toBeInTheDocument());
                 })
                 // An item is chosen when the mouse button is let go over it, so a press is taken back by
                 // moving off it first (WCAG 2.5.2, Pointer Cancellation)

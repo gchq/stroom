@@ -269,3 +269,13 @@
     height: 20px;
     cursor: nw-resize;
 }
+
+/* Forced colours (e.g. Windows high contrast) drop box shadows, so a dialog being moved or resized
+   from the keyboard has an outline instead of its ring */
+@media (forced-colors: active) {
+    .dialog--moving .dialog__frame,
+    .dialog--resizing .dialog__frame {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}

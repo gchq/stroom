@@ -20,9 +20,11 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.util.client.AbstractSelectionEventManager;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -63,6 +65,9 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private final CellTable<Item> cellTable;
     private final ScrollPanel scrollPanel;
     private final Widget widget;
+    private final MenuSelectionEventManager eventManager;
+    // Typing a character goes to the next item starting with it (the WAI-ARIA menu's type-ahead)
+    private final TypeAhead typeAhead = new TypeAhead();
 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
     private int mouseOverRow = -1;
@@ -112,7 +117,11 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.addColumn(iconColumn);
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel, new MenuSelectionEventManager(cellTable));
+        eventManager = new MenuSelectionEventManager(cellTable);
+        // Typed characters go to an item rather than being movement keys (KeyBinding's W, A, S, D, H,
+        // J, K and L); Space still chooses the item
+        eventManager.setTypedHandler(this::typeAhead);
+        cellTable.setSelectionModel(selectionModel, eventManager);
 
         widget = scrollPanel;
     }
@@ -184,6 +193,29 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             // e.g. a group heading, which is read as it comes
             element.setAttribute(ROLE, ROLE_NONE);
         }
+    }
+
+    // Goes to the next item, enabled or not, whose text starts with what has been typed, as the arrow
+    // keys would (opening its sub menu)
+    private void typeAhead(final String text) {
+        final List<Item> items = cellTable.getVisibleItems();
+        final int row = typeAhead.next(text,
+                cellTable.getKeyboardSelectedRow(),
+                items.size(),
+                i -> isReachable(items.get(i))
+                        ? getItemText(i)
+                        : null);
+        if (row >= 0) {
+            eventManager.onKeyboardSelectRow(row, true);
+        }
+    }
+
+    // The text an item shows (its label, without its shortcut)
+    private String getItemText(final int row) {
+        final Element text = ElementUtil.findChild(cellTable.getRowElement(row), "menu__text");
+        return text != null
+                ? text.getInnerText()
+                : null;
     }
 
     public void showSubMenu(final Item item) {
