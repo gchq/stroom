@@ -209,6 +209,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
                         }
                     }
+                } catch (final LoggedException e) {
+                    // Already logged, so propagate without logging again
+                    throw e;
                 } catch (final RuntimeException e) {
                     fatalError(e.getMessage(), e);
                 }
@@ -221,8 +224,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             // Cache config value to avoid Provider lookup on every element.
             maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
 
+        } catch (final LoggedException e) {
+            // Already logged, so propagate without logging again
+            throw e;
         } catch (final Exception e) {
-            fatalError("Failed to initialise JsonGenerator", e);
+            fatalError("Failed to initialise Elasticsearch indexing filter", e);
         } finally {
             super.startProcessing();
         }
