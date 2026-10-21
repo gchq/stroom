@@ -2026,13 +2026,10 @@ public class AskStroomAIService {
         // stands rather than as one of the new messages - once the client had seen it, it would never
         // be sent again, and its progress would never be seen.
         final AiChatMessage workingMessage = aiService.getWorkingMessage(chatId).orElse(null);
-        // Likewise the answer and reasoning being streamed.
-        final List<AiChatMessage> newMessages = aiService
-                .getMessagesSince(chatId, request.getLastSeenMessageId())
-                .stream()
-                .filter(msg -> !TRANSIENT_MESSAGE_TYPES.contains(msg.getMessageType()))
-                .toList();
-
+        // The run is read before the messages. A run stores what it asks the user, or its answer, before it
+        // waits for the user or ends, so a run seen waiting or ended comes with those messages. Read the other way
+        // round, a form stored between the two reads would be missed, and the client, seeing the run waiting for
+        // the user, would stop polling without ever showing it.
         // The conversation is complete when no run is active and all attachments have finished
         // downloading.
         AiChatRun run = runDao.getLatest(chatId).orElse(null);
@@ -2042,6 +2039,15 @@ public class AskStroomAIService {
             aiService.deleteWorkingMessages(chatId);
             run = runDao.getLatest(chatId).orElse(null);
         }
+
+        // Like the WORKING message, the answer and reasoning being streamed are reported as they stand, not as new
+        // messages.
+        final List<AiChatMessage> newMessages = aiService
+                .getMessagesSince(chatId, request.getLastSeenMessageId())
+                .stream()
+                .filter(msg -> !TRANSIENT_MESSAGE_TYPES.contains(msg.getMessageType()))
+                .toList();
+
         final boolean runActive = run != null && run.isActive();
         final boolean attachmentsComplete = attachments.stream()
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
@@ -2346,6 +2352,9 @@ public class AskStroomAIService {
                     case WARNING:
                         label = "**Warning**";
                         break;
+                    case ELICITATION:
+                        label = "**Form**";
+                        break;
                     case THINKING:
                     case TOOL_CALL:
                     case TOOL_RESULT:
@@ -2378,9 +2387,14 @@ public class AskStroomAIService {
                     // Stream the markdown from the attachment file store as a Markdown table.
                     writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
                 } else {
-                    final String body = AiActivityExport.isActivity(msg.getMessageType())
-                            ? AiActivityExport.body(msg)
-                            : NullSafe.string(msg.getMessage());
+                    final String body;
+                    if (msg.getMessageType() == AiMessageType.ELICITATION) {
+                        body = AiFormExport.body(msg.getMessage());
+                    } else if (AiActivityExport.isActivity(msg.getMessageType())) {
+                        body = AiActivityExport.body(msg);
+                    } else {
+                        body = NullSafe.string(msg.getMessage());
+                    }
                     writer.write(body);
                     writer.newLine();
                 }
