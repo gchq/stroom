@@ -228,7 +228,7 @@ class TestWorkspaceTools {
     @Test
     void testReadFileLimits() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, 10, 300, null, null, null, null, null, null, null),
+                new AiWorkspaceConfig(null, null, null, 10, 300, null, null, null, null, null, null, null, null),
                 null, null, null, null, null, null, null, null);
         workspace.write(chatId, WorkspacePath.parse("/outputs/long.txt"), "x".repeat(5_000) + "\n", null);
 
@@ -307,7 +307,7 @@ class TestWorkspaceTools {
     void testGrepReDoSIsStopped() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null, null,
-                        null, null, null, null), null,
+                        null, null, null, null, null), null,
                 null,
                 null,
                 null, null, null, null, null);
@@ -386,7 +386,7 @@ class TestWorkspaceTools {
     @Test
     void testQuota() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(100L, null, null, null, null, null, null, null, null, null, null, null),
+                new AiWorkspaceConfig(100L, null, null, null, null, null, null, null, null, null, null, null, null),
                         null, null, null, null, null,
                         null, null, null);
 

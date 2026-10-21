@@ -18,6 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
@@ -143,7 +145,8 @@ class TestBuiltInToolCatalogue {
                 ConsentGates.chat(Mockito.mock(ToolConsent.class), aiService, runManager),
                 Mockito.mock(AiAuditLog.class), new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
-                new UserActions(Mockito.mock(UserActionLookup.class)));
+                new UserActions(Mockito.mock(UserActionLookup.class)),
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = new ChatModel() {
             @Override

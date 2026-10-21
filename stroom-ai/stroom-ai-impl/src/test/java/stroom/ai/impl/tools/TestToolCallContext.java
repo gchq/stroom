@@ -187,6 +187,6 @@ class TestToolCallContext {
     // Limits with the given tool time limit and lines per read, and the defaults otherwise.
     private static AiWorkspaceConfig limits(final Duration toolTimeLimit, final int maxLinesPerRead) {
         return new AiWorkspaceConfig(null, null, null, maxLinesPerRead, null, StroomDuration.of(toolTimeLimit),
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 }

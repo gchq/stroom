@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -417,7 +418,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
-                new UserActions(Mockito.mock(UserActionLookup.class)));
+                new UserActions(Mockito.mock(UserActionLookup.class)),
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
     }
 
     /// Runs one question through the agent loop, with a model that follows a script.

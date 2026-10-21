@@ -93,19 +93,52 @@ public class AiAuditLog {
                          final String outcome,
                          final boolean success,
                          final boolean unattended) {
-        log(TOOL_CALL_TYPE_ID, "Ask Stroom AI called tool " + tool + " in " + where(session),
-                ProcessEventAction.builder()
-                        .withType(ProcessType.APPLICATION)
-                        .withAction(ProcessAction.CALL)
-                        .withCommand(tool)
-                        .withArguments(shorten(arguments))
-                        .withOutcome(Outcome.builder()
-                                .withSuccess(success)
-                                .withDescription(outcome)
-                                .build())
-                        .addData(sessionData(session))
-                        .addData(data("Unattended", String.valueOf(unattended)))
-                        .build());
+        logToolCall(session, tool, arguments, null, outcome, success, unattended);
+    }
+
+    /// Records a tool call whose arguments named workspace files, whose content was put in before it was sent.
+    ///
+    /// @param session               The session, e.g. the chat.
+    /// @param tool                  The tool, as the model named it.
+    /// @param arguments             Its arguments, as the model wrote them (naming the files, not with their
+    ///                              content).
+    /// @param expandedArgumentChars How many characters the arguments sent were, with the files' content, or null
+    ///                              if nothing was put in.
+    /// @param outcome               What happened, e.g. "Run", "Denied by the user".
+    /// @param success               False if it failed or was not run.
+    /// @param unattended            True if the user was away.
+    public void toolCall(final ToolSession session,
+                         final String tool,
+                         final String arguments,
+                         final Long expandedArgumentChars,
+                         final String outcome,
+                         final boolean success,
+                         final boolean unattended) {
+        logToolCall(session, tool, arguments, expandedArgumentChars, outcome, success, unattended);
+    }
+
+    private void logToolCall(final ToolSession session,
+                             final String tool,
+                             final String arguments,
+                             final Long expandedArgumentChars,
+                             final String outcome,
+                             final boolean success,
+                             final boolean unattended) {
+        final ProcessEventAction.Builder<Void> action = ProcessEventAction.builder()
+                .withType(ProcessType.APPLICATION)
+                .withAction(ProcessAction.CALL)
+                .withCommand(tool)
+                .withArguments(shorten(arguments))
+                .withOutcome(Outcome.builder()
+                        .withSuccess(success)
+                        .withDescription(outcome)
+                        .build())
+                .addData(sessionData(session))
+                .addData(data("Unattended", String.valueOf(unattended)));
+        if (expandedArgumentChars != null) {
+            action.addData(data("ExpandedArgumentsChars", String.valueOf(expandedArgumentChars)));
+        }
+        log(TOOL_CALL_TYPE_ID, "Ask Stroom AI called tool " + tool + " in " + where(session), action.build());
     }
 
     /// Records an answer given by the agent.
