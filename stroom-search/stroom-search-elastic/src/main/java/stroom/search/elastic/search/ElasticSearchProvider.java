@@ -185,10 +185,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     public int getFieldCount(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return NullSafe.get(
+            return NullSafe.getOrElse(
                     index,
                     this::getDataSourceFields,
-                    List::size);
+                    List::size,
+                    0);
         });
     }
 

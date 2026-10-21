@@ -191,6 +191,13 @@ class TestElasticSearchProvider {
         assertThat(alias.isIndexed()).isFalse();
     }
 
+    @Test
+    void testGetFieldCount_missingIndex() {
+        givenUseAsRead();
+
+        assertThat(elasticSearchProvider.getFieldCount(INDEX_REF)).isZero();
+    }
+
     private void givenUseAsRead() {
         when(securityContext.useAsReadResult(any()))
                 .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(0).get());
