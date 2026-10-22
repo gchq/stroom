@@ -20,6 +20,7 @@ import stroom.ai.impl.AiToolApprovalDao.Approval;
 import stroom.ai.impl.ToolConsent.Kind;
 import stroom.ai.impl.ToolConsent.Verdict;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.StandInTools;
 import stroom.ai.shared.AiToolApprovalDecision;
 import stroom.openai.shared.McpToolPolicy;
 
@@ -41,6 +42,13 @@ class TestToolConsent {
     private AiConfig aiConfig = new AiConfig();
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
     private final ToolConsent consent = new ToolConsent(approvalDao, aiDao, () -> aiConfig, () -> runManager);
+    // Stand-ins for Stroom's own tools, registered as Stroom registers them.
+    private final BuiltInTools standIns = StandInTools.builtInTools(
+            StandInTools.writeTool("save_xslt"),
+            StandInTools.selfConfirmingWriteTool("create_feed"),
+            StandInTools.readOnlyTool("read_xslt"),
+            StandInTools.mixedTool("mixed"),
+            StandInTools.chatOnlyWriteTool("write_file"));
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
@@ -89,6 +97,127 @@ class TestToolConsent {
                 .isEqualTo(Kind.ASK);
         assertThat(consent.decide(1, "memory", "{\"command\":\"write\"}", builtInTools, toolset, false).kind())
                 .isEqualTo(Kind.RUN);
+    }
+
+    @Test
+    void aBuiltInWriteToolRunsWithoutAskingInACleanChat() {
+        // Nothing the chat has read could have told the model to make the change.
+        Mockito.when(runManager.isTainted(1)).thenReturn(false);
+
+        assertThat(standInDecide("save_xslt", "{}", false)).isEqualTo(Verdict.RUN);
+        Mockito.verifyNoInteractions(approvalDao);
+    }
+
+    @Test
+    void aBuiltInWriteToolAsksOnceTheChatHasReadUntrustedContent() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+
+        final Verdict verdict = standInDecide("save_xslt", "{}", false);
+
+        assertThat(verdict.kind()).isEqualTo(Kind.ASK);
+        assertThat(verdict.reason())
+                .isEqualTo(ToolConsent.BUILT_IN_AFTER_UNTRUSTED_REASON)
+                .contains("This chat has read tool output or data")
+                .contains("changes something in Stroom");
+        // The card says why, as its classifications don't.
+        assertThat(verdict.cardReason()).isEqualTo(verdict.reason());
+        assertThat(verdict.allowForChat()).isTrue();
+        assertThat(verdict.allowServerReadOnly()).isFalse();
+        assertThat(verdict.risks()).containsExactly("can modify", "after reading data");
+        // Looked for under Stroom's own tools' server, as the card's 'allow for this chat' saves it.
+        Mockito.verify(approvalDao).find(1, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt");
+    }
+
+    @Test
+    void aBuiltInToolThatConfirmsItselfIsNotAskedAboutTwice() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+
+        // It asks the user itself, through its own forms, before each change.
+        assertThat(standInDecide("create_feed", "{}", false)).isEqualTo(Verdict.RUN);
+    }
+
+    @Test
+    void aBuiltInToolsCallsThatOnlyReadNeverAsk() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+
+        assertThat(standInDecide("read_xslt", "{}", false)).isEqualTo(Verdict.RUN);
+        assertThat(standInDecide("read_xslt", "{}", true)).isEqualTo(Verdict.RUN);
+        // A tool with some calls that change something: only those ask.
+        assertThat(standInDecide("mixed", "{\"command\":\"read\"}", false)).isEqualTo(Verdict.RUN);
+        assertThat(standInDecide("mixed", "{\"command\":\"write\"}", false).kind()).isEqualTo(Kind.ASK);
+        // A call whose arguments aren't known is judged as a change.
+        assertThat(standInDecide("mixed", null, false).kind()).isEqualTo(Kind.ASK);
+    }
+
+    @Test
+    void aBuiltInToolWhoseChangesStayInTheChatDoesNotAsk() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+
+        // E.g. the workspace files, and memory, which asks about a lasting change itself.
+        assertThat(standInDecide("write_file", "{}", false)).isEqualTo(Verdict.RUN);
+    }
+
+    @Test
+    void aBuiltInToolAllowedForTheChatRunsAfterUntrustedContent() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        final String hash = ToolConsent.builtInToolHash(standIns, "save_xslt");
+        Mockito.when(approvalDao.find(1, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt"))
+                .thenReturn(Optional.of(new Approval(9, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt", hash,
+                        AiToolApprovalDecision.ALLOW)));
+
+        assertThat(standInDecide("save_xslt", "{}", false)).isEqualTo(Verdict.RUN);
+        // Again, later in the chat.
+        assertThat(standInDecide("save_xslt", "{\"name\":\"other\"}", false)).isEqualTo(Verdict.RUN);
+        // Only for that tool.
+        assertThat(standInDecide("mixed", "{}", false).kind()).isEqualTo(Kind.ASK);
+        // While the user is away a change still waits for them.
+        assertThat(standInDecide("save_xslt", "{}", true).kind()).isEqualTo(Kind.ASK);
+        Mockito.verify(approvalDao, Mockito.never()).delete(Mockito.anyInt());
+    }
+
+    @Test
+    void aBuiltInToolAllowedForTheChatAsksAgainOnceTheToolHasChanged() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        Mockito.when(approvalDao.find(1, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt"))
+                .thenReturn(Optional.of(new Approval(9, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt",
+                        "an-older-hash", AiToolApprovalDecision.ALLOW)));
+
+        assertThat(standInDecide("save_xslt", "{}", false).kind()).isEqualTo(Kind.ASK);
+        Mockito.verify(approvalDao).delete(9);
+    }
+
+    @Test
+    void aBuiltInToolDeniedForTheChatIsNotRun() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        final String hash = ToolConsent.builtInToolHash(standIns, "save_xslt");
+        Mockito.when(approvalDao.find(1, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt"))
+                .thenReturn(Optional.of(new Approval(9, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt", hash,
+                        AiToolApprovalDecision.DENY)));
+
+        assertThat(standInDecide("save_xslt", "{}", false).kind()).isEqualTo(Kind.DENY);
+    }
+
+    @Test
+    void approveEverythingCoversABuiltInWriteToolAfterUntrustedContent() {
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
+        // Not allowed by the administrator.
+        assertThat(standInDecide("save_xslt", "{}", false).kind()).isEqualTo(Kind.ASK);
+
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null,
+                null, null, null, null);
+        assertThat(standInDecide("save_xslt", "{}", false)).isEqualTo(Verdict.RUN);
+        // But not while the user is away (S3).
+        assertThat(standInDecide("save_xslt", "{}", true).kind()).isEqualTo(Kind.ASK);
+    }
+
+    @Test
+    void aBuiltInToolsHashIsOfItsDefinition() {
+        assertThat(ToolConsent.builtInToolHash(standIns, "save_xslt"))
+                .hasSize(64)
+                .isEqualTo(ToolConsent.builtInToolHash(standIns, "save_xslt"))
+                .isNotEqualTo(ToolConsent.builtInToolHash(standIns, "mixed"));
+        assertThat(ToolConsent.builtInToolHash(standIns, "not_a_tool")).isNull();
     }
 
     @Test
@@ -324,6 +453,11 @@ class TestToolConsent {
 
     private Verdict decide(final String tool, final boolean unattended) {
         return consent.decide(1, tool, builtInTools, toolset, unattended);
+    }
+
+    // Decides about a call of one of the stand-ins for Stroom's own tools.
+    private Verdict standInDecide(final String tool, final String arguments, final boolean unattended) {
+        return consent.decide(1, tool, arguments, standIns, McpToolset.EMPTY, unattended);
     }
 
     private void tool(final McpToolInfo info) {

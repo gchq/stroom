@@ -95,7 +95,17 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
 
 Before a tool runs, Stroom decides whether to ask the user:
 
-* Built-in tools run without asking.
+* Stroom's own tools (built-in and ported) run as the user, within their permissions and tool policies.
+  Calls that only read never ask. A call that changes something in Stroom runs without asking until the
+  chat has read untrusted content; from then on it asks on an approval card, which says why. Untrusted
+  content is anything that could hold instructions planted by someone other than the user: any earlier
+  tool result, attached tab or table, dashboard or query data in the chat, the output of any tool not
+  marked as reading only trusted content (nearly all of Stroom's tools that read Stroom data, e.g. events,
+  streams or documents, and every MCP tool), and workspace files put into an MCP tool's arguments. In
+  practice a chat counts as having read it from its first tool result. This is the same signal that makes
+  a change to the user's memory ask. A tool that confirms each change itself through its own forms (e.g.
+  `create_feed`, `create_pipeline`) isn't asked about twice, and the workspace file tools and memory (which
+  asks about a lasting change itself) don't ask, as their changes stay in the chat.
 * MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking, and so
   do tools that modify data but aren't destructive and don't reach outside Stroom, until the run has read
   an untrusted MCP server's output, which could hold planted instructions (output from trusted servers,
@@ -107,12 +117,13 @@ Before a tool runs, Stroom decides whether to ask the user:
   changing tools do) runs without Stroom asking as well, so the user isn't asked twice. An _Ask every
   time_ policy still asks.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
-  A change to a tool's name or description, or to the server's settings, asks again.
+  A change to a tool's name or description, or to the server's settings, asks again. Stroom's own tools are
+  listed in **Tool Approvals** as on `Stroom (built-in)`.
 * _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals**) is off unless
   `allowApproveEverything` is true. The shield is highlighted while it is on. It lets trusted servers'
-  tools that modify data keep running without asking after the run has read an untrusted server's output; it
-  never covers
-  destructive or open-world tools.
+  tools that modify data keep running without asking after the run has read an untrusted server's output,
+  and Stroom's own tools that change something after the chat has read untrusted content; it never covers
+  MCP servers' destructive or open-world tools.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
   run, and anything else waits for the user.
 * A read-only tool changes nothing, but its arguments still go to its server. Set
