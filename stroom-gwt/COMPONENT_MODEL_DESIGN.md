@@ -831,6 +831,17 @@ What the pilot found for the API:
 
 **Exit:** the comparison is recorded and we decide to go ahead with Phase 1 or revise the API first.
 
+#### After the revision (22 October 2026)
+
+The revision is done:
+
+- **`DocumentEditor<D>`** (`stroom.entity.client.component`), a base class for documents: Save and Save As, the tab bar and toolbar (a tab's `HasToolbar` buttons join the document's), the read-only status and `READ_ONLY`, dirty state from comparing the document with what the tabs write, and the owner's callbacks. A document adds its tabs with `addTab(tab, make, reader[, writer])`, each made and owned when first shown, and its own buttons with `getToolbar()`. It is inherited, not composed: a composed helper would need every document to pass `read`, `write`, `setReadOnly` and the callbacks through (about 30 lines each).
+- **`RestFactory.MethodExecutor.owner(component)`**: neither handler (nor Stroom's default failure alert) runs once the owner is disposed, the task monitor is still ended, and with no task monitor given the owner's `TASK_MONITOR` is used. `FakeRestFactory` does the same. The copy has no `guard()` or `isDisposed()` checks left.
+- **`ScreenHarness.shownComponent()` and `closeShownComponents()`** give plays the component the story shows; the stories' static fields are gone.
+- **`PresenterAdapter`s are named after their presenter** (`PresenterAdapter(EditorPresenter)`), through a new `Component(String name, EventBus)` constructor.
+
+Measured again: the copy is 5 files, 677 lines (437 code), against the original's 850 (546): **size met**. The shared part is `DocumentEditor`, 347 lines, against `DocTabPresenter`, `DocPresenter` and the tab providers' 920. Story effort: `openComponent()` is 24 lines against `open()`'s 18; the 6 more are the owner's dirty and save spies, which the original can't offer, so it is **about the same**. Behaviour, leaks and late results are unchanged: all 17 stories pass with axe-core, the 7 screenshot pairs are identical, each close keeps 0 nodes and 0 listeners, and `CloseWhileLoading` passes through `owner()` alone.
+
 **Decided (22 October 2026):** revise, then go ahead with Phase 1. The revision adds a shared document component (Save, Save As, the tabs and toolbar, the read-only status), `RestFactory.owner(...)` (moved from Phase 3), and a harness method that gives plays the component a story shows; the copy is then measured again. The copy replaces the original after Phase 1, once `ContentManager` gives each open document tab a root: `DictionaryPlugin` then opens the copy and the original is deleted. Until then only the copy changes. The duplicate then either replaces the original or is deleted; both are never maintained.
 
 ### Phase 1: Ownership
@@ -861,7 +872,7 @@ Fix read-only and task-monitor threading once, centrally.
 
 The new authoring model goes live.
 
-1. Add `Dialog.showOnce` and `RestFactory.owner(...)`; `Component`, `Listeners` and `guard()` already exist from the pilot.
+1. Add `Dialog.showOnce`; `Component`, `Listeners`, `guard()` and `RestFactory.owner(...)` already exist from the pilot.
 2. Convert the receive-rules dialogs (`FieldEditPresenter`, `RulePresenter`, `RuleSetSettingsPresenter`) and the folder tabs to components, with full stories.
 3. Compare before and after: files, lines and behaviour per screen, recorded in this document.
 4. Write a one-page authoring guide (how to make a screen, a dialog, a tab body) and add it to `AGENTS.md`.

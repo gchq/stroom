@@ -42,7 +42,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.ComponentChecks;
-import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
@@ -136,11 +135,6 @@ public final class DictionaryEditorStories {
     static final String SAVE = "save";
     /// The name of the spy recording the component copy becoming dirty or clean.
     static final String DIRTY = "dirty";
-
-    // The component copy shown, and the story's root, for plays that act as its owner does (one
-    // story is shown at a time)
-    private static DictionaryEditor shownEditor;
-    private static ComponentNode shownRoot;
 
     private DictionaryEditorStories() {
         // Static utility
@@ -295,13 +289,13 @@ public final class DictionaryEditorStories {
                     final Query addButton = play.findByRole("button", "Add Imported Dictionary");
                     play.expect(addButton).not().toHaveAttribute("aria-disabled");
 
-                    play.run("lock the document", () -> shownEditor.setReadOnly(true));
+                    play.run("lock the document", () -> editor().setReadOnly(true));
                     play.expect(play.findByRole("button", "Save (read only)")).toBeInTheDocument();
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     play.expect(play.getByRole("button", "Add Imported Dictionary (dictionary is read only)"))
                             .toHaveAttribute("aria-disabled", "true");
 
-                    play.run("unlock the document", () -> shownEditor.setReadOnly(false));
+                    play.run("unlock the document", () -> editor().setReadOnly(false));
                     play.expect(play.findByRole("button", "Save")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Add Imported Dictionary"))
                             .not().toHaveAttribute("aria-disabled");
@@ -330,12 +324,17 @@ public final class DictionaryEditorStories {
                 .story("CloseWhileLoading", context -> renderComponent(context, false, LATE_FAILURE_FIXTURES))
                 .withPlay(play -> {
                     openTab(play, "Effective Words");
-                    play.run("close the editor, as closing its tab does", () -> shownRoot.dispose());
-                    play.expect("editor disposed", () -> shownEditor.isDisposed()).toBe(true);
+                    play.run("close the editor, as closing its tab does", ScreenHarness::closeShownComponents);
+                    play.expect("editor disposed", () -> editor().isDisposed()).toBe(true);
                     play.sleep(LATE_REPLY_MILLIS * 2);
                     play.expect("unowned components", ComponentChecks::unownedCount).toBe(0);
                     expectNoProblems(play);
                 });
+    }
+
+    // The component copy the story shows, for plays that act as its owner does
+    private static DictionaryEditor editor() {
+        return ScreenHarness.shownComponent();
     }
 
     // A sub-tab of the editor.
@@ -404,9 +403,7 @@ public final class DictionaryEditorStories {
                 ? "dirty"
                 : "clean"));
         editor.setOnSave(() -> harness.spy(SAVE, "imports: " + NullSafe.size(editor.write().getImports())));
-        shownEditor = editor;
-        shownRoot = harness.getComponentRoot();
-        final TaskMonitorFactory taskMonitorFactory = shownRoot.lookup(Contexts.TASK_MONITOR);
+        final TaskMonitorFactory taskMonitorFactory = harness.getComponentRoot().lookup(Contexts.TASK_MONITOR);
         final DictionaryResource resource = GWT.create(DictionaryResource.class);
         harness.getRestFactory()
                 .create(resource)

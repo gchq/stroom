@@ -162,7 +162,7 @@ class TestPresenterAdapter {
     void anAdapterNothingOwnsIsCounted() {
         PresenterAdapter.of(() -> new TestPresenter("editor"));
 
-        assertThat(ComponentChecks.unownedCount()).isEqualTo(1);
+        assertThat(ComponentChecks.unownedNames()).containsExactly("PresenterAdapter(TestPresenter)");
     }
 
     // --------------------------------------------------------------------------------

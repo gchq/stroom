@@ -102,13 +102,9 @@ public class EffectiveWordsList extends Component {
             restFactory
                     .create(WORD_LIST_RESOURCE)
                     .method(resource -> resource.getWords(uuid))
-                    .onSuccess(guard(this::setWordList))
-                    .onFailure(error -> {
-                        // Not a Consumer, so guard() can't wrap it (RestFactory.owner, Phase 3, will)
-                        if (!isDisposed()) {
-                            AlertEvent.fireError(bus, error.getMessage(), null);
-                        }
-                    })
+                    .onSuccess(this::setWordList)
+                    .onFailure(error -> AlertEvent.fireError(bus, error.getMessage(), null))
+                    .owner(this)
                     .taskMonitorFactory(pagerView)
                     .exec();
         }

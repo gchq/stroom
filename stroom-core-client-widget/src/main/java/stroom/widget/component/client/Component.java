@@ -52,7 +52,18 @@ public abstract class Component implements IsWidget, HasComponentNode {
     ///
     /// @param eventBus The application's event bus.
     protected Component(final EventBus eventBus) {
-        this.node = new ComponentNode(getClass().getSimpleName());
+        this(null, eventBus);
+    }
+
+    /// Makes a component with a name of its own, for diagnostics (e.g. the unowned components
+    /// [ComponentChecks] lists), rather than its class's.
+    ///
+    /// @param name     The name, or null for the class's simple name.
+    /// @param eventBus The application's event bus, or null if it doesn't listen to it.
+    protected Component(final String name, final EventBus eventBus) {
+        this.node = new ComponentNode(name != null
+                ? name
+                : getClass().getSimpleName());
         this.eventBus = eventBus;
     }
 

@@ -48,11 +48,14 @@ import java.util.function.Supplier;
 /// @param <P> The presenter's type.
 public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Component {
 
-    private final PresenterScope scope = new PresenterScope();
+    private final PresenterScope scope;
     private final P presenter;
 
-    private PresenterAdapter(final Supplier<P> maker) {
-        presenter = Objects.requireNonNull(scope.capture(maker), "presenter");
+    private PresenterAdapter(final PresenterScope scope, final P presenter) {
+        // Named after the presenter, so a leaked one can be told apart from the others
+        super("PresenterAdapter(" + presenter.getClass().getSimpleName() + ")", null);
+        this.scope = scope;
+        this.presenter = presenter;
         onDispose(scope::dispose);
         watch(Contexts.TASK_MONITOR, this::setTaskMonitorFactory);
     }
@@ -64,7 +67,9 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
     /// @return The adapter, for a component to own.
     public static <P extends MyPresenterWidget<?>> PresenterAdapter<P> of(final Supplier<P> maker) {
         Objects.requireNonNull(maker, "maker");
-        return new PresenterAdapter<>(maker);
+        final PresenterScope scope = new PresenterScope();
+        final P presenter = Objects.requireNonNull(scope.capture(maker), "presenter");
+        return new PresenterAdapter<>(scope, presenter);
     }
 
     /// Gives the presenter read-only now (once this adapter is owned) and whenever it changes.

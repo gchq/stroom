@@ -142,6 +142,8 @@ public final class ScreenHarness {
 
     private static final String ERROR_STYLE = "screen-harness-error";
     private static final String CONTENT_STYLE = "screen-harness-content";
+    // The harness of the story shown, for plays (a page shows one story at a time)
+    private static ScreenHarness shown;
 
     // The fields set in the constructor are null in a harness whose construction failed part way,
     // which dispose() copes with
@@ -165,6 +167,7 @@ public final class ScreenHarness {
     private PresenterScope probeScope;
     // Owns the components the story shows (see addComponent), made when first needed
     private ComponentNode componentRoot;
+    private Component shownComponent;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
     private int probeCleanUpMark;
@@ -417,7 +420,34 @@ public final class ScreenHarness {
     public <C extends Component> C addComponent(final C component) {
         getComponentRoot().adopt(component.getComponentNode());
         fillWidget(component.asWidget(), component, true);
+        shownComponent = component;
+        shown = this;
         return component;
+    }
+
+    /// For a play: the component the story shows (the last given to [#addComponent]), e.g. to act
+    /// on it as its owner does.
+    ///
+    /// @param <C> The component's type.
+    /// @return The component.
+    /// @throws IllegalStateException If the story shows none.
+    @SuppressWarnings("unchecked")
+    public static <C extends Component> C shownComponent() {
+        if (shown == null || shown.shownComponent == null) {
+            throw new IllegalStateException("The story shows no component");
+        }
+        return (C) shown.shownComponent;
+    }
+
+    /// For a play: closes the story's components as closing a document's tab does, disposing the
+    /// story's root and so everything it owns. Their widgets stay on the page.
+    ///
+    /// @throws IllegalStateException If the story shows none.
+    public static void closeShownComponents() {
+        if (shown == null || shown.componentRoot == null) {
+            throw new IllegalStateException("The story shows no component");
+        }
+        shown.componentRoot.dispose();
     }
 
     /// The story's root in the ownership tree, as an open document's tab is in Stroom: it owns the
@@ -589,6 +619,9 @@ public final class ScreenHarness {
             return;
         }
         disposed = true;
+        if (shown == this) {
+            shown = null;
+        }
         // Stop the network first, so nothing below can start new requests or receive replies
         if (dispatcher != null) {
             dispatcher.dispose();
