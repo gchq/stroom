@@ -397,12 +397,12 @@ public class FloorMapMapPresenter
         super(eventBus, view);
 
         this.floorMapClusterPresenter = floorMapClusterPresenter;
-        this.floorMapCanvasPresenter = floorMapCanvasPresenterProvider.get();
-        this.floorMapTimelinePresenter = floorMapTimelinePresenterProvider.get();
-        this.floorMapTrackingPresenter = floorMapEntityListPresenterProvider.get();
-        this.floorMapLayersPresenter = floorMapLayersPresenterProvider.get();
-        this.floorMapGroupsPresenter = floorMapGroupsPresenterProvider.get();
-        final FloorMapDockPresenter floorMapDockPresenter = floorMapDockPresenterProvider.get();
+        this.floorMapCanvasPresenter = own(floorMapCanvasPresenterProvider.get());
+        this.floorMapTimelinePresenter = own(floorMapTimelinePresenterProvider.get());
+        this.floorMapTrackingPresenter = own(floorMapEntityListPresenterProvider.get());
+        this.floorMapLayersPresenter = own(floorMapLayersPresenterProvider.get());
+        this.floorMapGroupsPresenter = own(floorMapGroupsPresenterProvider.get());
+        final FloorMapDockPresenter floorMapDockPresenter = own(floorMapDockPresenterProvider.get());
 
         // Default initial time
         this.selectedTime = System.currentTimeMillis();
@@ -564,7 +564,7 @@ public class FloorMapMapPresenter
         // source guard as above: the bus is shared by every open canvas.
         registerHandler(getEventBus().addHandler(MapClusterSelectedEvent.getType(), e -> {
             if (e.getSource() == floorMapCanvasPresenter && e.getCluster() != null) {
-                floorMapClusterPresenter.get().show(
+                ownUntilHidden(floorMapClusterPresenter.get()).show(
                         e.getCluster(),
                         this::entityDisplayName,
                         lastAreaMembership,

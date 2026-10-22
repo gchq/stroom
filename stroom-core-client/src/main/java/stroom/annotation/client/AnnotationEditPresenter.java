@@ -706,7 +706,7 @@ public class AnnotationEditPresenter
         final FetchAnnotationEntryRequest request = new FetchAnnotationEntryRequest(annotationRef, id);
         annotationResourceClient.fetchAnnotationEntry(request, annotationEntry -> {
             if (annotationEntry.getEntryValue() instanceof final StringEntryValue value) {
-                final CommentEditPresenter commentEditPresenter = commentEditPresenterProvider.get();
+                final CommentEditPresenter commentEditPresenter = ownUntilHidden(commentEditPresenterProvider.get());
                 commentEditPresenter.setText(value.getValue());
                 final PopupSize popupSize = PopupSize.resizable(600, 600);
                 ShowPopupEvent.builder(commentEditPresenter)

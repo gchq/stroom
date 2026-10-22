@@ -133,7 +133,8 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void onOpenClusterValues() {
         if (clusterValuesPresenterProvider != null) {
-            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = clusterValuesPresenterProvider.get();
+            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter =
+                    ownUntilHidden(clusterValuesPresenterProvider.get());
 
             // Get the position of this popup so we can show the cluster values popup at a slight
             // offset to make it clear it is above the other one. Offsets are not equal to account

@@ -595,7 +595,7 @@ public abstract class AbstractMetaListPresenter
     public void process() {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
-            final ProcessChoicePresenter processChoicePresenter = processChoicePresenterProvider.get();
+            final ProcessChoicePresenter processChoicePresenter = ownUntilHidden(processChoicePresenterProvider.get());
             final ProcessChoiceUiHandler processChoiceUiHandler = choice -> {
                 if (choice.isReprocess()) {
                     doReprocess(choice);
@@ -669,7 +669,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final DocSelectionPopup chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = ownUntilHidden(pipelineSelection.get());
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
@@ -864,7 +864,7 @@ public abstract class AbstractMetaListPresenter
                              final String caption,
                              final boolean reprocess,
                              final Runnable runnable) {
-        selectionSummaryPresenterProvider.get().show(
+        ownUntilHidden(selectionSummaryPresenterProvider.get()).show(
                 criteria,
                 permission,
                 postAction,

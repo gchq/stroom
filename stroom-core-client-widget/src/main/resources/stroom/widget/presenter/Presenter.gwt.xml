@@ -9,6 +9,7 @@
     <inherits name="com.gwtplatform.mvp.Mvp"/>
     <inherits name="stroom.task.Task"/>
     <inherits name="stroom.widget.component.Component"/>
+    <inherits name="stroom.widget.popup.Popup"/>
 
     <source path="client"/>
 </module>

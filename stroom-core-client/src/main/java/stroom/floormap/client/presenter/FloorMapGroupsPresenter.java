@@ -341,7 +341,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     /// Opens the edit dialog on a not-yet-added group, adding and selecting it only
     /// if the user confirms — so cancelling leaves no empty group behind.
     private void editNewGroup(final FloorMapGroup created) {
-        groupEditPresenterProvider.get().show(created, roster, nameResolver, true, saved -> {
+        ownUntilHidden(groupEditPresenterProvider.get()).show(created, roster, nameResolver, true, saved -> {
             applyEdit(FloorMapGroup.replace(groups, saved));
             selectionModel.setSelected(saved, true);
         });
@@ -352,7 +352,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         if (selected == null) {
             return;
         }
-        groupEditPresenterProvider.get().show(selected, roster, nameResolver, false, saved ->
+        ownUntilHidden(groupEditPresenterProvider.get()).show(selected, roster, nameResolver, false, saved ->
                 applyEdit(FloorMapGroup.replace(groups, saved)));
     }
 

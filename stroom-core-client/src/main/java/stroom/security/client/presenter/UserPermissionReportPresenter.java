@@ -153,7 +153,7 @@ public class UserPermissionReportPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = docFilterPresenterProvider.get();
+        final ExpressionPresenter presenter = ownUntilHidden(docFilterPresenterProvider.get());
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 filterExpression = presenter.write();
@@ -181,7 +181,8 @@ public class UserPermissionReportPresenter
     private void onEdit() {
         final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            final DocumentUserPermissionsEditPresenter presenter = documentUserPermissionsEditPresenterProvider.get();
+            final DocumentUserPermissionsEditPresenter presenter =
+                    ownUntilHidden(documentUserPermissionsEditPresenterProvider.get());
             presenter.show(selected.getFindResult().getDocRef(),
                     selected.getPermissions(),
                     documentPermissionsListPresenter::refresh,
@@ -191,7 +192,7 @@ public class UserPermissionReportPresenter
 
     private void onBatchEdit() {
         final BatchDocumentPermissionsEditPresenter presenter =
-                batchDocumentPermissionsEditPresenterProvider.get();
+                ownUntilHidden(batchDocumentPermissionsEditPresenterProvider.get());
         presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
         presenter.show(combinedExpression,
                 NullSafe.get(docs, ResultPage::getPageResponse),

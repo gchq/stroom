@@ -212,7 +212,7 @@ public class ProcessorPresenter
 
     private void onBatchEdit() {
         final BatchProcessorFilterEditPresenter presenter =
-                batchProcessorFilterEditPresenterProvider.get();
+                ownUntilHidden(batchProcessorFilterEditPresenterProvider.get());
         presenter.show(processorListPresenter.getExpression(),
                 processorListPresenter::refresh);
     }
@@ -225,7 +225,7 @@ public class ProcessorPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = filterPresenterProvider.get();
+        final ExpressionPresenter presenter = ownUntilHidden(filterPresenterProvider.get());
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 processorListPresenter.setExpression(presenter.write());
@@ -415,7 +415,7 @@ public class ProcessorPresenter
                       final ExpressionOperator defaultExpression) {
         if (editInterceptor.get()) {
             if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-                processorEditPresenterProvider.get()
+                ownUntilHidden(processorEditPresenterProvider.get())
                         .show(processorType,
                                 docRef,
                                 null,
@@ -431,7 +431,7 @@ public class ProcessorPresenter
                                     }
                                 });
             } else {
-                processorEditPresenterProvider.get()
+                ownUntilHidden(processorEditPresenterProvider.get())
                         .show(processorType, docRef, filter, null, result -> {
                             if (result != null) {
                                 // The runAsUser can't be changed in the editor

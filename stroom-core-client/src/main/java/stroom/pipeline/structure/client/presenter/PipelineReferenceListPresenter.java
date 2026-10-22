@@ -321,7 +321,7 @@ public class PipelineReferenceListPresenter
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
             builder.getReferences().getAddList().remove(pipelineReference);
 
-            final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
+            final NewPipelineReferencePresenter editor = ownUntilHidden(newPipelineReferencePresenter.get());
 
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {

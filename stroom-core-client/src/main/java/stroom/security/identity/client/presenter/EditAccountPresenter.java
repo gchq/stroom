@@ -133,7 +133,7 @@ public class EditAccountPresenter
 
     @Override
     public void onChangePassword() {
-        final ChangePasswordPresenter changePasswordPresenter = changePasswordPresenterProvider.get();
+        final ChangePasswordPresenter changePasswordPresenter = ownUntilHidden(changePasswordPresenterProvider.get());
         changePasswordPresenter.show(getPasswordCaption(), e -> {
             if (e.isOk()) {
                 if (changePasswordPresenter.validate()) {

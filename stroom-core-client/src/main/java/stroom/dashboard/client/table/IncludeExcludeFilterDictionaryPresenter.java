@@ -78,7 +78,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     }
 
     private void onAdd() {
-        final DocSelectionPopup chooser = dictionarySelection.get();
+        final DocSelectionPopup chooser = ownUntilHidden(dictionarySelection.get());
         chooser.setCaption("Choose Dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

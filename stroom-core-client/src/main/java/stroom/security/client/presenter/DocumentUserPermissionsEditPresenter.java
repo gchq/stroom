@@ -152,7 +152,7 @@ public class DocumentUserPermissionsEditPresenter
 
     @Override
     public void onEditCreatePermissions(final TaskMonitorFactory taskMonitorFactory) {
-        documentUserCreatePermissionsEditPresenterProvider.get().show(relatedDoc, relatedUser, () -> {
+        ownUntilHidden(documentUserCreatePermissionsEditPresenterProvider.get()).show(relatedDoc, relatedUser, () -> {
         }, taskMonitorFactory);
     }
 

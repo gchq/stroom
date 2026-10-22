@@ -254,21 +254,21 @@ public class FloorMapEditorPresenter
 
         // Each child is obtained via Provider so GIN creates a fresh instance
         // for this presenter rather than sharing singletons used elsewhere.
-        this.floorMapCanvasPresenter = canvasProvider.get();
-        this.floorMapTimelinePresenter = timelineProvider.get();
-        this.floorMapFactListPresenter = factListProvider.get();
-        this.floorMapTimeListPresenter = timeListProvider.get();
-        this.floorMapObjectEditPresenter = propertiesProvider.get();
+        this.floorMapCanvasPresenter = own(canvasProvider.get());
+        this.floorMapTimelinePresenter = own(timelineProvider.get());
+        this.floorMapFactListPresenter = own(factListProvider.get());
+        this.floorMapTimeListPresenter = own(timeListProvider.get());
+        this.floorMapObjectEditPresenter = own(propertiesProvider.get());
         // Let the properties dialog state an image's real-world size: the canvas
         // has already measured any image it has drawn, so this needs no second
         // load.
         this.floorMapObjectEditPresenter.setAspectRatioResolver(
                 floorMapCanvasPresenter::getImageAspectRatio);
-        final FloorMapDockPresenter floorMapDockPresenter = dockProvider.get();
-        this.floorMapSetScalePresenter = setScaleProvider.get();
-        this.floorMapLayersPresenter = layersProvider.get();
+        final FloorMapDockPresenter floorMapDockPresenter = own(dockProvider.get());
+        this.floorMapSetScalePresenter = own(setScaleProvider.get());
+        this.floorMapLayersPresenter = own(layersProvider.get());
         this.floorMapLayersPresenter.setEditorMode(true);
-        this.floorMapLayerStylePresenter = layerStyleProvider.get();
+        this.floorMapLayerStylePresenter = own(layerStyleProvider.get());
 
         // Always in edit mode, with the grid overlay shown as an editing aid.
         floorMapCanvasPresenter.setEditMode(true);

@@ -121,8 +121,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             defaultTab = DATA;
         }
 
-        steppingPresenter = steppingPresenterProvider.get();
-        pipelineStructurePresenter = structurePresenterProvider.get();
+        steppingPresenter = own(steppingPresenterProvider.get());
+        pipelineStructurePresenter = own(structurePresenterProvider.get());
 
         steppingTabProvider = new AbstractTabProvider<PipelineDoc, SteppingPresenter>(getEventBus()) {
             @Override

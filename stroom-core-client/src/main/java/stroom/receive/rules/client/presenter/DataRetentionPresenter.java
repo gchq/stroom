@@ -196,7 +196,7 @@ public class DataRetentionPresenter
 
     private DataRetentionImpactPresenter getOrCreateImpactPresenter() {
         if (dataRetentionImpactPresenter == null) {
-            dataRetentionImpactPresenter = dataRetentionImpactPresenterProvider.get();
+            dataRetentionImpactPresenter = own(dataRetentionImpactPresenterProvider.get());
         }
         return dataRetentionImpactPresenter;
     }

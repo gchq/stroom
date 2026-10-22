@@ -53,7 +53,7 @@ public class DataGenPresenter
                             final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        final DataGenProcessingPresenter dataGenProcessingPresenter = dataGenProcessingPresenterProvider.get();
+        final DataGenProcessingPresenter dataGenProcessingPresenter = own(dataGenProcessingPresenterProvider.get());
         dataGenProcessingPresenter.setDocumentEditPresenter(this);
 
         addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));

@@ -466,7 +466,7 @@ public class QueryPresenter
                 .timeRange(dashboardContext.getResolvedTimeRange())
                 .build();
 
-        final DocSelectionPopup chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = ownUntilHidden(pipelineSelection.get());
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

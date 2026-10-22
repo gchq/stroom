@@ -206,7 +206,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         this.uploadFileDialog = uploadFileDialog;
         this.addItemDialog = addItemDialog;
         this.editAssetDialog = editAssetDialog;
-        this.editorPresenter = editorPresenterProvider.get();
+        this.editorPresenter = own(editorPresenterProvider.get());
 
         tree.setStylePrimaryName("visualisation-asset-tree");
         tree.addSelectionHandler(event -> {

@@ -61,12 +61,12 @@ public class ReportPresenter
         own(reportQueryEditPresenter);
         this.reportQueryEditPresenter = reportQueryEditPresenter;
 
-        final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        final ReportProcessingPresenter analyticProcessingPresenter = own(processPresenterProvider.get());
         analyticProcessingPresenter.setDocumentEditPresenter(this);
 
         // Created up front rather than by the tab provider, so it can be told the processing type whether or
         // not the tab has been opened.
-        this.reportNotificationPresenter = notificationPresenterProvider.get();
+        this.reportNotificationPresenter = own(notificationPresenterProvider.get());
 
         addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
         addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));

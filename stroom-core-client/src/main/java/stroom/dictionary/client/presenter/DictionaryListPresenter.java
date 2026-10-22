@@ -85,7 +85,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     private void onAdd() {
-        final DocSelectionPopup chooser = dictionarySelection.get();
+        final DocSelectionPopup chooser = ownUntilHidden(dictionarySelection.get());
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

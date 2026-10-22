@@ -358,7 +358,7 @@ public class EmbeddedQueryPresenter
             OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
         } else {
             final QueryDoc doc = getQueryDoc();
-            final QueryDocPresenter queryDocPresenter = queryDocPresenterProvider.get();
+            final QueryDocPresenter queryDocPresenter = own(queryDocPresenterProvider.get());
             queryDocPresenter.setSaveInterceptor(() -> {
                 final QueryDoc embeddedQueryDoc = queryDocPresenter.write(doc);
                 final EmbeddedQueryComponentSettings settings = getQuerySettings();
@@ -372,7 +372,11 @@ public class EmbeddedQueryPresenter
                 onChange();
             });
             queryDocPresenter.read(doc.asDocRef(), doc, false);
-            contentManager.open(e -> e.getCallback().closeTab(true), queryDocPresenter, queryDocPresenter);
+            contentManager.open(e -> {
+                e.getCallback().closeTab(true);
+                // Its tab is closed for good
+                release(queryDocPresenter);
+            }, queryDocPresenter, queryDocPresenter);
         }
     }
 
@@ -474,7 +478,7 @@ public class EmbeddedQueryPresenter
 
     private void createNewTable() {
         if (currentTablePresenter == null) {
-            currentTablePresenter = tablePresenterProvider.get();
+            currentTablePresenter = own(tablePresenterProvider.get());
             currentTablePresenter.setDashboardContext(getDashboardContext());
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes
@@ -516,7 +520,7 @@ public class EmbeddedQueryPresenter
             visSelectionModel.addSelectionHandler(event ->
                     getDashboardContext().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
 
-            currentVisPresenter = visPresenterProvider.get();
+            currentVisPresenter = own(visPresenterProvider.get());
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setTaskMonitorFactory(this);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
@@ -530,6 +534,7 @@ public class EmbeddedQueryPresenter
     private void destroyCurrentVis() {
         if (currentVisPresenter != null) {
             currentVisPresenter.onRemove();
+            release(currentVisPresenter);
             currentVisPresenter = null;
             if (currentTablePresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(null);

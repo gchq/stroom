@@ -149,7 +149,7 @@ public class IndexVolumeGroupEditPresenter
     }
 
     private void editVolume(final IndexVolume indexVolume, final String caption) {
-        final IndexVolumeEditPresenter editor = editProvider.get();
+        final IndexVolumeEditPresenter editor = ownUntilHidden(editProvider.get());
         editor.show(indexVolume, caption, result -> {
             if (result != null) {
                 volumeStatusListPresenter.refresh();

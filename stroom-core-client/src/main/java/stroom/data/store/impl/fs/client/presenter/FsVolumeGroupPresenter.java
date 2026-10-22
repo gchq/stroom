@@ -90,7 +90,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
+        final NewFsVolumeGroupPresenter presenter = ownUntilHidden(newFsVolumeGroupPresenterProvider.get());
         presenter.show("", volumeGroup -> {
             edit(volumeGroup);
             refresh();
@@ -111,7 +111,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final FsVolumeGroup volumeGroup) {
-        final FsVolumeGroupEditPresenter editor = editProvider.get();
+        final FsVolumeGroupEditPresenter editor = ownUntilHidden(editProvider.get());
         editor.show(volumeGroup, "Edit Data Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();

@@ -188,7 +188,7 @@ public class ProfilePeriodListPresenter
 
     private void showEditor(final ProfilePeriod profilePeriod) {
         if (profilePeriod != null) {
-            final ProfilePeriodEditPresenter editor = newConcurrencyTimeRangePresenter.get();
+            final ProfilePeriodEditPresenter editor = ownUntilHidden(newConcurrencyTimeRangePresenter.get());
             editor.show(profilePeriod, updated -> {
                 final int index = profilePeriods.indexOf(profilePeriod);
                 if (index == -1) {

@@ -58,7 +58,7 @@ public class FolderRootPresenter
                                final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider,
                                final DocumentUserPermissionsTabProvider<Object> documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        this.tabContentProvider = new TabContentProvider<>(eventBus);
+        this.tabContentProvider = new TabContentProvider<>(eventBus, this);
 
         TabData selectedTab = null;
 

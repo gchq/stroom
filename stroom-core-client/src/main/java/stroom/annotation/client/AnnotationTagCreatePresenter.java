@@ -113,7 +113,7 @@ public class AnnotationTagCreatePresenter
                         : null);
         annotationResourceClient.createAnnotationTag(request,
                 r -> {
-                    editProvider.get().open(r, "Edit " + r.getName(), consumer);
+                    ownUntilHidden(editProvider.get()).open(r, "Edit " + r.getName(), consumer);
                     event.hide();
                 }, RestErrorHandler.forPopup(this, event), this);
     }

@@ -129,7 +129,8 @@ public class AnnotationTagEditPresenter
 
     @Override
     public void onPermissions() {
-        final DocumentUserPermissionsPresenter presenter = documentUserPermissionsPresenterProvider.get();
+        final DocumentUserPermissionsPresenter presenter =
+                ownUntilHidden(documentUserPermissionsPresenterProvider.get());
         presenter.setDocRef(new DocRef(AnnotationTag.TYPE, annotationTag.getUuid(), annotationTag.getName()));
         presenter.setTaskMonitorFactory(this);
         final PopupSize popupSize = PopupSize.resizable(800, 800);

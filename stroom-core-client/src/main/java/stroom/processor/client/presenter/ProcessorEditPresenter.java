@@ -273,7 +273,7 @@ public class ProcessorEditPresenter
 
     @Override
     public void onEditFeedDependencies() {
-        final FeedDependencyPresenter feedDependencyPresenter = feedDependencyPresenterProvider.get();
+        final FeedDependencyPresenter feedDependencyPresenter = ownUntilHidden(feedDependencyPresenterProvider.get());
         feedDependencyPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
     }
 

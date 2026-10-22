@@ -60,7 +60,7 @@ public class DocumentAssetDropDownPresenter extends MyPresenterWidget<DropDownVi
     @Override
     public void showPopup() {
         if (enabled && document != null) {
-            final DocumentAssetChooserPresenter chooser = chooserPresenterProvider.get();
+            final DocumentAssetChooserPresenter chooser = ownUntilHidden(chooserPresenterProvider.get());
             chooser.setDocument(document);
             final ShowPopupEvent.Builder popupEventBuilder = ShowPopupEvent.builder(chooser);
             chooser.setupPopup(popupEventBuilder);

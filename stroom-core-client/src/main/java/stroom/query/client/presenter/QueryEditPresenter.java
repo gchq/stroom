@@ -284,7 +284,7 @@ public class QueryEditPresenter
 
     private void createNewVis() {
         destroyCurrentVis();
-        currentVisPresenter = visPresenterProvider.get();
+        currentVisPresenter = own(visPresenterProvider.get());
         currentVisPresenter.setQueryModel(queryModel);
         currentVisPresenter.setTaskMonitorFactory(this);
         queryResultPresenter.setQueryResultVisPresenter(currentVisPresenter);
@@ -296,6 +296,7 @@ public class QueryEditPresenter
     private void destroyCurrentVis() {
         if (currentVisPresenter != null) {
             currentVisPresenter.onRemove();
+            release(currentVisPresenter);
             currentVisPresenter = null;
         }
     }

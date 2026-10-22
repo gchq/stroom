@@ -247,7 +247,7 @@ public class ManageActivityPresenter
     private void onEdit(final Activity e) {
         if (e != null) {
             if (editProvider != null) {
-                final ActivityEditPresenter editor = editProvider.get();
+                final ActivityEditPresenter editor = ownUntilHidden(editProvider.get());
                 editor.show(e, activity -> {
                     listPresenter.refresh();
                     setSelected(activity);

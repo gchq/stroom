@@ -289,7 +289,7 @@ public class RuleSetSettingsPresenter
                 true,
                 ExpressionOperator.builder().build(),
                 ReceiveAction.RECEIVE);
-        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
         editRulePresenter.read(newRule, fieldSelectionBoxModel);
 
         showRulePresenter(editRulePresenter, () -> {
@@ -302,7 +302,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void edit(final ReceiveDataRule existingRule) {
-        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
         editRulePresenter.read(existingRule, fieldSelectionBoxModel);
 
         showRulePresenter(editRulePresenter, () -> {

@@ -70,9 +70,9 @@ public class AnalyticRulePresenter
         // Created up front rather than by the tab provider, as the notifications tab has to be told when the
         // processing type changes on the execution tab, which can happen before the tab is ever opened.
         // Assigned before the change handler below is registered, as that handler reads it.
-        this.analyticNotificationPresenter = notificationPresenterProvider.get();
+        this.analyticNotificationPresenter = own(notificationPresenterProvider.get());
 
-        final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
+        final AnalyticProcessingPresenter analyticProcessingPresenter = own(processPresenterProvider.get());
         analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));

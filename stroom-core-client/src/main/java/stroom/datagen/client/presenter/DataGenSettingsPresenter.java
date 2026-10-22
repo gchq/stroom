@@ -48,7 +48,7 @@ public class DataGenSettingsPresenter
         super(eventBus, view);
         own(destinationFeedPresenter);
         this.destinationFeedPresenter = destinationFeedPresenter;
-        this.templatePresenter = editorPresenterProvider.get();
+        this.templatePresenter = own(editorPresenterProvider.get());
 
         view.setTemplateEditor(templatePresenter.getView());
         destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);

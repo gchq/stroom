@@ -180,7 +180,7 @@ public class BasicEmbeddedQuerySettingsPresenter
 
     @Override
     public void onCopyQuery() {
-        final DocSelectionPopup chooser = docSelectionPopupProvider.get();
+        final DocSelectionPopup chooser = ownUntilHidden(docSelectionPopupProvider.get());
         chooser.setCaption("Choose Query To Copy");
         chooser.setIncludedTypes(QueryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

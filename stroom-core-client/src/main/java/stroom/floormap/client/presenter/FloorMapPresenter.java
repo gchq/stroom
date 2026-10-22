@@ -97,7 +97,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         this.documentAssetPresenter = documentAssetPresenter;
 
         addTab(MAP, new DocTabProvider<>(() -> {
-            floorMapMapPresenter = floorMapMapPresenterProvider.get();
+            floorMapMapPresenter = own(floorMapMapPresenterProvider.get());
             // Stash the Map's zoom-to-fit initial view so the Editor tab adopts
             // the same zoom + translation (no jump on the first switch).
             floorMapMapPresenter.setInitialViewListener(initialView -> {
@@ -110,7 +110,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }));
 
         addTab(EDITOR, new DocTabProvider<>(() -> {
-            floorMapEditorPresenter = floorMapEditorPresenterProvider.get();
+            floorMapEditorPresenter = own(floorMapEditorPresenterProvider.get());
             // Adopt the Map tab's initial zoom + translation, if it has fitted
             // already, so the Editor opens on the same view. If the Editor is
             // opened first this is null and it fits its own content locally.
@@ -179,7 +179,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         });
 
         addTab(SETTINGS, new DocTabProvider<>(() -> {
-            floorMapSettingsPresenter = floorMapSettingsPresenterProvider.get();
+            floorMapSettingsPresenter = own(floorMapSettingsPresenterProvider.get());
             if (areaSupportEnabled) {
                 // Area support was enabled before this tab was first opened —
                 // keep its grid patched (idempotent; also re-applied on read).

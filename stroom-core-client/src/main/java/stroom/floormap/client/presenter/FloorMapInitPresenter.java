@@ -126,14 +126,14 @@ public class FloorMapInitPresenter
         this.restFactory = restFactory;
 
         // Facts Store = SqlTemporalStore (the Editor tab writes to it)
-        factsStorePresenter = docSelectionBoxPresenterProvider.get();
+        factsStorePresenter = own(docSelectionBoxPresenterProvider.get());
         factsStorePresenter.setCaption("Choose Facts Store");
         factsStorePresenter.setIncludedTypes(SqlTemporalStoreDoc.TYPE);
         factsStorePresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setFactsStoreView(factsStorePresenter.getView());
 
         // Events Store = FloorMapEventStore (read-only; the type fixes its state type)
-        eventsStorePresenter = docSelectionBoxPresenterProvider.get();
+        eventsStorePresenter = own(docSelectionBoxPresenterProvider.get());
         eventsStorePresenter.setCaption("Choose Events Store");
         eventsStorePresenter.setIncludedTypes(FloorMapEventStoreDoc.TYPE);
         eventsStorePresenter.setRequiredPermissions(DocumentPermission.USE);

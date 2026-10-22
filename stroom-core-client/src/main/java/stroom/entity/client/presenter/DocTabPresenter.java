@@ -90,7 +90,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
-        tabContentProvider = new TabContentProvider<>(eventBus);
+        tabContentProvider = new TabContentProvider<>(eventBus, this);
 
         commonTabsMap = new EnumMap<>(CommonDocLinkTab.class);
         addEntry(commonTabsMap, CommonDocLinkTab.DOCUMENTATION, this::getDocumentationTab);

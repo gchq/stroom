@@ -185,7 +185,7 @@ public class MetaPresenter
         // Upload
         if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
             streamListUpload = metaListPresenter.getToolbar().button(SvgImage.UPLOAD, "Upload Data to Feed",
-                    () -> streamUploadPresenter.get().show(MetaPresenter.this, feedRef));
+                    () -> own(streamUploadPresenter.get()).show(MetaPresenter.this, feedRef));
         }
 
         // Filter
@@ -212,7 +212,7 @@ public class MetaPresenter
     }
 
     private void onStreamListFilter() {
-        final ExpressionPresenter presenter = streamListFilterPresenter.get();
+        final ExpressionPresenter presenter = ownUntilHidden(streamListFilterPresenter.get());
 
         final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
             if (e.isOk()) {

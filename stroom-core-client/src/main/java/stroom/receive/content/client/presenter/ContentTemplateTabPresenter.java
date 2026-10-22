@@ -527,7 +527,7 @@ public class ContentTemplateTabPresenter
                 .withTemplateNumber(idx + 1) // idx is zero based, tempNo is 1 based
                 .build();
 
-        final ContentTemplateEditPresenter editRulePresenter = editPresenterProvider.get();
+        final ContentTemplateEditPresenter editRulePresenter = ownUntilHidden(editPresenterProvider.get());
         editRulePresenter.read(template);
 
         final PopupSize popupSize = PopupSize.resizable(1000, 800);
@@ -588,7 +588,7 @@ public class ContentTemplateTabPresenter
     }
 
     private void edit(final ContentTemplate existingRule) {
-        final ContentTemplateEditPresenter editRulePresenter = editPresenterProvider.get();
+        final ContentTemplateEditPresenter editRulePresenter = ownUntilHidden(editPresenterProvider.get());
         editRulePresenter.read(existingRule);
 
         final PopupSize popupSize = PopupSize.resizable(1000, 800);

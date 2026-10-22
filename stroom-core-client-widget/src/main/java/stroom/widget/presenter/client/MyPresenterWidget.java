@@ -22,8 +22,10 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.PresenterScope;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,6 +33,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stroom's presenter, built on GWTP's [PresenterWidget], with a place in the ownership tree (see
@@ -42,6 +45,10 @@ import java.util.function.Supplier;
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
         implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode {
+
+    // Runs something once the event being handled is done (replaced in JVM tests, which have no
+    // GWT scheduler)
+    static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
     private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
@@ -99,6 +106,40 @@ public class MyPresenterWidget<V extends View>
             node.adopt(childNode);
         }
         return child;
+    }
+
+    /// Disposes a presenter or component this presenter owns early, e.g. one being replaced.
+    ///
+    /// @param child The child.
+    protected final void release(final HasComponentNode child) {
+        final ComponentNode childNode = child.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
+        if (childNode != null) {
+            node.release(childNode);
+        }
+    }
+
+    /// Owns a presenter made for one use, e.g. a dialog made when a button is pressed, until it is
+    /// hidden: it is then disposed (once the popup manager has hidden it), rather than kept until
+    /// this presenter is. A dialog this presenter shows again must be owned with
+    /// [#own(HasComponentNode)] instead.
+    ///
+    /// @param dialog The presenter, just made, e.g. `ownUntilHidden(editPresenterProvider.get())`.
+    /// @param <P>    Its type.
+    /// @return The presenter.
+    protected final <P extends MyPresenterWidget<?>> P ownUntilHidden(final P dialog) {
+        own(dialog);
+        final ComponentNode dialogNode = dialog.getComponentNode();
+        if (dialogNode != null) {
+            // A registration of the dialog's, so it goes when the dialog is disposed
+            dialogNode.add(getEventBus().addHandlerToSource(HidePopupEvent.getType(), dialog, event ->
+                    deferred.accept(() -> {
+                        if (!dialogNode.isDisposed() && dialogNode.parent() == node) {
+                            node.release(dialogNode);
+                        }
+                    })));
+        }
+        return dialog;
     }
 
     /// Owns a registration, removed when this presenter is disposed (not when it is unbound, as

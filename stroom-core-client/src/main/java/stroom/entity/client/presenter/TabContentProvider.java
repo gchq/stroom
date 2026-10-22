@@ -22,6 +22,8 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.PresenterScope;
 
@@ -62,9 +64,15 @@ public class TabContentProvider<E>
     // The owner must bind and unbind this along with itself, so its registrations and tab
     // providers are released when the owner is
     private final PresenterScope presenterScope;
+    // What owns the tab presenters this makes (the document), so they are disposed with it and
+    // see its context
+    private final ComponentNode owner;
 
-    public TabContentProvider(final EventBus eventBus) {
+    /// @param eventBus The application's event bus.
+    /// @param owner    What owns the tab presenters this makes, e.g. the document's presenter.
+    public TabContentProvider(final EventBus eventBus, final HasComponentNode owner) {
         this.eventBus = eventBus;
+        this.owner = owner.getComponentNode();
         this.presenterScope = PresenterScope.current();
     }
 
@@ -142,7 +150,19 @@ public class TabContentProvider<E>
             read(currentTabProvider, docRef, entity, readOnly);
         }
 
-        return currentTabProvider.getPresenter();
+        return ownPresenter(currentTabProvider);
+    }
+
+    // The owner owns each tab presenter once it is made (a provider makes it when first asked)
+    private PresenterWidget<?> ownPresenter(final TabProvider<E> tabProvider) {
+        final PresenterWidget<?> presenter = tabProvider.getPresenter();
+        if (presenter instanceof final HasComponentNode hasComponentNode) {
+            final ComponentNode node = hasComponentNode.getComponentNode();
+            if (node != null && node.parent() != owner && !node.isDisposed()) {
+                owner.adopt(node);
+            }
+        }
+        return presenter;
     }
 
     @Override
@@ -182,6 +202,7 @@ public class TabContentProvider<E>
                       final boolean readOnly) {
         tabProvider.read(docRef, entity, readOnly);
         usedProviders.add(tabProvider);
+        ownPresenter(tabProvider);
     }
 
     private E write(final TabProvider<E> tabProvider, final E entity) {

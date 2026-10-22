@@ -86,7 +86,7 @@ public class AnnotationPresenter
         addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
             if (markdownEditPresenter == null) {
-                markdownEditPresenter = markdownEditPresenterProvider.get();
+                markdownEditPresenter = own(markdownEditPresenterProvider.get());
                 markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
                     saveButton = markdownToolbar.button(SvgImage.SAVE, "Save Annotation Description",
                             this::saveDescription);

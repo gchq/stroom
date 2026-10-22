@@ -93,6 +93,8 @@ public class TableFilterPresenter
 
     private void reset() {
         getView().getPanel().clear();
+        // Made again for the new columns
+        columnFilterPresenters.values().forEach(this::release);
         columnFilterPresenters.clear();
         currentColumns = Collections.emptyList();
     }
@@ -136,7 +138,7 @@ public class TableFilterPresenter
                     label.addStyleName("table-filter-label");
 
                     final ColumnValuesFilterPresenter columnValuesFilterPresenter =
-                            columnValuesFilterPresenterProvider.get();
+                            own(columnValuesFilterPresenterProvider.get());
                     columnFilterPresenters.put(column.getId(), columnValuesFilterPresenter);
 
                     final List<ConditionalFormattingRule> rules =

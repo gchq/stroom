@@ -140,7 +140,7 @@ public class BatchDocumentPermissionsPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = docFilterPresenterProvider.get();
+        final ExpressionPresenter presenter = ownUntilHidden(docFilterPresenterProvider.get());
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 filterExpression = presenter.write();
@@ -176,7 +176,7 @@ public class BatchDocumentPermissionsPresenter
 
     private void onBatchEdit() {
         final BatchDocumentPermissionsEditPresenter presenter =
-                batchDocumentPermissionsEditPresenterProvider.get();
+                ownUntilHidden(batchDocumentPermissionsEditPresenterProvider.get());
         presenter.show(combinedExpression, NullSafe.get(docs, ResultPage::getPageResponse), () ->
                 documentListPresenter.refresh());
     }

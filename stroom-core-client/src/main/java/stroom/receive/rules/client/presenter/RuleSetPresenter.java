@@ -107,7 +107,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 //            GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());
             onChange();
         }));
-        fieldListPresenter = fieldListPresenterProvider.get();
+        fieldListPresenter = own(fieldListPresenterProvider.get());
         ruleSetSettingsPresenter.setFieldListPresenter(fieldListPresenter);
         this.lazyMarkdownEditPresenter = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it

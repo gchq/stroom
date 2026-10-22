@@ -222,7 +222,7 @@ public class RulesPresenter
                 .formattingType(ConditionalFormattingType.BACKGROUND)
                 .enabled(true)
                 .build();
-        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editRulePresenter.read(newRule, selectionBoxModel);
@@ -249,7 +249,7 @@ public class RulesPresenter
     }
 
     private void edit(final ConditionalFormattingRule existingRule) {
-        final RulePresenter editRulePresenter = editRulePresenterProvider.get();
+        final RulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editRulePresenter.read(existingRule, selectionBoxModel);

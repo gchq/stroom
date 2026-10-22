@@ -108,7 +108,7 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            documentUserPermissionsEditPresenterProvider.get().show(
+            ownUntilHidden(documentUserPermissionsEditPresenterProvider.get()).show(
                     docRef, selected, documentUserPermissionsListPresenter::refresh, this);
         }
     }

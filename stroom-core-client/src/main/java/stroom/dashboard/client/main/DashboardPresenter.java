@@ -266,7 +266,7 @@ public class DashboardPresenter
     private void onConstraints() {
         restoreTabs();
 
-        final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
+        final LayoutConstraintPresenter presenter = ownUntilHidden(layoutConstraintPresenterProvider.get());
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
                 layoutConstraints = e.getValue();
@@ -285,7 +285,7 @@ public class DashboardPresenter
 
     private void onSelectionInfo() {
         if (currentSelectionPresenter == null) {
-            currentSelectionPresenter = currentSelectionPresenterProvider.get();
+            currentSelectionPresenter = own(currentSelectionPresenterProvider.get());
         }
 
         currentSelectionPresenter.refresh(dashboardContext, false);
@@ -655,7 +655,7 @@ public class DashboardPresenter
     }
 
     public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
-        final DocSelectionPopup chooser = dashboardSelection.get();
+        final DocSelectionPopup chooser = ownUntilHidden(dashboardSelection.get());
         chooser.setCaption("Choose Dashboard");
         chooser.setIncludedTypes(DashboardDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.EDIT);

@@ -100,7 +100,8 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
                 .method(res -> res.confirmPassword(request))
                 .onSuccess(r -> {
                     if (r.isValid()) {
-                        final ChangePasswordPresenter changePasswordPresenter = changePasswordPresenterProvider.get();
+                        final ChangePasswordPresenter changePasswordPresenter =
+                                ownUntilHidden(changePasswordPresenterProvider.get());
                         changePasswordPresenter.show("Change Password", e -> {
                             if (e.isOk()) {
                                 // Validate the change-password dialog (new password + confirmation), not
