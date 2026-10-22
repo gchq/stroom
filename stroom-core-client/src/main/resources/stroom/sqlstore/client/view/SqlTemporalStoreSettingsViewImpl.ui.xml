@@ -20,11 +20,10 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="sqlTemporalStoreSettingsEntryCount" label="Entry Count">
+        <form:FormGroup identity="sqlTemporalStoreSettingsEntryCount" label="Entry Count"
+                        helpText="The number of entries currently held in the store.">
             <g:Label ui:field="count"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Store"/>
-        </form:FormGroup>
+        <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Store"/>
     </g:FlowPanel>
 </ui:UiBinder>

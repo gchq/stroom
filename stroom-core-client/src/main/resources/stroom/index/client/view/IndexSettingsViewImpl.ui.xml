@@ -45,9 +45,7 @@
                         helpText="The pipeline used to extract field values for search results when a query does not choose its own extraction pipeline.">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsResetData" label="Reset Data">
-            <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Data"
-                      title="Deletes all index shards across all nodes in the cluster"/>
-        </form:FormGroup>
+        <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Data"
+                  title="Deletes all index shards across all nodes in the cluster"/>
     </g:FlowPanel>
 </ui:UiBinder>

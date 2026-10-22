@@ -48,6 +48,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.sqlstore.client.presenter.SqlTemporalStoreSettingsPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
@@ -97,6 +98,7 @@ import com.google.gwt.inject.client.GinModules;
         StreamStoreScreenModule.class,
         VisualisationScreenModule.class,
         XMLSchemaScreenModule.class,
+        SqlTemporalStoreScreenModule.class,
 })
 public interface EditorsScreenGinjector extends ScreenGinjector {
 
@@ -143,6 +145,9 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// @return A document's asset picker, as a floor map's settings have it, which opens the
     /// 'Choose Asset' dialog.
     DocumentAssetDropDownPresenter getDocumentAssetDropDownPresenter();
+
+    /// @return A SQL temporal store's 'Settings' tab (its entry count and Reset Store).
+    SqlTemporalStoreSettingsPresenter getSqlTemporalStoreSettingsPresenter();
 
     // Code documents
 

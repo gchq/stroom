@@ -178,6 +178,18 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   (`DurationSetting`); only cosmetic, as the model always supplies a value.
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
+* HTTP TLS settings: Verify Host Name defaults to true in `HttpTlsConfig`, but with no TLS config
+  yet `HttpTlsConfigPresenter.read()` skips the null and never sets the tick box, so it shows
+  unticked and OK saves `verifyHostname=false`.
+* Column format: one `FormatPresenter` serves all a table's columns, and for a column with no
+  format `show()` doesn't set the date or number settings, so Use Preferences and Use Separator
+  show whatever the last column left (unticked on first use) rather than their defaults.
+* Table settings: ticking Use Default Extraction Pipeline only disables Extraction Pipeline; the
+  default pipeline is copied in only when the query's data source changes
+  (`TablePresenter`), so an existing table keeps using the pipeline it had.
+* Table settings: the Maximum String Field Length spinner has no minimum and a maximum of
+  `Long.MAX_VALUE`, but is read with `getIntValue()`, so a large value could overflow
+  (`BasicTableSettingsPresenter`).
 
 ### The Pathways editor can't create a pathway or add a constraint
 
@@ -1055,11 +1067,9 @@ Stroom components that wrap a native element (`Button`, `CustomCheckBox`, `Colou
 `CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`), these remain:
 
 * GWT's `Button`, not Stroom's (`stroom.widget.button.client.Button` or a `ToolbarButton`):
-  "Reset Store" (`SqlTemporalStoreSettingsViewImpl`, beside a raw `<label class="form-label">` in
-  an `HTMLPanel` rather than a `FormGroup`), "Reset Data" (`IndexSettingsViewImpl`), "Show All"
-  (`FloorMapTimelineSettingsViewImpl`, styled by hand as `stroom-button stroom-button-blue`), the
-  task's Terminate (`UserTaskViewImpl`), the navigation logo (`NavigationViewImpl`) and the floor
-  map layer grip (`FloorMapLayersPresenter`, a real button on purpose, restyled).
+  the task's Terminate (`UserTaskViewImpl`), the navigation logo (`NavigationViewImpl`) and the
+  floor map layer grip (`FloorMapLayersPresenter`, a real button on purpose, restyled). (Reset
+  Store, Reset Data and Show All are now Stroom's.)
 * Links: GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`), and `Anchor` with an
   `InlineLabel` in the content pack details (`ContentStoreContentPackDetailsPresenter`), where
   `LinkButton` or `NewTabLink` would do; "View Source" (`DataViewImpl`) is a `Label` given
@@ -1153,6 +1163,8 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 * `VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
   fileyou wish to create" (missing space).
 * `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser.".
+* `AnnotationTagEditPresenter`: a blank name's error always says "annotation group", whatever the
+  tag's type.
 * `AccountServiceImpl`: a comment says a user ID can't change after the account is created, but the
   field can be edited and the DAO updates it.
 
@@ -1193,6 +1205,10 @@ works and its cells are covered by stories; these are the next steps, none urgen
 ## Smaller oddities
 
 **Reported.**
+
+* Global property editor: "Requires UI Refresh" means the property needs a restart of the nodes
+  serving the UI (`RestartScope.UI`), not a browser refresh, so the label misleads; e.g.
+  "Requires UI Node Restart" would say what it means.
 
 * In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,

@@ -50,6 +50,7 @@ import stroom.gwt.workbench.client.app.editors.PathwaysEditorStories;
 import stroom.gwt.workbench.client.app.editors.PlanBEditorStories;
 import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.editors.ReportEditorStories;
+import stroom.gwt.workbench.client.app.editors.SqlTemporalStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.StatisticStoreEditorStories;
 import stroom.gwt.workbench.client.app.editors.ViewEditorStories;
 import stroom.gwt.workbench.client.app.editors.VisualisationEditorStories;
@@ -394,6 +395,8 @@ public final class AppStories {
         ElasticIndexEditorStories.addTo(registry);
         // App/Index/IndexEditor
         IndexEditorStories.addTo(registry);
+        // App/Editors/SqlTemporalStoreSettings
+        SqlTemporalStoreSettingsStories.addTo(registry);
         // App/Index/SolrIndexEditor
         SolrIndexEditorStories.addTo(registry);
         // App/Feed/FeedEditor

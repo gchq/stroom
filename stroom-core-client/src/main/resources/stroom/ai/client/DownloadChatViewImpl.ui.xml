@@ -4,7 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup>
+        <form:FormGroup helpText="Include the table, dashboard and query data attached to the conversation in the downloaded Markdown file, as tables. Default is not ticked.">
             <tickbox:CustomCheckBox ui:field="includeDataContexts"
                                     identity="downloadChatIncludeDataContexts"
                                     label="Include data contexts (table/dashboard/query data attached to the conversation)"/>

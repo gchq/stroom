@@ -38,12 +38,14 @@
                  first cluster offers neither never flashes them. -->
             <form:FormGroup ui:field="areaFilterGroup" identity="clusterArea" label="Area"
                             addStyleNames="stroom-floormap-cluster-filters__filter"
-                            visible="false">
+                            visible="false"
+                            helpText="Show only members inside this area, or those not inside any area. Only shown when the members are in at least two different areas, or some are in none. Works together with Search and Group.">
                 <l:SelectionBox ui:field="areaFilter" addStyleNames="w-100"/>
             </form:FormGroup>
             <form:FormGroup ui:field="groupFilterGroup" identity="clusterGroup" label="Group"
                             addStyleNames="stroom-floormap-cluster-filters__filter"
-                            visible="false">
+                            visible="false"
+                            helpText="Show only members of this group, from the map's Groups panel, or those in no group. Only shown when the members are in at least two different groups, or some are in none. Works together with Search and Area.">
                 <l:SelectionBox ui:field="groupFilter" addStyleNames="w-100"/>
             </form:FormGroup>
         </g:FlowPanel>
