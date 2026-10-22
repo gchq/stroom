@@ -21,7 +21,7 @@
             <name>org.jooq.meta.mysql.MySQLDatabase</name>
             <inputSchema>__INPUT_SCHEMA__</inputSchema>
             <outputSchema>stroom</outputSchema>
-            <includes>ai_chat|ai_chat_message|ai_chat_attachment|ai_chat_file_chunk|ai_chat_run|ai_memory|ai_tool_approval|ai_tool_policy|ai_tool_policy_member|ai_tool_policy_category</includes>
+            <includes>ai_chat|ai_chat_message|ai_chat_attachment|ai_chat_file_chunk|ai_chat_run|ai_memory|ai_tool_approval|ai_tool_policy|ai_tool_policy_member|ai_tool_policy_category|ai_sample_upload|ai_sample_upload_file</includes>
             <excludes>ai_chat_schema_version</excludes>
             <recordVersionFields>version</recordVersionFields>
             <forcedTypes>

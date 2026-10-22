@@ -629,7 +629,9 @@ with an external identity provider, through MCP's OAuth sign-in, which the endpo
   once, within `sampleUploads.commandsLast`, up to `sampleUploads.maxUploadMb`. The commands single-quote the file's
   path (nothing in it is expanded by bash or PowerShell; a path with a line break or control character is refused)
   and send the body as `application/octet-stream`. A user may have `sampleUploads.maxPendingPerUser` sets of
-  commands waiting.
+  commands waiting. The waiting files are held in the database, so a post may reach any node, and a restart
+  doesn't forget them. A file is claimed by one post at a time; a claim left by a node that stopped part way
+  through a post may be taken again after 10 minutes.
 * Every call, made, refused or not approved, is audited, with the client that made it.
 
 `/mcp` is a servlet, not part of the REST API, so it isn't in the Swagger documentation; the user guide (User
@@ -642,7 +644,8 @@ The _AI Chat Retention_ job (hourly) removes:
 
 * workspace files older than `workspaceFileRetention` (default 7 days);
 * chats not updated for `chatRetention` (default 90 days);
-* the chats and memory of deleted users.
+* sample upload commands (`upload_sample files=`) that have run out (`sampleUploads.commandsLast`);
+* the chats, memory and sample upload commands of deleted users.
 
 Files made from Stroom data are checked against the user's permissions each time they are used, and removed if
 the user can no longer see the data.

@@ -19,6 +19,7 @@ package stroom.ai.impl.dao;
 import stroom.ai.impl.AiChatRunDao;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiMemoryDao;
+import stroom.ai.impl.AiSampleUploadDao;
 import stroom.ai.impl.AiToolApprovalDao;
 import stroom.ai.impl.AiToolPolicyDao;
 import stroom.ai.impl.AiWorkspaceDao;
@@ -36,5 +37,6 @@ public class AiDaoModule extends AbstractModule {
         bind(AiMemoryDao.class).to(AiMemoryDaoImpl.class);
         bind(AiToolApprovalDao.class).to(AiToolApprovalDaoImpl.class);
         bind(AiToolPolicyDao.class).to(AiToolPolicyDaoImpl.class);
+        bind(AiSampleUploadDao.class).to(AiSampleUploadDaoImpl.class);
     }
 }
