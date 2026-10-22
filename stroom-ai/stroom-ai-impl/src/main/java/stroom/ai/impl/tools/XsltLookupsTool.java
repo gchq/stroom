@@ -32,6 +32,7 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
@@ -124,6 +125,11 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
     }
 
     @Override

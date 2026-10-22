@@ -22,6 +22,7 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
@@ -195,6 +196,11 @@ class ServerTasksTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .requires(AppPermission.MANAGE_TASKS_PERMISSION)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.ADMINISTRATION;
     }
 
     @Override

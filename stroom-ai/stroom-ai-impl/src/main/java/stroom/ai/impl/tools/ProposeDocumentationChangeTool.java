@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerConstants;
@@ -86,6 +87,11 @@ class ProposeDocumentationChangeTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
     }
 
     @Override

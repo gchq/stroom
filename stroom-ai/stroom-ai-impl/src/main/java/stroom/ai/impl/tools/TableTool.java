@@ -32,6 +32,7 @@ import stroom.ai.impl.workspace.TableEngine.Query;
 import stroom.ai.impl.workspace.TableEngine.Result;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.concurrent.LazyValue;
 
 import jakarta.inject.Inject;
@@ -68,6 +69,11 @@ class TableTool extends AbstractWorkspaceTool {
     TableTool(final ChatWorkspace workspace, final ColumnSummariser columnSummariser) {
         super(workspace);
         this.columnSummariser = columnSummariser;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

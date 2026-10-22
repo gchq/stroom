@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -41,6 +42,11 @@ class ReadFileTool extends AbstractWorkspaceTool {
     @Inject
     ReadFileTool(final ChatWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

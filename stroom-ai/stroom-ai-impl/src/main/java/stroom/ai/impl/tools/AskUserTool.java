@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -58,6 +59,11 @@ class AskUserTool extends AbstractBuiltInTool {
 
     @Inject
     AskUserTool() {
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

@@ -24,6 +24,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -55,6 +56,11 @@ class JqTool extends AbstractWorkspaceTool {
     @Inject
     JqTool(final ChatWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

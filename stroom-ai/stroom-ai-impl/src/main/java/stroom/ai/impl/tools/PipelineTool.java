@@ -22,6 +22,7 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -71,6 +72,11 @@ class PipelineTool extends AbstractWorkspaceTool {
                 FetchEventsTool.NAME, fetchEventsTool,
                 SearchEventsTool.NAME, searchEventsTool,
                 CurrentResultsTool.NAME, currentResultsTool);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

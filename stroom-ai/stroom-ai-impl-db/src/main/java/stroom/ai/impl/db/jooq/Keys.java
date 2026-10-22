@@ -18,6 +18,9 @@ import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
 import stroom.ai.impl.db.jooq.tables.AiMemory;
 import stroom.ai.impl.db.jooq.tables.AiToolApproval;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyMember;
 import stroom.ai.impl.db.jooq.tables.records.AiChatAttachmentRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatFileChunkRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
@@ -25,6 +28,9 @@ import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatRunRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiMemoryRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiToolApprovalRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiToolPolicyCategoryRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiToolPolicyMemberRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiToolPolicyRecord;
 
 
 /**
@@ -48,6 +54,12 @@ public class Keys {
     public static final UniqueKey<AiMemoryRecord> KEY_AI_MEMORY_PRIMARY = Internal.createUniqueKey(AiMemory.AI_MEMORY, DSL.name("KEY_ai_memory_PRIMARY"), new TableField[] { AiMemory.AI_MEMORY.ID }, true);
     public static final UniqueKey<AiToolApprovalRecord> KEY_AI_TOOL_APPROVAL_IDX_AI_TOOL_APPROVAL_CHAT_TOOL = Internal.createUniqueKey(AiToolApproval.AI_TOOL_APPROVAL, DSL.name("KEY_ai_tool_approval_idx_ai_tool_approval_chat_tool"), new TableField[] { AiToolApproval.AI_TOOL_APPROVAL.FK_AI_CHAT_ID, AiToolApproval.AI_TOOL_APPROVAL.SERVER_KEY, AiToolApproval.AI_TOOL_APPROVAL.TOOL_NAME }, true);
     public static final UniqueKey<AiToolApprovalRecord> KEY_AI_TOOL_APPROVAL_PRIMARY = Internal.createUniqueKey(AiToolApproval.AI_TOOL_APPROVAL, DSL.name("KEY_ai_tool_approval_PRIMARY"), new TableField[] { AiToolApproval.AI_TOOL_APPROVAL.ID }, true);
+    public static final UniqueKey<AiToolPolicyRecord> KEY_AI_TOOL_POLICY_IDX_AI_TOOL_POLICY_NAME = Internal.createUniqueKey(AiToolPolicy.AI_TOOL_POLICY, DSL.name("KEY_ai_tool_policy_idx_ai_tool_policy_name"), new TableField[] { AiToolPolicy.AI_TOOL_POLICY.NAME }, true);
+    public static final UniqueKey<AiToolPolicyRecord> KEY_AI_TOOL_POLICY_PRIMARY = Internal.createUniqueKey(AiToolPolicy.AI_TOOL_POLICY, DSL.name("KEY_ai_tool_policy_PRIMARY"), new TableField[] { AiToolPolicy.AI_TOOL_POLICY.ID }, true);
+    public static final UniqueKey<AiToolPolicyCategoryRecord> KEY_AI_TOOL_POLICY_CATEGORY_IDX_AI_TOOL_POLICY_CATEGORY = Internal.createUniqueKey(AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY, DSL.name("KEY_ai_tool_policy_category_idx_ai_tool_policy_category"), new TableField[] { AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID, AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY.CATEGORY }, true);
+    public static final UniqueKey<AiToolPolicyCategoryRecord> KEY_AI_TOOL_POLICY_CATEGORY_PRIMARY = Internal.createUniqueKey(AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY, DSL.name("KEY_ai_tool_policy_category_PRIMARY"), new TableField[] { AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY.ID }, true);
+    public static final UniqueKey<AiToolPolicyMemberRecord> KEY_AI_TOOL_POLICY_MEMBER_IDX_AI_TOOL_POLICY_MEMBER = Internal.createUniqueKey(AiToolPolicyMember.AI_TOOL_POLICY_MEMBER, DSL.name("KEY_ai_tool_policy_member_idx_ai_tool_policy_member"), new TableField[] { AiToolPolicyMember.AI_TOOL_POLICY_MEMBER.FK_AI_TOOL_POLICY_ID, AiToolPolicyMember.AI_TOOL_POLICY_MEMBER.USER_UUID }, true);
+    public static final UniqueKey<AiToolPolicyMemberRecord> KEY_AI_TOOL_POLICY_MEMBER_PRIMARY = Internal.createUniqueKey(AiToolPolicyMember.AI_TOOL_POLICY_MEMBER, DSL.name("KEY_ai_tool_policy_member_PRIMARY"), new TableField[] { AiToolPolicyMember.AI_TOOL_POLICY_MEMBER.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

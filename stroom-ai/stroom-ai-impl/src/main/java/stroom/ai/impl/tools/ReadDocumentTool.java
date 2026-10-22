@@ -24,6 +24,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.Word;
@@ -103,6 +104,11 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                 .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override
