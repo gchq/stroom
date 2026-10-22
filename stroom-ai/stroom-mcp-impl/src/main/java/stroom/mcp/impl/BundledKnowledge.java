@@ -72,6 +72,11 @@ public class BundledKnowledge implements AgentKnowledge {
     }
 
     @Override
+    public Optional<String> buildInstructions() {
+        return Optional.of(serverInstructions());
+    }
+
+    @Override
     public List<String> guideNames() {
         return GUIDES;
     }

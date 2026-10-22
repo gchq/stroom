@@ -27,7 +27,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +108,45 @@ class TestBuiltInTools {
         assertThat(executor.execute(ToolExecutionRequest.builder().id("1").name("t").arguments("{}").build(), 1))
                 .contains("Error running built-in tool 'boom'")
                 .contains("kaboom");
+    }
+
+    @Test
+    void theBuildToolsInstructionsComeWithTheBuildTools() {
+        final BuiltInTools registry = new BuiltInTools(Set.of(new GetCurrentDateTool()), ToolCalls.chatContexts());
+        // Without bundled knowledge there are none.
+        assertThat(registry.buildInstructions(Set.of("start_onboarding"))).isEmpty();
+
+        registry.setKnowledge(Optional.of(new AgentKnowledge() {
+            @Override
+            public List<String> guideNames() {
+                return List.of();
+            }
+
+            @Override
+            public Optional<String> guide(final String name) {
+                return Optional.empty();
+            }
+
+            @Override
+            public List<String> conventionNames() {
+                return List.of();
+            }
+
+            @Override
+            public Optional<String> convention(final String name) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<String> buildInstructions() {
+                return Optional.of("Order of work: start_onboarding first.\n");
+            }
+        }));
+
+        assertThat(registry.buildInstructions(Set.of("start_onboarding", "read_file")))
+                .contains("## Instructions for Stroom's build tools\n\nOrder of work: start_onboarding first.");
+        // Not offered the build tools (e.g. a read-only policy without Content): not given their instructions.
+        assertThat(registry.buildInstructions(Set.of("read_file"))).isEmpty();
     }
 
     private static String run(final StroomTool tool, final String argsJson) {
