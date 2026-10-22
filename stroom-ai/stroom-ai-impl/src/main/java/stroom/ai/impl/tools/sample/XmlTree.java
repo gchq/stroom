@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
@@ -34,7 +36,7 @@ import javax.xml.stream.XMLStreamReader;
 /// error), and an element written back as lxml's `etree.tostring` writes it (with the namespaces it inherits).
 ///
 /// DTDs and external entities are not read.
-final class XmlTree {
+public final class XmlTree {
 
     private XmlTree() {
         // Static methods only.
@@ -45,7 +47,7 @@ final class XmlTree {
     /// @param text The document.
     /// @return Its root element.
     /// @throws XmlException if it isn't one well-formed document.
-    static Element parse(final String text) {
+    public static Element parse(final String text) {
         final Pull pull = pull(text, Integer.MAX_VALUE, false);
         if (pull.failed() || pull.root() == null || !pull.closed()) {
             throw new XmlException(pull.error() == null
@@ -291,7 +293,7 @@ final class XmlTree {
     /// @param closed  True if the root element was closed.
     /// @param error   What stopped the reading, or null if nothing did.
     /// @param cut     True if what stopped it was the end of the text cutting the XML off.
-    record Pull(Element root, List<Element> records, boolean closed, String error, boolean cut) {
+    public record Pull(Element root, List<Element> records, boolean closed, String error, boolean cut) {
 
         /// @return True if something stopped the reading.
         boolean failed() {
@@ -306,7 +308,7 @@ final class XmlTree {
     }
 
     /// An element.
-    static final class Element implements Node {
+    public static final class Element implements Node {
 
         final String prefix;
         final String localName;
@@ -327,6 +329,53 @@ final class XmlTree {
             this.parent = parent;
         }
 
+        /// @return Its local name (lxml's `etree.QName(element).localname`).
+        public String localName() {
+            return localName;
+        }
+
+        /// @return Its namespace, or null if it is in none.
+        public String namespace() {
+            return namespace;
+        }
+
+        /// @return The element it is in, or null for the root (lxml's `getparent()`).
+        public Element parent() {
+            return parent;
+        }
+
+        /// @return Its attributes in document order, each by its name as lxml's `attrib` gives it (`{namespace}name`
+        /// when it has a namespace).
+        public Map<String, String> attrib() {
+            final Map<String, String> out = new LinkedHashMap<>();
+            attributes.forEach(attribute -> out.put(attribute.clarkName(), attribute.value()));
+            return out;
+        }
+
+        /// @param name An attribute's name, as [#attrib()] gives it.
+        /// @return Its value, or null if it has no such attribute (lxml's `get(name)`).
+        public String get(final String name) {
+            return attrib().get(name);
+        }
+
+        /// @return The text inside it, its own and its descendants' (comments and processing instructions left
+        /// out), in document order, as lxml's `itertext()` gives it.
+        public List<String> itertext() {
+            final List<String> out = new ArrayList<>();
+            collectText(this, out);
+            return out;
+        }
+
+        private static void collectText(final Element element, final List<String> out) {
+            for (final Node child : element.children) {
+                if (child instanceof final Text text) {
+                    out.add(text.text());
+                } else if (child instanceof final Element inner) {
+                    collectText(inner, out);
+                }
+            }
+        }
+
         /// @return Its name as written, with its prefix.
         String qualifiedName() {
             return prefix == null
@@ -335,7 +384,7 @@ final class XmlTree {
         }
 
         /// @return Its child elements, in order.
-        List<Element> elements() {
+        public List<Element> elements() {
             final List<Element> elements = new ArrayList<>();
             for (final Node child : children) {
                 if (child instanceof final Element element) {
@@ -346,7 +395,7 @@ final class XmlTree {
         }
 
         /// @return True if it has no child nodes but text (lxml's `len(element) == 0`).
-        boolean isLeaf() {
+        public boolean isLeaf() {
             for (final Node child : children) {
                 if (!(child instanceof Text)) {
                     return false;
@@ -356,14 +405,14 @@ final class XmlTree {
         }
 
         /// @return Its text before its first child node, as lxml's `element.text`, or "" for none.
-        String text() {
+        public String text() {
             return !children.isEmpty() && children.getFirst() instanceof final Text text
                     ? text.text()
                     : "";
         }
 
         /// @return It and every element inside it, in document order, as lxml's `element.iter()`.
-        List<Element> iter() {
+        public List<Element> iter() {
             final List<Element> all = new ArrayList<>();
             collect(this, all);
             return all;
@@ -391,7 +440,7 @@ final class XmlTree {
     }
 
     /// What lxml's `XMLSyntaxError` says.
-    static final class XmlException extends RuntimeException {
+    public static final class XmlException extends RuntimeException {
 
         /// @param message What is wrong with the XML.
         XmlException(final String message) {

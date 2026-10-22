@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.mcp.impl.tools;
+package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
