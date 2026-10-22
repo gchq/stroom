@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -84,7 +86,7 @@ class TestSurveyDoc {
 
         assertThat(signatures).containsExactly("fields:a | loggerName=org.jgroups.TCP");
         assertThatThrownBy(() -> SurveyDoc.resolve(state, List.of("loggerName=")))
-                .isInstanceOf(SampleRefusal.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessage("'loggerName=' matches 2 kinds of event in the survey; give the exact signature");
         SurveyDoc.setHandling(state, signatures, "drop", "cluster chatter", "now");
         assertThat(SurveyDoc.dropped(state)).isEqualTo(Map.of("fields:a | loggerName=org.jgroups.TCP",

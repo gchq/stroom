@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiSampleUploadsConfig;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;

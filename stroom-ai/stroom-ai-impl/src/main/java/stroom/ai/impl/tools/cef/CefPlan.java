@@ -16,9 +16,9 @@
 
 package stroom.ai.impl.tools.cef;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
-import stroom.ai.impl.tools.fielddoc.PythonStrings;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XsltStyle;
@@ -268,7 +268,7 @@ public record CefPlan(@JsonProperty("output") String output,
         common.forEach(f -> found.add(Map.entry("[common] " + f.key(), f.path())));
         events.forEach((kind, fields) -> fields.forEach(f -> found.add(Map.entry("[" + kind + "] " + f.key(),
                 f.path()))));
-        if (PythonStrings.truthy(kafkaKey)) {
+        if (JsonValues.truthy(kafkaKey)) {
             found.add(Map.entry("kafka_key", kafkaKey));
         }
         return found;
@@ -295,7 +295,7 @@ public record CefPlan(@JsonProperty("output") String output,
     /// @return One line each; none if the plan can be saved.
     public List<String> problems() {
         final List<String> out = new ArrayList<>(unsafe());
-        if (KAFKA.equals(output) && !PythonStrings.truthy(topic)) {
+        if (KAFKA.equals(output) && !JsonValues.truthy(topic)) {
             out.add("output kafka needs topic: the Kafka topic ArcSight reads (ask the user, or the standing "
                     + "instructions may name it)");
         }
@@ -309,7 +309,7 @@ public record CefPlan(@JsonProperty("output") String output,
             out.add("severity '" + severity.value() + "' " + NOT_A_SEVERITY);
         }
         final List<String> mapped = new ArrayList<>(severity.map().values());
-        if (PythonStrings.truthy(severity.defaultValue())) {
+        if (JsonValues.truthy(severity.defaultValue())) {
             mapped.add(severity.defaultValue());
         }
         for (final String v : mapped) {
@@ -348,7 +348,7 @@ public record CefPlan(@JsonProperty("output") String output,
             } else if (f.key().endsWith("Label")) {
                 out.add("[" + kind + "] " + f.key() + ": a label is given as the slot's label, not as a field of "
                         + "its own");
-            } else if (CefKeys.SLOT_KEYS.contains(f.key()) && !PythonStrings.truthy(f.label())) {
+            } else if (CefKeys.SLOT_KEYS.contains(f.key()) && !JsonValues.truthy(f.label())) {
                 out.add("[" + kind + "] " + f.path() + " -> " + f.key() + ": a custom slot needs a label saying what "
                         + "it holds");
             }

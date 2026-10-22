@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.docref.DocRef;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
@@ -53,8 +54,6 @@ class ProcessorFilters {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilters.class);
 
-    static final String FEED = "Feed";
-    static final String TYPE = "Type";
     static final String PIPELINE = "Pipeline";
     static final String ID = "Id";
     static final String EVENTS = "Events";
@@ -173,7 +172,7 @@ class ProcessorFilters {
                                       && Objects.equals(NullSafe.get(term.getDocRef(), DocRef::getUuid),
                             pipelineUuid));
             final boolean readsFeed = terms.stream()
-                                              .anyMatch(term -> TYPE.equals(term.getField())
+                                              .anyMatch(term -> MetaFields.FIELD_TYPE.equals(term.getField())
                                                                 && EVENTS.equals(term.getValue()))
                                       && feeds(terms, known).stream().anyMatch(feeds::contains);
             if (namesIt || readsFeed) {
@@ -205,7 +204,7 @@ class ProcessorFilters {
                 continue;
             }
             final boolean events = terms.stream()
-                    .anyMatch(term -> (TYPE.equals(term.getField()) && EVENTS.equals(term.getValue()))
+                    .anyMatch(term -> (MetaFields.FIELD_TYPE.equals(term.getField()) && EVENTS.equals(term.getValue()))
                                       || PIPELINE.equals(term.getField()));
             final Map<String, Object> entry = found.computeIfAbsent(filter.getPipelineUuid(), uuid -> {
                 final Map<String, Object> map = new LinkedHashMap<>();

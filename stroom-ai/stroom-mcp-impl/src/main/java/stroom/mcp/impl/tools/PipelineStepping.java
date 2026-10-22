@@ -24,14 +24,15 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SampleProfiler;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltSafety;
@@ -194,7 +195,7 @@ class PipelineStepping {
                         .filter(error -> !allowed.contains(error))
                         .toList();
                 if (!errors.isEmpty()) {
-                    throw new ToolRefusal("draft_code[" + PythonText.repr(element)
+                    throw new ToolRefusal("draft_code[" + PyText.repr(element)
                                           + "] is not stepped: " + String.join("; ", errors));
                 }
             }
@@ -223,7 +224,7 @@ class PipelineStepping {
                     .filter(why -> !allowed.contains(why))
                     .toList();
             if (!refused.isEmpty()) {
-                throw new ToolRefusal("draft_code[" + PythonText.repr(element) + "] is not stepped: "
+                throw new ToolRefusal("draft_code[" + PyText.repr(element) + "] is not stepped: "
                                       + String.join("; ", refused));
             }
         });

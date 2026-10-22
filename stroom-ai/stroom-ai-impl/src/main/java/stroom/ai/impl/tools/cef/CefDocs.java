@@ -16,9 +16,10 @@
 
 package stroom.ai.impl.tools.cef;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
-import stroom.ai.impl.tools.fielddoc.PythonStrings;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -72,9 +73,9 @@ public final class CefDocs {
         out.add("Each Event becomes one CEF (ArcSight Common Event Format) line: `CEF:0|Device Vendor|Device "
                 + "Product|Device Version|Device Event Class ID|Name|Severity|` then key=value pairs. "
                 + (CefPlan.KAFKA.equals(plan.output())
-                ? "Each line is the value of one Kafka record on topic `" + PythonStrings.str(plan.topic())
+                ? "Each line is the value of one Kafka record on topic `" + PyText.str(plan.topic())
                   + "`, one Event a record"
-                  + (PythonStrings.truthy(plan.kafkaKey())
+                  + (JsonValues.truthy(plan.kafkaKey())
                         ? ", keyed by `" + plan.kafkaKey() + "`"
                         : "") + "."
                 : "The lines are written as text, one an Event."));
@@ -134,7 +135,7 @@ public final class CefDocs {
                                                 + " | " + cell(n.get("why")) + " |"));
             out.add("");
         }
-        return PythonStrings.rstrip(String.join("\n", out)) + "\n";
+        return PyText.rstrip(String.join("\n", out)) + "\n";
     }
 
     // One row per key of kinds shown together: its paths together, and each kind's example where they differ.
@@ -210,7 +211,7 @@ public final class CefDocs {
                     .map(e -> e.getKey() + " -> " + e.getValue())
                     .collect(Collectors.joining(", "));
         }
-        if (PythonStrings.truthy(value.defaultValue())) {
+        if (JsonValues.truthy(value.defaultValue())) {
             said += " (else '" + value.defaultValue() + "')";
         }
         return said;
@@ -264,13 +265,13 @@ public final class CefDocs {
                     final Map<String, String> says = new LinkedHashMap<>();
                     says.put("ArcSight", meaning);
                     meaning = described.of(descriptionKey(kind, f.key()), f.path() + " -> " + f.key()
-                                                                          + (PythonStrings.truthy(f.label())
+                                                                          + (JsonValues.truthy(f.label())
                             ? " (labelled '" + f.label() + "')"
                             : ""), example.isEmpty()
                             ? List.of()
                             : List.of(example), says, f.path());
                 }
-                String what = meaning + (PythonStrings.truthy(f.label()) && CefKeys.SLOT_KEYS.contains(f.key())
+                String what = meaning + (JsonValues.truthy(f.label()) && CefKeys.SLOT_KEYS.contains(f.key())
                         ? "; labelled '" + f.label() + "' (" + f.key() + "Label = " + labelFullName(f.key()) + ")"
                         : "");
                 if (CefField.EPOCH_MS.equals(f.transform())) {

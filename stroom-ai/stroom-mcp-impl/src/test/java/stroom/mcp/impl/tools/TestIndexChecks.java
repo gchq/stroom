@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.IndexSearches.Probe;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.dashboard.shared.ComponentConfig;

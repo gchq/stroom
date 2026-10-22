@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -81,7 +83,7 @@ public final class IndexFieldDocs {
                 for (final XmlElement record : root.iterElements(RECORDS, "record")) {
                     final Map<String, List<String>> document = new LinkedHashMap<>();
                     for (final XmlElement data : record.iterElements(RECORDS, "data")) {
-                        if (PythonStrings.truthy(data.get("name"))) {
+                        if (JsonValues.truthy(data.get("name"))) {
                             document.computeIfAbsent(data.get("name"), k -> new ArrayList<>())
                                     .add(Objects.requireNonNullElse(data.get("value"), ""));
                         }
@@ -235,7 +237,7 @@ public final class IndexFieldDocs {
                         .max(Double::compare)
                         .orElse(null);
                 if (share != null) {
-                    shares.add(PythonStrings.formatG(share) + "%" + (actions.size() > 1
+                    shares.add(PyText.formatG(share) + "%" + (actions.size() > 1
                             ? " (" + action + ")"
                             : ""));
                 }
@@ -267,7 +269,7 @@ public final class IndexFieldDocs {
         final Map<String, List<PlannedField>> groups = new LinkedHashMap<>();
         for (final PlannedField field : plan.fields()) {
             if (!head.contains(field.name())) {
-                groups.computeIfAbsent(PythonStrings.split(field.name(), ".").getFirst(), k -> new ArrayList<>())
+                groups.computeIfAbsent(PyText.split(field.name(), ".").getFirst(), k -> new ArrayList<>())
                         .add(field);
             }
         }
@@ -334,7 +336,7 @@ public final class IndexFieldDocs {
                 says.put(Descriptions.EVENT_LOGGING, FieldDocs.schemaDescription(schema, f.source()));
             }
             says.put("ECS", ecsSays(f.name()));
-            final String what = PythonStrings.truthy(f.description())
+            final String what = JsonValues.truthy(f.description())
                     ? f.description()
                     : descriptions.of(f.name(), shared == null
                             ? f.source()
@@ -348,7 +350,7 @@ public final class IndexFieldDocs {
                 cells.add(f.source().startsWith("@") || shared != null
                         ? "always"
                         : pct != null
-                                ? PythonStrings.formatG(pct) + "% of events"
+                                ? PyText.formatG(pct) + "% of events"
                                 : "not in the sample");
             }
             if (documents != null) {
@@ -356,7 +358,7 @@ public final class IndexFieldDocs {
                 cells.add(values.isEmpty()
                         ? "(none in the sample)"
                         : values.subList(0, Math.min(3, values.size())).stream()
-                                  .map(v -> "`" + PythonStrings.head(v, 40) + "`")
+                                  .map(v -> "`" + PyText.head(v, 40) + "`")
                                   .collect(Collectors.joining(", ")) + (values.size() > 3
                                 ? " (+" + (values.size() - 3) + ")"
                                 : ""));
@@ -376,52 +378,55 @@ public final class IndexFieldDocs {
     /// @param survey The index's survey (`survey_index`'s result, as JSON-like values).
     /// @return The summary's text, ending with a new line.
     public static String existingIndexSummary(final Map<String, Object> survey) {
-        final Map<String, Object> index = map(survey.get("index"));
-        final Map<String, Object> profile = map(survey.get("profile"));
+        final Map<String, Object> index = JsonValues.mapOrEmpty(survey.get("index"));
+        final Map<String, Object> profile = JsonValues.mapOrEmpty(survey.get("profile"));
         final List<String> lines = new ArrayList<>(List.of("### Data surveyed", ""));
-        if (PythonStrings.truthy(profile.get("documents"))) {
-            final String span = PythonStrings.truthy(profile.get("earliest"))
-                    ? ", from " + str(profile.get("earliest")) + " to " + str(profile.get("latest"))
+        if (JsonValues.truthy(profile.get("documents"))) {
+            final String span = JsonValues.truthy(profile.get("earliest"))
+                    ? ", from " + PyText.str(profile.get("earliest")) + " to " + PyText.str(profile.get("latest"))
                     : "";
-            final String streams = PythonStrings.truthy(profile.get("streams"))
-                    ? ", in " + str(profile.get("streams")) + " stream" + plural(profile.get("streams"))
+            final String streams = JsonValues.truthy(profile.get("streams"))
+                    ? ", in " + PyText.str(profile.get("streams")) + " stream" + plural(profile.get("streams"))
                     : "";
-            final String atLeast = PythonStrings.truthy(profile.get("partial"))
+            final String atLeast = JsonValues.truthy(profile.get("partial"))
                     ? "at least "
                     : "";
-            lines.add("- `" + str(index.get("name")) + "` holds " + atLeast + str(profile.get("documents"))
+            lines.add("- `" + PyText.str(index.get("name")) + "` holds " + atLeast
+                      + PyText.str(profile.get("documents"))
                       + " document" + plural(profile.get("documents")) + span + streams + "."
-                      + (PythonStrings.truthy(profile.get("partial"))
-                    ? " (" + str(profile.get("partial")) + ".)"
+                      + (JsonValues.truthy(profile.get("partial"))
+                    ? " (" + PyText.str(profile.get("partial")) + ".)"
                     : ""));
-            final List<Object> sources = list(profile.get("sources"));
+            final List<Object> sources = JsonValues.listOrEmpty(profile.get("sources"));
             final double examined = number(profile.get("streams_examined"));
             for (final Object item : sources.subList(0, Math.min(10, sources.size()))) {
-                final Map<String, Object> s = map(item);
-                final String made = PythonStrings.truthy(s.get("produced_by"))
-                        ? ", produced by pipeline `" + str(s.get("produced_by")) + "`"
+                final Map<String, Object> s = JsonValues.mapOrEmpty(item);
+                final String made = JsonValues.truthy(s.get("produced_by"))
+                        ? ", produced by pipeline `" + PyText.str(s.get("produced_by")) + "`"
                         : "";
-                final String said = PythonStrings.truthy(s.get("description"))
-                        ? " The feed's description: " + str(s.get("description"))
+                final String said = JsonValues.truthy(s.get("description"))
+                        ? " The feed's description: " + PyText.str(s.get("description"))
                         : "";
-                lines.add("- From feed `" + str(s.get("feed")) + "` (" + str(s.get("type")) + " streams" + made
-                          + "): " + str(s.get("streams")) + " stream" + plural(s.get("streams")) + ", "
-                          + str(s.get("documents")) + " documents." + said);
+                lines.add("- From feed `" + PyText.str(s.get("feed")) + "` (" + PyText.str(s.get("type")) + " streams"
+                          + made
+                          + "): " + PyText.str(s.get("streams")) + " stream" + plural(s.get("streams")) + ", "
+                          + PyText.str(s.get("documents")) + " documents." + said);
             }
-            if (!sources.isEmpty() && PythonStrings.truthy(profile.get("streams"))
+            if (!sources.isEmpty() && JsonValues.truthy(profile.get("streams"))
                 && examined < number(profile.get("streams"))) {
-                lines.add("- (Sources from the " + str(Objects.requireNonNullElse(profile.get("streams_examined"),
-                        0)) + " streams with the most documents.)");
+                lines.add("- (Sources from the "
+                          + PyText.str(Objects.requireNonNullElse(profile.get("streams_examined"), 0))
+                          + " streams with the most documents.)");
             }
         } else if (survey.get("documents_sampled") instanceof final Number sampled && sampled.doubleValue() == 0) {
-            lines.add("- " + (PythonStrings.truthy(survey.get("note"))
-                    ? str(survey.get("note"))
+            lines.add("- " + (JsonValues.truthy(survey.get("note"))
+                    ? PyText.str(survey.get("note"))
                     : "No documents came back through Stroom."));
         }
-        final List<Object> fed = list(survey.get("fed_by"));
+        final List<Object> fed = JsonValues.listOrEmpty(survey.get("fed_by"));
         for (final Object item : fed) {
-            final Map<String, Object> p = map(item);
-            lines.add("- Indexed by pipeline `" + str(p.get("name")) + "`" + (PythonStrings.truthy(p.get("plan"))
+            final Map<String, Object> p = JsonValues.mapOrEmpty(item);
+            lines.add("- Indexed by pipeline `" + PyText.str(p.get("name")) + "`" + (JsonValues.truthy(p.get("plan"))
                     ? ", from the index plan kept with its XSLT."
                     : "."));
         }
@@ -430,16 +435,16 @@ public final class IndexFieldDocs {
                       + "write; one that builds the name from values, or writes through an alias, is not found "
                       + "this way).");
         }
-        if (PythonStrings.truthy(survey.get("documents_sampled"))) {
+        if (JsonValues.truthy(survey.get("documents_sampled"))) {
             final String sampledFrom = survey.get("sampled_from") instanceof final String text
                     ? text
                     : "";
             final String recent = sampledFrom.startsWith("the last")
                     ? " of " + sampledFrom
                     : "";
-            lines.add("- The field table is drawn from " + str(survey.get("documents_sampled")) + " documents"
-                      + recent + (PythonStrings.truthy(survey.get("earliest"))
-                    ? " (" + str(survey.get("earliest")) + " to " + str(survey.get("latest")) + ")"
+            lines.add("- The field table is drawn from " + PyText.str(survey.get("documents_sampled")) + " documents"
+                      + recent + (JsonValues.truthy(survey.get("earliest"))
+                    ? " (" + PyText.str(survey.get("earliest")) + " to " + PyText.str(survey.get("latest")) + ")"
                     : "") + ": In sample and Sample values are what they held.");
         }
         return String.join("\n", lines) + "\n";
@@ -461,17 +466,17 @@ public final class IndexFieldDocs {
                                                final EventSchema schema,
                                                final String layout,
                                                final Descriptions described) {
-        final Map<String, Object> index = map(survey.get("index"));
+        final Map<String, Object> index = JsonValues.mapOrEmpty(survey.get("index"));
         final List<Map<String, List<String>>> documents = documents(survey.get("documents"));
         final String target = "elasticsearch".equals(survey.get("backend"))
-                ? "Elasticsearch index `" + str(survey.get("index_name")) + "`"
+                ? "Elasticsearch index `" + PyText.str(survey.get("index_name")) + "`"
                 : "a Lucene index";
         // The overall facts (what feeds it, what was surveyed) are in Data surveyed: only what explains the columns
         // here.
-        final List<Object> fed = list(survey.get("fed_by"));
-        String intro = "`" + str(index.get("name")) + "` is " + target + "; the time field is `"
-                       + str(survey.get("time_field")) + "`.";
-        if (fed.stream().noneMatch(p -> PythonStrings.truthy(map(p).get("plan")))) {
+        final List<Object> fed = JsonValues.listOrEmpty(survey.get("fed_by"));
+        String intro = "`" + PyText.str(index.get("name")) + "` is " + target + "; the time field is `"
+                       + PyText.str(survey.get("time_field")) + "`.";
+        if (fed.stream().noneMatch(p -> JsonValues.truthy(JsonValues.mapOrEmpty(p).get("plan")))) {
             intro += " Where each field comes from is not recorded: no pipeline that writes to it keeps an index "
                      + "plan.";
         }
@@ -481,14 +486,16 @@ public final class IndexFieldDocs {
         final List<String> lines = new ArrayList<>(List.of(intro, ""));
         final List<String> head = List.of("Index field", "Description", "Type", "From (event-logging path)",
                 "In sample", "Sample values");
-        final List<Map<String, Object>> fields = list(survey.get("fields")).stream().map(IndexFieldDocs::map).toList();
+        final List<Map<String, Object>> fields = JsonValues.listOrEmpty(survey.get("fields")).stream()
+                .map(JsonValues::mapOrEmpty)
+                .toList();
         final List<Object> first = new ArrayList<>(List.of("StreamId", "EventId"));
         first.add(survey.get("time_field"));
         first.add("@timestamp");
         final Map<String, List<Map<String, Object>>> groups = new LinkedHashMap<>();
         for (final Map<String, Object> f : fields) {
             if (!first.contains(f.get("name"))) {
-                groups.computeIfAbsent(PythonStrings.split(str(f.get("name")), ".").getFirst(),
+                groups.computeIfAbsent(PyText.split(PyText.str(f.get("name")), ".").getFirst(),
                         k -> new ArrayList<>()).add(f);
             }
         }
@@ -497,11 +504,11 @@ public final class IndexFieldDocs {
             fields.stream().filter(f -> Objects.equals(f.get("name"), name)).forEach(ordered::add);
         }
         groups.values().forEach(ordered::addAll);
-        final Set<String> surveyed = new LinkedHashSet<>(PythonStrings.truthy(survey.get("surveyed_fields"))
-                ? list(survey.get("surveyed_fields")).stream().map(IndexFieldDocs::str).toList()
-                : fields.stream().map(f -> str(f.get("name"))).toList());
+        final Set<String> surveyed = new LinkedHashSet<>(JsonValues.truthy(survey.get("surveyed_fields"))
+                ? JsonValues.listOrEmpty(survey.get("surveyed_fields")).stream().map(PyText::str).toList()
+                : fields.stream().map(f -> PyText.str(f.get("name"))).toList());
         final List<String> unsurveyed = fields.stream()
-                .map(f -> str(f.get("name")))
+                .map(f -> PyText.str(f.get("name")))
                 .filter(n -> !surveyed.contains(n))
                 .toList();
         if (!documents.isEmpty() && !unsurveyed.isEmpty()) {
@@ -513,9 +520,9 @@ public final class IndexFieldDocs {
                 ? new Descriptions()
                 : described;
         final List<IndexRow> rows = new ArrayList<>();
-        for (final String f : new LinkedHashSet<>(ordered.stream().map(x -> str(x.get("name"))).toList())) {
+        for (final String f : new LinkedHashSet<>(ordered.stream().map(x -> PyText.str(x.get("name"))).toList())) {
             final Map<String, Object> field = fields.stream()
-                    .filter(x -> f.equals(str(x.get("name"))))
+                    .filter(x -> f.equals(PyText.str(x.get("name"))))
                     .findFirst()
                     .orElseThrow();
             final PlannedField plan = planned.get(f);
@@ -563,7 +570,7 @@ public final class IndexFieldDocs {
                 held = percent((int) count, documents.size()) + " of documents";
                 values = FieldDocs.values(perDocument.stream().flatMap(List::stream).toList());
             }
-            rows.add(new IndexRow(source, List.of("`" + f + "`", description, str(field.get("type")),
+            rows.add(new IndexRow(source, List.of("`" + f + "`", description, PyText.str(field.get("type")),
                     !source.isEmpty()
                             ? "`" + source + "`"
                             : "(not recorded)", held, values)));
@@ -572,14 +579,14 @@ public final class IndexFieldDocs {
         // when the user chose to (write_documentation refuses otherwise), and said as such rather than left out.
         for (final String name : notListed(survey, planned)) {
             final PlannedField plan = planned.get(name);
-            final String what = PythonStrings.truthy(plan.description())
+            final String what = JsonValues.truthy(plan.description())
                     ? plan.description()
-                    : PythonStrings.truthy(plan.source())
+                    : JsonValues.truthy(plan.source())
                             ? FieldDocs.schemaDescription(schema, plan.source())
                             : "";
             rows.add(new IndexRow(plan.source(), List.of("`" + name + "`",
                     orElse(FieldDocs.fieldDescription(what, null), "Written by the pipeline that feeds the index."),
-                    Objects.requireNonNullElse(plan.type(), ""), PythonStrings.truthy(plan.source())
+                    Objects.requireNonNullElse(plan.type(), ""), JsonValues.truthy(plan.source())
                             ? "`" + plan.source() + "`"
                             : "(not recorded)", "not in the index", "-")));
         }
@@ -593,8 +600,8 @@ public final class IndexFieldDocs {
     /// @param planned The fields the feeding pipelines' plans write, by name.
     /// @return Their names, in the plans' order.
     public static List<String> notListed(final Map<String, Object> survey, final Map<String, PlannedField> planned) {
-        final Set<String> listed = list(survey.get("fields")).stream()
-                .map(f -> str(map(f).get("name")))
+        final Set<String> listed = JsonValues.listOrEmpty(survey.get("fields")).stream()
+                .map(f -> PyText.str(JsonValues.mapOrEmpty(f).get("name")))
                 .collect(Collectors.toSet());
         return planned.keySet().stream().filter(n -> !listed.contains(n)).toList();
     }
@@ -639,7 +646,7 @@ public final class IndexFieldDocs {
         final Map<String, String> explicit = new LinkedHashMap<>();
         explicit.put("StreamId", "the stream id");
         explicit.put("EventId", "the record number in the stream");
-        explicit.put("@timestamp", "`" + d.timestampField() + "`" + (PythonStrings.truthy(d.timestampFormat())
+        explicit.put("@timestamp", "`" + d.timestampField() + "`" + (JsonValues.truthy(d.timestampFormat())
                 ? " (format `" + d.timestampFormat() + "`)"
                 : ""));
         d.meta().forEach((name, attr) -> explicit.put(name, "stream meta `" + attr + "`"));
@@ -659,7 +666,7 @@ public final class IndexFieldDocs {
             final String name = entry.getKey();
             final String what = meaning.containsKey(name)
                     ? meaning.get(name)
-                    : "The stream's `" + PythonStrings.str(d.meta().get(name)) + "` meta attribute.";
+                    : "The stream's `" + PyText.str(d.meta().get(name)) + "` meta attribute.";
             final List<List<String>> perDocument = documents == null
                     ? null
                     : perDocument(documents, name);
@@ -681,7 +688,7 @@ public final class IndexFieldDocs {
                                      + "mapped dynamically:", "",
                     "| Field | Description | In sample | Sample values |", "| --- | --- | --- | --- |"));
             for (final String key : new TreeSet<>(seen.keySet()).stream().limit(80).toList()) {
-                final String top = PythonStrings.split(key, ".").getFirst();
+                final String top = PyText.split(key, ".").getFirst();
                 final String what = top.endsWith("_json") && d.unpackJson()
                         ? "Parsed from the JSON held in the source's `" + top.substring(0, top.length() - 5)
                           + "` field."
@@ -759,7 +766,7 @@ public final class IndexFieldDocs {
 
     // Python's f'{100 * count / total:.0f}%'.
     private static String percent(final int count, final int total) {
-        return PythonStrings.formatFixed0(100.0 * count / total) + "%";
+        return PyText.formatFixed0(100.0 * count / total) + "%";
     }
 
     private static String orElse(final String text, final String fallback) {
@@ -780,31 +787,14 @@ public final class IndexFieldDocs {
                 : 0;
     }
 
-    private static String str(final Object value) {
-        return PythonStrings.str(value);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> map(final Object value) {
-        return value instanceof Map
-                ? (Map<String, Object>) value
-                : Map.of();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Object> list(final Object value) {
-        return value instanceof List
-                ? (List<Object>) value
-                : List.of();
-    }
-
     // The survey's documents: field to values.
     private static List<Map<String, List<String>>> documents(final Object value) {
         final List<Map<String, List<String>>> documents = new ArrayList<>();
-        for (final Object item : list(value)) {
+        for (final Object item : JsonValues.listOrEmpty(value)) {
             final Map<String, List<String>> document = new LinkedHashMap<>();
-            map(item).forEach((key, values) -> document.put(key, list(values).stream()
-                    .map(PythonStrings::str)
+            JsonValues.mapOrEmpty(item).forEach((key, values) -> document.put(key, JsonValues.listOrEmpty(values)
+                    .stream()
+                    .map(PyText::str)
                     .toList()));
             documents.add(document);
         }

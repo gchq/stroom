@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -238,10 +239,9 @@ class ProcessorFilterWrites {
     ExpressionTerm feedTerm(final String feed) {
         final DocRef ref = feedNames.exact(feed)
                 .filter(found -> NullSafe.isNonBlankString(found.getUuid()))
-                .orElseThrow(() -> new ToolRefusal("No feed named '" + feed + "' in Stroom: give the feed's exact "
-                                                   + "name"));
+                .orElseThrow(() -> FeedNames.noFeedNamed(feed));
         return ExpressionTerm.builder()
-                .field(ProcessorFilters.FEED)
+                .field(MetaFields.FIELD_FEED)
                 .condition(Condition.IS_DOC_REF)
                 .docRef(new DocRef(FeedDoc.TYPE, ref.getUuid(), NullSafe.nonBlankStringElse(ref.getName(), feed)))
                 .build();

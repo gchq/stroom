@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.PyJson.JsonDecodeException;
 
@@ -78,7 +80,7 @@ public final class IndexTemplates {
     /// @param fields The fields a PUT takes, e.g. [#COMPONENT_TEMPLATE_FIELDS].
     /// @return It kept to those fields, its template part to what a PUT takes, and a lifecycle without its rollover.
     public static Object asPut(final Object body, final List<String> fields) {
-        final Map<String, Object> given = PyValues.map(body);
+        final Map<String, Object> given = JsonValues.map(body);
         if (given == null) {
             return body;
         }
@@ -88,7 +90,7 @@ public final class IndexTemplates {
                 out.put(key, value);
             }
         });
-        final Map<String, Object> template = PyValues.map(out.get("template"));
+        final Map<String, Object> template = JsonValues.map(out.get("template"));
         if (template != null) {
             final Map<String, Object> kept = new LinkedHashMap<>();
             template.forEach((key, value) -> {
@@ -96,7 +98,7 @@ public final class IndexTemplates {
                     kept.put(key, value);
                 }
             });
-            final Map<String, Object> lifecycle = PyValues.map(kept.get("lifecycle"));
+            final Map<String, Object> lifecycle = JsonValues.map(kept.get("lifecycle"));
             if (lifecycle != null) {
                 // Only rollover: a lifecycle's own settings grow from version to version.
                 final Map<String, Object> shorter = new LinkedHashMap<>(lifecycle);
@@ -148,7 +150,7 @@ public final class IndexTemplates {
     /// @return The template's name (null if the text doesn't say) and body.
     /// @throws IllegalArgumentException if it isn't one, saying why.
     public static NamedTemplate parseTemplate(final String given) {
-        String text = PyValues.strip(given);
+        String text = PyText.strip(given);
         String name = null;
         // The request line, then the body on the next line or the same one (seen in Ask Stroom AI: an agent gave
         // the server's own dev_tools on one line, and it was refused as not JSON).
@@ -171,12 +173,12 @@ public final class IndexTemplates {
         } else {
             body = json(text, "index template");
         }
-        Map<String, Object> map = PyValues.map(body);
+        Map<String, Object> map = JsonValues.map(body);
         if (map != null && map.containsKey("index_templates")) {
-            final List<Object> entries = PyValues.listOrEmpty(map.get("index_templates"));
+            final List<Object> entries = JsonValues.listOrEmpty(map.get("index_templates"));
             final Map<String, Object> entry = entries.isEmpty()
                     ? new LinkedHashMap<>()
-                    : PyValues.mapOrEmpty(entries.getFirst());
+                    : JsonValues.mapOrEmpty(entries.getFirst());
             if (entry.containsKey("name")) {
                 name = entry.get("name") == null
                         ? null
@@ -185,14 +187,14 @@ public final class IndexTemplates {
             body = entry.containsKey("index_template")
                     ? entry.get("index_template")
                     : new LinkedHashMap<>();
-            map = PyValues.map(body);
+            map = JsonValues.map(body);
         }
         if (map != null && !map.containsKey("index_patterns")) {
             // A mapping: GET <index>/_mapping ({index: {mappings}}), {mappings: ...}, or the mappings themselves.
             if (map.size() == 1 && map.values().iterator().next() instanceof final Map<?, ?> only
                 && only.containsKey("mappings")) {
                 name = map.keySet().iterator().next();
-                map = PyValues.map(only);
+                map = JsonValues.map(only);
             }
             final Object mappings = map.containsKey("mappings")
                     ? map.get("mappings")
@@ -211,7 +213,7 @@ public final class IndexTemplates {
             throw new IllegalArgumentException("Expected an Elasticsearch index template (index_patterns and "
                                                + "template.mappings), or an index's mapping (GET <index>/_mapping)");
         }
-        return new NamedTemplate(name, PyValues.map(asPut(map)));
+        return new NamedTemplate(name, JsonValues.map(asPut(map)));
     }
 
     /// The index template as a Dev Tools request, laid out to read: an object of plain values (a field's mapping, a
@@ -264,7 +266,7 @@ public final class IndexTemplates {
     private static void addComponent(final Map<String, Map<String, Object>> found,
                                      final Object body,
                                      final String name) {
-        final Map<String, Object> map = PyValues.map(body);
+        final Map<String, Object> map = JsonValues.map(body);
         if (body instanceof final String text) {
             readComponents(found, text);
         } else if (body instanceof final List<?> list) {
@@ -272,14 +274,14 @@ public final class IndexTemplates {
                 addComponent(found, item, null);
             }
         } else if (map != null && map.containsKey("component_templates")) {
-            for (final Object entry : PyValues.listOrEmpty(map.get("component_templates"))) {
+            for (final Object entry : JsonValues.listOrEmpty(map.get("component_templates"))) {
                 addComponent(found, entry, null);
             }
-        } else if (map != null && map.containsKey("component_template") && PyValues.truthy(map.get("name"))) {
-            found.put(String.valueOf(map.get("name")), PyValues.map(asPut(
-                    PyValues.mapOrEmpty(map.get("component_template")), COMPONENT_TEMPLATE_FIELDS)));
-        } else if (map != null && PyValues.truthy(name)) {
-            found.put(name, PyValues.map(asPut(map, COMPONENT_TEMPLATE_FIELDS)));
+        } else if (map != null && map.containsKey("component_template") && JsonValues.truthy(map.get("name"))) {
+            found.put(String.valueOf(map.get("name")), JsonValues.map(asPut(
+                    JsonValues.mapOrEmpty(map.get("component_template")), COMPONENT_TEMPLATE_FIELDS)));
+        } else if (map != null && JsonValues.truthy(name)) {
+            found.put(name, JsonValues.map(asPut(map, COMPONENT_TEMPLATE_FIELDS)));
         } else {
             throw new IllegalArgumentException("Give each component template with its name, as a Dev Tools request "
                                                + "(PUT _component_template/<name> {...}) or GET "
@@ -299,12 +301,12 @@ public final class IndexTemplates {
             }
             return;
         }
-        final String text = PyValues.strip(given);
+        final String text = PyText.strip(given);
         int at = 0;
         String name = null;
         while (at < text.length()) {
             final Matcher request = COMPONENT_REQUEST.matcher(text).region(at, text.length());
-            if (PyValues.isSpace(text.charAt(at))) {
+            if (PyText.isSpace(text.charAt(at))) {
                 at++;
             } else if (text.charAt(at) == '#') {
                 // Kibana's line before each response: '# GET ... 200 OK'.

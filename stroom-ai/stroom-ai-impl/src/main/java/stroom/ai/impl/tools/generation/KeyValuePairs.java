@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -69,7 +71,7 @@ public record KeyValuePairs(@JsonProperty("field") String field,
         final Set<String> unknown = new TreeSet<>(pairs.names.keySet());
         pairs.keys.forEach(unknown::remove);
         if (!unknown.isEmpty()) {
-            fields.valueError("pairs names " + PythonRepr.list(unknown) + ", which aren't among its keys");
+            fields.valueError("pairs names " + PyText.list(unknown) + ", which aren't among its keys");
             return null;
         }
         return pairs;

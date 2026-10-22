@@ -16,10 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -152,7 +154,7 @@ class ProcessingApprovals {
                     .build());
         }
         final Map<String, Object> agreed = KeptMapping.readAgreedTemplate(current.getDescription()).orElse(Map.of());
-        if (BuildPlan.truthy(agreed.get("by_user"))) {
+        if (JsonValues.truthy(agreed.get("by_user"))) {
             return new Committed("the user's own index template for Elasticsearch index '" + index + "' is "
                                  + "committed to cluster " + cluster + " (confirmed by the user, not checked here)",
                     current, null);

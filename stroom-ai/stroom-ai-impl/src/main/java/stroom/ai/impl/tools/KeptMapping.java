@@ -256,12 +256,12 @@ public final class KeptMapping {
             return summary;
         }
         if (TRANSLATION.equals(kept.kind())) {
-            final Map<String, Object> body = map(kept.payload().get("mapping"));
+            final Map<String, Object> body = JsonValues.mapOrEmpty(kept.payload().get("mapping"));
             summary.put("schema_version", kept.payload().get("schema_version"));
             summary.put("input", body.get("input"));
             summary.put("rules", eventKinds(body));
-            summary.put("common_entries", list(body.get("common")).size());
-            summary.put("extractions", list(body.get("extract")).size());
+            summary.put("common_entries", JsonValues.listOrEmpty(body.get("common")).size());
+            summary.put("extractions", JsonValues.listOrEmpty(body.get("extract")).size());
             summary.put("style", isTruthy(body.get("style"))
                     ? body.get("style")
                     : "the generator's current defaults");
@@ -284,8 +284,8 @@ public final class KeptMapping {
     /// @param pending The pending changes block.
     /// @return Each pending change's text, oldest first.
     public static List<Object> pendingChanges(final Map<String, Object> pending) {
-        return list(pending.get("entries")).stream()
-                .map(entry -> map(entry).get("change"))
+        return JsonValues.listOrEmpty(pending.get("entries")).stream()
+                .map(entry -> JsonValues.mapOrEmpty(entry).get("change"))
                 .toList();
     }
 
@@ -294,11 +294,12 @@ public final class KeptMapping {
     /// e.g. `logon: Authenticate (`action` = login)`.
     static List<String> eventKinds(final Map<String, Object> mapping) {
         final List<String> out = new ArrayList<>();
-        final List<Object> common = list(mapping.get("common"));
-        for (final Object item : list(mapping.get("events"))) {
-            final Map<String, Object> rule = map(item);
+        final List<Object> common = JsonValues.listOrEmpty(mapping.get("common"));
+        for (final Object item : JsonValues.listOrEmpty(mapping.get("events"))) {
+            final Map<String, Object> rule = JsonValues.mapOrEmpty(item);
             final List<String> conditions = new ArrayList<>();
-            list(rule.get("when")).forEach(condition -> conditions.add(conditionText(map(condition))));
+            JsonValues.listOrEmpty(rule.get("when"))
+                    .forEach(condition -> conditions.add(conditionText(JsonValues.mapOrEmpty(condition))));
             final String when = conditions.isEmpty()
                     ? "any other record"
                     : String.join(" and ", conditions);
@@ -309,9 +310,10 @@ public final class KeptMapping {
             }
             final Set<String> actions = new TreeSet<>();
             final List<Object> fields = new ArrayList<>(common);
-            fields.addAll(list(rule.get("fields")));
+            fields.addAll(JsonValues.listOrEmpty(rule.get("fields")));
             for (final Object field : fields) {
-                final String path = stripSlashes(NullSafe.string(stringOf(map(field).get("path"))));
+                final String path = PyText.strip(NullSafe.string(stringOf(JsonValues.mapOrEmpty(field).get("path"))),
+                        "/");
                 final String[] parts = path.split("/");
                 if (path.startsWith("EventDetail/") && parts.length > 1 && !"TypeId".equals(parts[1])
                     && !"Description".equals(parts[1])) {
@@ -339,7 +341,7 @@ public final class KeptMapping {
             return source + " = " + stringOf(condition.get("equals"));
         }
         if (condition.get("one_of") != null) {
-            return source + " in " + String.join(", ", list(condition.get("one_of")).stream()
+            return source + " in " + String.join(", ", JsonValues.listOrEmpty(condition.get("one_of")).stream()
                     .map(KeptMapping::stringOf)
                     .toList());
         }
@@ -402,20 +404,6 @@ public final class KeptMapping {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> map(final Object value) {
-        return value instanceof Map
-                ? (Map<String, Object>) value
-                : Map.of();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Object> list(final Object value) {
-        return value instanceof List
-                ? (List<Object>) value
-                : List.of();
-    }
-
     private static String stringOf(final Object value) {
         return value == null
                 ? null
@@ -430,18 +418,6 @@ public final class KeptMapping {
             return !string.isEmpty();
         }
         return value != null;
-    }
-
-    private static String stripSlashes(final String path) {
-        int start = 0;
-        int end = path.length();
-        while (start < end && path.charAt(start) == '/') {
-            start++;
-        }
-        while (end > start && path.charAt(end - 1) == '/') {
-            end--;
-        }
-        return path.substring(start, end);
     }
 
 

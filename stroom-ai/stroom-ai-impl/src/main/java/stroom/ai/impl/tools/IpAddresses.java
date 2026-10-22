@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.ai.impl.tools.indexing;
+package stroom.ai.impl.tools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.List;
 /// IP addresses as Python's `ipaddress.ip_address` reads them (Python 3.12): an IPv4 address of four decimal
 /// octets with no leading zeros, or an IPv6 address (at most one `::`, an IPv4 address as its last part, an optional
 /// `%scope`). Elasticsearch's ip type takes what it takes; the Stroom MCP server checked documents this way.
-final class IpAddresses {
+public final class IpAddresses {
 
     private static final int HEXTETS = 8;
 
@@ -32,13 +32,13 @@ final class IpAddresses {
 
     /// @param text A text.
     /// @return True if it is an IPv4 or IPv6 address.
-    static boolean isAddress(final String text) {
+    public static boolean isAddress(final String text) {
         return isIpv4(text) || isIpv6(text);
     }
 
     /// @param text A text.
     /// @return True if it is an IPv4 address.
-    static boolean isIpv4(final String text) {
+    public static boolean isIpv4(final String text) {
         return ipv4(text) >= 0;
     }
 
@@ -68,7 +68,7 @@ final class IpAddresses {
 
     /// @param text A text.
     /// @return True if it is an IPv6 address (with an optional scope).
-    static boolean isIpv6(final String text) {
+    public static boolean isIpv6(final String text) {
         final int percent = text.indexOf('%');
         final String address;
         if (percent >= 0) {

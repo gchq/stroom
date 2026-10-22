@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -55,12 +57,12 @@ public final class XPathText {
     /// path of keys), or an XML path as given.
     public static String fieldText(final String kind, final String fieldName) {
         if ("data_splitter".equals(kind)) {
-            return PyStr.split(fieldName, "/").stream()
+            return PyText.split(fieldName, "/").stream()
                            .map(part -> "data[@name=" + literal(part) + "]")
                            .collect(Collectors.joining("/")) + "/@value";
         }
         if ("json".equals(kind)) {
-            return PyStr.split(fieldName, ".").stream()
+            return PyText.split(fieldName, ".").stream()
                     .map(part -> "*[@key=" + literal(part) + "]")
                     .collect(Collectors.joining("/"));
         }
@@ -82,7 +84,7 @@ public final class XPathText {
         if (path == null || path.isEmpty()) {
             return found;
         }
-        final String steps = PyStr.split(PyStr.stripSlashes(path), "/").stream()
+        final String steps = PyText.split(PyText.strip(path, "/"), "/").stream()
                 .filter(step -> !step.isEmpty())
                 .map(step -> step.contains(":") || step.startsWith("@") || ".".equals(step) || "*".equals(step)
                         ? step

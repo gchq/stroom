@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.tools.PipelineIndex.Entry;
 import stroom.mcp.impl.tools.PipelineShapes.Shape;
@@ -61,27 +63,27 @@ class ReferenceData {
     /// @param xslt An XSLT's text.
     /// @return Each map it writes, as `{map, key, value, ranges}`; empty if it doesn't parse.
     static List<Map<String, Object>> mapsInXslt(final String xslt) {
-        final Optional<Element> root = XmlDocs.parse(xslt);
+        final Optional<Element> root = XmlTrees.tryParse(xslt);
         if (root.isEmpty()) {
             return List.of();
         }
         final Map<String, Map<String, Object>> found = new LinkedHashMap<>();
-        for (final Element reference : XmlDocs.elements(root.get(), REF_NS, "reference")) {
-            final Optional<Element> nameNode = XmlDocs.child(reference, REF_NS, "map");
-            final Optional<Element> keyNode = XmlDocs.child(reference, REF_NS, "key");
-            final Optional<Element> valueNode = XmlDocs.child(reference, REF_NS, "value");
+        for (final Element reference : XmlTrees.named(root.get(), REF_NS, "reference")) {
+            final Optional<Element> nameNode = XmlTrees.child(reference, REF_NS, "map");
+            final Optional<Element> keyNode = XmlTrees.child(reference, REF_NS, "key");
+            final Optional<Element> valueNode = XmlTrees.child(reference, REF_NS, "value");
             final String name = nameNode.map(ReferenceData::textOrSelect)
                     .orElse("?")
                     .replaceAll("^'(.*)'$", "$1");
             final Set<String> elements = new TreeSet<>();
             valueNode.ifPresent(value -> {
-                for (final Element child : XmlDocs.descendantsAndSelf(value)) {
+                for (final Element child : XmlTrees.descendantsAndSelf(value)) {
                     if (child == value) {
                         continue;
                     }
-                    if (XmlDocs.is(child, XmlDocs.XSL, "element")) {
-                        NullSafe.consume(XmlDocs.attribute(child, "name"), elements::add);
-                    } else if (!XmlDocs.XSL.equals(child.getNamespaceURI())) {
+                    if (XmlTrees.is(child, XmlTrees.XSL, "element")) {
+                        NullSafe.consume(XmlTrees.attribute(child, "name"), elements::add);
+                    } else if (!XmlTrees.XSL.equals(child.getNamespaceURI())) {
                         elements.add(child.getLocalName());
                     }
                 }
@@ -97,7 +99,7 @@ class ReferenceData {
             if (!elements.isEmpty()) {
                 entry.put("value", List.copyOf(elements));
             }
-            if (XmlDocs.child(reference, REF_NS, "range").isPresent()) {
+            if (XmlTrees.child(reference, REF_NS, "range").isPresent()) {
                 entry.put("ranges", true);
             }
         }
@@ -206,13 +208,13 @@ class ReferenceData {
 
     // A <map> or <key> element's content as the reader would say it: literal text, or the select expression.
     private static String textOrSelect(final Element node) {
-        final String literal = XmlDocs.leadingText(node).strip();
+        final String literal = XmlTrees.text(node);
         if (!literal.isEmpty()) {
             return literal;
         }
-        for (final Element child : XmlDocs.descendantsAndSelf(node)) {
-            if (XmlDocs.is(child, XmlDocs.XSL, "value-of") || XmlDocs.is(child, XmlDocs.XSL, "sequence")) {
-                return Objects.requireNonNullElse(XmlDocs.attribute(child, "select"), "");
+        for (final Element child : XmlTrees.descendantsAndSelf(node)) {
+            if (XmlTrees.is(child, XmlTrees.XSL, "value-of") || XmlTrees.is(child, XmlTrees.XSL, "sequence")) {
+                return Objects.requireNonNullElse(XmlTrees.attribute(child, "select"), "");
             }
         }
         return Objects.requireNonNullElse(node.getTextContent(), "").strip();

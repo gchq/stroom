@@ -16,8 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -73,40 +74,10 @@ final class TranslationArgs {
     }
 
     /// @param call A call.
-    /// @param name The argument's name.
-    /// @return It as given (a map, a list, text, ...), or null if it wasn't given.
-    static Object value(final ToolCall call, final String name) {
-        return AbstractBuiltInTool.argsMap(call).get(name);
-    }
-
-    /// @param call A call.
-    /// @param name The argument's name.
-    /// @return It as a JSON object: a map as given, or text that is one; null if it wasn't given.
-    /// @throws ToolRefusal if it is neither.
-    @SuppressWarnings("unchecked")
-    static Map<String, Object> object(final ToolCall call, final String name) {
-        final Object value = value(call, name);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof final Map<?, ?> map) {
-            return (Map<String, Object>) map;
-        }
-        if (value instanceof final String text && text.strip().startsWith("{")) {
-            try {
-                return JsonUtil.readValue(text, Map.class);
-            } catch (final RuntimeException e) {
-                throw new ToolRefusal(name + " is text that is not JSON: pass it as an object");
-            }
-        }
-        throw new ToolRefusal(name + " is an object, not " + SampleArguments.pythonRepr(String.valueOf(value)));
-    }
-
-    /// @param call A call.
     /// @return The user's answers about fields edited by hand (`hand_edit_choices`), or null.
     /// @throws ToolRefusal if an answer isn't one it takes.
     static Map<String, String> handEditChoices(final ToolCall call) {
-        final Map<String, Object> given = object(call, "hand_edit_choices");
+        final Map<String, Object> given = ToolArgs.map(call, "hand_edit_choices");
         if (given == null) {
             return null;
         }
@@ -126,7 +97,7 @@ final class TranslationArgs {
     /// @return The index plan given (`index_plan`), or null.
     /// @throws ToolRefusal if it isn't one.
     static FieldPlan indexPlan(final ToolCall call) {
-        final Object given = value(call, "index_plan");
+        final Object given = ToolArgs.raw(call, "index_plan");
         if (given == null) {
             return null;
         }

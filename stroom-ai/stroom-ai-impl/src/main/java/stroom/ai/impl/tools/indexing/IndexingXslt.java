@@ -16,11 +16,13 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.StyledXslt;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltComments;
+import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,7 +43,7 @@ final class IndexingXslt {
     static final Pattern PLAIN = Pattern.compile("^[\\w@*.:-]+(\\[[^\\]]*\\])?(/[\\w@*.:-]+(\\[[^\\]]*\\])?)*$",
             Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES);
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final Pattern BRACED = Pattern.compile("\\{([^{}]+)\\}");
     private static final Pattern OR = Pattern.compile("\\s+or\\s+", Pattern.UNICODE_CHARACTER_CLASS);
 
@@ -201,12 +203,12 @@ final class IndexingXslt {
             }
             for (final String value : values) {
                 for (final String given : OR.split(value.split(" ! ", -1)[0], -1)) {
-                    final String piece = PyValues.strip(given);
+                    final String piece = PyText.strip(given);
                     if (".".equals(piece) || piece.isEmpty() || !plain(piece)) {
                         continue;
                     }
                     String name = names.get(piece);
-                    if (!PyValues.truthy(name)) {
+                    if (!JsonValues.truthy(name)) {
                         name = names.entrySet().stream()
                                 .filter(entry -> entry.getKey().endsWith("/" + piece))
                                 .map(Map.Entry::getValue)
@@ -214,7 +216,7 @@ final class IndexingXslt {
                                 .orElse(null);
                     }
                     if (!out.containsKey(piece)) {
-                        out.put(piece, PyValues.truthy(name)
+                        out.put(piece, JsonValues.truthy(name)
                                 ? name
                                 : FieldPlans.steps(piece).getLast());
                     }

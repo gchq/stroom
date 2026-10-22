@@ -49,7 +49,8 @@ class TestSetShapeHandlingTool {
     private final Consent consent = new Consent(Mockito.mock(SecurityContext.class), () -> auditLog);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(), consent, new BuildMemory());
     private final SetShapeHandlingTool tool = new SetShapeHandlingTool(
-            new SurveyDocuments(world.guard(), world.documentAccess), consent, plan);
+            new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
+            plan);
 
     @Test
     void droppingKindsIsConfirmedThenKeptInTheSurveyDoc() {

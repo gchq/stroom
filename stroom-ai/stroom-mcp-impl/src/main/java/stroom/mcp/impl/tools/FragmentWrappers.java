@@ -17,9 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.HeldSchemas;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -93,7 +93,7 @@ class FragmentWrappers {
     String version(final String chosen) {
         try {
             return heldSchemas.chosenOrLatest(chosen);
-        } catch (final ValidationException e) {
+        } catch (final ToolRefusal e) {
             return null;
         }
     }

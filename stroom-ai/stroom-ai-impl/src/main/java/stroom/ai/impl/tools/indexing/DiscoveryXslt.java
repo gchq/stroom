@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.sample.PyJson;
 
 import java.io.IOException;
@@ -98,7 +99,7 @@ final class DiscoveryXslt {
                     : "[not(@name = (" + quoted(discovery.drop()) + "))]");
             xml = "";
         } else {
-            if (!PyValues.truthy(discovery.record())) {
+            if (!JsonValues.truthy(discovery.record())) {
                 throw new IllegalArgumentException("An XML discovery index needs the record element's name (record)");
             }
             final List<String> steps = new ArrayList<>();
@@ -139,7 +140,7 @@ final class DiscoveryXslt {
     }
 
     private static String time(final Discovery discovery, final String when) {
-        return PyValues.truthy(discovery.timestampFormat())
+        return JsonValues.truthy(discovery.timestampFormat())
                 ? "stroom:format-date(string(" + when + "), '" + discovery.timestampFormat() + "')"
                 : "string(" + when + ")";
     }

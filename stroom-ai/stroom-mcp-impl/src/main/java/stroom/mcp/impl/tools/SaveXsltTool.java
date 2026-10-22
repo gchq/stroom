@@ -20,10 +20,12 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.MappingValidationException;
@@ -75,19 +77,19 @@ class SaveXsltTool extends AbstractBuiltInTool {
 
     private final TranslationDocs translationDocs;
     private final RequiredImports requiredImports;
-    private final DraftedIndexPlans draftedIndexPlans;
+    private final IndexingMemory indexingMemory;
     private final EventVersions eventVersions;
     private final WriteGuard guard;
 
     @Inject
     SaveXsltTool(final TranslationDocs translationDocs,
                  final RequiredImports requiredImports,
-                 final DraftedIndexPlans draftedIndexPlans,
+                 final IndexingMemory indexingMemory,
                  final EventVersions eventVersions,
                  final WriteGuard guard) {
         this.translationDocs = translationDocs;
         this.requiredImports = requiredImports;
-        this.draftedIndexPlans = draftedIndexPlans;
+        this.indexingMemory = indexingMemory;
         this.eventVersions = eventVersions;
         this.guard = guard;
     }
@@ -180,7 +182,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
         final TranslationDocs.Source source = TranslationDocs.Source.of(indexPlan);
         if (uuid != null) {
             return translationDocs.updateXslt(call, context, uuid, code, stringArg(call, VERSION_ARG), source, said,
-                    CreateProcessorFilterTool.flag(call, DISCARD_HAND_EDIT_ARG),
+                    ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),
                     TranslationArgs.handEditChoices(call));
         }
         final String name = stringArg(call, NAME_ARG);
@@ -208,7 +210,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
     // With no code and no index_plan: the plan draft_index_mapping drafted or amended in this session, for the
     // index the XSLT's kept plan names (else that kept plan, regenerated), or with no XSLT yet, the only one drafted.
     private FieldPlan planToSave(final ToolCallContext context, final String uuid) {
-        final Map<String, FieldPlan> drafted = draftedIndexPlans.drafted(context.session());
+        final Map<String, FieldPlan> drafted = indexingMemory.drafted(context.session());
         if (uuid == null) {
             return IndexingHelpers.planGiven(null, null, drafted, List.of());
         }

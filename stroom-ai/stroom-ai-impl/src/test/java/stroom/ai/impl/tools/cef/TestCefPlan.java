@@ -19,12 +19,12 @@ package stroom.ai.impl.tools.cef;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocFixtures;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
-import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XmlSerialiser;
 import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.validation.XmlTrees;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -492,7 +492,7 @@ class TestCefPlan {
     void theXsltsFunctionsAreTheServers() {
         assertThat(CefXslt.FUNCTIONS).startsWith("  <!-- A header field, escaped: backslash and pipe, on one line. -->")
                 .endsWith("  </xsl:function>\n");
-        assertThat(MappingFacts.XSL).isEqualTo("http://www.w3.org/1999/XSL/Transform");
+        assertThat(XmlTrees.XSL).isEqualTo("http://www.w3.org/1999/XSL/Transform");
     }
 
     private static Map<String, String> pairs(final CefLines.Parsed parsed) {

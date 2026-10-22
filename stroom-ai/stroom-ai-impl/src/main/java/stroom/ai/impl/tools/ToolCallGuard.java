@@ -215,7 +215,7 @@ public class ToolCallGuard {
         if (!(value instanceof final String text) || NullSafe.isEmptyCollection(choices) || choices.contains(text)) {
             return null;
         }
-        final String bare = strip(text);
+        final String bare = PyText.strip(text, STRAY);
         return choices.stream()
                 .filter(bare::equals)
                 .findFirst()
@@ -412,18 +412,6 @@ public class ToolCallGuard {
             return list.stream().map(ToolCallGuard::sorted).toList();
         }
         return value;
-    }
-
-    private static String strip(final String text) {
-        int start = 0;
-        int end = text.length();
-        while (start < end && STRAY.indexOf(text.charAt(start)) >= 0) {
-            start++;
-        }
-        while (end > start && STRAY.indexOf(text.charAt(end - 1)) >= 0) {
-            end--;
-        }
-        return text.substring(start, end);
     }
 
     private static String shorten(final String text) {

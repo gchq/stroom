@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -136,7 +138,7 @@ public record FieldMapping(@JsonProperty("path") String path,
             // Stream meta is read as stroom:meta('Name'), which the generator, the documentation and rebuild_mapping
             // already handle as an xpath: kept in that one form (asked for by the user: values like MyHostName).
             final List<String> others = given();
-            if (!others.isEmpty() || PyStr.isBlank(meta) || meta.contains("'")) {
+            if (!others.isEmpty() || PyText.isBlank(meta) || meta.contains("'")) {
                 return "'" + path + "': meta names one stream meta attribute (e.g. 'MyHostName'), and is the entry's "
                        + "only input" + (others.isEmpty()
                         ? ""
@@ -148,7 +150,7 @@ public record FieldMapping(@JsonProperty("path") String path,
             // Seen: 'EventDetail/View/User/Id**,xpath:': the call's JSON ran the next key into the path's string, and
             // the reply said only "give exactly one of", about a field whose xpath was inside its path.
             final String before = path.substring(0, spilled.start());
-            return "path " + PythonRepr.repr(path) + " holds more than a path (from " + PythonRepr.repr(spilled.group())
+            return "path " + PyText.repr(path) + " holds more than a path (from " + PyText.repr(spilled.group())
                    + " on): the next key ran into its string. Close the path's string and give the input as a key of "
                    + "its own, e.g. {\"path\": \"" + before + "\", \"xpath\": \"<the xpath>\"}";
         }
@@ -175,7 +177,7 @@ public record FieldMapping(@JsonProperty("path") String path,
         for (final String name : names) {
             final String called = MappingFacts.functionCall(name);
             if (called != null) {
-                return "'" + path + "': field " + PythonRepr.repr(name) + " " + called;
+                return "'" + path + "': field " + PyText.repr(name) + " " + called;
             }
         }
         if (dictionary != null && field == null && anyOf == null) {
@@ -184,7 +186,7 @@ public record FieldMapping(@JsonProperty("path") String path,
         if (transform != null && value != null) {
             return "'" + path + "': transform applies to an input, not a constant";
         }
-        if (value != null && PyStr.isBlank(value)) {
+        if (value != null && PyText.isBlank(value)) {
             // Seen: Network/Permit/Source/Device/IPAddress given value '' for want of the address (inside a string
             // field, unextracted): an empty element in every event, which the schema refuses.
             return "'" + path + "': value '' writes an empty element, which the schema refuses: map the field that "
@@ -217,7 +219,7 @@ public record FieldMapping(@JsonProperty("path") String path,
     }
 
     private FieldMapping withMetaRead() {
-        return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + PyStr.strip(meta) + "')", null, lookup,
+        return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + PyText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName);
     }
 
@@ -242,7 +244,7 @@ public record FieldMapping(@JsonProperty("path") String path,
 
     /// @return The path without leading and trailing slashes.
     public String strippedPath() {
-        return PyStr.stripSlashes(path);
+        return PyText.strip(path, "/");
     }
 
     private static boolean isSet(final String text) {

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -77,8 +79,8 @@ public final class FieldPlans {
             return source.equals(path);
         }
         if (!source.contains("//")) {
-            final String[] want = PyValues.strip(source, "/").split("/", -1);
-            final String[] have = PyValues.strip(path, "/").split("/", -1);
+            final String[] want = PyText.strip(source, "/").split("/", -1);
+            final String[] have = PyText.strip(path, "/").split("/", -1);
             if (want.length != have.length) {
                 return false;
             }
@@ -91,8 +93,8 @@ public final class FieldPlans {
         }
         final String regex = (source.startsWith("//")
                 ? "(?:[^/]+/)*"
-                : "") + descendants(PyValues.strip(source, "/"));
-        return Pattern.compile(regex, Pattern.DOTALL).matcher(PyValues.strip(path, "/")).matches();
+                : "") + descendants(PyText.strip(source, "/"));
+        return Pattern.compile(regex, Pattern.DOTALL).matcher(PyText.strip(path, "/")).matches();
     }
 
     // The source as a regex: '*' one element, '//' any elements between, the rest as it is.

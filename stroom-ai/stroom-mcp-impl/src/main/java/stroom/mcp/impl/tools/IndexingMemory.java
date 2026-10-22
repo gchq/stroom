@@ -44,7 +44,7 @@ import java.util.function.LongSupplier;
 /// drafted (`index_plans_drafted`) and the verification checks that passed (`verify_checks_passed`). Each is a
 /// convenience: without it, the user is asked again, or the agent gives the template or plan again.
 @Singleton
-class IndexingMemory implements DraftedIndexPlans {
+class IndexingMemory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexingMemory.class);
 
@@ -187,7 +187,6 @@ class IndexingMemory implements DraftedIndexPlans {
     ///
     /// @param session The session asking.
     /// @return The plans, by index name.
-    @Override
     public Map<String, FieldPlan> drafted(final ToolSession session) {
         final Map<String, FieldPlan> drafted = new LinkedHashMap<>();
         plans().forEach((indexName, json) -> {
