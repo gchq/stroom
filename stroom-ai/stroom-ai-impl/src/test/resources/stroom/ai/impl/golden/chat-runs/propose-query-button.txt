@@ -48,7 +48,7 @@ Run 1: answered: Click Create query… to save it.
 (none)
 
 == Run flags ==
-Read content that could hold planted instructions: false
+Read content that could hold planted instructions: true
 Read an untrusted MCP server's output: false
 
 == MCP tools offered ==

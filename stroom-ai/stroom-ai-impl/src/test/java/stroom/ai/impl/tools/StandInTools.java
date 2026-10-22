@@ -38,32 +38,38 @@ public final class StandInTools {
     /// @return A tool whose every call changes something in Stroom (e.g. save_xslt), and which doesn't ask the user
     /// itself.
     public static StroomTool writeTool(final String name) {
-        return new StandIn(name, Calls.CHANGE, false, true);
+        return new StandIn(name, Calls.CHANGE, false, true, true);
     }
 
     /// @param name The tool's name.
     /// @return A tool whose every call changes something in Stroom, and which asks the user itself, through a form,
     /// before each change (e.g. create_feed).
     public static StroomTool selfConfirmingWriteTool(final String name) {
-        return new StandIn(name, Calls.CHANGE, true, true);
+        return new StandIn(name, Calls.CHANGE, true, true, true);
     }
 
     /// @param name The tool's name.
     /// @return A tool whose calls only read.
     public static StroomTool readOnlyTool(final String name) {
-        return new StandIn(name, Calls.READ, false, true);
+        return new StandIn(name, Calls.READ, false, true, true);
+    }
+
+    /// @param name The tool's name.
+    /// @return A tool whose calls only read, and whose results hold only trusted content (e.g. get_current_time).
+    public static StroomTool trustedReadOnlyTool(final String name) {
+        return new StandIn(name, Calls.READ, false, true, false);
     }
 
     /// @param name The tool's name.
     /// @return A tool whose calls with `"command":"read"` only read, and whose other calls change something.
     public static StroomTool mixedTool(final String name) {
-        return new StandIn(name, Calls.MIXED, false, true);
+        return new StandIn(name, Calls.MIXED, false, true, true);
     }
 
     /// @param name The tool's name.
     /// @return A tool whose calls change only the chat's own things (e.g. write_file).
     public static StroomTool chatOnlyWriteTool(final String name) {
-        return new StandIn(name, Calls.CHANGE, false, false);
+        return new StandIn(name, Calls.CHANGE, false, false, true);
     }
 
     // What the tool's calls do.
@@ -79,15 +85,18 @@ public final class StandInTools {
         private final Calls calls;
         private final boolean confirms;
         private final boolean changesNeedApproval;
+        private final boolean readsUntrusted;
 
         private StandIn(final String name,
                         final Calls calls,
                         final boolean confirms,
-                        final boolean changesNeedApproval) {
+                        final boolean changesNeedApproval,
+                        final boolean readsUntrusted) {
             this.name = name;
             this.calls = calls;
             this.confirms = confirms;
             this.changesNeedApproval = changesNeedApproval;
+            this.readsUntrusted = readsUntrusted;
         }
 
         @Override
@@ -129,6 +138,11 @@ public final class StandInTools {
         @Override
         public boolean changesNeedApprovalAfterUntrustedContent() {
             return changesNeedApproval;
+        }
+
+        @Override
+        public boolean readsUntrustedContent() {
+            return readsUntrusted;
         }
 
         @Override

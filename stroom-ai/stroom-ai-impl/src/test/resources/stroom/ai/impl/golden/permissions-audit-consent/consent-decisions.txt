@@ -28,10 +28,10 @@
 - pipeline (read-only, reads untrusted content): RUN in every situation
 - processor_tasks (read-only, reads untrusted content): RUN in every situation
 - propose_code_change (read-only, reads untrusted content): RUN in every situation
-- propose_dashboard (read-only, reads only trusted content): RUN in every situation
+- propose_dashboard (read-only, reads untrusted content): RUN in every situation
 - propose_dashboard_change (read-only, reads untrusted content): RUN in every situation
 - propose_documentation_change (read-only, reads untrusted content): RUN in every situation
-- propose_query (read-only, reads only trusted content): RUN in every situation
+- propose_query (read-only, reads untrusted content): RUN in every situation
 - propose_query_change (read-only, reads untrusted content): RUN in every situation
 - read_document (read-only, reads untrusted content): RUN in every situation
 - read_file (read-only, reads untrusted content): RUN in every situation
@@ -45,7 +45,7 @@
 - summarise_column (read-only, reads untrusted content): RUN in every situation
 - table (read-only, reads untrusted content): RUN in every situation
 - task_list (read-only, reads only trusted content): RUN in every situation
-- validate_stroomql (read-only, reads only trusted content): RUN in every situation
+- validate_stroomql (read-only, reads untrusted content): RUN in every situation
 - wc (read-only, reads only trusted content): RUN in every situation
 - write_file (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}
 - xpath (read-only, reads untrusted content): RUN in every situation
