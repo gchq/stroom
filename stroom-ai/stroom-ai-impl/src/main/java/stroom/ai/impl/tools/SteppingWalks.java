@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.pipeline.shared.PipelineDoc;
@@ -151,8 +152,16 @@ public class SteppingWalks {
 
         /// @return The stream's first record, stepped.
         /// @throws IllegalStateException if the step doesn't finish in time.
+        /// @throws stroom.ai.impl.workspace.ToolTimeoutException if the call is cancelled, or runs past its time
+        /// limit ([ToolDeadline]), while the step is unfinished.
         public SteppingResult first() {
             return step(StepType.FIRST, null);
+        }
+
+        /// @return The stream's last record, stepped.
+        /// @throws IllegalStateException if the step doesn't finish in time.
+        public SteppingResult last() {
+            return step(StepType.LAST, null);
         }
 
         /// @param location Where the last step was.
@@ -174,6 +183,8 @@ public class SteppingWalks {
             SteppingResult result = steppingService.step(request(stepType, location));
             sessionUuid = NullSafe.getOrElse(result, SteppingResult::getSessionUuid, sessionUuid);
             while (result != null && !result.isComplete()) {
+                // Stops at once when the call is cancelled (its thread interrupted) or past its time limit.
+                ToolDeadline.check();
                 if (System.currentTimeMillis() > stopAtMs) {
                     throw new IllegalStateException("Stepping did not finish in time; try fewer records or a "
                                                     + "smaller stream");

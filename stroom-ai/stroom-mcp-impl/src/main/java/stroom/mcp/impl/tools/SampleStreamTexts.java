@@ -96,9 +96,13 @@ class SampleStreamTexts {
         return new Texts(texts, notes);
     }
 
-    // Building and validating pipelines uses only a feed's own streams: refuse any older than its feed, which
-    // belongs to an earlier, deleted feed of the same name.
-    private void refuseOlderThanFeed(final List<Long> streamIds) {
+    /// Building and validating pipelines uses only a feed's own streams: refuses any older than its feed, which
+    /// belongs to an earlier, deleted feed of the same name. A stream that can't be found is left for the caller
+    /// to say so.
+    ///
+    /// @param streamIds Sample streams.
+    /// @throws ToolRefusal if any is older than its feed, naming the feed's own raw streams.
+    void refuseOlderThanFeed(final List<Long> streamIds) {
         final Map<String, List<Long>> older = new LinkedHashMap<>();
         final Map<String, Optional<Long>> created = new LinkedHashMap<>();
         for (final long streamId : streamIds) {
