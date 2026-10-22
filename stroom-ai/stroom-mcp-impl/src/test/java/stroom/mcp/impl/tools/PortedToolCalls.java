@@ -23,6 +23,8 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.util.json.JsonUtil;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
+
 import java.util.Map;
 
 /// Calls of the ported tools for their tests, as an MCP client makes them.
@@ -42,6 +44,29 @@ final class PortedToolCalls {
         return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
                         new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
                 .userQuestions(UserQuestions.NONE)
+                .build();
+    }
+
+    /// @param answer What the user answers every form with (accepting it).
+    /// @return The context of a call from an MCP client that shows forms, with no workspace, and the user's
+    /// answers.
+    static ToolCallContext answering(final Map<String, Object> answer) {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                .userQuestions(new UserQuestions() {
+                    @Override
+                    public boolean canAsk() {
+                        return true;
+                    }
+
+                    @Override
+                    public ElicitResult ask(final String toolName,
+                                            final String callId,
+                                            final String intro,
+                                            final Map<String, Object> form) {
+                        return new ElicitResult(ElicitResult.Action.ACCEPT, answer);
+                    }
+                })
                 .build();
     }
 

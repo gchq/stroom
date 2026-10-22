@@ -114,6 +114,9 @@ appConfig:
         - "System/Template Pipelines"
         templateNames:
         - "Event Data (*)"
+    sampleUploads:
+      commandsLast: "PT15M"
+      maxUploadMb: 100
     shareActiveTab: true
     suggestFollowUps: true
     toolGroupThreshold: 24

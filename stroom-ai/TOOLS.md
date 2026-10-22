@@ -450,3 +450,60 @@ tasks with `ProcessorTaskFinder`. Where they differ from the MCP server:
   thread is interrupted (the client gave up on the call) or the chat's run is stopped, and says where processing
   is (`CallProgress`) now and then while it waits. `timeout_seconds` outside 5 to 900 is brought within them, where
   the MCP server refused it; empty `stream_ids` are refused.
+
+## The feed tools: `create_feed`, `upload_sample` and `record_source_notes`
+
+Ported as tools of their own (`stroom-mcp-impl`): `create_feed` and `record_source_notes` (category content) and
+`upload_sample` (category processing, as it sends data into a feed), on the build layer above, with what they share:
+`BuildFeeds` (`tools/feeds.py`'s `_existing_feed`, `_refuse_case_twin`, `_build_feed`, `_sample_files` and
+`_works_from_message`, and `tools/processing_writes.py`'s `make_test_feed`, as `BuildFeeds.makeTestFeed`, for the
+processing write tools to reuse), `FeedNames.exact` (the MCP server's `/feed/v1/getDocRefForName`), `FeedUploads`
+(`utils/uploads.py`'s `send_to_feed` and `commands`), `SampleUploads` (in place of `UploadTickets`) and
+`SourceNotes` (`utils/sourcenotes.py`'s `REFERENCE_INFIX`, `block`, `read_notes`, `outcome_map`, `detail_problem`,
+`catalogue_problems` and `apply_to_draft`; `SourceNotes.applyToDraft` is public for the draft mapping's port).
+`McpUploadServlet` serves `POST /mcp/upload` (`utils/uploads.py`'s `handle_upload`).
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `create_feed` | no | no | yes | no |
+| `upload_sample` | no | no | no | no |
+| `record_source_notes` | no | no | no | no |
+
+`create_feed` asks the user to confirm (or correct) the feed's name in a form, as the MCP server's did;
+`upload_sample` and `record_source_notes` ask nothing themselves, so over `/mcp` each call is approved as a whole.
+
+Where they differ from the Python server:
+
+* **Sending text** (`upload_sample sample=`) is in-process: the data passes Stroom's receipt checks for the feed as
+  data posted to the datafeed does (`AttributeMapFilterFactory`: the feed's status or the data receipt policy, as
+  `stroom.receive.receiptCheckMode` says), then is stored as Stroom's own Upload on a feed's Data tab stores it
+  (`DataService.upload`), as the user: they need Import Data and Edit on the feed (the tool checks Import Data
+  first). A policy that drops the data is refused (`Stroom's receipt policy drops data for feed ...: nothing was
+  stored`), as is one that rejects it. The receipt id is read from the stream's receipt headers after it is stored
+  (Stroom's Upload gives none back); the stream is looked for once, not polled. The description says `as the real
+  source's data is received (Stroom's receipt checks, then stored as the user, as Stroom's Upload stores it)` where
+  the Python one said `through Stroom's datafeed receiver`.
+* **Files** (`upload_sample files=`) are posted by the commands to `/mcp/upload/<id>?file=<name>`, signed in as any
+  request to Stroom is (the user's API key or token, in the commands as `Authorization: Bearer $STROOM_API_KEY`, or
+  `$env:STROOM_API_KEY` in PowerShell, which the user sets in their terminal), in place of the MCP server's signed
+  upload tickets. What a ticket bound is kept by this node (`SampleUploads`): the user the commands were given to,
+  the feed, its stream type and receipt headers, the build, each file once, for `stroom.ai.sampleUploads.commandsLast`
+  (15 minutes, as `upload_ticket_minutes`); a file larger than `stroom.ai.sampleUploads.maxUploadMb` (100, as
+  `max_upload_mb`) is refused with 413. A post that matches no waiting file is refused with 403 (the ticket's 401).
+  As at `/mcp`, the servlet needs Use MCP Tools and is off with the endpoint; `upload_sample files=` says so up front,
+  and tells the agent to have the user upload in Stroom instead. A file whose storing failed can be posted again.
+  The `files` description and the hint describe the commands so (the user's key, never in the chat or the command),
+  not a ticket. The upload is logged (who, feed, file, stream), where the MCP server audited it.
+* **Results' JSON** leaves nulls out, as every ported tool's does: `upload_sample`'s reply for a stream not visible
+  yet has no `stream_id`.
+* **Paths** in refusals (`A feed named '...' (path) already exists`) are Stroom's explorer paths (`/Feeds/ACME`), not
+  the find index's (`System / Feeds / ACME`). Feeds are found among those the user can view.
+* **record_source_notes**: the event catalogue is checked against the newest event-logging schema held (the build's
+  chosen version is kept by the translation tools, not ported yet). Its notes are validated as the Python models
+  were (a field needs `field` and `meaning`, an event `event` and `description`, a document `title` and its text or
+  uuid), with messages such as `fields[0].meaning is required` in place of pydantic's; numbers given for strings are
+  taken as text. The block's JSON escapes non-ASCII characters (`json.dumps` with `ensure_ascii`), where the MCP
+  server's kept them; either reads the other's. An existing notes or reference doc is changed only when it is the
+  tools' own and in the build (`WriteGuard.checkInBuild`).
+* **apply_to_draft**: `not_in_catalogue` lists the catalogued fields in the catalogue's order (Python iterated a
+  set).

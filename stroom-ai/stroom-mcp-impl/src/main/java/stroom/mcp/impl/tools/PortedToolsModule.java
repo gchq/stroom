@@ -54,7 +54,10 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(StepPipelineTool.class)
                 .addBinding(StepSampleTool.class)
                 .addBinding(StepRecordsTool.class)
-                .addBinding(CompareOutputsTool.class);
+                .addBinding(CompareOutputsTool.class)
+                .addBinding(CreateFeedTool.class)
+                .addBinding(UploadSampleTool.class)
+                .addBinding(RecordSourceNotesTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)

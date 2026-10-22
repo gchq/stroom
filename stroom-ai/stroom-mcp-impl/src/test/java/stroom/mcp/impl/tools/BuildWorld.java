@@ -29,6 +29,7 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineService;
 
 import org.mockito.Mockito;
@@ -64,6 +65,8 @@ final class BuildWorld {
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     final PipelineService pipelineService = PipelineLayers.service();
     final PipelineShapes pipelineShapes = PipelineLayers.shapes(pipelineService, new AiConfig());
+    // When a feed made from now on was created.
+    long createTimeMs = 1_000_000L;
     // Runs before a save, as another node saving the same doc first would.
     Runnable beforeSave = () -> {
     };
@@ -118,6 +121,8 @@ final class BuildWorld {
         nodes.get(parent).children.add(id);
         if (DocumentationDoc.TYPE.equals(type)) {
             docs.put(id, DocumentationDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (FeedDoc.TYPE.equals(type)) {
+            docs.put(id, FeedDoc.builder().uuid(id).name(name).version("v0").createTimeMs(createTimeMs).build());
         }
         return node;
     }

@@ -70,6 +70,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final ErrorTriageConfig errorTriage;
     private final AiPipelineStagesConfig pipelineStages;
     private final AiBuildsConfig builds;
+    private final AiSampleUploadsConfig sampleUploads;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -99,6 +100,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         errorTriage = new ErrorTriageConfig();
         pipelineStages = new AiPipelineStagesConfig();
         builds = new AiBuildsConfig();
+        sampleUploads = new AiSampleUploadsConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -124,7 +126,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -153,7 +155,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("mcpEndpoint") final McpEndpointConfig mcpEndpoint,
                     @JsonProperty("errorTriage") final ErrorTriageConfig errorTriage,
                     @JsonProperty("pipelineStages") final AiPipelineStagesConfig pipelineStages,
-                    @JsonProperty("builds") final AiBuildsConfig builds) {
+                    @JsonProperty("builds") final AiBuildsConfig builds,
+                    @JsonProperty("sampleUploads") final AiSampleUploadsConfig sampleUploads) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -184,9 +187,11 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.errorTriage = Objects.requireNonNullElseGet(errorTriage, ErrorTriageConfig::new);
         this.pipelineStages = Objects.requireNonNullElseGet(pipelineStages, AiPipelineStagesConfig::new);
         this.builds = Objects.requireNonNullElseGet(builds, AiBuildsConfig::new);
+        this.sampleUploads = Objects.requireNonNullElseGet(sampleUploads, AiSampleUploadsConfig::new);
     }
 
-    /// As the constructor that reads the config, with the default error triage, pipeline stages and builds.
+    /// As the constructor that reads the config, with the default error triage, pipeline stages, builds and sample
+    /// uploads.
     public AiConfig(final AiDbConfig dbConfig,
                     final CacheConfig chatResponseCache,
                     final StroomDuration maxRunDuration,
@@ -212,7 +217,14 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
-                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null);
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null, null);
+    }
+
+    /// @return Sample files sent from the user's machine by the commands upload_sample gives: how large, and for
+    /// how long.
+    @JsonProperty("sampleUploads")
+    public AiSampleUploadsConfig getSampleUploads() {
+        return sampleUploads;
     }
 
     /// @return Where the agent's tools build things: the workspace folder holding a folder for each build.
@@ -426,6 +438,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", errorTriage=" + errorTriage +
                ", pipelineStages=" + pipelineStages +
                ", builds=" + builds +
+               ", sampleUploads=" + sampleUploads +
                '}';
     }
 }
