@@ -60,6 +60,7 @@ import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -307,10 +308,15 @@ class McpAgentChat {
         Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
-        final String serverInstructions = toolset.serverInstructions(mcpTools.keySet().stream()
-                .map(specification -> toolset.toolInfo(specification.name()).map(McpToolInfo::serverKey))
-                .flatMap(Optional::stream)
-                .collect(Collectors.toSet()));
+        // With the build tools' instructions (as the Stroom MCP server gave them to its clients), when they are
+        // offered.
+        final String serverInstructions = joined(toolset.serverInstructions(mcpTools.keySet().stream()
+                        .map(specification -> toolset.toolInfo(specification.name()).map(McpToolInfo::serverKey))
+                        .flatMap(Optional::stream)
+                        .collect(Collectors.toSet())),
+                builtInTools.buildInstructions(builtIns.keySet().stream()
+                        .map(ToolSpecification::name)
+                        .collect(Collectors.toSet())).orElse(null));
         withServerInstructions(conversation, serverInstructions);
         usageTracker.recordServerInstructions(chatId, serverInstructions);
         if (tools.isEmpty()) {
@@ -1302,6 +1308,16 @@ class McpAgentChat {
      * @param conversation The conversation, which starts with the system prompt. It is changed in place.
      * @param instructions The instructions, or null.
      */
+    // Instructions one after the other, leaving out those that are blank; null if all are.
+    private static String joined(final String... instructions) {
+        final String text = Arrays.stream(instructions)
+                .filter(NullSafe::isNonBlankString)
+                .collect(Collectors.joining("\n\n"));
+        return text.isEmpty()
+                ? null
+                : text;
+    }
+
     static void withServerInstructions(final List<ChatMessage> conversation, final String instructions) {
         if (NullSafe.isBlankString(instructions)) {
             return;
