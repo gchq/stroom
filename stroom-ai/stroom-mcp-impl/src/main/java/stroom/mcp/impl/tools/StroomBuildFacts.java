@@ -52,7 +52,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -280,7 +279,11 @@ class StroomBuildFacts implements BuildFacts {
             }
         }
         for (final Map<String, Object> doc : docs) {
-            final Object original = Objects.requireNonNullElse(doc.get("working_copy_of"), doc.get("version_of"));
+            // Either may be missing, and most docs have neither (seen: every upload_sample failed on a build's
+            // feed, as requireNonNullElse refuses two nulls).
+            final Object original = doc.get("working_copy_of") != null
+                    ? doc.get("working_copy_of")
+                    : doc.get("version_of");
             if (!PipelineDoc.TYPE.equals(doc.get("type")) || original == null) {
                 continue;
             }
