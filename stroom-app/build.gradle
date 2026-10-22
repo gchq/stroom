@@ -60,6 +60,7 @@ dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-ai:stroom-ai-impl-db')
+    implementation project(':stroom-ai:stroom-mcp-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl-db')
     implementation project(':stroom-annotation:stroom-annotation-impl')

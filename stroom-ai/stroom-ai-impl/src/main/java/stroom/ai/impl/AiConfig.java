@@ -66,6 +66,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final int maxToolIterations;
     private final boolean shareActiveTab;
     private final long maxTabSnapshotBytes;
+    private final McpEndpointConfig mcpEndpoint;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -91,6 +92,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         maxToolIterations = DEFAULT_MAX_TOOL_ITERATIONS;
         shareActiveTab = true;
         maxTabSnapshotBytes = DEFAULT_MAX_TAB_SNAPSHOT_BYTES;
+        mcpEndpoint = new McpEndpointConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -116,7 +118,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null);
+                null, null);
     }
 
     @SuppressWarnings("unused")
@@ -141,7 +143,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("suggestFollowUps") final Boolean suggestFollowUps,
                     @JsonProperty("maxToolIterations") final Integer maxToolIterations,
                     @JsonProperty("shareActiveTab") final Boolean shareActiveTab,
-                    @JsonProperty("maxTabSnapshotBytes") final Long maxTabSnapshotBytes) {
+                    @JsonProperty("maxTabSnapshotBytes") final Long maxTabSnapshotBytes,
+                    @JsonProperty("mcpEndpoint") final McpEndpointConfig mcpEndpoint) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -168,6 +171,13 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.shareActiveTab = Objects.requireNonNullElse(shareActiveTab, true);
         this.maxTabSnapshotBytes = Math.max(0, Objects.requireNonNullElse(maxTabSnapshotBytes,
                 DEFAULT_MAX_TAB_SNAPSHOT_BYTES));
+        this.mcpEndpoint = Objects.requireNonNullElseGet(mcpEndpoint, McpEndpointConfig::new);
+    }
+
+    /// @return Stroom's own MCP endpoint, through which MCP clients use Stroom's tools.
+    @JsonProperty("mcpEndpoint")
+    public McpEndpointConfig getMcpEndpoint() {
+        return mcpEndpoint;
     }
 
     /// @return True if what the user sees in their active document tab (unsaved changes included) is shared with
@@ -352,6 +362,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", maxToolIterations=" + maxToolIterations +
                ", shareActiveTab=" + shareActiveTab +
                ", maxTabSnapshotBytes=" + maxTabSnapshotBytes +
+               ", mcpEndpoint=" + mcpEndpoint +
                '}';
     }
 }

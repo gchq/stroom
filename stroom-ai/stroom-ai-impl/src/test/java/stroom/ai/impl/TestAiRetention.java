@@ -163,6 +163,27 @@ class TestAiRetention {
         assertThat(fileStore.exists(oldFile)).isFalse();
     }
 
+    @Test
+    void testDeleteIdleSessionWorkspaces() throws SQLException {
+        final UserRef user = UserRef.builder().uuid("user1").build();
+        final AiChat idle = aiDao.createSessionChat(user, "session-1");
+        final AiChat inUse = aiDao.createSessionChat(user, "session-2");
+        final AiChat chat = aiDao.createChat(user);
+        final int idleFile = workspaceStore.createFile(idle.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/a",
+                null, "a\n");
+        // A day later (the default session retention), one session is still in use.
+        final long later = System.currentTimeMillis() + Duration.ofDays(1).toMillis() + 1;
+        setUpdateTime(inUse.getId(), later);
+
+        assertThat(retention.deleteIdleSessionWorkspaces(later)).isEqualTo(1);
+
+        assertThat(aiDao.getChat(idle.getId())).isEmpty();
+        assertThat(fileStore.exists(idleFile)).isFalse();
+        assertThat(aiDao.getChat(inUse.getId())).isPresent();
+        // An ordinary chat is never taken for a session's, however old.
+        assertThat(aiDao.getChat(chat.getId())).isPresent();
+    }
+
     private void setUpdateTime(final int chatId, final long timeMs) throws SQLException {
         try (final Connection connection = aiDbConnProvider.getConnection();
                 final PreparedStatement statement = connection.prepareStatement(

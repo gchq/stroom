@@ -36,20 +36,37 @@ public class AiToolSummary {
     @JsonProperty
     private final boolean readOnly;
     @JsonProperty
+    private final boolean readOnlyCalls;
+    @JsonProperty
     private final String description;
 
     /// @param name        The tool's name.
     /// @param category    Its category.
     /// @param readOnly    True if it cannot change anything, so a read-only policy grants it.
     /// @param description What it does, as a client outside the chat is told.
+    public AiToolSummary(final String name,
+                         final AiToolCategory category,
+                         final boolean readOnly,
+                         final String description) {
+        this(name, category, readOnly, false, description);
+    }
+
+    /// @param name          The tool's name.
+    /// @param category      Its category.
+    /// @param readOnly      True if it cannot change anything, so a read-only policy grants it.
+    /// @param readOnlyCalls True if it can change things but some of its calls cannot, so a read-only policy
+    ///                      grants it for those calls only (e.g. memory's list and read).
+    /// @param description   What it does, as a client outside the chat is told.
     @JsonCreator
     public AiToolSummary(@JsonProperty("name") final String name,
                          @JsonProperty("category") final AiToolCategory category,
                          @JsonProperty("readOnly") final boolean readOnly,
+                         @JsonProperty("readOnlyCalls") final boolean readOnlyCalls,
                          @JsonProperty("description") final String description) {
         this.name = name;
         this.category = category;
         this.readOnly = readOnly;
+        this.readOnlyCalls = readOnlyCalls;
         this.description = description;
     }
 
@@ -68,6 +85,12 @@ public class AiToolSummary {
         return readOnly;
     }
 
+    /// @return True if it can change things but some of its calls cannot, so a read-only policy grants it for
+    /// those calls only.
+    public boolean isReadOnlyCalls() {
+        return readOnlyCalls;
+    }
+
     /// @return What it does, as a client outside the chat is told.
     public String getDescription() {
         return description;
@@ -80,6 +103,7 @@ public class AiToolSummary {
         }
         final AiToolSummary that = (AiToolSummary) o;
         return readOnly == that.readOnly
+               && readOnlyCalls == that.readOnlyCalls
                && Objects.equals(name, that.name)
                && category == that.category
                && Objects.equals(description, that.description);
@@ -87,6 +111,6 @@ public class AiToolSummary {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, category, readOnly, description);
+        return Objects.hash(name, category, readOnly, readOnlyCalls, description);
     }
 }

@@ -54,6 +54,12 @@ class TaskListTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It keeps the chat's task list.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CORE;
     }

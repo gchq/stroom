@@ -48,6 +48,12 @@ class MemoryTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // Memory is the chat agent's own.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CORE;
     }
