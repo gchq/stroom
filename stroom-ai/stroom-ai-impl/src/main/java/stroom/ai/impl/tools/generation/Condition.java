@@ -18,11 +18,6 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.PyText;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,16 +35,14 @@ import java.util.stream.Stream;
 /// @param inDictionary `in_dictionary`: the value is one of the lines of the Dictionary doc of this name (a list,
 ///                     one entry per line).
 /// @param scope        With for_each: `record` to test the record rather than the item.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"field", "xpath", "equals", "one_of", "matches", "present", "in_dictionary", "scope"})
-public record Condition(@JsonProperty("field") String field,
-                        @JsonProperty("xpath") String xpath,
-                        @JsonProperty("equals") String equalTo,
-                        @JsonProperty("one_of") List<String> oneOf,
-                        @JsonProperty("matches") String matches,
-                        @JsonProperty("present") Boolean present,
-                        @JsonProperty("in_dictionary") String inDictionary,
-                        @JsonProperty("scope") String scope) {
+public record Condition(String field,
+                        String xpath,
+                        String equalTo,
+                        List<String> oneOf,
+                        String matches,
+                        Boolean present,
+                        String inDictionary,
+                        String scope) {
 
     /// The scopes a field may have with `for_each`.
     public static final List<String> SCOPES = List.of("record", "item");
@@ -59,7 +52,6 @@ public record Condition(@JsonProperty("field") String field,
     /// @param json A condition as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Condition fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("Condition", read(reader, json, List.of()));

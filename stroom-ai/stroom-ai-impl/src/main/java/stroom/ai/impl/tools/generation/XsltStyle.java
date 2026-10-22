@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 
@@ -45,19 +40,16 @@ import java.util.Map;
 /// @param variables        Where variables are declared: `just_in_time` (default) or `top`.
 /// @param dataNames        `data_names`: Data element Names in this style, or `as_given` (default).
 /// @param layout           How the templates are laid out: `modes` (default), `named` or `inline`.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"naming", "variable_min_reads", "inline_map_max_keys", "function_min_uses", "data_values",
-        "data_entries", "data_run_min", "variables", "data_names", "layout"})
-public record XsltStyle(@JsonProperty("naming") String naming,
-                        @JsonProperty("variable_min_reads") long variableMinReads,
-                        @JsonProperty("inline_map_max_keys") long inlineMapMaxKeys,
-                        @JsonProperty("function_min_uses") long functionMinUses,
-                        @JsonProperty("data_values") String dataValues,
-                        @JsonProperty("data_entries") String dataEntries,
-                        @JsonProperty("data_run_min") long dataRunMin,
-                        @JsonProperty("variables") String variables,
-                        @JsonProperty("data_names") String dataNames,
-                        @JsonProperty("layout") String layout) {
+public record XsltStyle(String naming,
+                        long variableMinReads,
+                        long inlineMapMaxKeys,
+                        long functionMinUses,
+                        String dataValues,
+                        String dataEntries,
+                        long dataRunMin,
+                        String variables,
+                        String dataNames,
+                        String layout) {
 
     /// A field read fewer times than this in a template is written where it's used, not held in a variable: an
     /// element's own guard and value are two reads, so a variable needs a third, such as an enclosing guard.
@@ -78,7 +70,6 @@ public record XsltStyle(@JsonProperty("naming") String naming,
     /// @param json A style as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static XsltStyle fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("XsltStyle", read(reader, json, List.of()));

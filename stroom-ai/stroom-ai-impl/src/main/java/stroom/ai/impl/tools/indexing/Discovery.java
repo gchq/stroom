@@ -19,9 +19,7 @@ package stroom.ai.impl.tools.indexing;
 import stroom.ai.impl.tools.generation.ModelReader;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,19 +51,16 @@ import java.util.Objects;
 ///                              object; the string is kept (true by default).
 /// @param ignoreAbove           `ignore_above`: strings are keywords; longer ones are not indexed (1024 by default).
 /// @param totalFieldsLimit      `total_fields_limit`: Elasticsearch's limit on mapped fields (2000 by default).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"input", "record", "timestamp_field", "timestamp_chosen_by_user", "timestamp_format", "meta",
-        "drop", "unpack_json", "ignore_above", "total_fields_limit"})
-public record Discovery(@JsonProperty("input") String input,
-                        @JsonProperty("record") String record,
-                        @JsonProperty("timestamp_field") String timestampField,
-                        @JsonProperty("timestamp_chosen_by_user") boolean timestampChosenByUser,
-                        @JsonProperty("timestamp_format") String timestampFormat,
-                        @JsonProperty("meta") Map<String, String> meta,
-                        @JsonProperty("drop") List<String> drop,
-                        @JsonProperty("unpack_json") boolean unpackJson,
-                        @JsonProperty("ignore_above") long ignoreAbove,
-                        @JsonProperty("total_fields_limit") long totalFieldsLimit) {
+public record Discovery(String input,
+                        String record,
+                        String timestampField,
+                        boolean timestampChosenByUser,
+                        String timestampFormat,
+                        Map<String, String> meta,
+                        List<String> drop,
+                        boolean unpackJson,
+                        long ignoreAbove,
+                        long totalFieldsLimit) {
 
     /// The kinds of raw data.
     public static final List<String> INPUTS = List.of("json", "delimited", "xml");
@@ -120,7 +115,8 @@ public record Discovery(@JsonProperty("input") String input,
                 : null;
     }
 
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the Python model's `model_dump` writes it (and as Jackson writes it).
+    @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
         json.put("input", input);

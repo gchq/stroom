@@ -18,11 +18,6 @@ package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.generation.DumpMode;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +30,10 @@ import java.util.Objects;
 /// @param source       Or an XPath from the Event, e.g. `EventSource/System/Name`.
 /// @param map          Source value -> header value, e.g. severities.
 /// @param defaultValue `default`: when the source is empty, or matches no map entry.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"value", "source", "map", "default"})
-public record CefValue(@JsonProperty("value") String value,
-                       @JsonProperty("source") String source,
-                       @JsonProperty("map") Map<String, String> map,
-                       @JsonProperty("default") String defaultValue) {
+public record CefValue(String value,
+                       String source,
+                       Map<String, String> map,
+                       String defaultValue) {
 
     /// The model's own check.
     public static final String ONE_OF = "A header field takes value (a constant) or source (an XPath on the Event)";
@@ -67,7 +60,6 @@ public record CefValue(@JsonProperty("value") String value,
     /// @param json A header field as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static CefValue fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
         return reader.orThrow("CefValue", read(reader, json, List.of()));
