@@ -145,6 +145,25 @@ class TestCompareOutputsTool {
         assertThat(result.get("unchanged")).isEqualTo(true);
     }
 
+    @Test
+    void recordsAlreadyLocatedAreComparedWithoutLocatingThemAgain() {
+        // summarise_fix locates the events once, for the comparison and the steps.
+        final Map<String, Object> located = new LinkedHashMap<>();
+        located.put("raw", 6L);
+        located.put("part", 0L);
+        located.put("record", 12L);
+        world.records(20, "<Events><Event><User>u</User></Event></Events>");
+        final CompareOutputsTool.Request request = new CompareOutputsTool.Request("p-1", List.of(), null, "p-1",
+                null, CompareOutputsTool.DEFAULT_MAX_RECORDS, List.of());
+
+        final Map<String, Object> result = tool().compareLocated(world.context(), request, List.of(located));
+
+        Mockito.verifyNoInteractions(eventLocations);
+        assertThat(world.steps).containsExactly("REFRESH 0:12", "REFRESH 0:12");
+        assertThat(result.get("records_compared")).isEqualTo(1);
+        assertThat(result.get("unchanged")).isEqualTo(true);
+    }
+
     // A stepper whose record 1 says otherwise for draft code: the walks opened with code are the draft's.
     private BiFunction<Long, StepLocation, SteppingResult> withDraft(
             final BiFunction<Long, StepLocation, SteppingResult> saved) {
