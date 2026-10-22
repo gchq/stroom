@@ -115,7 +115,8 @@ class TestStreamSummaries {
     void theEnvironmentsOwnRulesComeFirst() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, new ErrorTriageConfig(List.of(
-                "{element: decorationFilter, class: blocking, reason: 'Decoration must not fail here'}")), null, null);
+                "{element: decorationFilter, class: blocking, reason: 'Decoration must not fail here'}")), null, null,
+                null);
         world.add(9, StreamTypeNames.ERROR, null, null, Map.of());
         world.bytes.put(9L, "[1:1 decorationFilter] WARN: No user found for \"a\"\n".getBytes(StandardCharsets.UTF_8));
 

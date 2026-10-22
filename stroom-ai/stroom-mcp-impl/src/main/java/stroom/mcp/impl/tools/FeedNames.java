@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeSet;
 
 /// Feeds by the names users give them: Stroom files a feed's streams under its name without regard to case, and a
@@ -68,6 +69,13 @@ class FeedNames {
         return all().stream()
                 .filter(feed -> name.equalsIgnoreCase(feed.getName()))
                 .toList();
+    }
+
+    /// @param name A feed's name, exactly.
+    /// @return The feed of exactly that name, if the user can view it (Stroom keeps one feed per name). A direct
+    /// lookup, as the Stroom MCP server's `/feed/v1/getDocRefForName`.
+    Optional<DocRef> exact(final String name) {
+        return docFinder(name).stream().findFirst();
     }
 
     /// The feed the user named, as Stroom spells it. Not here by that name: up to three close matches offered in
