@@ -106,7 +106,7 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_MCP_TOOL_POLICIES(
             "Manage MCP Tool Policies",
             "Access the MCP Tool Policies screen to view and manage which tools users and groups may use, over " +
-            "MCP and in Stroom AI."),
+            "MCP and in Ask Stroom AI."),
     MANAGE_PROPERTIES_PERMISSION(
             "Manage Properties",
             "Access to the Properties to manage the system configuration."),

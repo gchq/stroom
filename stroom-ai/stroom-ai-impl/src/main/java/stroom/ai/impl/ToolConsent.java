@@ -34,7 +34,8 @@ import java.util.Optional;
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
 /// run:
 ///
-/// - built-in tools run (they only reach the chat's own workspace and memory, which have their own controls),
+/// - built-in tools run (they run as the user, within the user's permissions and tool policies, and those that
+///   change documents, such as the build tools, ask the user themselves through forms before each change),
 ///   except that while the user is away only calls that only read run, and the others wait for the user, as for
 ///   MCP tools;
 /// - an MCP tool with an ALLOW policy runs, ASK_ALWAYS always asks, DENY tools are never offered;
@@ -109,8 +110,9 @@ public class ToolConsent {
                           final McpToolset toolset,
                           final boolean unattended) {
         if (builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName))) {
-            // They only reach the chat's own workspace and memory, which have their own controls (S6, S7), but
-            // while the user is away only what reads runs (S3): a change waits for them, as an MCP tool's does.
+            // They run as the user, within the user's permissions and tool policies, and those that confirm
+            // themselves ask through forms, but while the user is away only what reads runs (S3): a change waits
+            // for them, as an MCP tool's does.
             return unattended && !builtInTools.isReadOnlyCall(toolName, arguments)
                     ? Verdict.ask(builtInAwayReason(), false, false, List.of())
                     : Verdict.RUN;
@@ -253,7 +255,7 @@ public class ToolConsent {
     }
 
     private static String builtInAwayReason() {
-        return "You were away when the agent wanted to do this, and it changes the chat's files or memory.";
+        return "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory.";
     }
 
     /// What to do about a tool call.

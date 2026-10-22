@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,29 +50,25 @@ import java.util.Objects;
 /// @param imports      Shared XSLTs imported (xsl:import).
 /// @param shared       Named templates from shared XSLTs, called in their element's place.
 /// @param functions    Shared XSLTs whose xsl:functions the xpaths call.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"input", "root", "record", "xml_namespace", "json_layout", "json_fields", "xml_fields", "pairs",
-        "extract", "for_each", "nil_values", "drop_when", "common", "events", "unmatched", "style", "imports",
-        "shared", "functions"})
-public record TranslationMapping(@JsonProperty("input") String input,
-                                 @JsonProperty("root") String root,
-                                 @JsonProperty("record") String record,
-                                 @JsonProperty("xml_namespace") String xmlNamespace,
-                                 @JsonProperty("json_layout") String jsonLayout,
-                                 @JsonProperty("json_fields") List<String> jsonFields,
-                                 @JsonProperty("xml_fields") List<String> xmlFields,
-                                 @JsonProperty("pairs") List<KeyValuePairs> pairs,
-                                 @JsonProperty("extract") List<Extraction> extract,
-                                 @JsonProperty("for_each") String forEach,
-                                 @JsonProperty("nil_values") List<String> nilValues,
-                                 @JsonProperty("drop_when") List<DropRule> dropWhen,
-                                 @JsonProperty("common") List<FieldMapping> common,
-                                 @JsonProperty("events") List<EventRule> events,
-                                 @JsonProperty("unmatched") String unmatched,
-                                 @JsonProperty("style") XsltStyle style,
-                                 @JsonProperty("imports") List<String> imports,
-                                 @JsonProperty("shared") List<SharedTemplate> shared,
-                                 @JsonProperty("functions") List<SharedFunctions> functions) {
+public record TranslationMapping(String input,
+                                 String root,
+                                 String record,
+                                 String xmlNamespace,
+                                 String jsonLayout,
+                                 List<String> jsonFields,
+                                 List<String> xmlFields,
+                                 List<KeyValuePairs> pairs,
+                                 List<Extraction> extract,
+                                 String forEach,
+                                 List<String> nilValues,
+                                 List<DropRule> dropWhen,
+                                 List<FieldMapping> common,
+                                 List<EventRule> events,
+                                 String unmatched,
+                                 XsltStyle style,
+                                 List<String> imports,
+                                 List<SharedTemplate> shared,
+                                 List<SharedFunctions> functions) {
 
     /// The kinds of input.
     public static final List<String> INPUTS = List.of("data_splitter", "json", "xml", "xml_fragments");
@@ -105,7 +96,6 @@ public record TranslationMapping(@JsonProperty("input") String input,
     ///             kept in an XSLT doc's description.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate, with every error pydantic would give.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static TranslationMapping fromJson(final Map<String, Object> json) {
         return parse(json);
     }

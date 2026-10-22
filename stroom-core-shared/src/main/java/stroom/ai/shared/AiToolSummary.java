@@ -53,20 +53,20 @@ public class AiToolSummary {
 
     /// @param name          The tool's name.
     /// @param category      Its category.
-    /// @param readOnly      True if it cannot change anything, so a read-only policy grants it.
+    /// @param readOnly      True if it cannot change anything, so a read-only policy grants it. Null is false.
     /// @param readOnlyCalls True if it can change things but some of its calls cannot, so a read-only policy
-    ///                      grants it for those calls only (e.g. memory's list and read).
+    ///                      grants it for those calls only (e.g. memory's list and read). Null is false.
     /// @param description   What it does, as a client outside the chat is told.
     @JsonCreator
     public AiToolSummary(@JsonProperty("name") final String name,
                          @JsonProperty("category") final AiToolCategory category,
-                         @JsonProperty("readOnly") final boolean readOnly,
-                         @JsonProperty("readOnlyCalls") final boolean readOnlyCalls,
+                         @JsonProperty("readOnly") final Boolean readOnly,
+                         @JsonProperty("readOnlyCalls") final Boolean readOnlyCalls,
                          @JsonProperty("description") final String description) {
         this.name = name;
         this.category = category;
-        this.readOnly = readOnly;
-        this.readOnlyCalls = readOnlyCalls;
+        this.readOnly = Boolean.TRUE.equals(readOnly);
+        this.readOnlyCalls = Boolean.TRUE.equals(readOnlyCalls);
         this.description = description;
     }
 

@@ -18,11 +18,6 @@ package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.generation.DumpMode;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +31,11 @@ import java.util.Map;
 /// @param eventType `event_type`: only for this kind of event (its action element); null for wherever the path
 ///                  occurs.
 /// @param drop      True if the value is not sent.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"path", "key", "label", "event_type", "drop"})
-public record CefOverride(@JsonProperty("path") String path,
-                          @JsonProperty("key") String key,
-                          @JsonProperty("label") String label,
-                          @JsonProperty("event_type") String eventType,
-                          @JsonProperty("drop") boolean drop) {
+public record CefOverride(String path,
+                          String key,
+                          String label,
+                          String eventType,
+                          boolean drop) {
 
     /// @param path  The Event path.
     /// @param key   The CEF key.
@@ -62,7 +55,6 @@ public record CefOverride(@JsonProperty("path") String path,
     /// @param json An override as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static CefOverride fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
         final Map<String, Object> data = reader.model(json, List.of(), "Override");

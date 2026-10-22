@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -111,7 +112,8 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
         return approvalTimeout;
     }
 
-    /// @return How often an idle MCP session's open stream is sent a ping.
+    /// @return How often an idle MCP session's open stream is sent a ping. Read once, when the endpoint starts.
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("How often an MCP session's open stream is sent a ping, so that proxies and load "
                              + "balancers don't close it while it is idle. Keep it under their idle timeouts.")
     @JsonProperty("keepAliveInterval")
@@ -122,7 +124,8 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     /// @return How long the workspace of an MCP session that has had no requests is kept.
     @JsonPropertyDescription("How long the workspace of an MCP session that has had no requests is kept, for a "
                              + "session that ended without the client saying so (e.g. on a node that stopped). A "
-                             + "session that ends normally has its workspace deleted at once.")
+                             + "session that ends normally has its workspace deleted once the session's calls "
+                             + "have finished.")
     @JsonProperty("sessionRetention")
     public StroomDuration getSessionRetention() {
         return sessionRetention;

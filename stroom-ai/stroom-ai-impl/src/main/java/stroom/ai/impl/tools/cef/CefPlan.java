@@ -24,11 +24,6 @@ import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.validation.XsltSafety;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -61,24 +56,21 @@ import java.util.regex.Pattern;
 ///                   `why`): documented as not sent.
 /// @param imports    Shared XSLTs imported (xsl:import), e.g. those an AGENTS doc's Required imports name.
 /// @param style      How the CEF XSLT is written, as an Events translation's is (naming, variables, layout).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"output", "topic", "kafka_key", "custom_keys", "vendor", "product", "version", "signature",
-        "name", "severity", "common", "events", "not_sent", "imports", "style"})
-public record CefPlan(@JsonProperty("output") String output,
-                      @JsonProperty("topic") String topic,
-                      @JsonProperty("kafka_key") String kafkaKey,
-                      @JsonProperty("custom_keys") boolean customKeys,
-                      @JsonProperty("vendor") CefValue vendor,
-                      @JsonProperty("product") CefValue product,
-                      @JsonProperty("version") CefValue version,
-                      @JsonProperty("signature") CefValue signature,
-                      @JsonProperty("name") CefValue name,
-                      @JsonProperty("severity") CefValue severity,
-                      @JsonProperty("common") List<CefField> common,
-                      @JsonProperty("events") Map<String, List<CefField>> events,
-                      @JsonProperty("not_sent") List<Map<String, String>> notSent,
-                      @JsonProperty("imports") List<String> imports,
-                      @JsonProperty("style") XsltStyle style) {
+public record CefPlan(String output,
+                      String topic,
+                      String kafkaKey,
+                      boolean customKeys,
+                      CefValue vendor,
+                      CefValue product,
+                      CefValue version,
+                      CefValue signature,
+                      CefValue name,
+                      CefValue severity,
+                      List<CefField> common,
+                      Map<String, List<CefField>> events,
+                      List<Map<String, String>> notSent,
+                      List<String> imports,
+                      XsltStyle style) {
 
     /// One Kafka record per Event.
     public static final String KAFKA = "kafka";
@@ -127,7 +119,6 @@ public record CefPlan(@JsonProperty("output") String output,
     /// @param json A plan as JSON-like values (`model_dump()` of the Python model, or what an agent sends).
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate, with pydantic's errors.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static CefPlan fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
         final Map<String, Object> data = reader.model(json, List.of(), "CefPlan");

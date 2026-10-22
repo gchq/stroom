@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,12 +27,10 @@ import java.util.Objects;
 /// @param key      Input field holding the key.
 /// @param keyXpath `key_xpath`: or an XPath for the key, e.g. `lower-case(data[@name='user']/@value)`.
 /// @param values   What the key maps to (at least one).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"name", "key", "key_xpath", "values"})
-public record ReferenceMap(@JsonProperty("name") String name,
-                           @JsonProperty("key") String key,
-                           @JsonProperty("key_xpath") String keyXpath,
-                           @JsonProperty("values") List<ReferenceValue> values) {
+public record ReferenceMap(String name,
+                           String key,
+                           String keyXpath,
+                           List<ReferenceValue> values) {
 
     /// Fills in an empty list for a null one.
     public ReferenceMap {
@@ -47,7 +40,6 @@ public record ReferenceMap(@JsonProperty("name") String name,
     /// @param json A map as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static ReferenceMap fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("ReferenceMap", read(reader, json, List.of()));

@@ -15,7 +15,7 @@
                                             identity="mcpToolServerEnabled"
                                             label="Enabled"/>
                 </form:FormGroup>
-                <form:FormGroup helpText="Whether you trust this server, e.g. because you run it. Only a trusted server's tool descriptions (such as 'read-only') are believed, so its read-only tools can run without asking. Every tool of an untrusted server asks the user before running, unless a policy on the Tools tab says otherwise. With Stroom's internal identity provider, only a trusted server is signed in to with 'OAuth2 passthrough'.">
+                <form:FormGroup helpText="Whether you trust this server, e.g. because you run it. Only a trusted server's tool descriptions (such as 'read-only') are believed, so its read-only tools can run without asking. Every tool of an untrusted server asks the user before running, unless a policy on the Tool Policies tab says otherwise. With Stroom's internal identity provider, only a trusted server is signed in to with 'OAuth2 passthrough'.">
                     <tickbox:CustomCheckBox ui:field="trusted"
                                             identity="mcpToolServerTrusted"
                                             label="Trusted server"/>

@@ -18,11 +18,6 @@ package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.generation.DumpMode;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +34,10 @@ import java.util.Map;
 /// @param transform `text`; `epoch_ms`: a time as milliseconds since 1970 (rt, end, start and custom dates);
 ///                  `outcome`: Outcome/Success as success or failure (no Outcome counts as success, as in
 ///                  event-logging).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"path", "key", "label", "transform"})
-public record CefField(@JsonProperty("path") String path,
-                       @JsonProperty("key") String key,
-                       @JsonProperty("label") String label,
-                       @JsonProperty("transform") String transform) {
+public record CefField(String path,
+                       String key,
+                       String label,
+                       String transform) {
 
     /// The transforms.
     public static final List<String> TRANSFORMS = List.of("text", "epoch_ms", "outcome");
@@ -77,7 +70,6 @@ public record CefField(@JsonProperty("path") String path,
     /// @param json A field as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static CefField fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
         return reader.orThrow("CefField", read(reader, json, List.of()));
