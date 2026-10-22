@@ -1052,38 +1052,42 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
 **Confirmed** (a search of the client code, 22 October 2026). Leaving out layout panels, text
 (`Label`, `HTML`), the forked text boxes (`TextBox`, `TextArea`: the Text inputs component) and the
 Stroom components that wrap a native element (`Button`, `CustomCheckBox`, `ColourBox`,
-`CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`), these remain:
+`CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`).
 
-* GWT's `Button`, not Stroom's (`stroom.widget.button.client.Button` or a `ToolbarButton`):
-  the task's Terminate (`UserTaskViewImpl`), the navigation logo (`NavigationViewImpl`) and the
-  floor map layer grip (`FloorMapLayersPresenter`, a real button on purpose, restyled). (Reset
-  Store, Reset Data and Show All are now Stroom's.)
-* Links: GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`), and `Anchor` with an
-  `InlineLabel` in the content pack details (`ContentStoreContentPackDetailsPresenter`), where
-  `LinkButton` or `NewTabLink` would do; "View Source" (`DataViewImpl`) is a `Label` given
-  `role="button"` and a tab index by hand, which is a `LinkButton`.
-* GWT's `Grid` (a `<table>`) for form layout: the welcome page's build info (`WelcomeViewImpl`)
-  and the floor map's layer style, group edit and set scale dialogs (`FloorMapLayerStyleViewImpl`,
-  `FloorMapGroupEditViewImpl`, `FloorMapSetScaleViewImpl`; `FloorMapAria` names fields from the
-  table's cells), rather than `FormGroup`s.
-* GWT's `SuggestBox` in the term editor (`TermEditor`; see the Term editor in `COMPONENTS.md`).
-* GWT's `FormPanel` (a `<form>`) round the asset add and rename dialogs
-  (`DocumentAssetAddItemDialogViewImpl`, `DocumentAssetEditAssetDialogViewImpl`) and the step
-  location dialog (`StepLocationViewImpl`), where other dialogs have none.
-* GWT's `PopupPanel` for the editor's indicator popup (`IndicatorPopup`), outside Stroom's popups.
-* `FocusPanel` round the main view and full-screen view (`MainViewImpl`, `FullScreenViewImpl`);
-  the floor map canvas's is its keyboard surface, which is right.
-* `DockLayoutPanel` in the floor map's views (`FloorMapEditorViewImpl`, `FloorMapGroupsViewImpl`,
-  `FloorMapTimeListViewImpl`, `FloorMapTrackingViewImpl`, `FloorMapFactListViewImpl`,
-  `FloorMapMapViewImpl`), which the Layout panels row of `COMPONENTS.md` replaces with grid, flex
-  or `SplitPane`.
-* A tree drawn as HTML: the Pathways editor's paths (`PathwayTreePresenter`) are an `HTML` widget
-  whose nodes are chosen by a click on them, with no roles and no keys, where the grid's tree
-  profile (`DataGridProfile.TREE`) would give both.
-* Raw HTML from Java: a `<table>` for the dashboard's current selection (`TableBuilder`, used by
-  `DashboardContextImpl`, with no header cells), and `<img>`s for content pack icons and floor map
-  swatches (`ImageTagUtil`, `FloorMapSwatchHtml`). `Templates.input()` and `ItemCell`'s `<select>`
-  are unused (waiting for the removals).
+Decided on 2026-10-22: change only what stops a keyboard or screen reader user, and only without
+changing how it looks. Reset Store, Reset Data and Show All became Stroom's `Button`; the floor
+map's form grids are now `role="presentation"` (`FloorMapAria.layoutTable`); the welcome page's
+build info names are row headers; and content pack icons have an empty `alt`.
+
+Still to do:
+
+* The Pathways editor's paths (`PathwayTreePresenter`) are an `HTML` widget whose nodes are chosen
+  by a click, with no roles and no keys, so they can't be used without a mouse. The grid's tree
+  profile (`DataGridProfile.TREE`) would fix both, but changes its look to the explorer tree's.
+  Left until the Pathways editor itself is fixed (see "The Pathways editor can't create a pathway
+  or add a constraint").
+
+Left as they are, on purpose:
+
+* GWT's `Button` for the task's Terminate (`UserTaskViewImpl`), the navigation logo
+  (`NavigationViewImpl`) and the floor map layer grip (`FloorMapLayersPresenter`): real buttons
+  already, so only their styling differs.
+* GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`) and `Anchor` in the content pack
+  details (`ContentStoreContentPackDetailsPresenter`): real links already.
+* "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
+  press it, and it says when it is disabled).
+* The current selection's `<table>` (`TableBuilder`, from `DashboardContextImpl`): its components'
+  names are `<th>`; the name and value rows read in order, and row headers there would need `<th>`'s
+  heading look or a new `TableCell` option.
+* GWT's `SuggestBox` in the term editor (`TermEditor`): the Term editor in `COMPONENTS.md` replaces
+  it.
+* GWT's `PopupPanel` for the editor's indicator popup (`IndicatorPopup`): part of the Ace editor
+  work.
+* GWT's `FormPanel` round the asset add and rename dialogs and the step location dialog,
+  `FocusPanel` round the main and full-screen views (and the floor map canvas, its keyboard
+  surface), and `DockLayoutPanel` in six floor map views (the Layout panels row of `COMPONENTS.md`):
+  layout, not controls.
+* `Templates.input()` and `ItemCell`'s `<select>`: unused, waiting for the removals.
 
 ### Dialogs larger than the window
 

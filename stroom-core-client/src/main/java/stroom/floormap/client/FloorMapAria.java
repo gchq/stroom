@@ -193,6 +193,18 @@ public final class FloorMapAria {
         labelledBy(target, cellId(grid, row, column));
     }
 
+    /// Marks a grid used only to lay out a form (a label beside each control) as presentation, so
+    /// that a screen reader reads its labels and controls in turn rather than announcing a table of
+    /// rows and columns. Its cells keep their ids, so [#labelledByCell(Grid, int, int, UIObject)]
+    /// still names the controls from them.
+    ///
+    /// @param grid The grid laying out the form.
+    public static void layoutTable(final Grid grid) {
+        if (grid != null) {
+            grid.getElement().setAttribute(ROLE, "presentation");
+        }
+    }
+
     /// As [#labelledByCell(Grid, int, int, UIObject)], for a composite widget whose real control
     /// is inside it, e.g. a selection box, whose combobox is its text box: the name goes on that
     /// control, where on the wrapper it would be dropped (see [#labelInnerControl(UIObject, String)]).

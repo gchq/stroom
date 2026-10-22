@@ -20,6 +20,7 @@ import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -32,6 +33,8 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     private final Widget widget;
     @UiField
     SimplePanel html;
+    @UiField
+    Grid buildInfo;
     @UiField
     Label userIdentity;
     @UiField
@@ -50,6 +53,11 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     @Inject
     public WelcomeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Each row is a name and its value: the name cells are row headers, so a screen reader
+        // reads the name with its value
+        for (int row = 0; row < buildInfo.getRowCount(); row++) {
+            buildInfo.getCellFormatter().getElement(row, 0).setAttribute("role", "rowheader");
+        }
     }
 
     @Override
