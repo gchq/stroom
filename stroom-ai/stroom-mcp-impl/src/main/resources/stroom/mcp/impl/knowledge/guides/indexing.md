@@ -240,7 +240,7 @@ dates (GREATER_THAN, LESS_THAN, BETWEEN `from,to`), booleans (`true`), EQUALS `*
 `tags` hold `retry` matches `tags = retry`), and fields inside objects (`user.name`, `message_json.error.code`).
 Found against Stroom 7.13 and Elasticsearch 9, and not to be relied on: STARTS_WITH and CONTAINS find nothing (use
 EQUALS with wildcards), IS_NULL and IS_NOT_NULL match every document (use EQUALS `*` and compare counts; `verify_index` and
-`find_events` search IS_NOT_NULL as EQUALS `*` and IS_NULL as NOT_EQUALS `*` themselves, and say so), and IN
+`search_events` (given an index) search IS_NOT_NULL as EQUALS `*` and IS_NULL as NOT_EQUALS `*` themselves, and say so), and IN
 with spaces
 between the values finds nothing. `verify_index` refuses those searches.
 

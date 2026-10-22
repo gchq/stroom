@@ -178,10 +178,10 @@ class TestWorkspaceTools {
                 run(new DeleteFileTool(workspace), "{\"path\":" + path + "}"),
                 run(fetchEvents, "{\"path\":" + path + "}"),
                 run(fetchEvents, "{\"path\":\"/attachments/7.md\",\"out\":" + path + "}"),
-                run(new SearchEventsTool(workspace), "{\"path\":" + path + ",\"text\":\"SECRET\"}"),
-                run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
+                run(searchEventsTool(), "{\"path\":" + path + ",\"text\":\"SECRET\"}"),
+                run(searchEventsTool(), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
                                                      + "\"out\":" + path + "}"),
-                run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
+                run(searchEventsTool(), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
                                                      + "\"join\":" + path + "}"));
 
         assertThat(calls).allSatisfy(result -> assertThat(result)
@@ -556,5 +556,10 @@ class TestWorkspaceTools {
 
     private static ToolCall request(final String arguments) {
         return new ToolCall("x", "t", arguments);
+    }
+
+    // search_events over files: its search of an index isn't used here.
+    private SearchEventsTool searchEventsTool() {
+        return new SearchEventsTool(workspace, Mockito.mock(IndexEvents.class));
     }
 }

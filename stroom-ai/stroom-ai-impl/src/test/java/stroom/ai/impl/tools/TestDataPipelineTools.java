@@ -472,7 +472,7 @@ class TestDataPipelineTools {
                 new TableTool(workspace, summariser),
                 new FetchEventsTool(workspace, () -> Mockito.mock(Store.class), () -> injectorSecurityContext,
                         Mockito.mock(AiAuditLog.class), Mockito.mock(StreamReader.class)),
-                new SearchEventsTool(workspace), currentResultsTool);
+                new SearchEventsTool(workspace, Mockito.mock(IndexEvents.class)), currentResultsTool);
     }
 
     private SummariseColumnTool summariseTool() {

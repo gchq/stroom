@@ -35,14 +35,20 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -56,7 +62,9 @@ import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * {@code run_stroomql} - runs a StroomQL query as the chat's user (so only data they can see), and writes the
@@ -66,6 +74,8 @@ import java.util.Set;
 class RunStroomQlTool extends AbstractWorkspaceTool {
 
     static final String NAME = "run_stroomql";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RunStroomQlTool.class);
+
     static final String QUERY_ARG = "query";
     private static final Duration POLL_INTERVAL = Duration.ofMillis(500);
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
@@ -125,6 +135,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                         .general(" first; never choose one for them.")
                         .chatOnly(" If the user may instead want a Query document to run themselves "
                                   + "(propose_query), ask them which.")
+                        .general(" A query on a Lucene or Elastic index whose answer through Stroom would mislead "
+                                 + "(e.g. is null on Elasticsearch, which matches every document) is refused, "
+                                 + "saying what to query instead.")
+                        .chatOnly(" To find an event the user describes in an index, with each hit's StreamId and "
+                                  + "EventId and the streams holding every match, use search_events with index.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
@@ -163,9 +178,12 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 : WorkspacePath.parse("/outputs/queries/query-"
                                       + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
         final QueryService queryService = queryServiceProvider.get();
-        final String sourceDocUuid = queryService.getReferencedDataSource(query)
-                .map(DocRef::getUuid)
-                .orElse(null);
+        final DocRef dataSource = queryService.getReferencedDataSource(query).orElse(null);
+        final String sourceDocUuid = NullSafe.get(dataSource, DocRef::getUuid);
+        final Optional<String> misleading = misleading(queryService, query, dataSource);
+        if (misleading.isPresent()) {
+            throw new WorkspaceException(misleading.get());
+        }
 
         final QuerySearchRequest searchRequest = QuerySearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.API).build())
@@ -193,6 +211,42 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
         }
+    }
+
+    /// The refusal for a query on a Lucene or Elastic index whose answer through Stroom would mislead, as the Stroom
+    /// MCP server's find_events refused such a search (e.g. IS_NULL on Elasticsearch matches every document, and a
+    /// wildcard on an ip field finds nothing): it says what to query instead.
+    ///
+    /// @param queryService Parses the query and lists the index's fields.
+    /// @param query        The query.
+    /// @param dataSource   Its data source, or null.
+    /// @return The refusal, or empty if the query can be trusted, isn't on an index, or can't be checked.
+    static Optional<String> misleading(final QueryService queryService,
+                                       final String query,
+                                       final DocRef dataSource) {
+        final Optional<String> backend = MisleadingSearches.backendOf(dataSource);
+        if (backend.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<MisleadingSearches.Search> searches;
+        final List<QueryField> fields;
+        try {
+            searches = MisleadingSearches.searches(queryService.parseQuery(query));
+            if (searches.isEmpty()) {
+                return Optional.empty();
+            }
+            fields = NullSafe.list(NullSafe.get(queryService.findFields(new FindFieldCriteria(
+                    new PageRequest(0, IndexEvents.MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource,
+                    null, null)), ResultPage::getValues));
+        } catch (final RuntimeException e) {
+            // A check on the query, not a reason for it not to run: its own errors are Stroom's to give.
+            LOGGER.debug(() -> "Unable to check the query's searches: " + e.getMessage(), e);
+            return Optional.empty();
+        }
+        return MisleadingSearches.refusal(backend.get(), searches, MisleadingSearches.ipFields(fields), List.of(),
+                        Map.of(), MisleadingSearches.unindexed(dataSource, fields,
+                                searches.stream().map(MisleadingSearches.Search::field).toList()))
+                .map(refusal -> refusal + ". In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
     }
 
     // Writes the results of a search that has finished to the workspace, and says what they hold.
