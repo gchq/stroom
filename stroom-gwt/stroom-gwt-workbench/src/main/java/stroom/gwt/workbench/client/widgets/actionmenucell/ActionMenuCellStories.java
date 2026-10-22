@@ -77,18 +77,13 @@ public final class ActionMenuCellStories {
                     play.waitFor(() -> play.expect(play.spy(CLICKED)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(CLICKED)).toHaveBeenCalledWith("copy");
                 })
-                // No items: the cell has no menu to show
+                // No items: the cell has no menu to show, so no button (it once showed one that did
+                // nothing)
                 .story("NoItems", context -> {
                     context.fn(CLICKED);
                     return actionMenuCell(context, Collections.emptyList());
                 })
-                .withPlay(play -> {
-                    // ActionMenuCell renders its ellipsis for every row, even with no items; a mouse
-                    // down on it then shows no menu
-                    play.expect(play.getByTitle("Actions...")).toBeInTheDocument();
-                    play.click(play.getByTitle("Actions..."));
-                    play.expect(play.screen().querySelector(".menu")).toBeNull();
-                });
+                .withPlay(play -> play.expect(play.queryByTitle("Actions...")).toBeNull());
     }
 
     private static Widget actionMenuCell(final StoryContext context, final List<Item> items) {

@@ -22,8 +22,8 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
-import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -89,12 +89,15 @@ public final class DocumentCreatePermissionsGridStories {
                     final Value<Double> gridRight = play.querySelector(".data-grid").right();
                     play.expect("the space right of the columns", () -> gridRight.get() - lastRight.get())
                             .toBeLessThan(20);
-                    // GWT's grid tick is a TickBoxCell div, not a checkbox
-                    play.click(play.within(play.getByText("Pipeline").closest(StroomDom.GRID_ROW))
-                            .querySelector(".tick-box"));
+                    // Each tick box is a check box named for its row's permission, not its state
+                    final Query pipeline = play.getByRole("checkbox", "Create Pipeline");
+                    play.expect(pipeline).toHaveAttribute("aria-checked", "false");
+                    play.click(pipeline);
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
                             .toContain("Pipeline"));
+                    // Ticking it draws it again, still named
+                    play.expect(play.getByRole("checkbox", "Create Pipeline")).toHaveAttribute("aria-checked", "true");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The header tick toggles the '[ all ]' sentinel into the set

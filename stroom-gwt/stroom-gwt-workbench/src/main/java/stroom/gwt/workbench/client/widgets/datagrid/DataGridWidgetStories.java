@@ -524,12 +524,19 @@ public final class DataGridWidgetStories {
                     final Query engineering = InteractiveCellGrids.rowOf(play, "Engineering");
                     play.expect(engineering).toHaveAttribute("aria-level", "1");
                     play.expect(engineering).toHaveAttribute("aria-expanded", "false");
+                    // The expander says what a press does, to the mouse; the row tells assistive
+                    // technology (aria-expanded), so the expander is hidden from it
+                    final Query expander = play.within(engineering).querySelector(".expanderCell");
+                    play.expect(expander).toHaveAttribute("title", "Expand");
+                    play.expect(expander).toHaveAttribute("aria-hidden", "true");
 
                     play.click(play.getByText("Engineering"));
                     play.keyboard("{ArrowRight}");
                     play.waitFor(() -> play.expect(rows).toHaveLength(4));
                     play.expect(engineering).toHaveAttribute("aria-expanded", "true");
                     play.expect(engineering).toHaveFocus();
+                    play.expect(play.within(engineering).querySelector(".expanderCell"))
+                            .toHaveAttribute("title", "Collapse");
 
                     play.keyboard("{ArrowDown}");
                     final Query alice = InteractiveCellGrids.rowOf(play, "Alice Johnson");

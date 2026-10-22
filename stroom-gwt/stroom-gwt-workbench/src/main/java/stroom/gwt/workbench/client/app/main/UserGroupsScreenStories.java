@@ -37,6 +37,7 @@ import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -115,6 +116,12 @@ public final class UserGroupsScreenStories {
                     play.findByText("Members of group \"Administrators\":");
                     play.waitFor(() -> play.expect(play.getAllByText("Alice Anderson").count())
                             .toBeGreaterThanOrEqual(2));
+                    // The group is a member of none: its pager counts none ("0 to 0 of 0", once
+                    // "1 to 1 of 0")
+                    play.waitFor(() -> play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .toContain("0 to 0 of 0"));
+                    play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .not().toContain("1 to 1 of 0");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The runs of icon buttons, and the tab stops each costs, once a group is selected
@@ -272,6 +279,25 @@ public final class UserGroupsScreenStories {
         return "{\"values\": [" + String.join(", ", users) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
                 + users.length + ", \"total\": " + users.length + ", \"exact\": true}}";
     }
+
+    // Each pager's count, e.g. "1 to 3 of 3"
+    private static List<String> pagerCounts() {
+        final List<String> counts = new ArrayList<>();
+        final JsArrayString texts = pagerTexts();
+        for (int i = 0; i < texts.length(); i++) {
+            counts.add(texts.get(i));
+        }
+        return counts;
+    }
+
+    private static native JsArrayString pagerTexts() /*-{
+        var texts = [];
+        var pagers = $doc.querySelectorAll(".pager-paging");
+        for (var i = 0; i < pagers.length; i++) {
+            texts.push(pagers[i].textContent.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim());
+        }
+        return texts;
+    }-*/;
 
     private static Widget render(final StoryContext context) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);

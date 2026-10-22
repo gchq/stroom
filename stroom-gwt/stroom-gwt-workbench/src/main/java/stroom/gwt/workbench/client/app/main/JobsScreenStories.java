@@ -246,7 +246,8 @@ public final class JobsScreenStories {
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
                     // The row's action menu: GWT's buildActionMenu yields four items in this order.
                     // The menu is named for its job and node, and takes the focus
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(0));
+                    // The button is named for its job and node too
+                    play.click(play.getByTitle("Actions for job 'Data Retention' on node 'node1'"));
                     screen.findByRole("menu", "Actions for job 'Data Retention' on node 'node1'");
                     play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
                     play.expect(screen.getByText("Run Job on 'node1' Now")).toBeInTheDocument();
@@ -342,7 +343,7 @@ public final class JobsScreenStories {
     // Runs node1's job now from its row's action menu, and waits for the confirmation
     private static void runNow(final Play play) {
         final Play screen = play.screen();
-        play.click(play.within(row(play, "node1")).getByTitle(StroomDom.ACTIONS_TITLE));
+        play.click(play.within(row(play, "node1")).getByTitle(TextMatch.regex("^Actions for job ")));
         play.click(screen.findByText("Run Job on 'node1' Now"));
         play.waitFor(() -> play.expect(screen.getByText(
                 TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());

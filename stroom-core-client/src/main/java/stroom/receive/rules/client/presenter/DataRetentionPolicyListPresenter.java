@@ -154,7 +154,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
     private void addActionButtonColumn(final int width) {
 
-        final ActionCell<DataRetentionRule> actionCell = new stroom.cell.info.client.ActionCell<>(this::showActionMenu);
+        final ActionCell<DataRetentionRule> actionCell = new ActionCell<>(this::showActionMenu,
+                DataRetentionPolicyListPresenter::getActionMenuName);
 
         final Column<DataRetentionRule, DataRetentionRule> expressionColumn =
                 new Column<DataRetentionRule, DataRetentionRule>(actionCell) {

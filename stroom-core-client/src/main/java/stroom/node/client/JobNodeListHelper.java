@@ -507,9 +507,15 @@ public class JobNodeListHelper {
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<JobNodeAndInfo>(this::showActionMenu)
+                                () -> new ActionCell<JobNodeAndInfo>(this::showActionMenu, this::getActionMenuName)
                         )
                         .build(), "", 40);
+    }
+
+    // The name of a job node's actions (its button's and its menu's)
+    private String getActionMenuName(final JobNodeAndInfo jobNodeAndInfo) {
+        return "Actions for job '" + jobNodeAndInfo.getJobName()
+               + "' on node '" + jobNodeAndInfo.getNodeName() + "'";
     }
 
     // Shown as Stroom's other menus are, so that it is named and takes the focus
@@ -521,8 +527,7 @@ public class JobNodeListHelper {
                 ? Element.as(event.getEventTarget())
                 : null;
         ShowMenuEvent.builder()
-                .name("Actions for job '" + jobNodeAndInfo.getJobName()
-                      + "' on node '" + jobNodeAndInfo.getNodeName() + "'")
+                .name(getActionMenuName(jobNodeAndInfo))
                 .items(buildActionMenu(jobNodeAndInfo))
                 .popupPosition(popupPosition)
                 .opener(opener)

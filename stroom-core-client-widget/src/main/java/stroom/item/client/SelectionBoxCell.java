@@ -172,7 +172,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                       final String typed,
                       final Boolean atLast) {
         final String rowId = combobox.getAttribute(CELL_ATTRIBUTE);
-        final Element table = closestTable(combobox);
+        final Element grid = closestGrid(combobox);
         final SelectionPopup<T, I> opened = new SelectionPopup<>();
         popup = opened;
         opened.init(model);
@@ -206,7 +206,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
             if (!Objects.equals(chosen, value) && valueUpdater != null) {
                 valueUpdater.update(chosen);
                 // The grid draws the row again, which replaces the box that had the focus
-                refocusAfterRedraw(combobox, table, rowId);
+                refocusAfterRedraw(combobox, grid, rowId);
             }
         }));
         if (atLast == null) {
@@ -220,7 +220,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
     // later): the redraw leaves the focus on the page, or the grid gives it to its keyboard selected
     // cell. The focus is left alone if it has gone to a control on purpose meanwhile. Gives up after
     // half a second
-    private static void refocusAfterRedraw(final Element replaced, final Element table, final String rowId) {
+    private static void refocusAfterRedraw(final Element replaced, final Element grid, final String rowId) {
         final int[] tries = {0};
         Scheduler.get().scheduleFixedDelay(() -> {
             final Element box = findByCellAttribute(rowId);
@@ -229,8 +229,8 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                 final boolean lost = active == null
                                      || active == replaced
                                      || "body".equalsIgnoreCase(active.getTagName())
-                                     || (table != null
-                                         && table.isOrHasChild(active)
+                                     || (grid != null
+                                         && grid.isOrHasChild(active)
                                          && !isControl(active));
                 if (lost) {
                     box.focus();
@@ -265,8 +265,9 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
         return "input".equals(tag) || "select".equals(tag) || "textarea".equals(tag) || "button".equals(tag);
     }
 
-    private static native Element closestTable(Element element) /*-{
-        return element.closest('table');
+    // The grid the box is in: a data grid (drawn with divs), or a cell table
+    private static native Element closestGrid(Element element) /*-{
+        return element.closest('.data-grid, table');
     }-*/;
 
     private static native Element activeElement() /*-{

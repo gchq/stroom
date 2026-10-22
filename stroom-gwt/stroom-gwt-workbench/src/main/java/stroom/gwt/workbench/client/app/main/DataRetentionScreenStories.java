@@ -166,7 +166,8 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Keep 30 days");
-                    play.click(play.within(row(play, "Keep 30 days")).getByTitle(StroomDom.ACTIONS_TITLE));
+                    // Each row's button is named for its rule, as its menu is
+                    play.click(play.getByTitle("Actions for rule 1 'Keep 30 days'"));
                     play.waitFor(() -> play.expect(menuItem(screen, "Edit Rule")).toBeVisible());
                     for (final String label : new String[]{
                             "Add Rule Above", "Add Rule Below", "Edit Rule", "Duplicate Rule", "Delete Rule"}) {
@@ -180,7 +181,7 @@ public final class DataRetentionScreenStories {
                     play.waitFor(() -> play.expect(play.getAllByText("Keep 30 days").count()).toBe(2));
                     // The default retain-all row: only Add above and Duplicate
                     play.click(play.within(row(play, "Default Retain All Forever Rule"))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
+                            .getByTitle(TextMatch.regex("^Actions for rule ")));
                     play.waitFor(() -> play.expect(menuItem(screen, "Add Rule Above")).toBeVisible());
                     play.expect(menuItem(screen, "Duplicate Rule")).toBeVisible();
                     play.expect(screen.queryByText("Edit Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();

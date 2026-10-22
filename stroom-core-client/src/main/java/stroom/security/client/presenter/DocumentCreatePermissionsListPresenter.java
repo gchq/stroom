@@ -212,8 +212,13 @@ public class DocumentCreatePermissionsListPresenter
                 : new TickBoxCell.NoBorderAppearance();
 
         // Selection
+        // Each tick box is named for its row's permission, e.g. "Create Pipeline"
+        final TickBoxCell tickBoxCell = TickBoxCell.create(appearance, true, true, updateable)
+                .withNameForRow(index -> index < documentTypes.getTypes().size()
+                        ? "Create " + documentTypes.getTypes().get(index).getDisplayType()
+                        : null);
         final Column<DocumentType, TickBoxState> selectionColumn = new Column<DocumentType, TickBoxState>(
-                TickBoxCell.create(appearance, true, true, updateable)) {
+                tickBoxCell) {
             @Override
             public TickBoxState getValue(final DocumentType documentType) {
                 return getPermissionState(documentType);

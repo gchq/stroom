@@ -168,7 +168,11 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     public void render(final Context context,
                        final R row,
                        final SafeHtmlBuilder sb) {
-        if (row == null) {
+        // A row with no actions has no button: there would be no menu for it to open
+        final List<Item> items = row == null || menuCreator == null
+                ? null
+                : menuCreator.apply(row);
+        if (!NullSafe.hasItems(items)) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final String tooltipText = NullSafe.getOrElse(

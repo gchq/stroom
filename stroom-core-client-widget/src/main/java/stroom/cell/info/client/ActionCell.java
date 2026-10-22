@@ -28,6 +28,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * A cell containing an icon (ellipses icon by default) that when clicked
@@ -39,16 +40,34 @@ public class ActionCell<R> extends AbstractCell<R> {
 
     private final CellIcon cellIcon;
     private final BiConsumer<R, NativeEvent> action;
+    private final Function<R, String> nameFunction;
 
     public ActionCell(final BiConsumer<R, NativeEvent> action) {
         this(CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions..."), action);
     }
 
+    /// An "Actions..." button named for its row, so that each row's is told apart, e.g.
+    /// "Actions for job 'Data Retention' on node 'node1'" (as the menu it opens is named).
+    ///
+    /// @param action       What a press does, given the row and the event.
+    /// @param nameFunction The button's name (and tooltip) for a row.
+    public ActionCell(final BiConsumer<R, NativeEvent> action,
+                      final Function<R, String> nameFunction) {
+        this(CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions..."), action, nameFunction);
+    }
+
     public ActionCell(final CellIcon cellIcon,
                       final BiConsumer<R, NativeEvent> action) {
+        this(cellIcon, action, null);
+    }
+
+    private ActionCell(final CellIcon cellIcon,
+                       final BiConsumer<R, NativeEvent> action,
+                       final Function<R, String> nameFunction) {
         super("click");
         this.action = action;
         this.cellIcon = cellIcon;
+        this.nameFunction = nameFunction;
     }
 
     @Override
@@ -91,7 +110,10 @@ public class ActionCell<R> extends AbstractCell<R> {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final String className = "svgCell-icon svgCell-button";
-            sb.append(SvgImageUtil.toSafeHtml(cellIcon, className));
+            final CellIcon icon = nameFunction == null
+                    ? cellIcon
+                    : cellIcon.withName(nameFunction.apply(row));
+            sb.append(SvgImageUtil.toSafeHtml(icon, className));
         }
     }
 }

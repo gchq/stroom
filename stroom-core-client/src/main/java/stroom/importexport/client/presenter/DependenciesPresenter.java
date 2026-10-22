@@ -211,7 +211,7 @@ public class DependenciesPresenter
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,
                                        final String name,
                                        final int width) {
-        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu);
+        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu, this::getActionMenuName);
         final Column<Dependency, DocRef> actionColumn = DataGridUtil.columnBuilder(
                 docRefSelector,
                 () -> actionCell
@@ -226,11 +226,16 @@ public class DependenciesPresenter
                 ? Element.as(event.getEventTarget())
                 : null;
         ShowMenuEvent.builder()
-                .name("Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'")
+                .name(getActionMenuName(docRef))
                 .items(buildActionMenu(docRef))
                 .popupPosition(popupPosition)
                 .opener(opener)
                 .fire(this);
+    }
+
+    // The name of a document's actions (its button's and its menu's)
+    private String getActionMenuName(final DocRef docRef) {
+        return "Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'";
     }
 
     // A document type as users see it, e.g. 'XSLT Translation'

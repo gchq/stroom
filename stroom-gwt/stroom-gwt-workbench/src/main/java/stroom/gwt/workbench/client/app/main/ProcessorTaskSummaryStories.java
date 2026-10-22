@@ -169,11 +169,8 @@ public final class ProcessorTaskSummaryStories {
                     expectNoProblems(play);
                 })
                 // The pager's Refresh fetches the summary again, and the selected row's group now has
-                // one more task: the row shows the new count in its place. It should stay selected,
-                // as it is the same group (pipeline, feed, priority and status), but Stroom drops the
-                // selection and empties the task list (ISSUES.md 'The task summary loses its
-                // selection when a count changes'). Once that is fixed, this play should end with
-                // expectProcessingRowSelected(play, "4")
+                // one more task: the row shows the new count in its place, and stays selected, as it
+                // is the same group (pipeline, feed, priority and status), so its tasks stay listed
                 .story("RefreshWithChangedCount",
                         context -> render(context, RestReply.json(SUMMARY), RestReply.json(SUMMARY_MORE)))
                 .withPlay(play -> {
@@ -184,6 +181,7 @@ public final class ProcessorTaskSummaryStories {
                     expectRow(play, 0, "Events Pipeline", "EVENTS", "10", "Processing", "4");
                     expectRow(play, 1, "Events Pipeline", "EVENTS", "10", "Complete", "12,345");
                     expectRow(play, 2, "Reference Pipeline", "REFERENCE", "5", "Queued", "7");
+                    expectProcessingRowSelected(play, "4");
                     expectNoProblems(play);
                 })
                 // A row's Info icon shows the row's key data in a tooltip

@@ -218,10 +218,15 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                 protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
                     final ProcessorTaskSummary selected = selectionModel.getSelected();
                     if (selected != null) {
-                        // Reselect the task set.
+                        // Reselect the task set: the row of the same group (its key), whose count
+                        // may have changed, so it isn't equal to the one selected
                         selectionModel.clear();
-                        if (data != null && data.getValues().contains(selected)) {
-                            selectionModel.setSelected(selected);
+                        final Object key = dataGrid.getKeyProvider().getKey(selected);
+                        if (data != null) {
+                            data.getValues().stream()
+                                    .filter(row -> key.equals(dataGrid.getKeyProvider().getKey(row)))
+                                    .findFirst()
+                                    .ifPresent(selectionModel::setSelected);
                         }
                     }
                     super.changeData(data);

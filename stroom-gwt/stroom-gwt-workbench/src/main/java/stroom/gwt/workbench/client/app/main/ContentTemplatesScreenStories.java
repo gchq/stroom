@@ -147,8 +147,8 @@ public final class ContentTemplatesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("My template");
                     // Row 1 of 2: the full set, Move Down but no Move Up
-                    play.click(play.within(play.getByText("My template").closest(StroomDom.GRID_ROW))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
+                    // Each row's button is named for its template, as its menu is
+                    play.click(play.getByTitle("Actions for template 1 'My template'"));
                     play.waitFor(() -> play.expect(screen.getByText("Edit Template")).toBeVisible());
                     for (final String label : new String[]{"Add Template Above", "Add Template Below",
                             "Edit Template", "Duplicate Template", "Delete Template"}) {
@@ -161,7 +161,7 @@ public final class ContentTemplatesScreenStories {
                     play.waitFor(() -> play.expect(play.getByText("My template (copy)")).toBeInTheDocument());
                     // The last row has Move Up but no Move Down
                     play.click(play.within(play.getByText("Undescribed").closest(StroomDom.GRID_ROW))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
+                            .getByTitle(TextMatch.regex("^Actions for template ")));
                     play.waitFor(() -> play.expect(screen.getByText("Move Template Up")).toBeVisible());
                     play.expect(screen.queryByText("Move Template Down")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);

@@ -253,23 +253,6 @@ the new data grid, which copes (rows with one key are told apart by position). F
 * `stroom-core-client/src/main/java/stroom/dashboard/client/query/SelectionHandlersPresenter.java`
   (`onCopy`)
 
-### The task summary loses its selection when a count changes
-
-**Reproduced** (workbench story `App/Main/ProcessorTaskSummary`). In an 'Active Tasks' tab, select a
-summary row (e.g. a pipeline's Processing tasks) and press the summary's Refresh after another task
-of that group has started: the row is no longer selected and the task list below is emptied. On a
-refresh `ProcessorTaskSummaryPresenter.changeData` selects the row again only if
-`data.getValues().contains(selected)`, but `ProcessorTaskSummary.equals` compares the `count` as
-well as the group (pipeline, feed, priority and status), so a changed count is a different row. As
-the counts are what changes between refreshes, the selection rarely survives one. Fix: find the row
-again by its group (e.g. a key of pipeline, feed, priority and status, which the new grid's key
-provider can share) and select the new row, rather than comparing whole rows. The story's
-`RefreshWithChangedCount` says how to make it the regression test.
-
-* `stroom-core-client/src/main/java/stroom/data/client/presenter/ProcessorTaskSummaryPresenter.java`
-  (`refresh`, `changeData`)
-* `stroom-core-shared/src/main/java/stroom/processor/shared/ProcessorTaskSummary.java` (`equals`)
-
 ### Two workbench stories fail now and then under load
 
 **Reproduced** (October 2026). Each fails sometimes in a full `workbenchTest` run and passes when
@@ -555,13 +538,10 @@ last closed dialog for a moment only.
   tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
   group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
   e.g. a separate "Change Status" button beside the value.
-* A grid's spinners (Jobs' Max Tasks, Nodes' and Processors' Priority) can't be reached from the
-  keyboard: the field is `tabindex="-1"`, and Enter on a row doesn't go into it
-  (`ValueSpinnerCell`). Once it has the focus (by a click), its keys work. It also changes a typed
-  value without saying so: non-digits are dropped and the rest kept within its bounds (`500`
-  becomes `100`). Both wait on the data grid's keyboard pattern. A held finger doesn't repeat its
-  arrows (a tap steps once), as the grid hands a cell its events after the browser has handled
-  them (`AbstractHasData.onBrowserEvent`), so touch events don't reach it.
+* A grid's spinner (Jobs' Max Tasks, Nodes' and Processors' Priority) changes a typed value
+  without saying so: non-digits are dropped and the rest kept within its bounds (`500` becomes
+  `100`, `ValueSpinnerCell`). (Reaching it from the keyboard, and a held finger repeating its
+  arrows, came with the new grid; see Fixed.)
 
 ### Toolbars are a tab stop per button
 
@@ -975,24 +955,16 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
   name and say what may be typed; the Find and Recent Items dialogs use them (#5409).
 * A content tab's close cross (`.curveTab-close`, a `div`) has no name and isn't a button
   (`CurveTab`).
-* The grid's group expander has no name or title (`ExpanderCell`).
-* Every row's action button on the Dependencies screen is named "Actions...", not for its row.
 * Properties: the Database Value text area and password box have no names of their own. When the
   group loads both are shown, so the label names the panel holding them (`role="group"`), and the
   group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
 * Iframes have no title: the Documentation editor's markdown preview (`#markdown-frame`,
   `MarkdownEditPresenter`) and dashboard visualisations (`VisFrame`).
-* The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
-  their row (e.g. "Create Pipeline").
 
 ### Missing roles and states
 
 **Confirmed** (checked in the code; found by the workbench's plays).
 
-* Grids (`MyDataGrid`): the table has no `grid` role; selected rows have only the
-  `dataGridSelectedRow` class, no `aria-selected`; sortable headers get `role="button"` from GWT's
-  `AbstractCellTable`, so they aren't column headers to assistive technology (other headers are
-  `<th>`s, so they are); the sorted column has no `aria-sort`.
 * Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
 * Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
   sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
@@ -1093,13 +1065,9 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
   (`ManageActivityPresenter.setSelected`), which a grid comparing rows can't match.
 * A pathway's constraints list heads its value column "Type" (`ConstraintListPresenter.addValueColumn`),
   a copy of the column before it.
-* `SelectionBoxCell` looks for its grid with `closest('table')`, so in a grid drawn with divs (the
-  new `DataGridWidget`) its check for the focus falling back into the grid never finds it.
 
 * Rename hides its dialog before the request is sent, and the document permission dialogs
   close once a failed change is dismissed, so both lose what was entered if the request fails.
-* An empty paged list says "1 to 1 of 0" rather than "0 of 0" (e.g. the user groups screen's
-  Member Of and Members panes with nothing selected).
 * `TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
   and second groups.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
@@ -1114,8 +1082,6 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
   the presenter overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
-* `ActionMenuCell` shows its "Actions..." icon on every row, even one with no actions, where pressing
-  it does nothing.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationListPresenter`).
@@ -1994,6 +1960,34 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   cell had changed) and for the keyboard row's look, which isn't in the cells. The open box was
   replaced, so it didn't read as expanded and its list was placed off to one side (the floor map
   settings' Value Schema). `Widgets/Data Grid/DataGridKeyboard` `SelectionBoxStaysPut` checks it.
+* **Grids had no grid semantics** (`MyDataGrid`: no `grid` role, selection only a class, sortable
+  headers `role="button"`, no `aria-sort`). The new grid (`DataGridWidget`) is a `grid` (or
+  `treegrid`), with `aria-selected` rows, `columnheader`s and `aria-sort`.
+* **A grid's spinners couldn't be reached from the keyboard, nor a held finger repeat their
+  arrows.** With the new grid, Right goes into a row's cells, Enter or F2 edits a spinner, and it
+  hands a cell its events as they happen (`Widgets/Data Grid/DataGridKeyboard` `Editing`, the
+  value spinner real-input checks).
+* **The task summary lost its selection when a count changed.** `ProcessorTaskSummaryPresenter`
+  selected the row again only if the new data held an equal one, and a summary's equality takes in
+  its count. It now finds the row of the same group (the grid's key: pipeline, feed, priority and
+  status). `App/Main/ProcessorTaskSummary` `RefreshWithChangedCount` checks it.
+* **A tree grid's expander had no name or title.** It now has a title, Expand or Collapse, for the
+  mouse, and is hidden from assistive technology, which hears the row's `aria-expanded`
+  (`ExpanderCell`). `Widgets/Data Grid/DataGridWidget` `TreeKeys` checks it.
+* **Rows' action buttons were all named "Actions...".** An `ActionCell` can be named for its row,
+  as its menu is: Dependencies ("Actions for <type> '<name>'"), content templates, data retention
+  rules and job nodes. Their screens' stories find the buttons by those names.
+* **The Create permissions grid's tick boxes were named by their state.** A `TickBoxCell` can be
+  named for its row (`withNameForRow`): "Create Pipeline" and so on, kept when a tick draws the box
+  again. `App/Main/DocumentCreatePermissionsGrid` `ToggleType` checks it.
+* **`ActionMenuCell` showed its "Actions..." button on a row with no actions**, which then did
+  nothing. A row with none has no button. `Widgets/ActionMenuCell` `NoItems` checks it.
+* **An empty paged list said "1 to 1 of 0".** It says "0 to 0 of 0" (`Pager`).
+  `App/Main/UserGroupsScreen` `UserGroups` checks it.
+* **`SelectionBoxCell` looked for its grid with `closest('table')`**, which a grid drawn with divs
+  isn't, so its fallback (taking back the focus the grid gave one of its own cells after a choice)
+  never fired there. It looks for `.data-grid` too. No story shows the difference: the new grid
+  puts the focus back on the box itself, so the fallback isn't needed in any story.
 
 ## Checked and not bugs
 

@@ -37,6 +37,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntFunction;
 
 /**
  * A {@link Cell} used to render a checkbox. The value of the checkbox may be
@@ -62,6 +63,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
      * @param dependsOnSelection true if the cell depends on the selection state
      * @param handlesSelection   true if the cell modifies the selection state
      */
+    // A row's tick box's accessible name, e.g. "Create Pipeline", or null to leave it unnamed
+    private IntFunction<String> nameForRow;
+
     private TickBoxCell(final Appearance appearance,
                         final boolean dependsOnSelection,
                         final boolean handlesSelection,
@@ -94,6 +98,34 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         }
 
         return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
+    }
+
+    /// Name each row's tick box for its row, e.g. "Create Pipeline", rather than leaving assistive
+    /// technology only its state ("Ticked", its title, which says what the mouse would see).
+    ///
+    /// @param nameForRow The name of the tick box of the row at an index (as the grid counts them).
+    /// @return This cell.
+    public TickBoxCell withNameForRow(final IntFunction<String> nameForRow) {
+        this.nameForRow = nameForRow;
+        return this;
+    }
+
+    // The tick box's HTML with its row's name, if it is given one
+    private SafeHtml named(final SafeHtml html, final Context context) {
+        if (nameForRow == null || context == null) {
+            return html;
+        }
+        final String name = nameForRow.apply(context.getIndex());
+        if (name == null || name.isEmpty()) {
+            return html;
+        }
+        final String tickBox = html.asString();
+        final String start = "<div ";
+        if (!tickBox.startsWith(start)) {
+            return html;
+        }
+        return SafeHtmlUtils.fromTrustedString(start + "aria-label=\"" + SafeHtmlUtils.htmlEscape(name) + "\" "
+                                               + tickBox.substring(start.length()));
     }
 
     @Override
@@ -145,7 +177,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                     }
 
                     // Update the tick image immediately.
-                    final SafeHtml html = appearance.getHTML(state, clickable);
+                    final SafeHtml html = named(appearance.getHTML(state, clickable), context);
                     final Element active = activeElement();
                     final boolean focused = active != parent && parent.isOrHasChild(active);
                     parent.setInnerHTML(html.asString());
@@ -206,7 +238,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     @Override
     public void render(final Context context, final TickBoxState value, final SafeHtmlBuilder sb) {
-        appearance.render(this, context, value, sb);
+        final SafeHtmlBuilder html = new SafeHtmlBuilder();
+        appearance.render(this, context, value, html);
+        sb.append(named(html.toSafeHtml(), context));
     }
 
 

@@ -205,7 +205,8 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<>(this::showActionMenu))
+                                () -> new ActionCell<>(this::showActionMenu,
+                                        ContentTemplateListPresenter::getActionMenuName))
                         .enabledWhen(ContentTemplate::isEnabled)
                         .centerAligned()
                         .build(),
@@ -230,7 +231,8 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     private void addActionButtonColumn(final String name,
                                        final int width) {
 
-        final ActionCell<ContentTemplate> actionCell = new ActionCell<>(this::showActionMenu);
+        final ActionCell<ContentTemplate> actionCell = new ActionCell<>(this::showActionMenu,
+                ContentTemplateListPresenter::getActionMenuName);
 
         final Column<ContentTemplate, ContentTemplate> expressionColumn =
                 new Column<ContentTemplate, ContentTemplate>(actionCell) {
