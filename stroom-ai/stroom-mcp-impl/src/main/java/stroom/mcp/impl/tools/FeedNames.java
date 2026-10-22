@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -151,49 +152,13 @@ class FeedNames {
                 .toList();
     }
 
-    /// How alike two strings are, as Python's `difflib.SequenceMatcher.ratio()` measures it (without its junk
-    /// heuristic, which only applies to strings of 200 or more characters): twice the characters in matching
-    /// blocks over the total length.
+    /// How alike two strings are, as Python's `difflib.SequenceMatcher.ratio()` measures it ([CloseMatches]).
     ///
     /// @param a A string.
     /// @param b Another.
     /// @return From 0 (nothing alike) to 1 (the same).
     static double ratio(final String a, final String b) {
-        final int total = a.length() + b.length();
-        return total == 0
-                ? 1.0
-                : 2.0 * matches(a, 0, a.length(), b, 0, b.length()) / total;
-    }
-
-    // The characters in the matching blocks of a[alo:ahi] and b[blo:bhi]: the longest match (earliest in a, then
-    // in b), and those either side of it.
-    private static int matches(final String a, final int alo, final int ahi,
-                               final String b, final int blo, final int bhi) {
-        int bestI = alo;
-        int bestJ = blo;
-        int bestSize = 0;
-        int[] previous = new int[bhi - blo + 1];
-        for (int i = alo; i < ahi; i++) {
-            final int[] current = new int[bhi - blo + 1];
-            for (int j = blo; j < bhi; j++) {
-                if (a.charAt(i) == b.charAt(j)) {
-                    final int k = previous[j - blo] + 1;
-                    current[j - blo + 1] = k;
-                    if (k > bestSize) {
-                        bestI = i - k + 1;
-                        bestJ = j - k + 1;
-                        bestSize = k;
-                    }
-                }
-            }
-            previous = current;
-        }
-        if (bestSize == 0) {
-            return 0;
-        }
-        return bestSize
-               + matches(a, alo, bestI, b, blo, bestJ)
-               + matches(a, bestI + bestSize, ahi, b, bestJ + bestSize, bhi);
+        return CloseMatches.ratio(a, b);
     }
 
     private List<DocRef> docFinder(final String name) {
