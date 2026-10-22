@@ -85,7 +85,7 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final String uuid = stringArg(request, UUID_ARG);
         if (uuid == null) {

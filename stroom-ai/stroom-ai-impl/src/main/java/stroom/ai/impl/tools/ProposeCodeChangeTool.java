@@ -257,7 +257,7 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String elementId = stringArg(request, ELEMENT_ARG);
         final String given = rawArg(request, CODE_ARG);
         final Object edits = argsMap(request).get(EDITS_ARG);
