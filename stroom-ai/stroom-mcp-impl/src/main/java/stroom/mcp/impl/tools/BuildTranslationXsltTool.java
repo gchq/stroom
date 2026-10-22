@@ -676,7 +676,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 return Optional.of(saved);
             }
         } else if (request.name() != null) {
-            saved = translationDocs.createXslt(context, request.build(), request.name(), xslt,
+            saved = translationDocs.createXslt(call, context, request.build(), request.name(), xslt,
                     TranslationDocs.Source.of(b.mapping), said);
         } else {
             throw new ToolRefusal("To save the XSLT give name (a new XSLT in the build) or uuid (the one saved "

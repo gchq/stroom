@@ -1318,12 +1318,31 @@ what `dev/e2e_plan_walk.py` (promotion held up by the build's own stale document
 
 * **Stroom functions that reach outside Stroom** (`XsltSafety.STROOM_REFUSED`): an XSLT the tools save, check
   (check_xslt), compile or step as a draft (step_pipeline, step_sample, step_records, compare_outputs) may not call
-  `stroom:http-call()`, `stroom:fetch-json()` (both request a URL), `stroom:ask-ai()` (sends its text to a chat
-  model) or `stroom:host-name()` / `stroom:host-address()` (DNS lookups, which carry the name, and so a record's
-  data, to whichever server answers): Stroom would run them on its nodes for every record. Unless the XSLT being
-  replaced (a save) or the element's saved XSLT (a step) already calls the same function: the user put it there
-  (`XsltSafety.keptBy`, the one rule both use). A mapping's xpaths are not refused for these (they are only ever
-  saved as XSLT, where they are). The Python server let them all through.
+  `stroom:http-call()`, `stroom:fetch-json()` (both request a URL) or `stroom:ask-ai()` (sends its text to a chat
+  model): Stroom would run them on its nodes for every record. Unless the XSLT being replaced (a save) or the
+  element's saved XSLT (a step) already calls the same function: the user put it there (`XsltSafety.keptBy`, the
+  one rule both use). A mapping's xpaths are not refused for these (they are only ever saved as XSLT, where they
+  are). The Python server let them all through.
+* **DNS lookups need the user's agreement** (`XsltSafety.STROOM_ASKED`, `LookupAgreements`): `stroom:host-name()`
+  and `stroom:host-address()` look a name up in DNS when the pipeline runs, and a lookup can carry the looked-up
+  value (a record's data) to the DNS server. They are not refused (`XsltSafety.unsafeInXslt` leaves them out, so
+  XsltCompileCheck compiles them, and check_xslt passes them with a warning saying where each is called). A save
+  (save_xslt, an indexing XSLT from its plan included, build_translation_xslt, rebuild_mapping and
+  draft_cef_mapping's save: each goes through `TranslationDocs.createXslt` / `updateXslt`; build_reference_xslt's
+  XSLT is saved with save_xslt) of an
+  XSLT calling one the XSLT it replaces doesn't (`XsltSafety.newLookups`) asks the user first, in a form
+  (`Consent.require`, an approval), after the other checks and gates and before anything is written: the form names
+  the functions, where each is called (`template match='record' (line 12)`, as `XsltSafety.lookupsInXslt` finds it)
+  and what they do. Agreed: saved. Declined: `XSLT not saved: the user declined stroom:host-name() (...)`. Only a
+  form counts: where the session can't show one, the save is refused, saying so (the agent never holds the answer,
+  and no pending id is handed out for it). Stepping a draft (step_pipeline, step_sample, step_records,
+  compare_outputs, and summarise_fix's steps) asks the same way, as a step runs the XSLT on Stroom and so makes
+  the lookups too; one the element's saved XSLT already calls isn't asked about. What the user agreed to is
+  remembered for the session, by document (the XSLT's UUID; a new one's build and name; a step's element's saved
+  XSLT, else the pipeline and element) and function: the same XSLT stepped or saved again isn't asked about again,
+  an agreement given for a step covers saving the draft over the same XSLT, and a function not agreed to yet is
+  asked about on its own. The outright refusals above are made first, whatever the user would agree to. The Python
+  server let the lookups through.
 * **system-property() and available-system-properties()** are refused like environment-variable(): with Saxon's
   external functions allowed, as Stroom runs XSLT, a name in no namespace reads the JVM's system properties. Saxon
   gives system-property() to XSLT (and use-when) only, not to XPath. `LockedSaxon` now turns external functions off

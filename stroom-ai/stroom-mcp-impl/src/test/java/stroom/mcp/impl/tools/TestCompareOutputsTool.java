@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
@@ -135,7 +136,23 @@ class TestCompareOutputsTool {
         // The element's saved XSLT calls it already (the user put it there): stepped.
         Mockito.when(world.documentAccess.read(any(DocRef.class), Mockito.eq(XsltDoc.class)))
                 .thenReturn(Optional.of(XsltDoc.builder().uuid("x").name("ACME").data(calls).build()));
-        world.stepping().refuseUnsafeDrafts("p-1", Map.of("translationFilter", calls));
+        world.stepping().refuseUnsafeDrafts(new ToolCall("1", CompareOutputsTool.NAME, "{}"), world.context(), "p-1",
+                Map.of("translationFilter", calls));
+    }
+
+    @Test
+    void aDraftCallingADnsLookupIsComparedOnlyOnceTheUserAgrees() {
+        // Stepping the candidate runs it on Stroom: its DNS lookups are made then, so the user agrees to them first.
+        final String looksUp = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\" "
+                               + "xmlns:stroom=\"stroom\"><xsl:template match=\"/\"><xsl:value-of select=\""
+                               + "stroom:host-address(string(.))\"/></xsl:template></xsl:stylesheet>";
+        final String json = "{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7], \"draft_code\": {\"translationFilter\": "
+                            + JsonUtil.writeValueAsString(looksUp) + "}}";
+
+        assertThat(refused(json)).startsWith("draft_code['translationFilter'] is not stepped: it calls "
+                                             + "stroom:host-address()")
+                .contains("this session can't show one now");
+        assertThat(world.opened).isEmpty();
     }
 
     @Test
@@ -181,7 +198,8 @@ class TestCompareOutputsTool {
         final CompareOutputsTool.Request request = new CompareOutputsTool.Request("p-1", List.of(), null, "p-1",
                 null, CompareOutputsTool.DEFAULT_MAX_RECORDS, List.of());
 
-        final Map<String, Object> result = tool().compareLocated(world.context(), request, List.of(located));
+        final Map<String, Object> result = tool().compareLocated(new ToolCall("1", CompareOutputsTool.NAME, "{}"),
+                world.context(), request, List.of(located));
 
         Mockito.verifyNoInteractions(eventLocations);
         assertThat(world.steps).containsExactly("REFRESH 0:12", "REFRESH 0:12");
