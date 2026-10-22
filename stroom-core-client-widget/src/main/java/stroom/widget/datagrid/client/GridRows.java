@@ -16,9 +16,11 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.VirtualWindow;
+import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
@@ -33,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /// Draws a grid's rows: each row's cells are rendered to HTML and its element written only when
 /// that HTML changed, so selecting a row or moving the keyboard rewrites no cells. Rows are kept by
@@ -64,6 +67,7 @@ final class GridRows<R> {
     // Set while the rows are written, so the events that writing causes are ignored (see render)
     private boolean writing;
     private double measuredRowHeight;
+    private final TypeAhead typeAhead = new TypeAhead();
 
     GridRows(final DataGridWidget<R> grid,
              final PageState<R> pageState,
@@ -297,6 +301,19 @@ final class GridRows<R> {
             rendered.element.removeAttribute("aria-selected");
         }
         tree.setAttributes(rendered.element, row);
+        final Function<R, TickBoxState> rowChecked = grid.getRowChecked();
+        final TickBoxState checked = rowChecked != null && row != null
+                ? rowChecked.apply(row)
+                : null;
+        if (checked == null) {
+            rendered.element.removeAttribute("aria-checked");
+        } else {
+            rendered.element.setAttribute("aria-checked", switch (checked) {
+                case TICK -> "true";
+                case HALF_TICK -> "mixed";
+                case UNTICK -> "false";
+            });
+        }
 
         rendered.value = row;
         rendered.index = index;
@@ -398,6 +415,32 @@ final class GridRows<R> {
         final double height = DataGridDom.getHeight(probe);
         probe.removeFromParent();
         return height;
+    }
+
+    /// The row that typing goes to: the next whose text (its cells' joined) starts with what has
+    /// been typed (see [TypeAhead]).
+    ///
+    /// @param typed   The character typed.
+    /// @param current The page-relative index of the row with the focus.
+    /// @return The page-relative index of the row, or -1 if none matches.
+    int typeAhead(final String typed, final int current) {
+        return typeAhead.next(typed, current, pageState.getRowDataSize(), this::getRowText);
+    }
+
+    // A row's text, its cells' joined
+    private String getRowText(final int indexOnPage) {
+        final R row = pageState.getRow(indexOnPage);
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; row != null && i < columnModel.size(); i++) {
+            final String cellText = html.cellText(row, pageState.getPageStart() + indexOnPage, i);
+            if (!cellText.isEmpty()) {
+                if (text.length() > 0) {
+                    text.append(' ');
+                }
+                text.append(cellText);
+            }
+        }
+        return text.toString();
     }
 
     /// Forgets the measured row height, so it is measured again, e.g. after the columns or the

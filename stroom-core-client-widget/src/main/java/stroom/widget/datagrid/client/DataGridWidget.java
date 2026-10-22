@@ -16,6 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.HeadingListener;
@@ -30,7 +31,6 @@ import stroom.widget.datagrid.client.model.SortEntry;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 /// A data grid built from plain DOM and CSS grid layout, replacing `MyDataGrid`.
 ///
@@ -159,9 +160,10 @@ public class DataGridWidget<R> extends Widget
     private final DataGridKeyboard<R> keyboard;
 
     private DataGridProfile profile = DataGridProfile.GRID;
+    // Gives a row's tick state, for a list of tick boxes, or null
+    private Function<R, TickBoxState> rowChecked;
     // Whether the selection manager lets several rows be chosen (a list says so)
     private boolean multiSelectable;
-    private final TypeAhead typeAhead = new TypeAhead();
     private boolean multiLine;
     private boolean virtual;
     private int rowHeight;
@@ -743,6 +745,52 @@ public class DataGridWidget<R> extends Widget
         setStyleName("data-grid--fit", fitContent);
     }
 
+    /// Makes the grid as wide as its widest row, up to the width its container allows, as a list
+    /// in a popup is. By default a grid fills its container's width.
+    ///
+    /// @param fitWidth Whether the grid is as wide as its widest row.
+    public void setFitWidth(final boolean fitWidth) {
+        setStyleName("data-grid--fit-width", fitWidth);
+    }
+
+    /// Stripes a list's rows, as a grid's are (a list isn't striped by default), e.g. for results
+    /// of two lines each.
+    ///
+    /// @param striped Whether the rows are striped.
+    public void setStriped(final boolean striped) {
+        setStyleName("data-grid--striped", striped);
+    }
+
+    /// Shows the page that starts at a row, keeping the page size.
+    ///
+    /// @param index The absolute index of the page's first row.
+    public void setPageStart(final int index) {
+        setVisibleRange(index, getVisibleRange().getLength());
+    }
+
+    /// Leaves out the padding round each cell's content, for cells that draw their own, e.g. the
+    /// explorer's (`explorerCell`), so a row is as high as its cell draws it.
+    ///
+    /// @param cellPadding Whether the cells' content is padded (the default).
+    public void setCellPadding(final boolean cellPadding) {
+        setStyleName("data-grid--no-cell-padding", !cellPadding);
+    }
+
+    /// Makes the rows say whether they are ticked (`aria-checked`, `mixed` for part ticked), as a
+    /// list of tick boxes' options do: the row's own state, which Space or a press changes (see
+    /// [DataGridWidgetSelectionEventManager#setChooser]), not a check box in it.
+    ///
+    /// @param rowChecked Gives a row's state, or null for rows that aren't ticked.
+    public void setRowChecked(final Function<R, TickBoxState> rowChecked) {
+        this.rowChecked = rowChecked;
+        redraw();
+    }
+
+    /// @return Gives a row's tick state (see [#setRowChecked(Function)]), or null.
+    Function<R, TickBoxState> getRowChecked() {
+        return rowChecked;
+    }
+
     /// @return The grid's profile (see [DataGridProfile]).
     public DataGridProfile getProfile() {
         return profile;
@@ -754,28 +802,12 @@ public class DataGridWidget<R> extends Widget
     /// @param typed The character typed.
     /// @return Whether a row matched (and has the focus).
     public boolean typeAhead(final String typed) {
-        final int count = pageState.getRowDataSize();
-        final int row = typeAhead.next(typed, keyboardSelectedRow, count, this::getRowText);
+        final int row = gridRows.typeAhead(typed, keyboardSelectedRow);
         if (row < 0) {
             return false;
         }
         keyboard.moveTo(row);
         return true;
-    }
-
-    // A row's text, its cells' joined, for type-ahead
-    private String getRowText(final int indexOnPage) {
-        final StringBuilder text = new StringBuilder();
-        for (int i = 0; i < columnModel.size(); i++) {
-            final String cellText = getCellText(indexOnPage, i);
-            if (!cellText.isEmpty()) {
-                if (text.length() > 0) {
-                    text.append(' ');
-                }
-                text.append(cellText);
-            }
-        }
-        return text.toString();
     }
 
     /// @param hideHeader Whether to hide the header row.

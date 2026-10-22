@@ -371,16 +371,24 @@ public final class ColumnModel<C> {
     }
 
     /// @return A CSS `grid-template-columns` value for a list, which is as wide as what it is in:
-    /// the current widths, but the last column takes the rest of the width (at least its own),
-    /// e.g. `"22px minmax(200px, 1fr)"`.
+    /// the current widths, but the fill columns (see [ColumnSizing#isFill()]), or the last column if
+    /// there are none, share the rest of the width (each at least its own), e.g.
+    /// `"22px minmax(200px, 1fr) 22px"`.
     public String toListTemplate() {
+        boolean anyFill = false;
+        for (final Entry<C> entry : entries) {
+            anyFill = anyFill || entry.sizing.isFill();
+        }
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < entries.size(); i++) {
             if (i > 0) {
                 sb.append(' ');
             }
             final int width = Math.max(1, entries.get(i).width);
-            if (i == entries.size() - 1) {
+            final boolean fills = anyFill
+                    ? entries.get(i).sizing.isFill()
+                    : i == entries.size() - 1;
+            if (fills) {
                 sb.append("minmax(").append(width).append("px, 1fr)");
             } else {
                 sb.append(width).append("px");

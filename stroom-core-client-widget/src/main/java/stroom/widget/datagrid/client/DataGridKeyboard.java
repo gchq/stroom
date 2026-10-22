@@ -278,7 +278,10 @@ class DataGridKeyboard<R> {
                     return true;
                 }
                 if (!grid.getProfile().hasCells()) {
-                    // A list's row is its only stop
+                    // A list's row is its only stop; Right may change page (a find dialog's)
+                    if (selector != null) {
+                        selector.onRight();
+                    }
                     return true;
                 }
                 final int right = nextColumn(row, column);
@@ -296,6 +299,9 @@ class DataGridKeyboard<R> {
                     final int parent = grid.getTreeRows().getParentRow(rowIndex);
                     if (parent >= 0) {
                         move(parent, false, false);
+                    } else if (!grid.getProfile().hasCells() && selector != null) {
+                        // A list's Left may change page (a find dialog's)
+                        selector.onLeft();
                     }
                 }
                 return true;
@@ -733,14 +739,17 @@ class DataGridKeyboard<R> {
             + 'textarea');
     }-*/;
 
-    // A control in the cell that doesn't use the arrow keys, which takes the focus itself, or null
+    // A control in the cell that doesn't use the arrow keys, which takes the focus itself, or null. A
+    // tick box drawn only as a picture (aria-hidden, a list's option saying its state) isn't one
     private static native Element directControl(Element cell) /*-{
-        return cell.querySelector('[role="combobox"], [role="checkbox"], button, a[href], [data-row-action]');
+        return cell.querySelector('[role="combobox"], [role="checkbox"]:not([aria-hidden="true"]), button, '
+            + 'a[href], [data-row-action]');
     }-*/;
 
     // A control in the cell that a value is entered with (Tab goes to it while editing), or null
     private static native Element formControl(Element cell) /*-{
-        return cell.querySelector('[role="combobox"], [role="checkbox"]:not([aria-readonly="true"])');
+        return cell.querySelector('[role="combobox"], '
+            + '[role="checkbox"]:not([aria-readonly="true"]):not([aria-hidden="true"])');
     }-*/;
 
     // Leaves every row, header, cell and control but the one to keep out of the tab order: rows and
@@ -750,7 +759,8 @@ class DataGridKeyboard<R> {
     private static native void clearTabStops(Element grid, Element keep) /*-{
         var elements = grid.querySelectorAll('[data-row], [data-hcol][tabindex], [data-col][tabindex], '
             + '[data-col] input, [data-col] textarea, [data-col] select, [data-col] button, '
-            + '[data-col] a[href], [data-col] [role="checkbox"], [data-col] [role="combobox"], '
+            + '[data-col] a[href], [data-col] [role="checkbox"]:not([aria-hidden="true"]), '
+            + '[data-col] [role="combobox"], '
             + '[data-col] [tabindex]');
         for (var i = 0; i < elements.length; i++) {
             var element = elements[i];
@@ -821,6 +831,14 @@ class DataGridKeyboard<R> {
         /// the row.
         default boolean onUpFromFirst() {
             return false;
+        }
+
+        /// Left was pressed on a list's row (a list has no cells to move into).
+        default void onLeft() {
+        }
+
+        /// Right was pressed on a list's row.
+        default void onRight() {
         }
     }
 }

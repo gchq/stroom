@@ -18,7 +18,6 @@ package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -38,6 +37,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.FindResultLists;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -47,9 +48,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.Range;
@@ -74,7 +72,7 @@ public class FindInContentPresenter
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final int TIMER_DELAY_MS = 750;
 
-    private final CellTable<FindInContentResult> cellTable;
+    private final DataGridWidget<FindInContentResult> resultList;
     private final RestDataProvider<FindInContentResult, ResultPage<FindInContentResult>> dataProvider;
     private final MultiSelectionModelImpl<FindInContentResult> selectionModel;
     private final EditorPresenter editorPresenter;
@@ -107,26 +105,7 @@ public class FindInContentPresenter
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
 
-        cellTable = new MyCellTable<FindInContentResult>(100) {
-            @Override
-            protected void onBrowserEvent2(final Event event) {
-                super.onBrowserEvent2(event);
-                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
-                    if (cellTable.getKeyboardSelectedRow() == 0) {
-                        getView().focus();
-                    }
-                }
-            }
-        };
-        cellTable.addStyleName("FindCellTable");
-
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
-                cellTable,
-                selectionModel,
-                this::openDocument,
-                this::showHighlights);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         view.setResultView(pagerView);
         editorPresenter.setReadOnly(true);
@@ -149,8 +128,8 @@ public class FindInContentPresenter
                 if (NullSafe.isBlankString(currentQuery.getFilter().getPattern())) {
                     getView().setPatternValid();
                     final ResultPage<FindInContentResult> resultPage = ResultPage.empty();
-                    if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                        cellTable.setPageStart(resultPage.getPageStart());
+                    if (resultPage.getPageStart() != resultList.getPageStart()) {
+                        resultList.setPageStart(resultPage.getPageStart());
                     }
                     dataConsumer.accept(resultPage);
                     selectionModel.clear();
@@ -162,8 +141,8 @@ public class FindInContentPresenter
                             .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
                                 getView().setPatternValid();
-                                if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                                    cellTable.setPageStart(resultPage.getPageStart());
+                                if (resultPage.getPageStart() != resultList.getPageStart()) {
+                                    resultList.setPageStart(resultPage.getPageStart());
                                 }
                                 dataConsumer.accept(resultPage);
 
@@ -194,15 +173,15 @@ public class FindInContentPresenter
             }
         };
 
-        final Column<FindInContentResult, FindInContentResult> column =
-                new Column<FindInContentResult, FindInContentResult>(new FindInContentResultCell()) {
-                    @Override
-                    public FindInContentResult getValue(final FindInContentResult object) {
-                        return object;
-                    }
-                };
-        cellTable.addColumn(column);
-        pagerView.setDataWidget(cellTable);
+        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
+        // click, opens it, and Up on the first goes back to the filter
+        resultList = FindResultLists.create(this,
+                "Content found",
+                new FindInContentResultCell(),
+                selectionModel,
+                this::openDocument,
+                () -> getView().focus());
+        pagerView.setDataWidget(resultList);
     }
 
     private void resetFocus() {
@@ -281,14 +260,14 @@ public class FindInContentPresenter
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             openDocument(selectionModel.getSelected());
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
-            cellTable.setKeyboardSelectedRow(0, true);
+            resultList.setKeyboardSelectedRow(0, true);
         }
     }
 
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(cellTable);
+            dataProvider.addDataDisplay(resultList);
         } else {
             dataProvider.refresh();
         }

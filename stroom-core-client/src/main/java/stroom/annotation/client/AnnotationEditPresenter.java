@@ -225,6 +225,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationLabelPresenter.setAccessibleName("Labels");
 
         this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
@@ -233,6 +234,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationCollectionPresenter.setAccessibleName("Collections");
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);

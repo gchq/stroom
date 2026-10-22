@@ -832,8 +832,8 @@ public final class QueryEditorStories {
                     // Stroom doesn't select the first annotation (the list only selects it when the
                     // filter changes), so OK with none selected warns and keeps the chooser open;
                     // the play then selects it
-                    play.expect(dialog.findByText("Existing incident").closest("tr"))
-                            .not().toHaveClass("cellTableSelectedRow");
+                    play.expect(dialog.findByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
@@ -843,8 +843,8 @@ public final class QueryEditorStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
                     play.click(dialog.getByText("Existing incident"));
-                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("tr"))
-                            .toHaveClass("cellTableSelectedRow"));
+                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").withJsonBodyContaining(

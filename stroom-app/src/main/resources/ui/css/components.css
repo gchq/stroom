@@ -408,11 +408,6 @@
     white-space: nowrap;
 }
 
-.queryHistoryViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
-}
-
 .resizableAcceptRejectContent-button {
     margin: 0;
     padding: 2px 4px;
@@ -743,11 +738,6 @@
 
 .toolbarContainer {
     display: flex;
-}
-
-.queryFavouritesViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
 }
 
 .editExpressionViewImpl-expressionTree {
@@ -2107,10 +2097,6 @@
 }
 
 /* --- */
-.multiChooser td {
-    vertical-align: middle;
-}
-
 .multiChooser .tick-box {
     cursor: pointer;
 }

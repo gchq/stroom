@@ -18,15 +18,6 @@
   "app-dashboard-queryresultvis--pause-button-reports-up": [
     "frame-title"
   ],
-  "app-editors-analyticruleeditor--default": [
-    "target-size"
-  ],
-  "app-editors-analyticruleeditor--new-rule-hides-type-tabs": [
-    "target-size"
-  ],
-  "app-editors-analyticruleeditor--table-preferences-persist-on-the-doc": [
-    "target-size"
-  ],
   "app-editors-dashboardeditor--splitter-above-visualisation": [
     "frame-title"
   ],
@@ -60,95 +51,8 @@
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
   ],
-  "app-editors-queryeditor--column-filter-menu": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--column-menu": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--column-values-filter-menu": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--conditional-formatting-menu": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--create-report": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--create-rule": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--create-rule-group-by": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--create-rule-without-defaults": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--data-stroom-tab": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--default": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--format-menu": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--groups": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--hyperlinks": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--hyperlinks-by-keyboard": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--null-completion": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--query-help": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--query-help-paging": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--query-info-popup": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--query-side-filter-has-no-include-exclude-tab": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--read-only": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--run-query": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--search-request-carries-date-time-settings": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--source-preview": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--stepping-hyperlink": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--time-range-dialog-keys": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--time-range-rerun": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--visualisation": [
-    "target-size"
-  ],
   "app-editors-queryeditor--visualisation-data-latch": [
     "frame-title"
-  ],
-  "app-editors-reporteditor--default": [
-    "target-size"
-  ],
-  "app-editors-reporteditor--table-preferences-persist-on-the-doc": [
-    "target-size"
   ],
   "app-editors-visualisationeditor--assets": [
     "aria-required-parent",
@@ -349,53 +253,11 @@
   "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
   ],
-  "app-main-executionschedulesscreen--batch-edit": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--batch-no-change": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--batch-schedule-disabled": [
-    "aria-command-name"
-  ],
   "app-main-executionschedulesscreen--default-sort-is-name-descending": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--edit": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--filter": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--invalid-filter-keeps-dialog-usable": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--run-now": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--run-now-filtered-skips-disabled": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--schedules": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--set-default-hidden-without-permission": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--set-default-node-writes-the-property": [
-    "aria-command-name"
-  ],
-  "app-main-executionschedulesscreen--unknown-node-is-marked": [
     "aria-command-name"
   ],
   "app-main-manageactivitydialog--validation-blocks-save": [
     "scrollable-region-focusable"
-  ],
-  "app-main-quickfilterhistory--no-recent-filters": [
-    "target-size"
-  ],
-  "app-main-quickfilterhistory--recent-filters-fail-to-load": [
-    "target-size"
   ],
   "app-main-resultstoresdialog--settings": [
     "scrollable-region-focusable"
@@ -419,12 +281,6 @@
   "app-main-visualisationassets--upload-file": [
     "aria-required-parent",
     "image-alt"
-  ],
-  "app-query-queryresultstable--column-filter-row": [
-    "target-size"
-  ],
-  "app-query-queryresultstable--url-link-named-by-host-and-path": [
-    "target-size"
   ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"

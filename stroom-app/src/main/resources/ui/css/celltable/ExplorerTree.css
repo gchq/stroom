@@ -21,6 +21,13 @@
     padding: 0;
 }
 
+/* The explorer's type filter: a line under its All / None row, and the space below it the line it
+   had (an <hr>) left */
+.data-grid__row.type-filter__all {
+    border-bottom: 1px solid var(--text-color);
+    margin-bottom: 0.5em;
+}
+
 .explorerCell {
     display: flex;
     align-items: center;

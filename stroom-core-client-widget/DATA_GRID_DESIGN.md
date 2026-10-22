@@ -1084,3 +1084,27 @@ keyboard focus drawn inside the row) and has its stories switched with it, as th
   even one already chosen). First list moved: the annotation status and standard comment chooser
   (`ChooserPresenter`, named "Statuses" or "Standard comments"); `App/Main/AnnotationEditor`
   `StatusChooserKeys`.
+* **Step 2, the small lists** (2026-10-22), each with a story of its keys, roles and names, and
+  each checked against a picture of the old one:
+  * The tab session chooser ("Tab sessions") and the stepping filter's elements ("Elements"), and
+    query history and favourites ("Query history", "Favourite queries", which were `CustomCellList`s,
+    their presenters now making the list): the row with the focus chosen; in a list, Enter opens the
+    row as a double click does (a double-select `MultiSelectEvent`), e.g. confirming the dialog. The
+    history dialog once also took a single click on the chosen query as choosing it, as two
+    selections within the double click time: that is a double click or Enter now.
+  * Tick lists: the explorer's type filter ("Document types"), a column's values filter ("Values",
+    in its popup and the dashboard's Table Filter) and the annotation label and collection choosers
+    ("Labels", "Collections", which had no keys at all). A tick is the option's own state
+    (`setRowChecked`: `aria-checked`, `mixed` for All / None part ticked), changed with Space,
+    Enter or a press (`setChooser`), Ctrl+A for all; the tick box is drawn as a picture
+    (`TickBoxCell.DefaultAppearance.getPicture`, `aria-hidden`), which the grid's keyboard leaves
+    alone, and in the clickable look (the values filter's were the read-only grey). The type filter
+    is as wide as its longest type (`setFitWidth`) and as compact as the explorer's rows
+    (`setCellPadding(false)`, its cells drawing their own padding), with its line under All / None
+    a row style rather than an `<hr>` in the row.
+  * The find dialogs' results: documents found, recent items ("Documents"), content found,
+    annotations found and AI chats, made by one helper (`FindResultLists`): striped
+    (`setStriped`), the result with the focus chosen, Enter or a double click opening it, Up on the
+    first back to the filter, Left and Right changing page as they did (`setLeftRightPage`, through
+    the keyboard's `Selector.onLeft` and `onRight` for a list).
+  * `DataGridWidget.java` stays under 2,000 lines: type-ahead is `GridRows`'.

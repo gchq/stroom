@@ -610,8 +610,16 @@ public final class DashboardComponentStories {
                     // The Query's toolbar button is titled 'Show Query History'
                     play.click(play.getByRole("button", "Show Query History"));
                     final Play history = DashboardPlays.dialog(screen, "Query History");
-                    // The first query is selected as the dialog opens, so clicking it again chooses it
-                    play.click(history.findByText(TextMatch.containing("Name = alpha"), ".queryCell-expression"));
+                    // The queries are a list (listbox), the first chosen and focused as the dialog
+                    // opens; Enter on it (or a double click) opens it. A single click on the chosen
+                    // query once did too, as two choices of a row within the double click time
+                    final Play queries = screen.within(history.findByRole("listbox", "Query history"));
+                    final Query first = queries.getAllByRole("option").nth(0);
+                    play.expect(first).toHaveTextContent(TextMatch.containing("Name = alpha"));
+                    play.expect(first).toBeVisible();
+                    play.waitFor(() -> play.expect(first).toHaveFocus());
+                    play.expect(first).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(screen.queryByText("Query History", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.waitFor(() -> play.expect(play.getByText("Name = alpha")).toBeInTheDocument());

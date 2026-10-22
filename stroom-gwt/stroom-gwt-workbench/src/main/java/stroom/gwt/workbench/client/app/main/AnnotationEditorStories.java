@@ -113,8 +113,8 @@ public final class AnnotationEditorStories {
                     // GWT doesn't select the first annotation found (its list only
                     // selects the first result when the filter changes), so OK with nothing selected
                     // warns and keeps the chooser open; the annotation is then selected
-                    play.expect(chooser.findByText("Related alert").closest("tr"))
-                            .not().toHaveClass("cellTableSelectedRow");
+                    play.expect(chooser.findByText("Related alert").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(chooser.getByRole("button", StroomDom.button("OK")));
                     final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
@@ -307,6 +307,28 @@ public final class AnnotationEditorStories {
                                     .toSpyMatcher()));
                     play.expect(tab(play, "Documentation")).toBeInTheDocument();
                     play.expect(tab(play, "Permissions")).toBeInTheDocument();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The label chooser's list is a listbox whose options say whether they are ticked
+                // (aria-checked): it has the focus when it opens, and Space ticks the label with
+                // the focus (it had no keys at all)
+                .story("LabelChooserKeys", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Labels"));
+                    final Play labels = screen.within(screen.findByRole("listbox", "Labels"));
+                    final Query p1 = labels.getByRole("option", "P1");
+                    play.expect(p1).toBeVisible();
+                    play.expect(p1).toHaveAttribute("aria-checked", "false");
+                    play.waitFor(() -> play.expect(p1).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withJsonBodyContaining("{\"change\": {\"type\": \"addTag\", "
+                                            + "\"tag\": {\"name\": \"P1\"}}}")
+                                    .toSpyMatcher()));
+                    play.expect(p1).toHaveAttribute("aria-checked", "true");
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Read only (no Edit permission): everything can be read, nothing changed (the

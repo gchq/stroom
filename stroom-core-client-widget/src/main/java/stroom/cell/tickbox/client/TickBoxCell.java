@@ -343,6 +343,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
             return safeHtml;
         }
+
+        /// The tick box drawn for a state, as a picture only (hidden from assistive technology),
+        /// for a row that says the state itself, e.g. a list's option (`aria-checked`), which may
+        /// not hold a check box of its own.
+        ///
+        /// @param value The state.
+        /// @return The tick box's HTML.
+        public SafeHtml getPicture(final TickBoxState value) {
+            if (value == null) {
+                return SafeHtmlUtils.EMPTY_SAFE_HTML;
+            }
+            // Drawn as a tick box that can be clicked, as its row can
+            final String html = getHTML(value, true).asString();
+            return SafeHtmlUtils.fromTrustedString(html.replaceFirst("<div ", "<div aria-hidden=\"true\" "));
+        }
     }
 
 

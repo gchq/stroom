@@ -28,7 +28,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class ColumnValueCell extends AbstractCell<ColumnValue> {
 
-    private static final TickBoxCell.Appearance TICK_BOX = new TickBoxCell.DefaultAppearance();
+    private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
 
     private final ColumnValueSelection.Builder columnValueSelection;
 
@@ -40,25 +40,30 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
     public void render(final Context context, final ColumnValue item, final SafeHtmlBuilder sb) {
         if (item != null) {
             final HtmlBuilder hb = new HtmlBuilder(sb);
-            final ColumnValueSelection selection = columnValueSelection.build();
-
-            final boolean selected;
-            if (selection.getValues().contains(item.getValue())) {
-                selected = !selection.isInvert();
-            } else {
-                selected = selection.isInvert();
-            }
-
             hb.div(outer -> {
 
-                // The tick box (tick-box.css), showing whether the value is chosen; the row, not the
-                // box, is what is clicked to change it, so the box is read only
-                outer.append(TICK_BOX.getHTML(selected
-                        ? TickBoxState.TICK
-                        : TickBoxState.UNTICK, false));
+                // The tick box (tick-box.css), showing whether the value is chosen, as a picture: the
+                // list's option says it (aria-checked), and is what is clicked to change it
+                outer.append(TICK_BOX.getPicture(stateOf(columnValueSelection, item)));
 
                 outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
             }, Attribute.className("columnValueCell"));
         }
+    }
+
+    /// @param columnValueSelection The values chosen.
+    /// @param item                 A value.
+    /// @return Whether the value is chosen, as a tick box shows it.
+    static TickBoxState stateOf(final ColumnValueSelection.Builder columnValueSelection, final ColumnValue item) {
+        final ColumnValueSelection selection = columnValueSelection.build();
+        final boolean selected;
+        if (selection.getValues().contains(item.getValue())) {
+            selected = !selection.isInvert();
+        } else {
+            selected = selection.isInvert();
+        }
+        return selected
+                ? TickBoxState.TICK
+                : TickBoxState.UNTICK;
     }
 }

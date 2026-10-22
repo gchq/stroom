@@ -16,22 +16,20 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.table.client.MyCellTable;
 import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.util.client.BasicSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -46,8 +44,8 @@ import java.util.function.Function;
 
 public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionChooserView> {
 
-    private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
-    private final CellTable<T> cellTable;
+    private final MultiSelectionModelImpl<T> selectionModel = new MultiSelectionModelImpl<>();
+    private final DataGridWidget<T> list;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     @Inject
@@ -56,27 +54,20 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
                                       final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<>(Integer.MAX_VALUE);
-        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<T>(cellTable) {
-            @Override
-            protected boolean onClose(final CellPreviewEvent<T> e) {
-                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).autoClose(true)
-                        .action(DialogAction.CLOSE)
-                        .fire();
-                return true;
-            }
+        // A list of sessions, the one with the focus chosen. Escape goes on to the dialog (Cancel)
+        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName("Tab sessions");
+        list.setSelectionModel(selectionModel,
+                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false));
+        view.setSelectionList(list);
 
-            @Override
-            protected void onExecute(final CellPreviewEvent<T> e) {
-                super.onExecute(e);
-                SelectionChangeEvent.fire(selectionModel);
+        // Enter, or a double click, on a session confirms it and closes the dialog
+        selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).fire();
             }
         });
-        view.setSelectionList(cellTable);
-
-        // Double-click a row to confirm selection and close the dialog.
-        selectionModel.addDoubleSelectHandler(event ->
-                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).fire());
 
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
@@ -91,11 +82,11 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
                 return builder.toSafeHtml();
             }
         };
-        cellTable.addColumn(textColumn);
+        list.addColumn(textColumn, "", 200);
     }
 
     void focus() {
-        cellTable.setFocus(true);
+        list.setFocus(true);
     }
 
     /**
@@ -106,11 +97,11 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
     }
 
     public Optional<T> getSelected() {
-        return Optional.ofNullable(selectionModel.getSelectedObject());
+        return Optional.ofNullable(selectionModel.getSelected());
     }
 
     public void setSelected(final T value) {
-        selectionModel.setSelected(value, true);
+        selectionModel.setSelected(value);
     }
 
     public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
@@ -118,8 +109,8 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
     }
 
     public void setSelectionList(final List<T> selectionList) {
-        cellTable.setRowData(0, selectionList);
-        cellTable.setRowCount(selectionList.size());
+        list.setRowData(0, selectionList);
+        list.setRowCount(selectionList.size());
     }
 
     // --------------------------------------------------------------------------------

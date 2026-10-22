@@ -375,9 +375,9 @@ public final class DashboardSearchStories {
         expectSearchesComplete(play);
     }
 
-    // The tick box of a value in a Table Filter's list
+    // A value in a Table Filter's list: an option that says whether it is ticked (aria-checked)
     private static Query valueTick(final Play play, final String value) {
-        return play.within(play.getByText(value).closest(".columnValueCell")).getByRole("checkbox");
+        return play.getByRole("option", value);
     }
 
     // No Query is still searching: each Query's own button is back to 'Execute Query' (it is

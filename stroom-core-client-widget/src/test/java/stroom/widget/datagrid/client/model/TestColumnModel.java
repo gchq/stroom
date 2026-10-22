@@ -118,6 +118,17 @@ class TestColumnModel {
     }
 
     @Test
+    void testListTemplateFillColumnFills() {
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("icon", ColumnSizing.fixed(22));
+        model.add("name", ColumnSizing.fill(100));
+        model.add("filter", ColumnSizing.fixed(22));
+
+        // The name column fills, not the filter icon after it
+        assertThat(model.toListTemplate()).isEqualTo("22px minmax(100px, 1fr) 22px");
+    }
+
+    @Test
     void testListTemplateOneColumn() {
         final ColumnModel<String> model = new ColumnModel<>();
         model.add("name", ColumnSizing.fixed(0));

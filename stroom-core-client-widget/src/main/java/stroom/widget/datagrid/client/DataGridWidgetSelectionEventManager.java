@@ -40,6 +40,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.Range;
 
 import java.util.List;
 import java.util.Set;
@@ -70,6 +71,8 @@ public class DataGridWidgetSelectionEventManager<T>
     private Consumer<String> typedHandler;
     // What chooses a row pressed, or Enter or Space on it, instead of selecting it; null to select
     private Consumer<T> chooser;
+    // Whether Left and Right on a list's row show the page before or after
+    private boolean leftRightPage;
 
     /// @param dataGrid         The grid.
     /// @param selectionModel   The selection model to update.
@@ -95,6 +98,41 @@ public class DataGridWidgetSelectionEventManager<T>
     /// @param chooser Given each row chosen, or null for rows that are selected as the focus moves.
     public void setChooser(final Consumer<T> chooser) {
         this.chooser = chooser;
+    }
+
+    /// Makes Left and Right on a list's row show the page before or after, as the find dialogs'
+    /// results do.
+    ///
+    /// @param leftRightPage Whether Left and Right change page.
+    public void setLeftRightPage(final boolean leftRightPage) {
+        this.leftRightPage = leftRightPage;
+    }
+
+    @Override
+    public void onLeft() {
+        if (leftRightPage) {
+            showPage(-1);
+        }
+    }
+
+    @Override
+    public void onRight() {
+        if (leftRightPage) {
+            showPage(1);
+        }
+    }
+
+    // Shows the page before (-1) or after (1) the one shown, if there is one
+    private void showPage(final int direction) {
+        final Range range = dataGrid.getVisibleRange();
+        int start = range.getStart() + direction * range.getLength();
+        if (dataGrid.isRowCountExact()) {
+            start = Math.min(start, dataGrid.getRowCount() - range.getLength());
+        }
+        start = Math.max(0, start);
+        if (start != range.getStart()) {
+            dataGrid.setPageStart(start);
+        }
     }
 
     /// What Up on the first row does, as `DataGridSelectionEventManager`'s, e.g. move the focus to
@@ -176,11 +214,14 @@ public class DataGridWidgetSelectionEventManager<T>
         }
     }
 
-    /// Enter chooses only the row.
+    /// Enter chooses only the row. In a list it also opens it, as a double click does (a
+    /// `MultiSelectEvent` whose selection type is a double select), e.g. confirming a dialog's choice.
     @Override
     public void onEnter(final T item) {
         if (item != null && chooser != null) {
             chooser.accept(item);
+        } else if (item != null && !dataGrid.getProfile().hasCells()) {
+            selectionModel.setSelected(item, new SelectionType(true, false, allowMultiSelect, false, false));
         } else if (item != null) {
             selectionModel.setSelected(item);
         }

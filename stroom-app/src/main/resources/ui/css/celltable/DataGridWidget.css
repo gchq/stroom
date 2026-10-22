@@ -78,6 +78,24 @@
     max-height: inherit;
 }
 
+/* A grid as wide as its widest row (setFitWidth), up to the width its container allows: e.g. a list
+   in a popup, as wide as its longest value */
+.data-grid--fit-width {
+    width: max-content;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+.data-grid--fit-width .data-grid__content {
+    width: max-content;
+    min-width: 100%;
+}
+
+/* Cells that draw their own padding (setCellPadding(false)), e.g. the explorer's */
+.data-grid--no-cell-padding .data-grid__cell > div {
+    padding: 0;
+}
+
 .data-grid input {
     margin: 0;
 }
@@ -223,10 +241,11 @@
     background-color: var(--row__background-color--odd);
 }
 
-/* A list (DataGridProfile.LISTBOX) isn't striped, as the cell tables' lists weren't: its rows show
-   what they sit on. The row states (data-grid.css) are stronger than this */
-.data-grid--list .data-grid__row--even,
-.data-grid--list .data-grid__row--odd {
+/* A list (DataGridProfile.LISTBOX) isn't striped, as the cell tables' lists weren't, unless it asks
+   to be (setStriped, e.g. the find dialogs' results): its rows show what they sit on. The row states
+   (data-grid.css) are stronger than this */
+.data-grid--list:where(:not(.data-grid--striped)) .data-grid__row--even,
+.data-grid--list:where(:not(.data-grid--striped)) .data-grid__row--odd {
     background-color: transparent;
 }
 
