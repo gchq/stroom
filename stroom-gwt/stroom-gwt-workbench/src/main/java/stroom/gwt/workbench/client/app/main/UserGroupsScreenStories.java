@@ -161,11 +161,11 @@ public final class UserGroupsScreenStories {
                     // Member Of's, then Members', with the splitter (named by the pane it resizes)
                     // between each. A grid is one tab stop: the row with the keyboard focus (named
                     // by its text; its row actions are reached with Right), or, with no rows, the
-                    // grid itself, so its headers can still be reached (named by them here)
+                    // grid itself, so its headers can still be reached (named by its table name, Users)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
                             FILTER, "Show Recent Filters", "Create Group", "First", "Administrators",
                             "Users and groups",
-                            FILTER, "Show Recent Filters", "Add to Group", "First", "Display Name 1",
+                            FILTER, "Show Recent Filters", "Add to Group", "First", "Users",
                             "Members",
                             FILTER, "Show Recent Filters", "Add Member to Group", "First",
                             "Alice Anderson Alice A Anderson"));

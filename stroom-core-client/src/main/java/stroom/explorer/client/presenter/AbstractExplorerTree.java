@@ -17,6 +17,8 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
@@ -132,6 +134,8 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
         // The items' levels and open state, which Right, Left and * change as the expander does
         tree.setTreeRows(AbstractExplorerTree::expanderOf, treeModel::setItemOpen);
+        // Each item's type, read after its name (#5411): "Countries, tree item, Dictionary"
+        tree.setRowDescription(AbstractExplorerTree::typeOf);
         final TickBoxSelectionModel tickBoxSelectionModel = getTickBoxSelectionModel();
         if (tickBoxSelectionModel != null) {
             // A tick tree's items say whether they are ticked
@@ -157,6 +161,12 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         return new Expander(node.getDepth(),
                 node.hasNodeFlag(NodeFlag.OPEN),
                 !node.hasNodeFlag(NodeFlag.OPEN) && !node.hasNodeFlag(NodeFlag.CLOSED));
+    }
+
+    // An item's type as people know it, e.g. Dictionary or Folder (else its type's own name)
+    private static String typeOf(final ExplorerNode node) {
+        final String type = node.getType();
+        return NullSafe.getOrElse(DocumentTypeRegistry.get(type), DocumentType::getDisplayType, type);
     }
 
     @Override

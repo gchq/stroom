@@ -72,13 +72,13 @@ public final class SelectionBoxStories {
                 .layout(StoryLayout.CENTERED)
                 // Basic controlled selector with a non-select ("clear") row
                 .story("Basic", context -> {
-                    final SelectionBox<String> box = selectionBox(context, List.of("Alpha", "Beta", "Gamma", "Delta"));
+                    final SelectionBox<String> box = namedBox(context, List.of("Alpha", "Beta", "Gamma", "Delta"));
                     box.setNonSelectString("(none)");
                     return withEcho(box);
                 })
                 // Disabled - non-interactive with a preset value
                 .story("Disabled", context -> {
-                    final SelectionBox<String> box = selectionBox(context, List.of("One", "Two"));
+                    final SelectionBox<String> box = namedBox(context, List.of("One", "Two"));
                     box.setValue("One");
                     box.setEnabled(false);
                     return minWidth(box);
@@ -86,7 +86,7 @@ public final class SelectionBoxStories {
                 // Disabling the box while its list is open closes the list (it once stayed open, so
                 // the value could still be changed)
                 .story("DisabledWhileOpen", context -> {
-                    final SelectionBox<String> box = selectionBox(context, List.of("One", "Two"));
+                    final SelectionBox<String> box = namedBox(context, List.of("One", "Two"));
                     // Stands in for a screen that disables the box while its list is open (e.g.
                     // when it learns that the document is read only): F9 disables it
                     final HandlerRegistration registration = Event.addNativePreviewHandler(event -> {
@@ -250,7 +250,7 @@ public final class SelectionBoxStories {
                     for (int i = 1; i <= 150; i++) {
                         items.add("Item " + i);
                     }
-                    return withEcho(selectionBox(context, items));
+                    return withEcho(namedBox(context, items));
                 })
                 // A box backed by a server-side model (e.g. Stroom's DynamicFieldSelectionListModel)
                 // always shows the quick filter and pager, however few items there are
@@ -277,7 +277,7 @@ public final class SelectionBoxStories {
                             .toBeInTheDocument();
                 })
                 // The default: a short list shows no pager
-                .story("ShortListHasNoPager", context -> selectionBox(context, List.of("One", "Two")))
+                .story("ShortListHasNoPager", context -> namedBox(context, List.of("One", "Two")))
                 .withPlay(play -> {
                     play.click(play.querySelector(OPENER));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
@@ -285,14 +285,14 @@ public final class SelectionBoxStories {
                     play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
                 })
                 // The popup's markup is GWT's (SelectionPopup > SimplePopupLayout > SelectionList)
-                .story("PopupUsesGwtMarkup", context -> selectionBox(context, List.of("One", "Two")))
+                .story("PopupUsesGwtMarkup", context -> namedBox(context, List.of("One", "Two")))
                 .withPlay(SelectionBoxStories::playPopupMarkup)
                 // Escape in an open list closes the list
                 .story("EscapeClosesOnlyTheList", context -> {
                     final Spy onWindowEscape = context.fn(ON_WINDOW_ESCAPE);
                     final JavaScriptObject listener = addWindowKeyDownListener(onWindowEscape);
                     context.addCleanUp(() -> removeWindowKeyDownListener(listener));
-                    return selectionBox(context, List.of("One", "Two"));
+                    return namedBox(context, List.of("One", "Two"));
                 })
                 .withPlay(SelectionBoxStories::playEscape);
     }
@@ -349,6 +349,14 @@ public final class SelectionBoxStories {
         box.addItems(items);
         final Spy onChange = context.fn(ON_CHANGE);
         box.addValueChangeHandler(event -> onChange.call(event.getValue()));
+        return box;
+    }
+
+    /// A box named as a form group's label names one on Stroom's screens, for a story that shows it
+    /// on its own.
+    private static SelectionBox<String> namedBox(final StoryContext context, final List<String> items) {
+        final SelectionBox<String> box = selectionBox(context, items);
+        AccessibleName.set(box, "Choice");
         return box;
     }
 

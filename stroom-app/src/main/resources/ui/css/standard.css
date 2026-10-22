@@ -38,6 +38,17 @@ a, a:visited, a:hover {
   color: var(--link__text-color);
 }
 
+/* Links in running text are underlined, so they are told from the text round them by more than
+   their colour (WCAG 1.4.1). Links that are part of the UI (toolbars, tabs, grids) are left as
+   they are. */
+.markdown a,
+.info-page a,
+.help-popup__content a,
+.welcomeViewImpl-body a,
+.AuthErrorViewGenericMessageContainer a {
+  text-decoration: underline;
+}
+
 /**
  * The reference theme can be used to determine when this style sheet has
  * loaded.  Create a hidden div element with absolute position, assign the style

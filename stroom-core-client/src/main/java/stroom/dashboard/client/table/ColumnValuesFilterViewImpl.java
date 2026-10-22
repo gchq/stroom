@@ -55,6 +55,8 @@ public class ColumnValuesFilterViewImpl
     @Inject
     public ColumnValuesFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        quickFilter.setAccessibleName("Filter values");
         // Only drawn between the two buttons, not read out
         separator.getElement().setAttribute("aria-hidden", "true");
     }

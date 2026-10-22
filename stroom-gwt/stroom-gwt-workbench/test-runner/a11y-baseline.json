@@ -1,20 +1,4 @@
 {
-  "app-ai-askaichatpanel--attachment-ready": [
-    "button-name"
-  ],
-  "app-ai-askaichatpanel--stop-while-working": [
-    "button-name",
-    "nested-interactive"
-  ],
-  "app-ai-askstroomaidialog--default": [
-    "button-name"
-  ],
-  "app-ai-askstroomaidialog--download-chat": [
-    "button-name"
-  ],
-  "app-ai-askstroomaidialog--view-attachment-data": [
-    "button-name"
-  ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
   ],
@@ -27,156 +11,8 @@
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
   ],
-  "app-idp-authenticationerror--with-config-message": [
-    "link-in-text-block"
-  ],
-  "app-main-appshell--activity-chooser": [
-    "button-name"
-  ],
-  "app-main-appshell--ai-docked-beside-content": [
-    "button-name"
-  ],
-  "app-main-appshell--banner": [
-    "button-name"
-  ],
-  "app-main-appshell--change-keyboard-shortcut": [
-    "button-name"
-  ],
-  "app-main-appshell--character-key-shortcuts-off": [
-    "button-name"
-  ],
-  "app-main-appshell--context-menu": [
-    "button-name"
-  ],
-  "app-main-appshell--context-menu-on-favourites-root": [
-    "button-name"
-  ],
-  "app-main-appshell--context-menu-on-system-root": [
-    "button-name"
-  ],
-  "app-main-appshell--context-menu-permissions": [
-    "button-name"
-  ],
-  "app-main-appshell--copy-document": [
-    "button-name"
-  ],
-  "app-main-appshell--create-document": [
-    "button-name"
-  ],
-  "app-main-appshell--deep-link": [
-    "button-name"
-  ],
-  "app-main-appshell--default": [
-    "button-name"
-  ],
-  "app-main-appshell--delete-after-failed-lookup-still-proceeds": [
-    "button-name"
-  ],
-  "app-main-appshell--delete-document": [
-    "button-name"
-  ],
   "app-main-appshell--delete-with-dependants-warns": [
-    "button-name",
     "scrollable-region-focusable"
-  ],
-  "app-main-appshell--dictionary-lifecycle": [
-    "button-name"
-  ],
-  "app-main-appshell--editor-theme-preferences": [
-    "button-name"
-  ],
-  "app-main-appshell--explorer-toggle-alerts": [
-    "button-name"
-  ],
-  "app-main-appshell--explorer-type-filter": [
-    "button-name"
-  ],
-  "app-main-appshell--export-document": [
-    "button-name"
-  ],
-  "app-main-appshell--find-shortcut": [
-    "button-name"
-  ],
-  "app-main-appshell--goto-shortcut": [
-    "button-name"
-  ],
-  "app-main-appshell--help-menu": [
-    "button-name"
-  ],
-  "app-main-appshell--help-not-configured": [
-    "button-name"
-  ],
-  "app-main-appshell--info-dialog": [
-    "button-name"
-  ],
-  "app-main-appshell--keyboard-shortcut-preferences": [
-    "button-name"
-  ],
-  "app-main-appshell--live-explorer": [
-    "button-name"
-  ],
-  "app-main-appshell--locate-only-for-explorer-tabs": [
-    "button-name"
-  ],
-  "app-main-appshell--main-menu": [
-    "button-name"
-  ],
-  "app-main-appshell--main-menu-no-empty-group": [
-    "button-name"
-  ],
-  "app-main-appshell--main-toolbar-tab-order": [
-    "button-name"
-  ],
-  "app-main-appshell--move-document": [
-    "button-name"
-  ],
-  "app-main-appshell--multi-delete": [
-    "button-name"
-  ],
-  "app-main-appshell--opened-document-takes-focus": [
-    "button-name"
-  ],
-  "app-main-appshell--opened-screen-takes-focus": [
-    "button-name"
-  ],
-  "app-main-appshell--opens-document": [
-    "button-name"
-  ],
-  "app-main-appshell--opens-feed": [
-    "button-name"
-  ],
-  "app-main-appshell--record-clashing-shortcut": [
-    "button-name"
-  ],
-  "app-main-appshell--rename-document": [
-    "button-name"
-  ],
-  "app-main-appshell--rename-to-blank-warns": [
-    "button-name"
-  ],
-  "app-main-appshell--save-as-document": [
-    "button-name"
-  ],
-  "app-main-appshell--security-menu-both-for-administrator": [
-    "button-name"
-  ],
-  "app-main-appshell--security-menu-user-access-only": [
-    "button-name"
-  ],
-  "app-main-appshell--sign-out-other-sessions": [
-    "button-name"
-  ],
-  "app-main-appshell--tab-context-menu": [
-    "button-name"
-  ],
-  "app-main-appshell--tab-keyboard": [
-    "button-name"
-  ],
-  "app-main-appshell--toolbar-delete": [
-    "button-name"
-  ],
-  "app-main-appshell--toolbar-tab-stops": [
-    "button-name"
   ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
@@ -202,9 +38,6 @@
   "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
   ],
-  "app-main-executionschedulesscreen--default-sort-is-name-descending": [
-    "aria-command-name"
-  ],
   "app-main-manageactivitydialog--validation-blocks-save": [
     "scrollable-region-focusable"
   ],
@@ -214,49 +47,13 @@
   "app-main-resultstoresdialog--stores": [
     "scrollable-region-focusable"
   ],
-  "app-main-topbar--focus-rings": [
-    "button-name"
-  ],
-  "app-main-topbar--keyboard": [
-    "button-name"
-  ],
   "app-main-tracesscreen--traces": [
     "scrollable-region-focusable"
-  ],
-  "widgets-display-htmlpresenter--rich-content": [
-    "link-in-text-block"
-  ],
-  "widgets-display-logo--clickable": [
-    "button-name"
-  ],
-  "widgets-display-logo--default": [
-    "button-name"
   ],
   "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
     "aria-hidden-focus"
   ],
   "widgets-editors-viewers-aceeditorfeatures--search-box": [
     "color-contrast"
-  ],
-  "widgets-selectors-selectionbox--basic": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--disabled": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--disabled-while-open": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--escape-closes-only-the-list": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--long-list": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--popup-uses-gwt-markup": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--short-list-has-no-pager": [
-    "label"
   ]
 }

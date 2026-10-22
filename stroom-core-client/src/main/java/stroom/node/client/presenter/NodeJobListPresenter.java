@@ -86,6 +86,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.nodeClient = nodeClient;
         this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("Node Jobs");
+        this.dataGrid.setAccessibleName("Node jobs");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
         this.dataProvider = buildDataProvider(eventBus, view, restFactory);
@@ -223,6 +224,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
             dataProvider.addDataDisplay(dataGrid);
         }
         setNodeNameCriteria(nodeName);
+        // Named for the node whose jobs it shows
+        dataGrid.setAccessibleName(nodeName == null
+                ? "Node jobs"
+                : "Jobs on " + nodeName);
         internalRefresh();
     }
 

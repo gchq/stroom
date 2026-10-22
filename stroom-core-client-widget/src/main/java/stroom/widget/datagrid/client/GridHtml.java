@@ -22,6 +22,7 @@ import stroom.widget.datagrid.client.model.TableText;
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.Header;
@@ -48,10 +49,16 @@ final class GridHtml<R> {
     /// The attribute holding a header cell's column index.
     static final String DATA_HCOL = "data-hcol";
 
+    // A tick box in a cell is a check box to assistive technology
+    private static final String CHECK_BOX_ROLE = "role=\"checkbox\"";
+
     private final ColumnModel<Column<R, ?>> columnModel;
     private final Map<Column<R, ?>, Header<?>> headers;
     private final ColumnSortList sortList;
     private final BiFunction<R, Integer, Object> keys;
+    // Each column's name for the unnamed tick boxes in its cells (see nameTickBoxes), worked out
+    // when the header is rendered; null for a column whose header gives none
+    private String[] tickBoxNames = new String[0];
 
     /// @param columnModel The grid's columns.
     /// @param headers     The columns' headers.
@@ -72,6 +79,7 @@ final class GridHtml<R> {
 
     /// @return The header cells, with the sort indicators of the columns in the sort list.
     SafeHtml header() {
+        updateTickBoxNames();
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         final int count = columnModel.size();
         for (int i = 0; i < count; i++) {
@@ -168,11 +176,53 @@ final class GridHtml<R> {
             }
             sb.appendHtmlConstant("><div>");
             if (row != null) {
-                column.render(context, row, sb);
+                final SafeHtmlBuilder cell = new SafeHtmlBuilder();
+                column.render(context, row, cell);
+                sb.append(nameTickBoxes(cell.toSafeHtml(), i));
             }
             sb.appendHtmlConstant("</div></div>");
         }
         return sb.toSafeHtml();
+    }
+
+    // A tick box in a cell with no name of its own (e.g. its row's, from
+    // TickBoxCell.withNameForRow) is named by its column's header, e.g. "Enabled", so that a screen
+    // reader says what it sets ("Enabled, check box, checked") rather than only its title, which
+    // repeats its state ("Ticked") (#5411)
+    private SafeHtml nameTickBoxes(final SafeHtml cellHtml, final int index) {
+        if (tickBoxNames.length != columnModel.size()) {
+            updateTickBoxNames();
+        }
+        final String name = tickBoxNames[index];
+        final String html = cellHtml.asString();
+        if (name == null || !html.contains(CHECK_BOX_ROLE) || html.contains("aria-label")) {
+            return cellHtml;
+        }
+        return SafeHtmlUtils.fromTrustedString(html.replace(CHECK_BOX_ROLE,
+                CHECK_BOX_ROLE + " aria-label=\"" + SafeHtmlUtils.htmlEscape(name) + "\""));
+    }
+
+    // The headers' text, as names for the tick boxes in their cells. A header holding a control
+    // (e.g. a tick box that ticks every row) gives none, as its text wouldn't say what a row's tick
+    // box sets, nor does a blank one.
+    private void updateTickBoxNames() {
+        final int count = columnModel.size();
+        final String[] names = new String[count];
+        for (int i = 0; i < count; i++) {
+            final Header<?> header = headers.get(columnModel.getColumn(i));
+            if (header != null) {
+                final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                header.render(new Context(0, i, header.getKey()), sb);
+                final String html = sb.toSafeHtml().asString();
+                if (!html.contains("role=") && !html.contains("<input") && !html.contains("<button")) {
+                    final String text = TableText.normaliseWhitespace(DataGridDom.textOfHtml(html));
+                    names[i] = text.isEmpty()
+                            ? null
+                            : text;
+                }
+            }
+        }
+        tickBoxNames = names;
     }
 
     /// Append a copy of a cell for measuring its content (R-CR4). It has the cell's classes and

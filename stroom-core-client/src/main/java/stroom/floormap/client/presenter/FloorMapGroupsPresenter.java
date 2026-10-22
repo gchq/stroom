@@ -143,6 +143,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         this.groupEditPresenterProvider = groupEditPresenterProvider;
 
         dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Groups");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapGroup::getId);
         dataGrid.setSelectionModel(selectionModel);

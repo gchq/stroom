@@ -47,6 +47,8 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Inject
     public TaskManagerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        nameFilter.setAccessibleName("Filter server tasks");
     }
 
     @Override

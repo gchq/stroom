@@ -17,6 +17,7 @@
 package stroom.widget.datagrid.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.VirtualWindow;
@@ -312,6 +313,15 @@ final class GridRows<R> {
             rendered.element.removeAttribute("aria-label");
         } else {
             rendered.element.setAttribute("aria-label", name);
+        }
+        final Function<R, String> rowDescription = grid.getRowDescription();
+        final String description = rowDescription != null && row != null
+                ? rowDescription.apply(row)
+                : null;
+        if (NullSafe.isBlankString(description)) {
+            rendered.element.removeAttribute("aria-description");
+        } else {
+            rendered.element.setAttribute("aria-description", description);
         }
         final Function<R, TickBoxState> rowChecked = grid.getRowChecked();
         final TickBoxState checked = rowChecked != null && row != null

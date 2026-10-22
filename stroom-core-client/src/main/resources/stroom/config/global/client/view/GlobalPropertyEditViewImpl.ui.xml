@@ -30,7 +30,8 @@
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value"
                         helpText="The cluster-wide value stored in the database. Only editable when 'Set Database value' is ticked. The format depends on the Data Type."
-                        screenReaderText="Editable when Set Database value is ticked. Format depends on the data type.">
+                        screenReaderText="Editable when Set Database value is ticked. Format depends on the data type."
+                        controlNames="Database Value, Database Value">
             <g:FlowPanel>
                 <g:TextArea ui:field="databaseValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>

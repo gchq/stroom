@@ -181,6 +181,7 @@ public class QueryResultTablePresenter
 
         this.pagerView = pagerView;
         this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid.setTableName("Query Results");
         // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
         dataGrid.setVirtual(true);
         dataGrid.addStyleName("TablePresenter");

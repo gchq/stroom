@@ -157,6 +157,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         super(eventBus, view);
 
         dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Tracking");
         dataGrid.setSelectionModel(selectionModel);
         // The grid is the map's text equivalent — a navigable row per entity with
         // its type and containing area — so it needs a stable id for the canvas to

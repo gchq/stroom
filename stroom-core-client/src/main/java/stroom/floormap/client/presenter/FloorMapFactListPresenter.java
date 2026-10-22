@@ -118,6 +118,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         super(eventBus, view);
 
         dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Facts");
         // Multi-select: ctrl/shift-click extends the selection natively via the
         // grid's selection event manager.
         selectionModel = dataGrid.addDefaultSelectionModel(true);

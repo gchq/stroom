@@ -166,6 +166,8 @@ public class DataGridWidget<R> extends Widget
     private Function<R, TickBoxState> rowChecked;
     // Gives a row's name where its content doesn't, or null
     private Function<R, String> rowName;
+    private Function<R, String> rowDescription;
+    private String accessibleName;
     // Whether the selection manager lets several rows be chosen (a list says so)
     private boolean multiSelectable;
     private boolean multiLine;
@@ -883,10 +885,20 @@ public class DataGridWidget<R> extends Widget
         return headingListener;
     }
 
-    /// Names the grid for screen readers (its `grid`), e.g. `Users and groups`.
+    /// Names the grid for screen readers (its `grid`), e.g. `Users and groups`. Without one, it is
+    /// named by its table name ([#setTableName(String)]).
     ///
-    /// @param name The name.
+    /// @param name The name, or null or blank for the table name.
     public void setAccessibleName(final String name) {
+        this.accessibleName = name;
+        updateAccessibleName();
+    }
+
+    // The grid's name for screen readers: its own, else its table name, else none
+    private void updateAccessibleName() {
+        final String name = NullSafe.isNonBlankString(accessibleName)
+                ? accessibleName
+                : tableName;
         if (NullSafe.isBlankString(name)) {
             scroller.removeAttribute("aria-label");
         } else {
@@ -926,9 +938,26 @@ public class DataGridWidget<R> extends Widget
         return rowName;
     }
 
-    /// @param tableName The table's name, used when copying, exporting or asking AI about it.
+    /// Describes each row for assistive technology (`aria-description`), read after its name, role
+    /// and state, e.g. the type of an explorer item ("Countries, tree item, Dictionary").
+    ///
+    /// @param rowDescription Gives a row's description, or null (or a blank one) for none.
+    public void setRowDescription(final Function<R, String> rowDescription) {
+        this.rowDescription = rowDescription;
+        redraw();
+    }
+
+    /// @return Gives a row's description (see [#setRowDescription(Function)]), or null.
+    Function<R, String> getRowDescription() {
+        return rowDescription;
+    }
+
+    /// @param tableName The table's name, used when copying, exporting or asking AI about it, and to
+    ///                  name the grid for screen readers when it has no name of its own
+    ///                  ([#setAccessibleName(String)]).
     public void setTableName(final String tableName) {
         this.tableName = tableName;
+        updateAccessibleName();
     }
 
     /// @return The table's name, or `null`.

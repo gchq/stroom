@@ -1009,23 +1009,8 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
 
 ### Controls with no accessible name
 
-**Reported.**
+**Fixed**: all those listed here (see Fixed). Left: a grid's first (icon) column has an empty header.
 
-* Node: the jobs list's group has no label because its `setLabel` call is commented out
-  (`NodeViewImpl`).
-* The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
-  stop (`NavigationViewImpl`).
-* Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
-  (Its Send/Cancel button, once named only by `setText`, which didn't show, is now a `ToolbarButton`
-  named Send or Cancel.)
-* Quick filters have only a "Quick Filter" placeholder, no label, e.g. Dependencies, User Access
-  and Export (`QuickFilter`). `QuickFilter.setAccessibleName` and `setDescription` now give one a
-  name and say what may be typed; the Find and Recent Items dialogs use them (#5409).
-* Properties: the Database Value text area and password box have no names of their own. When the
-  group loads both are shown, so the label names the panel holding them (`role="group"`), and the
-  group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
-* The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
-  their row (e.g. "Create Pipeline").
 
 ### Missing roles and states
 
@@ -1239,6 +1224,12 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Names (batch 2 of `A11Y.md`): the explorer's logo is out of the tab order and hidden from
+    screen readers (the Main Menu button beside it does the same); Ask Stroom AI's decorative icon
+    buttons are spans; a grid is named by its table name when it has no name of its own; a grid's
+    tick box is named by its column's header; explorer items have their type as their description;
+    nine quick filters, Properties' Database Value controls and the Nodes screen's jobs list are
+    named; links in running text are underlined. The a11y baseline went from 93 stories to 19.
   * Help opened from the keyboard (F1 in a form group's field, Enter on a help button) takes the
     focus, so that a screen reader reads it, and Escape gives it back; a mouse click leaves the
     focus where it is (`HelpPopup`, #5400). Found doing it: F1 in a text field never opened its

@@ -61,6 +61,7 @@ public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
         this.askStroomAiClient = askStroomAiClient;
 
         dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Attachment Data");
         view.setDataWidget(dataGrid);
     }
 
