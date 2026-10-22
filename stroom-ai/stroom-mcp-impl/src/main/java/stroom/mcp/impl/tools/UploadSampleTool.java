@@ -187,8 +187,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
                + "for each file in the user's terminal: it sends the file from their disk whole, and prints its "
                + "stream_id. Never send files to Stroom's datafeed yourself (you have no token for it), and don't "
                + "pass their text through you. Only if there is no terminal, the user uploads them in Stroom (the "
-               + "feed, " + links.documentTarget(feed) + ", its Data tab, Upload), and find_streams feed="
-               + feed.getName() + " gives each stream id. Either way, carry on with stream_ids.";
+               + "feed, " + links.documentTarget(feed) + ", its Data tab, Upload), and stream_meta feeds=['"
+               + feed.getName() + "'] gives each stream id. Either way, carry on with stream_ids.";
     }
 
     private Map<String, Object> upload(final ToolCall call, final ToolCallContext context) {
@@ -246,8 +246,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
         if (sent.streamId() == null) {
             result.put("receipt_id", sent.receiptId());
             result.put("stream_id", null);
-            result.put("hint", "Stroom accepted the data but the stream is not visible yet; check find_streams "
-                               + "shortly.");
+            result.put("hint", "Stroom accepted the data but the stream is not visible yet; check stream_meta "
+                               + "feeds=['" + feed + "'] shortly.");
             return result;
         }
         result.putAll(sent.toMap());
@@ -308,7 +308,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
         throw new ToolRefusal("The commands post the files to Stroom's MCP endpoint (" + SampleUploads.PATH + "), "
                               + "which " + why + ": the user uploads the files in Stroom instead (the feed, "
                               + context.links().documentTarget(feed) + ", its Data tab, Upload, each file as its "
-                              + "own stream), and find_streams feed=" + feed.getName() + " gives each stream id.");
+                              + "own stream), and stream_meta feeds=['" + feed.getName() + "'] gives each stream "
+                              + "id.");
     }
 
     private void checkImportData(final String feed) {

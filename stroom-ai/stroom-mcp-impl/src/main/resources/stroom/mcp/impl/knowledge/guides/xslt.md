@@ -53,7 +53,7 @@ the pipeline's `JSONParser`.
 | --- | --- |
 | `stroom:format-date(value, 'pattern')` | Parse a timestamp into `yyyy-MM-ddTHH:mm:ss.SSSZ`. A third argument gives the input time zone (e.g. `'+10:00'`); the five-argument form also sets the output pattern and zone. A value that does not match logs a WARNING and returns empty, which then fails the schema. |
 | `stroom:lookup('map', key)` | Reference data lookup through a reference loader attached to the XSLT element. |
-| `stroom:meta('Name')` | A receipt header of the source stream, e.g. `Feed`, `ReceivedTime`, `RemoteAddress`, or a custom one. See `describe_stream`. |
+| `stroom:meta('Name')` | A receipt header of the source stream, e.g. `Feed`, `ReceivedTime`, `RemoteAddress`, or a custom one. `stream_meta streamId=` lists a stream's. |
 | `stroom:feed-name()`, `stroom:stream-id()`, `stroom:record-no()` | Where the record came from. |
 | `stroom:dictionary('Name')` | Text of a Dictionary doc, e.g. a field mapping table. |
 | `json-to-xml(string)` | Parse JSON held in a string field into `map`/`array` elements. |
@@ -112,7 +112,7 @@ Each value has one source and optional modifiers:
 | `value` | A constant |
 | `lookup: {map, field, path?}` | What reference data holds for the key (see the reference-data guide) |
 | `xpath` | A computed value (embedded JSON: `json-to-xml(...)/*/*[@key='x']`) |
-| `meta` | A stream meta attribute, the headers a stream was sent with: `{"path": "EventSource/Device/HostName", "meta": "MyHostName"}` reads `stroom:meta('MyHostName')`. `describe_stream` lists a stream's; given the sample streams, `build_translation_xslt` warns of one none carries |
+| `meta` | A stream meta attribute, the headers a stream was sent with: `{"path": "EventSource/Device/HostName", "meta": "MyHostName"}` reads `stroom:meta('MyHostName')`. `stream_meta streamId=` lists a stream's; given the sample streams, `build_translation_xslt` warns of one none carries |
 
 | Modifier | Meaning |
 | --- | --- |

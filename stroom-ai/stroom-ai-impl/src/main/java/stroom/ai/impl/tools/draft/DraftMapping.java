@@ -1178,7 +1178,7 @@ public final class DraftMapping {
             }
             if (!notInCatalogue.isEmpty()) {
                 notes.add("The catalogue does not list " + String.join(", ", notInCatalogue) + ": those records fall "
-                          + "to the rule for the rest; read the reference documents (find_documents content=the "
+                          + "to the rule for the rest; read the reference documents (find_in_content pattern=the "
                           + "value) or ask the user.");
             }
             return left;

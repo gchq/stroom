@@ -37,9 +37,11 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndexable;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
@@ -82,7 +84,10 @@ import java.util.TreeMap;
 /// time with `find` ([DocumentationPassages]), and its outline given when it is too long to show; and a pipeline
 /// is given with its processor filters, i.e. what it processes. An XSLT is given with what the translation does
 /// ([TranslationDescriptions]), and for the event-logging XMLSchema `element` says what an element takes
-/// ([EventElements]) rather than the whole XSD, the UUID optional.
+/// ([EventElements]) rather than the whole XSD, the UUID optional. A pipeline is given as Stroom runs it
+/// ([MergedPipeline#description()]: its template chain, effective elements and properties and which layer set each,
+/// reference loaders, and what it removes from its template); an Elastic Index or Lucene Index doc with a survey of
+/// what the index holds; and an XSLT saved with a mapping that is gone says so ([DocumentAnalyses], where bound).
 class ReadDocumentTool extends AbstractWorkspaceTool {
 
     static final String NAME = "read_document";
@@ -101,6 +106,10 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     static final int PREVIEW_CHARS = 1_500;
     /// The deepest a dictionary's imports are followed.
     static final int MAX_IMPORT_DEPTH = 20;
+    /// The most documents an index survey samples.
+    static final int SURVEY_DOCUMENTS = 100;
+    /// The types of document an index survey is given for.
+    static final Set<String> INDEX_TYPES = Set.of(ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReadDocumentTool.class);
 
@@ -109,6 +118,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     private final Provider<WordListProvider> wordListProviderProvider;
     private final TabSnapshots tabSnapshots;
     private final Provider<HeldSchemas> heldSchemasProvider;
+    private final Optional<DocumentAnalyses> analyses;
 
     @Inject
     ReadDocumentTool(final ChatWorkspace workspace,
@@ -116,13 +126,26 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                      final ProcessorFilterAccess processorFilterAccess,
                      final Provider<WordListProvider> wordListProviderProvider,
                      final TabSnapshots tabSnapshots,
-                     final Provider<HeldSchemas> heldSchemasProvider) {
+                     final Provider<HeldSchemas> heldSchemasProvider,
+                     final Optional<DocumentAnalyses> analyses) {
         super(workspace);
         this.documentAccess = documentAccess;
         this.processorFilterAccess = processorFilterAccess;
         this.wordListProviderProvider = wordListProviderProvider;
         this.tabSnapshots = tabSnapshots;
         this.heldSchemasProvider = heldSchemasProvider;
+        this.analyses = analyses;
+    }
+
+    /// As the injected constructor, without the analyses: no index survey and no lost mapping.
+    ReadDocumentTool(final ChatWorkspace workspace,
+                     final DocumentAccess documentAccess,
+                     final ProcessorFilterAccess processorFilterAccess,
+                     final Provider<WordListProvider> wordListProviderProvider,
+                     final TabSnapshots tabSnapshots,
+                     final Provider<HeldSchemas> heldSchemasProvider) {
+        this(workspace, documentAccess, processorFilterAccess, wordListProviderProvider, tabSnapshots,
+                heldSchemasProvider, Optional.empty());
     }
 
     /// As the injected constructor, without the XML schemas: `element` is refused.
@@ -164,7 +187,14 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                                  + "pipeline it runs, whether it is enabled, its priority and its progress. A "
                                  + "pipeline is given with its processor filters, i.e. what it processes")
                         .chatOnly(" (follow them to the feeds with document_links)")
-                        .general(". Cluster credentials are redacted. An "
+                        .general(", and how Stroom runs it (template chain, effective elements and properties and "
+                                 + "which layer set each, reference data, what it removes from its template). For "
+                                 + "an Elastic Index or Lucene Index doc, a survey of what the index holds, read "
+                                 + "through Stroom: its fields, a sample of up to " + SURVEY_DOCUMENTS
+                                 + " documents, recent ones where there are any (how often each field is "
+                                 + "populated, sample values) and the pipelines that feed it; not the whole "
+                                 + "index's totals, which write_documentation counts. Cluster credentials are "
+                                 + "redacted. An "
                                  + "XSLT's kept mapping (the mapping it was generated from) is summarised, with "
                                  + "its pending changes. A long Documentation doc (a vendor manual) is given with "
                                  + "its outline; find returns the passages about one thing instead. An XSLT is "
@@ -237,13 +267,20 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             return readPassages(docRef, find, intArg(request, CONTEXT_LINES_ARG));
         }
         final String result = readParts(context, docRef, part, booleanArg(request, MAPPING_ARG, false));
+        final String pipeline = PipelineDoc.TYPE.equals(docRef.getType()) && part == null
+                ? pipeline(context, docRef)
+                : "";
         final String processing = PipelineDoc.TYPE.equals(docRef.getType())
                 ? processing(docRef)
                 : "";
         final String translation = XsltDoc.TYPE.equals(docRef.getType()) && part == null
                 ? translation(context, docRef)
                 : "";
-        return ToolResult.text(result + processing + translation + savedVersionNote(context, docRef));
+        final String survey = INDEX_TYPES.contains(docRef.getType()) && part == null
+                ? survey(context, docRef)
+                : "";
+        return ToolResult.text(result + pipeline + processing + translation + survey
+                               + savedVersionNote(context, docRef));
     }
 
     // What an event-logging element takes, from the XMLSchema document given: the whole XSD is over 100 KB (seen
@@ -303,16 +340,62 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         } catch (final ValidationException e) {
             return "\n\n## Translation\nIt couldn't be described: " + e.getMessage();
         }
-        final String json = JsonUtil.writeValueAsString(described, true);
-        if (json.length() <= limits(context).getMaxCharsPerRead() / 2) {
-            return "\n\n## Translation\nWhat it does (each output's source, the input fields it reads, its imports, "
-                   + "dictionaries and lookups):\n" + json;
+        return jsonSection(context, docRef, "Translation", "What it does (each output's source, the input fields "
+                                                           + "it reads, its imports, dictionaries and lookups)",
+                described, "translation.json");
+    }
+
+    // How Stroom runs a pipeline, as the Stroom MCP server's describe_pipeline said it (reached through its
+    // describe_document): its template chain, element chain, every property and the layer that set it, its
+    // reference loaders, and what it removes from its template.
+    private String pipeline(final ToolCallContext context, final DocRef docRef) {
+        return MergedPipeline.load(documentAccess, docRef.getUuid())
+                .map(merged -> jsonSection(context, docRef, "Pipeline", "How Stroom runs it (template chain, root "
+                                                                        + "first; the chain in processing order; "
+                                                                        + "each property's value and the layer "
+                                                                        + "that set it; reference loaders; what it "
+                                                                        + "removes from its template)",
+                        merged.description(), "pipeline.json"))
+                .orElse("\n\n## Pipeline\nHow Stroom runs it couldn't be worked out: it, or a template it inherits "
+                        + "from, can't be read, or Stroom can't merge them.");
+    }
+
+    // What an index holds, as the Stroom MCP server's describe_document surveyed it, without the index's totals:
+    // counting them reads every document through Stroom, minutes on a large index (seen: three minutes before the
+    // agent could go on). write_documentation counts them.
+    private String survey(final ToolCallContext context, final DocRef docRef) {
+        if (analyses.isEmpty()) {
+            return "";
         }
-        final WorkspacePath path = documentPath(docRef, "translation.json");
+        final Map<String, Object> survey;
+        try {
+            survey = analyses.get().surveyIndex(context, docRef);
+        } catch (final RuntimeException e) {
+            // The cluster may be unreachable: the doc itself is still worth having (e.g. to copy its settings).
+            LOGGER.debug(() -> "Unable to survey " + docRef, e);
+            return "\n\n## Survey\nCould not survey the index through Stroom: " + e.getMessage();
+        }
+        return jsonSection(context, docRef, "Survey", "What the index holds, read through Stroom (its fields, a "
+                                                      + "sample of its documents: how often each field is "
+                                                      + "populated, sample values; the pipelines that feed it)",
+                survey, "survey.json");
+    }
+
+    // A section of JSON, saved to the workspace when it is too large to show.
+    private String jsonSection(final ToolCallContext context,
+                               final DocRef docRef,
+                               final String heading,
+                               final String what,
+                               final Map<String, Object> content,
+                               final String fileName) {
+        final String json = JsonUtil.writeValueAsString(content, true);
+        if (json.length() <= limits(context).getMaxCharsPerRead() / 2) {
+            return "\n\n## " + heading + "\n" + what + ":\n" + json;
+        }
+        final WorkspacePath path = documentPath(docRef, fileName);
         sessionWorkspace(context).writeDocument(path, json, docRef.getUuid());
-        return "\n\n## Translation\nWhat it does (each output's source, the input fields it reads, its imports, "
-               + "dictionaries and lookups) is too large to show (" + size(json.length()) + "), so it has been "
-               + "saved to " + path + ".";
+        return "\n\n## " + heading + "\n" + what + " is too large to show (" + size(json.length()) + "), so it "
+               + "has been saved to " + path + ".";
     }
 
     // A Documentation doc's passages that mention something, as the Stroom MCP server's describe_document gave them.
@@ -492,8 +575,11 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                 .orElse(null);
         final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(description);
         final Optional<Map<String, Object>> pending = KeptMapping.pendingOf(description);
+        final String lost = kept.isEmpty()
+                ? lostMapping(docRef, description)
+                : "";
         if (kept.isEmpty() && pending.isEmpty()) {
-            return "";
+            return lost;
         }
         // Its own text (and its version history) stays in its description.
         parts.replaceAll((name, text) -> withoutBlocks(text, description));
@@ -504,7 +590,15 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         });
         kept.ifPresent(mapping -> sb.append("\n\n## Kept mapping\n")
                 .append(JsonUtil.writeValueAsString(KeptMapping.summary(mapping, docRef.getUuid(), whole), true)));
-        return sb.toString().stripTrailing();
+        return sb.toString().stripTrailing() + lost;
+    }
+
+    // Why an XSLT saved with a mapping has none now (e.g. it was deleted from its Documentation tab), as the Stroom
+    // MCP server's describe_document gave it: `{"lost": ...}` as its kept mapping.
+    private String lostMapping(final DocRef docRef, final String description) {
+        return analyses.flatMap(analysis -> analysis.lostMapping(docRef, description))
+                .map(why -> "\n\n## Kept mapping\n" + JsonUtil.writeValueAsString(Map.of("lost", why), true))
+                .orElse("");
     }
 
     // A part that is the document's JSON, with its description's kept blocks taken out; any other part as it was.

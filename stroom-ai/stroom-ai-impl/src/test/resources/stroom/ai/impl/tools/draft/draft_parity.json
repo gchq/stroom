@@ -25070,7 +25070,7 @@
    "kinds": [],
    "notes": [
     "Drafted from the source documentation: usr -> EventSource/User/Id; src -> EventSource/Client/IPAddress; 4624 (evt=4624) -> Authenticate; 4625 (evt=4625) -> Authenticate; 4634 (evt=4634) -> Authenticate; 4648 (evt=4648) -> Authenticate, not in the sample.",
-    "The catalogue does not list evt=9999: those records fall to the rule for the rest; read the reference documents (find_documents content=the value) or ask the user."
+    "The catalogue does not list evt=9999: those records fall to the rule for the rest; read the reference documents (find_in_content pattern=the value) or ask the user."
    ],
    "unmapped_fields": [
     "evt",
@@ -25586,7 +25586,7 @@
     "Drafted from the source documentation: LOGIN-SUCCESS (action=LOGIN_SUCCESS) -> Authenticate; LOGIN-FAILED (action=LOGIN_FAILED) -> Authenticate; CONFIG-CHANGE (action=CONFIG_CHANGE) -> Update.",
     "Kept from the sample's values, where the catalogue can't be followed: event_type=TRAFFIC: the catalogue has more than one event for it, so the sample's rules are kept (traffic_permitted: Network; traffic_denied: Network); action=VPN_TUNNEL_DOWN: the catalogue gives no action element, so the sample's rules are kept (system_alert: Alert).",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Update for action CONFIG_CHANGE; SYSTEM: Alert for action VPN_TUNNEL_DOWN.",
-    "The catalogue does not list action=ALLOW, action=DENY, event_type=ADMIN, event_type=SYSTEM: those records fall to the rule for the rest; read the reference documents (find_documents content=the value) or ask the user."
+    "The catalogue does not list action=ALLOW, action=DENY, event_type=ADMIN, event_type=SYSTEM: those records fall to the rule for the rest; read the reference documents (find_in_content pattern=the value) or ask the user."
    ],
    "unmapped_fields": [
     "protocol",

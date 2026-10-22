@@ -62,6 +62,8 @@ public final class MergedPipeline {
     private final List<PipelineReference> references;
     private final DocRef pipeline;
     private final Set<String> ownElements;
+    private final List<DocRef> templateChain;
+    private final Map<String, List<Map<String, Object>>> ownRemovals;
     private final PipelineDoc doc;
 
     private MergedPipeline(final Map<String, String> elements,
@@ -71,6 +73,8 @@ public final class MergedPipeline {
                            final List<PipelineReference> references,
                            final DocRef pipeline,
                            final Set<String> ownElements,
+                           final List<DocRef> templateChain,
+                           final Map<String, List<Map<String, Object>>> ownRemovals,
                            final PipelineDoc doc) {
         this.elements = elements;
         this.links = links;
@@ -79,6 +83,8 @@ public final class MergedPipeline {
         this.references = references;
         this.pipeline = pipeline;
         this.ownElements = ownElements;
+        this.templateChain = templateChain;
+        this.ownRemovals = ownRemovals;
         this.doc = doc;
     }
 
@@ -116,7 +122,8 @@ public final class MergedPipeline {
         try {
             final MergedPipeline merged = of(layers);
             return Optional.of(new MergedPipeline(merged.elements, merged.links, merged.properties,
-                    merged.propertySources, merged.references, merged.pipeline, merged.ownElements, pipelineDoc));
+                    merged.propertySources, merged.references, merged.pipeline, merged.ownElements,
+                    merged.templateChain, merged.ownRemovals, pipelineDoc));
         } catch (final RuntimeException e) {
             // E.g. a PipelineModelException: an element type Stroom no longer has.
             return Optional.empty();
@@ -191,8 +198,64 @@ public final class MergedPipeline {
             NullSafe.list(lastData.getAddedPipelineReferences()).forEach(reference ->
                     own.add(reference.getElement()));
         }
+        final List<DocRef> chain = NullSafe.list(layers).stream()
+                .filter(Objects::nonNull)
+                .map(PipelineLayer::getSourcePipeline)
+                .toList();
         return new MergedPipeline(elements, links, properties, sources, List.copyOf(references),
-                NullSafe.get(last, PipelineLayer::getSourcePipeline), Set.copyOf(own), null);
+                NullSafe.get(last, PipelineLayer::getSourcePipeline), Set.copyOf(own), chain,
+                removalsOf(lastData), null);
+    }
+
+    // What the pipeline's own layer removes from its template, by section, as the Stroom MCP server gave it: only
+    // the sections it removes anything from.
+    private static Map<String, List<Map<String, Object>>> removalsOf(final PipelineData data) {
+        final Map<String, List<Map<String, Object>>> removals = new LinkedHashMap<>();
+        if (data == null) {
+            return removals;
+        }
+        final List<Map<String, Object>> elements = NullSafe.list(data.getRemovedElements()).stream()
+                .map(element -> entry("id", element.getId(), "type", element.getType()))
+                .toList();
+        final List<Map<String, Object>> links = NullSafe.list(data.getRemovedLinks()).stream()
+                .map(link -> entry("from", link.getFrom(), "to", link.getTo()))
+                .toList();
+        final List<Map<String, Object>> properties = NullSafe.list(data.getRemovedProperties()).stream()
+                .map(property -> entry("element", property.getElement(), "name", property.getName(),
+                        "value", value(property.getValue())))
+                .toList();
+        final List<Map<String, Object>> references = NullSafe.list(data.getRemovedPipelineReferences()).stream()
+                .map(MergedPipeline::reference)
+                .toList();
+        putIfAny(removals, "elements", elements);
+        putIfAny(removals, "links", links);
+        putIfAny(removals, "properties", properties);
+        putIfAny(removals, "pipelineReferences", references);
+        return removals;
+    }
+
+    private static void putIfAny(final Map<String, List<Map<String, Object>>> removals,
+                                 final String section,
+                                 final List<Map<String, Object>> removed) {
+        if (!removed.isEmpty()) {
+            removals.put(section, removed);
+        }
+    }
+
+    // A map of the names and values given, in order: name, value, name, value, ...
+    private static Map<String, Object> entry(final Object... namesAndValues) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < namesAndValues.length; i += 2) {
+            map.put(String.valueOf(namesAndValues[i]), namesAndValues[i + 1]);
+        }
+        return map;
+    }
+
+    // A reference loader as the Stroom MCP server gave it: element, name, pipeline, feed and stream_type.
+    private static Map<String, Object> reference(final PipelineReference reference) {
+        return entry("element", reference.getElement(), "name", reference.getName(),
+                "pipeline", docRef(reference.getPipeline()), "feed", docRef(reference.getFeed()),
+                "stream_type", reference.getStreamType());
     }
 
     /// @return Each element's type by its id, leaving out `Source`.
@@ -269,6 +332,55 @@ public final class MergedPipeline {
     /// @return The pipeline's document, if it was read with [#load(DocumentAccess, String)]; null otherwise.
     public PipelineDoc doc() {
         return doc;
+    }
+
+    /// @return The pipelines whose layers make it up, root template first, the pipeline itself last.
+    public List<DocRef> templateChain() {
+        return templateChain;
+    }
+
+    /// @return What the pipeline's own layer removes from what it inherits, by section (`elements`, `links`,
+    /// `properties`, `pipelineReferences`), only the sections it removes anything from: where it departs from its
+    /// template, e.g. a decoration step it bypasses.
+    public Map<String, List<Map<String, Object>>> ownRemovals() {
+        return ownRemovals;
+    }
+
+    /// The pipeline as Stroom runs it, as the Stroom MCP server's `describe_pipeline` gave it: its template chain
+    /// (root first), the element chain in processing order, its elements and links, every property value and the
+    /// layer that set it, its reference loaders, and what it removes from its template; with the elements it sets
+    /// itself and the code it runs ([#translationDocMaps()]).
+    ///
+    /// @return `{pipeline, template_chain, chain, elements, links, properties, references,
+    /// removed_by_this_pipeline, own_elements, translation_docs}`.
+    public Map<String, Object> description() {
+        final Map<String, Object> described = new LinkedHashMap<>();
+        final Map<String, Object> self = new LinkedHashMap<>();
+        self.put("uuid", NullSafe.get(pipeline, DocRef::getUuid));
+        self.put("name", doc != null
+                ? doc.getName()
+                : NullSafe.get(pipeline, DocRef::getName));
+        self.put("description", NullSafe.isBlankString(NullSafe.get(doc, PipelineDoc::getDescription))
+                ? null
+                : doc.getDescription());
+        described.put("pipeline", self);
+        described.put("template_chain", templateChain.stream().map(MergedPipeline::docRef).toList());
+        described.put("chain", chain());
+        described.put("elements", elements.entrySet().stream()
+                .map(element -> entry("id", element.getKey(), "type", element.getValue()))
+                .toList());
+        final List<Map<String, Object>> linkList = new ArrayList<>();
+        links.forEach((from, tos) -> tos.forEach(to -> linkList.add(entry("from", from, "to", to))));
+        described.put("links", linkList);
+        described.put("properties", properties.entrySet().stream()
+                .map(property -> entry("element", property.getKey().element(), "name", property.getKey().name(),
+                        "value", property.getValue(), "from", docRef(propertySources.get(property.getKey()))))
+                .toList());
+        described.put("references", references.stream().map(MergedPipeline::reference).toList());
+        described.put("removed_by_this_pipeline", ownRemovals);
+        described.put("own_elements", ownElements.stream().sorted().toList());
+        described.put("translation_docs", translationDocMaps());
+        return described;
     }
 
     /// @return The pipeline itself (its own layer), or null if it has no layers.

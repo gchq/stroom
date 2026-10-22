@@ -203,7 +203,7 @@
    "model": null
   },
   "meta": {
-   "description": "A stream meta attribute (a receipt header the stream was sent with, e.g. 'MyHostName', 'RemoteHost', 'Feed'; describe_stream lists a stream's), read with stroom:meta(): for values the records don't hold, such as the sending host.",
+   "description": "A stream meta attribute (a receipt header the stream was sent with, e.g. 'MyHostName', 'RemoteHost', 'Feed'; stream_meta streamId= lists a stream's), read with stroom:meta(): for values the records don't hold, such as the sending host.",
    "model": null
   },
   "lookup": {

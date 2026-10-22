@@ -40,7 +40,7 @@ not such a question: ask for it in your answer and end your turn. Whatever is fo
 to review, a choice) goes in your answer, never only in your thinking: clients collapse thinking, and the user
 doesn't see it (seen: a question asked only there went unanswered).
 
-Existing feed: when the user asks to onboard data a feed already holds, work from that feed (onboard_existing_feed):
+Existing feed: when the user asks to onboard data a feed already holds, work from that feed:
 start_build feeds=[it], then survey_feed. No feed is created and nothing uploaded, whatever sample files the
 workspace holds: its streams are stepped and processed where they are (create_processor_filter with their stream
 ids), the server writing their Events to a test feed it makes in the build; then stage 2 indexes those Events, as for
