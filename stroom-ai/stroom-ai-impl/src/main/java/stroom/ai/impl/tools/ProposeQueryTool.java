@@ -69,6 +69,12 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It proposes a query to the user in the chat, for them to open.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CONTENT;
     }

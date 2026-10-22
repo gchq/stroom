@@ -51,12 +51,14 @@ import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -119,6 +121,9 @@ public class AiChatRunManager {
     private final Map<Integer, LocalRun> localRuns = new ConcurrentHashMap<>();
     /// The chats with queued runs, in the order they were asked.
     private final Deque<Integer> queue = new ArrayDeque<>();
+    // Heavy tool calls made over MCP on this node, which each take one of their user's run slots.
+    private final Map<String, AtomicInteger> toolCallsByUser = new ConcurrentHashMap<>();
+    private final AtomicInteger toolCallsOnNode = new AtomicInteger();
     private volatile ScheduledExecutorService heartbeatExecutor;
 
     @Inject
@@ -237,9 +242,43 @@ public class AiChatRunManager {
         final AiConfig aiConfig = aiConfigProvider.get();
         final long workingOnNode = localRuns.values().stream()
                 .filter(localRun -> localRun.working().get())
-                .count();
+                .count() + toolCallsOnNode.get();
         return workingOnNode < aiConfig.getMaxRunsPerNode()
-               && (userUuid == null || runDao.countWorking(userUuid) < aiConfig.getMaxRunsPerUser());
+               && (userUuid == null
+                   || runDao.countWorking(userUuid) + toolCalls(userUuid) < aiConfig.getMaxRunsPerUser());
+    }
+
+    /// Takes one of the user's run slots for a heavy tool call made over MCP (e.g. a query), as a chat run takes
+    /// one, so MCP calls and chat runs count against the same limits. Calls on other nodes aren't counted.
+    ///
+    /// @param userUuid The user making the call.
+    /// @return The slot, to close when the call ends; or empty if the user, or this node, has none free.
+    public Optional<RunSlot> takeToolCallSlot(final String userUuid) {
+        synchronized (queue) {
+            if (!hasFreeSlot(userUuid)) {
+                return Optional.empty();
+            }
+            toolCallsByUser.computeIfAbsent(userUuid, uuid -> new AtomicInteger()).incrementAndGet();
+            toolCallsOnNode.incrementAndGet();
+        }
+        final AtomicBoolean closed = new AtomicBoolean();
+        return Optional.of(() -> {
+            if (closed.compareAndSet(false, true)) {
+                synchronized (queue) {
+                    NullSafe.consume(toolCallsByUser.get(userUuid), AtomicInteger::decrementAndGet);
+                    toolCallsByUser.computeIfPresent(userUuid, (uuid, count) -> count.get() <= 0
+                            ? null
+                            : count);
+                    toolCallsOnNode.decrementAndGet();
+                }
+                // A slot has come free.
+                startQueued();
+            }
+        });
+    }
+
+    private int toolCalls(final String userUuid) {
+        return NullSafe.getOrElse(toolCallsByUser.get(userUuid), AtomicInteger::get, 0);
     }
 
     private void submit(final int chatId, final LocalRun localRun) {
@@ -617,6 +656,15 @@ public class AiChatRunManager {
         public AiChatRunStopReason getStopReason() {
             return stopReason;
         }
+    }
+
+    /// One of a user's run slots, taken by a heavy tool call made over MCP (see [#takeToolCallSlot(String)]).
+    @FunctionalInterface
+    public interface RunSlot extends AutoCloseable {
+
+        /// Gives the slot back. Closing it again does nothing.
+        @Override
+        void close();
     }
 
     /// Thrown when a question is asked in a chat that is still working on an earlier one.

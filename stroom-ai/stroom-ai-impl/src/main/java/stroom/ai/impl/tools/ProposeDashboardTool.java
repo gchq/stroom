@@ -78,6 +78,12 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It proposes a dashboard to the user in the chat, for them to open.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CONTENT;
     }

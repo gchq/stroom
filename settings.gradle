@@ -40,6 +40,7 @@ include 'stroom-ai:stroom-ai-api'
 include 'stroom-ai:stroom-ai-impl'
 include 'stroom-ai:stroom-ai-impl-db'
 include 'stroom-ai:stroom-ai-mock'
+include 'stroom-ai:stroom-mcp-impl'
 
 // Analytics
 include 'stroom-analytics:stroom-analytics-api'

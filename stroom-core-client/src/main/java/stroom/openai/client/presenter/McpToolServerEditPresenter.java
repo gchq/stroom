@@ -16,6 +16,7 @@
 
 package stroom.openai.client.presenter;
 
+import stroom.ai.shared.AiToolCategory;
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
@@ -59,6 +60,8 @@ public class McpToolServerEditPresenter
 
     // As on the server (McpToolFilter): tool names are short, so a longer pattern is a mistake.
     static final int MAX_PATTERN_LENGTH = 500;
+    // The text of the empty tool category option: a server with no tool category is in Core.
+    private static final String DEFAULT_TOOL_CATEGORY_TEXT = "Default (Core)";
 
     private final EventBus eventBus;
     private final CredentialClient credentialClient;
@@ -89,6 +92,9 @@ public class McpToolServerEditPresenter
         view.getAuthModeSelectionBox().addItems(Arrays.stream(McpAuthMode.values())
                 .sorted(Comparator.comparing(McpAuthMode::getDisplayValue, String.CASE_INSENSITIVE_ORDER))
                 .toList());
+        // No category means Core, so the empty option says so.
+        view.getToolCategorySelectionBox().setNonSelectString(DEFAULT_TOOL_CATEGORY_TEXT);
+        view.getToolCategorySelectionBox().addItems(AiToolCategory.values());
     }
 
     /// Shows the dialog.
@@ -270,6 +276,7 @@ public class McpToolServerEditPresenter
         getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
         getView().setTrusted(c.isTrusted());
         getView().setToolPolicies(c.getToolPolicies());
+        getView().getToolCategorySelectionBox().setValue(c.getToolCategory());
         this.httpClientConfiguration = c.getHttpClientConfiguration();
     }
 
@@ -289,6 +296,7 @@ public class McpToolServerEditPresenter
                 .toolPolicies(NullSafe.isEmptyCollection(getView().getToolPolicies())
                         ? null
                         : getView().getToolPolicies())
+                .toolCategory(getView().getToolCategorySelectionBox().getValue())
                 .build();
     }
 
@@ -375,6 +383,10 @@ public class McpToolServerEditPresenter
 
         /// @param rules The tool policies, in order, or null for none.
         void setToolPolicies(List<McpToolPolicyRule> rules);
+
+        /// @return The box for the tool policy category that grants the server's tools, where a tool names none
+        /// itself. An empty value means Core.
+        SelectionBox<AiToolCategory> getToolCategorySelectionBox();
 
         /// Shows the Tool Policies tab, e.g. to point out a problem with a tool policy.
         void showToolsTab();

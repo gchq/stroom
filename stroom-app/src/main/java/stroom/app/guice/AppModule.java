@@ -28,6 +28,7 @@ import stroom.dropwizard.common.prometheus.PrometheusModule;
 import stroom.dropwizard.common.sysinfo.SystemInfoAdminServletModule;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.lifecycle.impl.LifecycleServiceModule;
+import stroom.mcp.impl.McpModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.impl.SecurityContextModule;
@@ -47,6 +48,7 @@ public class AppModule extends AbstractModule {
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new AiModule());
+        install(new McpModule());
         install(new LifecycleServiceModule());
         install(new JobsModule());
         install(new ClusterModule());

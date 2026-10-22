@@ -29,6 +29,7 @@ import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.DocumentReference;
 import stroom.ai.shared.DocumentReferenceContext;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
@@ -419,4 +420,40 @@ class TestAiDaoImpl {
         assertThat(aiDao.hasMessageOfType(other.getId(), AiMessageType.QUEUED_STEER_MESSAGE)).isTrue();
     }
 
+    @Test
+    void anMcpSessionsChatIsHiddenFromTheUsersChats() {
+        final UserRef user = UserRef.builder().uuid("user1").build();
+        final AiChat chat = aiDao.createChat(user);
+        final AiChat hidden = aiDao.createSessionChat(user, "session-1");
+
+        assertThat(aiDao.findSessionChat("session-1")).contains(hidden.getId());
+        assertThat(aiDao.findSessionChat("session-2")).isEmpty();
+        assertThat(aiDao.listChats(user, new FindAiChatHistoryCriteria(null, null, null)).getValues())
+                .extracting(AiChat::getId)
+                .containsExactly(chat.getId());
+        assertThat(aiDao.getChatStatuses("user1", 10))
+                .extracting(AiChatStatus::getChatId)
+                .containsExactly(chat.getId());
+        // Its files count towards the user's workspace, so it is one of their chats there.
+        assertThat(aiDao.getChatIds("user1")).containsExactlyInAnyOrder(chat.getId(), hidden.getId());
+    }
+
+    @Test
+    void anMcpSessionsChatIsIdleOnlyIfNotUsedSince() throws InterruptedException {
+        final UserRef user = UserRef.builder().uuid("user1").build();
+        final AiChat hidden = aiDao.createSessionChat(user, "session-1");
+        aiDao.createChat(user);
+        final long created = hidden.getUpdateTimeMs();
+
+        // Ordinary chats are never taken for an MCP session's.
+        assertThat(aiDao.findSessionChatsNotUpdatedSince(created + 1)).containsExactly(hidden.getId());
+        assertThat(aiDao.findSessionChatsNotUpdatedSince(created)).isEmpty();
+
+        // Used too recently to be marked again.
+        Thread.sleep(5);
+        aiDao.touchChat(hidden.getId(), 60_000);
+        assertThat(aiDao.findSessionChatsNotUpdatedSince(created + 1)).containsExactly(hidden.getId());
+        aiDao.touchChat(hidden.getId(), 0);
+        assertThat(aiDao.findSessionChatsNotUpdatedSince(created + 1)).isEmpty();
+    }
 }
