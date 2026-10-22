@@ -19,10 +19,10 @@ package stroom.mcp.impl.tools;
 /// A ported tool's refusal: what the tool, or a helper it calls, tells the caller when it can't go on, worded for
 /// the agent to act on (as the Stroom MCP server's `ToolError`s were). A tool gives its message as an error result
 /// (see [JsonResults#refused(ToolRefusal)]).
-class ToolRefusal extends RuntimeException {
+public class ToolRefusal extends RuntimeException {
 
     /// @param message Why the tool can't go on, and what to do instead.
-    ToolRefusal(final String message) {
+    public ToolRefusal(final String message) {
         super(message);
     }
 }

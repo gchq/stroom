@@ -117,6 +117,7 @@ class TestStroomMcpServer {
         final List<StroomTool> tools = List.of(
                 tool("read_thing", AiToolCategory.CORE, true, false, false),
                 tool("write_thing", AiToolCategory.CORE, false, false, false),
+                confirming(tool("confirmed_write", AiToolCategory.CORE, false, false, false)),
                 tool("chat_thing", AiToolCategory.CORE, true, true, false),
                 tool("search_thing", AiToolCategory.SEARCH, true, false, true),
                 tool("search_write", AiToolCategory.SEARCH, false, false, false),
@@ -160,11 +161,12 @@ class TestStroomMcpServer {
             // Core is read and write, Search read-only, Administration not granted, and the chat's own tool is
             // never offered. A client without forms is offered approve_call, as it is offered a tool that writes.
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "search_thing", "approve_call");
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing",
+                            "approve_call");
         }
         try (McpSyncClient client = client(true, request -> new ElicitResult(Action.ACCEPT, Map.of()))) {
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "search_thing");
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing");
             final Tool write = client.listTools().tools().stream()
                     .filter(tool -> tool.name().equals("write_thing"))
                     .findFirst()
@@ -209,6 +211,16 @@ class TestStroomMcpServer {
                     Map.of("approval_id", approvalId)));
             assertThat(again.isError()).isTrue();
             assertThat(ran).containsExactly("write_thing");
+        }
+    }
+
+    @Test
+    void aToolThatConfirmsEachChangeItselfIsNotApprovedAsAWholeFirst() {
+        try (McpSyncClient client = client(false, null)) {
+            // It asks the user in its own form (or gives its own confirmation id), so the user is asked once.
+            assertThat(text(client.callTool(new CallToolRequest("confirmed_write", Map.of()))))
+                    .isEqualTo("ran confirmed_write {}");
+            assertThat(ran).containsExactly("confirmed_write");
         }
     }
 
@@ -428,6 +440,36 @@ class TestStroomMcpServer {
 
     private static String text(final CallToolResult result) {
         return ((TextContent) result.content().getFirst()).text();
+    }
+
+    // The tool, as one that confirms each change it makes itself.
+    private static StroomTool confirming(final StroomTool tool) {
+        return new StroomTool() {
+            @Override
+            public ToolDefinition definition() {
+                return tool.definition();
+            }
+
+            @Override
+            public AiToolCategory category() {
+                return tool.category();
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return tool.isReadOnly();
+            }
+
+            @Override
+            public boolean confirmsItself() {
+                return true;
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                return tool.execute(call, context);
+            }
+        };
     }
 
     private StroomTool tool(final String name,

@@ -71,7 +71,8 @@ class DescribeTemplateTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("How this environment uses a Stroom pipeline template (not an Elasticsearch index "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "How this environment uses a Stroom pipeline template (not an Elasticsearch index "
                              + "template), before making a child of it: the pipelines that inherit from it, each "
                              + "with what it overrides (properties set, elements removed or re-linked, reference "
                              + "data added) and the feeds it covers, as examples; and the template's contract, "
