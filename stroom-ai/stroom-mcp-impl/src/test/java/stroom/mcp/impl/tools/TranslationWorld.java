@@ -99,7 +99,7 @@ final class TranslationWorld {
     final RequiredImports requiredImports = new RequiredImports(agentInstructions, world::guard, () -> docFinder,
             world.documentAccess);
     final LookupAgreements lookups = new LookupAgreements(consent);
-    final TranslationDocs docs = new TranslationDocs(world.guard(), world.documentAccess, plan, checkXslt,
+    final TranslationDocs docs = new TranslationDocs(world.guard(), world.documentAccess, () -> plan, checkXslt,
             requiredImports, eventVersions, handEditGate, history, lookups, () -> Mockito.mock(AgentKnowledge.class));
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
