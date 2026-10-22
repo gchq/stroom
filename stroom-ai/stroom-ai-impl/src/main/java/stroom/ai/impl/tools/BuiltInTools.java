@@ -43,6 +43,9 @@ import java.util.Set;
 @Singleton
 public class BuiltInTools {
 
+    /// The tool that starts a build, whose being offered brings the build tools' instructions with it.
+    static final String BUILD_ENTRY_TOOL = "start_onboarding";
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuiltInTools.class);
 
     private final Map<ToolSpecification, ToolExecutor> toolMap;
@@ -53,6 +56,8 @@ public class BuiltInTools {
     private final Map<String, ToolPermissions> permissions;
     private final Map<String, StroomTool> toolsByName;
     private final Map<String, AiToolCategory> categories;
+    // The knowledge bundled for agents, set by injection where a module bundles it.
+    private Optional<AgentKnowledge> knowledge = Optional.empty();
 
     /// @param tools    The tools, as bound in [BuiltInToolsModule].
     /// @param contexts Makes the context of a call in a chat.
@@ -112,6 +117,28 @@ public class BuiltInTools {
      */
     public Map<ToolSpecification, ToolExecutor> toolMap() {
         return toolMap;
+    }
+
+    /// @param knowledge The knowledge bundled for agents, if a module bundles it.
+    @Inject
+    void setKnowledge(final Optional<AgentKnowledge> knowledge) {
+        this.knowledge = Objects.requireNonNullElse(knowledge, Optional.empty());
+    }
+
+    /// The instructions for the tools that build Stroom content, for a chat offered them: the Stroom MCP server
+    /// gave them to every client when it connected, and the build tools' replies assume them (the order of work,
+    /// `next`, how to ask the user).
+    ///
+    /// @param offered The names of the tools the chat is offered.
+    /// @return The instructions under a heading, or empty if the chat isn't offered the build tools (their entry
+    /// point, start_onboarding) or none are bundled.
+    public Optional<String> buildInstructions(final Set<String> offered) {
+        if (!offered.contains(BUILD_ENTRY_TOOL)) {
+            return Optional.empty();
+        }
+        return knowledge.flatMap(AgentKnowledge::buildInstructions)
+                .filter(text -> !text.isBlank())
+                .map(text -> "## Instructions for Stroom's build tools\n\n" + text.strip());
     }
 
     /// @return Every built-in tool, by name.
