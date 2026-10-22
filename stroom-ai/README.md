@@ -1,8 +1,13 @@
 # Ask Stroom AI: operator guide
 
 Ask Stroom AI is a chat panel in the Stroom UI. Users ask questions about their data, and an AI model answers,
-using built-in tools (to query Stroom, and to work with files in a per-chat workspace) and the tools of any
-MCP servers the model is given, such as the Stroom FastMCP Server.
+using Stroom's own tools (to query Stroom, read streams, step pipelines, build feeds, translations and indexes,
+and work with files in a per-chat workspace) and the tools of any MCP servers the model is given.
+
+Stroom's own tools include everything the separate Stroom MCP server offered: its tools have been brought into
+Stroom ([TOOLS.md](TOOLS.md) lists them, and where each differs from the server's). The same tools are served to
+outside MCP clients (VS Code, Claude Code and others) through Stroom's MCP endpoint, `/mcp` (see _Stroom's tools
+over MCP_ below). Which of them a user is given, in the chat and over MCP alike, is set by MCP tool policies.
 
 This guide covers setting it up and running it safely. See GitHub issue
 [#5848](https://github.com/gchq/stroom/issues/5848) for the design.
@@ -246,8 +251,10 @@ _Steps for you_ card. The model can neither make nor click one.
   the document in the current Stroom session, whatever host the link names, so set FastMCP's
   `STROOM_MCP_STROOM_UI_URL` to Stroom's public address for links copied elsewhere. Other links open in a
   new browser tab.
-* Nothing is uploaded to an MCP server through the chat. Sample files for a new feed go through Stroom's
-  own data upload, on the feed's Data tab.
+* Sample data for a new feed is sent into the feed by the `upload_sample` tool: text in the chat goes through
+  Stroom's receipt checks and is stored as the feed's Data tab's Upload stores it, as the user; for files on the
+  user's machine, the agent gives a command to run in their terminal, which posts each file to `/mcp/upload` as the
+  user (see _Stroom's tools over MCP_).
 
 
 ## Context, memory and compaction
@@ -570,6 +577,38 @@ templates. The cluster's credentials need the Elasticsearch privileges to read t
 logged as a View event of the document. Its output is treated as untrusted, as it comes from Elasticsearch.
 
 
+## Stroom's tools over MCP (`/mcp`)
+
+Stroom serves its own tools to outside MCP clients at `/mcp` (MCP's Streamable HTTP transport), on the application
+port, behind the security filter like any other servlet: a client signs in with one of the user's API keys (or,
+with an external identity provider, through MCP's OAuth sign-in, which the endpoint's `401` and
+`/.well-known/oauth-protected-resource` point it to). Each request runs as that user.
+
+* The user needs the _Use MCP Tools_ permission, and is offered only the tools their MCP tool policies grant
+  (Administration > MCP Tool Policies, which needs _Manage MCP Tool Policies_). The policies govern the chat too:
+  categories (Core, Search, Content, Indexing, Processing, Administration), read-only or read and write, the union
+  of every enabled policy covering the user or a group they are in; none means no tools. The upgrade adds one
+  policy, _Everyone: read-only tools_. When a policy changes, open sessions are told to list their tools again.
+* A call that changes something asks the user first: a form, where the client can show one (MCP elicitation), or
+  else an approval id, which the client passes to `approve_call` once the user agrees. A tool that asks the user
+  itself before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once.
+* Each session has a workspace, as a chat has (a hidden chat record), deleted when the session ends, or after
+  `mcpEndpoint.sessionRetention` without requests. Heavy calls take one of the user's run slots, as chat runs do.
+* The tools' instructions (as the Stroom MCP server gave its clients) are sent when a client connects, and the
+  agent guides and field convention profiles are offered as MCP resources (`stroom://guide/<name>`,
+  `stroom://conventions/<name>`). The chat is given the same instructions when it is offered the build tools.
+* A session lives on the node that started it, so a load balancer must keep each client on one node: by client IP
+  (nginx `ip_hash`, a Service's `sessionAffinity: ClientIP`, or ingress-nginx's `upstream-hash-by: "$remote_addr"`).
+  A request for a session a node doesn't have is answered `404`, and the client starts a new session.
+* `upload_sample` gives commands that post a sample file to `/mcp/upload` as the user (`Authorization: Bearer
+  $STROOM_API_KEY`); the endpoint takes a file only for the user, feed, stream type and build `upload_sample` named,
+  once, within `sampleUploads.commandsLast`, up to `sampleUploads.maxUploadMb`.
+* Every call, made, refused or not approved, is audited, with the client that made it.
+
+`/mcp` is a servlet, not part of the REST API, so it isn't in the Swagger documentation; the user guide (User
+Guide > AI > Agent Tools) describes it.
+
+
 ## Retention and limits
 
 The _AI Chat Retention_ job (hourly) removes:
@@ -611,6 +650,17 @@ All under `appConfig.ai` unless stated.
 | `workspace.maxEventsPerFetch` | `500` | The most source events `fetch_events` fetches in one call |
 | `workspace.maxEventBytes` | `1048576` | The largest source event `fetch_events` fetches, in bytes |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
+| `mcpEndpoint.enabled` | `true` | Whether Stroom's MCP endpoint, `/mcp`, serves MCP clients |
+| `mcpEndpoint.formTimeout` | `PT10M` | How long a form asked of an MCP client's user waits |
+| `mcpEndpoint.maxFormsPerNode` | `50` | Forms that may wait for MCP clients' users on a node at once |
+| `mcpEndpoint.approvalTimeout` | `PT10M` | How long an approval id given to an MCP client may be used |
+| `mcpEndpoint.keepAliveInterval` | `PT20S` | How often an MCP session's open stream is pinged |
+| `mcpEndpoint.sessionRetention` | `P1D` | How long an idle MCP session, and its workspace, is kept |
+| `builds.workspaceFolder` | `MCP Workspace` | The folder below System in which the build tools make each build's folder |
+| `sampleUploads.maxUploadMb` | `100` | The largest sample file that may be posted to `/mcp/upload` |
+| `sampleUploads.commandsLast` | `PT15M` | How long `upload_sample`'s upload commands may be used |
+| `errorTriage.rules` | `[]` | The environment's own rules for triaging pipeline errors, before Stroom's |
+| `pipelineStages.*` | (see `expected.yaml`) | What marks a pipeline as each stage, and where each stage's templates are |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
 | `appConfig.askStroomAi.showToolCalls` | `true` | Shows tool calls in the conversation (only hides them when off) |
 | `appConfig.askStroomAi.showReasoning` | `true` | Shows the model's reasoning in the conversation |
@@ -718,46 +768,3 @@ Planned, not yet built.
   ignored and every Elasticsearch request is limited to the connection timeout (3 seconds by default). The
   connection timeout is also applied as the wait for a pooled connection, not the connect timeout. To be
   fixed separately, with a regression test.
-* **Folding the Stroom MCP server into Stroom.** Stroom serving its own tools to external agents over MCP,
-  with the MCP server's functionality moved in. The built-in tools already run as the user, check Stroom's
-  permissions and log access; what ties them to the chat is their plumbing. To do first, so the move is a move
-  rather than a rewrite:
-  * Before any of it, tests that fix today's behaviour, so the groundwork can be checked to change nothing:
-    1. Reference files of what the model is shown: every built-in tool's name, description, schema and flags
-       per chat mode (as `expected.yaml` does for configuration), and the whole prompt `ContextAssembler`
-       builds for a fixed chat.
-    2. Scripted chat runs through `McpAgentChat` (a scripted model replaying tool calls), checking the exact
-       messages stored: large results saved to files, review results kept in full, proposals with buttons,
-       ask_user forms, approvals, refusals, memory changes after untrusted content.
-    3. Old chats: today's stored rows (tool calls and results, digests, compaction, user actions, forms) kept
-       as fixtures, checking what the model is given from them, so renames and record changes can't break
-       existing chats.
-    4. Exact output, in reference files, of the tools with the most involved results (processor_tasks,
-       config_properties, document_links, read_document, run_stroomql, current_results, the large-result
-       stub), including the links they make.
-    5. A permission matrix per tool (with and without the permission it needs, and that it stays listed), the
-       audit events each tool records, the consent decisions per tool and situation, and how MCP tools whose
-       names clash with built-in ones are handled.
-    6. Outside the build: a small set of real prompts run against the model before and after each step,
-       comparing the tools called and the outcome, to catch the agent getting worse at choosing tools.
-  * A tool call context in place of the `int chatId` every tool takes: the session (a chat now, an MCP session
-    later), the caller (Stroom AI chat or an external client), the workspace if there is one, asking the user,
-    reporting progress and the time limit. `AiAuditLog` records the session and caller rather than a chat.
-  * A Stroom-owned tool contract (name, JSON schema, `execute(args, context)`, and flags that map to MCP's tool
-    annotations: read only, destructive, reads untrusted content), with adapters to langchain4j and MCP, rather
-    than tools building langchain4j types themselves.
-  * Typed results: text, optional structured content, resources (workspace files as resource links), and user
-    actions as a part an external client gets as a description instead of a button; links to Stroom objects
-    made in one place, so external clients get real URLs.
-  * Tool descriptions that don't depend on other tools existing (e.g. jq or read_file).
-  * One inventory of tool names, owners, behaviour and permissions shared with the MCP server, aligning the
-    tools both have (instructions, AGENTS docs, build docs, document reads) with Stroom as the source of truth.
-    The built-in tools, and the MCP server tools they overlap, are listed in [TOOLS.md](TOOLS.md).
-  * One consent model: a short form where the client supports elicitation, else an approval id the user
-    confirms, as the MCP server does; approval rules kept with each tool.
-  * Each tool's required permission declared as metadata, so an MCP endpoint can list tools per user; rate and
-    time limits per session.
-
-  Later: the MCP endpoint (streamable HTTP in Dropwizard; the MCP Java SDK Stroom uses as a client has server
-  classes), OAuth for external clients with Stroom's identity provider, moving the MCP server's tools in, and
-  progress and cancellation for long-running tools.
