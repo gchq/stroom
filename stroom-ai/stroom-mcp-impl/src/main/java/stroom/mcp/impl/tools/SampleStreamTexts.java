@@ -48,6 +48,10 @@ import java.util.Optional;
 /// `read_sample_streams` and `refuse_older_than_feed`).
 class SampleStreamTexts {
 
+    /// What is said to a user without the View Data permission.
+    static final String NO_VIEW_DATA = "You don't have permission to view data, so the sample streams can't be "
+                                       + "read.";
+
     private final StreamReader streamReader;
     private final FeedNames feedNames;
     private final DocumentAccess documentAccess;
@@ -61,8 +65,12 @@ class SampleStreamTexts {
 
     /// @param streamIds Sample streams.
     /// @return Their text by name (`stream <id>`), and notes on what was cut short or read through its bytes.
-    /// @throws ToolRefusal if a stream is older than its feed (an earlier, deleted feed's), or can't be read.
+    /// @throws ToolRefusal if the user may not view data, a stream is older than its feed (an earlier, deleted
+    ///                     feed's), or one can't be read.
     Texts read(final List<Long> streamIds) {
+        if (!documentAccess.canViewData()) {
+            throw new ToolRefusal(NO_VIEW_DATA);
+        }
         refuseOlderThanFeed(streamIds);
         final Map<String, String> texts = new LinkedHashMap<>();
         final List<String> notes = new ArrayList<>();
