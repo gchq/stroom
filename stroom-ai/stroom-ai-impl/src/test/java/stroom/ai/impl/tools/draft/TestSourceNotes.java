@@ -155,6 +155,42 @@ class TestSourceNotes {
     }
 
     @Test
+    void severalNotesDocsAreReadAsOneTheFirstFieldOfANameKept() {
+        final Map<String, Object> merged = SourceNotes.merged(List.of(notes(), entry("fields",
+                List.of(entry("field", "evt", "meaning", "other")), "events", List.of())));
+
+        assertThat(list(merged.get("fields")).getFirst().get("meaning")).isEqualTo("Event id");
+        assertThat(list(merged.get("events"))).hasSize(list(notes().get("events")).size());
+    }
+
+    @Test
+    void aMappingThatContradictsTheCatalogueIsReported() {
+        final Map<String, Object> mapping = mapping(new ArrayList<>(List.of(entry("path", "EventSource/User/Id",
+                "field", "user"))), new ArrayList<>(List.of(other())));
+        SourceNotes.applyToDraft(mapping, NAMES, VALUES, notes(), CHECK);
+        assertThat(SourceNotes.checkMapping(mapping, notes())).isEmpty();
+
+        for (final Map<String, Object> rule : list(mapping.get("events"))) {
+            if ("4625".equals(rule.get("name"))) {
+                rule.put("fields", List.of(entry("path", "EventDetail/TypeId", "value", "Logon"),
+                        entry("path", "EventDetail/Unknown/Data", "data_name", "evt", "field", "evt")));
+            }
+        }
+        final List<String> problems = SourceNotes.checkMapping(mapping, notes());
+        assertThat(problems).anySatisfy(p -> assertThat(p).contains("4625 (evt=4625): the documentation says "
+                                                                    + "Authenticate; rule '4625' writes Unknown"));
+        assertThat(problems).anySatisfy(p -> assertThat(p).contains("TypeId is 'Logon failed'; rule '4625' writes "
+                                                                    + "'Logon'"));
+
+        mapping.put("events", list(mapping.get("events")).stream()
+                .filter(rule -> !"4634".equals(rule.get("name")) && rule.get("when") instanceof final List<?> when
+                                                                    && !when.isEmpty())
+                .toList());
+        assertThat(SourceNotes.checkMapping(mapping, notes())).anySatisfy(p -> assertThat(p).contains(
+                "4634 (evt=4634): no rule takes it"));
+    }
+
+    @Test
     void withoutCataloguedEventsOnlyTheFieldsAreApplied() {
         final List<Map<String, Object>> events = new ArrayList<>(List.of(other()));
         final Map<String, Object> mapping = mapping(new ArrayList<>(), events);

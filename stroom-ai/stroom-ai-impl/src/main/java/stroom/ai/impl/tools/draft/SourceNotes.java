@@ -358,6 +358,109 @@ public final class SourceNotes {
         return applied;
     }
 
+    /// Several notes docs read as one: fields by name (the first of each), events in order.
+    ///
+    /// @param notes The notes of each doc.
+    /// @return `fields` and `events`.
+    public static Map<String, Object> merged(final List<Map<String, Object>> notes) {
+        final Map<String, Map<String, Object>> fields = new LinkedHashMap<>();
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (final Map<String, Object> note : NullSafe.list(notes)) {
+            maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
+            events.addAll(maps(note.get("events")));
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("fields", new ArrayList<>(fields.values()));
+        out.put("events", events);
+        return out;
+    }
+
+    /// Where a mapping contradicts the catalogue: a catalogued event's records meet a rule writing another action
+    /// element or TypeId than the documentation gives.
+    ///
+    /// @param mapping The mapping, as JSON maps and lists.
+    /// @param notes   The notes ([#merged]).
+    /// @return The contradictions.
+    public static List<String> checkMapping(final Map<String, Object> mapping, final Map<String, Object> notes) {
+        final List<String> problems = new ArrayList<>();
+        final Map<Object, Map<String, Object>> common = new LinkedHashMap<>();
+        maps(mapping.get("common")).forEach(entry -> common.put(entry.get("path"), entry));
+        for (final Map<String, Object> event : maps(notes.get("events"))) {
+            if (!truthy(event.get("field")) || !hasValue(event.get("value"))) {
+                continue;
+            }
+            final String value = pythonStr(event.get("value"));
+            final String label = firstTruthy(event.get("event"), value, value) + " (" + pythonStr(event.get("field"))
+                                 + "=" + value + ")";
+            final Map<String, Object> rule = ruleFor(maps(mapping.get("events")), pythonStr(event.get("field")),
+                    value);
+            if (rule == null) {
+                problems.add(label + ": no rule takes it");
+                continue;
+            }
+            final Set<String> details = new TreeSet<>();
+            for (final Map<String, Object> field : maps(rule.get("fields"))) {
+                final String path = text(field.get("path"));
+                if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2) {
+                    details.add(path.split("/")[1]);
+                }
+            }
+            final String want = stripSlashes(text(event.get("event_detail")).strip()).split("/")[0];
+            if (!want.isEmpty() && !UNKNOWN.equals(want) && !details.contains(want)) {
+                problems.add(label + ": the documentation says " + want + "; rule '" + text(rule.get("name"))
+                             + "' writes " + (details.isEmpty()
+                        ? "no action element"
+                        : String.join(", ", details)));
+            }
+            if (truthy(event.get("type_id"))) {
+                final Map<String, Object> typeId = maps(rule.get("fields")).stream()
+                        .filter(field -> "EventDetail/TypeId".equals(field.get("path")))
+                        .findFirst()
+                        .orElse(common.get("EventDetail/TypeId"));
+                if (typeId != null && typeId.get("value") != null
+                    && !pythonStr(typeId.get("value")).equals(pythonStr(event.get("type_id")))) {
+                    problems.add(label + ": the documentation's TypeId is '" + pythonStr(event.get("type_id"))
+                                 + "'; rule '" + text(rule.get("name")) + "' writes '"
+                                 + pythonStr(typeId.get("value")) + "'");
+                }
+            }
+        }
+        return problems;
+    }
+
+    // The first rule a record holding only field=value would meet (equals and one_of tests; a rule testing anything
+    // else is passed over, as it cannot be judged from the catalogue).
+    private static Map<String, Object> ruleFor(final List<Map<String, Object>> rules,
+                                               final String field,
+                                               final String value) {
+        for (final Map<String, Object> rule : rules) {
+            final List<Map<String, Object>> when = maps(rule.get("when"));
+            if (when.isEmpty()) {
+                return rule;
+            }
+            boolean ok = true;
+            for (final Map<String, Object> condition : when) {
+                if (!Objects.equals(condition.get("field"), field)) {
+                    ok = false;
+                    break;
+                }
+                if (condition.get("equals") != null && !pythonStr(condition.get("equals")).equals(value)) {
+                    ok = false;
+                } else if (condition.get("one_of") != null && (!(condition.get("one_of") instanceof final List<?> one)
+                                                               || one.stream().map(SourceNotes::pythonStr)
+                                                                       .noneMatch(value::equals))) {
+                    ok = false;
+                } else if (condition.get("equals") == null && condition.get("one_of") == null) {
+                    ok = false;
+                }
+            }
+            if (ok) {
+                return rule;
+            }
+        }
+        return null;
+    }
+
     // Why the catalogue can't be followed for an event, or null when it can.
     private static String why(final boolean twin, final String detail, final Function<String, String> detailCheck) {
         if (twin) {

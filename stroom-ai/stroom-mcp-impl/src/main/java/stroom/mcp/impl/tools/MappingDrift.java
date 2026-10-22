@@ -23,12 +23,11 @@ import java.util.Optional;
 /// ([BuildChecks]): the Stroom MCP server's `tools/builds.py` `_drift`, `_plan_drift` and `lost_mappings`, which
 /// regenerate an XSLT from its mapping (`utils/xsltgen.py`) and compare.
 ///
-/// The generator is ported with the translation and generation tools: until then the binding is [#NONE], which
-/// finds no drift, so the checks report only what they can read without it. The generation port binds its own with
-/// Guice's `OptionalBinder.setBinding()`.
+/// It is bound to [GeneratedDrift], on the ported generators; [#NONE] finds no drift (for tests of the checks
+/// without them).
 interface MappingDrift {
 
-    /// Finds no drift: the binding until the generator is ported.
+    /// Finds no drift.
     MappingDrift NONE = new MappingDrift() {
         @Override
         public Optional<String> drift(final KeptMappings.KeptXslt kept) {

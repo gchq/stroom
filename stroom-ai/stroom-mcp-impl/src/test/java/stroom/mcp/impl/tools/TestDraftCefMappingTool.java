@@ -110,7 +110,7 @@ class TestDraftCefMappingTool {
         Mockito.when(sources.templates(any(), anyList())).thenReturn(Map.of());
         Mockito.when(sources.kafkaConfigs()).thenReturn(List.of());
         Mockito.when(keptMappings.keptXslt(anyString())).thenReturn(Optional.empty());
-        Mockito.when(saves.requiredFor(any(), anyString(), any())).thenReturn(List.of());
+        Mockito.when(saves.requiredFor(any(), anyString(), any(), any())).thenReturn(List.of());
         Mockito.when(plan.buildOf(any())).thenReturn(Optional.empty());
     }
 
@@ -158,7 +158,7 @@ class TestDraftCefMappingTool {
 
     @Test
     void aPlanIsSavedWithItsXsltAndTheImportsTheInstructionsRequire() throws Exception {
-        Mockito.when(saves.requiredFor(any(), eq("cef"), eq("b"))).thenReturn(List.of(
+        Mockito.when(saves.requiredFor(any(), eq("cef"), eq("b"), any())).thenReturn(List.of(
                 new RequiredImport("CEF-Shared", "/Feeds")));
         Mockito.when(saves.create(any(), eq("b"), eq("CEF"), anyString(), any(), anyString())).thenReturn(Map.of(
                 "type", "XSLT", "uuid", "x-1", "name", "CEF", "version", "v1", "next", Map.of("step", "pipeline")));
@@ -167,12 +167,12 @@ class TestDraftCefMappingTool {
                                                  + "\"build\": \"b\", \"name\": \"CEF\"}");
 
         final ArgumentCaptor<String> code = ArgumentCaptor.forClass(String.class);
-        final ArgumentCaptor<KeptMapping.Kept> kept = ArgumentCaptor.forClass(KeptMapping.Kept.class);
-        Mockito.verify(saves).create(any(), eq("b"), eq("CEF"), code.capture(), kept.capture(),
+        final ArgumentCaptor<TranslationDocs.Source> source = ArgumentCaptor.forClass(TranslationDocs.Source.class);
+        Mockito.verify(saves).create(any(), eq("b"), eq("CEF"), code.capture(), source.capture(),
                 eq("Created from its CEF plan"));
         assertThat(code.getValue()).contains("<xsl:import href=\"CEF-Shared\"");
-        assertThat(kept.getValue().kind()).isEqualTo("cef");
-        assertThat(kept.getValue().payload().get("imports")).isEqualTo(List.of("CEF-Shared"));
+        // Saved with the CEF plan it is generated from.
+        assertThat(source.getValue().cefPlan().imports()).isEqualTo(List.of("CEF-Shared"));
         assertThat(result.get("required_imports")).isEqualTo(List.of("CEF-Shared"));
         assertThat(result.get("saved")).isEqualTo(Map.of("type", "XSLT", "uuid", "x-1", "name", "CEF", "version",
                 "v1"));
@@ -195,7 +195,7 @@ class TestDraftCefMappingTool {
         guidance.put("status", "needs_guidance");
         guidance.put("saved", null);
         guidance.put("hint", "Not saved: the user edited these fields by hand");
-        Mockito.when(saves.update(any(), any(), eq("x-1"), anyString(), any(), anyString(), anyBoolean(), any()))
+        Mockito.when(saves.update(any(), any(), eq("x-1"), anyString(), any(), any(), anyString(), anyBoolean(), any()))
                 .thenReturn(guidance);
 
         final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"uuid\": \"x-1\", "
@@ -204,7 +204,7 @@ class TestDraftCefMappingTool {
 
         assertThat(result.get("status")).isEqualTo("needs_guidance");
         assertThat(result.get("applied")).isEqualTo(List.of("[common] EventSource/User/Id -> duser"));
-        Mockito.verify(saves).update(any(), any(), eq("x-1"), anyString(), any(),
+        Mockito.verify(saves).update(any(), any(), eq("x-1"), anyString(), any(), any(),
                 eq("CEF plan changes: [common] EventSource/User/Id -> duser"), eq(false), isNull());
     }
 

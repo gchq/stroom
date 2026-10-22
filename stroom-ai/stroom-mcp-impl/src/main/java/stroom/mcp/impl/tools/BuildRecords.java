@@ -64,7 +64,8 @@ import java.util.regex.Pattern;
 /// nothing: Stroom refuses a save of a doc changed since it was read, and the change is made again on the newer
 /// doc. A build's old tags are folded into its record the first time it is read, then removed.
 ///
-/// A record is `{"docs": {uuid: entry}}`, with `source_feeds` once a build works from existing feeds; an entry may
+/// A record is `{"docs": {uuid: entry}}`, with `source_feeds` once a build works from existing feeds and
+/// `event_logging_version` (`version`, `how`) once the version its translation writes is settled; an entry may
 /// hold `type`, `name`, `copy_of`, `version_of`, `stepped`, `verified`, `validated` (lists of digests),
 /// `stepped_streams` and `sample_files`.
 @Singleton
@@ -86,6 +87,8 @@ public class BuildRecords {
     public static final String DOCS = "docs";
     /// What a record holds the existing feeds a build works from in.
     public static final String SOURCE_FEEDS = "source_feeds";
+    /// The record's key for the event-logging version chosen for the build's translation.
+    public static final String EVENT_LOGGING_VERSION = "event_logging_version";
 
     static final Pattern FENCE = Pattern.compile("```json build-record\\n(.*?)\\n```", Pattern.DOTALL);
     // The tags earlier versions kept these in, and the entry each one fills (null: the build, now the folder it is
@@ -175,6 +178,34 @@ public class BuildRecords {
             final Set<String> all = new LinkedHashSet<>(stringList(state.get(SOURCE_FEEDS)));
             all.addAll(feeds);
             state.put(SOURCE_FEEDS, new ArrayList<>(all));
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The event-logging version the user chose for the build's translation, and how it was settled
+    /// (`version` and `how`), or empty when none was recorded.
+    public Optional<Map<String, Object>> eventLoggingVersion(final String build) {
+        return load(build).get(EVENT_LOGGING_VERSION) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the event-logging version chosen for the build's translation, so a later call (in this session or
+    /// another) doesn't ask again what an earlier one asked.
+    ///
+    /// @param build   A build's name.
+    /// @param version The version.
+    /// @param how     How it was settled: `given`, `form` or `only`.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> chosen = new LinkedHashMap<>();
+            chosen.put("version", version);
+            chosen.put("how", how);
+            state.put(EVENT_LOGGING_VERSION, chosen);
         });
     }
 
