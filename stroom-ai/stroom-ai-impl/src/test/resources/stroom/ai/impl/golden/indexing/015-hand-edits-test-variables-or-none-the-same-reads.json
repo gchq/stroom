@@ -1,0 +1,86 @@
+{
+ "test": "tests/test_hand_edits.py::test_variables_or_none_the_same_reads",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "ecs-acme-v1",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "@EventId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "user.name",
+    "type": "keyword",
+    "source": "EventSource/User/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "url.original",
+    "type": "keyword",
+    "source": "EventDetail/*/Resource/URL",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "http.request.method",
+    "type": "keyword",
+    "source": "EventDetail/*/Resource/HTTPMethod",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "http.request.body.bytes",
+    "type": "long",
+    "source": "EventDetail/*/Resource/InboundSize",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": "ecs",
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 99,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

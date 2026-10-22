@@ -1,0 +1,184 @@
+{
+ "test": "tests/test_index_names.py::test_a_plan_is_amended_with_only_what_changes_and_the_tools_take_it_from_the_session",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "ecs-firewall-v1",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "@EventId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "observer.product",
+    "type": "keyword",
+    "source": "EventSource/System/Name",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "host.name",
+    "type": "keyword",
+    "source": "EventSource/Device/HostName",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "source.ip",
+    "type": "ip",
+    "source": "EventDetail/Network/*/Source/Device/IPAddress",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "source.port",
+    "type": "long",
+    "source": "EventDetail/Network/*/Source/Port",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "destination.ip",
+    "type": "ip",
+    "source": "EventDetail/Network/*/Destination/Device/IPAddress",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "event.code",
+    "type": "keyword",
+    "source": "EventDetail/TypeId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "message",
+    "type": "text",
+    "source": "EventDetail/Description",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "event.action",
+    "type": "keyword",
+    "source": "EventDetail/*/Action",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "event.outcome",
+    "type": "keyword",
+    "source": "EventDetail/*/Outcome/Success",
+    "description": "",
+    "transform": "outcome",
+    "multiple": false
+   },
+   {
+    "name": "process.command_line",
+    "type": "keyword",
+    "source": "EventDetail/Process/Command",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "firewall.alert.severity",
+    "type": "keyword",
+    "source": "EventDetail/Alert/Severity",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "firewall.authenticate.user.id",
+    "type": "keyword",
+    "source": "EventDetail/Authenticate/User/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "firewall.process.type",
+    "type": "keyword",
+    "source": "EventDetail/Process/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "firewall.update.configuration.type",
+    "type": "keyword",
+    "source": "EventDetail/Update/After/Configuration/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "firewall.configuration",
+    "type": "keyword",
+    "source": "EventDetail/Update/After/Configuration/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "acme.ticket",
+    "type": "keyword",
+    "source": "EventDetail/Alert/Data[@Name='Ticket']/@Value",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": "ecs",
+  "custom_namespaces": [
+   "firewall"
+  ],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

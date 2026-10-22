@@ -1,0 +1,65 @@
+{
+ "test": "tests/test_indexing.py::test_without_forms_the_candidates_are_listed_and_the_users_answer_goes_ahead",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "stroom-discovery-acme-v1",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "stroom:stream-id()",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "stroom:record-no()",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "received",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": {
+   "input": "json",
+   "record": null,
+   "timestamp_field": "received",
+   "timestamp_chosen_by_user": true,
+   "timestamp_format": null,
+   "meta": {},
+   "drop": [],
+   "unpack_json": true,
+   "ignore_above": 1024,
+   "total_fields_limit": 2000
+  },
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

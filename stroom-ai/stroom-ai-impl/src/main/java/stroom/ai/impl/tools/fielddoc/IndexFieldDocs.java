@@ -19,13 +19,18 @@ package stroom.ai.impl.tools.fielddoc;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
-import stroom.ai.impl.tools.indexing.IndexingStandIns;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.Discovery;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.FieldPlan;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.JsonScalar;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.PlannedField;
+import stroom.ai.impl.tools.indexing.Discovery;
+import stroom.ai.impl.tools.indexing.EcsSchema;
+import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
+import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.indexing.TemplateCheck;
+import stroom.ai.impl.tools.indexing.TemplateCheck.DocValue;
 import stroom.ai.impl.tools.validation.EventSchema;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -43,6 +48,9 @@ import java.util.stream.Collectors;
 /// its values; by event type (the fields any kind of event has, then a table per action element) or compact. Ported
 /// from the Stroom MCP server's `utils/fielddoc.py`.
 public final class IndexFieldDocs {
+
+    // Where the bundled conventions are on the class path.
+    private static final String CONVENTIONS = "/stroom/mcp/impl/knowledge/conventions/";
 
     private static final String RECORDS = "records:2";
     // An index Stroom did not build may hold raw records, not events.
@@ -81,13 +89,13 @@ public final class IndexFieldDocs {
                     documents.add(document);
                 }
             } else {
-                for (final Map<String, Object> item : IndexingStandIns.jsonXmlDocuments(xml)) {
+                for (final Map<String, Object> item : TemplateCheck.jsonXmlDocuments(xml)) {
                     // Values come as (JSON type, text); a nested map as ('object', None).
                     final Map<String, List<String>> document = new LinkedHashMap<>();
-                    IndexingStandIns.flattenDocument(item).forEach((key, values) -> document.put(key, values.stream()
-                            .filter(v -> v instanceof final JsonScalar scalar && !"object".equals(scalar.kind())
+                    TemplateCheck.flattenDocument(item, "").forEach((key, values) -> document.put(key, values.stream()
+                            .filter(v -> v instanceof final DocValue scalar && !"object".equals(scalar.kind())
                                          && scalar.text() != null)
-                            .map(v -> ((JsonScalar) v).text())
+                            .map(v -> ((DocValue) v).text())
                             .toList()));
                     documents.add(document);
                 }
@@ -104,7 +112,7 @@ public final class IndexFieldDocs {
     public static List<String> objectArrays(final List<String> outputs) {
         final Set<String> found = new TreeSet<>();
         for (final String xml : outputs) {
-            for (final Map<String, Object> document : IndexingStandIns.jsonXmlDocuments(xml)) {
+            for (final Map<String, Object> document : TemplateCheck.jsonXmlDocuments(xml)) {
                 walkArrays(document, "", found);
             }
         }
@@ -143,7 +151,7 @@ public final class IndexFieldDocs {
     /// @return The type shown.
     public static String shownType(final FieldPlan plan, final String kind) {
         return "elasticsearch".equals(plan.backend())
-                ? IndexingStandIns.ELASTIC.getOrDefault(kind, kind)
+                ? FieldPlans.ELASTIC.getOrDefault(kind, kind)
                 : kind;
     }
 
@@ -152,7 +160,29 @@ public final class IndexFieldDocs {
     /// @param name A field name, e.g. `source.ip`.
     /// @return ECS's words, or "" when it is not ECS's.
     public static String ecsSays(final String name) {
-        return IndexingStandIns.ecsShort(name);
+        final EcsSchema ecs = Ecs.SCHEMA;
+        final Map<String, Object> field = ecs == null
+                ? null
+                : ecs.field(name);
+        return field != null && field.get("short") instanceof final String text
+                ? text
+                : "";
+    }
+
+    // The ECS reference bundled with Stroom for agents (stroom-mcp-impl's resources), read once; null where it
+    // isn't on the class path.
+    private static EcsSchema readEcs() {
+        try (InputStream fields = IndexFieldDocs.class.getResourceAsStream(CONVENTIONS + EcsSchema.FIELDS_FILE);
+                InputStream component = IndexFieldDocs.class.getResourceAsStream(
+                        CONVENTIONS + EcsSchema.COMPONENT_FILE)) {
+            if (fields == null || component == null) {
+                return null;
+            }
+            return EcsSchema.parse(new String(fields.readAllBytes(), StandardCharsets.UTF_8),
+                    new String(component.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (final IOException | RuntimeException e) {
+            return null;
+        }
     }
 
     /// `index_tables`: an index's field rows (each with the event-logging path it comes from), by event type (the
@@ -314,7 +344,7 @@ public final class IndexFieldDocs {
                             ? "shared template `" + shared.template() + "` of `" + shared.href() + "`"
                             : "`" + f.source() + "`"));
             if (sampled) {
-                final Double pct = IndexingStandIns.populationOf(f.source(), population);
+                final Double pct = FieldPlans.populationOf(f.source(), population);
                 cells.add(f.source().startsWith("@") || shared != null
                         ? "always"
                         : pct != null
@@ -792,5 +822,11 @@ public final class IndexFieldDocs {
     /// @param cells  The row's cells.
     public record IndexRow(String source, List<String> cells) {
 
+    }
+
+    // The ECS reference, read the first time it is needed.
+    private static final class Ecs {
+
+        private static final EcsSchema SCHEMA = readEcs();
     }
 }

@@ -97,6 +97,7 @@ public class BundledKnowledge implements AgentKnowledge {
 
     /// @param fileName A file in the conventions folder, e.g. [#ECS_FIELDS].
     /// @return Its text, or empty if there is no such file.
+    @Override
     public Optional<String> conventionsFile(final String fileName) {
         if (fileName == null || fileName.contains("/") || fileName.contains("\\")) {
             return Optional.empty();
