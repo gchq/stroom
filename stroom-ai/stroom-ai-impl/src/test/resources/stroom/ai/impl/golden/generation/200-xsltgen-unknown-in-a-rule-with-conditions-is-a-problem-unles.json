@@ -1,0 +1,365 @@
+{
+ "source": "xsltgen-unknown-in-a-rule-with-conditions-is-a-problem-unles",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "status",
+    "when": [
+     {
+      "field": "action",
+      "equals": "status"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": false,
+  "problems": [
+   "[status] writes EventDetail/Unknown, which says what happened is not known, yet its conditions single these records out: use the action element that describes them, with its own child elements: connections allowed or denied Network/Permit or Network/Deny (Source and Destination with Device/IPAddress and Port), logons and logoffs Authenticate (Action, User/Id, Outcome/Success), configuration changes Update (After/Configuration/Type), alerts and health messages Alert (Type, Severity), processes started or stopped Process; also Create, Delete, View, Send, Receive. A schema problem in the action element is fixed from what it names, not avoided with Unknown, and a value no element means is carried as Data of the action element (EventDetail/<Action>/Data, data_name). allow_unknown (the reason, which the user confirms) is only for records no action element describes."
+  ],
+  "warnings": [
+   "[status] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[status] required ['EventTime', 'EventDetail'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from action, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "status",
+    "when": [
+     "data[@name='action']/@value = 'status'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ },
+ "full": {
+  "input": "data_splitter",
+  "root": null,
+  "record": null,
+  "xml_namespace": "",
+  "json_layout": "array",
+  "json_fields": [],
+  "xml_fields": [],
+  "pairs": [],
+  "extract": [],
+  "for_each": null,
+  "nil_values": [],
+  "drop_when": [],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Name",
+    "field": null,
+    "any_of": null,
+    "value": "Acme VPN",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "field": null,
+    "any_of": null,
+    "value": "Dev",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": null,
+    "any_of": null,
+    "value": "vpnd",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": "unknown",
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   }
+  ],
+  "events": [
+   {
+    "name": "status",
+    "when": [
+     {
+      "field": "action",
+      "xpath": null,
+      "equals": "status",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "other",
+    "when": [],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "action"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   }
+  ],
+  "unmatched": "skip",
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "imports": [],
+  "shared": [],
+  "functions": []
+ }
+}

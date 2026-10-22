@@ -1,0 +1,155 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Service Desk"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "service-desk-export"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "servicedesk01"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "comment",
+    "transform": "unescape_quotes"
+   }
+  ],
+  "events": [
+   {
+    "name": "create",
+    "when": [
+     {
+      "field": "action",
+      "equals": "create"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Create/Object/Type",
+      "value": "Ticket"
+     },
+     {
+      "path": "EventDetail/Create/Object/Id",
+      "field": "ticket"
+     },
+     {
+      "path": "EventDetail/Create/Data",
+      "field": "priority",
+      "data_name": "priority"
+     }
+    ]
+   },
+   {
+    "name": "change",
+    "when": [
+     {
+      "field": "action",
+      "one_of": [
+       "update",
+       "close",
+       "reopen"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Update/After/Object/Type",
+      "value": "Ticket"
+     },
+     {
+      "path": "EventDetail/Update/After/Object/Id",
+      "field": "ticket"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "priority",
+      "data_name": "priority"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[create] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[change] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "create",
+    "when": [
+     "data[@name='action']/@value = 'create'"
+    ],
+    "fields": [
+     "EventDetail/Create/Data[priority]",
+     "EventDetail/Create/Object/Id",
+     "EventDetail/Create/Object/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "change",
+    "when": [
+     "data[@name='action']/@value = ('update', 'close', 'reopen')"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Object/Id",
+     "EventDetail/Update/After/Object/Type",
+     "EventDetail/Update/Data[action]",
+     "EventDetail/Update/Data[priority]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

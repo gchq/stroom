@@ -1,0 +1,133 @@
+{
+ "source": "multi-repeated-data-elements-and-repeat-rules",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "for_each": "events",
+  "drop_when": [
+   {
+    "when": [
+     {
+      "field": "host",
+      "matches": "^qa-",
+      "scope": "record"
+     }
+    ],
+    "reason": "QA traffic"
+   },
+   {
+    "when": [
+     {
+      "field": "action",
+      "equals": "HEARTBEAT"
+     }
+    ],
+    "reason": "heartbeats are not events"
+   }
+  ],
+  "common": [
+   {
+    "path": "EventSource/User/Id",
+    "field": "roles",
+    "repeat": true
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "action",
+      "equals": "LOGIN"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "action",
+      "equals": "LOGOUT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": false,
+  "problems": [
+   "[logon] EventSource/User/Id: repeat needs an element on the path the schema lets repeat; none of ['EventSource', 'User', 'Id'] may occur more than once",
+   "[logon] Event/EventTime is required by the schema; map it",
+   "[logon] Event/EventSource/System is required by the schema; map it",
+   "[logon] Event/EventSource/Generator is required by the schema; map it",
+   "[logon] Event/EventSource/Device is required by the schema; map it",
+   "[logon] Event/EventDetail/TypeId is required by the schema; map it",
+   "[logon] Event/EventDetail/Authenticate needs one of ['User', 'Device', 'Group']. Already mapped elsewhere in the event: EventSource/User/Id (field 'roles'). If the action is about one of them, map the same input here as well (EventDetail/Authenticate/User/Id), and keep the existing mapping: it says something different",
+   "[logoff] EventSource/User/Id: repeat needs an element on the path the schema lets repeat; none of ['EventSource', 'User', 'Id'] may occur more than once",
+   "[logoff] Event/EventTime is required by the schema; map it",
+   "[logoff] Event/EventSource/System is required by the schema; map it",
+   "[logoff] Event/EventSource/Generator is required by the schema; map it",
+   "[logoff] Event/EventSource/Device is required by the schema; map it",
+   "[logoff] Event/EventDetail/TypeId is required by the schema; map it",
+   "[logoff] Event/EventDetail/Authenticate needs one of ['User', 'Device', 'Group']. Already mapped elsewhere in the event: EventSource/User/Id (field 'roles'). If the action is about one of them, map the same input here as well (EventDetail/Authenticate/User/Id), and keep the existing mapping: it says something different"
+  ],
+  "warnings": [
+   "[logon] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "drop: QA traffic",
+    "when": [
+     "exists($record/*[@key='host'][matches(., '^qa-')])"
+    ],
+    "dropped": true
+   },
+   {
+    "event": "drop: heartbeats are not events",
+    "when": [
+     "*[@key='action'] = 'HEARTBEAT'"
+    ],
+    "dropped": true
+   },
+   {
+    "event": "logon",
+    "when": [
+     "*[@key='action'] = 'LOGIN'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventSource/User/Id"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "*[@key='action'] = 'LOGOUT'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventSource/User/Id"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": [],
+  "items": "events"
+ }
+}

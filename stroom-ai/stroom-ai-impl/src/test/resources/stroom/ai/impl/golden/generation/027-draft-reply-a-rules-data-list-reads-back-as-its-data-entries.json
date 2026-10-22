@@ -1,0 +1,486 @@
+{
+ "source": "draft-reply-a-rules-data-list-reads-back-as-its-data-entries",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FW"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src_ip"
+   },
+   {
+    "path": "EventSource/Client/Port",
+    "field": "src_port"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dst_ip"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "dst_port"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "username"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "FW"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "event_type"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic_permitted",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     },
+     {
+      "field": "action",
+      "equals": "ALLOW"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "protocol",
+      "map": {
+       "TCP": "TCP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Port",
+      "field": "dst_port"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "traffic_denied",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     },
+     {
+      "field": "action",
+      "equals": "DENY"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+      "field": "protocol",
+      "map": {
+       "TCP": "TCP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Port",
+      "field": "dst_port"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "admin_logon",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "ADMIN"
+     },
+     {
+      "field": "action",
+      "equals": "LOGIN_SUCCESS"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "action",
+      "map": {
+       "LOGIN_SUCCESS": "true"
+      }
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "protocol",
+      "data_name": "protocol"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "system_alert",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "SYSTEM"
+     },
+     {
+      "field": "action",
+      "equals": "HIGH_CPU"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "field": "action",
+      "map": {
+       "HIGH_CPU": "Other"
+      }
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "severity",
+      "map": {
+       "WARNING": "Minor",
+       "DEBUG": "Info",
+       "INFO": "Info",
+       "NOTICE": "Info",
+       "WARN": "Minor",
+       "ERROR": "Major",
+       "ERR": "Major",
+       "CRITICAL": "Critical",
+       "CRIT": "Critical",
+       "ALERT": "Critical",
+       "EMERGENCY": "Critical",
+       "FATAL": "Critical"
+      }
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "protocol",
+      "data_name": "protocol"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "protocol",
+      "data_name": "protocol"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic_permitted] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[traffic_denied] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[admin_logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[system_alert] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Alert/Type'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from event_type, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic_permitted",
+    "when": [
+     "data[@name='event_type']/@value = 'TRAFFIC'",
+     "data[@name='action']/@value = 'ALLOW'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Permit/Data[bytes_received]",
+     "EventDetail/Network/Permit/Data[bytes_sent]",
+     "EventDetail/Network/Permit/Data[rule_id]",
+     "EventDetail/Network/Permit/Data[severity]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Destination/Port",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Port",
+     "EventDetail/Network/Permit/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "traffic_denied",
+    "when": [
+     "data[@name='event_type']/@value = 'TRAFFIC'",
+     "data[@name='action']/@value = 'DENY'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Deny/Data[bytes_received]",
+     "EventDetail/Network/Deny/Data[bytes_sent]",
+     "EventDetail/Network/Deny/Data[rule_id]",
+     "EventDetail/Network/Deny/Data[severity]",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Destination/Port",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/Port",
+     "EventDetail/Network/Deny/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "admin_logon",
+    "when": [
+     "data[@name='event_type']/@value = 'ADMIN'",
+     "data[@name='action']/@value = 'LOGIN_SUCCESS'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[bytes_received]",
+     "EventDetail/Authenticate/Data[bytes_sent]",
+     "EventDetail/Authenticate/Data[protocol]",
+     "EventDetail/Authenticate/Data[rule_id]",
+     "EventDetail/Authenticate/Data[severity]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "system_alert",
+    "when": [
+     "data[@name='event_type']/@value = 'SYSTEM'",
+     "data[@name='action']/@value = 'HIGH_CPU'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Data[bytes_received]",
+     "EventDetail/Alert/Data[bytes_sent]",
+     "EventDetail/Alert/Data[protocol]",
+     "EventDetail/Alert/Data[rule_id]",
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventDetail/Unknown/Data[bytes_received]",
+     "EventDetail/Unknown/Data[bytes_sent]",
+     "EventDetail/Unknown/Data[protocol]",
+     "EventDetail/Unknown/Data[rule_id]",
+     "EventDetail/Unknown/Data[severity]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

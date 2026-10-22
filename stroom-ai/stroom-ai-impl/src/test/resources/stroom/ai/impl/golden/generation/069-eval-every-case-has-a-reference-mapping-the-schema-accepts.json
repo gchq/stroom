@@ -1,0 +1,134 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "generated_time",
+    "time_format": "yyyy/MM/dd HH:mm:ss",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Palo Alto Firewall"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "PAN-OS"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "srcuser",
+    "transform": "strip_domain"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "xpath": "concat(data[@name='type']/@value, '-', data[@name='subtype']/@value)"
+   }
+  ],
+  "events": [
+   {
+    "name": "session",
+    "when": [
+     {
+      "field": "type",
+      "equals": "TRAFFIC"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Port",
+      "field": "sport"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "dport"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "rule",
+      "data_name": "rule"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "app",
+      "data_name": "app"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "session_end_reason",
+      "data_name": "end_reason"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "allow": "true"
+      },
+      "default": "false"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[session] TypeId is read from its input, which its records may lack: those get TypeId 'session', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[session] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "session",
+    "when": [
+     "data[@name='type']/@value = 'TRAFFIC'"
+    ],
+    "fields": [
+     "EventDetail/Network/Open/Data[app]",
+     "EventDetail/Network/Open/Data[end_reason]",
+     "EventDetail/Network/Open/Data[rule]",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/Network/Open/Source/Port",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

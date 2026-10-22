@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -50,6 +51,11 @@ public final class KeptMapping {
     public static final String PENDING = "pending changes";
     /// The kinds of mapping kept, in the order they are looked for.
     public static final List<String> KINDS = List.of("translation", "index", "cef");
+    /// The name of the block of a pipeline's agreed index template.
+    public static final String AGREED_TEMPLATE = "agreed index template";
+    /// The mark a documentation doc's Field mapping section carries: `{digest}` is the digest of the mapping and the
+    /// XSLT it was generated from.
+    public static final String DOC_MARK = "<!-- stroom-mcp field-mapping {digest} -->";
     /// The kind of mapping an events pipeline's translation XSLT keeps.
     public static final String TRANSLATION = "translation";
     /// Where the stroom-mcp part of a description begins: its note, a hidden block, or a shown one written before.
@@ -64,6 +70,8 @@ public final class KeptMapping {
     private static final Pattern HIDDEN = Pattern.compile(
             "\\n*<!-- stroom-mcp ([a-z ]+): kept by the server, do not edit or delete\\n(.*?)\\n-->\\n*",
             Pattern.DOTALL);
+    private static final Pattern DOC_MARK_PATTERN = Pattern.compile(
+            "<!-- stroom-mcp field-mapping ([0-9a-f]{16}) -->");
     private static final Pattern NOTE_PATTERN = Pattern.compile("\\n*" + Pattern.quote(NOTE) + "\\n*");
     private static final Pattern DATA_SPLITTER_FIELD = Pattern.compile("(?:data\\[@name='([^']*)'\\]/)+@value");
     private static final Pattern DATA_NAME = Pattern.compile("data\\[@name='([^']*)'\\]");
@@ -122,16 +130,17 @@ public final class KeptMapping {
         return text.strip();
     }
 
-    /// The description with a block (hidden, as compact JSON) replacing any earlier one of its name, after the
-    /// note. A comment can't hold '--': written '-\\u002d', which JSON reads back as '--' (it only occurs inside a
-    /// string).
+    /// The description with a block (hidden, as compact JSON, written as the Stroom MCP server's
+    /// `json.dumps(payload, ensure_ascii=False, separators=(',', ':'))` writes it) replacing any earlier one of its
+    /// name, after the note. A comment can't hold '--': written '-\\u002d', which JSON reads back as '--' (it only
+    /// occurs inside a string).
     ///
     /// @param description A document's description, or null.
     /// @param name        The block's name, e.g. [#PENDING].
     /// @param payload     What the block holds.
     /// @return The description with the block.
     public static String withBlock(final String description, final String name, final Object payload) {
-        final String body = JsonUtil.writeValueAsString(payload, false).replace("--", "-\\u002d");
+        final String body = PyJson.dumpsCompact(payload).replace("--", "-\\u002d");
         final String block = "<!-- stroom-mcp " + name + ": kept by the server, do not edit or delete\n" + body
                              + "\n-->";
         final String text = NOTE_PATTERN.matcher(withoutBlock(description, name)).replaceAll("\n\n").strip();
@@ -152,6 +161,81 @@ public final class KeptMapping {
             }
         }
         return String.join("\n\n", parts);
+    }
+
+    /// The description with the mapping block replacing any earlier one (of any kind): the Stroom MCP server's
+    /// `mappingstore.with_mapping`.
+    ///
+    /// @param description A document's description, or null.
+    /// @param kind        The mapping's kind, one of [#KINDS].
+    /// @param payload     The mapping block: for a translation, `schema_version` and `mapping` (the mapping's
+    ///                    compact JSON).
+    /// @return The description with the block.
+    public static String withMapping(final String description, final String kind, final Map<String, Object> payload) {
+        String text = NullSafe.string(description);
+        for (final String other : KINDS) {
+            if (!other.equals(kind)) {
+                text = withoutBlock(text, other + " mapping");
+            }
+        }
+        return withBlock(text, kind + " mapping", payload);
+    }
+
+    /// @param description A pipeline's description, or null.
+    /// @param agreed      The Elasticsearch index template the user agreed for an indexing pipeline: what the
+    ///                    cluster admin was asked to apply, for the index and cluster and the indexing XSLT it was
+    ///                    agreed against.
+    /// @return The description keeping it.
+    public static String withAgreedTemplate(final String description, final Map<String, Object> agreed) {
+        return withBlock(description, AGREED_TEMPLATE, agreed);
+    }
+
+    /// @param description A pipeline's description, or null.
+    /// @return The index template agreed for it, or empty if none.
+    public static Optional<Map<String, Object>> readAgreedTemplate(final String description) {
+        return readBlock(description, AGREED_TEMPLATE);
+    }
+
+    /// @param markdown A documentation doc's text.
+    /// @return The digest of the mapping and XSLT its Field mapping section was generated from (its
+    /// [#DOC_MARK]), or empty if it has none.
+    public static Optional<String> docDigest(final String markdown) {
+        final Matcher matcher = DOC_MARK_PATTERN.matcher(NullSafe.string(markdown));
+        return matcher.find()
+                ? Optional.of(matcher.group(1))
+                : Optional.empty();
+    }
+
+    /// The markdown with the `## heading` section's body replaced, or the section added before Output (else
+    /// Conformance, Open items or Change log, else at the end): the Stroom MCP server's
+    /// `mappingstore.replace_section`.
+    ///
+    /// @param markdown A documentation doc's text.
+    /// @param heading  The section's heading, without `## `.
+    /// @param body     Its new body.
+    /// @param exact    True for a heading that is exactly this, not one starting with it.
+    /// @return The markdown with the section.
+    public static String replaceSection(final String markdown,
+                                        final String heading,
+                                        final String body,
+                                        final boolean exact) {
+        final String rest = exact
+                ? "[ \\t]*"
+                : "[^\\n]*";
+        final Pattern pattern = Pattern.compile("(^## " + Pattern.quote(heading) + rest + "\\n)(.*?)(?=^## |\\z)",
+                Pattern.MULTILINE | Pattern.DOTALL);
+        final String section = "## " + heading + "\n\n" + body.strip() + "\n\n";
+        final Matcher matcher = pattern.matcher(markdown);
+        if (matcher.find()) {
+            return markdown.substring(0, matcher.start()) + section + markdown.substring(matcher.end());
+        }
+        for (final String anchor : List.of("## Output", "## Conformance", "## Open items", "## Change log")) {
+            final int at = markdown.indexOf(anchor);
+            if (at >= 0) {
+                return markdown.substring(0, at) + section + markdown.substring(at);
+            }
+        }
+        return markdown.stripTrailing() + "\n\n" + section;
     }
 
     /// What `read_document` gives of an XSLT's kept mapping: by default a summary, as the whole mapping (1,400

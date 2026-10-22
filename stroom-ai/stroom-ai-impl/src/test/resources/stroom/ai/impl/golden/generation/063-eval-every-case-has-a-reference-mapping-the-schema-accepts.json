@@ -1,0 +1,187 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "extract": [
+   {
+    "field": "service",
+    "regex": "^(\\d+)/(\\w+)$",
+    "names": [
+     "service_port",
+     "service_protocol"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Network Access Control"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "nac"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "switch"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "field": "ip",
+    "transform": "lower"
+   },
+   {
+    "path": "EventSource/Device/MACAddress",
+    "xpath": "replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"
+   },
+   {
+    "path": "EventSource/Device/Port",
+    "field": "service_port"
+   },
+   {
+    "path": "EventSource/Device/Data",
+    "field": "port",
+    "data_name": "switch_port"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "result"
+   }
+  ],
+  "events": [
+   {
+    "name": "user access",
+    "when": [
+     {
+      "field": "user",
+      "present": true
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Connect"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "result",
+      "map": {
+       "accept": "true",
+       "reject": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "service_protocol",
+      "data_name": "protocol"
+     }
+    ]
+   },
+   {
+    "name": "device access",
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Connect"
+     },
+     {
+      "path": "EventDetail/Authenticate/Device/MACAddress",
+      "xpath": "replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "result",
+      "map": {
+       "accept": "true",
+       "reject": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "service_protocol",
+      "data_name": "protocol"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[user access] TypeId is read from result, which its records may lack: those get TypeId 'user access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[user access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[device access] TypeId is read from result, which its records may lack: those get TypeId 'device access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[device access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "user access",
+    "when": [
+     "exists(*[@key='user'][normalize-space(.)])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[protocol]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/Data[switch_port]",
+     "EventSource/Device/HostName",
+     "EventSource/Device/IPAddress",
+     "EventSource/Device/MACAddress",
+     "EventSource/Device/Port",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "device access",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[protocol]",
+     "EventDetail/Authenticate/Device/MACAddress",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/TypeId",
+     "EventSource/Device/Data[switch_port]",
+     "EventSource/Device/HostName",
+     "EventSource/Device/IPAddress",
+     "EventSource/Device/MACAddress",
+     "EventSource/Device/Port",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

@@ -1,0 +1,279 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))",
+    "time_format": "yyyy MMM d HH:mm:ss",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Secure Web Gateway"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "cef_product"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "suser"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "cef_signature_id"
+   },
+   {
+    "path": "EventDetail/Description",
+    "any_of": [
+     "msg",
+     "cef_name"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "cef_signature_id",
+      "one_of": [
+       "1001",
+       "1002"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "suser"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "outcome",
+      "map": {
+       "success": "true",
+       "failure": "false"
+      }
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "cef_signature_id",
+      "equals": "1003"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "suser"
+     }
+    ]
+   },
+   {
+    "name": "web request",
+    "when": [
+     {
+      "field": "cef_signature_id",
+      "one_of": [
+       "2001",
+       "2002"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "dpt"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "request",
+      "data_name": "url"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "cat",
+      "data_name": "category"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "act",
+      "map": {
+       "allow": "true",
+       "block": "false"
+      }
+     }
+    ]
+   },
+   {
+    "name": "malware",
+    "when": [
+     {
+      "field": "cef_signature_id",
+      "equals": "3001"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Malware"
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "value": "Major"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "fname",
+      "data_name": "file"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "fileHash",
+      "data_name": "sha_or_md5"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "act",
+      "data_name": "action"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[web request] required ['EventTime', 'EventDetail', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[malware] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "data[@name='cef_signature_id']/@value = ('1001', '1002')"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "data[@name='cef_signature_id']/@value = '1003'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "web request",
+    "when": [
+     "data[@name='cef_signature_id']/@value = ('2001', '2002')"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Open/Destination/Data[category]",
+     "EventDetail/Network/Open/Destination/Data[url]",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "malware",
+    "when": [
+     "data[@name='cef_signature_id']/@value = '3001'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Data[action]",
+     "EventDetail/Alert/Data[file]",
+     "EventDetail/Alert/Data[sha_or_md5]",
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

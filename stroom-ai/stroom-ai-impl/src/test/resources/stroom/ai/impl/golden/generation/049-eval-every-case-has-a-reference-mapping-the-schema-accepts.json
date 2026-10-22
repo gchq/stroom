@@ -1,0 +1,142 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "ts",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme directory"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "acme-directory"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "usr"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "evt"
+   },
+   {
+    "path": "EventDetail/Authenticate/User/Id",
+    "field": "usr"
+   },
+   {
+    "path": "EventDetail/Authenticate/Outcome/Success",
+    "field": "res",
+    "map": {
+     "R0": "true",
+     "R7": "false",
+     "R9": "false"
+    }
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "evt",
+      "one_of": [
+       "A17",
+       "A18"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "evt",
+      "equals": "A40"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "data[@name='evt']/@value = ('A17', 'A18')"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "data[@name='evt']/@value = 'A40'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

@@ -1,0 +1,343 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "^User (\\S+) logged.*$",
+    "names": [
+     "user"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "^Login failed for user (\\S+) from ([\\d.]+).*$",
+    "names": [
+     "failed_user",
+     "failed_from"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "^.*?\\(customer (\\S+)\\)[\\s\\S]*$",
+    "names": [
+     "customer"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "^Setting (\\S+) changed from (\\S+) to (\\S+) by (\\S+).*$",
+    "names": [
+     "setting",
+     "old_value",
+     "new_value",
+     "admin"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd HH:mm:ss,SSS",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Billing Service"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "logger"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "billing01"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "any_of": [
+     "user",
+     "failed_user",
+     "customer",
+     "admin"
+    ]
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "logger"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^User \\S+ logged in"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^User \\S+ logged out"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   },
+   {
+    "name": "logon-failed",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^Login failed"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "failed_user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "value": "false"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Description",
+      "field": "message"
+     }
+    ]
+   },
+   {
+    "name": "invoice",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^Invoice \\d+ created"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Create/Object/Type",
+      "value": "Invoice"
+     },
+     {
+      "path": "EventDetail/Create/Object/Description",
+      "field": "message"
+     }
+    ]
+   },
+   {
+    "name": "payment-error",
+    "when": [
+     {
+      "field": "level",
+      "equals": "ERROR"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Error"
+     },
+     {
+      "path": "EventDetail/Alert/Description",
+      "field": "message"
+     }
+    ]
+   },
+   {
+    "name": "config",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^Setting "
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Update/After/Object/Type",
+      "value": "Setting"
+     },
+     {
+      "path": "EventDetail/Update/After/Object/Id",
+      "field": "setting"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "old_value",
+      "data_name": "old_value"
+     },
+     {
+      "path": "EventDetail/Update/Data",
+      "field": "new_value",
+      "data_name": "new_value"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] TypeId is read from logger, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logon] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] TypeId is read from logger, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logoff] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon-failed] TypeId is read from logger, which its records may lack: those get TypeId 'logon-failed', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logon-failed] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[invoice] TypeId is read from logger, which its records may lack: those get TypeId 'invoice', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[invoice] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[payment-error] TypeId is read from logger, which its records may lack: those get TypeId 'payment-error', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[payment-error] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[config] TypeId is read from logger, which its records may lack: those get TypeId 'config', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[config] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "extract names ['failed_from'], which nothing reads: map each to the element that means it (a Data entry if nothing else fits), or leave it out of names ('')."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^User \\S+ logged in')])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^User \\S+ logged out')])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logon-failed",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^Login failed')])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Description",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "invoice",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^Invoice \\d+ created')])"
+    ],
+    "fields": [
+     "EventDetail/Create/Object/Description",
+     "EventDetail/Create/Object/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "payment-error",
+    "when": [
+     "data[@name='level']/@value = 'ERROR'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Description",
+     "EventDetail/Alert/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "config",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^Setting ')])"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Object/Id",
+     "EventDetail/Update/After/Object/Type",
+     "EventDetail/Update/Data[new_value]",
+     "EventDetail/Update/Data[old_value]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

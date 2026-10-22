@@ -1,0 +1,112 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "nil_values": [
+   "-"
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Web Filter"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "app"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   }
+  ],
+  "events": [
+   {
+    "name": "web request",
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "url",
+      "data_name": "url"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "category",
+      "data_name": "category"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Data",
+      "field": "referer",
+      "data_name": "referer"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "allow": "true",
+       "block": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[web request] TypeId is read from action, which its records may lack: those get TypeId 'web request', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[web request] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "web request",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Network/Open/Destination/Data[category]",
+     "EventDetail/Network/Open/Destination/Data[url]",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Data[referer]",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

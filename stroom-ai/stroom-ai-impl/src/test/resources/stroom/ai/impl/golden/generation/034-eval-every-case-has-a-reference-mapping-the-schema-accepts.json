@@ -1,0 +1,123 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "xml",
+  "root": "audit",
+  "record": "entry",
+  "xml_namespace": "urn:example:fileaudit",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "when",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "File Server"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "fileaudit"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "machine"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "account"
+   }
+  ],
+  "events": [
+   {
+    "name": "read",
+    "when": [
+     {
+      "field": "op",
+      "equals": "read"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "File-Read"
+     },
+     {
+      "path": "EventDetail/View/File/Path",
+      "field": "path"
+     }
+    ]
+   },
+   {
+    "name": "delete",
+    "when": [
+     {
+      "field": "op",
+      "equals": "delete"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "File-Delete"
+     },
+     {
+      "path": "EventDetail/Delete/File/Path",
+      "field": "path"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[read] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "read",
+    "when": [
+     "op = 'read'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/View/File/Path",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "delete",
+    "when": [
+     "op = 'delete'"
+    ],
+    "fields": [
+     "EventDetail/Delete/File/Path",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

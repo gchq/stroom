@@ -1,0 +1,181 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "HR System"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "hr-export"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "hr01.example.org"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "changed_by"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "change"
+   }
+  ],
+  "events": [
+   {
+    "name": "joiner",
+    "when": [
+     {
+      "field": "change",
+      "equals": "joiner"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Create/User/Id",
+      "field": "employee_id"
+     },
+     {
+      "path": "EventDetail/Create/User/Name",
+      "field": "employee_name"
+     },
+     {
+      "path": "EventDetail/Create/User/Data",
+      "field": "department",
+      "data_name": "department"
+     }
+    ]
+   },
+   {
+    "name": "mover",
+    "when": [
+     {
+      "field": "change",
+      "equals": "mover"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Update/After/User/Id",
+      "field": "employee_id"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Name",
+      "field": "employee_name"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Data",
+      "field": "department",
+      "data_name": "department"
+     }
+    ]
+   },
+   {
+    "name": "leaver",
+    "when": [
+     {
+      "field": "change",
+      "equals": "leaver"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Delete/User/Id",
+      "field": "employee_id"
+     },
+     {
+      "path": "EventDetail/Delete/User/Name",
+      "field": "employee_name"
+     },
+     {
+      "path": "EventDetail/Delete/User/Data",
+      "field": "department",
+      "data_name": "department"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[joiner] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[mover] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[leaver] required ['EventTime', 'EventDetail', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "joiner",
+    "when": [
+     "data[@name='change']/@value = 'joiner'"
+    ],
+    "fields": [
+     "EventDetail/Create/User/Data[department]",
+     "EventDetail/Create/User/Id",
+     "EventDetail/Create/User/Name",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "mover",
+    "when": [
+     "data[@name='change']/@value = 'mover'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/User/Data[department]",
+     "EventDetail/Update/After/User/Id",
+     "EventDetail/Update/After/User/Name",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "leaver",
+    "when": [
+     "data[@name='change']/@value = 'leaver'"
+    ],
+    "fields": [
+     "EventDetail/Delete/User/Data[department]",
+     "EventDetail/Delete/User/Id",
+     "EventDetail/Delete/User/Name",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}
