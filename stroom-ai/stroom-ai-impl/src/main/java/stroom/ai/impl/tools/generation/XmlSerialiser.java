@@ -141,11 +141,20 @@ public final class XmlSerialiser {
     }
 
     // The element's own declarations; at the top of what is written, also those of its ancestors it is in the
-    // scope of (lxml copies them, so the text written stands on its own).
+    // scope of (lxml copies them, so the text written stands on its own): as libxml2 copies the element, the
+    // namespace of its name and then its attributes' first, then each ancestor's declarations, nearest first.
     private static List<XmlNamespace> declarationsWritten(final XmlElement element, final boolean top) {
         final List<XmlNamespace> out = new ArrayList<>(element.declarations());
         if (!top) {
             return out;
+        }
+        final List<XmlNamespace> used = new ArrayList<>();
+        used.add(element.binding());
+        element.attributes().forEach(attribute -> used.add(attribute.declared()));
+        for (final XmlNamespace declared : used) {
+            if (declared != null && out.stream().noneMatch(have -> Objects.equals(have.prefix(), declared.prefix()))) {
+                out.add(declared);
+            }
         }
         for (final XmlElement ancestor : element.ancestors()) {
             for (final XmlNamespace declared : ancestor.declarations()) {

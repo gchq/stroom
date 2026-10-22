@@ -1,0 +1,3069 @@
+[
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "Fortigate"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "Fortigate"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "Fortigate"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ]
+  },
+  "done": [
+   "common 'EventSource/System/Name' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "common": [
+    {
+     "path": "EventSource/System/Name",
+     "value": "Saved"
+    }
+   ],
+   "input": "json",
+   "json_layout": "lines",
+   "events": [
+    {
+     "name": "all",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "changes": {
+   "description": "kept"
+  },
+  "merged": {
+   "common": [
+    {
+     "path": "EventSource/System/Name",
+     "value": "Saved"
+    }
+   ],
+   "input": "json",
+   "json_layout": "lines",
+   "events": [
+    {
+     "name": "all",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "description": "kept"
+  },
+  "done": [
+   "'description' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "TODO system name"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "TODO generator"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "TODO generator"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ]
+  },
+  "done": [
+   "common 'EventSource/System/Name' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "TODO generator"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ]
+  },
+  "changes": {
+   "description": "again"
+  },
+  "merged": {
+   "input": "json",
+   "json_layout": "lines",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "FortiOS"
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "TODO e.g. Prod"
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host"
+    },
+    {
+     "path": "EventSource/Client/IPAddress",
+     "field": "srcip"
+    },
+    {
+     "path": "EventSource/Server/IPAddress",
+     "field": "dstip"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user"
+    },
+    {
+     "path": "EventDetail/Description",
+     "field": "msg"
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "TODO generator"
+    },
+    {
+     "path": "EventDetail/TypeId",
+     "field": "type"
+    }
+   ],
+   "events": [
+    {
+     "name": "traffic_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "traffic"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "event_permitted",
+     "when": [
+      {
+       "field": "type",
+       "equals": "event"
+      },
+      {
+       "field": "action",
+       "equals": "accept"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+       "field": "srcip"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+       "field": "dstip"
+      }
+     ],
+     "data": [
+      "logid"
+     ]
+    },
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "logid",
+       "field": "logid"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "logid",
+      "type",
+      "action",
+      "msg",
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "srcip",
+      "dstip"
+     ]
+    }
+   ],
+   "description": "again"
+  },
+  "done": [
+   "'description' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "data_splitter",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "Acme VPN",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "Dev",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "vpnd",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host",
+     "repeat": false,
+     "default": "unknown"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "repeat": false
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "when": [
+      {
+       "field": "action",
+       "equals": "login"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/User/Id",
+       "field": "user",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Outcome/Success",
+       "field": "result",
+       "repeat": false,
+       "map": {
+        "ok": "true",
+        "fail": "false"
+       }
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "sid",
+       "repeat": false,
+       "data_name": "session"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    },
+    {
+     "name": "other",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "action",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "field": "action",
+       "repeat": false,
+       "data_name": "action"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "changes": {
+   "unmatched": "warn"
+  },
+  "merged": {
+   "input": "data_splitter",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "Acme VPN",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "Dev",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "vpnd",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host",
+     "repeat": false,
+     "default": "unknown"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "repeat": false
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "when": [
+      {
+       "field": "action",
+       "equals": "login"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/User/Id",
+       "field": "user",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Outcome/Success",
+       "field": "result",
+       "repeat": false,
+       "map": {
+        "ok": "true",
+        "fail": "false"
+       }
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "sid",
+       "repeat": false,
+       "data_name": "session"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    },
+    {
+     "name": "other",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "action",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "field": "action",
+       "repeat": false,
+       "data_name": "action"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "done": [
+   "'unmatched' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    },
+    {
+     "name": "logoff",
+     "fields": []
+    },
+    {
+     "name": "logon",
+     "remove": true
+    }
+   ],
+   "common": [
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "b"
+    },
+    {
+     "path": "EventTime/TimeCreated",
+     "remove": true
+    }
+   ],
+   "unmatched": "skip"
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "b"
+    }
+   ],
+   "events": [
+    {
+     "name": "other",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    },
+    {
+     "name": "logoff",
+     "fields": []
+    }
+   ],
+   "unmatched": "skip"
+  },
+  "done": [
+   "rule 'other' replaced",
+   "rule 'logoff' added after the others",
+   "rule 'logon' removed",
+   "common 'EventDetail/Unknown/Data' (Data 'a') replaced",
+   "common 'EventTime/TimeCreated' removed",
+   "'unmatched' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {},
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "fields": []
+    }
+   ]
+  },
+  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "nope",
+     "remove": true
+    }
+   ]
+  },
+  "error": "changes.events removes rule 'nope', which the mapping does not have (its rules: ['logon', 'other'])"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "value": "x"
+    }
+   ]
+  },
+  "error": "Each entry in changes.common needs its path (and data_name for a Data entry): it replaces the entry with that path, or is added"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "data_splitter",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "Acme VPN",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "Dev",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "vpnd",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host",
+     "repeat": false,
+     "default": "unknown"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "repeat": false
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Nope",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    },
+    {
+     "name": "other",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "action",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "field": "action",
+       "repeat": false,
+       "data_name": "action"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "logon",
+     "when": [
+      {
+       "field": "action",
+       "equals": "login"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/User/Id",
+       "field": "user",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Outcome/Success",
+       "field": "result",
+       "repeat": false,
+       "map": {
+        "ok": "true",
+        "fail": "false"
+       }
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "sid",
+       "repeat": false,
+       "data_name": "session"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ]
+  },
+  "merged": {
+   "input": "data_splitter",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "time",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Name",
+     "value": "Acme VPN",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/System/Environment",
+     "value": "Dev",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Generator",
+     "value": "vpnd",
+     "repeat": false
+    },
+    {
+     "path": "EventSource/Device/HostName",
+     "field": "host",
+     "repeat": false,
+     "default": "unknown"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "repeat": false
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "when": [
+      {
+       "field": "action",
+       "equals": "login"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/User/Id",
+       "field": "user",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Outcome/Success",
+       "field": "result",
+       "repeat": false,
+       "map": {
+        "ok": "true",
+        "fail": "false"
+       }
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "sid",
+       "repeat": false,
+       "data_name": "session"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    },
+    {
+     "name": "other",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "action",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "field": "action",
+       "repeat": false,
+       "data_name": "action"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "done": [
+   "rule 'logon' replaced"
+  ]
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "elasticsearch",
+   "index_name": "ecs-firewall-v1",
+   "time_field": "@timestamp",
+   "fields": [
+    {
+     "name": "StreamId",
+     "type": "id",
+     "source": "@StreamId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "EventId",
+     "type": "id",
+     "source": "@EventId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "@timestamp",
+     "type": "date",
+     "source": "EventTime/TimeCreated",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "observer.product",
+     "type": "keyword",
+     "source": "EventSource/System/Name",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "host.name",
+     "type": "keyword",
+     "source": "EventSource/Device/HostName",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "source.ip",
+     "type": "ip",
+     "source": "EventDetail/Network/*/Source/Device/IPAddress",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "source.port",
+     "type": "long",
+     "source": "EventDetail/Network/*/Source/Port",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "destination.ip",
+     "type": "ip",
+     "source": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.code",
+     "type": "keyword",
+     "source": "EventDetail/TypeId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "message",
+     "type": "text",
+     "source": "EventDetail/Description",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.action",
+     "type": "keyword",
+     "source": "EventDetail/*/Action",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.outcome",
+     "type": "keyword",
+     "source": "EventDetail/*/Outcome/Success",
+     "description": "",
+     "transform": "outcome",
+     "multiple": false
+    },
+    {
+     "name": "process.command_line",
+     "type": "keyword",
+     "source": "EventDetail/Process/Command",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.alert.severity",
+     "type": "keyword",
+     "source": "EventDetail/Alert/Severity",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.alert.type",
+     "type": "keyword",
+     "source": "EventDetail/Alert/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.authenticate.user.id",
+     "type": "keyword",
+     "source": "EventDetail/Authenticate/User/Id",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.process.type",
+     "type": "keyword",
+     "source": "EventDetail/Process/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.update.configuration.type",
+     "type": "keyword",
+     "source": "EventDetail/Update/After/Configuration/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.configuration",
+     "type": "keyword",
+     "source": "EventDetail//Configuration/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    }
+   ],
+   "drop_when": [],
+   "discovery": null,
+   "imports": [],
+   "shared": [],
+   "subobjects": true,
+   "convention": "ecs",
+   "custom_namespaces": [
+    "firewall"
+   ],
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   }
+  },
+  "changes": {
+   "fields": [
+    {
+     "name": "firewall.alert.type",
+     "remove": true
+    },
+    {
+     "name": "firewall.configuration",
+     "type": "keyword",
+     "source": "EventDetail/Update/After/Configuration/Type"
+    },
+    {
+     "name": "acme.ticket",
+     "type": "keyword",
+     "source": "EventDetail/Alert/Data[@Name='Ticket']/@Value"
+    }
+   ]
+  },
+  "merged": {
+   "backend": "elasticsearch",
+   "index_name": "ecs-firewall-v1",
+   "time_field": "@timestamp",
+   "fields": [
+    {
+     "name": "StreamId",
+     "type": "id",
+     "source": "@StreamId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "EventId",
+     "type": "id",
+     "source": "@EventId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "@timestamp",
+     "type": "date",
+     "source": "EventTime/TimeCreated",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "observer.product",
+     "type": "keyword",
+     "source": "EventSource/System/Name",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "host.name",
+     "type": "keyword",
+     "source": "EventSource/Device/HostName",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "source.ip",
+     "type": "ip",
+     "source": "EventDetail/Network/*/Source/Device/IPAddress",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "source.port",
+     "type": "long",
+     "source": "EventDetail/Network/*/Source/Port",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "destination.ip",
+     "type": "ip",
+     "source": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.code",
+     "type": "keyword",
+     "source": "EventDetail/TypeId",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "message",
+     "type": "text",
+     "source": "EventDetail/Description",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.action",
+     "type": "keyword",
+     "source": "EventDetail/*/Action",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "event.outcome",
+     "type": "keyword",
+     "source": "EventDetail/*/Outcome/Success",
+     "description": "",
+     "transform": "outcome",
+     "multiple": false
+    },
+    {
+     "name": "process.command_line",
+     "type": "keyword",
+     "source": "EventDetail/Process/Command",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.alert.severity",
+     "type": "keyword",
+     "source": "EventDetail/Alert/Severity",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.authenticate.user.id",
+     "type": "keyword",
+     "source": "EventDetail/Authenticate/User/Id",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.process.type",
+     "type": "keyword",
+     "source": "EventDetail/Process/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.update.configuration.type",
+     "type": "keyword",
+     "source": "EventDetail/Update/After/Configuration/Type",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "firewall.configuration",
+     "type": "keyword",
+     "source": "EventDetail/Update/After/Configuration/Type"
+    },
+    {
+     "name": "acme.ticket",
+     "type": "keyword",
+     "source": "EventDetail/Alert/Data[@Name='Ticket']/@Value"
+    }
+   ],
+   "drop_when": [],
+   "discovery": null,
+   "imports": [],
+   "shared": [],
+   "subobjects": true,
+   "convention": "ecs",
+   "custom_namespaces": [
+    "firewall"
+   ],
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   }
+  },
+  "done": [
+   "field 'firewall.alert.type' removed",
+   "field 'firewall.configuration' replaced",
+   "field 'acme.ticket' added"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {},
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": [],
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": "x",
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": null,
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "fields": []
+    }
+   ]
+  },
+  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": {
+    "name": "one",
+    "fields": []
+   }
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    },
+    {
+     "name": "one",
+     "fields": []
+    }
+   ]
+  },
+  "done": [
+   "rule 'one' added after the others"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "nope",
+     "remove": true
+    }
+   ]
+  },
+  "error": "changes.events removes rule 'nope', which the mapping does not have (its rules: ['logon', 'other'])"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    "x"
+   ]
+  },
+  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": ""
+    }
+   ]
+  },
+  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "value": "x"
+    }
+   ]
+  },
+  "error": "Each entry in changes.common needs its path (and data_name for a Data entry): it replaces the entry with that path, or is added"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": {
+    "path": "EventSource/User/Id",
+    "field": "u"
+   }
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "field": "u"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "done": [
+   "common 'EventSource/User/Id' added"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventDetail/Unknown/Data",
+     "remove": true
+    }
+   ]
+  },
+  "error": "changes.common removes common 'EventDetail/Unknown/Data', which the mapping does not have"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "remove": 1
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "done": [
+   "common 'EventDetail/Unknown/Data' (Data 'a') removed"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "b",
+     "remove": true
+    }
+   ]
+  },
+  "error": "changes.common removes common 'EventDetail/Unknown/Data' (Data 'b'), which the mapping does not have"
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "data_name": "",
+     "field": "time"
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "data_name": "",
+     "field": "time"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "done": [
+   "common 'EventTime/TimeCreated' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": 5,
+     "fields": []
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    },
+    {
+     "name": 5,
+     "fields": []
+    }
+   ]
+  },
+  "done": [
+   "rule '5' added after the others"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "unmatched": "warn",
+   "style": {
+    "layout": "named"
+   }
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "layout": "named"
+   }
+  },
+  "done": [
+   "'unmatched' replaced",
+   "'style' replaced"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "logon",
+     "fields": []
+    },
+    {
+     "name": "other",
+     "fields": []
+    }
+   ]
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "logon",
+     "remove": true
+    },
+    {
+     "name": "logon",
+     "fields": [
+      1
+     ]
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventTime/TimeCreated",
+     "field": "ts"
+    },
+    {
+     "path": "EventDetail/Unknown/Data",
+     "data_name": "a",
+     "field": "a"
+    }
+   ],
+   "events": [
+    {
+     "name": "other",
+     "fields": []
+    },
+    {
+     "name": "logon",
+     "fields": [
+      1
+     ]
+    }
+   ]
+  },
+  "done": [
+   "rule 'logon' removed",
+   "rule 'logon' added after the others"
+  ]
+ },
+ {
+  "kind": "mapping",
+  "base": {
+   "input": "json"
+  },
+  "changes": {
+   "events": [
+    {
+     "name": "a"
+    }
+   ],
+   "common": [
+    {
+     "path": "x",
+     "value": "y"
+    }
+   ]
+  },
+  "merged": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a"
+    }
+   ],
+   "common": [
+    {
+     "path": "x",
+     "value": "y"
+    }
+   ]
+  },
+  "done": [
+   "rule 'a' added after the others",
+   "common 'x' added"
+  ]
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    }
+   ]
+  },
+  "changes": {},
+  "error": "changes is an object holding only what changes, e.g. {\"fields\": [{\"name\": \"acme.ticket\", \"type\": \"keyword\", \"source\": \"...\"}]} or {\"drop_when\": [...]}"
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    }
+   ]
+  },
+  "changes": {
+   "fields": [
+    {
+     "type": "x"
+    }
+   ]
+  },
+  "error": "Each entry in changes.fields needs its name: it replaces the field of that name whole, or is added"
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    }
+   ]
+  },
+  "changes": {
+   "fields": {
+    "name": "c",
+    "type": "keyword"
+   }
+  },
+  "merged": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    },
+    {
+     "name": "c",
+     "type": "keyword"
+    }
+   ]
+  },
+  "done": [
+   "field 'c' added"
+  ]
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    }
+   ]
+  },
+  "changes": {
+   "fields": [
+    {
+     "name": "a",
+     "remove": true
+    },
+    {
+     "name": "b",
+     "type": "keyword"
+    }
+   ],
+   "drop_when": [
+    "x"
+   ]
+  },
+  "merged": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "b",
+     "type": "keyword"
+    }
+   ],
+   "drop_when": [
+    "x"
+   ]
+  },
+  "done": [
+   "field 'a' removed",
+   "field 'b' replaced",
+   "'drop_when' replaced"
+  ]
+ },
+ {
+  "kind": "plan",
+  "base": {
+   "backend": "lucene",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id"
+    },
+    {
+     "name": "b",
+     "type": "text"
+    }
+   ]
+  },
+  "changes": {
+   "fields": [
+    {
+     "name": "z",
+     "remove": true
+    }
+   ]
+  },
+  "error": "changes.fields removes 'z', which the plan does not have (its fields: ['a', 'b'])"
+ }
+]
