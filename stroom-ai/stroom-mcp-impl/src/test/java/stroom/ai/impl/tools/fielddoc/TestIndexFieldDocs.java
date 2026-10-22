@@ -17,9 +17,9 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.generation.SharedTemplate;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.Discovery;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.FieldPlan;
-import stroom.ai.impl.tools.indexing.IndexingStandIns.PlannedField;
+import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 
@@ -48,11 +48,11 @@ class TestIndexFieldDocs {
 
     @Test
     void indexFieldMappingTable() {
-        final FieldPlan plan = new FieldPlan("lucene", "ACME-INDEX", "EventTime", List.of(
-                PlannedField.of("StreamId", "id", "@StreamId"),
-                PlannedField.of("EventTime", "date", "EventTime/TimeCreated"),
-                PlannedField.of("UserId", "keyword", "EventSource/User/Id")), List.of("EventDetail/TypeId = 'hb'"),
-                null, List.of());
+        final FieldPlan plan = FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
+                        PlannedField.of("StreamId", "id", "@StreamId"),
+                        PlannedField.of("EventTime", "date", "EventTime/TimeCreated"),
+                        PlannedField.of("UserId", "keyword", "EventSource/User/Id")))
+                .withDropWhen(List.of("EventDetail/TypeId = 'hb'"));
         final Map<String, Double> population = new LinkedHashMap<>();
         population.put("EventTime/TimeCreated", 100.0);
         population.put("EventSource/User/Id", 66.7);
@@ -93,7 +93,7 @@ class TestIndexFieldDocs {
                 {"outcome", "keyword", "EventDetail/Authenticate/Outcome/Success"}}) {
             fields.add(new PlannedField(f[0], f[1], f[2], "outcome".equals(f[0])
                     ? "Whether the logon succeeded."
-                    : ""));
+                    : "", null, false));
         }
         final FieldPlan plan = FieldPlan.of("elasticsearch", "people-v1", "@timestamp", fields);
         final List<Map<String, List<String>>> documents = json("""
@@ -267,7 +267,7 @@ class TestIndexFieldDocs {
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
         planned.put("user.name", PlannedField.of("user.name", "keyword", "EventSource/User/Id"));
         planned.put("user.role", new PlannedField("user.role", "keyword", "EventSource/User/Role",
-                "The role the user acted in."));
+                "The role the user acted in.", null, false));
         final Map<String, Object> survey = survey(fedByPlan(), true);
         assertThat(IndexFieldDocs.notListed(survey, planned)).containsExactly("user.role");
         assertThat(IndexFieldDocs.existingIndexMarkdown(survey, planned, null, FieldDocs.BY_EVENT_TYPE, null))
@@ -309,7 +309,8 @@ class TestIndexFieldDocs {
         final FieldPlan plan = FieldPlan.of("elasticsearch", "mail-v1", "@timestamp", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId"),
                 PlannedField.of("email.subject", "keyword", "EventDetail/Send/Data[@Name='subject']/@Value"),
-                new PlannedField("host.name", "keyword", "EventSource/Device/HostName", "Mail relay.")));
+                new PlannedField("host.name", "keyword", "EventSource/Device/HostName", "Mail relay.", null,
+                        false)));
         final List<Map<String, List<String>>> documents = json("""
                 [{"StreamId": ["7"], "email.subject": ["Invoice 4411"]},
                  {"StreamId": ["7"], "email.subject": ["Re: lunch"]}]""");
@@ -367,8 +368,9 @@ class TestIndexFieldDocs {
                 PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
                 PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
                 PlannedField.of("user.id", "keyword", "EventSource/User/Id"),
-                PlannedField.of("guid", "keyword", "shared:guid")), List.of(), null,
-                List.of(new SharedTemplate("Common-Elastic-V1", "guid", "guid", Map.of())));
+                PlannedField.of("guid", "keyword", "shared:guid")), List.of(), null, List.of(),
+                List.of(new SharedTemplate("Common-Elastic-V1", "guid", "guid", Map.of())), true, null, List.of(),
+                XsltStyle.DEFAULT);
         assertThat(plan.writtenBy("guid").template()).isEqualTo("guid");
         assertThat(section(plan, Map.of("EventSource/User/Id", 100.0), null, null)).contains(
                 "| `guid` | Written by the shared template `guid`. | keyword | shared template `guid` of "
@@ -412,7 +414,7 @@ class TestIndexFieldDocs {
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
         @SuppressWarnings("unchecked") final Map<String, Map<String, Object>> fields =
                 (Map<String, Map<String, Object>>) given.get("planned");
-        fields.forEach((name, f) -> planned.put(name, field(f)));
+        fields.forEach((name, f) -> planned.put(name, PlannedField.fromJson(f)));
         assertThat(IndexFieldDocs.existingIndexMarkdown(survey, planned, SCHEMA, FieldDocs.BY_EVENT_TYPE, null))
                 .isEqualTo(goldenText("existing.md"));
         assertThat(IndexFieldDocs.existingIndexMarkdown(survey, planned, SCHEMA, FieldDocs.COMPACT, null))
@@ -503,25 +505,9 @@ class TestIndexFieldDocs {
         return PythonStrings.strip(text, "| `");
     }
 
-    @SuppressWarnings("unchecked")
+    // A plan as the MCP server dumped it, read as the MCP server reads one.
     private static FieldPlan plan(final Map<String, Object> json) {
-        final List<PlannedField> fields = ((List<Map<String, Object>>) json.get("fields")).stream()
-                .map(TestIndexFieldDocs::field)
-                .toList();
-        final Map<String, Object> d = (Map<String, Object>) json.get("discovery");
-        final Discovery discovery = d == null
-                ? null
-                : new Discovery((String) d.get("timestamp_field"), (String) d.get("timestamp_format"),
-                        (Map<String, String>) d.get("meta"), (List<String>) d.get("drop"),
-                        Boolean.TRUE.equals(d.get("unpack_json")), ((Number) d.get("ignore_above")).longValue(),
-                        ((Number) d.get("total_fields_limit")).longValue());
-        return new FieldPlan((String) json.get("backend"), (String) json.get("index_name"),
-                (String) json.get("time_field"), fields, (List<String>) json.get("drop_when"), discovery, List.of());
-    }
-
-    private static PlannedField field(final Map<String, Object> json) {
-        return new PlannedField((String) json.get("name"), (String) json.get("type"), (String) json.get("source"),
-                (String) json.get("description"));
+        return FieldPlan.fromJson(json);
     }
 
     @SuppressWarnings("unchecked")
