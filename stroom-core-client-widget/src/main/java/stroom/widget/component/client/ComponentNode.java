@@ -52,9 +52,13 @@ public final class ComponentNode {
     private final List<Watch<?>> watches = new ArrayList<>();
     private final Map<ContextKey<?>, ContextValue<?>> provided = new HashMap<>();
     private ComponentNode parent;
+    // Owned only until something else owns it (see adoptUntilOwned)
+    private boolean provisional;
     private boolean shared;
     private boolean disposing;
     private boolean disposed;
+    // The ComponentChecks generation it is counted as unowned in, if it is
+    int countedUnowned = ComponentChecks.NOT_COUNTED;
 
     /// Makes a node that something must own (see [#adopt(ComponentNode)]). Until it is owned, it
     /// is counted as unowned by [ComponentChecks].
@@ -154,16 +158,30 @@ public final class ComponentNode {
             return;
         }
         if (child.parent != null) {
-            if (ComponentChecks.fail(child.name + " is already owned by " + child.parent.name)) {
+            if (!child.provisional
+                && ComponentChecks.fail(child.name + " is already owned by " + child.parent.name)) {
                 return;
             }
             child.parent.children.remove(child);
         }
         child.parent = this;
+        child.provisional = false;
         children.add(child);
         ComponentChecks.owned(child);
         if (isConnected()) {
             child.refreshWatches();
+        }
+    }
+
+    /// Owns a child until something else owns it, when it moves there without that counting as
+    /// owning it twice. For what is owned for want of an explicit owner while the component model
+    /// replaces `PresenterScope` (see `stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Phase 1).
+    ///
+    /// @param child The child.
+    public void adoptUntilOwned(final ComponentNode child) {
+        adopt(child);
+        if (child.parent == this) {
+            child.provisional = true;
         }
     }
 

@@ -8,6 +8,7 @@
     <inherits name="com.google.gwt.user.User"/>
     <inherits name="com.gwtplatform.mvp.Mvp"/>
     <inherits name="stroom.task.Task"/>
+    <inherits name="stroom.widget.component.Component"/>
 
     <source path="client"/>
 </module>

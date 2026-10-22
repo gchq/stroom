@@ -74,7 +74,8 @@ class TestPresenterAdapter {
         root.dispose();
 
         assertThat(adapter.presenterCount()).isZero();
-        assertThat(events).containsExactly("child disposed", "parent disposed");
+        // The presenter the adapter owns first, then the presenters made with it, with the scope
+        assertThat(events).containsExactly("parent disposed", "child disposed");
     }
 
     @Test

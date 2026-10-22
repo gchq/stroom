@@ -20,6 +20,8 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -29,23 +31,28 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
+/// Stroom's presenter, built on GWTP's [PresenterWidget], with a place in the ownership tree (see
+/// [ComponentNode]): the presenters and components it owns ([#own(HasComponentNode)]), and the
+/// registrations made through it ([#listen(Type, Object)], [#addHandlerToSource(Type, Object)]),
+/// are released when it is disposed ([#dispose()]), as a component's are.
+///
+/// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
-        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory {
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode {
 
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
+    private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
     // What this presenter belongs to (e.g. an open document), if it was made in a scope
     private final PresenterScope presenterScope;
-    // Handlers others added with this presenter as their source, removed when it is disposed
-    private List<HandlerRegistration> sourceRegistrations;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
         presenterScope = PresenterScope.register(this);
+        // Run after what it owns is disposed and its registrations are removed
+        node.onDispose(this::release);
     }
 
     @Override
@@ -74,14 +81,47 @@ public class MyPresenterWidget<V extends View>
     protected final <H> HandlerRegistration addHandlerToSource(final Type<H> type, final H handler) {
         final HandlerRegistration registration = getEventBus().addHandlerToSource(type, this, handler);
         // Callers often throw the registration away, and the event bus would then keep the handler,
-        // and what it refers to, for good; within a scope it is removed when this is disposed
-        if (presenterScope != null) {
-            if (sourceRegistrations == null) {
-                sourceRegistrations = new ArrayList<>();
-            }
-            sourceRegistrations.add(registration);
-        }
+        // and what it refers to, for good; it is removed when this is disposed
+        node.add(registration);
         return registration;
+    }
+
+    /// Owns a presenter or component, which is then disposed with this presenter and sees its
+    /// context.
+    ///
+    /// @param child The presenter or component, e.g. one just made by a GIN provider.
+    /// @param <C>   Its type.
+    /// @return The child, so it can be owned as it is made: `own(editorProvider.get())`.
+    protected final <C extends HasComponentNode> C own(final C child) {
+        node.adopt(child.getComponentNode());
+        return child;
+    }
+
+    /// Owns a registration, removed when this presenter is disposed (not when it is unbound, as
+    /// [#registerHandler(HandlerRegistration)]'s are).
+    ///
+    /// @param registration The registration.
+    protected final void own(final HandlerRegistration registration) {
+        node.add(registration);
+    }
+
+    /// Listens to an app-wide event on the event bus until this presenter is disposed.
+    ///
+    /// @param type    The event's type.
+    /// @param handler The handler.
+    /// @param <H>     The handler's type.
+    protected final <H> void listen(final Type<H> type, final H handler) {
+        node.add(getEventBus().addHandler(type, handler));
+    }
+
+    @Override
+    public final ComponentNode getComponentNode() {
+        return node;
+    }
+
+    /// @return Whether this presenter is disposed.
+    public final boolean isDisposed() {
+        return node.isDisposed();
     }
 
     /// Makes something (usually a presenter, from a provider) in this presenter's scope, so that a
@@ -101,17 +141,16 @@ public class MyPresenterWidget<V extends View>
         return presenterScope;
     }
 
-    /// Releases this presenter for good, when what it belongs to is closed: unbinds it (removing
-    /// the handlers it registered), removes the handlers others added with it as their source, and
-    /// lets a subclass release anything else in [#onDispose()]. Called by [PresenterScope#dispose()].
+    /// Releases this presenter for good, when what it belongs to is closed: disposes what it
+    /// owns, removes the handlers it and others added through it, unbinds it (removing the
+    /// handlers it registered) and lets a subclass release anything else in [#onDispose()]. Runs
+    /// once, however often it is called (e.g. by its owner and by a [PresenterScope]).
     public final void dispose() {
+        node.dispose();
+    }
+
+    private void release() {
         unbind();
-        if (sourceRegistrations != null) {
-            for (final HandlerRegistration registration : sourceRegistrations) {
-                registration.removeHandler();
-            }
-            sourceRegistrations = null;
-        }
         onDispose();
     }
 

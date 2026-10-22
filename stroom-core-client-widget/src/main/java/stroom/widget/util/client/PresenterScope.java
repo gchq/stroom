@@ -16,6 +16,8 @@
 
 package stroom.widget.util.client;
 
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -34,11 +36,18 @@ import java.util.function.Supplier;
 /// A presenter that is shared (e.g. a GIN singleton) must not first be made while a scope is
 /// current, or closing that scope would dispose it for everyone; make such presenters eager
 /// singletons.
+///
+/// While the component model replaces it (see `stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Phase 1), a
+/// scope is also a root in the ownership tree ([ComponentNode]): it owns what [#capture(Supplier)]
+/// returns (e.g. the document's editor), so that what the editor owns is disposed with it, and
+/// later sees the context the root provides. The presenters it records, but that nothing owns yet,
+/// are disposed from its list as before.
 public final class PresenterScope {
 
     // The scope that presenters made now belong to (the UI runs on one thread)
     private static PresenterScope current;
 
+    private final ComponentNode root = ComponentNode.root("PresenterScope");
     private final List<MyPresenterWidget<?>> presenters = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private boolean disposed;
@@ -50,6 +59,25 @@ public final class PresenterScope {
     /// @param <T>      What it returns.
     /// @return What it returned.
     public <T> T capture(final Supplier<T> supplier) {
+        final T made = collect(supplier);
+        // What was made for the scope (e.g. the editor) belongs to its root, unless it already has
+        // an owner or is shared, until something owns it explicitly
+        if (!disposed && made instanceof final HasComponentNode hasComponentNode) {
+            final ComponentNode node = hasComponentNode.getComponentNode();
+            if (node.parent() == null && !node.isShared() && !node.isDisposed()) {
+                root.adoptUntilOwned(node);
+            }
+        }
+        return made;
+    }
+
+    /// As [#capture(Supplier)], but without owning what is made, for an owner that owns it itself
+    /// (e.g. a `PresenterAdapter`).
+    ///
+    /// @param supplier What to run.
+    /// @param <T>      What it returns.
+    /// @return What it returned.
+    public <T> T collect(final Supplier<T> supplier) {
         final PresenterScope previous = current;
         current = this;
         try {
@@ -121,6 +149,11 @@ public final class PresenterScope {
         }
         disposed = true;
         RuntimeException failure = null;
+        try {
+            root.dispose();
+        } catch (final RuntimeException e) {
+            failure = e;
+        }
         for (int i = presenters.size() - 1; i >= 0; i--) {
             try {
                 presenters.get(i).dispose();
@@ -159,6 +192,11 @@ public final class PresenterScope {
     /// @return Whether the scope has been disposed.
     public boolean isDisposed() {
         return disposed;
+    }
+
+    /// @return The scope's root, which owns what it made.
+    public ComponentNode getRoot() {
+        return root;
     }
 
     /// @return The number of presenters in the scope.

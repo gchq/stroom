@@ -34,6 +34,7 @@ import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.ComponentStories;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -323,11 +324,14 @@ public final class DictionaryEditorStories {
                 // leaves nothing unowned behind
                 .story("CloseWhileLoading", context -> renderComponent(context, false, LATE_FAILURE_FIXTURES))
                 .withPlay(play -> {
+                    // Presenters the story's harness makes for itself are counted too
+                    final Value<Integer> unownedBefore = play.capture("unowned", ComponentChecks::unownedCount);
                     openTab(play, "Effective Words");
                     play.run("close the editor, as closing its tab does", ScreenHarness::closeShownComponents);
                     play.expect("editor disposed", () -> editor().isDisposed()).toBe(true);
                     play.sleep(LATE_REPLY_MILLIS * 2);
-                    play.expect("unowned components", ComponentChecks::unownedCount).toBe(0);
+                    play.expect("unowned components added",
+                            () -> ComponentChecks.unownedCount() - unownedBefore.get()).toBeLessThanOrEqual(0);
                     expectNoProblems(play);
                 });
     }

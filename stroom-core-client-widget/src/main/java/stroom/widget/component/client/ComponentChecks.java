@@ -17,9 +17,9 @@
 package stroom.widget.component.client;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
 
 /// Development checks of the ownership tree. While they are enabled, misusing ownership (owning a
 /// disposed or shared component, owning one twice, releasing one that isn't a child) throws, and
@@ -32,10 +32,17 @@ import java.util.Set;
 /// it can be (see [ComponentNode#adopt(ComponentNode)]).
 public final class ComponentChecks {
 
-    // Live components that nothing owns, oldest first
-    private static final Set<ComponentNode> UNOWNED = new LinkedHashSet<>();
+    // A node not counted as unowned (generations start at 0)
+    static final int NOT_COUNTED = -1;
+
+    // How many live components of each name nothing owns. Counts, not the nodes, so that counting
+    // doesn't keep alive what nothing else refers to
+    private static final Map<String, Integer> UNOWNED = new TreeMap<>();
 
     private static boolean enabled = !"DISABLED".equals(System.getProperty("stroom.componentChecks"));
+    private static int unownedCount;
+    // Changed by reset(), so that nodes counted before it aren't taken off the new count
+    private static int generation;
 
     private ComponentChecks() {
         // Static only
@@ -48,14 +55,17 @@ public final class ComponentChecks {
 
     /// @return The number of live components that nothing owns.
     public static int unownedCount() {
-        return UNOWNED.size();
+        return unownedCount;
     }
 
-    /// @return The names of the live components that nothing owns, oldest first.
+    /// @return The names of the live components that nothing owns, in name order, each as many
+    /// times as there are such components.
     public static List<String> unownedNames() {
-        final List<String> names = new ArrayList<>(UNOWNED.size());
-        for (final ComponentNode node : UNOWNED) {
-            names.add(node.getName());
+        final List<String> names = new ArrayList<>(unownedCount);
+        for (final Map.Entry<String, Integer> entry : UNOWNED.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                names.add(entry.getKey());
+            }
         }
         return names;
     }
@@ -66,13 +76,15 @@ public final class ComponentChecks {
     static void setEnabled(final boolean enabled) {
         ComponentChecks.enabled = enabled;
         if (!enabled) {
-            UNOWNED.clear();
+            reset();
         }
     }
 
     /// Forgets the unowned components counted so far, so that tests start from nothing.
     static void reset() {
         UNOWNED.clear();
+        unownedCount = 0;
+        generation++;
     }
 
     /// Reports misuse of ownership.
@@ -88,14 +100,23 @@ public final class ComponentChecks {
     }
 
     static void unowned(final ComponentNode node) {
-        if (enabled) {
-            UNOWNED.add(node);
+        if (enabled && node.countedUnowned != generation) {
+            node.countedUnowned = generation;
+            UNOWNED.merge(node.getName(), 1, Integer::sum);
+            unownedCount++;
         }
     }
 
     static void owned(final ComponentNode node) {
-        if (enabled) {
-            UNOWNED.remove(node);
+        if (enabled && node.countedUnowned == generation) {
+            node.countedUnowned = NOT_COUNTED;
+            final int count = UNOWNED.get(node.getName()) - 1;
+            if (count == 0) {
+                UNOWNED.remove(node.getName());
+            } else {
+                UNOWNED.put(node.getName(), count);
+            }
+            unownedCount--;
         }
     }
 }

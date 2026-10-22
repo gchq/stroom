@@ -16,6 +16,7 @@
 
 package stroom.widget.util.client;
 
+import stroom.widget.component.client.ComponentNode;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.Event;
@@ -42,6 +43,45 @@ class TestPresenterScope {
         assertThat(inside.getPresenterScope()).isSameAs(scope);
         assertThat(outside.getPresenterScope()).isNull();
         assertThat(scope.size()).isEqualTo(1);
+    }
+
+    @Test
+    void theScopesRootOwnsWhatItMakes() {
+        final PresenterScope scope = new PresenterScope();
+        final TestPresenter editor = scope.capture(this::newPresenter);
+
+        assertThat(editor.getComponentNode().parent()).isSameAs(scope.getRoot());
+
+        scope.dispose();
+
+        assertThat(editor.disposeCount).isEqualTo(1);
+        assertThat(scope.getRoot().isDisposed()).isTrue();
+    }
+
+    @Test
+    void collectRecordsWithoutOwning() {
+        final PresenterScope scope = new PresenterScope();
+        final TestPresenter presenter = scope.collect(this::newPresenter);
+
+        assertThat(presenter.getComponentNode().parent()).isNull();
+        assertThat(scope.size()).isEqualTo(1);
+
+        scope.dispose();
+
+        assertThat(presenter.disposeCount).isEqualTo(1);
+    }
+
+    @Test
+    void whatIsAlreadyOwnedIsNotOwnedAgain() {
+        final PresenterScope scope = new PresenterScope();
+        final ComponentNode owner = ComponentNode.root("owner");
+        final TestPresenter presenter = scope.capture(() -> {
+            final TestPresenter made = newPresenter();
+            owner.adopt(made.getComponentNode());
+            return made;
+        });
+
+        assertThat(presenter.getComponentNode().parent()).isSameAs(owner);
     }
 
     @Test

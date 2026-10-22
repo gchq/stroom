@@ -448,6 +448,29 @@ last closed dialog for a moment only.
 * `stroom-core-client/src/main/java/stroom/document/client/DocumentPlugin.java` (`actuallyClose`)
 * `stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)
 
+### The leak check fails 69 stories
+
+**Confirmed** (by `workbenchTest -PworkbenchLeakCheck` on 22 October 2026, at `97d2101ca6` and again
+with each presenter given an ownership node: the same stories, with the same DOM node and listener
+counts). Not fixed.
+
+* **Still leaking:** every `App/Main/AnnotationEditor` story and both `App/Annotations/decorateComment`
+  stories keep 1,256-1,364 DOM nodes and 189 listeners per close (about 450 KB of heap);
+  `App/AI/AskStroomAiDialog` keeps 155-160 nodes and 58 listeners; `App/AI/AskAiChatPanel`
+  `StopWhileWorking` keeps 45 nodes. The annotation editor is opened by `AnnotationEditSupport` in a
+  `PresenterScope`, so something it makes outside the scope (or a handler on a shared bus or
+  singleton) holds it.
+* **Accessibility after reopening:** 34 stories (mainly `AnalyticRuleEditor`, `ReportEditor` and
+  `QueryEditor`, and `DataRetentionScreen` `ImpactAbort`) break `target-size` on an element they
+  don't break it on when first opened, so the reopened screen lays something out differently.
+* **Not reopened:** 6 stories' screens don't open again within 15 s (`AppShell` `Embedded`,
+  `ContentTabPane` `NoDuplicateForSingleInstance`, `PipelineEditor` `FailedEmbeddedCreateKeepsDialogUsable`
+  and `MultiDocumentSave`, `docPlugin` `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`),
+  probably as each opens more than one screen or a dialog, which the probe's `open()` doesn't repeat.
+
+Without the leak check these stories pass. The component model's Phase 1 (owning what a screen
+makes) is expected to fix the first group, which is to be checked again as each area is converted.
+
 ## Accessibility
 
 ### Controls that can't be reached with the keyboard

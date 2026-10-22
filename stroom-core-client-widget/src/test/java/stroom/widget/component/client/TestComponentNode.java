@@ -238,6 +238,21 @@ class TestComponentNode {
         }
 
         @Test
+        void aChildOwnedUntilOwnedMovesToItsOwner() {
+            final ComponentNode scope = ComponentNode.root("scope");
+            final ComponentNode owner = ComponentNode.root("owner");
+            final ComponentNode child = new ComponentNode("child");
+            scope.adoptUntilOwned(child);
+
+            owner.adopt(child);
+
+            assertThat(child.parent()).isSameAs(owner);
+            assertThat(scope.childCount()).isZero();
+            // Owned for good now, so owning it again is misuse
+            assertThatThrownBy(() -> scope.adopt(child)).hasMessageContaining("already owned by owner");
+        }
+
+        @Test
         void owningAChildOwnedByAnotherFails() {
             final ComponentNode first = ComponentNode.root("first");
             final ComponentNode second = ComponentNode.root("second");
@@ -348,6 +363,28 @@ class TestComponentNode {
 
             assertThat(ComponentChecks.unownedCount()).isEqualTo(1);
             assertThat(ComponentChecks.unownedNames()).containsExactly("leaked");
+        }
+
+        @Test
+        void countsEachNameAsOftenAsItIsUnowned() {
+            new ComponentNode("leaked");
+            new ComponentNode("leaked");
+            final ComponentNode owned = new ComponentNode("owned");
+            ComponentNode.root("root").adopt(owned);
+
+            assertThat(ComponentChecks.unownedNames()).containsExactly("leaked", "leaked");
+        }
+
+        @Test
+        void nodesCountedBeforeAResetAreNotTakenOffTheNewCount() {
+            final ComponentNode before = new ComponentNode("before");
+            ComponentChecks.reset();
+            new ComponentNode("after");
+
+            ComponentNode.root("root").adopt(before);
+
+            assertThat(ComponentChecks.unownedCount()).isEqualTo(1);
+            assertThat(ComponentChecks.unownedNames()).containsExactly("after");
         }
 
         @Test

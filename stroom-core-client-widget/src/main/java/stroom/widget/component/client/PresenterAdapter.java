@@ -55,7 +55,8 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
         // Named after the presenter, so a leaked one can be told apart from the others
         super("PresenterAdapter(" + presenter.getClass().getSimpleName() + ")", null);
         this.scope = scope;
-        this.presenter = presenter;
+        this.presenter = own(presenter);
+        // The presenters it made, which it doesn't own yet, are disposed with the scope
         onDispose(scope::dispose);
         watch(Contexts.TASK_MONITOR, this::setTaskMonitorFactory);
     }
@@ -68,7 +69,7 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
     public static <P extends MyPresenterWidget<?>> PresenterAdapter<P> of(final Supplier<P> maker) {
         Objects.requireNonNull(maker, "maker");
         final PresenterScope scope = new PresenterScope();
-        final P presenter = Objects.requireNonNull(scope.capture(maker), "presenter");
+        final P presenter = Objects.requireNonNull(scope.collect(maker), "presenter");
         return new PresenterAdapter<>(scope, presenter);
     }
 
