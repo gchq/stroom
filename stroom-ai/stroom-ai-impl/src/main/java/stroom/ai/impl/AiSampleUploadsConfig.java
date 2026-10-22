@@ -77,8 +77,8 @@ public class AiSampleUploadsConfig extends AbstractConfig implements IsStroomCon
 
     /// @return The most sets of upload commands one user may have waiting at once.
     @JsonPropertyDescription("The most sets of upload commands (upload_sample with files=) one user may have "
-                             + "waiting to be run on a node at once. More are refused until some have been run or "
-                             + "have run out (commandsLast).")
+                             + "waiting to be run at once (on any node). More are refused until some have been "
+                             + "run or have run out (commandsLast).")
     @JsonProperty("maxPendingPerUser")
     public int getMaxPendingPerUser() {
         return maxPendingPerUser;

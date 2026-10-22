@@ -22,6 +22,7 @@ import stroom.ai.impl.McpEndpointConfig;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.mcp.impl.tools.FeedUploads;
 import stroom.mcp.impl.tools.SampleUploads;
+import stroom.mcp.impl.tools.SampleUploadsDb;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.json.JsonUtil;
@@ -53,7 +54,8 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 
 /// `POST /mcp/upload` (the Stroom MCP server's `utils/uploads.py` `handle_upload`, and its tests in
-/// `tests/test_uploads.py`), served by Jetty as Stroom serves it, the user signed in already.
+/// `tests/test_uploads.py`), served by Jetty as Stroom serves it, the user signed in already, the waiting files
+/// held in the database (MySQL, the test database).
 class TestMcpUploadServlet {
 
     private static final UserRef ALICE = UserRef.builder().uuid("alice").subjectId("alice").build();
@@ -62,7 +64,8 @@ class TestMcpUploadServlet {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final AiConfig aiConfig = Mockito.mock(AiConfig.class);
     private final FeedUploads feedUploads = Mockito.mock(FeedUploads.class);
-    private final SampleUploads sampleUploads = new SampleUploads(() -> aiConfig);
+    private SampleUploadsDb db;
+    private SampleUploads sampleUploads;
     private final List<String> sent = new ArrayList<>();
     private final HttpClient client = HttpClient.newHttpClient();
     private UserRef currentUser = ALICE;
@@ -71,6 +74,8 @@ class TestMcpUploadServlet {
 
     @BeforeEach
     void setUp() throws Exception {
+        db = SampleUploadsDb.emptied();
+        sampleUploads = db.uploads(() -> aiConfig, "node1");
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig());
         Mockito.when(aiConfig.getSampleUploads()).thenReturn(new AiSampleUploadsConfig(1, null, null));
         Mockito.when(securityContext.hasAppPermission(AppPermission.USE_MCP_TOOLS)).thenReturn(true);
@@ -123,6 +128,41 @@ class TestMcpUploadServlet {
                 body.length()));
         assertThat(sent).containsExactly("FORTIOS-EVENTS-V1.0|Raw Events|{Type=Raw Events, MyHost=ws01}|"
                                          + "sample-data/fortios/001_1.json|" + body);
+    }
+
+    @Test
+    void aPostReachingAnotherNodeThanTheOneThatGaveTheCommandsIsTaken() throws Exception {
+        // The commands were given on node2 (its chat or MCP session); the load balancer sent the post to node1, which
+        // serves this servlet. Both read the waiting files from the database.
+        final SampleUploads givingNode = db.uploads(() -> aiConfig, "node2");
+        final String id = givingNode.issue("alice", "FORTIOS-EVENTS-V1.0", "f1", "Raw Events",
+                Map.of("MyHost", "ws01"), "fortios", List.of("001_1.json")).id();
+
+        final HttpResponse<String> response = post(id + "?file=001_1.json", "[]");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(sent).containsExactly("FORTIOS-EVENTS-V1.0|Raw Events|{Type=Raw Events, MyHost=ws01}|"
+                                         + "001_1.json|[]");
+        // Stored once, for either node.
+        assertThat(post(id + "?file=001_1.json", "[]").statusCode()).isEqualTo(403);
+        assertThat(givingNode.claim(id, "alice", "001_1.json")).isEmpty();
+    }
+
+    @Test
+    void aFileBeingSentIsNotTakenByASecondPost() throws Exception {
+        // As if another node were storing it now: its claim isn't stale yet.
+        final String id = waiting("001_1.json");
+        final SampleUploads otherNode = db.uploads(() -> aiConfig, "node2");
+        final SampleUploads.Claim claim = otherNode.claim(id, "alice", "001_1.json").orElseThrow();
+
+        final HttpResponse<String> refused = post(id + "?file=001_1.json", "x");
+
+        assertThat(refused.statusCode()).isEqualTo(403);
+        assertThat(String.valueOf(json(refused).get("error"))).contains("or is being sent");
+        assertThat(sent).isEmpty();
+        // Once the other post fails and lets it go, it is taken.
+        otherNode.release(claim);
+        assertThat(post(id + "?file=001_1.json", "x").statusCode()).isEqualTo(200);
     }
 
     @Test

@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.ToolRefusal;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -29,11 +30,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The files upload_sample gave commands for, waiting to be posted (in place of the Stroom MCP server's upload
-/// tickets, `utils/uploads.py` `UploadTickets`, and its tests in `tests/test_uploads.py`).
+/// tickets, `utils/uploads.py` `UploadTickets`, and its tests in `tests/test_uploads.py`), held in the database
+/// (MySQL, the test database).
 class TestSampleUploads {
 
     private final AtomicLong now = new AtomicLong(1_000_000L);
-    private final SampleUploads uploads = new SampleUploads(AiConfig::new, now::get);
+    private SampleUploadsDb db;
+    private SampleUploads uploads;
+
+    @BeforeEach
+    void setUp() {
+        db = SampleUploadsDb.emptied();
+        uploads = db.uploads(AiConfig::new, "node1", now::get);
+    }
 
     @Test
     void eachFileIsTakenOnceByTheUserItWasGivenTo() {
@@ -46,21 +55,85 @@ class TestSampleUploads {
         assertThat(uploads.claim(pending.id(), "alice", "003.json")).isEmpty();
         assertThat(uploads.claim("not-an-id-12", "alice", "001_1.json")).isEmpty();
         assertThat(uploads.claim(null, "alice", "001_1.json")).isEmpty();
-        assertThat(uploads.claim(pending.id(), "alice", "001_1.json")).contains(pending);
+        assertThat(uploads.claim(pending.id(), "alice", "001_1.json")).map(SampleUploads.Claim::pending)
+                .contains(pending);
         // Posted once.
         assertThat(uploads.claim(pending.id(), "alice", "001_1.json")).isEmpty();
-        assertThat(uploads.claim(pending.id(), "alice", "002.json")).contains(pending);
+        assertThat(uploads.claim(pending.id(), "alice", "002.json")).map(SampleUploads.Claim::pending)
+                .contains(pending);
     }
 
     @Test
     void aFileWhoseStoringFailedCanBePostedAgain() {
         final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
                 List.of("a.json"));
-        uploads.claim(pending.id(), "alice", "a.json");
+        final SampleUploads.Claim claim = uploads.claim(pending.id(), "alice", "a.json").orElseThrow();
 
-        uploads.release(pending, "a.json");
+        uploads.release(claim);
 
-        assertThat(uploads.claim(pending.id(), "alice", "a.json")).contains(pending);
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).map(SampleUploads.Claim::pending)
+                .contains(pending);
+    }
+
+    @Test
+    void aStoredFileIsNotPostedAgain() {
+        final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                List.of("a.json"));
+        final SampleUploads.Claim claim = uploads.claim(pending.id(), "alice", "a.json").orElseThrow();
+
+        uploads.stored(claim, 77L);
+        // Not even once its claim would have gone stale.
+        now.addAndGet(SampleUploads.CLAIM_GOES_STALE.toMillis() + 1);
+
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
+        uploads.release(claim);
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
+    }
+
+    @Test
+    void aFileCutOffByItsNodeStoppingCanBePostedAgainOnceTheClaimIsStale() {
+        final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                List.of("a.json"));
+        // node1 claims it, then stops part way through the post: it never stores or releases it.
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isPresent();
+        final SampleUploads otherNode = db.uploads(AiConfig::new, "node2", now::get);
+
+        now.addAndGet(SampleUploads.CLAIM_GOES_STALE.toMillis() - 1);
+        assertThat(otherNode.claim(pending.id(), "alice", "a.json")).isEmpty();
+        now.addAndGet(2);
+        final SampleUploads.Claim claim = otherNode.claim(pending.id(), "alice", "a.json").orElseThrow();
+
+        otherNode.stored(claim, 77L);
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
+    }
+
+    @Test
+    void theCommandsAreTakenOnAnotherNodeAndAfterARestart() {
+        final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events",
+                Map.of("MyHost", "ws01"), "fortios", List.of("a.json"));
+        // Another node, or this one after a restart: nothing is kept in memory.
+        final SampleUploads otherNode = db.uploads(AiConfig::new, "node2", now::get);
+
+        assertThat(otherNode.claim(pending.id(), "alice", "a.json")).map(SampleUploads.Claim::pending)
+                .contains(pending);
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
+    }
+
+    @Test
+    void aFilePathTooLongToHoldIsRefused() {
+        assertThatThrownBy(() -> uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                List.of("a/".repeat(400) + "b.json")))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("longer than 700 characters");
+    }
+
+    @Test
+    void aFileNamedTwiceIsOneFile() {
+        final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                List.of("a.json", "a.json"));
+
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isPresent();
+        assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
     }
 
     @Test
@@ -69,18 +142,21 @@ class TestSampleUploads {
                 List.of("a.json", "b.json"));
         assertThat(pending.expiresMs()).isEqualTo(1_000_000L + 15 * 60_000L);
 
+        final SampleUploads.Claim claim = uploads.claim(pending.id(), "alice", "b.json").orElseThrow();
+
         now.set(pending.expiresMs());
 
         assertThat(uploads.claim(pending.id(), "alice", "a.json")).isEmpty();
-        // Issuing clears what has run out.
-        uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null, List.of("c.json"));
-        uploads.release(pending, "b.json");
+        // A file released after the commands ran out isn't taken either.
+        uploads.release(claim);
         assertThat(uploads.claim(pending.id(), "alice", "b.json")).isEmpty();
+        // Sets that have run out are deleted by the 'AI Chat Retention' job.
+        assertThat(db.dao().deleteExpired(now.get())).isEqualTo(1);
     }
 
     @Test
     void aUserCanHaveOnlySoManySetsOfCommandsWaiting() {
-        // Each set is kept in this node's memory until it runs out: one user can't fill it.
+        // Each set is kept until it runs out: one user can't fill the database with them.
         final AiConfig aiConfig = new AiConfig();
         final int max = aiConfig.getSampleUploads().getMaxPendingPerUser();
         SampleUploads.Pending first = null;

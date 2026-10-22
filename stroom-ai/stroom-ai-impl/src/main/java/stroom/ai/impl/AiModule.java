@@ -65,7 +65,8 @@ public class AiModule extends AbstractModule {
                 .bindJobTo(AiRetentionJob.class, builder -> builder
                         .name(AiRetention.JOB_NAME)
                         .description("Removes 'Ask Stroom AI' workspace files and chats that are past their "
-                                     + "retention age, and the chats and memory of deleted users")
+                                     + "retention age, sample upload commands that have run out, and the "
+                                     + "chats, memory and sample upload commands of deleted users")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
 
         // Stops agent runs when the session that started them ends.
