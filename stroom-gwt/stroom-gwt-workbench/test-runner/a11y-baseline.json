@@ -18,15 +18,6 @@
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
   ],
-  "app-editors-documentationeditor--default": [
-    "frame-title"
-  ],
-  "app-editors-documentationeditor--edit-mode-toggle": [
-    "frame-title"
-  ],
-  "app-editors-documentationeditor--read-only": [
-    "frame-title"
-  ],
   "app-editors-floormapforms--icon-picker": [
     "color-contrast"
   ],
@@ -246,18 +237,6 @@
   ],
   "widgets-editors-viewers-aceeditorfeatures--search-box": [
     "color-contrast"
-  ],
-  "widgets-editors-viewers-markdowneditor--blank-writable": [
-    "frame-title"
-  ],
-  "widgets-editors-viewers-markdowneditor--edit-preview-split": [
-    "frame-title"
-  ],
-  "widgets-editors-viewers-markdowneditor--help-not-configured": [
-    "frame-title"
-  ],
-  "widgets-editors-viewers-markdowneditor--read-only-preview": [
-    "frame-title"
   ],
   "widgets-selectors-selectionbox--basic": [
     "label"

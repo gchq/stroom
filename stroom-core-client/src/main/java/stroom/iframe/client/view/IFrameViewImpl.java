@@ -114,6 +114,11 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
     }
 
     @Override
+    public void setAccessibleName(final String name) {
+        frame.setTitle(name);
+    }
+
+    @Override
     public String getTitle() {
         if (customTitle != null) {
             return customTitle;

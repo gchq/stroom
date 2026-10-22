@@ -2,8 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:s="urn:import:stroom.main.client.view">
-    <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:FocusPanel ui:field="root" styleName="mainViewImpl">
+    <!-- Not a FocusPanel: keyboard events reach the document's handlers without one, and as a tab
+         stop it held the whole app, with no name -->
+    <g:SimplePanel ui:field="root" styleName="mainViewImpl">
         <g:FlowPanel styleName="mainViewImpl">
             <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
             <!-- The main toolbar is shown at the top right, over the content, but comes first so
@@ -13,6 +14,6 @@
                 <g:ResizeLayoutPanel ui:field="contentPanel" styleName="mainViewImpl-contentPanel"/>
             </g:FlowPanel>
         </g:FlowPanel>
-    </g:FocusPanel>
+    </g:SimplePanel>
 </ui:UiBinder>
 

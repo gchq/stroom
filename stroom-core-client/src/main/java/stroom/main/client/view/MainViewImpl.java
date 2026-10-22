@@ -31,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.ResizeFlowPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -49,7 +48,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     private final EventBus eventBus;
 
     @UiField
-    FocusPanel root;
+    SimplePanel root;
     @UiField
     SimplePanel banner;
     @UiField

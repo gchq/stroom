@@ -587,6 +587,9 @@ public final class AppShellStories {
                     play.run("focus the main menu's button", () -> mainMenu.element().get().focus());
                     play.tab();
                     play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
+                    // The main view round it all isn't a tab stop (it was: a nameless stop holding
+                    // the whole app, which Shift+Tab from the first button landed on)
+                    play.expect(play.querySelector(".mainViewImpl[tabindex]")).not().toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened

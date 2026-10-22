@@ -206,8 +206,8 @@ basic use:
 
 ### Three workbench stories fail
 
-**Confirmed** (by `workbenchTest`, October 2026, and the code). Not fixed; two are stories left
-behind by changes to Stroom, and one is a contrast failure in Stroom's help popup.
+**Fixed**: all three pass in the full run of 22 October 2026 (1,538 stories), so this entry is kept
+only for what each was.
 
 * `App/Main/QuickFilterHistory` `AdvancedQueryUnconvertible` waits for a "Replace the filter
   text?" confirmation that no app code shows any more: #5740 (`943ba04085`) removed it from
@@ -992,10 +992,11 @@ and Escape stops), now turned on (see Keyboard trap in the code editor).
 
 ### Expression terms and tables
 
-An expression tree is drawn on a canvas that takes focus but has no role or name, so its terms
-can't be reached or edited by keyboard. Tables take focus with no role or name, the number inputs in
-their cells have no name, and icon columns have empty headers. The quick filter's help button is
-22px, under WCAG 2.2's 24px minimum target size.
+**Reported.** The expression tree is now a named `tree` whose items say what they are and are
+reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are now
+`treegrid`s of rows, column headers and cells, but have no name, and the first (icon) column's
+header is empty (seen in `App/Query/QueryResultsTable`). Not yet checked again: the number inputs in
+their cells have no name, and the quick filter's help button is 22px (under WCAG 2.2's 24px).
 
 ### Menu buttons don't say they open a menu
 
@@ -1020,17 +1021,9 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
 * Quick filters have only a "Quick Filter" placeholder, no label, e.g. Dependencies, User Access
   and Export (`QuickFilter`). `QuickFilter.setAccessibleName` and `setDescription` now give one a
   name and say what may be typed; the Find and Recent Items dialogs use them (#5409).
-* A content tab's close cross (`.curveTab-close`, a `div`) has no name and isn't a button
-  (`CurveTab`).
 * Properties: the Database Value text area and password box have no names of their own. When the
   group loads both are shown, so the label names the panel holding them (`role="group"`), and the
   group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
-* Iframes have no title: the Documentation editor's markdown preview (`#markdown-frame`,
-  `MarkdownEditPresenter`) and dashboard visualisations (`VisFrame`).
-
-  `MarkdownEditPresenter`). Visualisation frames (`VisFrame`) are now named after their dashboard
-  component, or 'Visualisation' in a query editor (`App/Editors/DashboardEditor`
-  `VisLinkedToTable`).
 * The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
   their row (e.g. "Create Pipeline").
 
@@ -1038,9 +1031,6 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
 
 **Confirmed** (checked in the code; found by the workbench's plays).
 
-* Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
-* Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
-  sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
 * The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
   its messages and no `autocomplete` hints on its fields.
 * The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
@@ -1247,6 +1237,18 @@ works and its cells are covered by stories; these are the next steps, none urgen
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Dialogs are `role="dialog"`, named by their title, and modal ones `aria-modal`
+    (`PopupUtil.setDialogRole`); tab bars are a `tablist` of `tab`s with `aria-selected` and
+    `aria-controls` (`AbstractTabBar`); a content tab closes with Delete, its cross hidden from
+    screen readers (`CurveTab`, `Widgets/Tabs/CurveTabBar`).
+  * The main view and full-screen view were a `FocusPanel`, so each was a nameless tab stop
+    holding the whole app, which Shift+Tab from the first button landed on. They are plain panels
+    (keyboard shortcuts work without them; `App/Main/AppShell` `MainToolbarTabOrder`).
+  * The Documentation editor's markdown preview frame is titled "Preview"
+    (`IFramePresenter.setAccessibleName`); its seven `frame-title` baseline entries are gone.
+    Visualisation frames were already named (`VisFrame`).
 
 * **Found while adding help to the fields that had none** (2026-10-22):
   * HTTP TLS settings: with no TLS config yet, the dialog left Verify Host Name unticked and OK
