@@ -153,7 +153,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             final Object samples = argsMap(call).get(SAMPLES_ARG);
             final List<String> files = stringListArg(call, FILES_ARG);
             final List<String> folders = stringListArg(call, FOLDERS_ARG);
-            final List<Long> streamIds = streamIds(call);
+            final List<Long> streamIds = streamIds(call, STREAM_IDS_ARG);
             final String build = buildName(sourceName, stringArg(call, BUILD_ARG));
             if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
                 return JsonResults.of(filesFirst(context, sourceName, files, build, folders));
@@ -346,14 +346,19 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         return "onboard-" + name.substring(0, Math.min(40, name.length()));
     }
 
-    // The stream ids given: a list, one id, or ids in a string, separated by commas.
-    private static List<Long> streamIds(final ToolCall call) {
+    /// The stream ids given: a list, one id, or ids in a string, separated by commas.
+    ///
+    /// @param call The call.
+    /// @param name The argument that gives them, e.g. `stream_ids`.
+    /// @return The ids, in the order given; empty if none are given.
+    /// @throws ToolRefusal if one is not a number.
+    static List<Long> streamIds(final ToolCall call, final String name) {
         final List<Long> ids = new ArrayList<>();
-        for (final String value : stringListArg(call, STREAM_IDS_ARG)) {
+        for (final String value : stringListArg(call, name)) {
             try {
                 ids.add((long) Double.parseDouble(value.replace("[", "").replace("]", "").strip()));
             } catch (final NumberFormatException e) {
-                throw new ToolRefusal("stream_ids are stream ids (numbers): '" + value + "' is not one");
+                throw new ToolRefusal(name + " are stream ids (numbers): '" + value + "' is not one");
             }
         }
         return ids;
