@@ -55,7 +55,8 @@ final class PipelineWorld {
     final ReferenceData referenceData = Mockito.mock(ReferenceData.class);
     final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
     final PipelineDocs pipelineDocs = new PipelineDocs(world.documentAccess);
-    final BuildIndexes buildIndexes = new BuildIndexes(world.guard(), world.documentAccess, world.pipelineShapes);
+    final BuildIndexes buildIndexes = new BuildIndexes(world.guard(), world.pipelineShapes, world.documentAccess,
+            pipelineDocs, new PipelineIndex(() -> feeds.docFinder, world.documentAccess), feeds.plan);
     final PipelineWrites writes = new PipelineWrites(world.pipelineShapes, pipelineDocs, propertyTypes,
             world.documentAccess, () -> feeds.docFinder, feeds.feedNames, referenceData, world.guard(), feeds.plan,
             buildIndexes);

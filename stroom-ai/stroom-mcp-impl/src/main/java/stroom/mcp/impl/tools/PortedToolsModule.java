@@ -66,7 +66,14 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(CopyPipelineTool.class)
                 .addBinding(UpdatePipelineTool.class)
                 .addBinding(DraftCefMappingTool.class)
-                .addBinding(ReviewCoverageTool.class);
+                .addBinding(ReviewCoverageTool.class)
+                .addBinding(GetFieldConventionsTool.class)
+                .addBinding(DraftIndexMappingTool.class)
+                .addBinding(CreateIndexDocTool.class)
+                .addBinding(RenameIndexTool.class)
+                .addBinding(ProposeIndexTemplateTool.class)
+                .addBinding(CheckIndexTemplateTool.class)
+                .addBinding(VerifyIndexTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
