@@ -67,6 +67,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final boolean shareActiveTab;
     private final long maxTabSnapshotBytes;
     private final McpEndpointConfig mcpEndpoint;
+    private final ErrorTriageConfig errorTriage;
+    private final AiPipelineStagesConfig pipelineStages;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -93,6 +95,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         shareActiveTab = true;
         maxTabSnapshotBytes = DEFAULT_MAX_TAB_SNAPSHOT_BYTES;
         mcpEndpoint = new McpEndpointConfig();
+        errorTriage = new ErrorTriageConfig();
+        pipelineStages = new AiPipelineStagesConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -118,7 +122,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null, null);
+                null, null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -144,7 +148,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("maxToolIterations") final Integer maxToolIterations,
                     @JsonProperty("shareActiveTab") final Boolean shareActiveTab,
                     @JsonProperty("maxTabSnapshotBytes") final Long maxTabSnapshotBytes,
-                    @JsonProperty("mcpEndpoint") final McpEndpointConfig mcpEndpoint) {
+                    @JsonProperty("mcpEndpoint") final McpEndpointConfig mcpEndpoint,
+                    @JsonProperty("errorTriage") final ErrorTriageConfig errorTriage,
+                    @JsonProperty("pipelineStages") final AiPipelineStagesConfig pipelineStages) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -172,6 +178,50 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.maxTabSnapshotBytes = Math.max(0, Objects.requireNonNullElse(maxTabSnapshotBytes,
                 DEFAULT_MAX_TAB_SNAPSHOT_BYTES));
         this.mcpEndpoint = Objects.requireNonNullElseGet(mcpEndpoint, McpEndpointConfig::new);
+        this.errorTriage = Objects.requireNonNullElseGet(errorTriage, ErrorTriageConfig::new);
+        this.pipelineStages = Objects.requireNonNullElseGet(pipelineStages, AiPipelineStagesConfig::new);
+    }
+
+    /// As the constructor that reads the config, with the default error triage and pipeline stages.
+    public AiConfig(final AiDbConfig dbConfig,
+                    final CacheConfig chatResponseCache,
+                    final StroomDuration maxRunDuration,
+                    final StroomDuration unattendedAfter,
+                    final Integer maxRunsPerUser,
+                    final Integer maxRunsPerNode,
+                    final AiCompactionConfig compaction,
+                    final StroomDuration workspaceFileRetention,
+                    final StroomDuration chatRetention,
+                    final AiWorkspaceConfig workspace,
+                    final Boolean allowApproveEverything,
+                    final Integer toolGroupThreshold,
+                    final StroomDuration elicitationTimeout,
+                    final Integer maxElicitationsPerNode,
+                    final Boolean askReadOnlyToolsAfterUntrustedContent,
+                    final Integer maxChatTitleWords,
+                    final Boolean suggestFollowUps,
+                    final Integer maxToolIterations,
+                    final Boolean shareActiveTab,
+                    final Long maxTabSnapshotBytes,
+                    final McpEndpointConfig mcpEndpoint) {
+        this(dbConfig, chatResponseCache, maxRunDuration, unattendedAfter, maxRunsPerUser, maxRunsPerNode,
+                compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
+                toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
+                askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null);
+    }
+
+    /// @return What marks a pipeline as each stage (translation, indexing, reference and so on), and where the
+    /// templates for each stage's new pipelines are looked for.
+    @JsonProperty("pipelineStages")
+    public AiPipelineStagesConfig getPipelineStages() {
+        return pipelineStages;
+    }
+
+    /// @return How the tools triage pipeline errors: the environment's own rules.
+    @JsonProperty("errorTriage")
+    public ErrorTriageConfig getErrorTriage() {
+        return errorTriage;
     }
 
     /// @return Stroom's own MCP endpoint, through which MCP clients use Stroom's tools.
@@ -363,6 +413,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", shareActiveTab=" + shareActiveTab +
                ", maxTabSnapshotBytes=" + maxTabSnapshotBytes +
                ", mcpEndpoint=" + mcpEndpoint +
+               ", errorTriage=" + errorTriage +
+               ", pipelineStages=" + pipelineStages +
                '}';
     }
 }

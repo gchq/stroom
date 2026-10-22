@@ -134,7 +134,9 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                              + "is and the chain of links that reached it. Each processor filter reached is given "
                              + "with what it selects (e.g. which feeds and stream types) and whether it is "
                              + "enabled, so the dependants of a pipeline at depth 1 answer 'which feeds or "
-                             + "streams does this pipeline process?' in one call. The graph only holds the links "
+                             + "streams does this pipeline process?' in one call, and the dependencies of a "
+                             + "pipeline give the XSLTs, text converters, dictionaries and reference feeds it "
+                             + "uses. The graph only holds the links "
                              + "each document names, e.g. a processor filter that picks streams by type alone has "
                              + "no link to a feed, so if a link you expect is missing, read the filters and "
                              + "pipelines rather than conclude there is none.")

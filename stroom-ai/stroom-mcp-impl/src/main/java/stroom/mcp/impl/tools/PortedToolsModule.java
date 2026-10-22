@@ -28,6 +28,14 @@ public class PortedToolsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), StroomTool.class);
+        GuiceUtil.buildMultiBinder(binder(), StroomTool.class)
+                .addBinding(FindPipelineTemplatesTool.class)
+                .addBinding(DescribeTemplateTool.class)
+                .addBinding(DescribeFeedTool.class)
+                .addBinding(FindReferenceDataTool.class)
+                .addBinding(FindElasticClustersTool.class)
+                .addBinding(SummariseStreamsTool.class)
+                .addBinding(ProcessingStatusTool.class)
+                .addBinding(LocateEventTool.class);
     }
 }

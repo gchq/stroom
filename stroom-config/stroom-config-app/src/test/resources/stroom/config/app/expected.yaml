@@ -48,6 +48,8 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     elicitationTimeout: "PT10M"
+    errorTriage:
+      rules: []
     maxChatTitleWords: 12
     maxElicitationsPerNode: 5
     maxRunDuration: "PT2H"
@@ -62,6 +64,54 @@ appConfig:
       keepAliveInterval: "PT20S"
       maxFormsPerNode: 50
       sessionRetention: "P1D"
+    pipelineStages:
+      discovery:
+        schemaGroups: []
+        streamTypes: []
+        templateFolders:
+        - "System/Template Pipelines/Elasticsearch"
+        templateNames:
+        - "Raw to Elasticsearch"
+      forwarding:
+        schemaGroups: []
+        streamTypes: []
+        templateFolders: []
+        templateNames: []
+      indexing:
+        schemaGroups: []
+        streamTypes: []
+        templateFolders:
+        - "System/Template Pipelines"
+        - "System/Template Pipelines/Elasticsearch"
+        templateNames:
+        - "Indexing"
+        - "Events to Elasticsearch"
+        - "Indexing - Elasticsearch"
+      records:
+        schemaGroups:
+        - "RECORDS"
+        streamTypes:
+        - "Records"
+        templateFolders: []
+        templateNames: []
+      reference:
+        schemaGroups:
+        - "REFERENCE_DATA"
+        streamTypes:
+        - "Reference"
+        templateFolders:
+        - "System/Template Pipelines"
+        templateNames:
+        - "Reference Data"
+      translation:
+        schemaGroups:
+        - "EVENTS"
+        streamTypes:
+        - "Events"
+        templateFolders:
+        - "System/Template Pipelines"
+        templateNames:
+        - "Event Data (*)"
     shareActiveTab: true
     suggestFollowUps: true
     toolGroupThreshold: 24

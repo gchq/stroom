@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.OptionalBinder;
 
 /**
  * Binds the built-in chat tools. Add a new {@link StroomTool} implementation and a single
@@ -76,5 +77,8 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ProposeDocumentationChangeTool.class)
                 .addBinding(ConfigPropertiesTool.class)
                 .addBinding(ElasticIndexTemplatesTool.class);
+
+        // The guides and conventions bundled for agents, bound by the module that bundles them (stroom-mcp-impl).
+        OptionalBinder.newOptionalBinder(binder(), AgentKnowledge.class);
     }
 }

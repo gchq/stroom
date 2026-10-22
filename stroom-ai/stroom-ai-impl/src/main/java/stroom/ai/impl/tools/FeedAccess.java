@@ -27,7 +27,7 @@ import jakarta.inject.Provider;
 /// Checks View on a feed known only by its name, as processing tasks and their summaries name their feeds.
 ///
 /// A feed the user can't view is treated exactly as one that doesn't exist, and every check fails closed.
-class FeedAccess {
+public class FeedAccess {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedAccess.class);
 
@@ -45,7 +45,7 @@ class FeedAccess {
     /// @param name A feed's name.
     /// @return True if the user can view a feed of this name. False if not, if the name is blank, or if it can't
     /// be found (failing closed).
-    boolean canView(final String name) {
+    public boolean canView(final String name) {
         if (name == null || name.isBlank()) {
             return false;
         }

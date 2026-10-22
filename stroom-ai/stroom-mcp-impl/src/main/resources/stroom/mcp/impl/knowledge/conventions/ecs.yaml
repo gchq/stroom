@@ -1,0 +1,84 @@
+# Elastic Common Schema names for common event-logging paths, e.g. for ecs-* indices.
+# Every name here is an ECS field of the type given (tests/test_ecs.py checks them against conventions/ecs_fields.json,
+# the schema Elastic publishes, refreshed by dev/update_ecs.py), and every path is event-logging's; plans that follow
+# this profile are checked against the schema. Only where the meaning is the same: event-logging elements with no
+# clear ECS field (Alert's Severity, text where ECS has a number; Authenticate's User; LogonType) are left out.
+name: ecs
+description: Elastic Common Schema field names for the common event-logging paths; every plan checked against the full schema
+structure: nested
+reference_index_docs: []        # e.g. the Elastic Index docs of existing ecs-* indices; fields read through Stroom
+required_fields: {StreamId: id, EventId: id, '@timestamp': date}
+field_map:
+  EventTime/TimeCreated: {name: '@timestamp', type: date}
+  # The system and device the events are from.
+  EventSource/System/Name: {name: observer.product, type: keyword}
+  EventSource/System/Version: {name: observer.version, type: keyword}
+  EventSource/System/Environment: {name: service.environment, type: keyword}
+  EventSource/System/Organisation: {name: organization.name, type: keyword}
+  EventSource/Device/HostName: {name: host.name, type: keyword}
+  EventSource/Device/IPAddress: {name: host.ip, type: ip}
+  EventSource/Device/MACAddress: {name: host.mac, type: keyword}
+  EventSource/Device/Id: {name: host.id, type: keyword}
+  EventSource/Device/Location/City: {name: host.geo.city_name, type: keyword}
+  EventSource/Device/Location/TimeZoneName: {name: host.geo.timezone, type: keyword}
+  # The client and server of the event.
+  EventSource/Client/IPAddress: {name: source.ip, type: ip}
+  EventSource/Client/HostName: {name: source.domain, type: keyword}
+  EventSource/Client/MACAddress: {name: source.mac, type: keyword}
+  EventSource/Client/Port: {name: source.port, type: long}
+  EventSource/Client/Location/City: {name: source.geo.city_name, type: keyword}
+  EventSource/Server/IPAddress: {name: destination.ip, type: ip}
+  EventSource/Server/HostName: {name: destination.domain, type: keyword}
+  EventSource/Server/MACAddress: {name: destination.mac, type: keyword}
+  EventSource/Server/Port: {name: destination.port, type: long}
+  EventSource/Server/Location/City: {name: destination.geo.city_name, type: keyword}
+  # Network events, whichever action (Permit, Deny, Connect...): a name already planned from above is not planned again.
+  EventDetail/Network/*/Source/Device/IPAddress: {name: source.ip, type: ip}
+  EventDetail/Network/*/Source/Device/HostName: {name: source.domain, type: keyword}
+  EventDetail/Network/*/Source/Device/MACAddress: {name: source.mac, type: keyword}
+  EventDetail/Network/*/Source/Port: {name: source.port, type: long}
+  EventDetail/Network/*/Source/TransportProtocol: {name: network.transport, type: keyword}
+  EventDetail/Network/*/Destination/Device/IPAddress: {name: destination.ip, type: ip}
+  EventDetail/Network/*/Destination/Device/HostName: {name: destination.domain, type: keyword}
+  EventDetail/Network/*/Destination/Device/MACAddress: {name: destination.mac, type: keyword}
+  EventDetail/Network/*/Destination/Port: {name: destination.port, type: long}
+  EventDetail/Network/*/Destination/TransportProtocol: {name: network.transport, type: keyword}
+  EventDetail/Network/*/Destination/ApplicationProtocol: {name: network.protocol, type: keyword}
+  EventDetail/Network/*/Source/ApplicationProtocol: {name: network.protocol, type: keyword}
+  EventDetail/Network/*/Destination/HTTPMethod: {name: http.request.method, type: keyword}
+  EventDetail/Network/*/ProcessName: {name: process.name, type: keyword}
+  EventDetail/Network/*/Rule: {name: rule.name, type: keyword}
+  # The user who acted.
+  EventSource/User/Id: {name: user.name, type: keyword}
+  EventSource/User/Name: {name: user.full_name, type: keyword}
+  EventSource/User/Domain: {name: user.domain, type: keyword}
+  EventSource/User/EmailAddress: {name: user.email, type: keyword}
+  EventSource/User/UserDetails/Role: {name: user.roles, type: keyword}
+  EventDetail/TypeId: {name: event.code, type: keyword}
+  EventDetail/Description: {name: message, type: text}
+  # What happened, whichever the action element: its Action, and its Outcome (no Outcome is success in event-logging,
+  # so the field is left out rather than guessed). Its reason: the Outcome's Description, else its Reason.
+  EventDetail/*/Action: {name: event.action, type: keyword}
+  EventDetail/*/Outcome/Success: {name: event.outcome, type: keyword, transform: outcome}
+  EventDetail/*/Outcome/Description: {name: event.reason, type: keyword}
+  EventDetail/*/Outcome/Reason: {name: event.reason, type: keyword}
+  EventDetail/*/Rule: {name: rule.name, type: keyword}
+  # A web request (a Resource the action is on: View, Create, Authorise...). ECS has no field for a page's title, nor a
+  # side-free one for Inbound/OutboundSize: those are left out.
+  EventDetail/*/Resource/URL: {name: url.original, type: keyword}
+  EventDetail/*/Resource/Referrer: {name: http.request.referrer, type: keyword}
+  EventDetail/*/Resource/UserAgent: {name: user_agent.original, type: keyword}
+  EventDetail/*/Resource/HTTPMethod: {name: http.request.method, type: keyword}
+  EventDetail/*/Resource/HTTPVersion: {name: http.version, type: keyword}
+  EventDetail/*/Resource/ResponseCode: {name: http.response.status_code, type: long}
+  EventDetail/*/Resource/MimeType: {name: http.response.mime_type, type: keyword}
+  # A process, and a file an action is on (View, Create, Delete...).
+  EventDetail/Process/Command: {name: process.command_line, type: keyword}
+  EventDetail/Process/ProcessId: {name: process.pid, type: long}
+  EventDetail/Process/ThreadId: {name: process.thread.id, type: long}
+  EventDetail/*/File/Path: {name: file.path, type: keyword}
+  EventDetail/*/File/Name: {name: file.name, type: keyword}
+  EventDetail/*/File/Size: {name: file.size, type: long}
+  EventDetail/*/File/Created: {name: file.created, type: date}
+  EventDetail/*/File/Modified: {name: file.mtime, type: date}
+  EventDetail/*/File/Accessed: {name: file.accessed, type: date}
