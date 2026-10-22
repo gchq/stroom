@@ -264,7 +264,7 @@ class IndexDocumentation {
                                  || LuceneIndexDoc.TYPE.equals(found.getType()))
                 .filter(documentAccess::canView)
                 .orElseThrow(() -> new ToolRefusal("No Elastic Index or Lucene Index doc " + uuid + ": find it with "
-                                                   + "find_documents types=['ElasticIndex', 'Index']"));
+                                                   + "folder_contents name='*' types=['ElasticIndex', 'Index']"));
     }
 
     private DocumentationDoc write(final ToolCallContext context,
