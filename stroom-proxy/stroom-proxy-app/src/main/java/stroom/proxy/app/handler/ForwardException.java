@@ -106,6 +106,13 @@ public class ForwardException extends RuntimeException {
         return feedName;
     }
 
+    /// Returns the downstream Stroom status associated with this forwarding failure.
+    ///
+    /// @return the Stroom status code
+    public StroomStatusCode getStroomStatusCode() {
+        return stroomStatusCode;
+    }
+
     public int getHttpResponseCode() {
         return httpResponseCode;
     }
