@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,9 +53,9 @@ public final class MappingCompaction {
         final Map<String, Object> out = new LinkedHashMap<>(mapping);
         final List<Object> events = new ArrayList<>();
         out.put("events", events);
-        for (final Map<String, Object> given : maps(mapping.get("events"))) {
+        for (final Map<String, Object> given : JsonValues.maps(mapping.get("events"))) {
             Map<String, Object> rule = given;
-            final List<Map<String, Object>> fields = maps(rule.get("fields"));
+            final List<Map<String, Object>> fields = JsonValues.maps(rule.get("fields"));
             final List<String> paths = fields.stream()
                     .map(field -> text(field.get("path")))
                     .filter(path -> !path.endsWith("/Data"))
@@ -72,7 +75,7 @@ public final class MappingCompaction {
             if (!plain.isEmpty()) {
                 rule = new LinkedHashMap<>(rule);
                 rule.put("fields", fields.stream().filter(field -> !plain.contains(field)).toList());
-                final List<Object> data = new ArrayList<>(list(given.get("data")));
+                final List<Object> data = new ArrayList<>(JsonValues.listOrEmpty(given.get("data")));
                 plain.forEach(field -> data.add(field.get("field")));
                 rule.put("data", data);
             }
@@ -90,17 +93,17 @@ public final class MappingCompaction {
     /// @return The mapping's JSON with pairs entries, or the mapping itself if none of its entries fold.
     public static Map<String, Object> compactPairs(final Map<String, Object> mapping) {
         final Set<Object> derived = new LinkedHashSet<>();
-        maps(mapping.get("extract")).forEach(ex -> derived.addAll(list(ex.get("names"))));
+        JsonValues.maps(mapping.get("extract")).forEach(ex -> derived.addAll(JsonValues.listOrEmpty(ex.get("names"))));
         final Map<List<String>, Map<String, Object>> pairs = new LinkedHashMap<>();
         final List<Object> rest = new ArrayList<>();
-        for (final Map<String, Object> ex : maps(mapping.get("extract"))) {
+        for (final Map<String, Object> ex : JsonValues.maps(mapping.get("extract"))) {
             final String field = ex.get("field") instanceof final String text && !text.isEmpty()
                     ? text
                     : null;
             final Optional<Pairs.StyleAndKey> found = PLAIN_EXTRACT_KEYS.containsAll(ex.keySet()) && field != null
                     ? Pairs.pairOf(text(ex.get("regex")))
                     : Optional.empty();
-            final List<Object> allNames = list(ex.get("names"));
+            final List<Object> allNames = JsonValues.listOrEmpty(ex.get("names"));
             final List<String> names = allNames.stream()
                     .filter(name -> name instanceof final String text && !text.isEmpty())
                     .map(String.class::cast)
@@ -139,7 +142,7 @@ public final class MappingCompaction {
                 out.put(key, value);
             }
         });
-        final List<Object> all = new ArrayList<>(list(mapping.get("pairs")));
+        final List<Object> all = new ArrayList<>(JsonValues.listOrEmpty(mapping.get("pairs")));
         all.addAll(pairs.values());
         out.put("pairs", all);
         if (!rest.isEmpty()) {
@@ -190,28 +193,10 @@ public final class MappingCompaction {
                 }
             }
             final String body = LIST.matcher(members.getFirst()[1])
-                    .replaceFirst(Matcher.quoteReplacement(PythonRepr.list(List.copyOf(items))));
+                    .replaceFirst(Matcher.quoteReplacement(PyText.list(List.copyOf(items))));
             out.add("[" + String.join(", ", members.stream().map(member -> member[0]).toList()) + "] " + body);
         }
         return out;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> maps(final Object value) {
-        if (!(value instanceof List)) {
-            return List.of();
-        }
-        return ((List<Object>) value).stream()
-                .filter(Map.class::isInstance)
-                .map(item -> (Map<String, Object>) item)
-                .toList();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Object> list(final Object value) {
-        return value instanceof List
-                ? (List<Object>) value
-                : List.of();
     }
 
     private static String text(final Object value) {

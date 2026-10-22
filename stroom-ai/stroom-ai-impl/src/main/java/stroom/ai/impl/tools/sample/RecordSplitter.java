@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -144,7 +147,7 @@ public final class RecordSplitter {
                     .records();
             final List<Map<String, Object>> parsed = objects(records.subList(0,
                     Math.min(maxRecords, records.size())));
-            return new Chunk(format, data, parsed, null, null, namingColumns(stringList(info.get("columns")),
+            return new Chunk(format, data, parsed, null, null, namingColumns(JsonValues.strings(info.get("columns")),
                     parsed));
         }
         if (JSON_LINES.equals(format)) {
@@ -218,17 +221,10 @@ public final class RecordSplitter {
         } else {
             rows.addAll(PyCsv.read(String.join("\n", records), PyCsv.Dialect.delimitedBy(delimiter.charAt(0))));
         }
-        final List<String> columns = stringList(info.get("columns"));
+        final List<String> columns = JsonValues.strings(info.get("columns"));
         final List<Map<String, Object>> parsed = new ArrayList<>();
         rows.forEach(row -> parsed.add(SampleProfiler.zip(columns, row)));
         return new Chunk(format, records, parsed, header, null, namingColumns(columns, parsed));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> stringList(final Object value) {
-        return value instanceof List<?>
-                ? (List<String>) value
-                : List.of();
     }
 
     private static List<Map<String, Object>> objects(final List<Map<String, String>> records) {
@@ -347,28 +343,6 @@ public final class RecordSplitter {
             }
         }
         return out;
-    }
-
-    /// Records written back in the form their stream had, ready to upload as a sample: a JSON array's items in an
-    /// array, an XML document's in its root, delimited rows under their header line, else a record a line.
-    ///
-    /// @param chunk    The records' chunk.
-    /// @param examples Some of its records.
-    /// @return The sample's text.
-    public static String sampleText(final Chunk chunk, final List<String> examples) {
-        if (JSON_ARRAY.equals(chunk.format())) {
-            return "[" + String.join(",\n", examples) + "]";
-        }
-        if (XML.equals(chunk.format()) && chunk.root() != null) {
-            return chunk.root().replace("{records}", String.join("\n", examples));
-        }
-        if (DELIMITED.equals(chunk.format()) && chunk.header() != null) {
-            final List<String> lines = new ArrayList<>();
-            lines.add(chunk.header());
-            lines.addAll(examples);
-            return String.join("\n", lines) + "\n";
-        }
-        return String.join("\n", examples) + "\n";
     }
 
     /// @param text A text.

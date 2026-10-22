@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ import java.util.regex.Pattern;
 /// from it and steps both over the sample in Stroom, and saves it only when every record's output is the same.
 public final class XsltReader {
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final String EVT = XsltGenerator.EVT;
     // The generator's own comments (not XPath): a rule's name, a kind left untranslated, one left Unknown on
     // purpose.
@@ -487,7 +489,7 @@ public final class XsltReader {
                 rule.leaves().add(leaf);
             }
         }
-        final String text = PyStr.strip(Objects.requireNonNullElse(child.text(), ""));
+        final String text = PyText.strip(Objects.requireNonNullElse(child.text(), ""));
         if (!text.isEmpty() && child.childElements().isEmpty()) {
             final LeafReading leaf = new LeafReading(String.join("/", here), null);
             leaf.setValue(text);
@@ -757,7 +759,7 @@ public final class XsltReader {
         final List<String> out = new ArrayList<>();
         final StringBuilder word = new StringBuilder();
         text.codePoints().forEach(cp -> {
-            if (PyStr.isSpace(cp)) {
+            if (PyText.isSpace(cp)) {
                 if (!word.isEmpty()) {
                     out.add(word.toString());
                     word.setLength(0);

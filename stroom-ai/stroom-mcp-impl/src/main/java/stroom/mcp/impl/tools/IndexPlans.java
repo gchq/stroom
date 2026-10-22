@@ -20,11 +20,9 @@ import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;
@@ -33,7 +31,6 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

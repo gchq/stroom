@@ -16,7 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.sample.PyText;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 
@@ -53,14 +54,14 @@ public final class SplitterXml {
 
     private static Map<String, Map<String, Object>> examples() {
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        out.put(DELIMITED, PyValues.dict("kind", DELIMITED, "delimiter", ",", "header", true, "quote", "\""));
-        out.put("key=value", PyValues.dict("kind", "key_value", "delimiter", " ", "pair_separator", "=", "quote",
+        out.put(DELIMITED, JsonValues.dict("kind", DELIMITED, "delimiter", ",", "header", true, "quote", "\""));
+        out.put("key=value", JsonValues.dict("kind", "key_value", "delimiter", " ", "pair_separator", "=", "quote",
                 "\""));
-        out.put("syslog rfc3164", PyValues.dict("kind", "syslog", "rfc", "rfc3164", "body",
-                PyValues.dict("kind", "key_value")));
-        out.put("syslog rfc5424", PyValues.dict("kind", "syslog", "rfc", "rfc5424", "body",
-                PyValues.dict("kind", "key_value")));
-        out.put("unknown text", PyValues.dict("kind", "regex", "pattern", "^(\\S+ \\S+) (\\S+) (.*)$", "names",
+        out.put("syslog rfc3164", JsonValues.dict("kind", "syslog", "rfc", "rfc3164", "body",
+                JsonValues.dict("kind", "key_value")));
+        out.put("syslog rfc5424", JsonValues.dict("kind", "syslog", "rfc", "rfc5424", "body",
+                JsonValues.dict("kind", "key_value")));
+        out.put("unknown text", JsonValues.dict("kind", "regex", "pattern", "^(\\S+ \\S+) (\\S+) (.*)$", "names",
                 List.of("time", "host", "message")));
         return Collections.unmodifiableMap(out);
     }

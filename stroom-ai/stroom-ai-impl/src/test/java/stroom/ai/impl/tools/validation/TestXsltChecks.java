@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.validation.XsltChecks.FunctionProblems;
 
 import org.junit.jupiter.api.Test;
@@ -176,7 +177,7 @@ class TestXsltChecks {
     @Test
     void testXmlThatIsNotWellFormedIsRefusedSayingWhat() {
         assertThatThrownBy(() -> XsltChecks.parse("<xsl:stylesheet", "XSLT"))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageStartingWith("XSLT is not well-formed XML: ");
     }
 

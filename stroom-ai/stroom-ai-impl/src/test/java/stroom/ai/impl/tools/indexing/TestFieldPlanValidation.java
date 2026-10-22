@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -41,11 +42,11 @@ class TestFieldPlanValidation {
 
     @TestFactory
     Stream<DynamicTest> aPlanIsValidatedAsPydanticValidatesIt() {
-        final List<Object> cases = PyValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
+        final List<Object> cases = JsonValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
                 "/stroom/ai/impl/tools/indexing/model_cases.json")));
         assertThat(cases).hasSizeGreaterThan(8);
-        return cases.stream().map(item -> DynamicTest.dynamicTest(PyJson.dumps(PyValues.map(item).get("input")),
-                () -> check(PyValues.map(item))));
+        return cases.stream().map(item -> DynamicTest.dynamicTest(PyJson.dumps(JsonValues.map(item).get("input")),
+                () -> check(JsonValues.map(item))));
     }
 
     private static void check(final Map<String, Object> given) {
@@ -70,8 +71,8 @@ class TestFieldPlanValidation {
                 errors.add(entry);
             }
             final List<Object> expected = new ArrayList<>();
-            for (final Object item : PyValues.listOrEmpty(given.get("errors"))) {
-                final Map<String, Object> error = PyValues.map(item);
+            for (final Object item : JsonValues.listOrEmpty(given.get("errors"))) {
+                final Map<String, Object> error = JsonValues.map(item);
                 final Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("type", error.get("type"));
                 entry.put("loc", error.get("loc"));

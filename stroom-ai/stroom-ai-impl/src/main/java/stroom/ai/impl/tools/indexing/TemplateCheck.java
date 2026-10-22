@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.Globs;
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.IpAddresses;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.indexing.TemplateMappings.Mapping;
@@ -41,12 +43,12 @@ import java.util.regex.Pattern;
 public final class TemplateCheck {
 
     private static final String FN = "http://www.w3.org/2005/xpath-functions";
-    private static final Set<String> KEYWORD_LIKE = PyValues.nullSafeSet("keyword", "text", "wildcard",
+    private static final Set<String> KEYWORD_LIKE = JsonValues.nullSafeSet("keyword", "text", "wildcard",
             "match_only_text", "constant_keyword", "version", "search_as_you_type");
-    private static final Set<String> INTEGER = PyValues.nullSafeSet("long", "integer", "short", "byte",
+    private static final Set<String> INTEGER = JsonValues.nullSafeSet("long", "integer", "short", "byte",
             "unsigned_long");
-    private static final Set<String> DECIMAL = PyValues.nullSafeSet("double", "float", "half_float", "scaled_float");
-    private static final Set<String> OBJECT = PyValues.nullSafeSet("object", "nested", "flattened");
+    private static final Set<String> DECIMAL = JsonValues.nullSafeSet("double", "float", "half_float", "scaled_float");
+    private static final Set<String> OBJECT = JsonValues.nullSafeSet("object", "nested", "flattened");
     private static final List<String> CHECKED_FORMATS = List.of("strict_date_optional_time", "date_optional_time",
             "strict_date_time", "date_time", "strict_date_optional_time_nanos", "epoch_millis", "epoch_second");
     private static final int FLAGS = Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES;
@@ -75,7 +77,7 @@ public final class TemplateCheck {
         for (final Object item : data instanceof final List<?> list
                 ? list
                 : List.of(data)) {
-            final Map<String, Object> document = PyValues.map(item);
+            final Map<String, Object> document = JsonValues.map(item);
             if (document != null) {
                 documents.add(document);
             }
@@ -112,21 +114,21 @@ public final class TemplateCheck {
     public static Map<String, List<DocValue>> flattenDocument(final Map<String, Object> doc, final String prefix) {
         final Map<String, List<DocValue>> out = new LinkedHashMap<>();
         doc.forEach((key, item) -> add(out, prefix.isEmpty()
-                ? PyValues.str(key)
-                : prefix + "." + PyValues.str(key), item));
+                ? PyText.str(key)
+                : prefix + "." + PyText.str(key), item));
         return out;
     }
 
     private static void add(final Map<String, List<DocValue>> out, final String path, final Object item) {
         if (item instanceof final Map<?, ?> map) {
             out.computeIfAbsent(path, key -> new ArrayList<>()).add(DocValue.OBJECT);
-            map.forEach((key, sub) -> add(out, path + "." + PyValues.str(key), sub));
+            map.forEach((key, sub) -> add(out, path + "." + PyText.str(key), sub));
         } else if (item instanceof final List<?> list) {
             list.forEach(sub -> add(out, path, sub));
         } else if (item != null) {
             out.computeIfAbsent(path, key -> new ArrayList<>()).add(item instanceof final DocValue read
                     ? read
-                    : new DocValue("string", PyValues.str(item)));
+                    : new DocValue("string", PyText.str(item)));
         }
     }
 
@@ -148,11 +150,11 @@ public final class TemplateCheck {
         final Object givenPatterns = body.get("index_patterns");
         final List<String> patterns = givenPatterns instanceof final String one
                 ? List.of(one)
-                : PyValues.strings(givenPatterns);
+                : JsonValues.strings(givenPatterns);
         if (!body.containsKey("index_patterns")) {
             notes.add("a mapping, not an index template: which indices it covers is not checked");
-        } else if (PyValues.truthy(indexName) && patterns.stream().noneMatch(p -> Globs.matches(indexName, p))) {
-            blocking.add("index_patterns " + PythonRepr.list(patterns) + " do not match the pipeline's index '"
+        } else if (JsonValues.truthy(indexName) && patterns.stream().noneMatch(p -> Globs.matches(indexName, p))) {
+            blocking.add("index_patterns " + PyText.list(patterns) + " do not match the pipeline's index '"
                          + indexName + "', so this template would not apply to it");
             changes.add(change(null, "template does not cover index '" + indexName + "'",
                     "change index_patterns to include '" + indexName + "*', or set the indexing pipeline's "
@@ -164,7 +166,7 @@ public final class TemplateCheck {
             // Elasticsearch maps a data stream's @timestamp as a date itself, whatever dynamic says.
             mapping.fields().putIfAbsent("@timestamp", new LinkedHashMap<>(Map.of("type", "date")));
         }
-        final boolean byComponent = PyValues.strings(body.get("composed_of")).contains(EcsSchema.COMPONENT);
+        final boolean byComponent = JsonValues.strings(body.get("composed_of")).contains(EcsSchema.COMPONENT);
         checkMapping(mapping, blocking, changes, notes);
         final Map<String, List<DocValue>> emitted = new LinkedHashMap<>();
         for (final Map<String, Object> doc : docs) {
@@ -188,10 +190,10 @@ public final class TemplateCheck {
             Map<String, Object> spec = mapping.fields().get(path);
             if (spec != null && "alias".equals(spec.get("type"))) {
                 blocking.add(path + ": written by the pipeline, but mapped as an alias (of '"
-                             + PyValues.str(spec.get("path")) + "'), and documents can't write to an alias, so they "
+                             + PyText.str(spec.get("path")) + "'), and documents can't write to an alias, so they "
                              + "are rejected");
                 changes.add(change(path, "written, but mapped as an alias", "map '" + path + "' as a field in the "
-                        + "template (as '" + PyValues.str(spec.get("path")) + "' is mapped), or stop writing it in the "
+                        + "template (as '" + PyText.str(spec.get("path")) + "' is mapped), or stop writing it in the "
                         + "indexing XSLT"));
                 continue;
             }
@@ -224,7 +226,7 @@ public final class TemplateCheck {
                 .map(Map.Entry::getKey)
                 .toList());
         if (!hidden.isEmpty()) {
-            notes.add(PythonRepr.list(hidden.subList(0, Math.min(20, hidden.size())))
+            notes.add(PyText.list(hidden.subList(0, Math.min(20, hidden.size())))
                       + (hidden.size() > 20
                     ? " (+" + (hidden.size() - 20) + ")"
                     : "")
@@ -254,25 +256,25 @@ public final class TemplateCheck {
         mapping.fields().forEach((path, spec) -> {
             final Object target = spec.get("path");
             if ("alias".equals(spec.get("type"))) {
-                final Object targetType = PyValues.truthy(target)
-                        ? PyValues.mapOrEmpty(mapping.fields().get(PyValues.str(target))).get("type")
+                final Object targetType = JsonValues.truthy(target)
+                        ? JsonValues.mapOrEmpty(mapping.fields().get(PyText.str(target))).get("type")
                         : null;
-                if (!PyValues.truthy(target) || targetType == null || "alias".equals(targetType)
+                if (!JsonValues.truthy(target) || targetType == null || "alias".equals(targetType)
                     || "object".equals(targetType)) {
                     // Not checked before: a template with such an alias was agreed, and Elasticsearch refused it.
-                    blocking.add(path + ": an alias of '" + PyValues.str(target) + "', which this template doesn't "
+                    blocking.add(path + ": an alias of '" + PyText.str(target) + "', which this template doesn't "
                                  + "map as a field, so Elasticsearch refuses the template ('an alias must refer to an "
                                  + "existing field')");
-                    changes.add(change(path, "alias of a field the template lacks ('" + PyValues.str(target) + "')",
-                            "drop the alias '" + path + "' from the template, or map '" + PyValues.str(target)
+                    changes.add(change(path, "alias of a field the template lacks ('" + PyText.str(target) + "')",
+                            "drop the alias '" + path + "' from the template, or map '" + PyText.str(target)
                             + "'"));
                 }
             }
             final Object format = spec.get("format");
-            if (("date".equals(spec.get("type")) || "date_nanos".equals(spec.get("type"))) && PyValues.truthy(format)
-                && List.of(PyValues.str(format).split("\\|\\|", -1)).stream()
-                        .anyMatch(f -> !CHECKED_FORMATS.contains(PyValues.strip(f)))) {
-                notes.add(path + ": custom date format " + PythonRepr.repr(format) + " not checked here; stepping "
+            if (("date".equals(spec.get("type")) || "date_nanos".equals(spec.get("type"))) && JsonValues.truthy(format)
+                && List.of(PyText.str(format).split("\\|\\|", -1)).stream()
+                        .anyMatch(f -> !CHECKED_FORMATS.contains(PyText.strip(f)))) {
+                notes.add(path + ": custom date format " + PyText.repr(format) + " not checked here; stepping "
                           + "output is ISO 8601");
             }
         });
@@ -291,7 +293,7 @@ public final class TemplateCheck {
         if (parent == null) {
             return false;
         }
-        final String type = PyValues.str(mapping.fields().get(parent).get("type"));
+        final String type = PyText.str(mapping.fields().get(parent).get("type"));
         blocking.add(path + ": the template maps '" + parent + "' as " + type + ", so it cannot also hold '" + path
                      + "'");
         changes.add(change(path, "'" + parent + "' is a " + type, "rename '" + path + "' in the indexing XSLT, or map '"
@@ -323,7 +325,7 @@ public final class TemplateCheck {
             if (why != null) {
                 blocking.add(path + " " + why);
                 changes.add(change(path, why, "change the indexing XSLT to write '" + path + "' as a valid "
-                                              + PyValues.str(type) + ", or map it with a type that takes these "
+                                              + PyText.str(type) + ", or map it with a type that takes these "
                                               + "values"));
                 return;
             }
@@ -383,37 +385,37 @@ public final class TemplateCheck {
         if (OBJECT.contains(mapped)) {
             return "object".equals(kind)
                     ? null
-                    : "is a single value, but the template maps it as " + PyValues.str(mapped);
+                    : "is a single value, but the template maps it as " + PyText.str(mapped);
         }
         if ("object".equals(kind)) {
-            return "is an object, but the template maps it as " + PyValues.str(mapped);
+            return "is an object, but the template maps it as " + PyText.str(mapped);
         }
         if (KEYWORD_LIKE.contains(mapped)) {
             final Object value = spec.get("value");
             if ("constant_keyword".equals(mapped) && value != null && !text.equals(value)) {
-                return "is " + PythonRepr.repr(text) + ", but constant_keyword only takes " + PythonRepr.repr(value);
+                return "is " + PyText.repr(text) + ", but constant_keyword only takes " + PyText.repr(value);
             }
             return null;
         }
         if (INTEGER.contains(mapped)) {
             return WHOLE.matcher(text).lookingAt()
                     ? null
-                    : "is " + PythonRepr.repr(text) + ", not a whole number (" + mapped + ")";
+                    : "is " + PyText.repr(text) + ", not a whole number (" + mapped + ")";
         }
         if (DECIMAL.contains(mapped)) {
             return NUMBER.matcher(text).lookingAt()
                     ? null
-                    : "is " + PythonRepr.repr(text) + ", not a number (" + mapped + ")";
+                    : "is " + PyText.repr(text) + ", not a number (" + mapped + ")";
         }
         if ("boolean".equals(mapped)) {
             return "true".equals(text) || "false".equals(text)
                     ? null
-                    : "is " + PythonRepr.repr(text) + ", not true/false";
+                    : "is " + PyText.repr(text) + ", not true/false";
         }
         if ("ip".equals(mapped)) {
             return IpAddresses.isAddress(text)
                     ? null
-                    : "is " + PythonRepr.repr(text) + ", not an IP address";
+                    : "is " + PyText.repr(text) + ", not an IP address";
         }
         if ("date".equals(mapped) || "date_nanos".equals(mapped)) {
             return fitsDate(spec, text);
@@ -422,8 +424,8 @@ public final class TemplateCheck {
     }
 
     private static String fitsDate(final Map<String, Object> spec, final String text) {
-        final List<String> formats = List.of(PyValues.str(spec.getOrDefault("format",
-                "strict_date_optional_time||epoch_millis")).split("\\|\\|", -1)).stream().map(PyValues::strip).toList();
+        final List<String> formats = List.of(PyText.str(spec.getOrDefault("format",
+                "strict_date_optional_time||epoch_millis")).split("\\|\\|", -1)).stream().map(PyText::strip).toList();
         final List<Pattern> known = new ArrayList<>();
         for (final String format : formats) {
             if (CHECKED_FORMATS.contains(format)) {
@@ -438,7 +440,7 @@ public final class TemplateCheck {
         }
         return known.stream().anyMatch(pattern -> pattern.matcher(text).lookingAt())
                 ? null
-                : "is " + PythonRepr.repr(text) + ", which date format " + String.join("||", formats) + " rejects";
+                : "is " + PyText.repr(text) + ", which date format " + String.join("||", formats) + " rejects";
     }
 
     private static Map<String, Object> change(final String field, final String problem, final String change) {

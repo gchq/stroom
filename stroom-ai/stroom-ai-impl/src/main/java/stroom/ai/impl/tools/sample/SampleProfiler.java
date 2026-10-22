@@ -16,6 +16,10 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.IpAddresses;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -443,7 +447,7 @@ public final class SampleProfiler {
                 return "timestamp (" + pattern + ")";
             }
         }
-        if (IpAddresses.isIpAddress(text)) {
+        if (IpAddresses.isAddress(text)) {
             return "ip";
         }
         if (PyText.fullmatch(INTEGER, text)) {
@@ -706,21 +710,21 @@ public final class SampleProfiler {
     /// Text that starts as JSON and doesn't parse, with where and why. Seen: a FortiOS file's text retyped by the
     /// agent with `tz=\"\+1000\"` (`\+` is no JSON escape), profiled as key=value from its records' body field,
     /// with a key=value template proposed for a JSON file.
-    private static SampleRefusal notJson(final String text) {
+    private static ToolRefusal notJson(final String text) {
         final String first = text.stripLeading().startsWith("[")
                 ? text
                 : PyText.splitlines(text).getFirst();
         try {
             PyJson.loads(first);
             // Not reached: called only when it fails.
-            return new SampleRefusal("not JSON");
+            return new ToolRefusal("not JSON");
         } catch (final PyJson.JsonDecodeException e) {
             final String near = first.substring(Math.max(0, e.pos() - 40), Math.min(first.length(), e.pos() + 40));
-            return new SampleRefusal("This starts as JSON but isn't valid JSON: " + e.msg() + " at character "
-                                     + e.pos() + ", near " + PyText.repr(near) + ". Pass the source's text exactly as "
-                                     + "it is, not retyped (an escape such as \\+ isn't JSON). A file on the user's "
-                                     + "disk isn't passed through you: upload_sample files= sends it whole, and the "
-                                     + "server reads it from the stream.");
+            return new ToolRefusal("This starts as JSON but isn't valid JSON: " + e.msg() + " at character "
+                                   + e.pos() + ", near " + PyText.repr(near) + ". Pass the source's text exactly as "
+                                   + "it is, not retyped (an escape such as \\+ isn't JSON). A file on the user's "
+                                   + "disk isn't passed through you: upload_sample files= sends it whole, and the "
+                                   + "server reads it from the stream.");
         }
     }
 
@@ -803,7 +807,7 @@ public final class SampleProfiler {
 
     // A value of a type a column name never is: a time, a number, an IP address.
     private static boolean typed(final String value) {
-        return PyText.fullmatch(NUMBER, value) || IpAddresses.isIpAddress(value)
+        return PyText.fullmatch(NUMBER, value) || IpAddresses.isAddress(value)
                || TimePatterns.inferTimePattern(value) != null;
     }
 
@@ -1123,7 +1127,7 @@ public final class SampleProfiler {
     ///
     /// @param sample The sample's text.
     /// @return Its profile.
-    /// @throws SampleRefusal if it starts as JSON and isn't JSON.
+    /// @throws ToolRefusal if it starts as JSON and isn't JSON.
     public static Map<String, Object> profile(final String sample) {
         return profile(sample, MAX_RECORDS);
     }
@@ -1133,7 +1137,7 @@ public final class SampleProfiler {
     /// @param sample     The sample's text.
     /// @param maxRecords The most records read for its fields.
     /// @return Its profile.
-    /// @throws SampleRefusal if it starts as JSON and isn't JSON.
+    /// @throws ToolRefusal if it starts as JSON and isn't JSON.
     public static Map<String, Object> profile(final String sample, final int maxRecords) {
         final String text = PyText.strip(sample, "\uFEFF\r\n ");
         final List<String> lines = PyText.nonBlankLines(text);

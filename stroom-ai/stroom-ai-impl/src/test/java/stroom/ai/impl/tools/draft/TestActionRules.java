@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,7 +48,7 @@ class TestActionRules extends DraftFixtures {
         assertThat(permitted.get("when")).isEqualTo(json("""
                 [{"field": "kind", "equals": "TRAFFIC"}, {"field": "action", "equals": "ALLOW"}]"""));
         // The protocols TransportProtocol takes, from every record of the kind; the rest are Other.
-        assertThat(PyValues.maps(permitted.get("fields"))).contains(map("path",
+        assertThat(JsonValues.maps(permitted.get("fields"))).contains(map("path",
                 "EventDetail/Network/Permit/Source/TransportProtocol", "field", "proto", "map",
                 map("tcp", "TCP", "udp", "UDP"), "default", "Other"));
         assertThat(ActionRules.described(found.rules()))

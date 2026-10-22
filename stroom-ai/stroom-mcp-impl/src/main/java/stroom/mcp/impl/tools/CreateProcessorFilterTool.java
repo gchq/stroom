@@ -17,22 +17,24 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -301,7 +303,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
-                    NAME, flag(call, TEMPLATE_COMMITTED_BY_USER_ARG), stringArg(call, TEMPLATE_CONFIRMATION_ID_ARG));
+                    NAME, ToolArgs.flag(call, TEMPLATE_COMMITTED_BY_USER_ARG),
+                    stringArg(call, TEMPLATE_CONFIRMATION_ID_ARG));
             if (committed.round() != null) {
                 return committed.round();
             }
@@ -356,7 +359,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
     // build the agent asked them to, between its steps). Every such pipeline is in a build (managedPipeline).
     private Map<String, Object> approved(final ToolCall call, final ToolCallContext context, final Run run) {
         final Map<String, Object> details = run.details();
-        if (details.containsKey(IndexingRuns.ALREADY_INDEXED) && !flag(call, INDEX_DROPPED_ARG)) {
+        if (details.containsKey(IndexingRuns.ALREADY_INDEXED) && !ToolArgs.flag(call, INDEX_DROPPED_ARG)) {
             return plan.nextFor(context, run.ref(), ProcessingApprovals.dropFirst(context.links(), run.pipeline(),
                     run.destination(), run.lucene(), details, NAME));
         }
@@ -400,10 +403,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final List<Long> done = filterWrites.alreadyProcessed(ProcessorFilterWrites.ref(pipeline), streamIds);
         if (!done.isEmpty()) {
             throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' has already processed stream(s) "
-                                  + PythonText.numbers(done) + ": use reprocess_streams (at most "
+                                  + PyText.repr(done) + ": use reprocess_streams (at most "
                                   + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " per call)");
         }
-        return new Scope(ProcessorFilterWrites.anyOf(streamIds), "streams " + PythonText.numbers(streamIds),
+        return new Scope(ProcessorFilterWrites.anyOf(streamIds), "streams " + PyText.repr(streamIds),
                 ProcessorFilterWrites.SAMPLE_MAX_TASKS, null);
     }
 
@@ -421,7 +424,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         if (source == null) {
             children.add(filterWrites.feedTerm(feed));
         }
-        children.add(ProcessorFilterWrites.term(ProcessorFilters.TYPE, streamType));
+        children.add(ProcessorFilterWrites.term(MetaFields.FIELD_TYPE, streamType));
         final String said = source != null
                 ? streamType + " streams created after " + bounds.said()
                 : "feed " + feed + " (" + streamType + ") created after " + bounds.said();
@@ -456,16 +459,6 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             throw new ToolRefusal("priority is a whole number from " + MIN_PRIORITY + " to " + MAX_PRIORITY);
         }
         return given;
-    }
-
-    /// @param call A call.
-    /// @param name A true or false argument.
-    /// @return True if it was given as true (or "true").
-    static boolean flag(final ToolCall call, final String name) {
-        final Object value = argsMap(call).get(name);
-        return value instanceof final String text
-                ? Boolean.parseBoolean(text.strip())
-                : BuildPlan.truthy(value);
     }
 
 

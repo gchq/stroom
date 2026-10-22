@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.StreamReader;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -55,8 +56,6 @@ import java.util.TreeSet;
 /// and streams are only read where the user may.
 class PipelineFeeds {
 
-    static final String FEED = "Feed";
-    static final String TYPE = "Type";
     static final String PIPELINE = "Pipeline";
     static final String ID = "Id";
     /// How far up the pipelines whose output a filter reads are followed.
@@ -113,7 +112,7 @@ class PipelineFeeds {
             final List<ExpressionTerm> terms = filterTerms(expression);
             final List<String> read = List.copyOf(new TreeSet<>(filterFeeds(terms, known, false)));
             final List<String> types = terms.stream()
-                    .filter(t -> TYPE.equals(t.getField()) && NullSafe.isNonEmptyString(t.getValue()))
+                    .filter(t -> MetaFields.FIELD_TYPE.equals(t.getField()) && NullSafe.isNonEmptyString(t.getValue()))
                     .map(ExpressionTerm::getValue)
                     .toList();
             final Map<String, Object> entry = new LinkedHashMap<>();
@@ -214,7 +213,7 @@ class PipelineFeeds {
     Set<String> filterFeeds(final List<ExpressionTerm> terms, final Map<Object, Object> known, final boolean lower) {
         final Set<String> feeds = new LinkedHashSet<>();
         for (final ExpressionTerm term : terms) {
-            if (!FEED.equals(term.getField())) {
+            if (!MetaFields.FIELD_FEED.equals(term.getField())) {
                 continue;
             }
             final DocRef ref = term.getDocRef();

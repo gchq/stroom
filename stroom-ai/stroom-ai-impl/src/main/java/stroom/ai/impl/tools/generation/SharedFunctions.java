@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -54,7 +56,7 @@ public record SharedFunctions(@JsonProperty("href") String href,
         final String prefix = fields.requiredString("prefix");
         if (prefix != null && (!NCNAME.matcher(prefix).matches()
                                || prefix.toLowerCase(Locale.ROOT).startsWith("xml"))) {
-            reader.valueError(ModelReader.at(loc, "prefix"), "prefix " + PythonRepr.repr(prefix) + " is not a "
+            reader.valueError(ModelReader.at(loc, "prefix"), "prefix " + PyText.repr(prefix) + " is not a "
                                                              + "namespace prefix (letters, digits, _ . -; not "
                                                              + "xml...)", prefix);
         }

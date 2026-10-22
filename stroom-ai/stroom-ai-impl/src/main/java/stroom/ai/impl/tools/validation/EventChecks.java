@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.validation.SchemaErrors.SchemaError;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 
@@ -61,7 +63,7 @@ public class EventChecks {
     ///                      Stroom holds.
     /// @return `valid`, `schema` (the system id, or null for XML that is not Events), `error_count` and `errors`
     /// (the first [HeldSchemas#MAX_ERRORS], each `line`, `path` and `message`).
-    /// @throws ValidationException if it is not well-formed, or Stroom holds no such schema.
+    /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
     public Map<String, Object> validateEvents(final String eventsXml, final String schemaVersion) {
         final Element root = XsltChecks.parse(eventsXml, "Events XML");
         final String namespace = root.getNamespaceURI();
@@ -87,7 +89,7 @@ public class EventChecks {
         try {
             errors = heldSchemas.validate(systemId, eventsXml);
         } catch (final NotWellFormedException e) {
-            throw new ValidationException("Events XML is not well-formed XML: " + e.getMessage());
+            throw new ToolRefusal("Events XML is not well-formed XML: " + e.getMessage());
         }
         result.put("valid", errors.isEmpty());
         result.put("schema", systemId);
@@ -106,7 +108,7 @@ public class EventChecks {
     /// @param eventsXml An `<Events>` document (or one `<Event>`).
     /// @return `events_checked`, `ok`, `rules` (each rule failed, with `events_failing` and up to three
     /// `examples`), and `notes` when events have EventDetail/Unknown.
-    /// @throws ValidationException if it is not well-formed.
+    /// @throws ToolRefusal if it is not well-formed.
     public static Map<String, Object> checkEventQuality(final String eventsXml) {
         final Element root = XsltChecks.parse(eventsXml, "Events XML");
         final List<Element> events = "Events".equals(root.getLocalName())
@@ -148,7 +150,7 @@ public class EventChecks {
         if (!unknown.isEmpty()) {
             // Advice, not a failure: Unknown is right for records no action element describes.
             result.put("notes", List.of(unknown.size() + " of " + events.size() + " events (e.g. "
-                                        + PythonText.numbers(unknown.subList(0, Math.min(3, unknown.size())))
+                                        + PyText.repr(unknown.subList(0, Math.min(3, unknown.size())))
                                         + ") have EventDetail/Unknown: what happened is not known. If those records "
                                         + "are an activity another action element describes (Alert, Authenticate, "
                                         + "Network, Process, Create, Update, Delete, View, ...), use it."));
@@ -162,7 +164,7 @@ public class EventChecks {
         final List<Finding> found = new ArrayList<>();
         final String created = XmlTrees.text(find(event, "EventTime", "TimeCreated"));
         if (!ISO_TIME.matcher(created).matches()) {
-            found.add(new Finding("time_created", "EventTime/TimeCreated is " + PythonText.repr(created)
+            found.add(new Finding("time_created", "EventTime/TimeCreated is " + PyText.repr(created)
                                                   + ", not yyyy-MM-ddTHH:mm:ss.SSSZ"));
         }
         final Map<String, String[]> required = new LinkedHashMap<>();
@@ -189,7 +191,7 @@ public class EventChecks {
             found.add(new Finding("action", "EventDetail should hold exactly one action element, found "
                                             + (actions.isEmpty()
                     ? "none"
-                    : PythonText.list(actions))));
+                    : PyText.list(actions))));
         }
         for (final Element node : XmlTrees.descendantsAndSelf(event)) {
             if (XmlTrees.isLeaf(node) && XmlTrees.text(node).isEmpty() && XmlTrees.attributes(node).isEmpty()) {

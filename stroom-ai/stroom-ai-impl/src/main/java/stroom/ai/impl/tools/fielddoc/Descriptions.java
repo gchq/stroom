@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -66,8 +69,8 @@ public final class Descriptions {
         final Map<String, String> kept = new LinkedHashMap<>();
         if (given != null) {
             given.forEach((key, value) -> {
-                if (value instanceof final String text && !PythonStrings.strip(text).isEmpty()) {
-                    kept.put(key, PythonStrings.strip(text));
+                if (value instanceof final String text && !PyText.strip(text).isEmpty()) {
+                    kept.put(key, PyText.strip(text));
                 }
             });
         }
@@ -122,11 +125,11 @@ public final class Descriptions {
             final Set<Set<String>> reads = asks.values().stream().map(DataAsk::reads).collect(Collectors.toSet());
             if (asks.size() > 1 && reads.size() == 1) {
                 final List<String> values = new ArrayList<>(new LinkedHashSet<>(asks.values().stream()
-                        .flatMap(a -> strings(a.asked().get("values")).stream())
+                        .flatMap(a -> JsonValues.strings(a.asked().get("values")).stream())
                         .toList()));
                 final Object said = asks.values().stream()
                         .map(a -> a.asked().get("schemas_say"))
-                        .filter(PythonStrings::truthy)
+                        .filter(JsonValues::truthy)
                         .findFirst()
                         .orElse(null);
                 final Map<String, Object> merged = new LinkedHashMap<>();
@@ -167,14 +170,14 @@ public final class Descriptions {
                     : null;
             final String bare = BARE.matcher(path).replaceAll("");
             found = notes.stream()
-                    .filter(n -> PythonStrings.truthy(n.get("event_logging_path")))
+                    .filter(n -> JsonValues.truthy(n.get("event_logging_path")))
                     .filter(n -> BARE.matcher(text(n.get("event_logging_path"))).replaceAll("").equals(bare))
                     .filter(n -> wantedName == null || (text(n.get("event_logging_path")) + " " + text(n.get(
                             "field"))).toLowerCase(Locale.ROOT).contains(wantedName))
                     .toList();
         }
         return found.stream()
-                .filter(n -> PythonStrings.truthy(n.get("meaning")))
+                .filter(n -> JsonValues.truthy(n.get("meaning")))
                 .map(Descriptions::said)
                 .collect(Collectors.joining(" "));
     }
@@ -206,10 +209,10 @@ public final class Descriptions {
         final Map<String, String> said = new LinkedHashMap<>();
         final List<String> named = names == null
                 ? List.of()
-                : names.stream().filter(PythonStrings::truthy).toList();
+                : names.stream().filter(JsonValues::truthy).toList();
         said.put(VENDOR, vendor(named, path));
         said.putAll(says);
-        said.values().removeIf(v -> !PythonStrings.truthy(v));
+        said.values().removeIf(v -> !JsonValues.truthy(v));
         final Matcher dataPath = DATA_PATH.matcher(field);
         final boolean isData = dataPath.find();
         final List<String> keys = new ArrayList<>();
@@ -228,7 +231,7 @@ public final class Descriptions {
             asking.put("field", field);
             asking.put("from", source);
             asking.put("values", values.subList(0, Math.min(3, values.size())).stream()
-                    .map(v -> PythonStrings.head(v, 60))
+                    .map(v -> PyText.head(v, 60))
                     .toList());
             if (!said.isEmpty()) {
                 asking.put("schemas_say", said);
@@ -282,27 +285,20 @@ public final class Descriptions {
 
     // One note's words: its meaning, and up to eight of its codes.
     private static String said(final Map<String, Object> note) {
-        final String meaning = PythonStrings.rstrip(text(note.get("meaning")), ".") + ".";
-        if (!PythonStrings.truthy(note.get("values")) || !(note.get("values") instanceof final Map<?, ?> codes)) {
+        final String meaning = PyText.rstrip(text(note.get("meaning")), ".") + ".";
+        if (!JsonValues.truthy(note.get("values")) || !(note.get("values") instanceof final Map<?, ?> codes)) {
             return meaning;
         }
         return meaning + " Codes: " + codes.entrySet().stream()
                 .limit(8)
-                .map(e -> PythonStrings.str(e.getKey()) + ": " + PythonStrings.str(e.getValue()))
+                .map(e -> PyText.str(e.getKey()) + ": " + PyText.str(e.getValue()))
                 .collect(Collectors.joining("; ")) + ".";
     }
 
     private static String text(final Object value) {
         return value == null
                 ? ""
-                : PythonStrings.str(value);
-    }
-
-    private static List<String> strings(final Object value) {
-        if (value instanceof final List<?> list) {
-            return list.stream().map(String::valueOf).toList();
-        }
-        return List.of();
+                : PyText.str(value);
     }
 
 

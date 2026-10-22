@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.tools.PipelineIndex.Entry;

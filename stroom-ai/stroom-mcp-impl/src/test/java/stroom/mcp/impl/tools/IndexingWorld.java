@@ -74,7 +74,7 @@ final class IndexingWorld {
             world.documentAccess, processing.feeds.plan);
     final IndexPlans plans = new IndexPlans(memory, keptMappings, heldSchemas, knowledge);
     final IndexExamples examples = new IndexExamples(world.documentAccess, pipelineIndex, () -> templates,
-            () -> queryService, world.guard(), processing.feeds.plan, memory);
+            () -> queryService, world.guard(), processing.feeds.plan, memory, new DocumentWrites(world.documentAccess));
     final BuildIndexes buildIndexes = new BuildIndexes(world.guard(), world.pipelineShapes, world.documentAccess,
             processing.pipelineDocs, pipelineIndex, processing.feeds.plan);
     final IndexFields indexFields = new IndexFields(() -> queryService, () -> indexResource, world.documentAccess,

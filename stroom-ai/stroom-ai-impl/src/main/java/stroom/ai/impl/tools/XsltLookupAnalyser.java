@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.workspace.SafeXPath;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -63,7 +64,6 @@ import javax.xml.transform.sax.SAXSource;
 ///   resolved in the same way.
 final class XsltLookupAnalyser {
 
-    static final String XSL_NAMESPACE = "http://www.w3.org/1999/XSL/Transform";
     static final String STROOM_NAMESPACE = "stroom";
     static final String REFERENCE_DATA_NAMESPACE_PREFIX = "reference-data";
     static final String LOOKUP = "lookup";
@@ -206,7 +206,7 @@ final class XsltLookupAnalyser {
     /// @return The XPath expressions in an element's attributes.
     static List<Expression> expressions(final XdmNode element) {
         final List<Expression> expressions = new ArrayList<>();
-        final boolean xsl = XSL_NAMESPACE.equals(element.getNodeName().getNamespaceURI());
+        final boolean xsl = XmlTrees.XSL.equals(element.getNodeName().getNamespaceURI());
         final String elementName = element.getNodeName().getLocalName();
         for (final XdmNode attribute : nodes(element, Axis.ATTRIBUTE)) {
             final QName name = attribute.getNodeName();
@@ -219,7 +219,7 @@ final class XsltLookupAnalyser {
                            || ("name".equals(local) && AVT_NAME_ELEMENTS.contains(elementName))) {
                     avt(value).forEach(text -> expressions.add(new Expression(local, text)));
                 }
-            } else if (XSL_NAMESPACE.equals(name.getNamespaceURI())) {
+            } else if (XmlTrees.XSL.equals(name.getNamespaceURI())) {
                 // E.g. xsl:use-when on a literal result element.
                 if (XPATH_ATTRIBUTES.contains(local)) {
                     expressions.add(new Expression(local, value));
@@ -855,7 +855,7 @@ final class XsltLookupAnalyser {
     static boolean isXsl(final XdmNode node, final String localName) {
         return node != null
                && node.getNodeKind() == XdmNodeKind.ELEMENT
-               && XSL_NAMESPACE.equals(node.getNodeName().getNamespaceURI())
+               && XmlTrees.XSL.equals(node.getNodeName().getNamespaceURI())
                && localName.equals(node.getNodeName().getLocalName());
     }
 

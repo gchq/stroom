@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules.ComponentRule;
 import stroom.ai.impl.tools.InstructionRules.ComponentRules;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.ToolCall;
@@ -103,7 +104,7 @@ class TestIndexTemplateTools {
     private final BuildIndexes buildIndexes = Mockito.mock(BuildIndexes.class);
     private final TemplatePipelines pipelines = Mockito.mock(TemplatePipelines.class);
     private final IndexExamples examples = new IndexExamples(Mockito.mock(DocumentAccess.class), null, null, null,
-            Mockito.mock(WriteGuard.class), Mockito.mock(BuildPlan.class), memory);
+            Mockito.mock(WriteGuard.class), Mockito.mock(BuildPlan.class), memory, Mockito.mock(DocumentWrites.class));
     private final TemplateReviews reviews = new TemplateReviews(world.feeds.consent, memory, world.pipelineDocs,
             world.world.guard(), world.agreements);
     private List<Map<String, Object>> documents = DOCS;
@@ -280,7 +281,7 @@ class TestIndexTemplateTools {
                                                                   + PyJson.dumps(body),
                 "component_templates", List.of("PUT _component_template/legacy-base\n{\"template\": "
                                                + "{\"mappings\": {}}}")));
-        assertThat(ProposeIndexTemplateTool.strings(result.get("notes")))
+        assertThat(JsonValues.strings(result.get("notes")))
                 .contains("composed_of lacks 'org-ilm', which standing instructions include",
                         "composed_of has 'legacy-base', which standing instructions exclude");
     }

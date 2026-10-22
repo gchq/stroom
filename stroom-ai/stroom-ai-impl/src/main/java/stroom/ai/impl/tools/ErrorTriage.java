@@ -405,22 +405,10 @@ public final class ErrorTriage {
         /// @return True if an error meets everything the rule has.
         public boolean matches(final String severity, final String element, final boolean own, final String message) {
             return (this.severity == null || this.severity.contains(severity))
-                   && (this.element == null || glob(this.element).matcher(element.toLowerCase(Locale.ROOT))
-                    .matches())
+                   && (this.element == null || Globs.matches(element.toLowerCase(Locale.ROOT),
+                    this.element.toLowerCase(Locale.ROOT)))
                    && (this.own == null || this.own == own)
                    && (this.message == null || this.message.matcher(NullSafe.string(message)).find());
-        }
-
-        private static Pattern glob(final String glob) {
-            final StringBuilder regex = new StringBuilder();
-            for (final char c : glob.toLowerCase(Locale.ROOT).toCharArray()) {
-                switch (c) {
-                    case '*' -> regex.append(".*");
-                    case '?' -> regex.append('.');
-                    default -> regex.append(Pattern.quote(String.valueOf(c)));
-                }
-            }
-            return Pattern.compile(regex.toString(), Pattern.DOTALL);
         }
     }
 

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.ToolDeadline;
@@ -470,7 +471,7 @@ public final class XPathChecks {
                 missed = text;
             }
         }
-        final String names = PythonText.list(ex.names().stream().filter(n -> n != null && !n.isEmpty()).toList());
+        final String names = PyText.list(ex.names().stream().filter(n -> n != null && !n.isEmpty()).toList());
         if (matched == 0) {
             problems.add(where + ": the regex matches none of the " + texts.size() + " sample texts, so " + names
                          + " would be empty in every event. " + whereItStops(ex.regex(), flags, texts));

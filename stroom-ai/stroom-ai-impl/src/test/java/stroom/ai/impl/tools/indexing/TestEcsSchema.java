@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
@@ -195,7 +197,7 @@ class TestEcsSchema {
         final List<String> outcomes = new ArrayList<>();
         for (final Map<String, Object> document : TemplateCheck.jsonXmlDocuments(IndexingFixtures.transform(
                 plan.xslt(), EVENTS))) {
-            final Object outcome = PyValues.mapOrEmpty(document.get("event")).get("outcome");
+            final Object outcome = JsonValues.mapOrEmpty(document.get("event")).get("outcome");
             outcomes.add(outcome == null
                     ? null
                     : ((TemplateCheck.DocValue) outcome).text());
@@ -361,7 +363,7 @@ class TestEcsSchema {
         // Seen in testing: a proposed template composed ecs@settings, which Elasticsearch doesn't have.
         assertThatThrownBy(() -> IndexingHelpers.componentsWanted(
                 Map.of("composed_of", List.of("ecs@mappings", "ecs@settings")), Map.of(), List.of("ecs@settings")))
-                .isInstanceOf(IndexingRefusal.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("ecs@mappings is its only ECS one");
         // Given, it exists on the user's cluster.
         assertThat(IndexingHelpers.componentsWanted(Map.of("composed_of", List.of("ecs@settings")),
@@ -455,14 +457,14 @@ class TestEcsSchema {
         final Map<String, Object> mappings = TemplateMappings.mappingsOf(built.body());
         assertThat(built.body().get("composed_of")).isEqualTo(List.of("ecs@mappings", "org-base"));
         assertThat(mappings.get("dynamic")).isEqualTo(true);
-        assertThat(PyValues.map(mappings.get("properties"))).containsOnlyKeys("StreamId", "acme");
+        assertThat(JsonValues.map(mappings.get("properties"))).containsOnlyKeys("StreamId", "acme");
         assertThat(ExampleTemplates.ecsDuplicates(built.body(), ECS)).isEmpty();
         // From the plan alone, ecs@mappings nominated: the same.
         final Built alone = ExampleTemplates.withComponents(planned, Map.of(), List.of("ecs@mappings"), List.of(),
                 ECS);
         assertThat(alone.body().get("composed_of")).isEqualTo(List.of("ecs@mappings"));
         assertThat(TemplateMappings.mappingsOf(alone.body()).get("dynamic")).isEqualTo(true);
-        assertThat(PyValues.map(TemplateMappings.mappingsOf(alone.body()).get("properties")))
+        assertThat(JsonValues.map(TemplateMappings.mappingsOf(alone.body()).get("properties")))
                 .containsOnlyKeys("StreamId", "acme");
         assertThat(alone.notes()).anyMatch(n -> n.contains("['host.name', 'source.ip']"));
         // A template that composes it and maps them anyway is said to map them twice.
@@ -494,6 +496,6 @@ class TestEcsSchema {
     }
 
     private static Map<String, Object> body(final Map<String, Object> template) {
-        return PyValues.map(template.get("body"));
+        return JsonValues.map(template.get("body"));
     }
 }

@@ -22,11 +22,11 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 import stroom.ai.impl.tools.validation.XsltChecks;
@@ -172,7 +172,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
         if (xslt.contains("schemaLocation")) {
             try {
                 errors.addAll(heldSchemas.locationProblems(root));
-            } catch (final ValidationException e) {
+            } catch (final ToolRefusal e) {
                 warnings.add("Schema locations not checked: " + e.getMessage());
             }
         }
@@ -221,7 +221,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
                             .filter(NullSafe::isNonEmptyString)
                             .orElseGet(() -> heldSchemas.translationVersion(null, xslt));
             schema = heldSchemas.eventSchema(version);
-        } catch (final ValidationException e) {
+        } catch (final ToolRefusal e) {
             warnings.add("Event-logging element names not checked: " + e.getMessage());
             return;
         }

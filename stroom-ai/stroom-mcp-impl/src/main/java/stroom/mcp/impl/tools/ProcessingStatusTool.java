@@ -43,7 +43,6 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -124,18 +123,18 @@ class ProcessingStatusTool extends AbstractBuiltInTool {
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
         if (pipelineUuid == null) {
-            return ToolResult.error("Error: give pipeline_uuid, the pipeline whose processor filters to report.");
+            return JsonResults.refused("Error: give pipeline_uuid, the pipeline whose processor filters to report.");
         }
         final DocRef pipeline = documentAccess.findDocRef(pipelineUuid)
                 .filter(docRef -> PipelineDoc.TYPE.equals(docRef.getType()))
                 .orElse(null);
         final ProcessorFilterAccess.Filters found = processorFilterAccess.filtersOf(pipeline);
         if (found.refused() != null) {
-            return ToolResult.error("Error: Stroom refused to list this pipeline's processor filters: "
+            return JsonResults.refused("Error: Stroom refused to list this pipeline's processor filters: "
                                     + found.refused() + ".");
         }
         final Map<String, Object> result = status(pipelineUuid, found.filters());
-        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+        return JsonResults.of(result);
     }
 
     /// @return The status of the filters, as the Stroom MCP server gave it.

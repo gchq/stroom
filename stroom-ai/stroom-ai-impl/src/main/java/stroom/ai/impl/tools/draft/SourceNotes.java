@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
@@ -124,7 +126,7 @@ public final class SourceNotes {
     /// @param detail The event's `event_detail`, e.g. `Authenticate` or `Network/Permit`, or null.
     /// @return Why it can't be, or null when it can (or none is given).
     public static String detailProblem(final EventSchema schema, final String detail) {
-        final String given = stripSlashes(NullSafe.string(detail).strip());
+        final String given = PyText.strip(NullSafe.string(detail).strip(), "/");
         if (given.isEmpty()) {
             return null;
         }
@@ -179,7 +181,7 @@ public final class SourceNotes {
             if (NullSafe.isNonEmptyString(problem)) {
                 problems.add(label + ": " + problem);
             }
-            if (truthy(event.get("field")) && hasValue(event.get("value"))) {
+            if (JsonValues.truthy(event.get("field")) && hasValue(event.get("value"))) {
                 final List<String> key = key(event);
                 if (seen.containsKey(key)) {
                     problems.add(seen.get(key) + " and " + label + " are both " + key.get(0) + "=" + key.get(1)
@@ -214,7 +216,9 @@ public final class SourceNotes {
                                                    final Function<String, String> detailCheck) {
         final List<Map<String, Object>> common = (List<Map<String, Object>>) mapping.get("common");
         final List<Map<String, Object>> drafted = (List<Map<String, Object>>) mapping.get("events");
-        final List<Map<String, Object>> sampled = drafted.stream().filter(rule -> truthy(rule.get("when"))).toList();
+        final List<Map<String, Object>> sampled = drafted.stream()
+                .filter(rule -> JsonValues.truthy(rule.get("when")))
+                .toList();
         final Map<String, Object> applied = new LinkedHashMap<>();
         final List<String> appliedFields = new ArrayList<>();
         final List<String> appliedEvents = new ArrayList<>();
@@ -228,14 +232,14 @@ public final class SourceNotes {
         applied.put("from_sample", fromSample);
 
         final Map<String, Map<String, Object>> byField = new LinkedHashMap<>();
-        for (final Map<String, Object> field : maps(notes.get("fields"))) {
+        for (final Map<String, Object> field : JsonValues.maps(notes.get("fields"))) {
             if (names.contains(text(field.get("field")))) {
                 byField.put(text(field.get("field")), field);
             }
         }
         final List<Map<String, Object>> detailFields = new ArrayList<>();
         byField.forEach((name, note) -> {
-            final String path = stripSlashes(text(note.get("event_logging_path")).strip());
+            final String path = PyText.strip(text(note.get("event_logging_path")).strip(), "/");
             if (path.isEmpty()) {
                 return;
             }
@@ -259,7 +263,7 @@ public final class SourceNotes {
             appliedFields.add(name + " -> " + path);
         });
 
-        final List<Map<String, Object>> events = maps(notes.get("events")).stream()
+        final List<Map<String, Object>> events = JsonValues.maps(notes.get("events")).stream()
                 .filter(event -> names.contains(text(event.get("field"))) && hasValue(event.get("value")))
                 .toList();
         if (events.isEmpty()) {
@@ -283,8 +287,8 @@ public final class SourceNotes {
 
         final List<Map<String, Object>> rules = new ArrayList<>();
         for (final Map<String, Object> event : events) {
-            String detail = stripSlashes(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
-                    .strip());
+            String detail = PyText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
+                    .strip(), "/");
             if (detail.isEmpty()) {
                 detail = UNKNOWN;
             }
@@ -338,7 +342,7 @@ public final class SourceNotes {
             }
         }
         final Map<String, Object> other = drafted.stream()
-                .filter(rule -> !truthy(rule.get("when")))
+                .filter(rule -> !JsonValues.truthy(rule.get("when")))
                 .findFirst()
                 .orElse(null);
         final Set<String> namesUsed = new LinkedHashSet<>();
@@ -366,8 +370,8 @@ public final class SourceNotes {
         final Map<String, Map<String, Object>> fields = new LinkedHashMap<>();
         final List<Map<String, Object>> events = new ArrayList<>();
         for (final Map<String, Object> note : NullSafe.list(notes)) {
-            maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
-            events.addAll(maps(note.get("events")));
+            JsonValues.maps(note.get("fields")).forEach(field -> fields.putIfAbsent(text(field.get("field")), field));
+            events.addAll(JsonValues.maps(note.get("events")));
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("fields", new ArrayList<>(fields.values()));
@@ -384,44 +388,44 @@ public final class SourceNotes {
     public static List<String> checkMapping(final Map<String, Object> mapping, final Map<String, Object> notes) {
         final List<String> problems = new ArrayList<>();
         final Map<Object, Map<String, Object>> common = new LinkedHashMap<>();
-        maps(mapping.get("common")).forEach(entry -> common.put(entry.get("path"), entry));
-        for (final Map<String, Object> event : maps(notes.get("events"))) {
-            if (!truthy(event.get("field")) || !hasValue(event.get("value"))) {
+        JsonValues.maps(mapping.get("common")).forEach(entry -> common.put(entry.get("path"), entry));
+        for (final Map<String, Object> event : JsonValues.maps(notes.get("events"))) {
+            if (!JsonValues.truthy(event.get("field")) || !hasValue(event.get("value"))) {
                 continue;
             }
-            final String value = pythonStr(event.get("value"));
-            final String label = firstTruthy(event.get("event"), value, value) + " (" + pythonStr(event.get("field"))
+            final String value = PyText.str(event.get("value"));
+            final String label = firstTruthy(event.get("event"), value, value) + " (" + PyText.str(event.get("field"))
                                  + "=" + value + ")";
-            final Map<String, Object> rule = ruleFor(maps(mapping.get("events")), pythonStr(event.get("field")),
-                    value);
+            final Map<String, Object> rule = ruleFor(JsonValues.maps(mapping.get("events")),
+                    PyText.str(event.get("field")), value);
             if (rule == null) {
                 problems.add(label + ": no rule takes it");
                 continue;
             }
             final Set<String> details = new TreeSet<>();
-            for (final Map<String, Object> field : maps(rule.get("fields"))) {
+            for (final Map<String, Object> field : JsonValues.maps(rule.get("fields"))) {
                 final String path = text(field.get("path"));
                 if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2) {
                     details.add(path.split("/")[1]);
                 }
             }
-            final String want = stripSlashes(text(event.get("event_detail")).strip()).split("/")[0];
+            final String want = PyText.strip(text(event.get("event_detail")).strip(), "/").split("/")[0];
             if (!want.isEmpty() && !UNKNOWN.equals(want) && !details.contains(want)) {
                 problems.add(label + ": the documentation says " + want + "; rule '" + text(rule.get("name"))
                              + "' writes " + (details.isEmpty()
                         ? "no action element"
                         : String.join(", ", details)));
             }
-            if (truthy(event.get("type_id"))) {
-                final Map<String, Object> typeId = maps(rule.get("fields")).stream()
+            if (JsonValues.truthy(event.get("type_id"))) {
+                final Map<String, Object> typeId = JsonValues.maps(rule.get("fields")).stream()
                         .filter(field -> "EventDetail/TypeId".equals(field.get("path")))
                         .findFirst()
                         .orElse(common.get("EventDetail/TypeId"));
                 if (typeId != null && typeId.get("value") != null
-                    && !pythonStr(typeId.get("value")).equals(pythonStr(event.get("type_id")))) {
-                    problems.add(label + ": the documentation's TypeId is '" + pythonStr(event.get("type_id"))
+                    && !PyText.str(typeId.get("value")).equals(PyText.str(event.get("type_id")))) {
+                    problems.add(label + ": the documentation's TypeId is '" + PyText.str(event.get("type_id"))
                                  + "'; rule '" + text(rule.get("name")) + "' writes '"
-                                 + pythonStr(typeId.get("value")) + "'");
+                                 + PyText.str(typeId.get("value")) + "'");
                 }
             }
         }
@@ -434,7 +438,7 @@ public final class SourceNotes {
                                                final String field,
                                                final String value) {
         for (final Map<String, Object> rule : rules) {
-            final List<Map<String, Object>> when = maps(rule.get("when"));
+            final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
             if (when.isEmpty()) {
                 return rule;
             }
@@ -444,10 +448,10 @@ public final class SourceNotes {
                     ok = false;
                     break;
                 }
-                if (condition.get("equals") != null && !pythonStr(condition.get("equals")).equals(value)) {
+                if (condition.get("equals") != null && !PyText.str(condition.get("equals")).equals(value)) {
                     ok = false;
                 } else if (condition.get("one_of") != null && (!(condition.get("one_of") instanceof final List<?> one)
-                                                               || one.stream().map(SourceNotes::pythonStr)
+                                                               || one.stream().map(PyText::str)
                                                                        .noneMatch(value::equals))) {
                     ok = false;
                 } else if (condition.get("equals") == null && condition.get("one_of") == null) {
@@ -486,25 +490,26 @@ public final class SourceNotes {
                                             final List<Map<String, Object>> sampled,
                                             final List<String> rest) {
         final List<Map<String, Object>> fields = new ArrayList<>();
-        if (truthy(event.get("type_id"))) {
+        if (JsonValues.truthy(event.get("type_id"))) {
             fields.add(entry("path", "EventDetail/TypeId", "value", text(event.get("type_id"))));
         } else {
             fields.add(entry("path", "EventDetail/TypeId", "field", key.get(0)));
         }
-        if (truthy(event.get("description"))) {
+        if (JsonValues.truthy(event.get("description"))) {
             fields.add(entry("path", "EventDetail/Description", "value", event.get("description")));
         }
-        if (truthy(event.get("action"))) {
+        if (JsonValues.truthy(event.get("action"))) {
             fields.add(entry("path", EVENT_DETAIL + detail + "/Action", "value", event.get("action")));
         }
         if (event.get("success") != null) {
             fields.add(entry("path", EVENT_DETAIL + detail + "/Outcome/Success", "value",
-                    truthy(event.get("success"))
+                    JsonValues.truthy(event.get("success"))
                             ? "true"
                             : "false"));
         }
         final String user = common.stream()
-                .filter(entry -> "EventSource/User/Id".equals(entry.get("path")) && truthy(entry.get("field")))
+                .filter(entry -> "EventSource/User/Id".equals(entry.get("path"))
+                                 && JsonValues.truthy(entry.get("field")))
                 .map(entry -> text(entry.get("field")))
                 .findFirst()
                 .orElse(null);
@@ -522,15 +527,15 @@ public final class SourceNotes {
         sampled.stream()
                 .filter(rule -> covers(rule, key) && detailOf(rule).contains(element))
                 .findFirst()
-                .ifPresent(like -> fields.addAll(maps(like.get("fields")).stream()
+                .ifPresent(like -> fields.addAll(JsonValues.maps(like.get("fields")).stream()
                         .filter(field -> text(field.get("path")).startsWith(prefix)
                                          && !(text(field.get("path")).endsWith("/Data") || hasPath(fields, field)))
                         .toList()));
         for (final String name : rest) {
             fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
         }
-        final String name = stripUnderscores(NOT_NAME.matcher(firstTruthy(event.get("event"), key.get(1), ""))
-                .replaceAll("_")).toLowerCase(Locale.ROOT);
+        final String name = PyText.strip(NOT_NAME.matcher(firstTruthy(event.get("event"), key.get(1), ""))
+                .replaceAll("_"), "_").toLowerCase(Locale.ROOT);
         final Map<String, Object> rule = new LinkedHashMap<>();
         rule.put("name", name.isEmpty()
                 ? "event"
@@ -544,7 +549,7 @@ public final class SourceNotes {
     // The action elements a rule writes.
     private static Set<String> detailOf(final Map<String, Object> rule) {
         final Set<String> elements = new LinkedHashSet<>();
-        for (final Map<String, Object> field : maps(rule.get("fields"))) {
+        for (final Map<String, Object> field : JsonValues.maps(rule.get("fields"))) {
             final String path = text(field.get("path"));
             if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2) {
                 elements.add(path.split("/")[1]);
@@ -560,15 +565,15 @@ public final class SourceNotes {
     }
 
     private static boolean covers(final Map<String, Object> rule, final List<String> key) {
-        for (final Map<String, Object> condition : maps(rule.get("when"))) {
+        for (final Map<String, Object> condition : JsonValues.maps(rule.get("when"))) {
             if (!key.get(0).equals(condition.get("field"))) {
                 continue;
             }
             final boolean matches = condition.get("equals") != null
-                    ? pythonStr(condition.get("equals")).equals(key.get(1))
+                    ? PyText.str(condition.get("equals")).equals(key.get(1))
                     : NullSafe.list(condition.get("one_of") instanceof final List<?> list
                             ? list
-                            : null).stream().map(SourceNotes::pythonStr).toList().contains(key.get(1));
+                            : null).stream().map(PyText::str).toList().contains(key.get(1));
             if (matches) {
                 return true;
             }
@@ -581,7 +586,7 @@ public final class SourceNotes {
     }
 
     private static List<String> key(final Map<String, Object> event) {
-        return List.of(text(event.get("field")), pythonStr(event.get("value")));
+        return List.of(text(event.get("field")), PyText.str(event.get("value")));
     }
 
     private static Map<String, Object> entry(final Object... keysAndValues) {
@@ -592,31 +597,18 @@ public final class SourceNotes {
         return entry;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> maps(final Object value) {
-        final List<Map<String, Object>> found = new ArrayList<>();
-        if (value instanceof final List<?> list) {
-            for (final Object item : list) {
-                if (item instanceof final Map<?, ?> map) {
-                    found.add((Map<String, Object>) map);
-                }
-            }
-        }
-        return found;
-    }
-
     private static Map<String, String> strings(final Map<?, ?> map) {
         final Map<String, String> out = new LinkedHashMap<>();
-        map.forEach((key, value) -> out.put(String.valueOf(key), pythonStr(value)));
+        map.forEach((key, value) -> out.put(String.valueOf(key), PyText.str(value)));
         return out;
     }
 
     private static String firstTruthy(final Object first, final Object second, final String otherwise) {
-        if (truthy(first)) {
-            return pythonStr(first);
+        if (JsonValues.truthy(first)) {
+            return PyText.str(first);
         }
-        return truthy(second)
-                ? pythonStr(second)
+        return JsonValues.truthy(second)
+                ? PyText.str(second)
                 : otherwise;
     }
 
@@ -624,58 +616,10 @@ public final class SourceNotes {
         return value != null && !"".equals(value);
     }
 
-    // As Python's truth test of a JSON value.
-    private static boolean truthy(final Object value) {
-        return switch (value) {
-            case null -> false;
-            case final Boolean bool -> bool;
-            case final String text -> !text.isEmpty();
-            case final Number number -> number.doubleValue() != 0;
-            case final List<?> list -> !list.isEmpty();
-            case final Map<?, ?> map -> !map.isEmpty();
-            default -> true;
-        };
-    }
-
     // A value as text, "" for null.
     private static String text(final Object value) {
         return value == null
                 ? ""
-                : pythonStr(value);
-    }
-
-    // As Python's str() of a JSON value.
-    private static String pythonStr(final Object value) {
-        return switch (value) {
-            case null -> "None";
-            case final Boolean bool -> bool
-                    ? "True"
-                    : "False";
-            default -> String.valueOf(value);
-        };
-    }
-
-    private static String stripSlashes(final String text) {
-        int start = 0;
-        int end = text.length();
-        while (start < end && text.charAt(start) == '/') {
-            start++;
-        }
-        while (end > start && text.charAt(end - 1) == '/') {
-            end--;
-        }
-        return text.substring(start, end);
-    }
-
-    private static String stripUnderscores(final String text) {
-        int start = 0;
-        int end = text.length();
-        while (start < end && text.charAt(start) == '_') {
-            start++;
-        }
-        while (end > start && text.charAt(end - 1) == '_') {
-            end--;
-        }
-        return text.substring(start, end);
+                : PyText.str(value);
     }
 }

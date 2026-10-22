@@ -18,8 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -59,9 +61,17 @@ class TestFeedNames {
     @Test
     void testRatioIsDifflibs() {
         // As Python's difflib.SequenceMatcher(None, a, b).ratio() gives them.
-        assertThat(FeedNames.ratio("abcd", "bcde")).isCloseTo(0.75, within(1e-9));
-        assertThat(FeedNames.ratio("acme-vpn", "acme-vpn-events")).isCloseTo(16.0 / 23, within(1e-9));
-        assertThat(FeedNames.ratio("", "")).isEqualTo(1.0);
+        assertThat(CloseMatches.ratio("abcd", "bcde")).isCloseTo(0.75, within(1e-9));
+        assertThat(CloseMatches.ratio("acme-vpn", "acme-vpn-events")).isCloseTo(16.0 / 23, within(1e-9));
+        assertThat(CloseMatches.ratio("", "")).isEqualTo(1.0);
+    }
+
+    @Test
+    void testAFeedNameThatIsNoFeedsHereMayBeAnotherClustersFeed() {
+        assertThat(FeedNames.noFeedNamed("ACME").getMessage())
+                .startsWith("No feed named 'ACME' in this Stroom. If the user named it, they may mean a different "
+                            + "Stroom cluster: stop")
+                .endsWith("Don't look for another document to use instead, and don't create one.");
     }
 
     @Test

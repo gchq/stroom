@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;

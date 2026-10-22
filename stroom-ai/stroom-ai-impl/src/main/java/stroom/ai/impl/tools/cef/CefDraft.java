@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.cef;
 
-import stroom.ai.impl.tools.fielddoc.PythonStrings;
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.XmlElement;
 
 import java.util.ArrayList;
@@ -90,13 +90,13 @@ public final class CefDraft {
         }
         // Values the header carries are not sent again in the extension.
         for (final CefValue value : head.values()) {
-            if (PythonStrings.truthy(value.source())) {
+            if (JsonValues.truthy(value.source())) {
                 draft.takenByHeader.add(value.source());
             }
         }
         CefKeys.HEADER_PATHS.forEach((name, path) -> {
             final String source = head.get(name).source();
-            if (PythonStrings.truthy(source) && source.contains(path)) {
+            if (JsonValues.truthy(source) && source.contains(path)) {
                 draft.takenByHeader.add(path);
             }
         });
@@ -146,14 +146,14 @@ public final class CefDraft {
             }
         }
         final List<CefOverride> given = Objects.requireNonNullElse(overrides, List.of());
-        if (given.stream().anyMatch(o -> o.eventType() == null && PythonStrings.truthy(o.key())
+        if (given.stream().anyMatch(o -> o.eventType() == null && JsonValues.truthy(o.key())
                                          && seenPaths.stream().noneMatch(p -> matches(o.path(), p)))) {
             final List<String> missing = given.stream()
-                    .filter(o -> PythonStrings.truthy(o.key()) && seenPaths.stream().noneMatch(p -> matches(o.path(),
+                    .filter(o -> JsonValues.truthy(o.key()) && seenPaths.stream().noneMatch(p -> matches(o.path(),
                             p)))
                     .map(CefOverride::path)
                     .toList();
-            draft.notes.add("overrides for paths no sample Event holds, not used: " + PythonRepr.list(missing));
+            draft.notes.add("overrides for paths no sample Event holds, not used: " + PyText.list(missing));
         }
         final CefPlan plan = new CefPlan(output, topic, kafkaKey, customKeys, head.get("vendor"), head.get("product"),
                 head.get("version"), head.get("signature"), head.get("name"), head.get("severity"), common, eventsOut,
@@ -237,7 +237,7 @@ public final class CefDraft {
                 .filter(n -> !plan.notSent().contains(n))
                 .toList();
         if (!unsent.isEmpty()) {
-            notes.add(unsent.size() + " new value(s) no key or free slot takes: " + PythonRepr.list(unsent.stream()
+            notes.add(unsent.size() + " new value(s) no key or free slot takes: " + PyText.list(unsent.stream()
                     .map(n -> n.get("path"))
                     .limit(8)
                     .toList()));
@@ -254,7 +254,7 @@ public final class CefDraft {
         if (data.find()) {
             return data.group(1);
         }
-        final List<String> steps = PythonStrings.split(path, "/").stream()
+        final List<String> steps = PyText.split(path, "/").stream()
                 .filter(s -> !NOT_LABEL.contains(s) && !s.startsWith("@"))
                 .toList();
         return String.join(" ", steps.subList(Math.max(0, steps.size() - 3), steps.size()));
@@ -266,8 +266,8 @@ public final class CefDraft {
     /// @param path    An Event path.
     /// @return True if it matches.
     public static boolean matches(final String pattern, final String path) {
-        final List<String> want = PythonStrings.split(pattern, "/");
-        final List<String> have = PythonStrings.split(path, "/");
+        final List<String> want = PyText.split(pattern, "/");
+        final List<String> have = PyText.split(path, "/");
         if (want.size() != have.size()) {
             return false;
         }
@@ -331,7 +331,7 @@ public final class CefDraft {
         if (kind != null) {
             entry.put("event_type", kind);
         }
-        if (PythonStrings.truthy(f.label())) {
+        if (JsonValues.truthy(f.label())) {
             entry.put("label", f.label());
         }
         return entry;
@@ -420,13 +420,13 @@ public final class CefDraft {
                 notSent.add(notSent(path, where, INSTRUCTED));
                 return;
             }
-            if (given != null && PythonStrings.truthy(given.key())) {
+            if (given != null && JsonValues.truthy(given.key())) {
                 final String key = CefKeys.keyOf(given.key());
                 if (used.contains(key)) {
                     notes.add("[" + where + "] " + path + " -> " + key + " as instructed, but " + key + " was already "
                               + "taken: check the overrides");
                 }
-                out.add(new CefField(path, key, PythonStrings.truthy(given.label())
+                out.add(new CefField(path, key, JsonValues.truthy(given.label())
                         ? given.label()
                         : CefKeys.SLOT_KEYS.contains(key)
                                 ? labelFor(path)
@@ -450,7 +450,7 @@ public final class CefDraft {
                 return;
             }
             if (home != null) {
-                notes.add("[" + where + "] " + path + ": values like " + PythonRepr.list(values.subList(0,
+                notes.add("[" + where + "] " + path + ": values like " + PyText.list(values.subList(0,
                         Math.min(2, values.size()))) + " don't fit " + home.key() + " (" + CefKeys.KEYS.get(home.key())
                                   .type() + "), so it goes to a custom slot");
             }

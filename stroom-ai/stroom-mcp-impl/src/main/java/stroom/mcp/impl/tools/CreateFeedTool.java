@@ -17,11 +17,13 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -170,7 +172,7 @@ class CreateFeedTool extends AbstractBuiltInTool {
         final String encoding = NullSafe.nonBlankStringElse(stringArg(call, ENCODING_ARG), "UTF-8");
         final String streamType = NullSafe.nonBlankStringElse(stringArg(call, STREAM_TYPE_ARG), "Raw Events");
         final String description = NullSafe.string(rawArg(call, DESCRIPTION_ARG));
-        final boolean testFeed = BuildPlan.truthy(flag(call, TEST_FEED_ARG));
+        final boolean testFeed = JsonValues.truthy(flag(call, TEST_FEED_ARG));
         final Optional<Map<String, Object>> existing = buildFeeds.existingFeed(proposed, build);
         if (existing.isPresent()) {
             return plan.withNext(context, build, existing.get());

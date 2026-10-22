@@ -16,7 +16,9 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
@@ -71,19 +73,19 @@ public final class FieldDocs {
             "^(EventDetail/)(?!(?:TypeId|Description|Classification|Purpose|Data)\\b)([^/\\[]+)(?=/)");
     private static final Pattern DESCRIPTIONS = Pattern.compile("<!-- stroom-mcp field descriptions\\n(.*?)\\n-->",
             Pattern.DOTALL);
-    private static final Pattern IP = PythonStrings.re("^(\\d{1,3}\\.){3}\\d{1,3}$|^[0-9a-fA-F:]+:[0-9a-fA-F:]*$");
-    private static final Pattern EMAIL = PythonStrings.re("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-    private static final Pattern TIME = PythonStrings.re("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}");
-    private static final Pattern NUMBER = PythonStrings.re("^-?\\d+(\\.\\d+)?$");
+    private static final Pattern IP = PyText.re("^(\\d{1,3}\\.){3}\\d{1,3}$|^[0-9a-fA-F:]+:[0-9a-fA-F:]*$");
+    private static final Pattern EMAIL = PyText.re("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern TIME = PyText.re("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}");
+    private static final Pattern NUMBER = PyText.re("^-?\\d+(\\.\\d+)?$");
     private static final Pattern DATA = Pattern.compile("Data\\[@Name='([^']+)'\\]/@Value$");
     private static final Pattern PREDICATE = Pattern.compile("\\[[^\\]]*\\]");
     // The schema's descriptive openings, which say nothing about the field itself.
-    private static final Pattern BOILERPLATE = PythonStrings.re("^This element (?:contains (?:information about|data "
+    private static final Pattern BOILERPLATE = PyText.re("^This element (?:contains (?:information about|data "
                                                                 + "relating to)|provides details of|describes|details)"
                                                                 + "\\s+(?:the details of\\s+)?(?:the\\s+)?");
     private static final Pattern CAMEL_GAP = Pattern.compile("(?<=[a-z])(?=[A-Z])");
-    private static final Pattern GENERIC = PythonStrings.re("\\bthe (object|device)\\b");
-    private static final Pattern EXAMPLE_TAIL = PythonStrings.re(",?\\s+e\\.?g\\.?\\s.*$");
+    private static final Pattern GENERIC = PyText.re("\\bthe (object|device)\\b");
+    private static final Pattern EXAMPLE_TAIL = PyText.re(",?\\s+e\\.?g\\.?\\s.*$");
     private static final List<String> NETWORK_ACTIONS = List.of("Permit", "Deny", "Connect", "Open", "Close", "Bind",
             "Send", "Receive", "Listen");
 
@@ -128,33 +130,33 @@ public final class FieldDocs {
         String text;
         final Lookup lookup = entry.lookup();
         if (lookup != null) {
-            final String key = PythonStrings.truthy(lookup.field())
+            final String key = JsonValues.truthy(lookup.field())
                     ? "`" + lookup.field() + "`"
                     : "`" + readable(lookup.xpath()) + "`";
-            text = "lookup `" + lookup.map() + "` by " + key + (PythonStrings.truthy(lookup.path())
+            text = "lookup `" + lookup.map() + "` by " + key + (JsonValues.truthy(lookup.path())
                     ? " -> `" + lookup.path() + "`"
                     : "");
-        } else if (PythonStrings.truthy(entry.anyOf())) {
+        } else if (JsonValues.truthy(entry.anyOf())) {
             text = "first of " + entry.anyOf().stream().map(f -> "`" + f + "`").collect(Collectors.joining(", "));
         } else if (entry.field() != null) {
             text = "`" + entry.field() + "`";
         } else {
             text = "`" + readable(entry.xpath()) + "`";
         }
-        if (PythonStrings.truthy(entry.dictionary())) {
+        if (JsonValues.truthy(entry.dictionary())) {
             text += " via dictionary `" + entry.dictionary() + "`";
         }
-        if (PythonStrings.truthy(entry.transform())) {
+        if (JsonValues.truthy(entry.transform())) {
             text += " (" + entry.transform() + ")";
         }
         if ("record".equals(entry.scope())) {
             text += " (of the record)";
         }
-        if (PythonStrings.truthy(entry.timeFormat())) {
-            text += " (time " + entry.timeFormat() + (PythonStrings.truthy(entry.timezone())
+        if (JsonValues.truthy(entry.timeFormat())) {
+            text += " (time " + entry.timeFormat() + (JsonValues.truthy(entry.timezone())
                     ? ", " + entry.timezone()
                     : "") + ")";
-        } else if (PythonStrings.truthy(entry.timezone())) {
+        } else if (JsonValues.truthy(entry.timezone())) {
             text += " (" + entry.timezone() + ")";
         }
         if (entry.hasMap()) {
@@ -297,7 +299,7 @@ public final class FieldDocs {
         if (descriptions.isEmpty()) {
             return "";
         }
-        final String body = PythonStrings.jsonIndented(descriptions).replace("--", "-\\u002d");
+        final String body = PyJson.dumps(descriptions, 1, false).replace("--", "-\\u002d");
         return "<!-- stroom-mcp field descriptions\n" + body + "\n-->";
     }
 
@@ -314,7 +316,7 @@ public final class FieldDocs {
         final Matcher data = DATA.matcher(source);
         final boolean isData = data.find();
         String path = PREDICATE.matcher(isData
-                ? PythonStrings.split(source, "/Data[").getFirst()
+                ? PyText.split(source, "/Data[").getFirst()
                 : source).replaceAll("");
         String attribute = null;
         if (path.contains("/@")) {
@@ -349,7 +351,7 @@ public final class FieldDocs {
                        + trimmed.substring(trimmed.offsetByCodePoints(0, 1));
             }
         }
-        final List<String> parts = PythonStrings.split(PythonStrings.strip(path, "/"), "/");
+        final List<String> parts = PyText.split(PyText.strip(path, "/"), "/");
         if (!said.isEmpty() && parts.size() > 1) {
             // Ids and names inherit a base type's words ('the object', 'the device'): name the element they
             // belong to.
@@ -365,16 +367,16 @@ public final class FieldDocs {
         if (isData) {
             // The element the Data is under, not its description (seen in testing: every Data under Send was
             // described as 'Used for send events that are at a higher level than a network/send event').
-            final String stripped = PythonStrings.strip(path, "/");
+            final String stripped = PyText.strip(path, "/");
             final String under = stripped.isEmpty()
                     ? ""
-                    : PythonStrings.split(stripped, "/").getLast();
+                    : PyText.split(stripped, "/").getLast();
             return "The `" + data.group(1) + "` value recorded in a Data element" + (under.isEmpty()
                     ? "."
                     : " of " + under + ".");
         }
         if (attribute != null) {
-            return "The `" + attribute + "` attribute of " + PythonStrings.split(path, "/").getLast() + (said.isEmpty()
+            return "The `" + attribute + "` attribute of " + PyText.split(path, "/").getLast() + (said.isEmpty()
                     ? "."
                     : ": " + said);
         }
@@ -391,8 +393,8 @@ public final class FieldDocs {
     /// @return The description, each part ending with a full stop.
     public static String fieldDescription(final String what, final List<List<String>> perDocument) {
         final List<String> parts = new ArrayList<>();
-        if (what != null && !PythonStrings.strip(what).isEmpty()) {
-            parts.add(PythonStrings.strip(what));
+        if (what != null && !PyText.strip(what).isEmpty()) {
+            parts.add(PyText.strip(what));
         }
         if (perDocument != null) {
             final List<List<String>> holding = perDocument.stream()
@@ -421,7 +423,7 @@ public final class FieldDocs {
     /// @return Its action (`Authenticate`), or null for what any kind of event has (EventTime, EventSource, TypeId,
     /// Description, the ids) or no path at all.
     public static String actionOf(final String source) {
-        final List<String> parts = PythonStrings.split(PythonStrings.strip(PREDICATE.matcher(source == null
+        final List<String> parts = PyText.split(PyText.strip(PREDICATE.matcher(source == null
                 ? ""
                 : source).replaceAll(""), "/"), "/");
         return parts.size() > 1 && "EventDetail".equals(parts.get(0)) && !CefKeys.NOT_ACTION.contains(parts.get(1))
@@ -482,7 +484,7 @@ public final class FieldDocs {
             return "(none in the sample)";
         }
         return distinct.subList(0, Math.min(3, distinct.size())).stream()
-                       .map(v -> "`" + PythonStrings.head(v, 40) + "`")
+                       .map(v -> "`" + PyText.head(v, 40) + "`")
                        .collect(Collectors.joining(", ")) + (distinct.size() > 3
                 ? " (+" + (distinct.size() - 3) + ")"
                 : "");

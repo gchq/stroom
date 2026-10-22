@@ -18,16 +18,19 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
@@ -118,7 +121,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                 .items(StringSchema.builder().build())
                                 .description("Only for samples that are not files (pasted text): every sample's "
                                              + "text, by name or as a list, to tell the format and fields from: "
-                                             + SampleArguments.SAMPLE_GUIDE + ". Never trimmed further, completed "
+                                             + SampleTexts.SAMPLE_GUIDE + ". Never trimmed further, completed "
                                              + "or repaired. Not paths: this server cannot read the client's "
                                              + "files.")
                                 .build())
@@ -177,7 +180,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             named = read.texts();
             notes = read.notes();
         } else {
-            named = SampleArguments.namedSamples(samples);
+            named = SampleTexts.asNamedSamples(samples, null);
         }
         if (named.isEmpty()) {
             throw new ToolRefusal("Give the sample files' text (samples by file name), or stream_ids once they are "
@@ -187,7 +190,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         plan.rememberBuild(context, build);
         final Map<String, Object> profiled = sampleProfiler.profileAll(named);
         final Optional<String> tooLong = samples != null
-                ? SampleArguments.longSamplesNote(named)
+                ? Optional.ofNullable(SampleTexts.longSamplesNote(named))
                 : Optional.empty();
         final String format = String.valueOf(profiled.get("format"));
         final String parser = BuildPlan.PARSER_FOR_FORMAT.getOrDefault(format, List.of("DSParser")).getFirst();
@@ -248,7 +251,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         result.put("task_list", BuildPlan.TASK_LIST);
         result.put("next", firstStep(build, steps));
         result.put("then", List.of(
-                "upload_sample feed=<the feed> files=" + SampleArguments.pythonList(files) + ": run each command it "
+                "upload_sample feed=<the feed> files=" + PyText.list(files) + ": run each command it "
                 + "gives in the user's terminal; each prints the stream_id",
                 "start_onboarding source_name='" + sourceName + "' build='" + build + "' stream_ids=<those stream "
                 + "ids>: it profiles the uploaded files (format, fields, parser, template, converter) and says what "

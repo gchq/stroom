@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.docref.DocRef;
@@ -171,9 +172,9 @@ class TestBuildPlan {
         for (final Object[] each : cases) {
             final String step = (String) each[0];
             final String processing = (String) each[1];
-            final BuildPlan.NextCall call = BuildPlan.nextCall(step, BuildPlan.CallArgs.of("b", List.of("F"),
-                    List.of(1L), List.of(2L), "p", "q").withProcessing(processing, Map.of("uuid", "i", "backend",
-                    "lucene")));
+            final BuildPlan.NextCall call = BuildPlan.nextCall(step, new BuildPlan.CallArgs("b", List.of("F"),
+                    List.of(1L), List.of(2L), "p", "q", processing, Map.of("uuid", "i", "backend", "lucene"),
+                    List.of(), false, null, null, null));
             // The sample's filter is created once the user approves it (asked for by the user); one left disabled is
             // waited on only once the user enables it.
             if (processing == null) {

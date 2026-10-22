@@ -17,10 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.DocumentationText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -39,7 +41,6 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -149,7 +150,7 @@ class IndexDocumentation {
         Map<String, Object> survey = indexSurveys.surveyIndex(context, ref, 100, true);
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
         final Map<String, List<String>> expected = new LinkedHashMap<>();
-        for (final Map<String, Object> fed : maps(survey.get("fed_by"))) {
+        for (final Map<String, Object> fed : JsonValues.maps(survey.get("fed_by"))) {
             final FieldPlan plan = planOf(fed.get("plan"));
             if (plan == null) {
                 continue;
@@ -165,7 +166,7 @@ class IndexDocumentation {
                 : schema(context, request.build());
         // Every field a feeding pipeline writes must be in the index, or the doc would leave it out unsaid.
         final Set<String> listed = new LinkedHashSet<>();
-        maps(survey.get("fields")).forEach(field -> listed.add(String.valueOf(field.get("name"))));
+        JsonValues.maps(survey.get("fields")).forEach(field -> listed.add(String.valueOf(field.get("name"))));
         Map<String, List<String>> missingBy = Map.of();
         if (expected.values().stream().flatMap(List::stream).anyMatch(field -> !listed.contains(field))) {
             missingBy = indexFields.notInIndex(ref, expected);
@@ -312,17 +313,6 @@ class IndexDocumentation {
         return plan instanceof final Map<?, ?> map && !map.isEmpty()
                 ? FieldPlan.fromJson((Map<String, Object>) map)
                 : null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> maps(final Object value) {
-        final List<Map<String, Object>> out = new ArrayList<>();
-        if (value instanceof final List<?> list) {
-            list.stream()
-                    .filter(Map.class::isInstance)
-                    .forEach(item -> out.add((Map<String, Object>) item));
-        }
-        return out;
     }
 
 

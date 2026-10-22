@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.ExampleNames.FieldGroup;
 import stroom.ai.impl.tools.indexing.ExampleNames.Named;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
@@ -63,7 +65,7 @@ class TestIndexingParity {
     Stream<DynamicTest> everyRecordedCallGivesWhatTheServerGave() {
         final List<Object> calls = calls();
         return calls.stream().map(item -> {
-            final Map<String, Object> call = PyValues.map(item);
+            final Map<String, Object> call = JsonValues.map(item);
             return DynamicTest.dynamicTest(call.get("fn") + " " + call.get("test"), () -> check(call));
         });
     }
@@ -71,7 +73,7 @@ class TestIndexingParity {
     @Test
     void everyFunctionIsReached() {
         final Set<String> functions = new TreeSet<>();
-        calls().forEach(item -> functions.add((String) PyValues.map(item).get("fn")));
+        calls().forEach(item -> functions.add((String) JsonValues.map(item).get("fn")));
         assertThat(functions).contains("templatecheck.compare", "templatecheck.from_example",
                 "templatecheck.names_from_example", "templatecheck.with_components", "templatecheck.compose",
                 "templatecheck.composition", "templatecheck.json_xml_documents", "templatecheck.flatten_document",
@@ -83,12 +85,12 @@ class TestIndexingParity {
     }
 
     private static List<Object> calls() {
-        return PyValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
+        return JsonValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
                 "/stroom/ai/impl/tools/indexing/recorded_calls.json")));
     }
 
     private static void check(final Map<String, Object> call) {
-        final Args args = new Args(PyValues.listOrEmpty(call.get("args")), PyValues.mapOrEmpty(call.get("kwargs")));
+        final Args args = new Args(JsonValues.listOrEmpty(call.get("args")), JsonValues.mapOrEmpty(call.get("kwargs")));
         final String fn = (String) call.get("fn");
         if (call.containsKey("raises")) {
             final Throwable thrown = catchThrown(() -> run(fn, args, call));
@@ -104,7 +106,7 @@ class TestIndexingParity {
         try {
             runnable.run();
             return null;
-        } catch (final IllegalArgumentException | IndexingRefusal e) {
+        } catch (final IllegalArgumentException | ToolRefusal e) {
             return e;
         }
     }
@@ -115,7 +117,7 @@ class TestIndexingParity {
         return switch (fn) {
             case "ecs.check" -> ECS.check(args.string(0, "name"), args.string(1, "type_"));
             case "ecs.problems" -> ECS.problems(plannedFields(args.get(0, "fields")),
-                    PyValues.strings(decode(args.get(1, "namespaces", List.of()))));
+                    JsonValues.strings(decode(args.get(1, "namespaces", List.of()))));
             case "ecs.source_namespace" -> ECS.sourceNamespace(args.string(0, "index_name"));
             case "ecs.for_data_name" -> ECS.forDataName(args.string(0, "data_name"));
             case "ecs.left_to_component" -> ECS.leftToComponent(args.string(0, "name"), args.string(1, "plan_type"));
@@ -136,7 +138,7 @@ class TestIndexingParity {
             case "indexing.missing_fields_said" -> IndexingHelpers.missingFieldsSaid(
                     (Map<String, List<String>>) (Map<?, ?>) args.map(0, "missing"), args.string(1, "index_name"));
             case "indexing.writes_to" -> writesTo(args);
-            case "indexing._component_notes" -> IndexingHelpers.componentNotes(PyValues.strings(args.get(0,
+            case "indexing._component_notes" -> IndexingHelpers.componentNotes(JsonValues.strings(args.get(0,
                     "missing")));
             case "indexing._ecs_base" -> IndexingHelpers.ecsBase(args.map(0, "example"));
             case "plan.elastic_template" -> plan(call).elasticTemplate(args.string(0, "template_name"),
@@ -156,13 +158,13 @@ class TestIndexingParity {
     private static Object runTemplateCheck(final String fn, final Args args) {
         return switch (fn) {
             case "templatecheck.as_put" -> args.has(1, "fields")
-                    ? IndexTemplates.asPut(args.get(0, "body"), PyValues.strings(decode(args.get(1, "fields"))))
+                    ? IndexTemplates.asPut(args.get(0, "body"), JsonValues.strings(decode(args.get(1, "fields"))))
                     : IndexTemplates.asPut(args.get(0, "body"));
             case "templatecheck.stroom_tool_templates" -> IndexTemplates.stroomToolTemplates(args.get(0, "text"));
             case "templatecheck.parse_template" -> IndexTemplates.parseTemplate(args.string(0, "text"));
             case "templatecheck.dev_tools" -> IndexTemplates.devTools(args.string(0, "name"), args.map(1, "body"));
             case "templatecheck.parse_component_templates" -> IndexTemplates.parseComponentTemplates(
-                    PyValues.listOrEmpty(args.get(0, "texts")));
+                    JsonValues.listOrEmpty(args.get(0, "texts")));
             case "templatecheck.with_components" -> ExampleTemplates.withComponents(args.map(0, "body"),
                     components(args.get(1, "components")), args.strings(2, "include"), args.strings(3, "exclude"),
                     ECS);
@@ -170,7 +172,7 @@ class TestIndexingParity {
                     args.map(0, "mappings"), ECS);
             case "templatecheck.not_indexed" -> TemplateMappings.notIndexed(args.map(0, "mappings"));
             case "templatecheck.unsearchable" -> TemplateMappings.unsearchable(args.map(0, "mappings"),
-                    PyValues.strings(decode(args.get(1, "paths"))));
+                    JsonValues.strings(decode(args.get(1, "paths"))));
             case "templatecheck.ecs_duplicates" -> ExampleTemplates.ecsDuplicates(args.map(0, "body"), ECS);
             case "templatecheck.compose" -> TemplateMappings.compose(args.map(0, "body"),
                     components(args.get(1, "components")));
@@ -184,7 +186,7 @@ class TestIndexingParity {
             case "templatecheck.nested_name" -> ExampleNames.nestedName(args.string(0, "source"),
                     args.string(1, "style"));
             case "templatecheck.names_from_example" -> ExampleNames.namesFromExample(
-                    (List<Map<String, Object>>) (List<?>) PyValues.listOrEmpty(args.get(0, "fields")),
+                    (List<Map<String, Object>>) (List<?>) JsonValues.listOrEmpty(args.get(0, "fields")),
                     components(args.get(1, "example")), conventionNames(args.get(2, "convention_names")),
                     args.strings(3, "populated"));
             case "templatecheck.type_styles" -> TemplateMappings.typeStyles(components(args.get(0, "fields")));
@@ -211,13 +213,13 @@ class TestIndexingParity {
     }
 
     private static FieldPlan plan(final Map<String, Object> call) {
-        return FieldPlan.fromJson(PyValues.map(call.get("plan")));
+        return FieldPlan.fromJson(JsonValues.map(call.get("plan")));
     }
 
     private static List<PlannedField> plannedFields(final Object value) {
         final List<PlannedField> fields = new ArrayList<>();
-        for (final Object item : PyValues.listOrEmpty(value)) {
-            fields.add(PlannedField.fromJson(PyValues.map(PyValues.map(item).get("data"))));
+        for (final Object item : JsonValues.listOrEmpty(value)) {
+            fields.add(PlannedField.fromJson(JsonValues.map(JsonValues.map(item).get("data"))));
         }
         return fields;
     }
@@ -226,7 +228,7 @@ class TestIndexingParity {
         final Object decoded = decode(value);
         return decoded instanceof final String one
                 ? List.of(one)
-                : PyValues.strings(decoded);
+                : JsonValues.strings(decoded);
     }
 
     // The server's writes_to, the Elasticsearch side being the port's.
@@ -234,8 +236,8 @@ class TestIndexingParity {
         final String docType = args.string(1, "doc_type");
         final String uuid = args.string(2, "uuid");
         final String indexName = args.string(3, "index_name");
-        for (final Object pair : PyValues.listOrEmpty(PyValues.map(args.get(0, "properties")).get("__pairs__"))) {
-            final List<Object> entry = PyValues.listOrEmpty(pair);
+        for (final Object pair : JsonValues.listOrEmpty(JsonValues.map(args.get(0, "properties")).get("__pairs__"))) {
+            final List<Object> entry = JsonValues.listOrEmpty(pair);
             // The key, (element, name), as decoded: a pair of strings.
             final String name = ((DocValue) entry.get(0)).text();
             final Object held = entry.get(1);
@@ -256,12 +258,12 @@ class TestIndexingParity {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Map<String, Object>> components(final Object value) {
-        return (Map<String, Map<String, Object>>) (Map<?, ?>) PyValues.mapOrEmpty(value);
+        return (Map<String, Map<String, Object>>) (Map<?, ?>) JsonValues.mapOrEmpty(value);
     }
 
     private static Map<String, Set<String>> conventionNames(final Object value) {
         final Map<String, Set<String>> out = new LinkedHashMap<>();
-        PyValues.mapOrEmpty(value).forEach((path, names) -> {
+        JsonValues.mapOrEmpty(value).forEach((path, names) -> {
             final Set<String> set = new LinkedHashSet<>();
             ((Collection<?>) decode(names)).forEach(name -> set.add((String) name));
             out.put(path, set);
@@ -271,7 +273,7 @@ class TestIndexingParity {
 
     private static List<Map<String, Object>> documents(final Object value) {
         final List<Map<String, Object>> docs = new ArrayList<>();
-        for (final Object doc : PyValues.listOrEmpty(value)) {
+        for (final Object doc : JsonValues.listOrEmpty(value)) {
             docs.add(document(doc));
         }
         return docs;
@@ -286,7 +288,7 @@ class TestIndexingParity {
     private static Object decode(final Object value) {
         if (value instanceof final Map<?, ?> map) {
             if (map.size() == 1 && map.containsKey("__tuple__")) {
-                final List<Object> items = PyValues.listOrEmpty(map.get("__tuple__"));
+                final List<Object> items = JsonValues.listOrEmpty(map.get("__tuple__"));
                 if (items.size() == 2 && items.getFirst() instanceof final String kind
                     && (items.get(1) == null || items.get(1) instanceof String)) {
                     return new DocValue(kind, (String) items.get(1));
@@ -294,7 +296,7 @@ class TestIndexingParity {
                 return items.stream().map(TestIndexingParity::decode).toList();
             }
             if (map.size() == 1 && map.containsKey("__set__")) {
-                return new LinkedHashSet<>(PyValues.listOrEmpty(map.get("__set__")));
+                return new LinkedHashSet<>(JsonValues.listOrEmpty(map.get("__set__")));
             }
             final Map<String, Object> out = new LinkedHashMap<>();
             map.forEach((key, item) -> out.put((String) key, decode(item)));
@@ -403,7 +405,7 @@ class TestIndexingParity {
         }
 
         List<String> strings(final int at, final String name) {
-            return PyValues.strings(get(at, name, List.of()));
+            return JsonValues.strings(get(at, name, List.of()));
         }
     }
 }

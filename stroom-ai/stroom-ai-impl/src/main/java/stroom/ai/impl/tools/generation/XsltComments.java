@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -49,7 +51,7 @@ public final class XsltComments {
     /// @param width The width to wrap it to.
     /// @return The comment's text: dashes runs made one, trailing dashes dropped, wrapped, with a space either side.
     public static String comment(final String text, final int width) {
-        final String single = PyStr.rstrip(DASHES.matcher(text).replaceAll("-"), "-");
+        final String single = PyText.rstrip(DASHES.matcher(text).replaceAll("-"), "-");
         return String.join("\n", wrap(single, width, FIRST_INDENT, LATER_INDENT)) + " ";
     }
 
@@ -74,7 +76,7 @@ public final class XsltComments {
                     ? firstIndent
                     : laterIndent;
             final int room = width - length(indent);
-            if (!lines.isEmpty() && PyStr.isBlank(chunks.get(next))) {
+            if (!lines.isEmpty() && PyText.isBlank(chunks.get(next))) {
                 next++;
             }
             final List<String> line = new ArrayList<>();
@@ -92,7 +94,7 @@ public final class XsltComments {
             if (next < chunks.size() && length(chunks.get(next)) > room && line.isEmpty()) {
                 line.add(chunks.get(next++));
             }
-            if (!line.isEmpty() && PyStr.isBlank(line.getLast())) {
+            if (!line.isEmpty() && PyText.isBlank(line.getLast())) {
                 line.removeLast();
             }
             if (!line.isEmpty()) {

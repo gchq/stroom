@@ -17,16 +17,18 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.draft.SplitterXml;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.sample.SampleProfiler;
-import stroom.ai.impl.tools.sample.SampleRefusal;
+import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.workspace.PatternTimeoutException;
@@ -167,11 +169,9 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                 others.addAll(texts.subList(1, texts.size()));
             }
         } else if (sample != null) {
-            SampleArguments.whyNotData(sample, SAMPLE_ARG).ifPresent(why -> {
-                throw new ToolRefusal(why);
-            });
+            SampleTexts.checkSample(sample, SAMPLE_ARG);
         }
-        final Map<String, Object> spec = TranslationArgs.object(call, SPEC_ARG);
+        final Map<String, Object> spec = ToolArgs.map(call, SPEC_ARG);
         if (sample == null && spec == null) {
             throw new ToolRefusal("Give the sample (the file's text, or stream_ids): the spec is inferred from it");
         }
@@ -266,8 +266,8 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                 ? String.valueOf(list.getFirst())
                 : "";
         throw new ToolRefusal("The sample's format could not be inferred (" + format + "): give spec, a regex with a "
-                              + "name per group, e.g. " + PythonRepr.repr(SplitterXml.EXAMPLES.get("unknown text"))
-                              + ", written for lines like " + PythonRepr.repr(example));
+                              + "name per group, e.g. " + PyText.repr(SplitterXml.EXAMPLES.get("unknown text"))
+                              + ", written for lines like " + PyText.repr(example));
     }
 
     // build_data_splitter for XML fragments: the wrapper converter (the environment's own when it has one), saved
@@ -320,16 +320,12 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                     SplitterXml.EXAMPLES.get("delimited"));
             throw new ToolRefusal("spec is not a splitter spec (" + e.getMessage() + "). For "
                                   + NullSafe.nonBlankStringElse(format, "this") + " data it looks like "
-                                  + PythonRepr.repr(example) + "; or leave spec out and it is inferred from the "
+                                  + PyText.repr(example) + "; or leave spec out and it is inferred from the "
                                   + "sample.");
         }
     }
 
     private static SplitterDryRun.Inferred infer(final String sample) {
-        try {
-            return SplitterDryRun.inferSpec(sample);
-        } catch (final SampleRefusal e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        return SplitterDryRun.inferSpec(sample);
     }
 }

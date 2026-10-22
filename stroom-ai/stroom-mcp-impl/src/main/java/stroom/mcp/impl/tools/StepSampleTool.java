@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -26,9 +27,9 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -353,7 +354,7 @@ class StepSampleTool extends AbstractBuiltInTool {
             result.put("verdict", summary.get("verdict"));
         }
         if (keys.isEmpty()) {
-            SteppingVerdicts.nothingStepped(result, walked.markers, "streams " + PythonText.numbers(streamIds));
+            SteppingVerdicts.nothingStepped(result, walked.markers, "streams " + PyText.repr(streamIds));
         }
         if (walked.cut) {
             // A verdict of fewer records than asked for isn't the clean step promotion relies on: not recorded.

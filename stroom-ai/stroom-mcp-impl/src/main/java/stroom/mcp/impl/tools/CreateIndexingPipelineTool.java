@@ -19,10 +19,12 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -296,7 +298,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         if (!missing.isEmpty() && kept == null) {
             throw new ToolRefusal("Index '" + index.getName() + "' has " + (have.isEmpty()
                     ? "no fields"
-                    : "no field") + " for " + SampleArguments.pythonList(missing.subList(0,
+                    : "no field") + " for " + PyText.list(missing.subList(0,
                     Math.min(MISSING_NAMED, missing.size()))) + (missing.size() > MISSING_NAMED
                     ? " ..."
                     : "") + ", which the indexing XSLT writes: Stroom would drop those values ('Attempt to "

@@ -20,10 +20,13 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.RebuiltMapping;
@@ -273,7 +276,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             result.put("hint", "Stepping gave no records: check stream_ids are the pipeline's raw streams.");
             return result;
         }
-        final boolean accept = CreateProcessorFilterTool.flag(call, ACCEPT_DIFFERENCES_ARG);
+        final boolean accept = ToolArgs.flag(call, ACCEPT_DIFFERENCES_ARG);
         if (!proof.differences().isEmpty()) {
             result.put("differences", proof.differences().subList(0, Math.min(20, proof.differences().size())));
             if (!accept) {
@@ -408,7 +411,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                         .findFirst();
                 if (element.isPresent()) {
                     found.add(new Runs(entry.uuid(), element.get()));
-                    names.add(SampleArguments.pythonRepr(entry.name()));
+                    names.add(PyText.repr(entry.name()));
                 }
             } catch (final PipelineUnreadableException e) {
                 LOGGER.debug(() -> "Pipeline " + entry.uuid() + " can't be read: " + e.getMessage());

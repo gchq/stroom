@@ -19,10 +19,12 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.MappingValidationException;
@@ -108,7 +110,7 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
     }
 
     private Map<String, Object> build(final ToolCall call, final ToolCallContext context) {
-        final ReferenceMapping given = mapping(TranslationArgs.value(call, MAPPING_ARG));
+        final ReferenceMapping given = mapping(ToolArgs.raw(call, MAPPING_ARG));
         ReferenceMapping mapping = given;
         final String version = version(stringArg(call, SCHEMA_VERSION_ARG));
         final String build = stringArg(call, BUILD_ARG);

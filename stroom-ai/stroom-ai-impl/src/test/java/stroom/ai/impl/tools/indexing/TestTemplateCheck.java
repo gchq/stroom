@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.indexing.ExampleNames.Named;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.ComponentsUsed;
@@ -240,10 +241,10 @@ class TestTemplateCheck {
         assertThat(body.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2*"));
         assertThat(body.get("priority")).isEqualTo(300L);
         assertThat(body.get("composed_of")).isEqualTo(List.of("ecs-base", "ecs-source"));
-        final Map<String, Object> template = PyValues.map(body.get("template"));
-        assertThat(PyValues.map(PyValues.map(template.get("settings")).get("index")).get("number_of_shards"))
+        final Map<String, Object> template = JsonValues.map(body.get("template"));
+        assertThat(JsonValues.map(JsonValues.map(template.get("settings")).get("index")).get("number_of_shards"))
                 .isEqualTo(2L);
-        final Map<String, Object> mappings = PyValues.map(template.get("mappings"));
+        final Map<String, Object> mappings = JsonValues.map(template.get("mappings"));
         assertThat(mappings.get("dynamic")).isEqualTo("strict");
         assertThat(mappings.get("date_detection")).isEqualTo(false);
         assertThat(template).doesNotContainKey("aliases");
@@ -306,9 +307,9 @@ class TestTemplateCheck {
                                                 && n.contains("user.name"));
         // Objects the example leaves undeclared stay undeclared; its fields this source lacks are listed, not
         // copied.
-        final Map<String, Object> properties = PyValues.map(TemplateMappings.mappingsOf(built.body())
+        final Map<String, Object> properties = JsonValues.map(TemplateMappings.mappingsOf(built.body())
                 .get("properties"));
-        assertThat(PyValues.map(properties.get("user"))).doesNotContainKey("type");
+        assertThat(JsonValues.map(properties.get("user"))).doesNotContainKey("type");
         assertThat(properties).doesNotContainKey("host");
         assertThat(built.notes()).anyMatch(n -> n.startsWith("in the example but not written by this pipeline")
                                                 && n.contains("host.name"));
@@ -364,7 +365,7 @@ class TestTemplateCheck {
                                && n.contains("User.Name"));
 
         final Built built = fromExample(planTemplate(named.fields()), IndexingFixtures.json(KEYFOB), base);
-        final Map<String, Object> properties = PyValues.map(TemplateMappings.mappingsOf(built.body())
+        final Map<String, Object> properties = JsonValues.map(TemplateMappings.mappingsOf(built.body())
                 .get("properties"));
         assertThat(PyJson.dumps(properties.get("User"))).isEqualTo(
                 "{\"type\": \"object\", \"properties\": {\"Id\": {\"type\": \"keyword\", \"ignore_above\": 512}}}");
@@ -420,7 +421,7 @@ class TestTemplateCheck {
                                                 && n.contains("lastModified") && n.contains("user.createdOn")
                                                 && n.contains("userName"));
         final Built built = fromExample(planTemplate(named.fields()), camel, Map.of());
-        final Map<String, Object> properties = PyValues.map(TemplateMappings.mappingsOf(built.body())
+        final Map<String, Object> properties = JsonValues.map(TemplateMappings.mappingsOf(built.body())
                 .get("properties"));
         assertThat(properties.get("userId")).isEqualTo(Map.of("type", "keyword"));
         assertThat(properties.get("clientIpAddress")).isEqualTo(Map.of("type", "ip"));
@@ -450,27 +451,28 @@ class TestTemplateCheck {
     void anExampleWithSubobjectsFalseMapsNamesFlatAndAllowsAValueBesideItsDottedNames() {
         // subobjects: false: the index maps user.id as a field of its own (no user object), and time beside
         // time.min.
-        final FieldPlan plan = FieldPlan.of("elasticsearch", "metrics-v1", "@timestamp", List.of(
-                PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
-                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
-                PlannedField.of("time", "keyword", "EventDetail/Data[@Name=\"time\"]/@Value"),
-                PlannedField.of("time.min", "keyword", "EventDetail/Data[@Name=\"min\"]/@Value"),
-                PlannedField.of("user.id", "keyword", "EventSource/User/Id"))).withSubobjects(false);
+        final FieldPlan plan = IndexingFixtures.withSubobjects(FieldPlan.of("elasticsearch", "metrics-v1",
+                "@timestamp", List.of(
+                        PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
+                        PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                        PlannedField.of("time", "keyword", "EventDetail/Data[@Name=\"time\"]/@Value"),
+                        PlannedField.of("time.min", "keyword", "EventDetail/Data[@Name=\"min\"]/@Value"),
+                        PlannedField.of("user.id", "keyword", "EventSource/User/Id"))), false);
         assertThat(plan.required()).isEmpty();
         final Map<String, Object> planned = body(plan);
         assertThat(TemplateMappings.mappingsOf(planned).get("subobjects")).isEqualTo(false);
-        assertThat(PyValues.map(TemplateMappings.mappingsOf(planned).get("properties")))
+        assertThat(JsonValues.map(TemplateMappings.mappingsOf(planned).get("properties")))
                 .containsOnlyKeys("StreamId", "EventId", "@timestamp", "time", "time.min", "user.id");
         final Map<String, Object> example = IndexingFixtures.json("""
                 {"index_patterns": ["metrics-sibling*"], "template": {"mappings": {"subobjects": false, "properties":
                  {"user.id": {"type": "keyword", "ignore_above": 512}, "time": {"type": "keyword"}}}}}""");
         final Built built = fromExample(planned, example, Map.of());
-        final Map<String, Object> properties = PyValues.map(TemplateMappings.mappingsOf(built.body())
+        final Map<String, Object> properties = JsonValues.map(TemplateMappings.mappingsOf(built.body())
                 .get("properties"));
         assertThat(TemplateMappings.mappingsOf(built.body()).get("subobjects")).isEqualTo(false);
         assertThat(properties).doesNotContainKey("user").containsKeys("time", "time.min");
         assertThat(properties.get("user.id")).isEqualTo(Map.of("type", "keyword", "ignore_above", 512L));
-        final FieldPlan nested = plan.withSubobjects(true);
+        final FieldPlan nested = IndexingFixtures.withSubobjects(plan, true);
         assertThat(nested.required()).anyMatch(p -> p.contains("'time' is a value and also the object holding "
                                                                + "['time.min']"));
         // The document is nested either way; only time.min, beside its value time, is a flat key.
@@ -493,7 +495,7 @@ class TestTemplateCheck {
                 PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
                 PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
                 PlannedField.of("User.Id", "keyword", "EventSource/User/Id")));
-        final Map<String, Object> planned = PyValues.map(plan.elasticTemplate("fortios-firewall", 200L, true, ECS)
+        final Map<String, Object> planned = JsonValues.map(plan.elasticTemplate("fortios-firewall", 200L, true, ECS)
                 .get("body"));
         final Built built = fromExample(planned, example, Map.of());
         // The target's type, not an alias.
@@ -530,7 +532,7 @@ class TestTemplateCheck {
         assertThat(body.get("data_stream")).isEqualTo(Map.of());
         final List<String> keys = new ArrayList<>(body.keySet());
         assertThat(keys.indexOf("data_stream")).isLessThan(keys.indexOf("template"));
-        final Map<String, Object> full = PyValues.map(plan.elasticTemplate("ecs-acme-v1", null, false, ECS)
+        final Map<String, Object> full = JsonValues.map(plan.elasticTemplate("ecs-acme-v1", null, false, ECS)
                 .get("body"));
         // An example index template that is a plain index keeps it a plain index.
         final Built plain = fromExample(full, IndexTemplates.parseTemplate("""
@@ -680,8 +682,8 @@ class TestTemplateCheck {
         final Built built = ExampleTemplates.withComponents(body(plan), components(
                         "{\"org-users\": {\"template\": {\"mappings\": {\"properties\": {\"user\": {\"properties\": "
                         + "{\"name\": {\"type\": \"keyword\"}}}}}}}}"), List.of("org-users"), List.of(), ECS);
-        assertThat(PyValues.strings(built.body().get("composed_of")).getLast()).isEqualTo("org-users");
-        assertThat(PyValues.map(TemplateMappings.mappingsOf(built.body()).get("properties")))
+        assertThat(JsonValues.strings(built.body().get("composed_of")).getLast()).isEqualTo("org-users");
+        assertThat(JsonValues.map(TemplateMappings.mappingsOf(built.body()).get("properties")))
                 .doesNotContainKey("user");
         assertThat(built.notes()).anyMatch(n -> n.contains("['user.name']"));
     }
@@ -695,7 +697,7 @@ class TestTemplateCheck {
                         "{\"org-users\": {\"template\": {\"mappings\": {\"properties\": {\"user\": {\"properties\": "
                         + "{\"name\": {\"type\": \"keyword\"}}}}}}}}"), List.of("org-users"), List.of(), ECS);
         assertThat(built.body().get("composed_of")).isEqualTo(List.of("org-users"));
-        assertThat(PyValues.map(TemplateMappings.mappingsOf(built.body()).get("properties"))).containsOnlyKeys(
+        assertThat(JsonValues.map(TemplateMappings.mappingsOf(built.body()).get("properties"))).containsOnlyKeys(
                 "host.name");
     }
 
@@ -815,7 +817,7 @@ class TestTemplateCheck {
     }
 
     private static Map<String, Object> body(final FieldPlan plan) {
-        return PyValues.map(plan.elasticTemplate(plan.indexName(), ECS).get("body"));
+        return JsonValues.map(plan.elasticTemplate(plan.indexName(), ECS).get("body"));
     }
 
     @SuppressWarnings("unchecked")

@@ -37,7 +37,6 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -128,22 +127,22 @@ class LocateEventTool extends AbstractBuiltInTool {
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         final Integer streamId = intArg(call, STREAM_ID_ARG);
         if (streamId == null) {
-            return ToolResult.error("Error: give stream_id, the stream the user reported.");
+            return JsonResults.refused("Error: give stream_id, the stream the user reported.");
         }
         final Integer eventId = intArg(call, EVENT_ID_ARG);
         if (eventId != null && eventId < 1) {
-            return ToolResult.error("Error: event_id counts from 1, as dashboards show EventId.");
+            return JsonResults.refused("Error: event_id counts from 1, as dashboards show EventId.");
         }
         if (!documentAccess.canViewData()) {
-            return ToolResult.error("Error: you don't have permission to view data, so the stream can't be traced.");
+            return JsonResults.refused("Error: you don't have permission to view data, so the stream can't be traced.");
         }
         final List<Long> viewed = new ArrayList<>();
         try {
             final Map<String, Object> result = locate(streamId, eventId, stringArg(call, PIPELINE_UUID_ARG),
                     viewed);
-            return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+            return JsonResults.of(result);
         } catch (final RuntimeException e) {
-            return ToolResult.error("Error: " + StreamSummaries.reason(e));
+            return JsonResults.refused("Error: " + StreamSummaries.reason(e));
         } finally {
             auditLog.streamsViewed(context.session(), viewed, "Traced stream " + streamId + " with the " + NAME
                                                               + " tool");

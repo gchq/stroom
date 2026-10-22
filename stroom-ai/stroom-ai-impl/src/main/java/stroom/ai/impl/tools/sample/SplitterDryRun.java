@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.workspace.DeadlineCharSequence;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.impl.workspace.SafePattern;
@@ -368,7 +370,7 @@ public final class SplitterDryRun {
                     .quote((String) info.get("quote"))
                     .commentPrefix((String) info.get("comment_prefix"))
                     .headerDirective((String) info.get("header_directive"))
-                    .directives(stringList(info.get("directives")))
+                    .directives(JsonValues.strings(info.get("directives")))
                     .build(), info);
         }
         if (delimited) {
@@ -384,7 +386,7 @@ public final class SplitterDryRun {
             if (Boolean.TRUE.equals(info.get("has_header"))) {
                 builder.header(true);
             } else {
-                builder.header(stringList(info.get("columns")));
+                builder.header(JsonValues.strings(info.get("columns")));
             }
             return new Inferred(builder.build(), info);
         }
@@ -451,13 +453,6 @@ public final class SplitterDryRun {
             body = SplitterSpec.builder("regex").pattern(chosen.getKey()).names(chosen.getValue()).build();
         }
         return SplitterSpec.builder("cef").body(body).build();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> stringList(final Object value) {
-        return value instanceof List<?>
-                ? (List<String>) value
-                : List.of();
     }
 
     /// What the generated splitter makes of a sample, reading at most [#MAX_RECORDS] records.
