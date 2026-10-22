@@ -153,14 +153,14 @@ class TestDraftCefMappingTool {
 
         assertThat(result).containsEntry("saved", null);
         assertThat(String.join(" ", (List<String>) result.get("problems"))).contains("needs topic");
-        Mockito.verify(saves, Mockito.never()).create(any(), any(), any(), any(), any(), any());
+        Mockito.verify(saves, Mockito.never()).create(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void aPlanIsSavedWithItsXsltAndTheImportsTheInstructionsRequire() throws Exception {
         Mockito.when(saves.requiredFor(any(), eq("cef"), eq("b"), any())).thenReturn(List.of(
                 new RequiredImport("CEF-Shared", "/Feeds")));
-        Mockito.when(saves.create(any(), eq("b"), eq("CEF"), anyString(), any(), anyString())).thenReturn(Map.of(
+        Mockito.when(saves.create(any(), any(), eq("b"), eq("CEF"), anyString(), any(), anyString())).thenReturn(Map.of(
                 "type", "XSLT", "uuid", "x-1", "name", "CEF", "version", "v1", "next", Map.of("step", "pipeline")));
 
         final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"topic\": \"t\", "
@@ -168,7 +168,7 @@ class TestDraftCefMappingTool {
 
         final ArgumentCaptor<String> code = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<TranslationDocs.Source> source = ArgumentCaptor.forClass(TranslationDocs.Source.class);
-        Mockito.verify(saves).create(any(), eq("b"), eq("CEF"), code.capture(), source.capture(),
+        Mockito.verify(saves).create(any(), any(), eq("b"), eq("CEF"), code.capture(), source.capture(),
                 eq("Created from its CEF plan"));
         assertThat(code.getValue()).contains("<xsl:import href=\"CEF-Shared\"");
         // Saved with the CEF plan it is generated from.

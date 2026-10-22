@@ -56,6 +56,7 @@ public class XsltSaves {
 
     /// Creates an XSLT in the build ([TranslationDocs#createXslt]).
     ///
+    /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
     /// @param build   The build.
     /// @param name    The document's name.
@@ -65,13 +66,14 @@ public class XsltSaves {
     /// @param change  What this change is, for the version history, or null.
     /// @return The document (`type`, `uuid`, `name`, `version`, and `matches_mapping`, `warning` or `ecs_check`),
     /// with the build's next step.
-    public Map<String, Object> create(final ToolCallContext context,
+    public Map<String, Object> create(final ToolCall call,
+                                      final ToolCallContext context,
                                       final String build,
                                       final String name,
                                       final String code,
                                       final TranslationDocs.Source source,
                                       final String change) {
-        return translationDocs.createXslt(context, build, name, code, source, change);
+        return translationDocs.createXslt(call, context, build, name, code, source, change);
     }
 
     /// Replaces an XSLT's code ([TranslationDocs#updateXslt]).

@@ -93,6 +93,8 @@ final class SteppingWorld {
     final BuildRecords buildRecords = Mockito.mock(BuildRecords.class);
     final BuildPlan plan = Mockito.mock(BuildPlan.class);
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    final Consent consent = new Consent(securityContext, () -> auditLog);
+    final LookupAgreements lookups = new LookupAgreements(consent);
     final List<String> said = new ArrayList<>();
     /// Each walk opened: the stream, and the code it was opened with.
     final List<Map.Entry<Long, Map<String, String>>> opened = new ArrayList<>();
@@ -139,7 +141,7 @@ final class SteppingWorld {
     PipelineStepping stepping() {
         return new PipelineStepping(steppingWalks, documentAccess, () -> securityContext,
                 () -> elementRegistryFactory, streamSummaries, acceptedErrors, checkXslt, streamReader,
-                sampleStreamTexts, guard, keptMappings, buildRecords, plan, auditLog);
+                sampleStreamTexts, guard, keptMappings, buildRecords, plan, auditLog, lookups);
     }
 
     /// @return A call's context from an MCP client, with its progress said to [#said].

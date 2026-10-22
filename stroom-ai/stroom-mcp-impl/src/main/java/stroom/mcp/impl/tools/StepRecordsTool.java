@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
@@ -163,11 +164,14 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                            + "{stream, part, record}.");
             }
             final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
-            return JsonResults.of(stepRecords(context, pipelineUuid, locations, draftCode));
+            return JsonResults.of(stepRecords(call, context, pipelineUuid, locations, draftCode));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -179,12 +183,13 @@ class StepRecordsTool extends AbstractBuiltInTool {
     /// `hint`, `stopped_early` and `record`.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
-    Map<String, Object> stepRecords(final ToolCallContext context,
+    Map<String, Object> stepRecords(final ToolCall call,
+                                    final ToolCallContext context,
                                     final String pipelineUuid,
                                     final List<Location> locations,
                                     final Map<String, String> draftCode) {
         stepping.checkCanStep();
-        stepping.checkDrafts(pipelineUuid, draftCode);
+        stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         final List<Location> stepped = locations.subList(0, Math.min(locations.size(), maxSampleRecords));
         final List<Long> streams = new ArrayList<>(new TreeSet<>(locations.stream().map(Location::stream).toList()));
         stepping.refuseOlderThanFeed(streams);

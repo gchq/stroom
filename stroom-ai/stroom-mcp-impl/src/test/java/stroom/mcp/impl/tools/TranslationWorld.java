@@ -98,14 +98,18 @@ final class TranslationWorld {
             Clock.fixed(Instant.parse("2026-10-22T00:00:00Z"), ZoneOffset.UTC));
     final RequiredImports requiredImports = new RequiredImports(agentInstructions, world::guard, () -> docFinder,
             world.documentAccess);
+    final LookupAgreements lookups = new LookupAgreements(consent);
     final TranslationDocs docs = new TranslationDocs(world.guard(), world.documentAccess, plan, checkXslt,
-            requiredImports, eventVersions, handEditGate, history, () -> Mockito.mock(AgentKnowledge.class));
+            requiredImports, eventVersions, handEditGate, history, lookups, () -> Mockito.mock(AgentKnowledge.class));
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
     final List<String> versions = new ArrayList<>(List.of(VERSION));
-    // What the user answers each form with, by its title's start; none: no forms.
+    // What the user answers each form with, by its question's start (`yes` or `no` for a confirmation or an
+    // approval); none: no forms.
     final Map<String, String> answers = new LinkedHashMap<>();
+    // Each form's message, as the user was shown it.
+    final List<String> asked = new ArrayList<>();
     boolean forms;
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final Map<String, String> files = new LinkedHashMap<>();
@@ -178,11 +182,13 @@ final class TranslationWorld {
                                             final String callId,
                                             final String intro,
                                             final Map<String, Object> form) {
+                        asked.add(intro);
                         return answers.entrySet().stream()
                                 .filter(answer -> intro.startsWith(answer.getKey()))
                                 .findFirst()
-                                .map(answer -> new ElicitResult(ElicitResult.Action.ACCEPT,
-                                        Map.of("choice", answer.getValue())))
+                                .map(answer -> new ElicitResult(ElicitResult.Action.ACCEPT, isYesOrNo(form)
+                                        ? Map.of("value", "yes".equals(answer.getValue()))
+                                        : Map.of("choice", answer.getValue())))
                                 .orElse(new ElicitResult(ElicitResult.Action.DECLINE, null));
                     }
                 })
@@ -271,6 +277,11 @@ final class TranslationWorld {
         Mockito.when(chatWorkspace.readLines(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyLong(),
                 Mockito.anyInt())).thenAnswer(inv ->
                 List.of(files.get(String.valueOf((Object) inv.getArgument(1))).split("\n", -1)));
+    }
+
+    // Whether a form is a confirmation's or an approval's: a yes or no.
+    private static boolean isYesOrNo(final Map<String, Object> form) {
+        return form.get("properties") instanceof final Map<?, ?> properties && properties.containsKey("value");
     }
 
     private static EventSchema schema() {
