@@ -1,0 +1,81 @@
+{
+ "source": "generation-the-example-mapping-generates",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "xml_fragments",
+  "record": "Event",
+  "xml_namespace": "records:2",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "System/TimeCreated/@SystemTime",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "AppAudit"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "AppAudit"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "Computer"
+   }
+  ],
+  "events": [
+   {
+    "name": "view",
+    "when": [
+     {
+      "field": "EventID",
+      "equals": "4663"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "EventID"
+     },
+     {
+      "path": "EventDetail/View/Document/Id",
+      "xpath": "EventData/Data[@Name=\"ObjectName\"]"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[view] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "view",
+    "when": [
+     "EventID = '4663'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/View/Document/Id",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

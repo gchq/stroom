@@ -1,0 +1,392 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Edge Firewall"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "firewall"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   }
+  ],
+  "events": [
+   {
+    "name": "connection",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/TransportProtocol",
+      "field": "protocol"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "dst_port"
+     },
+     {
+      "path": "EventDetail/Network/Open/Rule",
+      "field": "rule_id"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "ALLOW": "true",
+       "DENY": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "ADMIN"
+     },
+     {
+      "field": "action",
+      "one_of": [
+       "LOGIN_SUCCESS",
+       "LOGIN_FAILED"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "action",
+      "map": {
+       "LOGIN_SUCCESS": "true",
+       "LOGIN_FAILED": "false"
+      }
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "ADMIN"
+     },
+     {
+      "field": "action",
+      "equals": "LOGOUT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "username"
+     }
+    ]
+   },
+   {
+    "name": "config change",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "ADMIN"
+     },
+     {
+      "field": "action",
+      "equals": "CONFIG_CHANGE"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Update/After/Configuration/Name",
+      "value": "Firewall rules"
+     }
+    ]
+   },
+   {
+    "name": "config backup",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "ADMIN"
+     },
+     {
+      "field": "action",
+      "equals": "CONFIG_BACKUP"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Export/Source/Configuration/Name",
+      "value": "Running configuration"
+     }
+    ]
+   },
+   {
+    "name": "system",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "SYSTEM"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "field": "action",
+      "map": {
+       "VPN_TUNNEL_DOWN": "Network",
+       "VPN_TUNNEL_UP": "Network",
+       "CONFIG_SAVED": "Change"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "severity",
+      "map": {
+       "INFO": "Info",
+       "NOTICE": "Info",
+       "WARNING": "Minor",
+       "ERROR": "Major"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[connection] TypeId is read from action, which its records may lack: those get TypeId 'connection', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[connection] EventDetail/Network/Open/Destination/TransportProtocol: TransportProtocol only takes ['TCP', 'UDP', 'ICMP', 'IGMP', 'Other']; the input value is written as it is, so add a map unless it already uses these values",
+   "[connection] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[config change] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[config backup] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[system] TypeId is read from action, which its records may lack: those get TypeId 'system', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[system] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "connection",
+    "when": [
+     "data[@name='event_type']/@value = 'TRAFFIC'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Open/Data[bytes_received]",
+     "EventDetail/Network/Open/Data[bytes_sent]",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Destination/TransportProtocol",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Rule",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/Network/Open/Source/Port",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logon",
+    "when": [
+     "data[@name='event_type']/@value = 'ADMIN'",
+     "data[@name='action']/@value = ('LOGIN_SUCCESS', 'LOGIN_FAILED')"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "data[@name='event_type']/@value = 'ADMIN'",
+     "data[@name='action']/@value = 'LOGOUT'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "config change",
+    "when": [
+     "data[@name='event_type']/@value = 'ADMIN'",
+     "data[@name='action']/@value = 'CONFIG_CHANGE'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Configuration/Name",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "config backup",
+    "when": [
+     "data[@name='event_type']/@value = 'ADMIN'",
+     "data[@name='action']/@value = 'CONFIG_BACKUP'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Export/Source/Configuration/Name",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "system",
+    "when": [
+     "data[@name='event_type']/@value = 'SYSTEM'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

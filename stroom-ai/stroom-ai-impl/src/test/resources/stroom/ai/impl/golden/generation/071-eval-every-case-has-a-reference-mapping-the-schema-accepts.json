@@ -1,0 +1,193 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "epoch_s"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Billing App"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "gelf"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "_user"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "_src_ip"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "_action"
+   },
+   {
+    "path": "EventDetail/Description",
+    "any_of": [
+     "full_message",
+     "short_message"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "_action",
+      "equals": "login"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "_user"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "_action",
+      "equals": "logout"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "_user"
+     }
+    ]
+   },
+   {
+    "name": "disk",
+    "when": [
+     {
+      "field": "_action",
+      "equals": "disk_alert"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Other"
+     },
+     {
+      "path": "EventDetail/Alert/Description",
+      "field": "short_message"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "_disk",
+      "data_name": "disk"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "_pct",
+      "data_name": "percent_used"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[disk] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "*[@key='_action'] = 'login'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "*[@key='_action'] = 'logout'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "disk",
+    "when": [
+     "*[@key='_action'] = 'disk_alert'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Data[disk]",
+     "EventDetail/Alert/Data[percent_used]",
+     "EventDetail/Alert/Description",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

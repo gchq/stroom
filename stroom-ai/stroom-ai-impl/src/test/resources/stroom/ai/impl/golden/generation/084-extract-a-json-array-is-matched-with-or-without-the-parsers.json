@@ -1,0 +1,73 @@
+{
+ "source": "extract-a-json-array-is-matched-with-or-without-the-parsers",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "A"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "D"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "g"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   }
+  ],
+  "events": [
+   {
+    "name": "any",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "x"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "host",
+      "data_name": "h"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[any] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[any] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "any",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[h]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

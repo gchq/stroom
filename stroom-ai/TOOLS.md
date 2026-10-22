@@ -369,6 +369,60 @@ Where it differs from the MCP server:
   lines' context, from `LineDiff`, whose lines are split on any line ending: a draft differing from the saved code
   only in its line endings shows no changed lines (the MCP server's `difflib` showed every line changed).
 
+## The translation generator (`stroom.ai.impl.tools.generation`)
+
+The MCP server's translation XSLT generator (`utils/xsltgen.py`) and what it needs, ported as plain Java in
+`stroom-ai-impl` before the tools that use it (`build_translation_xslt`, `draft_translation_mapping`, `save_xslt`,
+`rebuild_mapping`):
+
+* **The mapping** (`TranslationMapping`, `EventRule`, `FieldMapping`, `Condition`, `Lookup`, `Extraction`,
+  `KeyValuePairs`, `DropRule`, `XsltStyle`, `SharedTemplate`, `SharedFunctions`): records with Jackson annotations,
+  read with `fromJson`/`parse`, which validate as pydantic did (lax types, defaults, the models' own checks and their
+  messages; every error as a `MappingError` with its `loc`, `type`, `msg` and `input`, in a
+  `MappingValidationException`), and turn pairs into extract entries, a rule's data list into Data entries, meta into
+  the xpath reading it and Data Names into the style's `data_names`. `toJson(DumpMode)` writes them as `model_dump`
+  did: `ALL`, `WITHOUT_NONE` (`exclude_none`) or `COMPACT` (`exclude_none` and `exclude_defaults`: the form kept in a
+  document's description), keys in the models' field order. A mapping saved by either server reads in the other.
+* **The generator** (`XsltGenerator.generate`, with `EventTrees` and `EventNode` for the rules' trees and checks):
+  the same XSLT text as the Python generator, to the byte, and the same problems, warnings and events summary
+  (`Generated.toMap()` is the Python dict). It builds the XSLT in a small XML tree (`XmlElement`, `XmlComment`, ...)
+  that keeps what lxml's serialisation depends on: namespace declarations and where lxml puts them, attribute order,
+  text and tails; `XmlSerialiser` writes it as lxml does (pretty-printed or not), and `XmlParser` reads XML as
+  `etree.fromstring` does (with `remove_blank_text` and `remove_comments` where the Python code used them).
+* **Its helpers**: `XPathText` (the expression writers the server's XSLT reader reuses), `MappingFacts` (action
+  homes, kept Unknown rules, rooted paths, variable reads, function calls given as fields), `MappingCompaction`
+  (`compact_rules`, `compact_pairs`, `grouped`), `XsltNames` (`style_name`, `unique_name`, `data_name_in`),
+  `XsltComments` (the comment wrapper, Python's `textwrap`), `Pairs` (`utils/pairs.py`), `FieldHomes` (draftmap's
+  `HOMES` and `_matches`, for the draft's port to use), `StyledXslt` (`utils/xsltstyle.py`, for the indexing and CEF
+  generators), `HandEdits` (`utils/handedit.py`: outline, undone, lost, plan fields, collisions) and `CodeDiff`
+  (`mappingstore.code_diff`, with Python's `difflib` in `LineDiff`). The write side of `mappingstore` is in
+  `KeptMapping` (`withMapping`, `replaceSection`, `docDigest`, `withAgreedTemplate`, `readAgreedTemplate`);
+  `normalise_xslt` and `digest` were ported before as `XsltCode` (stroom-mcp-impl).
+
+Parity is tested against the Python server's own code: every mapping its test suite generated (236 of them, with
+the evaluation cases' reference mappings) is a golden file under `golden/generation/` with what the Python generator
+gave for it, XSLT included; and the helpers, the models' validation (errors included), the hand-edit checks, the
+code diff and the description blocks have their Python results in `tools/generation/*.json`. The generator's own
+tests run its XSLT with Saxon over the tests' records and validate the events against the event-logging XSDs.
+
+Where it differs from the Python server:
+
+* **Wording**: a refused function in an xpath says "the tools don't run or save it" (`XsltSafety`, ported before)
+  where the server said "the server".
+* **A regex an extraction gives** is checked with a port of Python's `re` parser (`PythonRegex`), for its group count
+  and Python's messages (`bad escape \p at position 0`): an XPath regex Python can't compile is still reported. A
+  repetition count too large for Python (`a{99999999999}`) is a problem ("the regex does not compile: the repetition
+  number is too large") where the Python generator raised an `OverflowError`.
+* **Kept blocks** in a description are written as the server's `json.dumps(ensure_ascii=False, separators=(',',
+  ':'))` writes them (`PyJson.dumpsCompact`), for every block `KeptMapping.withBlock` writes: before, Jackson wrote
+  them, leaving nulls out and escaping control characters in upper case.
+* **Style numbers** (`variable_min_reads` and the others) are Java longs: a number past that is refused as pydantic
+  refuses a float past it (`int_parsing_size`).
+* **Not ported here**: the tools (`build_translation_xslt`, `draft_translation_mapping`, the save tools), the rest of
+  `utils/draftmap.py`, `utils/fielddoc.py` (the documentation's Field mapping tables), `utils/mappingchanges.py`,
+  the indexing and CEF plans (`utils/fieldplan.py`, `utils/cef.py`, which use `StyledXslt`) and the reader of an
+  XSLT back into a mapping (`utils/xsltread.py`, which uses `XPathText`).
+
 ## MCP server tools with no built-in counterpart
 
 What would move in with each. These all need the MCP server's workspace folder and write guard (tags

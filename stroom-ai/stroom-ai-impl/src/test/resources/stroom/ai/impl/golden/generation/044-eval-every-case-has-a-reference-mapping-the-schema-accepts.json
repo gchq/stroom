@@ -1,0 +1,118 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Door Control"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "badge-controller"
+   },
+   {
+    "path": "EventSource/Device/Name",
+    "field": "door"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "badge_user",
+    "transform": "lower"
+   },
+   {
+    "path": "EventSource/User/Name",
+    "lookup": {
+     "map": "USER_DIRECTORY",
+     "xpath": "lower-case(data[@name='badge_user']/@value)",
+     "path": "name"
+    }
+   },
+   {
+    "path": "EventSource/User/UserDetails/Organisation",
+    "lookup": {
+     "map": "USER_DIRECTORY",
+     "xpath": "lower-case(data[@name='badge_user']/@value)",
+     "path": "department"
+    }
+   }
+  ],
+  "events": [
+   {
+    "name": "badge",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Badge-Access"
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": "door"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "badge_user",
+      "transform": "lower"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "result",
+      "map": {
+       "granted": "true",
+       "denied": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[badge] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "Lookups read reference map(s) ['USER_DIRECTORY']: the pipeline needs the feed that loads each as a pipeline reference (create_pipeline references, or update_pipeline (references=...)); find_reference_data lists the maps and their feeds."
+  ],
+  "events": [
+   {
+    "event": "badge",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/Name",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventSource/User/Name",
+     "EventSource/User/UserDetails/Organisation",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [
+   "USER_DIRECTORY"
+  ],
+  "dictionaries": []
+ }
+}

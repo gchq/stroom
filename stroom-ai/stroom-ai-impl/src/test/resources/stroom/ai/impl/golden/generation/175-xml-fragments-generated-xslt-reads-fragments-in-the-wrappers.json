@@ -1,0 +1,193 @@
+{
+ "source": "xml-fragments-generated-xslt-reads-fragments-in-the-wrappers",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "xml_fragments",
+  "record": "Event",
+  "xml_namespace": "records:2",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "System/TimeCreated/@SystemTime",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Workstations"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "Security"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "System/Computer"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "EventData/Data[@Name='IpAddress']"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "EventData/Data[@Name='TargetUserName']"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "System/EventID"
+   },
+   {
+    "path": "EventDetail/Authenticate/User/Id",
+    "field": "EventData/Data[@Name='TargetUserName']"
+   },
+   {
+    "path": "EventDetail/Authenticate/Data",
+    "field": "EventData/Data[@Name='LogonType']",
+    "data_name": "LogonType"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4624"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account was successfully logged on"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "failed logon",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4625"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account failed to log on"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "value": "false"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4634"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account was logged off"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[failed logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "System/EventID = '4624'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[LogonType]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "failed logon",
+    "when": [
+     "System/EventID = '4625'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[LogonType]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "System/EventID = '4634'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[LogonType]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

@@ -1,0 +1,154 @@
+{
+ "source": "rebuild-a-lost-mapping-is-read-back-from-the-xslt-and-writes",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "A"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "D"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "g"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "any_of": [
+     "hostname",
+     "host"
+    ],
+    "transform": "lower"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "transform": "strip_domain"
+   },
+   {
+    "path": "EventSource/User/Name",
+    "field": "user",
+    "dictionary": "User names",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Domain",
+    "field": "user",
+    "transform": "domain"
+   },
+   {
+    "path": "EventSource/User/UserDetails/Organisation",
+    "lookup": {
+     "map": "USER_TO_ORG",
+     "field": "user",
+     "path": "org"
+    }
+   }
+  ],
+  "events": [
+   {
+    "name": "vip",
+    "when": [
+     {
+      "field": "user",
+      "in_dictionary": "VIP users"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "vip"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "data_name": "u"
+     }
+    ],
+    "allow_unknown": "a VIP list match has no action of its own",
+    "keep_unknown": true
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "x"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "data_name": "u"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[vip] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "Lookups read reference map(s) ['USER_TO_ORG']: the pipeline needs the feed that loads each as a pipeline reference (create_pipeline references, or update_pipeline (references=...)); find_reference_data lists the maps and their feeds."
+  ],
+  "events": [
+   {
+    "event": "vip",
+    "when": [
+     "data[@name='user']/@value in dictionary 'VIP users'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[u]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Domain",
+     "EventSource/User/Id",
+     "EventSource/User/Name",
+     "EventSource/User/UserDetails/Organisation",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[u]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Domain",
+     "EventSource/User/Id",
+     "EventSource/User/Name",
+     "EventSource/User/UserDetails/Organisation",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [
+   "USER_TO_ORG"
+  ],
+  "dictionaries": [
+   "User names",
+   "VIP users"
+  ]
+ }
+}
