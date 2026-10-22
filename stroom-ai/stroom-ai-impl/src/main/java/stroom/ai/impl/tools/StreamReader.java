@@ -62,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -277,10 +278,18 @@ public class StreamReader {
                                   && DataType.SEGMENTED.equals(dataResult.getDataType());
         return new Fetched(result.getFeedName(), result.getStreamTypeName(), data, segmented,
                 NullSafe.get(result.getTotalItemCount(), Count::getCount),
-                result.getAvailableChildStreamTypes() == null
-                        ? null
-                        : List.copyOf(result.getAvailableChildStreamTypes()),
+                childTypes(result),
                 NullSafe.list(result.getErrors()));
+    }
+
+    // The child streams the data viewer says the stream has. Seen reading a processed Events stream in Stroom: the
+    // set holds a null, which List.copyOf refuses (check_events failed on every Events stream).
+    private static List<String> childTypes(final AbstractFetchDataResult result) {
+        return result.getAvailableChildStreamTypes() == null
+                ? null
+                : result.getAvailableChildStreamTypes().stream()
+                        .filter(Objects::nonNull)
+                        .toList();
     }
 
     /// A segmented record as a well-formed document. Stroom wraps each record in the stream's root element, but

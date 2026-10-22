@@ -48,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,8 @@ final class StreamWorld {
     final Map<String, String> encodings = new HashMap<>();
     /// The longest a raw stream's text is given by the data viewer, as its page of characters.
     final int viewerPage = 1_000;
+    /// The child streams the data viewer says each stream has.
+    final Set<String> childTypes = new HashSet<>(Set.of(StreamTypeNames.META));
 
     StreamWorld() {
         // The user may view data, as reading a stream's text needs; a test takes it away to see the refusal.
@@ -183,18 +186,18 @@ final class StreamWorld {
         return result(row, text.substring(0, Math.min(viewerPage, text.length())), 1, DataType.NON_SEGMENTED, null);
     }
 
-    private static FetchDataResult result(final MetaRow row,
-                                          final String data,
-                                          final long total,
-                                          final DataType dataType,
-                                          final List<String> problems) {
+    private FetchDataResult result(final MetaRow row,
+                                   final String data,
+                                   final long total,
+                                   final DataType dataType,
+                                   final List<String> problems) {
         return new FetchDataResult(row == null
                 ? null
                 : row.getMeta().getFeedName(),
                 row == null
                         ? null
                         : row.getMeta().getTypeName(),
-                null, null, null, Count.of(total, true), null, null, Set.of(StreamTypeNames.META), data, false,
+                null, null, null, Count.of(total, true), null, null, childTypes, data, false,
                 dataType, DisplayMode.TEXT, problems);
     }
 
