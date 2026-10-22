@@ -532,17 +532,81 @@ tasks with `ProcessorTaskFinder`. Where they differ from the MCP server:
   approving over `/mcp`, and none could be made while the user is away. It reads up to 500 records of the streams
   in all (the MCP server's `max_sample_records` default), and its `stream_ids` description says so rather than
   naming the setting.
-* **wait_for_processing is read-only too**, and takes a run slot. The MCP server's restored the build's
-  Elasticsearch indexing pipeline's batch size once indexing passed (`development_batch(..., small=False)`, which
-  made it `readOnlyHint` false); nothing sets that batch size until `create_processor_filter` and
-  `reprocess_streams` are ported, so it isn't ported here: the write tools' port adds it (and then reconsiders the
-  read-only flag).
+* **wait_for_processing is read-only too**, and takes a run slot. Once indexing passes it restores the build's
+  Elasticsearch indexing pipeline's batch size, as the MCP server's did (`IndexingRuns.developmentBatch(..., false)`,
+  added with the processing write tools), which made the MCP server's `readOnlyHint` false. Reconsidered then and
+  kept read-only, on check_events' grounds: it only takes off the small batch size `create_processor_filter` and
+  `reprocess_streams` set, on a pipeline tagged as the tools' own in a build (never a document a person wrote), and
+  as a write every wait would need approving over `/mcp` and none could run while the user is away. A failure to
+  restore it never fails the wait.
 * **wait_for_processing stops before the session's time limit for a long call** (its query time limit, less 10 s
   for its last reads), where the MCP server stopped before the caller's access token ran out: the hint says to call
   again, as the MCP server's `out_of_time` did, naming the limit instead of the sign-in. It stops at once when its
   thread is interrupted (the client gave up on the call) or the chat's run is stopped, and says where processing
   is (`CallProgress`) now and then while it waits. `timeout_seconds` outside 5 to 900 is brought within them, where
   the MCP server refused it; empty `stream_ids` are refused.
+
+## The processing write tools: `create_processor_filter`, `set_processor_filter_enabled` and `reprocess_streams`
+
+Ported as tools of their own (`stroom-mcp-impl`, category processing), on the build layer and the helpers above
+(`StreamProcessing`, `PipelineOutputs`, `UserActionEntries`, `IndexTemplateAgreements`, `BuildFeeds.makeTestFeed`,
+`BuildRecords.steppedClean`, `SampleStreamTexts.refuseOlderThanFeed`). The rest of `tools/processing_writes.py` is
+ported as helpers, named for the builds' port (`start_build`, `promote_build`) to reuse:
+
+* **`ProcessorFilterWrites`**: `_term` (`term`, `anyOf`, `allOf`), `_managed_pipeline` (`managedPipeline`),
+  `_create_filter` (`createFilter`), `_selected_ids`, `_already_processed`, `_feed_term`, `_pipeline_term`,
+  `feed_stream_type`, `filter_feeds`, `_pipeline_terms` (and `pipelineUuids`), `_names_pipeline`, `_feed_bounds`
+  (`feedBounds`, with `feed_created_ms` as `feedCreatedMs`), `_refuse_duplicate`, and the settings
+  `max_reprocess_streams`, `reprocess_max_tasks`, `sample_max_tasks` and `max_feed_filter_tasks` as constants (10,
+  1, 1 and 2, their defaults: not Stroom config, so expected.yaml is unchanged).
+* **`ProcessingSources`**: `_events_source`, `_refuse_superseded` and `_build_feeds_only`.
+* **`OutputFeeds`**: `_feed_taken`, `_free_feed_name`, `output_feed` and `restore_output_feed` (`TEST_FEED` is
+  `-MCP-TEST`).
+* **`IndexingRuns`**: `lucene_index`, `_own_index`, `_writes_refused`, `drop_request`, `_fresh_index`,
+  `_delete_index_shards` and `development_batch` (`DEV_BATCH_SIZE`, `BATCH_NOTE`).
+* **`ProcessingApprovals`**: `_reprocess_runs`, `_committed`, `_for_the_user`, `_before_actions`, `_drop_first` and
+  `_output_note`.
+* **`PromotionProcessing`**: `promotion_processing`, `_test_feed`, `create_promotion_filters`, `_covering_filter` and
+  `_before_promoted_indexing`.
+* **`PipelineDocs`**: a pipeline read and saved as the user, and `tools/pipeline_writes.py`'s `_set_property`
+  (`withProperty`, with `addedProperties` and `withAddedProperties`).
+* **`UserActionEntries`** gains `es_request` (`esRequest`, the same request shapes only) and `enable_filter`'s
+  `after`.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `create_processor_filter` | no | no | yes | no |
+| `set_processor_filter_enabled` | no | no | no | no |
+| `reprocess_streams` | no | no | yes | no |
+
+`create_processor_filter` and `reprocess_streams` ask the user in their own forms, as the MCP server's did (the
+approval of a filter that runs, the confirmation of a source pipeline the tools didn't build, of an index template
+of the user's own); a filter on any other pipeline is made disabled, its enabling the user's.
+`set_processor_filter_enabled` asks nothing (it only ever disables), so over `/mcp` each call is approved as a whole.
+
+Where they differ from the Python server:
+
+* **Filters are made through Stroom's `ProcessorFilterService`** as the user, as the Processors tab and the data
+  browser's Process action make them (Manage Processors, and View on the pipeline); a new processor left disabled is
+  enabled through `ProcessorService`, as the MCP server's `PUT /processor/v1/{id}/enabled` did. Reprocessing makes a
+  new filter on the pipeline selecting the streams by id, as the MCP server's did, rather than Stroom's own
+  reprocess filters (the data browser's Reprocess action, `ProcessorFilterService.reprocess`): those select the
+  output streams a processor made, and an indexing pipeline makes none (only an Error stream when something went
+  wrong), and they give no filter id for `wait_for_processing` to count the new outputs by.
+* **A Lucene index's shards are deleted through Stroom's index service** (`IndexResource`, as the index's Shards tab
+  deletes them, node by node: the user needs the Manage Index Shards permission). `stroom-index-impl`'s `IndexModule`
+  now binds `IndexResource` to its implementation for it (as `TaskModule` binds `TaskResource`). Elasticsearch is
+  never written to: dropping an index is a request for the cluster admin (`drop_first`, a button to copy).
+* **`_writes_refused` reads an Error stream's text**, line by line, for Elasticsearch's refusal, where the MCP server
+  read its stored error markers' messages; the same reasons are found.
+* **`set_processor_filter_enabled`** refuses a filter the user can't see (no Manage Processors, or none of that id)
+  saying so, where the MCP server gave the REST error.
+* **Descriptions**: `reprocess_streams` says `At most 10 streams per call` where the Python one named its setting
+  (`max_reprocess_streams (default 10)`); `priority` is described (`The filter's priority (1 to 100; default 10).`),
+  and one outside 1 to 100 is refused, as pydantic refused it. `created_after` without an offset is taken as UTC
+  (Python's naive time was the server's local time).
+* **Consent actions** are the MCP server's (`index_events_from_other_pipeline` for the source confirmation, the tool's
+  own name for the template confirmation), so a round's hint names that action, as the Python one did.
 
 ## The feed tools: `create_feed`, `upload_sample` and `record_source_notes`
 
