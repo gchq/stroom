@@ -525,14 +525,9 @@ last closed dialog for a moment only.
   tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
   group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
   e.g. a separate "Change Status" button beside the value.
-* A grid row's action buttons work only with the mouse (found 2026-10-22, checking
-  `COMPONENTS.md`): `ActionMenuCell`'s "Actions..." (Users, Dependencies, Processors and others)
-  and `ActionCell`'s named buttons (job nodes, content templates, data retention rules) are `div`s
-  with a title that act on a mouse down or click. The grid's keyboard lands on their cell, and
-  Enter and Space there do nothing (`App/Main/UsersScreen` `ActionMenu`: Right to the cell, then
-  Enter or Space, opens no menu). `HoverActionMenuCell` shows its menu only on a mouse over. Fix:
-  draw them as `button`s, which the grid's keyboard already puts the focus on (as it does a
-  user's open link, `rowAction`), and open the menu on a click (Enter and Space make one).
+* `HoverActionMenuCell` shows its "..." only on a mouse over and opens its menu only on a mouse
+  press. Nothing uses it (`UserListPresenter`'s use is commented out); if anything does again, it
+  wants the `ActionMenuCell` treatment (see Fixed: a grid row's action buttons).
 * A grid's spinner doesn't repeat while a finger is held on an arrow (a tap steps once): it steps
   on the mouse events the browser makes after a touch, and takes no touch or pointer events
   (`ValueSpinnerCell`; the `ValueSpinner` widget does repeat). The new grid hands a cell its
@@ -2044,6 +2039,19 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `checks` and `dirty`. Checked against a workbench grid; not run against a live Stroom here.
   (`compare/lib/structure.mjs` still lists `th.dataGridHeader` after `[role=columnheader]`, which is
   harmless.)
+* **A grid row's action buttons worked only with the mouse** (found 2026-10-22, checking
+  `COMPONENTS.md`): `ActionMenuCell`'s "Actions..." (Users, Dependencies, Processors and others)
+  and `ActionCell`'s named buttons (job nodes, content templates, data retention rules) were `div`s
+  with a title that acted on a mouse down or click, so the grid's keyboard landed on their cell,
+  where Enter and Space did nothing. They are now `button`s (`RowActions.button`), which the grid's
+  keyboard puts the focus on: Enter or Space opens the `ActionMenuCell`'s menu below the button
+  (its opener, so the menu says it is open and the focus comes back to it), and presses an
+  `ActionCell` as a click at the button's lower left corner would (`RowActions.clickBelow`), so a
+  presenter that places its menu by the pointer places it by the button. As buttons they are
+  touch targets, so each is 24px round its icon (`SvgCell.css`), taking no more room in the row.
+  `Widgets/ActionMenuCell` `OpensFromTheKeyboard`, `App/Main/JobsScreen` `CrossNavigation` (End to
+  the row's button, Enter opens its menu); both failed before (no such button). The unused
+  `RowActions.updateTabStops`, `MyDataGrid`'s, is deleted.
 
 ## Checked and not bugs
 

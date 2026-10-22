@@ -164,6 +164,10 @@ public final class ContentTemplatesScreenStories {
                             .getByTitle(TextMatch.regex("^Actions for template ")));
                     play.waitFor(() -> play.expect(screen.getByText("Move Template Up")).toBeVisible());
                     play.expect(screen.queryByText("Move Template Down")).toBeNull();
+                    // Closed, so the accessibility check doesn't measure the buttons it covers (a
+                    // row's button is a 24px target, but one partly under the menu isn't)
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Move Template Up")).toBeNull());
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Editing a template (rename) dirties the document; Save Templates saves it

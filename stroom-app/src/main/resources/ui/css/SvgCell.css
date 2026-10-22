@@ -29,6 +29,20 @@
 	cursor: pointer;
 }
 
+/* A row's action button (ActionCell, ActionMenuCell, a RowActions button) is a 24px target
+   (WCAG 2.5.8) round its icon; a negative margin takes the extra back, so the row is no taller */
+.svgCell-button.rowAction {
+	min-width: 24px;
+	min-height: 24px;
+	margin: -4px;
+}
+
+/* ...which a grid cell's content (overflow-x hidden, so overflow-y auto) would otherwise scroll by.
+   It has no text to cut short */
+.data-grid__cell > div:has(> .svgCell-button.rowAction) {
+	overflow: visible;
+}
+
 .svgCell-face {
 	border: none;
 	outline: none;

@@ -257,6 +257,17 @@ public final class JobsScreenStories {
                     // Tasks screen (TaskManagerPresenter.changeNameFilter)
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_TASKS))
                             .toHaveBeenCalledWith("node=node1, task=Data Retention"));
+
+                    // The keyboard reaches the button, the row's last cell, and Enter opens the menu
+                    // (the button was a picture that only a mouse press used)
+                    play.click(play.within(row(play, "node1")).getByText("Enabled"));
+                    play.keyboard("{ArrowRight}{End}");
+                    play.expect(play.getByRole("button", "Actions for job 'Data Retention' on node 'node1'"))
+                            .toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     expectNoProblems(play);
                 })
                 // Clicking a Schedule link opens the editor; OK saves the edited schedule

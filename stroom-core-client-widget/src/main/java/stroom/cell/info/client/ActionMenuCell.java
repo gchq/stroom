@@ -21,7 +21,10 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.ElementUtil;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -38,12 +41,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * A cell containing an ellipses icon that when clicked
- * will show a popup menu of actions to perform.
- *
- * @param <R>
- */
+/// A cell holding an "Actions..." button (an ellipsis) that shows a menu of actions for its row:
+/// pressed with the mouse, the menu by the pointer; Enter or Space while it has the focus (the grid's
+/// keyboard puts the focus on it), the menu below the button. A row with no actions has no button.
+///
+/// @param <R> The row's type.
 public class ActionMenuCell<R> extends AbstractCell<R> {
 
     private static final CellIcon ICON = CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions...");
@@ -66,7 +68,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                           final Function<R, String> tooltipExtractor,
                           final Function<R, String> menuNameExtractor,
                           final HasHandlers hasHandlers) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
 
         this.menuCreator = menuCreator;
         this.tooltipExtractor = tooltipExtractor;
@@ -98,52 +100,45 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                                final R row,
                                final NativeEvent event,
                                final ValueUpdater<R> valueUpdater) {
-        super.onBrowserEvent(context, parent, row, event, valueUpdater);
-        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-            final EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
+        final EventTarget eventTarget = event.getEventTarget();
+        final Element button = parent.getFirstChildElement();
+        if (row == null || button == null || !Element.is(eventTarget)
+            || !button.isOrHasChild(Element.as(eventTarget))) {
+            // Ignore events outside the button
+            return;
+        }
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+            showActionMenu(context, row, button, new PopupPosition(
+                    event.getClientX() + 10,
+                    event.getClientY() + 10));
+            if (valueUpdater != null) {
+                valueUpdater.update(row);
             }
-            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
-                // Ignore clicks that occur outside the main element.
-                onEnterKeyDown(context, parent, row, event, valueUpdater);
+        } else if (RowActions.isKeyPress(event)) {
+            // Enter or Space: the menu below the button (the browser's own click is prevented)
+            event.preventDefault();
+            showActionMenu(context, row, button, new PopupPosition(new Rect(button), PopupLocation.BELOW));
+            if (valueUpdater != null) {
+                valueUpdater.update(row);
             }
         }
     }
 
-    @Override
-    protected void onEnterKeyDown(final Context context,
-                                  final Element parent,
-                                  final R row,
-                                  final NativeEvent event,
-                                  final ValueUpdater<R> valueUpdater) {
-        final Element element = event.getEventTarget().cast();
-        if (ElementUtil.hasClassName(element, ACTION_MENU_CELL_CLASS_NAME, 5)) {
-            final List<Item> items = NullSafe.get(menuCreator, mc -> mc.apply(row));
-            if (NullSafe.hasItems(items)) {
-                showActionMenu(context, row, event);
-            }
-        }
-        if (valueUpdater != null) {
-            valueUpdater.update(row);
-        }
-    }
-
-    private void showActionMenu(final Context context, final R row, final NativeEvent event) {
+    private void showActionMenu(final Context context,
+                                final R row,
+                                final Element button,
+                                final PopupPosition popupPosition) {
         Objects.requireNonNull(menuCreator);
         final List<Item> items = menuCreator.apply(row);
-        final PopupPosition popupPosition = new PopupPosition(
-                event.getClientX() + 10,
-                event.getClientY() + 10);
+        if (!NullSafe.hasItems(items)) {
+            return;
+        }
         ShowMenuEvent
                 .builder()
                 .name(getMenuName(NullSafe.get(menuNameExtractor, func -> func.apply(row)), context))
                 .items(items)
                 .popupPosition(popupPosition)
-//                    .onShow(e -> {
-//                    })
-//                    .onHide(e -> {
-//                    })
+                .opener(button)
                 .allowCloseOnMoveLeft()
                 .fire(hasHandlers);
     }
@@ -180,12 +175,11 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                     func -> func.apply(row),
                     "Actions...");
 
-            final CellIcon icon = ICON.withName(tooltipText);
-            sb.append(SvgImageUtil.toSafeHtml(
-                    icon,
-                    "svgCell-icon",
-                    "svgCell-button",
-                    ACTION_MENU_CELL_CLASS_NAME));
+            // A button the grid's keyboard reaches (a row action), named by its title
+            sb.append(RowActions.button(
+                    "svgCell-button " + ACTION_MENU_CELL_CLASS_NAME,
+                    tooltipText,
+                    SvgImageUtil.toSafeHtml(ICON.getIcon(), "svgCell-icon")));
         }
     }
 }

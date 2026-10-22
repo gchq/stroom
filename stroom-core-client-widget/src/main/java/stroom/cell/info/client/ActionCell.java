@@ -17,10 +17,12 @@
 package stroom.cell.info.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -30,12 +32,12 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-/**
- * A cell containing an icon (ellipses icon by default) that when clicked
- * will execute an action. Useful for a simple
- *
- * @param <R>
- */
+/// A cell holding a button with an icon (an ellipsis by default) that does an action when pressed:
+/// clicked, or Enter or Space while it has the focus (the grid's keyboard puts the focus on it). A
+/// key press clicks it at its lower left corner (see [RowActions#clickBelow(Element)]), so an action
+/// that places a menu by the pointer places it below the button.
+///
+/// @param <R> The row's type.
 public class ActionCell<R> extends AbstractCell<R> {
 
     private final CellIcon cellIcon;
@@ -64,7 +66,7 @@ public class ActionCell<R> extends AbstractCell<R> {
     private ActionCell(final CellIcon cellIcon,
                        final BiConsumer<R, NativeEvent> action,
                        final Function<R, String> nameFunction) {
-        super("click");
+        super(BrowserEvents.CLICK, BrowserEvents.KEYDOWN);
         this.action = action;
         this.cellIcon = cellIcon;
         this.nameFunction = nameFunction;
@@ -76,16 +78,20 @@ public class ActionCell<R> extends AbstractCell<R> {
                                final R row,
                                final NativeEvent event,
                                final ValueUpdater<R> valueUpdater) {
-        super.onBrowserEvent(context, parent, row, event, valueUpdater);
-        if ("click".equals(event.getType())) {
-            final EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
-            }
-            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
-                // Ignore clicks that occur outside of the main element.
-                onEnterKeyDown(context, parent, row, event, valueUpdater);
-            }
+        final EventTarget eventTarget = event.getEventTarget();
+        final Element button = parent.getFirstChildElement();
+        if (row == null || button == null || !Element.is(eventTarget)
+            || !button.isOrHasChild(Element.as(eventTarget))) {
+            // Ignore events outside the button
+            return;
+        }
+        if (RowActions.isKeyPress(event)) {
+            // Enter or Space: a click placed by the button. The browser's own click from the key
+            // is prevented (and would be ignored, having no position)
+            event.preventDefault();
+            RowActions.clickBelow(button);
+        } else if (BrowserEvents.CLICK.equals(event.getType()) && !RowActions.isKeyboardClick(event)) {
+            onEnterKeyDown(context, parent, row, event, valueUpdater);
         }
     }
 
@@ -109,11 +115,14 @@ public class ActionCell<R> extends AbstractCell<R> {
         if (row == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final String className = "svgCell-icon svgCell-button";
-            final CellIcon icon = nameFunction == null
-                    ? cellIcon
-                    : cellIcon.withName(nameFunction.apply(row));
-            sb.append(SvgImageUtil.toSafeHtml(icon, className));
+            final String name = nameFunction == null
+                    ? cellIcon.getName()
+                    : nameFunction.apply(row);
+            // A button the grid's keyboard reaches (a row action), named by its title
+            sb.append(RowActions.button(
+                    "svgCell-button",
+                    name,
+                    SvgImageUtil.toSafeHtml(cellIcon.getIcon(), "svgCell-icon")));
         }
     }
 }
