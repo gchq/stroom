@@ -295,5 +295,6 @@ public class UserPreferencesManager {
         currentPreferences.setEditorTheme(userPreferences.getEditorTheme());
         currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
         currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
+        currentPreferences.setVisualisationPalette(userPreferences.getVisualisationPalette());
     }
 }

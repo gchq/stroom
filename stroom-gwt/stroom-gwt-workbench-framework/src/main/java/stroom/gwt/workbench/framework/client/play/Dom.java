@@ -220,6 +220,18 @@ final class Dom {
         return [doc.body];
     }-*/;
 
+    /// @param frame An `<iframe>`.
+    /// @return The body of the frame's document, or none if it isn't a frame, has no document
+    /// yet, or shows a document of another origin (which the page can't read).
+    static native JsArray<Element> frameBody(Element frame) /*-{
+        try {
+            var doc = frame && frame.contentDocument;
+            return doc && doc.body ? [doc.body] : [];
+        } catch (e) {
+            return [];
+        }
+    }-*/;
+
     // ---------- Roles, called by the JavaScript helpers ----------
 
     /// @param element An element.

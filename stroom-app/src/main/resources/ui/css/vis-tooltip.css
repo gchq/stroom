@@ -1,0 +1,74 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A visualisation's hover tooltip (stroom.dashboard.client.vis.VisTooltip), shown on the page
+   rather than inside the visualisation's frame so that it isn't cut off at the frame's edges.
+   Its content is the visualisation's own HTML; the grid and col classes are the key and value
+   columns that the visualisations' common tooltip builder makes.
+
+   It looks as Stroom's other popups do, drawn over their background (SimplePopup.css's
+   simplePopup-background-behind: colour, edge, rounded corners and shadow), so that it is
+   see-through, as they are, when the user's preferences say so (the page's transparency class).
+*/
+
+.vis-tooltip {
+    position: fixed;
+    z-index: 3000;
+    max-width: 400px;
+    color: var(--text-color);
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+}
+
+.vis-tooltip__content {
+    padding: 6px 8px;
+}
+
+.vis-tooltip .grid {
+    display: flex;
+    column-gap: 8px;
+}
+
+.vis-tooltip .col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* The title and rows of a tooltip made by vis.js's stroom.tooltipHtml */
+.vis-tooltip__title {
+    font-weight: 600;
+}
+
+.vis-tooltip__rows {
+    border-collapse: collapse;
+}
+
+.vis-tooltip__rows th,
+.vis-tooltip__rows td {
+    padding: 0;
+    text-align: left;
+    vertical-align: top;
+}
+
+.vis-tooltip__rows th {
+    padding-right: 8px;
+    font-weight: 400;
+    opacity: 0.8;
+}

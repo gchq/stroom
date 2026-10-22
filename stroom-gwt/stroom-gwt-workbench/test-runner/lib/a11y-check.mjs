@@ -48,6 +48,23 @@ export async function measureA11y(page, baseUrl) {
       return { checked: false, reason: 'axe-core is not available (run the workbenchFetchAxe task)' };
     }
   }
+  // axe only checks what is inside a frame (e.g. a visualisation's) if it is loaded there too, so it
+  // is loaded into every frame of the page that it can be (those of the same origin)
+  const origin = new URL(page.url()).origin;
+  for (const frame of page.frames()) {
+    if (frame === page.mainFrame() || !frame.url().startsWith(origin)) {
+      continue;
+    }
+    try {
+      if (!await frame.evaluate(() => Boolean(window.axe))) {
+        await frame.addScriptTag({ url: `${baseUrl}${AXE_PATH}` });
+      }
+      await frame.addStyleTag({ content: '*, *::before, *::after { transition: none !important; '
+        + 'animation: none !important; }' });
+    } catch (error) {
+      // The frame went (or is going) while it was being prepared, so there is nothing to check
+    }
+  }
   // Colour contrast is measured from the colours shown now, so a button part way through a hover
   // or press transition gives a different answer each run: finish transitions and animations first
   await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; '

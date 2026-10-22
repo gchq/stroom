@@ -136,7 +136,13 @@ public class VisJson {
                 } else {
                     final List<Object> vals = row.subList(row.size() - valueCount, row.size());
                     values.add(vals);
+                    final String[] valueTypes = types[types.length - 1];
                     for (int i = 0; i < valueCount; i++) {
+                        // A text field has no minimum, maximum or sum, even when its values look
+                        // like numbers or dates
+                        if (valueTypes != null && i < valueTypes.length && Type.TEXT.name().equals(valueTypes[i])) {
+                            continue;
+                        }
                         final Double dbl = VisTypeConverter.getDouble(vals.get(i));
                         if (dbl != null) {
                             min[i] = min(min[i], dbl);

@@ -27,6 +27,7 @@ public class CurrentPreferences {
     private String editorTheme;
     private String editorKeyBindings;
     private Toggle editorLiveAutoCompletion;
+    private String visualisationPalette;
 
     public String getTheme() {
         return theme;
@@ -58,5 +59,17 @@ public class CurrentPreferences {
 
     public void setEditorLiveAutoCompletion(final Toggle editorLiveAutoCompletion) {
         this.editorLiveAutoCompletion = editorLiveAutoCompletion;
+    }
+
+    /// @return The name of the palette visualisations colour categories from, or null for the
+    /// default.
+    public String getVisualisationPalette() {
+        return visualisationPalette;
+    }
+
+    /// @param visualisationPalette The name of the palette visualisations colour categories from,
+    ///                             or null for the default.
+    public void setVisualisationPalette(final String visualisationPalette) {
+        this.visualisationPalette = visualisationPalette;
     }
 }

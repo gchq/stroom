@@ -172,21 +172,39 @@ public class DateTimeFormatter {
 
         final TimeZoneSettings tz = getTimeZoneSettings();
 
-        String pattern = tz.pattern;
-
-        if (momentPatternOverride != null) {
-            pattern = momentPatternOverride;
-        } else {
-            // If UTC then just display the `Z` suffix.
-            if (Use.UTC.equals(tz.use)) {
-                pattern = pattern.replaceAll("Z", "[Z]");
-            }
-            // Ensure we haven't doubled up square brackets.
-            pattern = pattern.replaceAll("\\[+", "[");
-            pattern = pattern.replaceAll("]+", "]");
-        }
+        final String pattern = momentPatternOverride != null
+                ? momentPatternOverride
+                : fullPattern(tz);
 
         return MomentJs.nativeToDateString(ms, tz.use.getDisplayValue(), pattern, tz.zoneId, tz.offsetMinutes);
+    }
+
+    /// The user's time zone and date-time pattern as a visualisation needs them to show times as
+    /// the rest of Stroom does (`vis.js` formats them with moment.js, as [#format(Long)] and
+    /// [#formatCompact(Long)] do).
+    ///
+    /// @return The settings, never null: the defaults (UTC, ISO 8601) if the user has none.
+    public VisTimeSettings getVisTimeSettings() {
+        final TimeZoneSettings tz = getTimeZoneSettings();
+        return new VisTimeSettings(
+                tz.use.getDisplayValue(),
+                tz.zoneId,
+                tz.offsetMinutes,
+                fullPattern(tz),
+                toCompactPattern(tz.pattern));
+    }
+
+    // The moment.js pattern [#format(Long)] uses: the user's, with a UTC zone shown as `Z`
+    private String fullPattern(final TimeZoneSettings tz) {
+        String pattern = tz.pattern;
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(tz.use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+        return pattern;
     }
 
     /**
@@ -316,6 +334,58 @@ public class DateTimeFormatter {
             this.pattern = pattern;
             this.offsetMinutes = offsetMinutes;
             this.zoneId = zoneId;
+        }
+    }
+
+
+    // ---------------------------------------------------------------
+
+
+    /// The user's time settings for a visualisation (see [#getVisTimeSettings()]).
+    public static final class VisTimeSettings {
+
+        private final String use;
+        private final String zoneId;
+        private final int offsetMinutes;
+        private final String pattern;
+        private final String compactPattern;
+
+        VisTimeSettings(final String use,
+                        final String zoneId,
+                        final int offsetMinutes,
+                        final String pattern,
+                        final String compactPattern) {
+            this.use = use;
+            this.zoneId = zoneId;
+            this.offsetMinutes = offsetMinutes;
+            this.pattern = pattern;
+            this.compactPattern = compactPattern;
+        }
+
+        /// @return How the zone is given: `UTC`, `Local`, `Offset` or `Id`.
+        public String getUse() {
+            return use;
+        }
+
+        /// @return The zone's id, e.g. `Europe/London`, for `Id`.
+        public String getZoneId() {
+            return zoneId;
+        }
+
+        /// @return The zone's offset from UTC in minutes, for `Offset`.
+        public int getOffsetMinutes() {
+            return offsetMinutes;
+        }
+
+        /// @return The moment.js pattern of a time in full, as [DateTimeFormatter#format(Long)] uses.
+        public String getPattern() {
+            return pattern;
+        }
+
+        /// @return The moment.js pattern of a time to the minute, as
+        ///         [DateTimeFormatter#formatCompact(Long)] uses.
+        public String getCompactPattern() {
+            return compactPattern;
         }
     }
 }

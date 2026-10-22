@@ -25,6 +25,9 @@ import stroom.gwt.workbench.client.app.dashboard.PausePollingStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryResultVisStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryResultsTableDashboardStories;
 import stroom.gwt.workbench.client.app.dashboard.TableFilterSettingsStories;
+import stroom.gwt.workbench.client.app.dashboard.VisSettingsStories;
+import stroom.gwt.workbench.client.app.dashboard.VisToolbarStories;
+import stroom.gwt.workbench.client.app.dashboard.VisTooltipStories;
 import stroom.gwt.workbench.client.app.data.DataUploadDialogStories;
 import stroom.gwt.workbench.client.app.data.MetaBrowserStories;
 import stroom.gwt.workbench.client.app.data.ProcessChoiceDialogStories;
@@ -128,6 +131,12 @@ import stroom.gwt.workbench.client.app.main.VisualisationAssetsStories;
 import stroom.gwt.workbench.client.app.main.WelcomeScreenStories;
 import stroom.gwt.workbench.client.app.query.QueryResultsTableStories;
 import stroom.gwt.workbench.client.app.security.DocumentPermissionsTabStories;
+import stroom.gwt.workbench.client.app.vis.ChartVisStories;
+import stroom.gwt.workbench.client.app.vis.MapVisStories;
+import stroom.gwt.workbench.client.app.vis.NetworkVisStories;
+import stroom.gwt.workbench.client.app.vis.StatusVisStories;
+import stroom.gwt.workbench.client.app.vis.TimeVisStories;
+import stroom.gwt.workbench.client.app.vis.VisAccessibilityStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 /// Registers the workbench's `App/*` stories.
@@ -336,6 +345,25 @@ public final class AppStories {
         TableFilterSettingsStories.addTo(registry);
         // App/Dashboard/QueryResultVis
         QueryResultVisStories.addTo(registry);
+        // App/Dashboard/VisTooltip
+        VisTooltipStories.addTo(registry);
+        // App/Dashboard/VisToolbar
+        VisToolbarStories.addTo(registry);
+        VisSettingsStories.addTo(registry);
+        // App/Visualisations/BarChart, LineChart, StackedArea, TimeSeries, Scatter, Bubble, Doughnut,
+        // TreeMap, WordCloud
+        ChartVisStories.addTo(registry);
+        // App/Visualisations/DayWeekHeatMap, HourDayMultiHeatMap, HourDayPointMap, HourDaySessionMap,
+        // Session, SeriesSessionMap
+        TimeVisStories.addTo(registry);
+        // App/Visualisations/Gauge, RAGStatus, TrafficLights, TextValue
+        StatusVisStories.addTo(registry);
+        // App/Visualisations/Force, ChordLabels, Sunburst, Tree
+        NetworkVisStories.addTo(registry);
+        // App/Visualisations/GeoMap, FloorMap
+        MapVisStories.addTo(registry);
+        // App/Visualisations/Accessibility
+        VisAccessibilityStories.addTo(registry);
         // App/Dashboard/PausePolling
         PausePollingStories.addTo(registry);
         // App/Data/DataUploadDialog

@@ -15,9 +15,6 @@
   "app-ai-askstroomaidialog--view-attachment-data": [
     "button-name"
   ],
-  "app-dashboard-queryresultvis--pause-button-reports-up": [
-    "frame-title"
-  ],
   "app-editors-analyticruleeditor--default": [
     "target-size"
   ],
@@ -27,20 +24,8 @@
   "app-editors-analyticruleeditor--table-preferences-persist-on-the-doc": [
     "target-size"
   ],
-  "app-editors-dashboardeditor--splitter-above-visualisation": [
-    "frame-title"
-  ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
-  ],
-  "app-editors-dashboardeditor--vis-dynamic-controls": [
-    "frame-title"
-  ],
-  "app-editors-dashboardeditor--vis-linked-to-table": [
-    "frame-title"
-  ],
-  "app-editors-dashboardeditor--vis-refetches-on-column-filter": [
-    "frame-title"
   ],
   "app-editors-documentationeditor--default": [
     "frame-title"
@@ -125,9 +110,6 @@
   ],
   "app-editors-queryeditor--visualisation": [
     "target-size"
-  ],
-  "app-editors-queryeditor--visualisation-data-latch": [
-    "frame-title"
   ],
   "app-editors-reporteditor--default": [
     "target-size"
@@ -380,6 +362,9 @@
     "scrollable-region-focusable"
   ],
   "app-main-resultstoresdialog--stores": [
+    "scrollable-region-focusable"
+  ],
+  "app-main-tracesscreen--traces": [
     "scrollable-region-focusable"
   ],
   "app-main-topbar--focus-rings": [

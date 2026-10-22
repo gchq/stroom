@@ -79,6 +79,18 @@ class TestQuery {
     }
 
     @Test
+    void testFrameBody() {
+        final Play play = new Play();
+        final Query frame = play.screen().querySelector("iframe.vis");
+        assertThat(frame.frameBody().describe())
+                .isEqualTo("within(document.body).querySelector(\"iframe.vis\").frameBody()");
+        // Queries within the frame's document
+        assertThat(play.withinFrame(frame).getByRole("img", "Bar").describe())
+                .isEqualTo("within(within(document.body).querySelector(\"iframe.vis\").frameBody())"
+                           + ".getByRole(\"img\", { name: \"Bar\" })");
+    }
+
+    @Test
     void testBodyAndFirst() {
         final Play play = new Play();
         assertThat(play.body().describe()).isEqualTo("document.body");
