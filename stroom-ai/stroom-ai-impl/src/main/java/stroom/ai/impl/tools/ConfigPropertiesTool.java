@@ -269,7 +269,7 @@ class ConfigPropertiesTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String mode = NullSafe.string(stringArg(request, MODE_ARG)).toLowerCase(Locale.ROOT);
         if (!List.of(SEARCH, GET, LIST).contains(mode)) {
             throw new WorkspaceException("The mode must be " + SEARCH + ", " + GET + " or " + LIST + ".");
