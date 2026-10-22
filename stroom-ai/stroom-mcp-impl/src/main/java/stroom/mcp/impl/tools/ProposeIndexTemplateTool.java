@@ -153,7 +153,8 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Build the final Elasticsearch index template (not a Stroom pipeline template) for the "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Build the final Elasticsearch index template (not a Stroom pipeline template) for the "
                              + "indexing pipeline's destination index, for the cluster admin to apply: from the "
                              + "user's example index template or mapping and any component templates it is composed "
                              + "of, following their conventions: their settings and composed_of, the new index's own "

@@ -116,7 +116,8 @@ class RenameIndexTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Use another Elasticsearch index name wherever the build uses one, when the user asks "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Use another Elasticsearch index name wherever the build uses one, when the user asks "
                              + "for it: the Elastic Index doc's index name and that of each of the build's indexing "
                              + "pipelines writing to it, together. Only in a build. The template agreed for the old "
                              + "name doesn't apply to the new one: propose_index_template again (its name and index "

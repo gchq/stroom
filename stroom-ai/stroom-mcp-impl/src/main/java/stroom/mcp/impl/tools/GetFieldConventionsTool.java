@@ -120,7 +120,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Field naming conventions for indexes. Without a name this lists the profiles and "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Field naming conventions for indexes. Without a name this lists the profiles and "
                              + "returns needs_guidance: the agent must ask the user which convention to follow, point "
                              + "at reference index docs, or describe one. It never picks a convention itself. With a "
                              + "name it returns the profile's field map plus the fields and types of its reference "
