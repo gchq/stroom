@@ -66,7 +66,7 @@ class TestSurveyFeedTool {
     private final FeedNames feedNames = Mockito.mock(FeedNames.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
-    private final Consent consent = new Consent(securityContext, () -> auditLog);
+    private final Consent consent = new Consent(() -> auditLog);
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
             new FewerStreams(securityContext),
@@ -84,20 +84,22 @@ class TestSurveyFeedTool {
         // Seen in VS Code: an agent surveyed a live feed 3 streams at a time until the user asked for a larger
         // sample. A number the user gives is still theirs: fewer is confirmed in a form, then not asked again for
         // that feed.
-        final ToolCallContext context = PortedToolCalls.context();
-        final Map<String, Object> asked = json(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", context));
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(String.valueOf(asked.get("summary"))).contains("only 3 stream(s) a call (the default is 10)");
+        // Without a form, the user can't confirm it: nothing is read.
+        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", PortedToolCalls.context()).text())
+                .startsWith("Not done: Survey feed 'ACME-VPN' only 3 stream(s) a call (the default is 10).");
         Mockito.verify(streamReader, Mockito.never()).find(any(), anyInt(), anyBoolean());
 
-        final ToolResult agreed = call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3, \"confirmation_id\": \""
-                                       + asked.get("confirmation_id") + "\"}", context);
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final ToolResult agreed = call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", user.context());
         assertThat(agreed.text()).isEqualTo("No Raw Events streams in feed 'ACME-VPN'");
+        assertThat(user.shown()).singleElement().asString()
+                .contains("only 3 stream(s) a call (the default is 10)");
         // Agreed: not asked again.
-        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", context).text())
+        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", user.context()).text())
                 .isEqualTo("No Raw Events streams in feed 'ACME-VPN'");
-        assertThat(json(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 2}", context)).get("status"))
-                .isEqualTo("needs_confirmation");
+        assertThat(user.shown()).hasSize(1);
+        call("{\"feed\": \"ACME-VPN\", \"max_streams\": 2}", user.context());
+        assertThat(user.shown()).hasSize(2);
     }
 
     @Test
@@ -128,9 +130,9 @@ class TestSurveyFeedTool {
         for (int id = 1; id <= 5; id++) {
             stream(id, "ACME-VPN", 0, "{\"a\": 1}\n", false);
         }
-        final Map<String, Object> asked = json(call("{\"stream_ids\": [1, 2, 3, 4, 5]}"));
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(String.valueOf(asked.get("summary"))).contains("only 5 stream(s) a call");
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        call("{\"stream_ids\": [1, 2, 3, 4, 5]}", user.context());
+        assertThat(user.shown()).singleElement().asString().contains("only 5 stream(s) a call");
 
         // A sample uploaded to a build's feed is read as it is.
         sampleFeedInABuild();

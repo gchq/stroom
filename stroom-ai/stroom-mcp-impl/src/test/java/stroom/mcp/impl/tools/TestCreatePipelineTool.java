@@ -49,25 +49,26 @@ class TestCreatePipelineTool {
         textTemplate();
         pipelines.textConverter("tc", "Acme-Splitter");
         pipelines.xslt("x1", "Acme-Events", Map.of());
-        final ToolCallContext context = PortedToolCalls.context();
         final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"template\": "
-                                 + "\"Event Data (Text)\", \"description\": \"Acme's events\"";
+                                 + "\"Event Data (Text)\", \"description\": \"Acme's events\"}";
 
-        final Map<String, Object> asked = PipelineWorld.json(call(arguments + "}", context));
-
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Create pipeline 'Acme-V1-Events' from template 'Event Data "
-                                                   + "(Text)'");
-        assertThat(asked.get("details")).isEqualTo(Map.of("build", BUILD, "pipeline name", "Acme-V1-Events",
-                "template", "Event Data (Text)", "sets", List.of("dsParser.textConverter", "translationFilter.xslt"),
-                "filled from the build", List.of("dsParser.textConverter = Acme-Splitter (the build's only "
-                                                 + "TextConverter)",
-                        "translationFilter.xslt = Acme-Events (the build's only XSLT)")));
-        // Nothing made until the user agrees.
+        // Nothing made until the user agrees, which they can't without a form.
+        assertThat(call(arguments, PortedToolCalls.context()).text())
+                .startsWith("Not done: Create pipeline 'Acme-V1-Events' from template 'Event Data (Text)'.");
         assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
 
-        final Map<String, Object> made = PipelineWorld.json(call(arguments + ", \"confirmation_id\": \""
-                                                                 + asked.get("confirmation_id") + "\"}", context));
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final Map<String, Object> made = PipelineWorld.json(call(arguments, user.context()));
+
+        assertThat(user.forms()).singleElement().satisfies(form -> {
+            assertThat(form.get("summary")).isEqualTo("Create pipeline 'Acme-V1-Events' from template 'Event Data "
+                                                      + "(Text)'");
+            assertThat(form.get("details")).isEqualTo(Map.of("build", BUILD, "pipeline name", "Acme-V1-Events",
+                    "template", "Event Data (Text)", "sets", "dsParser.textConverter, translationFilter.xslt",
+                    "filled from the build", "dsParser.textConverter = Acme-Splitter (the build's only "
+                                             + "TextConverter), translationFilter.xslt = Acme-Events (the build's "
+                                             + "only XSLT)"));
+        });
 
         final PipelineDoc doc = pipelines.pipelineNamed("Acme-V1-Events");
         assertThat(doc.getParentPipeline()).isEqualTo(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));

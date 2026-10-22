@@ -87,20 +87,25 @@ class TestRebuildMappingTool {
     void aHandEditIsProvenOnTheSampleConfirmedThenSaved() {
         world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
 
-        final Map<String, Object> asked = call(Map.of());
-        assertThat(asked).containsEntry("status", "needs_confirmation")
-                .containsEntry("mode", "out of step with the kept mapping");
-        assertThat(String.valueOf(asked.get("summary"))).startsWith("Save the mapping rebuilt from XSLT "
-                                                                    + "'ACME-Events' (carrying hand edits into the "
-                                                                    + "mapping), and the XSLT regenerated from it: "
-                                                                    + "it wrote the same output as the XSLT for all "
-                                                                    + "1 records stepped");
-        assertThat(asked.get("proven_on")).isEqualTo(Map.of("records", 1, "streams", List.of(7), "which",
-                "the streams given"));
         final String before = world.xslt(uuid).getData();
+        // Without a form the user can't confirm it: nothing is saved.
+        final Map<String, Object> refused = call(Map.of());
+        assertThat(refused.get("error")).asString().startsWith("Not done: Save the mapping rebuilt from XSLT "
+                                                               + "'ACME-Events' (carrying hand edits into the "
+                                                               + "mapping), and the XSLT regenerated from it: it "
+                                                               + "wrote the same output as the XSLT for all 1 "
+                                                               + "records stepped");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
 
-        final Map<String, Object> done = call(Map.of("confirmation_id", asked.get("confirmation_id")));
-        assertThat(done).containsKey("saved").containsKey("next");
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+        final Map<String, Object> done = call(Map.of());
+        assertThat(world.shown).singleElement().asString().startsWith("Save the mapping rebuilt from XSLT "
+                                                                      + "'ACME-Events'");
+        assertThat(done).containsKey("saved").containsKey("next")
+                .containsEntry("mode", "out of step with the kept mapping");
+        assertThat(done.get("proven_on")).isEqualTo(Map.of("records", 1, "streams", List.of(7), "which",
+                "the streams given"));
         final XsltDoc saved = world.xslt(uuid);
         // The XSLT is the one regenerated from the rebuilt mapping, kept with it: the two agree again.
         final TranslationMapping kept = TranslationMapping.parse(KeptMapping.readMapping(saved.getDescription())
@@ -123,9 +128,12 @@ class TestRebuildMappingTool {
                 assertThat(((Map<?, ?>) difference).get("path") + " " + ((Map<?, ?>) difference).get("records"))
                         .isEqualTo("Event/EventSource/Generator 1"));
 
-        final Map<String, Object> asked = call(Map.of("accept_differences", true));
-        assertThat(asked).containsEntry("status", "needs_confirmation");
-        assertThat(String.valueOf(asked.get("summary"))).endsWith("1 output paths differ, as shown");
+        // Asked in a form, which the user declines: nothing saved.
+        final String before = world.xslt(uuid).getData();
+        world.forms = true;
+        call(Map.of("accept_differences", true));
+        assertThat(world.shown).singleElement().asString().contains("1 output paths differ, as shown");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
     }
 
     @Test

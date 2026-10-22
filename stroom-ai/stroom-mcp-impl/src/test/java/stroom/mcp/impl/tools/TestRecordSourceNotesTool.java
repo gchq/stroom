@@ -24,7 +24,6 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
-import stroom.security.api.SecurityContext;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,9 +55,9 @@ class TestRecordSourceNotesTool {
     private final BuildWorld world = new BuildWorld();
     private final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
-            new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+            new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
     private final EventVersions eventVersions = new EventVersions(heldSchemas, new Consent(
-            Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory(),
+            () -> Mockito.mock(AiAuditLog.class)), new BuildMemory(),
             world::guard, world::records);
     private final RecordSourceNotesTool tool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
             new DocumentWrites(world.documentAccess), eventVersions, plan);

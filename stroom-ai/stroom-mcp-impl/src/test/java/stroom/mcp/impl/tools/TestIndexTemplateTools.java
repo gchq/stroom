@@ -164,7 +164,7 @@ class TestIndexTemplateTools {
         assertThat(String.valueOf(result.get("hint"))).contains("Show the user pipeline_changes");
         final ToolResult bad = checkTool().execute(call(CheckIndexTemplateTool.NAME, args("template", "{",
                 "pipeline_uuid", "p1", "events_stream_ids", List.of(8))),
-                context());
+                context(UserQuestions.NONE));
         assertThat(bad.isError()).isTrue();
         assertThat(bad.text()).contains("not valid JSON");
     }
@@ -192,9 +192,14 @@ class TestIndexTemplateTools {
         assertThat(String.valueOf(shown.get("dev_tools"))).startsWith("PUT _index_template/ecs-acme-v2\n{\n  ");
         assertThat(String.valueOf(shown.get("hint"))).contains("json code block")
                 .contains("reviewed='" + shown.get("review_id") + "'");
-        // Then confirmed in a short form: lines, not the JSON.
+        // Then confirmed in a short form: lines, not the JSON. Without a form, it can't be.
         final Map<String, Object> reviewedArgs = with(given, "reviewed", shown.get("review_id"));
-        final Map<String, Object> asked = propose(reviewedArgs);
+        assertThat(refused(proposeTool(), ProposeIndexTemplateTool.NAME, reviewedArgs))
+                .startsWith("Not done: Use Elasticsearch index template 'ecs-acme-v2'");
+        assertThat(KeptMapping.readAgreedTemplate(description())).isEmpty();
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final Map<String, Object> agreed = propose(reviewedArgs, user);
+        final Map<String, Object> asked = user.forms().getFirst();
         assertThat(asked).containsEntry("status", "needs_confirmation").containsEntry("summary",
                 "Use Elasticsearch index template 'ecs-acme-v2' for index 'ecs-acme-v2' (cluster ES_DEV), as shown "
                 + "in the chat");
@@ -203,14 +208,11 @@ class TestIndexTemplateTools {
                                                             + shown.get("review_id") + ")")
                 .doesNotContainKey("notes");
         assertThat(String.valueOf(details.get("applies to"))).startsWith("ecs-acme-v2* (priority ");
-        assertThat(((Number) details.get("fields mapped here")).intValue()).isPositive();
+        assertThat(Integer.parseInt(String.valueOf(details.get("fields mapped here")))).isPositive();
         // Short (seen in testing: every field, note and component made it 2,000 characters, and the client
         // declined it as too long): the notes are beside it in the reply, for the chat.
-        assertThat(Consent.formMessage(String.valueOf(asked.get("summary")), details)).hasSizeLessThan(400);
-        assertThat(asked.get("from_example")).isNotNull();
-        assertThat(String.valueOf(asked.get("hint"))).contains("check_index_template with their version");
-        final Map<String, Object> agreed = propose(with(reviewedArgs, "confirmation_id",
-                asked.get("confirmation_id")));
+        assertThat(user.shown().getFirst()).hasSizeLessThan(400);
+        assertThat(agreed.get("from_example")).isNotNull();
         assertThat(agreed).containsEntry("agreed", true);
         assertThat(String.valueOf(agreed.get("hint"))).contains("commit to the cluster");
         // As a button for the cluster admin to copy (asked for by the user): the request exactly as agreed.
@@ -244,12 +246,12 @@ class TestIndexTemplateTools {
         final Map<String, Object> shownAgain = check(args("template", text));
         assertThat(shownAgain).containsEntry("status", "needs_review");
         assertThat(String.valueOf(shownAgain.get("dev_tools"))).contains("\"priority\": 500");
-        final Map<String, Object> askedAgain = check(args("template", text, "reviewed", shownAgain.get("review_id")));
+        final PortedToolCalls.FormUser again2 = PortedToolCalls.user(Map.of("value", true));
+        check(args("template", text, "reviewed", shownAgain.get("review_id")), again2);
+        final Map<String, Object> askedAgain = again2.forms().getFirst();
         assertThat(askedAgain).containsEntry("status", "needs_confirmation");
         assertThat(String.valueOf(((Map<String, Object>) askedAgain.get("details")).get("applies to")))
                 .contains("(priority 500)");
-        check(args("template", text, "reviewed", shownAgain.get("review_id"), "confirmation_id",
-                askedAgain.get("confirmation_id")));
         final String devTools = String.valueOf(KeptMapping.readAgreedTemplate(description()).orElseThrow()
                 .get("dev_tools"));
         assertThat(((Map<String, Object>) PyJson.loads(devTools.split("\n", 2)[1])).get("priority"))
@@ -265,7 +267,7 @@ class TestIndexTemplateTools {
                 List.of(new ComponentRule("org-base", "System")),
                 List.of(new ComponentRule("legacy", "System"), new ComponentRule("mine", "System"))));
         final TemplatePipelines.ComponentChoices choices = new TemplatePipelines(null, null, instructions)
-                .componentChoices(context(), "p", List.of("mine"));
+                .componentChoices(context(UserQuestions.NONE), "p", List.of("mine"));
         assertThat(choices.include()).containsExactly("mine", "org-base");
         assertThat(choices.exclude()).containsExactly("legacy");
         assertThat(choices.notes()).noneMatch(note -> note.contains("'mine'"));
@@ -329,9 +331,11 @@ class TestIndexTemplateTools {
                 .contains("without_example=true");
         // Only when the user says they have none: built from the plan, and they confirm it as shown.
         final Map<String, Object> shown = propose(args("plan", plan.toJson(), "without_example", true));
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
         final Map<String, Object> asked = propose(args("plan", plan.toJson(), "without_example", true,
-                "reviewed", shown.get("review_id")));
-        assertThat(asked).containsEntry("status", "needs_confirmation")
+                "reviewed", shown.get("review_id")), user);
+        assertThat(user.forms()).extracting(form -> form.get("status")).containsExactly("needs_confirmation");
+        assertThat(asked).containsEntry("agreed", true)
                 .containsEntry("template_name", "stroom-discovery-acme-v1");
         final List<?> notes = (List<?>) asked.get("notes");
         assertThat(notes.getFirst()).isEqualTo("built from the field plan alone: the user has no example index "
@@ -422,20 +426,40 @@ class TestIndexTemplateTools {
     }
 
     private Map<String, Object> propose(final Map<String, Object> arguments) {
-        return run(proposeTool(), ProposeIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"));
+        return run(proposeTool(), ProposeIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"),
+                UserQuestions.NONE);
+    }
+
+    private Map<String, Object> propose(final Map<String, Object> arguments, final UserQuestions user) {
+        return run(proposeTool(), ProposeIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"), user);
     }
 
     private Map<String, Object> check(final Map<String, Object> arguments) {
-        return run(checkTool(), CheckIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"));
+        return check(arguments, UserQuestions.NONE);
+    }
+
+    private Map<String, Object> check(final Map<String, Object> arguments, final UserQuestions user) {
+        return run(checkTool(), CheckIndexTemplateTool.NAME, with(arguments, "pipeline_uuid", "p1"), user);
     }
 
     private Map<String, Object> run(final stroom.ai.impl.tools.StroomTool tool,
                                     final String name,
-                                    final Map<String, Object> arguments) {
+                                    final Map<String, Object> arguments,
+                                    final UserQuestions user) {
         final Map<String, Object> withStreams = with(arguments, "events_stream_ids", List.of(8));
-        final ToolResult result = tool.execute(call(name, withStreams), context());
+        final ToolResult result = tool.execute(call(name, withStreams), context(user));
         assertThat(result.isError()).as(result.text()).isFalse();
         return PortedToolCalls.json(result.text());
+    }
+
+    // The refusal of a call without forms.
+    private String refused(final stroom.ai.impl.tools.StroomTool tool,
+                           final String name,
+                           final Map<String, Object> arguments) {
+        final ToolResult result = tool.execute(call(name, with(with(arguments, "pipeline_uuid", "p1"),
+                "events_stream_ids", List.of(8))), context(UserQuestions.NONE));
+        assertThat(result.isError()).as(result.text()).isTrue();
+        return result.text();
     }
 
     private ProposeIndexTemplateTool proposeTool() {
@@ -450,10 +474,10 @@ class TestIndexTemplateTools {
         return PortedToolCalls.call(name, JsonUtil.writeValueAsString(arguments, false));
     }
 
-    private static ToolCallContext context() {
+    private static ToolCallContext context(final UserQuestions user) {
         return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
                         new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
-                .userQuestions(UserQuestions.NONE)
+                .userQuestions(user)
                 .links(StroomLinks.absolute("https://stroom.example"))
                 .build();
     }

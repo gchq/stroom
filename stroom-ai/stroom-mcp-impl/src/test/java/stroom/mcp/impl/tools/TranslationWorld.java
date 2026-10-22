@@ -85,7 +85,7 @@ final class TranslationWorld {
     final PipelineStepping stepping = Mockito.mock(PipelineStepping.class);
     final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
-    final Consent consent = new Consent(securityContext, () -> auditLog);
+    final Consent consent = new Consent(() -> auditLog);
     final BuildMemory memory = new BuildMemory();
     final BuildPlan plan = new BuildPlan(facts, world.guard(), consent, memory);
     final CheckXsltTool checkXslt = new CheckXsltTool(heldSchemas, () -> docFinder, world.documentAccess,
@@ -106,10 +106,12 @@ final class TranslationWorld {
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
     final List<String> versions = new ArrayList<>(List.of(VERSION));
     // What the user answers each form with, by its question's start (`yes` or `no` for a confirmation or an
-    // approval); none: no forms.
+    // approval, else the choice picked); none: no forms.
     final Map<String, String> answers = new LinkedHashMap<>();
-    // Each form's message, as the user was shown it.
+    // Each form's message, as the user was shown it, in order.
     final List<String> asked = new ArrayList<>();
+    // The same messages, as the consent tests read them.
+    final List<String> shown = asked;
     boolean forms;
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final Map<String, String> files = new LinkedHashMap<>();
@@ -187,8 +189,8 @@ final class TranslationWorld {
                                 .filter(answer -> intro.startsWith(answer.getKey()))
                                 .findFirst()
                                 .map(answer -> new ElicitResult(ElicitResult.Action.ACCEPT, isYesOrNo(form)
-                                        ? Map.of("value", "yes".equals(answer.getValue()))
-                                        : Map.of("choice", answer.getValue())))
+                                        ? Map.of("value", !"no".equals(answer.getValue()))
+                                        : Map.of("choice", answer.getValue(), "value", true)))
                                 .orElse(new ElicitResult(ElicitResult.Action.DECLINE, null));
                     }
                 })

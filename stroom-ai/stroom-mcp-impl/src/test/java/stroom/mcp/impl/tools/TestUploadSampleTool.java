@@ -178,7 +178,7 @@ class TestUploadSampleTool {
     @Test
     void filesWithoutTheMcpEndpointAreTheUsersToUploadInStroom() {
         feeds.buildFeed("fortios", "FORTIOS-EVENTS-V1.0");
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null,
                 null, null));
 
         assertThat(call("{\"feed\": \"FORTIOS-EVENTS-V1.0\", \"files\": [\"a.json\"]}").text())

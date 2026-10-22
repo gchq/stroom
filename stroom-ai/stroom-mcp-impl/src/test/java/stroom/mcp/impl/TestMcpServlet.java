@@ -112,7 +112,7 @@ class TestMcpServlet {
 
     @Test
     void whenTurnedOffThereIsNoEndpoint() throws Exception {
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null,
                 null, null));
 
         servlet.service(request, response);

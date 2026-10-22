@@ -601,11 +601,15 @@ with an external identity provider, through MCP's OAuth sign-in, which the endpo
   categories (Core, Search, Content, Indexing, Processing, Administration), read-only or read and write, the union
   of every enabled policy covering the user or a group they are in; none means no tools. The upgrade adds one
   policy, _Everyone: read-only tools_. When a policy changes, open sessions are told to list their tools again.
-* A call that changes something asks the user first: a form, where the client can show one (MCP elicitation), or
-  else an approval id, which the client passes to `approve_call` once the user agrees. A tool that asks the user
-  itself before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once.
-  What is shown leads with what the call acts on (a target's uuid or name, the build); arguments past 1,500
-  characters are cut, saying so, and such a call gets no approval id, as the user couldn't see what they approve.
+* A call that changes something needs an MCP client that can show forms (MCP elicitation: one that declares the
+  `elicitation` capability when it connects), and asks the user in a form first. A tool that asks the user itself
+  before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once. What
+  the form shows leads with what the call acts on (a target's uuid or name, the build); arguments past 1,500
+  characters are cut, saying so. From a client that can't show forms, such a call is refused, saying why, and
+  nothing is changed; its read-only calls work. The model is never given an id to approve a call with (as the
+  Stroom MCP server gave one), since a model holding one could approve its own call. Such a client is still offered
+  the tools that change things: many have calls that only read, and a refusal tells the model why, where a tool
+  left out would leave it guessing at another way to make the change.
 * Each session has a workspace, as a chat has (a hidden chat record), deleted when the session ends (once its
   running calls have stopped), or after `mcpEndpoint.sessionRetention` without requests (the _MCP Session
   Maintenance_ job, every minute on each node, ends idle sessions and those whose clients have gone). Heavy calls
@@ -683,7 +687,6 @@ All under `appConfig.ai` unless stated.
 | `mcpEndpoint.enabled` | `true` | Whether Stroom's MCP endpoint, `/mcp`, serves MCP clients |
 | `mcpEndpoint.formTimeout` | `PT10M` | How long a form asked of an MCP client's user waits |
 | `mcpEndpoint.maxFormsPerNode` | `50` | Forms that may wait for MCP clients' users on a node at once |
-| `mcpEndpoint.approvalTimeout` | `PT10M` | How long an approval id given to an MCP client may be used |
 | `mcpEndpoint.keepAliveInterval` | `PT20S` | How often an MCP session's open stream is pinged |
 | `mcpEndpoint.sessionRetention` | `P1D` | How long an idle MCP session, and its workspace, is kept |
 | `mcpEndpoint.maxSessionsPerUser` | `20` | MCP sessions one user may have open on a node at once |

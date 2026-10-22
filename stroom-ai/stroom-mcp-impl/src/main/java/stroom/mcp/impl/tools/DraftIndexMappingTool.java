@@ -94,7 +94,6 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     static final String SHARED_ARG = "shared";
     static final String DISCOVERY_ARG = "discovery";
     static final String WITHOUT_EXAMPLE_ARG = "without_example";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String REPLACES_ARG = "replaces";
     static final String CUSTOM_NAMESPACES_ARG = "custom_namespaces";
     static final String CHANGES_ARG = "changes";
@@ -247,7 +246,6 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                                                  + "index template and no existing index to follow; "
                                                                  + "they confirm it in a form, and the convention "
                                                                  + "alone names the fields.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .addStringProperty(REPLACES_ARG, "When this index replaces an existing one (e.g. its fields "
                                                          + "renamed to ECS): the old indexing XSLT's uuid, or its "
                                                          + "pipeline's. The reply lists the fields the old index "
@@ -332,10 +330,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, Map<String, Object>> profiles = IndexingHelpers.conventions(knowledge);
         final String pasted = draft.exampleTemplate;
         if (draft.likeIndex != null && draft.exampleTemplate == null) {
-            final Optional<Map<String, Object>> gate = follow(call, context, indexName, draft);
-            if (gate.isPresent()) {
-                return gate.get();
-            }
+            follow(call, context, indexName, draft);
         }
         if (draft.convention == null && draft.exampleTemplate != null) {
             // The example names the fields; a profile only says which event paths are worth indexing.
@@ -403,19 +398,19 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 : "no convention given");
         details.put("index template", "built from Elasticsearch defaults, not from an index you already have");
         details.put("instead", "paste an example index template, or name an existing index in Stroom to follow");
-        return consent.require(call, context, Consent.Request.confirmation(NAME, "Index '" + indexName
-                                                                                 + "' into Elasticsearch without an "
-                                                                                 + "example index template", details,
-                stringArg(call, CONFIRMATION_ID_ARG)));
+        consent.require(call, context, Consent.Request.confirmation(NAME, "Index '" + indexName
+                                                                          + "' into Elasticsearch without an "
+                                                                          + "example index template", details));
+        return Optional.empty();
     }
 
     // Following another source's index is the user's choice, as the example is. Its index template and component
     // templates, read by Stroom where it can (asked for by the user: pasting them was cumbersome); else its fields,
-    // read through Stroom. Either way the user confirms what they'd get first. Empty to go on.
-    private Optional<Map<String, Object>> follow(final ToolCall call,
-                                                 final ToolCallContext context,
-                                                 final String indexName,
-                                                 final Draft draft) {
+    // read through Stroom. Either way the user confirms what they'd get first. Returns to go on.
+    private void follow(final ToolCall call,
+                        final ToolCallContext context,
+                        final String indexName,
+                        final Draft draft) {
         final Optional<IndexExamples.FromIndex> fetched = examples.templateFromIndex(draft.likeIndex);
         final Map<String, Object> details = new LinkedHashMap<>();
         if (fetched.isPresent() && fetched.get().template() != null) {
@@ -470,13 +465,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         // Picked in get_field_conventions' form: the user isn't asked again (what can't be read through Stroom is
         // said in the result, for the agent to tell them).
         if (!draft.likeIndex.equals(draft.chosen.get("like_index"))) {
-            final Optional<Map<String, Object>> gate = consent.require(call, context,
+            consent.require(call, context,
                     Consent.Request.confirmation(NAME, "Name the fields of index '" + indexName + "' after an "
-                                                       + "existing index in Stroom", details,
-                            stringArg(call, CONFIRMATION_ID_ARG)));
-            if (gate.isPresent()) {
-                return gate;
-            }
+                                                       + "existing index in Stroom", details));
         }
         if (draft.followed != null) {
             // Agreed: not asked again when the draft is called again with a component Stroom couldn't read.
@@ -491,7 +482,6 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                              + "component templates, keyword sub-fields, ignore_above), Elasticsearch defaults for "
                              + "those unless they paste it.";
         }
-        return Optional.empty();
     }
 
     // The plan, from the convention's paths the sample populates, named after the example where there is one.

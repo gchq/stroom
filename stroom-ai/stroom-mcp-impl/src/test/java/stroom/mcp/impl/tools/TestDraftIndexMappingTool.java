@@ -238,11 +238,12 @@ class TestDraftIndexMappingTool {
         assertThat(asked.get("drafted")).isEqualTo(false);
         assertThat(String.valueOf(((List<Map<String, Object>>) asked.get("options")).getFirst().get("option")))
                 .startsWith("example index template");
-        // Without an example only when the user confirms it.
-        final Map<String, Object> gate = draft("x", Map.of("convention", "stroom-flat", "without_example", true),
-                IndexingWorld.noForms());
-        assertThat(gate.get("status")).isEqualTo("needs_confirmation");
-        assertThat(String.valueOf(gate.get("summary"))).contains("without an example index template");
+        // Without an example only when the user confirms it: not without a form to confirm it in.
+        assertThat(refused(Map.of("backend", "elasticsearch", "index_name", "x", "events_stream_ids", List.of(1),
+                "convention", "stroom-flat", "without_example", true)))
+                .startsWith("Not done: Index 'x' into Elasticsearch without an example index template.");
+        draft("x", Map.of("convention", "stroom-flat", "without_example", true), agreeing());
+        assertThat(world.asked).singleElement().asString().contains("without an example index template");
     }
 
     @Test
@@ -254,20 +255,22 @@ class TestDraftIndexMappingTool {
                 ElasticIndexField.builder().fldName("source.ip").nativeType("ip").build(),
                 ElasticIndexField.builder().fldName("rule.id").nativeType("keyword").build())).build());
         Mockito.when(world.templates.read(any())).thenThrow(new ReadException(Reason.NOT_FOUND, "gone"));
-        final Map<String, Object> gate = draft("fortinet-firewall-v1", Map.of("like_index", "a96e"),
-                IndexingWorld.noForms());
+        final Map<String, Object> arguments = Map.of("backend", "elasticsearch", "index_name",
+                "fortinet-firewall-v1", "events_stream_ids", List.of(1), "like_index", "a96e");
+        assertThat(refused(arguments)).startsWith("Not done: Name the fields of index 'fortinet-firewall-v1' after "
+                                                  + "an existing index in Stroom.");
+        final ToolResult declined = world.draftTool().execute(PortedToolCalls.call(DraftIndexMappingTool.NAME,
+                PyJson.dumps(arguments)), world.forms(question -> Map.of("value", false)));
         // The fields are read first, so the user sees what they'd get; nothing is drafted before they agree.
-        assertThat(gate.get("status")).isEqualTo("needs_confirmation");
+        assertThat(declined.text()).startsWith("The user did not agree to: Name the fields of index "
+                                               + "'fortinet-firewall-v1' after an existing index in Stroom");
         Mockito.verify(world.summaries, Mockito.never()).summariseEvents(anyList(), anyInt());
-        assertThat(gate.get("summary"))
-                .isEqualTo("Name the fields of index 'fortinet-firewall-v1' after an existing index in Stroom");
-        final Map<String, Object> details = (Map<String, Object>) gate.get("details");
-        assertThat(details.get("follow")).isEqualTo("Elastic Index doc 'FortiOS-V1' (index ecs-fortios-v1)");
-        assertThat(String.valueOf(details.get("read through Stroom"))).startsWith("2 fields and their types")
-                .contains("source.ip (ip)");
-        // What Stroom can't give: the template itself, which the user may still paste.
-        assertThat(String.valueOf(details.get("not readable through Stroom"))).contains("component templates")
-                .contains("paste its index template");
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Name the fields of index 'fortinet-firewall-v1' after an existing index in Stroom")
+                .contains("- follow: Elastic Index doc 'FortiOS-V1' (index ecs-fortios-v1)")
+                .contains("- read through Stroom: 2 fields and their types", "source.ip (ip)")
+                // What Stroom can't give: the template itself, which the user may still paste.
+                .contains("- not readable through Stroom: ", "component templates", "paste its index template");
     }
 
     @Test
