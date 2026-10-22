@@ -778,12 +778,9 @@ in stroom-mcp-impl, beside the bundled ECS conventions the descriptions fall bac
 
 Where they differ from the MCP server:
 
-* **Stand-ins**: what they use of `utils/fieldplan.py`, `utils/templatecheck.py` and `utils/ecs.py` (`ELASTIC`,
-  `population_of`, `source_matches`, `any_action`, `json_xml_documents`, `flatten_document`, `FieldPlan`,
-  `PlannedField`, `Discovery`, `FieldPlan.written_by`, ECS's `short`) is stood in for by
-  `stroom.ai.impl.tools.indexing.IndexingStandIns`, to be replaced by the indexing core port.
-  `IndexingStandIns.ecsShort` reads `conventions/ecs_fields.json` from the class path (stroom-mcp-impl's
-  resources), and is "" without it.
+* What they use of `utils/fieldplan.py`, `utils/templatecheck.py` and `utils/ecs.py` is the indexing core's
+  (`FieldPlans`, `TemplateCheck`, `FieldPlan`, `PlannedField`, `Discovery`, `EcsSchema`). ECS's `short` for a field
+  is read from the ECS reference bundled in stroom-mcp-impl's resources, from the class path, and is "" without it.
 * `CefPlan.unsafe()` says why an expression is refused in `XsltSafety.refused`'s words ("the tools don't run or save
   it"), not the server's ("the server doesn't ...").
 * A time with no offset is read in the server's time zone when a review matches it to milliseconds, as Python's
@@ -793,3 +790,31 @@ Where they differ from the MCP server:
   to the next ` key=`), so a long value can't overflow Java's regex stack.
 * A field mapping with neither a field, a lookup nor an xpath (a `meta` one) is documented as an empty xpath; the
   Python raised on it.
+
+## The indexing core (`stroom.ai.impl.tools.indexing`)
+
+What the indexing tools (`get_field_conventions`, `draft_index_mapping`, `propose_index_template`,
+`check_index_template`, `create_index_doc`, `create_indexing_pipeline`, `rename_index`, `verify_index`) will be
+made of, ported before the tools: `utils/ecs.py` (`EcsSchema`), `utils/fieldplan.py` (`FieldPlan`, `PlannedField`,
+`Discovery`, `FieldPlans`; the XSLT in `IndexingXslt`, `ElasticDocument` and `DiscoveryXslt`, the template in
+`PlanTemplates`), `utils/templatecheck.py` (`IndexTemplates`, `TemplateMappings`, `ExampleNames`,
+`ExampleTemplates`, `TemplateCheck`) and the pure helpers of `tools/indexing.py` (`IndexingHelpers`). A plan's JSON
+(`FieldPlan.toJson()`, and Jackson's) is the server's `model_dump`, and `FieldPlan.fromJson` validates as pydantic
+does, with its messages, through the generator's `ModelReader`. Tests check the port against the server's own code:
+103 indexing XSLTs to the byte (`golden/indexing`), and some 2,900 calls recorded while the server's test suite ran
+(`tools/indexing/recorded_calls.json`).
+
+Where it differs from the Python server:
+
+* The ECS files are bundled with the agent knowledge in `stroom-mcp-impl`; `AgentKnowledge.conventionsFile` (a
+  default method, implemented by `BundledKnowledge`) gives them to `stroom-ai-impl`, and `EcsSchema.from(knowledge)`
+  reads them once. The functions that need ECS take the `EcsSchema` as an argument rather than reading a module
+  global.
+* A text that can't be read is an `IllegalArgumentException` (the server's `ValueError`) with the same message;
+  `components_wanted`'s `ToolError` is an `IndexingRefusal`.
+* A document value as read from an indexing XSLT's output is a `TemplateCheck.DocValue(kind, text)` (the server's
+  `(kind, text)` tuple).
+* What reads Stroom or the session (`with_cardinality`'s schema, `plan_given`'s kept and drafted plans,
+  `other_index`'s build docs, `fields_not_in_index`'s looks at the index, `_replaced`'s documents) is left to the
+  tools: the helpers take what the tools read. `writes_to`'s Elasticsearch part is `IndexingHelpers.writesToIndex`,
+  which `IndexDocs.writesTo` now uses; `Globs` moved to `stroom.ai.impl.tools` for both modules.

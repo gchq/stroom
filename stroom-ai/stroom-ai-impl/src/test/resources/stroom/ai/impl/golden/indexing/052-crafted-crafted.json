@@ -1,0 +1,136 @@
+{
+ "test": "crafted",
+ "plan": {
+  "backend": "lucene",
+  "index_name": "acme-v1",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "@EventId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "user.name",
+    "type": "keyword",
+    "source": "EventSource/User/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "user.domain",
+    "type": "keyword",
+    "source": "EventSource/User/Domain",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "source.ip",
+    "type": "ip",
+    "source": "EventSource/Client/IPAddress",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "source.port",
+    "type": "long",
+    "source": "EventSource/Client/Port",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "http.request.method",
+    "type": "keyword",
+    "source": "EventDetail/*/Resource/HTTPMethod",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "http.request.body.bytes",
+    "type": "long",
+    "source": "EventDetail/*/Resource/InboundSize",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "event.outcome",
+    "type": "keyword",
+    "source": "EventDetail/*/Outcome/Success",
+    "description": "",
+    "transform": "outcome",
+    "multiple": false
+   },
+   {
+    "name": "acme.ticket",
+    "type": "keyword",
+    "source": "EventDetail/Data[@Name='ticket']/@Value",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "acme.ports",
+    "type": "long",
+    "source": "EventDetail/Data[@Name=\"port\"]/@Value",
+    "description": "",
+    "transform": null,
+    "multiple": true
+   },
+   {
+    "name": "message",
+    "type": "text",
+    "source": "EventDetail/Description",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": "ecs",
+  "custom_namespaces": [
+   "acme"
+  ],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "named"
+  }
+ },
+ "version": "2.0"
+}

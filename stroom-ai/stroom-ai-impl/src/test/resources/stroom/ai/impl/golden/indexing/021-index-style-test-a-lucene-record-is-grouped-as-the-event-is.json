@@ -1,0 +1,54 @@
+{
+ "test": "tests/test_index_style.py::test_a_lucene_record_is_grouped_as_the_event_is",
+ "plan": {
+  "backend": "lucene",
+  "index_name": "ACME",
+  "time_field": "EventTime",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventTime",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "UserId",
+    "type": "keyword",
+    "source": "EventSource/User/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}
