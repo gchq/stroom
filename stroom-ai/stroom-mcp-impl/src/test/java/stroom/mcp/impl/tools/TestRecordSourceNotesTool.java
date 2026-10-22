@@ -57,12 +57,15 @@ class TestRecordSourceNotesTool {
     private final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
             new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+    private final EventVersions eventVersions = new EventVersions(heldSchemas, new Consent(
+            Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory(),
+            world::guard, world::records);
     private final RecordSourceNotesTool tool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
-            heldSchemas, plan);
+            eventVersions, plan);
 
     @BeforeEach
     void setUp() {
-        Mockito.when(heldSchemas.chosenOrLatest(null)).thenReturn("4.1.0");
+        Mockito.when(heldSchemas.eventVersions()).thenReturn(List.of("4.1.0", "3.5.2"));
         Mockito.when(heldSchemas.eventSchema("4.1.0")).thenReturn(schema());
     }
 
@@ -161,7 +164,7 @@ class TestRecordSourceNotesTool {
 
     @Test
     void withoutTheSchemaTheCatalogueIsStillCheckedForTwins() {
-        Mockito.when(heldSchemas.chosenOrLatest(null)).thenThrow(new ValidationException(HeldSchemas.NO_EVENT_LOGGING));
+        Mockito.when(heldSchemas.eventVersions()).thenThrow(new ValidationException(HeldSchemas.NO_EVENT_LOGGING));
 
         final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"s\", "
                                         + "\"events\": [{\"event\": \"A\", \"description\": \"a\", \"field\": "
@@ -173,6 +176,22 @@ class TestRecordSourceNotesTool {
                                              + "each the field and value that tell them apart (e.g. action=ALLOW "
                                              + "and action=DENY), or record them as one event. Correct the events "
                                              + "and call again.");
+    }
+
+    @Test
+    void theCatalogueIsCheckedAgainstTheVersionChosenForTheBuild() {
+        // As the translation tools read it: the build's chosen event-logging version, not the newest held.
+        world.guard().buildFolder("fw");
+        world.records().rememberEventLoggingVersion("fw", "3.5.2", EventVersions.GIVEN);
+        Mockito.when(heldSchemas.eventSchema("3.5.2")).thenReturn(schema());
+
+        final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"s\", "
+                                        + "\"events\": [{\"event\": \"A\", \"description\": \"a\", "
+                                        + "\"event_detail\": \"Allow\"}]}");
+
+        assertThat(refused.text()).contains("A: 'Allow' is not an EventDetail action element");
+        Mockito.verify(heldSchemas).eventSchema("3.5.2");
+        Mockito.verify(heldSchemas, Mockito.never()).eventSchema("4.1.0");
     }
 
     @Test

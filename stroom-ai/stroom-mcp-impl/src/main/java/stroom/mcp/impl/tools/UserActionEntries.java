@@ -33,9 +33,9 @@ import java.util.regex.Pattern;
 
 /// Steps that are the user's, as entries a client can show as buttons (asked for by the user: Stroom's Ask Stroom
 /// AI shows each on the tool call's card, where a click is the user's consent; the model can neither make nor
-/// click one). Ported from the Stroom MCP server's `utils/useractions.py` (`enable_filter`, `open_document` and
-/// `actions`). The same steps stay in each result's text for other clients, and the tools never take a step as
-/// done: they read Stroom's state (wait_for_processing, build_status).
+/// click one). Ported from the Stroom MCP server's `utils/useractions.py` (`enable_filter`, `disable_filter`,
+/// `open_document` and `actions`). The same steps stay in each result's text for other clients, and the tools
+/// never take a step as done: they read Stroom's state (wait_for_processing, build_status).
 ///
 /// A result gives them as `user_actions`, as the Stroom MCP server's did, and the chat is given them as
 /// [ToolUserAction]s ([#withActions]), which it checks ([UserActions]) before showing them.
@@ -91,6 +91,33 @@ final class UserActionEntries {
                 : ""));
         if (!NullSafe.isEmptyCollection(after)) {
             entry.put("after", new ArrayList<>(after));
+        }
+        return entry;
+    }
+
+    /// `disable_filter`: a button that disables a filter, e.g. an earlier version's once a new one takes over.
+    ///
+    /// @param links    How the caller links to Stroom.
+    /// @param filterId A processor filter.
+    /// @param pipeline Its pipeline.
+    /// @param why      Why the user might.
+    /// @param optional True for a suggestion the user may leave.
+    /// @return The button.
+    static Map<String, Object> disableFilter(final StroomLinks links,
+                                             final int filterId,
+                                             final DocRef pipeline,
+                                             final String why,
+                                             final boolean optional) {
+        final Map<String, Object> doc = doc(pipeline, PipelineDoc.TYPE);
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("id", "disable-" + filterId);
+        entry.put("action", UserActions.DISABLE_PROCESSOR_FILTER);
+        entry.put("filter_id", filterId);
+        entry.put("doc", doc);
+        entry.put("link", links.documentTarget(pipeline));
+        entry.put("summary", "Disable filter " + filterId + " on pipeline '" + doc.get("name") + "': " + why);
+        if (optional) {
+            entry.put("optional", true);
         }
         return entry;
     }
