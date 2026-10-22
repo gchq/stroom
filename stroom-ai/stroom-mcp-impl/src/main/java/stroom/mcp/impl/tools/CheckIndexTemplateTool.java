@@ -18,19 +18,21 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.ExampleTemplates;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
-import stroom.ai.impl.tools.indexing.IndexingRefusal;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -173,8 +175,6 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
             return UserActionEntries.withActions(JsonResults.of(result), result);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final IndexingRefusal e) {
-            return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
         } catch (final RuntimeException e) {
@@ -193,7 +193,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         }
         final int maxRecords = maxRecords(call);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
-        final List<String> without = IndexingArgs.strings(call, WITHOUT_COMPONENTS_ARG);
+        final List<String> without = ToolArgs.strings(call, WITHOUT_COMPONENTS_ARG);
         final String confirmationId = stringArg(call, CONFIRMATION_ID_ARG);
         final String given = rawArg(call, TEMPLATE_ARG);
         final String template = NullSafe.isBlankString(given)
@@ -205,10 +205,10 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         }
         final NamedTemplate parsed = ProposeIndexTemplateTool.parse(template);
         final String name = parsed.name();
-        final List<String> composedOf = ProposeIndexTemplateTool.strings(parsed.body().get("composed_of"));
+        final List<String> composedOf = JsonValues.strings(parsed.body().get("composed_of"));
         final Map<String, Map<String, Object>> components;
         try {
-            components = examples.givenComponents(IndexingArgs.raw(call, COMPONENT_TEMPLATES_ARG), composedOf,
+            components = examples.givenComponents(ToolArgs.raw(call, COMPONENT_TEMPLATES_ARG), composedOf,
                     template);
         } catch (final IllegalArgumentException e) {
             throw new ToolRefusal(e.getMessage());
@@ -236,7 +236,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
             // Seen in testing: asked to use ecs@mappings, the agent composed it and still mapped every ECS field
             // itself.
             ruled.add("mapped explicitly just as ecs@mappings (which this template composes) maps them, so mapped "
-                      + "twice: " + PythonRepr.list(doubled.subList(0, Math.min(DOUBLED_SHOWN, doubled.size())))
+                      + "twice: " + PyText.list(doubled.subList(0, Math.min(DOUBLED_SHOWN, doubled.size())))
                       + (doubled.size() > DOUBLED_SHOWN
                     ? " (+" + (doubled.size() - DOUBLED_SHOWN) + ")"
                     : "")
@@ -268,7 +268,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         final Map<String, Object> result = TemplateCheck.compare(composed.body(), documents.docs(), index, ecs);
         final List<String> notes = new ArrayList<>(ruled);
         notes.addAll(IndexingHelpers.componentNotes(composed.missing()));
-        notes.addAll(ProposeIndexTemplateTool.strings(result.get("notes")));
+        notes.addAll(JsonValues.strings(result.get("notes")));
         result.put("notes", notes);
         if (!components.isEmpty()) {
             result.put("component_templates", new ArrayList<>(new TreeSet<>(components.keySet())));

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
@@ -47,7 +49,7 @@ class XsltRuns extends GenerationFixtures {
                                        + "name=\"message\"/><xsl:sequence select=\"()\"/></xsl:function>"
                                        + "<xsl:function name=\"stroom:record-no\"><xsl:sequence select=\"0\"/>"
                                        + "</xsl:function>";
-    static final String XSL = MappingFacts.XSL;
+    static final String XSL = XmlTrees.XSL;
     static final String EVT = XsltGenerator.EVT;
 
     XsltRuns() {

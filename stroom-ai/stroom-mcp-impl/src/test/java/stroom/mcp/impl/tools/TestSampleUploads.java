@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.tools.ToolRefusal;
 
 import org.junit.jupiter.api.Test;
 

@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DropRule;
@@ -25,7 +27,6 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.TranslationMapping;
-import stroom.ai.impl.tools.sample.PyText;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.XmlTree;
@@ -76,8 +77,8 @@ final class MappingSampleCheck {
         final Instant deadline = clock.instant().plus(CHECK_TIME);
         final LocalCheck.SampleRecords found = LocalCheck.sampleRecords(mapping, samples, splitter);
         final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(mapping, found.records()));
-        final List<String> problems = new ArrayList<>(strings(check.get("problems")));
-        final List<String> warnings = new ArrayList<>(strings(check.get("warnings")));
+        final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
+        final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
         problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
         final XPathChecks.Findings extractions = checkExtractions(mapping, samples, splitter, found.records(),
@@ -252,12 +253,5 @@ final class MappingSampleCheck {
     private static XPathChecks.Extraction extraction(final Extraction extraction) {
         return new XPathChecks.Extraction(extraction.field(), extraction.xpath(), extraction.regex(),
                 extraction.flags(), extraction.names());
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> strings(final Object value) {
-        return value instanceof final List<?> list
-                ? (List<String>) list
-                : List.of();
     }
 }

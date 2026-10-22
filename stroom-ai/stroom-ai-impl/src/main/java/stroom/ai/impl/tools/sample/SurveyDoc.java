@@ -16,6 +16,10 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
+
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -95,7 +99,7 @@ public final class SurveyDoc {
     /// @param state A survey state.
     /// @param names Signatures, or text in them, e.g. `loggerName=org.jgroups`.
     /// @return The signatures, each once, in order.
-    /// @throws SampleRefusal for a name in no signature or in several.
+    /// @throws ToolRefusal for a name in no signature or in several.
     public static List<String> resolve(final Map<String, Object> state, final List<String> names) {
         final Map<String, Object> shapes = shapes(state);
         final Set<String> out = new LinkedHashSet<>();
@@ -106,8 +110,8 @@ public final class SurveyDoc {
             }
             final List<String> hits = shapes.keySet().stream().filter(signature -> signature.contains(name)).toList();
             if (hits.size() != 1) {
-                throw new SampleRefusal("'" + name + "' matches " + hits.size() + " kinds of event in the survey; "
-                                        + "give the exact signature");
+                throw new ToolRefusal("'" + name + "' matches " + hits.size() + " kinds of event in the survey; "
+                                      + "give the exact signature");
             }
             out.add(hits.getFirst());
         }
@@ -188,17 +192,17 @@ public final class SurveyDoc {
                 : SampleProfiler.map("feed", result.get("feed"), "format", result.get("format"),
                         "streams_read", new ArrayList<>(), "surveys", new ArrayList<>(),
                         "shapes", new LinkedHashMap<String, Object>());
-        merged.put("format", truthy(merged.get("format"))
+        merged.put("format", JsonValues.truthy(merged.get("format"))
                 ? merged.get("format")
                 : result.get("format"));
-        merged.put("time_range", truthy(result.get("time_range"))
+        merged.put("time_range", JsonValues.truthy(result.get("time_range"))
                 ? result.get("time_range")
                 : merged.get("time_range"));
-        final List<Object> resultStreams = truthy(result.get("streams_read"))
+        final List<Object> resultStreams = JsonValues.truthy(result.get("streams_read"))
                 ? (List<Object>) result.get("streams_read")
                 : List.of();
         merged.put("streams_read", sortedUnion((Collection<Object>) merged.get("streams_read"), resultStreams));
-        merged.put("saturated", truthy(result.get("saturated")));
+        merged.put("saturated", JsonValues.truthy(result.get("saturated")));
         ((List<Object>) merged.get("surveys")).add(SampleProfiler.map("at", now,
                 "streams", new ArrayList<>(resultStreams),
                 "records", result.getOrDefault("records_read", 0),
@@ -231,19 +235,6 @@ public final class SurveyDoc {
             }
         }
         return merged;
-    }
-
-    // Python's truth: not null, false, zero, or empty.
-    private static boolean truthy(final Object value) {
-        return switch (value) {
-            case null -> false;
-            case final Boolean bool -> bool;
-            case final Number number -> number.doubleValue() != 0;
-            case final String text -> !text.isEmpty();
-            case final Collection<?> collection -> !collection.isEmpty();
-            case final Map<?, ?> map -> !map.isEmpty();
-            default -> true;
-        };
     }
 
     // sorted(set(a) | set(b)), of stream ids.
@@ -287,7 +278,7 @@ public final class SurveyDoc {
                 + (span != null
                         ? ", created " + PyText.str(span.get("oldest")) + " to " + PyText.str(span.get("newest"))
                         : "") + ". "
-                + (truthy(state.get("saturated"))
+                + (JsonValues.truthy(state.get("saturated"))
                         ? "The last survey found nothing new: the feed looks covered."
                         : "Not saturated yet: more streams may show more kinds of event.")
                 + (drop.isEmpty()

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.ai.impl.tools.sample;
+package stroom.ai.impl.tools;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// Text handling as the Stroom MCP server's Python did it, so the sample analysis ported from it reads a sample the
 /// same way: its regexes (Unicode `\w`, `\d`, `\s`; only `\n` ends a line), `str.strip()`, `str.splitlines()`,
@@ -148,6 +150,15 @@ public final class PyText {
     /// @return The text without leading and trailing characters that are in `chars`, as `str.strip(chars)`.
     public static String strip(final String text, final String chars) {
         return rstrip(lstrip(text, chars), chars);
+    }
+
+    /// @return The text without leading whitespace, as `str.lstrip()`.
+    public static String lstrip(final String text) {
+        int start = 0;
+        while (start < text.length() && isSpace(text.codePointAt(start))) {
+            start += Character.charCount(text.codePointAt(start));
+        }
+        return text.substring(start);
     }
 
     /// @return The text without leading characters that are in `chars`, as `str.lstrip(chars)`.
@@ -337,6 +348,25 @@ public final class PyText {
         return Integer.compare(a.length() - i, b.length() - j);
     }
 
+    /// @param text A text.
+    /// @return It lower-cased, as Python's `str.lower` does for the names these tools see.
+    public static String lower(final String text) {
+        return text.toLowerCase(Locale.ROOT);
+    }
+
+    /// @param name      A name.
+    /// @param separator The separator.
+    /// @return The part after the last separator (`name.rsplit(separator, 1)[-1]`).
+    public static String lastPart(final String name, final char separator) {
+        return name.substring(name.lastIndexOf(separator) + 1);
+    }
+
+    /// @param regex A regex written for Python's `re`.
+    /// @return It compiled case-insensitively (`re.I`).
+    public static Pattern ignoringCase(final String regex) {
+        return re(regex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    }
+
     /// @return The number with thousands separated by commas, as `f'{n:,}'`.
     public static String thousands(final long number) {
         return String.format(Locale.ROOT, "%,d", number);
@@ -349,6 +379,12 @@ public final class PyText {
             return text;
         }
         return repr(value);
+    }
+
+    /// @param items Strings.
+    /// @return Them as Python writes a list of them, e.g. `['a', 'b']`.
+    public static String list(final Collection<String> items) {
+        return items.stream().map(PyText::repr).collect(Collectors.joining(", ", "[", "]"));
     }
 
     /// @return The value as Python's `repr()` writes it, e.g. `'a'`, `['x', 'y']`, `{'k': 1}`, `None`, `True`.
@@ -457,6 +493,51 @@ public final class PyText {
         return sign + mantissa + "e" + (exponent < 0
                 ? "-"
                 : "+") + String.format(Locale.ROOT, "%02d", Math.abs(exponent));
+    }
+
+    /// @param value A number.
+    /// @return It as Python's `f'{value:g}'` writes it: six significant digits, trailing zeros gone, an exponent
+    /// only for the very large and the very small.
+    public static String formatG(final double value) {
+        if (Double.isNaN(value)) {
+            return "nan";
+        }
+        if (Double.isInfinite(value)) {
+            return value > 0
+                    ? "inf"
+                    : "-inf";
+        }
+        if (value == 0) {
+            return 1 / value < 0
+                    ? "-0"
+                    : "0";
+        }
+        final BigDecimal rounded = new BigDecimal(value).round(new MathContext(6, RoundingMode.HALF_EVEN));
+        final int exponent = rounded.precision() - rounded.scale() - 1;
+        if (exponent < -4 || exponent >= 6) {
+            final BigDecimal mantissa = rounded.movePointLeft(exponent);
+            final String digits = trimZeros(mantissa.toPlainString());
+            return digits + "e" + (exponent < 0
+                    ? "-"
+                    : "+") + String.format(Locale.ROOT, "%02d", Math.abs(exponent));
+        }
+        return trimZeros(rounded.toPlainString());
+    }
+
+    /// @param value A number.
+    /// @return It as Python's `f'{value:.0f}'` writes it: rounded half to even on its exact value.
+    public static String formatFixed0(final double value) {
+        return new BigDecimal(value).setScale(0, RoundingMode.HALF_EVEN).toPlainString();
+    }
+
+    private static String trimZeros(final String digits) {
+        if (!digits.contains(".")) {
+            return digits;
+        }
+        final String trimmed = rstrip(digits, "0");
+        return trimmed.endsWith(".")
+                ? trimmed.substring(0, trimmed.length() - 1)
+                : trimmed;
     }
 
     /// @return The value rounded to `digits` decimal places as Python's `round(value, digits)` does: half to even,

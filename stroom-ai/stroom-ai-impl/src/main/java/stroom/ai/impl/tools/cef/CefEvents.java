@@ -16,9 +16,11 @@
 
 package stroom.ai.impl.tools.cef;
 
-import stroom.ai.impl.tools.fielddoc.PythonStrings;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
+import stroom.util.shared.NullSafe;
 
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
@@ -41,11 +43,11 @@ import java.util.regex.Pattern;
 public final class CefEvents {
 
     private static final Pattern NETWORK_ACTION = Pattern.compile("^EventDetail/Network/[^/]+/");
-    private static final Pattern INTEGER = PythonStrings.re("-?\\d+");
-    private static final Pattern DECIMAL = PythonStrings.re("-?\\d+(\\.\\d+)?");
+    private static final Pattern INTEGER = PyText.re("-?\\d+");
+    private static final Pattern DECIMAL = PyText.re("-?\\d+(\\.\\d+)?");
     private static final Pattern MAC = Pattern.compile("([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}");
-    private static final Pattern LONG = PythonStrings.re("-?\\d{1,18}");
-    private static final Pattern FLOAT = PythonStrings.re("-?\\d+\\.\\d+");
+    private static final Pattern LONG = PyText.re("-?\\d{1,18}");
+    private static final Pattern FLOAT = PyText.re("-?\\d+\\.\\d+");
     // datetime.fromisoformat (Python 3.12): a date (extended, basic or a week date), any one character, a time
     // (hours, then minutes and seconds with or without colons, a fraction), and an offset.
     private static final Pattern ISO = Pattern.compile(
@@ -163,7 +165,7 @@ public final class CefEvents {
     /// @param value A value.
     /// @return True if Python's `IPv4Address` takes it: four decimal parts of 0 to 255, no leading zeros.
     static boolean isIpv4(final String value) {
-        final List<String> parts = PythonStrings.split(value, ".");
+        final List<String> parts = PyText.split(value, ".");
         if (parts.size() != 4) {
             return false;
         }
@@ -244,7 +246,7 @@ public final class CefEvents {
     private static void walk(final XmlElement el, final String path, final Map<String, String> out) {
         final List<XmlElement> children = el.childElements();
         final String name = el.localName();
-        if ("Data".equals(name) && PythonStrings.truthy(el.get("Name"))) {
+        if ("Data".equals(name) && JsonValues.truthy(el.get("Name"))) {
             final String here = path + "/Data[@Name='" + el.get("Name") + "']";
             if (el.get("Value") != null) {
                 out.putIfAbsent(here + "/@Value", el.get("Value"));
@@ -257,8 +259,8 @@ public final class CefEvents {
         final String here = path.isEmpty()
                 ? name
                 : path + "/" + name;
-        if (children.isEmpty() && !PythonStrings.strip(el.text()).isEmpty()) {
-            out.putIfAbsent(here, PythonStrings.strip(el.text()));
+        if (children.isEmpty() && !PyText.strip(NullSafe.string(el.text())).isEmpty()) {
+            out.putIfAbsent(here, PyText.strip(NullSafe.string(el.text())));
         }
         for (final XmlElement.Attribute attribute : el.attributes()) {
             if (attribute.namespace() == null) {

@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.RawHead;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
@@ -28,6 +29,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
@@ -358,8 +360,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
         if (state != null) {
-            NullSafe.list(asList(state.get("streams_read"))).forEach(id -> skip.add(((Number) id).longValue()));
-            NullSafe.map(asMap(state.get("shapes"))).keySet().forEach(signature -> known.add(String.valueOf(
+            JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> skip.add(((Number) id).longValue()));
+            JsonValues.mapOrEmpty(state.get("shapes")).keySet().forEach(signature -> known.add(String.valueOf(
                     signature)));
         }
         final CallProgress progress = CallProgress.of(context);
@@ -780,18 +782,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             map.put((String) keysAndValues[i], keysAndValues[i + 1]);
         }
         return map;
-    }
-
-    private static List<?> asList(final Object value) {
-        return value instanceof final List<?> list
-                ? list
-                : null;
-    }
-
-    private static Map<?, ?> asMap(final Object value) {
-        return value instanceof final Map<?, ?> map
-                ? map
-                : null;
     }
 
 

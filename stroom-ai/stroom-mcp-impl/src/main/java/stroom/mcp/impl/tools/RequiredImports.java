@@ -20,6 +20,9 @@ import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
@@ -161,7 +164,7 @@ class RequiredImports {
         final Set<String> from = new TreeSet<>();
         missing.forEach(r -> from.add(root(r.from())));
         throw new ToolRefusal("Standing instructions require every " + stage + " XSLT to import "
-                              + missing.stream().map(r -> SampleArguments.pythonRepr(r.href()))
+                              + missing.stream().map(r -> PyText.repr(r.href()))
                                       .collect(Collectors.joining(", "))
                               + " (the AGENTS doc in " + String.join(", ", from) + "): add "
                               + missing.stream().map(r -> "<xsl:import href=\"" + r.href() + "\"/>")
@@ -224,7 +227,7 @@ class RequiredImports {
                     }
                 }
                 shown.put(String.valueOf(name), kept);
-                if (BuildPlan.truthy(function.get("prefix")) && BuildPlan.truthy(function.get("namespace"))) {
+                if (JsonValues.truthy(function.get("prefix")) && JsonValues.truthy(function.get("namespace"))) {
                     entries.put(List.of(String.valueOf(function.get("prefix")),
                             String.valueOf(function.get("namespace"))), true);
                 }

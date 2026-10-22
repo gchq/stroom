@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -89,8 +90,8 @@ final class MappingProblems {
             out.add("and " + (errors.size() - 8) + " more");
         }
         if (!unknownKeys.isEmpty()) {
-            out.add("keys that are not part of a mapping: " + SampleArguments.pythonList(unknownKeys) + " (it has "
-                    + SampleArguments.pythonList(mappingKeys()) + ")");
+            out.add("keys that are not part of a mapping: " + PyText.list(unknownKeys) + " (it has "
+                    + PyText.list(mappingKeys()) + ")");
         }
         return out;
     }

@@ -16,12 +16,13 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlComment;
@@ -30,6 +31,7 @@ import stroom.ai.impl.tools.generation.XmlNode;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -89,9 +91,9 @@ public final class EventFieldDocs {
     public static String ruleOf(final XmlElement event) {
         for (final XmlNode node : event.children()) {
             if (node instanceof final XmlComment comment) {
-                final String text = PythonStrings.strip(comment.text());
+                final String text = PyText.strip(comment.text());
                 if (text.startsWith(XsltGenerator.RULE_MARK)) {
-                    return PythonStrings.strip(text.substring(XsltGenerator.RULE_MARK.length()));
+                    return PyText.strip(text.substring(XsltGenerator.RULE_MARK.length()));
                 }
             }
         }
@@ -189,7 +191,7 @@ public final class EventFieldDocs {
     // How the mapping reads records: items, kept as Unknown, drops, shared XSLTs, extractions.
     private static List<String> preamble(final TranslationMapping mapping, final Sample sample) {
         final List<String> lines = new ArrayList<>();
-        if (PythonStrings.truthy(mapping.forEach())) {
+        if (JsonValues.truthy(mapping.forEach())) {
             lines.add("Each record holds several events: one per `" + mapping.forEach() + "` item. Sources marked "
                       + "\"of the record\" read the record round the items.");
             lines.add("");
@@ -238,10 +240,10 @@ public final class EventFieldDocs {
             lines.add("");
             for (final Extraction ex : mapping.extract()) {
                 final String names = ex.names().stream()
-                        .filter(PythonStrings::truthy)
+                        .filter(JsonValues::truthy)
                         .map(n -> "`" + n + "`")
                         .collect(Collectors.joining(", "));
-                lines.add("- " + names + ": parsed from `" + (PythonStrings.truthy(ex.field())
+                lines.add("- " + names + ": parsed from `" + (JsonValues.truthy(ex.field())
                         ? ex.field()
                         : FieldDocs.readable(ex.xpath())) + "`" + ("record".equals(ex.scope())
                         ? " (of the record)"
@@ -265,7 +267,7 @@ public final class EventFieldDocs {
         if (!c.rules().isEmpty()) {
             final Map<FieldKey, FieldMapping> first = c.effective().get(c.rules().getFirst().name());
             first.forEach((k, entry) -> {
-                if (!"EventDetail".equals(PythonStrings.split(k.path(), "/").getFirst()) && c.rules().stream()
+                if (!"EventDetail".equals(PyText.split(k.path(), "/").getFirst()) && c.rules().stream()
                         .allMatch(r -> {
                             final FieldMapping theirs = c.effective().get(r.name()).get(k);
                             return theirs != null && FieldDocs.sourceText(theirs).equals(FieldDocs.sourceText(
@@ -459,7 +461,7 @@ public final class EventFieldDocs {
         final Map<FieldKey, FieldMapping> entries = new LinkedHashMap<>();
         for (final EventRule rule : c.rules()) {
             c.effective().get(rule.name()).forEach((k, entry) -> {
-                final String section = PythonStrings.split(k.path(), "/").getFirst();
+                final String section = PyText.split(k.path(), "/").getFirst();
                 if ("EventSource".equals(section) || "EventTime".equals(section)) {
                     sources.computeIfAbsent(k, x -> new LinkedHashMap<>())
                             .computeIfAbsent(FieldDocs.sourceText(entry), x -> new ArrayList<>())
@@ -540,7 +542,7 @@ public final class EventFieldDocs {
         seen.keySet().stream().filter(k -> !sources.containsKey(k)).forEach(unmapped::add);
         for (final FieldKey k : unmapped) {
             lines.add(FieldDocs.row("`" + k.path() + (k.name() != null && !k.name().isEmpty()
-                            ? "[@Name=" + PythonRepr.repr(k.name()) + "]/@Value"
+                            ? "[@Name=" + PyText.repr(k.name()) + "]/@Value"
                             : "") + "`", "", NOT_MAPPED,
                     FieldDocs.shown(new ArrayList<>(seen.get(k).keySet()), true)));
         }
@@ -703,7 +705,7 @@ public final class EventFieldDocs {
         final String rest = path.startsWith(below)
                 ? path.substring(below.length())
                 : path;
-        return rest + (PythonStrings.truthy(entry.dataName())
+        return rest + (JsonValues.truthy(entry.dataName())
                 ? "[@Name='" + entry.dataName() + "']/@Value"
                 : "");
     }
@@ -720,7 +722,7 @@ public final class EventFieldDocs {
         for (final XmlElement event : events) {
             kinds.merge(unknownKind(event), 1, Integer::sum);
         }
-        return PythonRepr.repr(kinds);
+        return PyText.repr(kinds);
     }
 
     private static String unknownKind(final XmlElement event) {
@@ -773,7 +775,7 @@ public final class EventFieldDocs {
                     .add(Objects.requireNonNullElse(node.get("Value"), ""));
         } else if (children.isEmpty()) {
             found.computeIfAbsent(new FieldKey(here, null), k -> new ArrayList<>())
-                    .add(PythonStrings.strip(node.text()));
+                    .add(PyText.strip(NullSafe.string(node.text())));
         }
         for (final XmlElement child : children) {
             walk(child, here, found);
@@ -799,7 +801,7 @@ public final class EventFieldDocs {
 
         /// @return The xpath it is documented by, e.g. `EventDetail/Authenticate/Data[@Name='sid']/@Value`.
         public String xpath() {
-            return path + (PythonStrings.truthy(name)
+            return path + (JsonValues.truthy(name)
                     ? "[@Name='" + name + "']/@Value"
                     : "");
         }

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// same calls (where it declares namespaces, the prefixes it makes up, escaping, pretty-printing).
 class TestXmlSerialiser {
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final String EVT = XsltGenerator.EVT;
 
     @Test

@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolArgs;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.util.shared.NullSafe;
 
@@ -81,7 +83,7 @@ record PropertyValue(String element, String name, String docUuid, String docType
     /// @return The properties.
     /// @throws ToolRefusal if one isn't a property.
     static List<PropertyValue> listOf(final Object given, final String argument) {
-        final List<Object> items = PipelineArguments.oneOrMore(given);
+        final List<Object> items = ToolArgs.oneOrMore(given);
         final List<PropertyValue> properties = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             try {

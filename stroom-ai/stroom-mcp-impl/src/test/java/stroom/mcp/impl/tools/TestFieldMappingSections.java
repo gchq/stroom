@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -50,7 +51,7 @@ class TestFieldMappingSections {
     private final StreamSummaries streamSummaries = Mockito.mock(StreamSummaries.class);
     private final FieldMappingSections sections = new FieldMappingSections(stepping,
             Mockito.mock(DraftCefMappingTool.class), Mockito.mock(PipelineShapes.class), world.eventVersions,
-            MappingDrift.NONE, world.streamReader, streamSummaries);
+            Mockito.mock(GeneratedDrift.class), world.streamReader, streamSummaries);
     private final PipelineDoc pipeline = PipelineDoc.builder().uuid("p").name("ACME-Events").build();
 
     @Test

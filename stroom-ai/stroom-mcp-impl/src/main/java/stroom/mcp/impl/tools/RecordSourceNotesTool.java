@@ -18,10 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
@@ -32,7 +34,6 @@ import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
@@ -78,16 +79,19 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
     private final EventVersions eventVersions;
     private final BuildPlan plan;
 
     @Inject
     RecordSourceNotesTool(final WriteGuard guard,
                           final DocumentAccess documentAccess,
+                          final DocumentWrites documentWrites,
                           final EventVersions eventVersions,
                           final BuildPlan plan) {
         this.guard = guard;
         this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
         this.eventVersions = eventVersions;
         this.plan = plan;
     }
@@ -185,15 +189,15 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                 FIELD_REQUIRED);
         final List<Map<String, Object>> events = merged(earlier.get("events"), givenEvents, EVENT_KEYS,
                 EVENT_REQUIRED);
-        final Set<String> references = new LinkedHashSet<>(strings(earlier.get("references")));
+        final Set<String> references = new LinkedHashSet<>(JsonValues.strings(earlier.get("references")));
         references.addAll(stringListArg(call, REFERENCES_ARG));
-        final Set<String> keptNames = new LinkedHashSet<>(strings(earlier.get("documents")));
+        final Set<String> keptNames = new LinkedHashSet<>(JsonValues.strings(earlier.get("documents")));
         keptDocs.forEach(doc -> keptNames.add(text(doc.get("name"))));
 
         final DocumentationDoc notesDoc = written(context.session(), contents, build, notesName,
                 notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames)));
         final long usable = events.stream()
-                .filter(event -> BuildPlan.truthy(event.get("field")) && BuildPlan.truthy(event.get("value")))
+                .filter(event -> JsonValues.truthy(event.get("field")) && JsonValues.truthy(event.get("value")))
                 .count();
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", DocumentationDoc.TYPE);
@@ -272,18 +276,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final WriteGuard.BuildDoc there = contents.get(DocumentationDoc.TYPE + "\n" + name);
         if (there != null) {
             guard.checkInBuild(session, there.docRef());
-            return writeText(there.docRef(), text);
+            return documentWrites.writeText(there.docRef(), text);
         }
-        return guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> writeText(ref, text), false, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    private DocumentationDoc writeText(final DocRef ref, final String text) {
-        final DocumentationDoc doc = documentAccess.read(ref, DocumentationDoc.class)
-                .orElseThrow(() -> new ToolRefusal("The Documentation doc " + ref.getUuid() + " can't be read"));
-        final DocumentActionHandler<DocumentationDoc> handler = documentAccess.handler(DocumentationDoc.TYPE)
-                .orElseThrow(() -> new ToolRefusal("Stroom has no Documentation store"));
-        return handler.writeDocument(BuildRecords.withBodyText(doc, text));
+        return guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> documentWrites.writeText(ref, text), false,
+                null);
     }
 
     private Map<String, Object> earlierNotes(final Map<String, WriteGuard.BuildDoc> contents, final String name) {
@@ -445,14 +441,6 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             } else if (value != null && (!text(value).isEmpty() || required.contains(key))) {
                 out.put(key, text(value));
             }
-        }
-        return out;
-    }
-
-    private static List<String> strings(final Object value) {
-        final List<String> out = new ArrayList<>();
-        if (value instanceof final List<?> list) {
-            list.forEach(item -> out.add(text(item)));
         }
         return out;
     }

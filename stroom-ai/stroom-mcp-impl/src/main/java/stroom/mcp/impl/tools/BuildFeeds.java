@@ -17,6 +17,8 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -136,11 +138,11 @@ class BuildFeeds {
     DocRef buildFeed(final ToolSession session, final String feed) {
         // A direct lookup.
         final DocRef match = feedNames.exact(feed)
-                .orElseThrow(() -> new ToolRefusal("No feed named '" + feed + "'"));
+                .orElseThrow(() -> FeedNames.noFeedNamed(feed));
         guard.checkManaged(session, match);
         final String build = guard.buildOf(match).orElse(null);
         final List<String> sources = plan.worksFrom(build);
-        if (!sources.isEmpty() && !BuildPlan.truthy(records.entry(build, match.getUuid()).get(USER_SAMPLES))) {
+        if (!sources.isEmpty() && !JsonValues.truthy(records.entry(build, match.getUuid()).get(USER_SAMPLES))) {
             throw new ToolRefusal(worksFromMessage(build, sources) + " Feed " + feed + " wasn't made for sample "
                                   + "files the user chose instead: upload nothing to it.");
         }
@@ -152,7 +154,7 @@ class BuildFeeds {
     /// refuses it). Kept in the build's record.
     boolean sampleFiles(final DocRef feed) {
         return guard.buildOf(feed)
-                .map(build -> BuildPlan.truthy(records.entry(build, feed.getUuid()).get(SAMPLE_FILES)))
+                .map(build -> JsonValues.truthy(records.entry(build, feed.getUuid()).get(SAMPLE_FILES)))
                 .orElse(false);
     }
 

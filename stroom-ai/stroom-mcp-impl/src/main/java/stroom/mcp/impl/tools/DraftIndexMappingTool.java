@@ -19,19 +19,20 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.generation.MappingChangeException;
 import stroom.ai.impl.tools.generation.MappingChanges;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.indexing.Discovery;
@@ -41,11 +42,11 @@ import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
-import stroom.ai.impl.tools.indexing.IndexingRefusal;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
@@ -285,7 +286,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             return JsonResults.of(draft(call, context));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final IndexingRefusal | IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             return JsonResults.refused(e.getMessage());
         }
     }
@@ -301,7 +302,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         final String indexName = required(call, INDEX_NAME_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG);
-        if (IndexingArgs.raw(call, CHANGES_ARG) != null) {
+        if (ToolArgs.raw(call, CHANGES_ARG) != null) {
             return amend(call, indexName, streamIds);
         }
         final Discovery discovery = IndexingArgs.discovery(call, DISCOVERY_ARG);
@@ -367,7 +368,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         // Names, types and structure come from what the environment already indexes: the agent asks the user, and
         // indexing from a convention alone is the user's call, made in a form, not the agent's.
         Map<String, Object> picked = Map.of();
-        if (!IndexingArgs.flag(call, WITHOUT_EXAMPLE_ARG)) {
+        if (!ToolArgs.flag(call, WITHOUT_EXAMPLE_ARG)) {
             final Map<String, Object> options = conventions.conventions(call, context, null,
                     FieldPlan.ELASTICSEARCH, null);
             // Answered in the form just now: drafted as the user chose (seen in VS Code: the user picked ECS here
@@ -444,7 +445,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             draft.likeNote = "followed Elastic Index doc '" + read.doc() + "': its index template " + read.name()
                              + (parts.isEmpty()
                     ? ""
-                    : " and component templates " + PythonRepr.list(readParts)) + ", read through Stroom";
+                    : " and component templates " + PyText.list(readParts)) + ", read through Stroom";
             draft.readDoc = read.doc();
         } else {
             final IndexExamples.FromFields read = examples.exampleFromIndex(draft.likeIndex);
@@ -529,7 +530,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             }
         });
         final EcsSchema ecs = plans.ecs();
-        final List<String> namespaces = new ArrayList<>(IndexingArgs.strings(call, CUSTOM_NAMESPACES_ARG));
+        final List<String> namespaces = new ArrayList<>(ToolArgs.strings(call, CUSTOM_NAMESPACES_ARG));
         final String own = actionNamespace(draft, indexName, ecs, namespaces);
         actionFields(populated, fields, mapped, "nested".equals(profile.get("structure")), own);
         final List<String> ecsData = ecsDataFields(draft, events, fields, ecs);
@@ -568,7 +569,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             namespaces.addAll(theirs);
         }
         FieldPlan plan = new FieldPlan(backend, indexName, timeField, fields,
-                IndexingArgs.strings(call, DROP_WHEN_ARG), null, List.of(), shared, subobjects, draft.convention,
+                ToolArgs.strings(call, DROP_WHEN_ARG), null, List.of(), shared, subobjects, draft.convention,
                 "ecs".equals(draft.convention)
                         ? namespaces
                         : List.of(), XsltStyle.DEFAULT);
@@ -611,7 +612,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         final List<String> clash = namespaces.stream().filter(n -> ecs.topLevel().contains(n)).toList();
         if (!clash.isEmpty()) {
-            throw new ToolRefusal("custom_namespaces " + PythonRepr.list(clash) + ": ECS's own top-level names, so "
+            throw new ToolRefusal("custom_namespaces " + PyText.list(clash) + ": ECS's own top-level names, so "
                                   + "not a namespace of the source's: name it after the source or organisation (e.g. "
                                   + ecs.sourceNamespace(indexName) + ")");
         }
@@ -696,13 +697,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                final List<String> exampleNotes) {
         final Map<String, Object> example = IndexTemplates.parseTemplate(draft.exampleTemplate).body();
         final Map<String, Map<String, Object>> components = examples.givenComponents(draft.componentTemplates,
-                strings(example.get("composed_of")), draft.exampleTemplate);
+                JsonValues.strings(example.get("composed_of")), draft.exampleTemplate);
         final Map<String, Object> wanted = IndexingHelpers.componentsWanted(example, components,
                 draft.withoutComponents);
         if (wanted != null) {
             if (draft.followed != null && !draft.followed.unread().isEmpty()) {
                 wanted.put("hint", "Stroom read the index template of '" + draft.followed.doc() + "' but not the "
-                                   + "component templates " + PythonRepr.list(new TreeSet<>(
+                                   + "component templates " + PyText.list(new TreeSet<>(
                         draft.followed.unread().keySet())) + " (Elasticsearch: "
                                    + draft.followed.unread().values().iterator().next() + "). " + wanted.get("hint"));
             }
@@ -766,7 +767,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                     : "keyword", "shared:" + use.template()));
                 }
             });
-            exampleNotes.add(PythonRepr.list(new TreeSet<>(values.keySet())) + ": written by the shared template "
+            exampleNotes.add(PyText.list(new TreeSet<>(values.keySet())) + ": written by the shared template "
                              + use.template() + " (" + use.href() + ")" + (found.isPresent()
                     ? ""
                     : "; not found as an XSLT document, so typed as a keyword"));
@@ -923,14 +924,15 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             if (chunk.isBlank()) {
                 continue;
             }
-            XmlDocs.parse(chunk.strip()).ifPresent(root -> {
-                for (final Element record : XmlDocs.descendantsAndSelf(root)) {
-                    if (!XmlDocs.is(record, RECORDS, "record")) {
+            XmlTrees.tryParse(chunk.strip()).ifPresent(root -> {
+                for (final Element record : XmlTrees.descendantsAndSelf(root)) {
+                    if (!XmlTrees.is(record, RECORDS, "record")) {
                         continue;
                     }
                     final Map<String, Object> row = new LinkedHashMap<>();
-                    for (final Element data : XmlDocs.descendantsAndSelf(record)) {
-                        if (XmlDocs.is(data, RECORDS, "data") && NullSafe.isNonEmptyString(data.getAttribute("name"))) {
+                    for (final Element data : XmlTrees.descendantsAndSelf(record)) {
+                        if (XmlTrees.is(data, RECORDS, "data")
+                            && NullSafe.isNonEmptyString(data.getAttribute("name"))) {
                             row.put(data.getAttribute("name"), data.hasAttribute("value")
                                     ? data.getAttribute("value")
                                     : null);
@@ -981,11 +983,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     // draft_index_mapping changes=: the kept plan with only what changes merged in.
     private Map<String, Object> amend(final ToolCall call, final String indexName, final List<Long> streamIds) {
         final Object changes;
-        try {
-            changes = IndexingArgs.object(call, CHANGES_ARG);
-        } catch (final ToolRefusal e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        changes = ToolArgs.object(call, CHANGES_ARG);
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
         final Map<String, FieldPlan> drafted = plans.drafted();
         FieldPlan base = drafted.get(indexName);
@@ -1000,14 +998,10 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                     : " (give pipeline_uuid= the indexing pipeline whose saved XSLT keeps one)")
                                   + ". Drafted in this session: " + (names.isEmpty()
                     ? "none"
-                    : PythonRepr.list(names)) + ". Else draft it whole.");
+                    : PyText.list(names)) + ". Else draft it whole.");
         }
         final MappingChanges.Applied applied;
-        try {
-            applied = MappingChanges.applyPlanChanges(base.toJson(), changes);
-        } catch (final MappingChangeException e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        applied = MappingChanges.applyPlanChanges(base.toJson(), changes);
         final FieldPlan plan;
         try {
             plan = FieldPlan.fromJson(applied.merged());
@@ -1094,12 +1088,6 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         return text.substring(0, end);
     }
 
-    private static List<String> strings(final Object value) {
-        return value instanceof final List<?> list
-                ? list.stream().map(String::valueOf).toList()
-                : List.of();
-    }
-
     @SuppressWarnings("unchecked")
     private static Map<String, Object> castMap(final Object value) {
         return (Map<String, Object>) value;
@@ -1144,13 +1132,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                               || rawArg(call, EXAMPLE_TEMPLATE_ARG).isBlank()
                     ? null
                     : rawArg(call, EXAMPLE_TEMPLATE_ARG);
-            final Object given = IndexingArgs.raw(call, COMPONENT_TEMPLATES_ARG);
+            final Object given = ToolArgs.raw(call, COMPONENT_TEMPLATES_ARG);
             componentTemplates = given instanceof final List<?> list
                     ? new ArrayList<>(list)
                     : given == null
                             ? new ArrayList<>()
                             : new ArrayList<>(List.of(given));
-            withoutComponents = IndexingArgs.strings(call, WITHOUT_COMPONENTS_ARG);
+            withoutComponents = ToolArgs.strings(call, WITHOUT_COMPONENTS_ARG);
             chosen = memory.namingChosen();
         }
     }

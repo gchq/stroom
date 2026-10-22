@@ -98,7 +98,7 @@ class TestIndexingHelpers {
     @Test
     void thePlanKeptWithAnIndexingXsltIsReadBack() {
         // The plan kept with a pipeline's indexing XSLT is what the pipeline writes.
-        final FieldPlan plan = plan("ecs-firewall-v1").withDropWhen(List.of("x"));
+        final FieldPlan plan = IndexingFixtures.withDropWhen(plan("ecs-firewall-v1"), List.of("x"));
         final String description = KeptMapping.withMapping("Indexes the firewall.", "index", plan.toJson());
         assertThat(description).startsWith("Indexes the firewall.");
         assertThat(IndexingHelpers.keptPlan(description)).contains(plan);

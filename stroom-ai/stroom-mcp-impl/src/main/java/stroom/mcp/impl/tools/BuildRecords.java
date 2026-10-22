@@ -17,10 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerService;
 import stroom.util.json.JsonUtil;
@@ -42,7 +43,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -98,20 +98,24 @@ public class BuildRecords {
 
     private final Provider<WriteGuard> guardProvider;
     private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
     private final Provider<ExplorerService> explorerServiceProvider;
     private final PipelineShapes pipelineShapes;
 
     /// @param guardProvider           Finds the build's documents and creates its record.
-    /// @param documentAccess          Reads and writes the record, as the user.
+    /// @param documentAccess          Reads the record, as the user.
+    /// @param documentWrites          Writes the record, as the user.
     /// @param explorerServiceProvider Deletes a record once it holds nothing.
     /// @param pipelineShapes          Reads the code a pipeline runs, for its fingerprint.
     @Inject
     public BuildRecords(final Provider<WriteGuard> guardProvider,
                         final DocumentAccess documentAccess,
+                        final DocumentWrites documentWrites,
                         final Provider<ExplorerService> explorerServiceProvider,
                         final PipelineShapes pipelineShapes) {
         this.guardProvider = guardProvider;
         this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
         this.explorerServiceProvider = explorerServiceProvider;
         this.pipelineShapes = pipelineShapes;
     }
@@ -175,7 +179,7 @@ public class BuildRecords {
     public Map<String, Object> addSourceFeeds(final String build, final List<String> feeds) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> {
-            final Set<String> all = new LinkedHashSet<>(stringList(state.get(SOURCE_FEEDS)));
+            final Set<String> all = new LinkedHashSet<>(JsonValues.strings(state.get(SOURCE_FEEDS)));
             all.addAll(feeds);
             state.put(SOURCE_FEEDS, new ArrayList<>(all));
         });
@@ -286,7 +290,7 @@ public class BuildRecords {
                     : saved;
             update(build, pipeline, entry -> {
                 final Set<String> kept = new TreeSet<>();
-                stringList(entry.get(kind)).stream()
+                JsonValues.strings(entry.get(kind)).stream()
                         .filter(saved::equals)
                         .forEach(kept::add);
                 kept.add(digest);
@@ -308,7 +312,7 @@ public class BuildRecords {
     /// @return Whether the pipeline's saved code is code that passed (on any node, or in the Stroom MCP server).
     public boolean passed(final DocRef pipeline, final String kind) {
         final WriteGuard guard = guardProvider.get();
-        final List<String> mine = stringList(entry(guard.buildOf(pipeline).orElse(null), pipeline.getUuid())
+        final List<String> mine = JsonValues.strings(entry(guard.buildOf(pipeline).orElse(null), pipeline.getUuid())
                 .get(kind));
         if (mine.isEmpty()) {
             return false;
@@ -384,7 +388,7 @@ public class BuildRecords {
         } else if (key != null && KINDS.contains(key)) {
             // 'mcp-stepped-<digest>', or the older 'mcp-stepped-<UTC time>-<digest>'.
             final String digest = tag.substring(tag.lastIndexOf('-') + 1);
-            final Set<String> digests = new TreeSet<>(stringList(entry.get(key)));
+            final Set<String> digests = new TreeSet<>(JsonValues.strings(entry.get(key)));
             digests.add(digest);
             entry.put(key, new ArrayList<>(digests));
         }
@@ -415,11 +419,11 @@ public class BuildRecords {
                       + NullSafe.string(text(e, "type")) + " | "
                       + NullSafe.nonBlankStringElse(NullSafe.get(entry.get("copy_of"), String::valueOf), "-")
                       + " | " + digests(entry, STEPPED) + " | " + digests(entry, VERIFIED) + " | "
-                      + digests(entry, VALIDATED) + " | " + (truthy(entry.get("sample_files"))
+                      + digests(entry, VALIDATED) + " | " + (JsonValues.truthy(entry.get("sample_files"))
                               ? "yes"
                               : "-") + " |");
         }
-        final List<String> sources = stringList(state.get(SOURCE_FEEDS));
+        final List<String> sources = JsonValues.strings(state.get(SOURCE_FEEDS));
         if (!sources.isEmpty()) {
             lines.add("");
             lines.add("Works from existing feeds: " + String.join(", ", sources) + ".");
@@ -476,14 +480,14 @@ public class BuildRecords {
                     return guardProvider.get().createFilled(DocumentationDoc.TYPE, NAME, build, ref -> {
                         final Map<String, Object> state = empty();
                         change.accept(state);
-                        write(withBodyText(read(ref), render(build, state)));
+                        documentWrites.write(withBodyText(read(ref), render(build, state)));
                         return state;
                     }, true, null);
                 }
                 final DocumentationDoc doc = read(current.docRef());
                 final Map<String, Object> state = parse(bodyText(doc));
                 change.accept(state);
-                write(withBodyText(doc, render(build, state)));
+                documentWrites.write(withBodyText(doc, render(build, state)));
                 return state;
             } catch (final RuntimeException e) {
                 // Another node (or the Stroom MCP server) saved or created it since it was read: do the change
@@ -503,13 +507,6 @@ public class BuildRecords {
     private DocumentationDoc read(final DocRef ref) {
         return documentAccess.read(ref, DocumentationDoc.class)
                 .orElseThrow(() -> new ToolRefusal("The build record " + ref.getUuid() + " can't be read"));
-    }
-
-    @SuppressWarnings("unchecked")
-    private void write(final DocumentationDoc doc) {
-        final DocumentActionHandler<DocumentationDoc> handler = documentAccess.handler(DocumentationDoc.TYPE)
-                .orElseThrow(() -> new ToolRefusal("Stroom has no Documentation store"));
-        handler.writeDocument(doc);
     }
 
     private static Optional<WriteGuard.BuildDoc> recordDoc(final List<WriteGuard.BuildDoc> contents) {
@@ -556,16 +553,6 @@ public class BuildRecords {
         return copy;
     }
 
-    static List<String> stringList(final Object value) {
-        if (!(value instanceof final Collection<?> collection)) {
-            return List.of();
-        }
-        return collection.stream()
-                .filter(Objects::nonNull)
-                .map(String::valueOf)
-                .toList();
-    }
-
     private static String text(final Entry<String, Object> entry, final String key) {
         return entry.getValue() instanceof final Map<?, ?> map && map.get(key) != null
                 ? String.valueOf(map.get(key))
@@ -573,16 +560,12 @@ public class BuildRecords {
     }
 
     private static String digests(final Map<String, Object> entry, final String kind) {
-        final List<String> digests = stringList(entry.get(kind)).stream()
+        final List<String> digests = JsonValues.strings(entry.get(kind)).stream()
                 .map(digest -> digest.substring(0, Math.min(8, digest.length())))
                 .toList();
         return digests.isEmpty()
                 ? "-"
                 : String.join(", ", digests);
-    }
-
-    private static boolean truthy(final Object value) {
-        return value != null && !Boolean.FALSE.equals(value) && !"".equals(value);
     }
 
     private static String shorten(final String text, final int max) {

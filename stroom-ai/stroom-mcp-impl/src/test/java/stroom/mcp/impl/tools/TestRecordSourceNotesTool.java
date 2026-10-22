@@ -17,11 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.security.api.SecurityContext;
@@ -61,7 +61,7 @@ class TestRecordSourceNotesTool {
             Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory(),
             world::guard, world::records);
     private final RecordSourceNotesTool tool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
-            eventVersions, plan);
+            new DocumentWrites(world.documentAccess), eventVersions, plan);
 
     @BeforeEach
     void setUp() {
@@ -164,7 +164,7 @@ class TestRecordSourceNotesTool {
 
     @Test
     void withoutTheSchemaTheCatalogueIsStillCheckedForTwins() {
-        Mockito.when(heldSchemas.eventVersions()).thenThrow(new ValidationException(HeldSchemas.NO_EVENT_LOGGING));
+        Mockito.when(heldSchemas.eventVersions()).thenThrow(new ToolRefusal(HeldSchemas.NO_EVENT_LOGGING));
 
         final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"s\", "
                                         + "\"events\": [{\"event\": \"A\", \"description\": \"a\", \"field\": "

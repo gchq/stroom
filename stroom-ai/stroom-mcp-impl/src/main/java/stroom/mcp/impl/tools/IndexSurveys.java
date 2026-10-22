@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;

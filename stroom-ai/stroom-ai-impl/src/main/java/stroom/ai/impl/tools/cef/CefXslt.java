@@ -16,11 +16,11 @@
 
 package stroom.ai.impl.tools.cef;
 
-import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.StyledXslt;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltComments;
 import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,7 +147,7 @@ public final class CefXslt {
                     : f.key());
         }
         reads.put("EventTime/TimeCreated", "event-time");
-        for (final XmlElement template : sheet.childElements(MappingFacts.XSL, "template")) {
+        for (final XmlElement template : sheet.childElements(XmlTrees.XSL, "template")) {
             StyledXslt.variables(template, reads, style, new HashSet<>());
         }
         return StyledXslt.serialise(sheet);

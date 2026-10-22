@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.PyText;
+
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -72,6 +74,16 @@ class TestPyJson {
                            + "\"e\": [null]}");
         assertThat(PyJson.dumps(SampleProfiler.map("a", List.of(1L, 2L), "b", Map.of()), 1))
                 .isEqualTo("{\n \"a\": [\n  1,\n  2\n ],\n \"b\": {}\n}");
+    }
+
+    @Test
+    void charactersPastAsciiAreKeptWithEnsureAsciiOff() {
+        // json.dumps({'café': 'naïve\t--'}, indent=1, ensure_ascii=False), as the field descriptions are kept.
+        assertThat(PyJson.dumps(SampleProfiler.map("café", "naïve\t--\u0001"), 1, false))
+                .isEqualTo("{\n \"café\": \"naïve\\t--\\u0001\"\n}");
+        assertThat(PyJson.dumps(SampleProfiler.map("café", "x"), 1, true))
+                .isEqualTo("{\n \"caf\\u00e9\": \"x\"\n}");
+        assertThat(PyJson.dumps(Map.of(), 1, false)).isEqualTo("{}");
     }
 
     @Test

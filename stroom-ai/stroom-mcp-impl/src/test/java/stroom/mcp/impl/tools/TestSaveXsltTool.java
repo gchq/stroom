@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.pipeline.shared.XsltDoc;
 
@@ -89,13 +90,13 @@ class TestSaveXsltTool {
         // 50-field plan went inline to save_xslt, create_index_doc and more. Saved with no code and no plan: the one
         // amended in the session, not pasted again.
         final FieldPlan drafted = FieldPlan.fromJson(lucenePlan());
-        final SaveXsltTool tool = world.saveXsltTool(session -> Map.of("acme", drafted));
+        final SaveXsltTool tool = world.saveXsltTool(Map.of("acme", drafted));
 
         final Map<String, Object> saved = world.call(tool, Map.of("build", "fw-v1", "name", "FW-INDEX-XSLT"));
 
         assertThat(world.xslt(String.valueOf(saved.get("uuid"))).getData()).isEqualTo(drafted.xslt());
         // With several drafted, and no XSLT to tell which, none is taken.
-        final SaveXsltTool several = world.saveXsltTool(session -> Map.of("acme", drafted, "other", drafted));
+        final SaveXsltTool several = world.saveXsltTool(Map.of("acme", drafted, "other", drafted));
         assertThat(String.valueOf(world.call(several, Map.of("build", "fw-v1", "name", "FW-2")).get("error")))
                 .contains("draft_index_mapping drafted several, or none");
     }

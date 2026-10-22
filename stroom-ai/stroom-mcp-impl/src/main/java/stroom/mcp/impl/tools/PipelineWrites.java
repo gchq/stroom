@@ -20,7 +20,10 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -153,7 +156,7 @@ class PipelineWrites {
     /// @throws ToolRefusal if the type is no parser, or the template has none.
     static Swap swapParser(final Layout template, final String newType) {
         if (!PARSERS.contains(newType)) {
-            throw new ToolRefusal("replace_parser must be one of " + SampleArguments.pythonList(sorted(PARSERS)));
+            throw new ToolRefusal("replace_parser must be one of " + PyText.list(sorted(PARSERS)));
         }
         final Map<String, String> types = template.elements();
         final String old = template.chain().stream()
@@ -459,7 +462,7 @@ class PipelineWrites {
             if (kind == null) {
                 throw new ToolRefusal(property.element() + " (" + elementType + ") has no property '"
                                       + property.name() + "'; its properties are "
-                                      + SampleArguments.pythonList(sorted(ofType.keySet())));
+                                      + PyText.list(sorted(ofType.keySet())));
             }
             if (!PLAIN.containsKey(kind)) {
                 // A document: doc_uuid and doc_type, refused by value() without them.
@@ -534,7 +537,7 @@ class PipelineWrites {
     DocRef docRefByName(final String type, final String name) {
         if (FeedDoc.TYPE.equals(type)) {
             final DocRef found = feedNames.exact(name)
-                    .orElseThrow(() -> new ToolRefusal("No feed named '" + name + "'"));
+                    .orElseThrow(() -> FeedNames.noFeedNamed(name));
             return new DocRef(FeedDoc.TYPE, found.getUuid(), NullSafe.nonBlankStringElse(found.getName(), name));
         }
         if (UUID_LIKE.matcher(name).matches()) {
@@ -597,7 +600,7 @@ class PipelineWrites {
                 .filter(element -> VALIDATION.contains(types.get(element)))
                 .toList());
         if (!touched.isEmpty()) {
-            throw new ToolRefusal(SampleArguments.pythonList(touched) + " validate the pipeline's output against "
+            throw new ToolRefusal(PyText.list(touched) + " validate the pipeline's output against "
                                   + "its schema; their settings are not changed here. Fix the output instead: an "
                                   + "Elasticsearch indexing XSLT's root must say which JSON schema it follows "
                                   + "(<array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions "
@@ -625,7 +628,7 @@ class PipelineWrites {
         final Map<String, String> types = layout(pipelineUuid).elements();
         if (!types.containsKey(property.element())) {
             throw new ToolRefusal("No element '" + property.element() + "' in this pipeline; elements are "
-                                  + SampleArguments.pythonList(sorted(types.keySet())));
+                                  + PyText.list(sorted(types.keySet())));
         }
         keepValidation(types, List.of(property));
         if ("ElasticIndexingFilter".equals(types.get(property.element())) && "indexName".equals(property.name())
@@ -715,7 +718,8 @@ class PipelineWrites {
                     value = "true".equalsIgnoreCase(text.strip());
                 }
                 if (!(value instanceof Boolean)) {
-                    throw new ToolRefusal(property.dotted() + " is true or false, not " + repr(property.value()));
+                    throw new ToolRefusal(property.dotted() + " is true or false, not "
+                                          + PyText.repr(property.value()));
                 }
             }
             case "int", "long" -> {
@@ -727,7 +731,8 @@ class PipelineWrites {
                     }
                 }
                 if (!(value instanceof Long) && !(value instanceof Integer)) {
-                    throw new ToolRefusal(property.dotted() + " is a whole number, not " + repr(property.value()));
+                    throw new ToolRefusal(property.dotted() + " is a whole number, not "
+                                          + PyText.repr(property.value()));
                 }
                 value = ((Number) value).longValue();
             }
@@ -746,24 +751,8 @@ class PipelineWrites {
         try {
             return Math.toIntExact(((Number) property.value()).longValue());
         } catch (final ArithmeticException e) {
-            throw new ToolRefusal(property.dotted() + " is a whole number, not " + repr(property.value()));
+            throw new ToolRefusal(property.dotted() + " is a whole number, not " + PyText.repr(property.value()));
         }
-    }
-
-    // A value as Python's repr writes it.
-    private static String repr(final Object value) {
-        if (value == null) {
-            return "None";
-        }
-        if (value instanceof final Boolean bool) {
-            return bool
-                    ? "True"
-                    : "False";
-        }
-        if (value instanceof final String text) {
-            return SampleArguments.pythonRepr(text);
-        }
-        return String.valueOf(value);
     }
 
     private static String referenceKey(final PipelineReference reference) {
@@ -926,7 +915,7 @@ class PipelineWrites {
         /// @return The references.
         /// @throws ToolRefusal if one has no feed.
         static List<ReferenceRequest> listOf(final Object given, final String argument) {
-            final List<Object> items = PipelineArguments.oneOrMore(given);
+            final List<Object> items = ToolArgs.oneOrMore(given);
             final List<ReferenceRequest> references = new ArrayList<>();
             for (int i = 0; i < items.size(); i++) {
                 final Object item = items.get(i);

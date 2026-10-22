@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -26,9 +27,9 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -224,7 +225,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
             final String kind = given == null
                     ? "first"
                     : given.toLowerCase(Locale.ROOT);
-            return new Record(kind, 0, PythonText.repr(kind));
+            return new Record(kind, 0, PyText.repr(kind));
         }
         final Integer index = intArg(call, RECORD_ARG);
         if (index == null || index < 0) {

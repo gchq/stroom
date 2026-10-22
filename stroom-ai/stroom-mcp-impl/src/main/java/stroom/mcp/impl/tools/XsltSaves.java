@@ -21,7 +21,6 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
-import stroom.pipeline.shared.XsltDoc;
 
 import jakarta.inject.Inject;
 
@@ -45,18 +44,14 @@ public class XsltSaves {
 
     private final TranslationDocs translationDocs;
     private final RequiredImports requiredImports;
-    private final HandEditGate handEditGate;
 
-    /// @param translationDocs Creates and saves the XSLTs.
+    /// @param translationDocs Creates and saves the XSLTs (with the hand-edit check, [HandEditGate]).
     /// @param requiredImports The imports standing instructions require.
-    /// @param handEditGate    Keeps an edit made by hand since the tools saved an XSLT.
     @Inject
     XsltSaves(final TranslationDocs translationDocs,
-              final RequiredImports requiredImports,
-              final HandEditGate handEditGate) {
+              final RequiredImports requiredImports) {
         this.translationDocs = translationDocs;
         this.requiredImports = requiredImports;
-        this.handEditGate = handEditGate;
     }
 
     /// Creates an XSLT in the build ([TranslationDocs#createXslt]).
@@ -127,25 +122,5 @@ public class XsltSaves {
     /// @return The build role it belongs in, or null.
     public static String xsltRole(final String code) {
         return RequiredImports.xsltRole(code);
-    }
-
-    /// [HandEditGate#check].
-    ///
-    /// @param call    The call.
-    /// @param context The call's context.
-    /// @param doc     The XSLT as it is now.
-    /// @param code    The new code.
-    /// @param kind    The kind of mapping or plan the new code is from, or null.
-    /// @param payload That mapping or plan, or null.
-    /// @param choices The user's answers, or null.
-    /// @return Empty when the code may be saved, else the question to return.
-    public Optional<Map<String, Object>> handEditGate(final ToolCall call,
-                                                      final ToolCallContext context,
-                                                      final XsltDoc doc,
-                                                      final String code,
-                                                      final String kind,
-                                                      final Map<String, Object> payload,
-                                                      final Map<String, String> choices) {
-        return handEditGate.check(call, context, doc, code, kind, payload, choices);
     }
 }

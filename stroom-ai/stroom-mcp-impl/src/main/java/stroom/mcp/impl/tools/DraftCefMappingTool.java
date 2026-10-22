@@ -22,14 +22,18 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.cef.CefDocs;
@@ -48,16 +52,14 @@ import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventStreams;
-import stroom.ai.impl.tools.validation.PythonText;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -277,7 +279,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
             return JsonResults.of(draft(call, context, request(call)));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final ValidationException | StreamReader.StreamReadException | PipelineUnreadableException e) {
+        } catch (final StreamReader.StreamReadException | PipelineUnreadableException e) {
             return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
@@ -709,8 +711,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 : Map.of();
         final String where = templates.get("from_instructions") != null
                 ? "the template the standing instructions name"
-                : BuildPlan.truthy(templates.get("forwarding_templates"))
-                  || BuildPlan.truthy(templates.get("existing_cef_pipelines"))
+                : JsonValues.truthy(templates.get("forwarding_templates"))
+                  || JsonValues.truthy(templates.get("existing_cef_pipelines"))
                         ? "a forwarding template (find_pipeline_templates stage=forwarding), or the one existing CEF "
                           + "pipelines inherit from"
                         : "no forwarding template exists: create_pipeline standalone='kafka' (the user confirms the "
@@ -765,8 +767,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     private static Optional<Map<String, Object>> fromStandingInstructions(final Map<String, Object> said) {
         final List<CefOverride> overrides = saidOverrides(said);
         if (overrides.isEmpty() && !said.containsKey(CefInstructions.CUSTOM_KEYS)
-            && !BuildPlan.truthy(said.get(CefInstructions.TOPIC))
-            && !BuildPlan.truthy(said.get(CefInstructions.TEMPLATE))) {
+            && !JsonValues.truthy(said.get(CefInstructions.TOPIC))
+            && !JsonValues.truthy(said.get(CefInstructions.TEMPLATE))) {
             return Optional.empty();
         }
         final Map<String, Object> from = new LinkedHashMap<>();
@@ -818,8 +820,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final Set<String> unknown = new TreeSet<>(header.keySet());
         unknown.removeAll(names);
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("header has no " + PythonText.list(unknown) + ": its fields are "
-                                  + PythonText.list(names));
+            throw new ToolRefusal("header has no " + PyText.list(unknown) + ": its fields are "
+                                  + PyText.list(names));
         }
         return new Request(StartOnboardingTool.streamIds(call, STREAM_IDS_ARG),
                 bool(args.get(CUSTOM_KEYS_ARG)),
@@ -836,7 +838,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 stringListArg(call, FEEDS_ARG),
                 stringListArg(call, FOLDERS_ARG),
                 style(args.get(STYLE_ARG)),
-                CreateProcessorFilterTool.flag(call, DISCARD_HAND_EDIT_ARG),
+                ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),
                 choices(args.get(HAND_EDIT_CHOICES_ARG)));
     }
 
@@ -845,10 +847,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         Object given = value;
         if (given instanceof final String text) {
             try {
-                given = JsonUtil.readValue(text, Object.class);
-            } catch (final RuntimeException e) {
-                throw new ToolRefusal("overrides is text that is not JSON (" + firstLine(e) + "): pass a list of "
-                                      + "objects");
+                given = PyJson.loads(text);
+            } catch (final PyJson.JsonDecodeException e) {
+                throw ToolArgs.notJson(OVERRIDES_ARG, e.msg(), "pass a list of objects");
             }
         }
         if (given == null) {
@@ -937,18 +938,10 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
 
     private static Object readJson(final String text, final String name) {
         try {
-            return JsonUtil.readValue(text, Object.class);
-        } catch (final RuntimeException e) {
-            throw new ToolRefusal(name + " is text that is not JSON (" + firstLine(e) + ")");
+            return PyJson.loads(text);
+        } catch (final PyJson.JsonDecodeException e) {
+            throw ToolArgs.notJson(name, ToolArgs.where(e), null);
         }
-    }
-
-    private static String firstLine(final RuntimeException e) {
-        final String message = NullSafe.nonBlankStringElse(e.getMessage(), e.toString());
-        final int end = message.indexOf('\n');
-        return end < 0
-                ? message
-                : message.substring(0, end);
     }
 
     private boolean savesXslt(final ToolCall call) {

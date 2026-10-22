@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -143,7 +145,7 @@ class TestSampleProfiler {
         final String retyped = "[{\"host\": \"gs-fw01\", \"body\": \"eventtime=1 tz=\\\"\\+1000\\\" srcip=10.0.0.1\"}]";
 
         assertThatThrownBy(() -> SampleProfiler.profile(retyped))
-                .isInstanceOf(SampleRefusal.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("starts as JSON but isn't valid JSON: Invalid \\escape");
         assertThat(SampleProfiler.profile(retyped.replace("\\+", "+"))).containsEntry("format", "json array");
         // Text that only starts with a bracket is not taken for JSON.

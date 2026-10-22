@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.SchemaKey;
@@ -157,11 +158,11 @@ public class HeldSchemas {
     /// As `tools/generation.py`'s `event_versions`.
     ///
     /// @return The event-logging versions this Stroom holds, newest first.
-    /// @throws ValidationException if it holds none.
+    /// @throws ToolRefusal if it holds none.
     public List<String> eventVersions() {
         final List<String> versions = heldEventVersions();
         if (versions.isEmpty()) {
-            throw new ValidationException(NO_EVENT_LOGGING);
+            throw new ToolRefusal(NO_EVENT_LOGGING);
         }
         return versions;
     }
@@ -171,7 +172,7 @@ public class HeldSchemas {
     ///
     /// @param chosen The version the user chose for the build, or null if none was chosen.
     /// @return It, else the newest this Stroom holds.
-    /// @throws ValidationException if none was chosen and Stroom holds no event-logging schema.
+    /// @throws ToolRefusal if none was chosen and Stroom holds no event-logging schema.
     public String chosenOrLatest(final String chosen) {
         return NullSafe.isNonBlankString(chosen)
                 ? chosen
@@ -184,7 +185,7 @@ public class HeldSchemas {
     /// @param keptVersion The `schema_version` kept with its mapping, or null.
     /// @param code        Its code, or null.
     /// @return The version kept with its mapping, else the one its code writes, else the newest this Stroom holds.
-    /// @throws ValidationException if it comes to the newest and Stroom holds none.
+    /// @throws ToolRefusal if it comes to the newest and Stroom holds none.
     public String translationVersion(final String keptVersion, final String code) {
         if (NullSafe.isNonBlankString(keptVersion)) {
             return keptVersion;
@@ -230,7 +231,7 @@ public class HeldSchemas {
 
     /// @param systemId A schema's system id.
     /// @return The XMLSchema document holding it.
-    /// @throws ValidationException if this Stroom holds no schema of that system id (that the user may view),
+    /// @throws ToolRefusal if this Stroom holds no schema of that system id (that the user may view),
     /// saying what to write instead (`file://` and two slashes) or which event-logging versions it holds.
     public XmlSchemaDoc document(final String systemId) {
         final Map<String, XmlSchemaDoc> index = index();
@@ -240,21 +241,21 @@ public class HeldSchemas {
         }
         final String fixed = twoSlashes(systemId);
         if (index.containsKey(fixed)) {
-            throw new ValidationException(unheldLocation(systemId, List.of(fixed)));
+            throw new ToolRefusal(unheldLocation(systemId, List.of(fixed)));
         }
         final List<String> versions = newestFirst(index.keySet().stream()
                 .map(HeldSchemas::eventLoggingVersion)
                 .filter(Objects::nonNull)
                 .toList());
-        throw new ValidationException("Stroom has no XML schema '" + systemId + "'. Event-logging versions it "
-                                      + "holds, newest first: " + (versions.isEmpty()
+        throw new ToolRefusal("Stroom has no XML schema '" + systemId + "'. Event-logging versions it "
+                              + "holds, newest first: " + (versions.isEmpty()
                 ? "none"
                 : String.join(", ", versions)) + " (all in namespace event-logging:3, 4.x as much as 3.x)");
     }
 
     /// @param systemId A schema's system id.
     /// @return The XSD text itself.
-    /// @throws ValidationException as [#document(String)].
+    /// @throws ToolRefusal as [#document(String)].
     public String source(final String systemId) {
         return NullSafe.string(document(systemId).getData());
     }
@@ -263,7 +264,7 @@ public class HeldSchemas {
     ///
     /// @param version An event-logging version, e.g. `4.1.0`.
     /// @return The model of what its schema allows.
-    /// @throws ValidationException if this Stroom holds no such schema, or it can't be read as one.
+    /// @throws ToolRefusal if this Stroom holds no such schema, or it can't be read as one.
     public EventSchema eventSchema(final String version) {
         final String xsd = source(eventLoggingSystemId(version));
         try {
@@ -278,8 +279,8 @@ public class HeldSchemas {
                     ? raced
                     : parsed;
         } catch (final RuntimeException e) {
-            throw new ValidationException("The event-logging " + version + " schema in this Stroom can't be read: "
-                                          + e.getMessage());
+            throw new ToolRefusal("The event-logging " + version + " schema in this Stroom can't be read: "
+                                  + e.getMessage());
         }
     }
 
@@ -293,7 +294,7 @@ public class HeldSchemas {
     /// @param systemId The schema's system id.
     /// @param xml      The document's text.
     /// @return Its errors; empty if it is valid.
-    /// @throws ValidationException             if Stroom holds no such schema, or it doesn't compile.
+    /// @throws ToolRefusal             if Stroom holds no such schema, or it doesn't compile.
     /// @throws XmlTrees.NotWellFormedException if the document is not well-formed.
     public List<SchemaErrors.SchemaError> validate(final String systemId, final String xml) {
         final String xsd = source(systemId);
@@ -307,8 +308,8 @@ public class HeldSchemas {
                                 StoredSchema::getErrorReceiver, StoredErrorReceiver::getList))
                         .map(Object::toString)
                         .collect(Collectors.joining("; "));
-                throw new ValidationException("The schema '" + systemId + "' in this Stroom doesn't compile"
-                                              + (NullSafe.isNonBlankString(why)
+                throw new ToolRefusal("The schema '" + systemId + "' in this Stroom doesn't compile"
+                                      + (NullSafe.isNonBlankString(why)
                         ? ": " + why.strip()
                         : ""));
             }

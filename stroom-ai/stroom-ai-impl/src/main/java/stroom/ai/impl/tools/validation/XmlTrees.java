@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -55,6 +59,8 @@ public final class XmlTrees {
     /// The namespace `xmlns` attributes are in.
     public static final String XMLNS = XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XmlTrees.class);
+
     private XmlTrees() {
         // Static only.
     }
@@ -74,6 +80,20 @@ public final class XmlTrees {
             throw new NotWellFormedException(e.getLineNumber(), e.getMessage());
         } catch (final ParserConfigurationException | SAXException | IOException e) {
             throw new NotWellFormedException(-1, e.getMessage());
+        }
+    }
+
+    /// @param text XML text, e.g. an XSLT, or null.
+    /// @return Its root element, or empty if it is blank or not well-formed XML (or has a DOCTYPE).
+    public static Optional<Element> tryParse(final String text) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(parse(text));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to parse XML: " + e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -103,14 +123,34 @@ public final class XmlTrees {
     }
 
     /// @param root      An element.
-    /// @param namespace A namespace.
+    /// @param namespace A namespace, or null for none.
     /// @param localName A local name, or `*` for any.
     /// @return The elements below root (and root itself) of that name, in document order.
     public static List<Element> named(final Element root, final String namespace, final String localName) {
         return descendantsAndSelf(root).stream()
-                .filter(element -> namespace.equals(element.getNamespaceURI()))
+                .filter(element -> Objects.equals(namespace, element.getNamespaceURI()))
                 .filter(element -> "*".equals(localName) || localName.equals(element.getLocalName()))
                 .toList();
+    }
+
+    /// @param element   An element.
+    /// @param namespace The namespace of the element wanted, or null for none.
+    /// @param localName The local name of the element wanted.
+    /// @return Its first child element of that name, if any.
+    public static Optional<Element> child(final Element element, final String namespace, final String localName) {
+        return children(element).stream()
+                .filter(child -> is(child, namespace, localName))
+                .findFirst();
+    }
+
+    /// @param node      A node.
+    /// @param namespace A namespace, or null for none.
+    /// @param localName A local name.
+    /// @return True if it is an element of that name.
+    public static boolean is(final Node node, final String namespace, final String localName) {
+        return node instanceof final Element element
+               && Objects.equals(element.getNamespaceURI(), namespace)
+               && localName.equals(element.getLocalName());
     }
 
     /// @param element An element.
@@ -246,6 +286,7 @@ public final class XmlTrees {
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         factory.setXIncludeAware(false);
         factory.setExpandEntityReferences(false);
         return factory;

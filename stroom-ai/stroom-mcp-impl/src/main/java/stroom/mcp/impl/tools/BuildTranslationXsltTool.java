@@ -21,12 +21,16 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
@@ -37,7 +41,6 @@ import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.EventRule;
-import stroom.ai.impl.tools.generation.MappingChangeException;
 import stroom.ai.impl.tools.generation.MappingChanges;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.MappingFacts;
@@ -48,7 +51,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.sample.SampleRefusal;
+import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -375,20 +378,16 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 try {
                     changes = PyJson.loads(text);
                 } catch (final PyJson.JsonDecodeException e) {
-                    throw new ToolRefusal("changes is text that is not JSON (" + e.msg() + " at character " + e.pos()
-                                          + "): pass it as an object. " + MappingProblems.ESCAPING);
+                    throw ToolArgs.notJson("changes", ToolArgs.where(e), "pass it as an object. "
+                                                                         + MappingProblems.ESCAPING);
                 }
             }
             final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), request.uuid(),
                     request.build(), request.name());
             b.basedOn = base.basedOn();
-            try {
-                final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes);
-                given = applied.merged();
-                b.applied = applied.done();
-            } catch (final MappingChangeException e) {
-                throw new ToolRefusal(e.getMessage());
-            }
+            final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes);
+            given = applied.merged();
+            b.applied = applied.done();
         } else if (given == null) {
             if (request.target().isEmpty()) {
                 throw new ToolRefusal("Give mapping (draft_translation_mapping drafts one), changes to fix the one "
@@ -409,9 +408,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             } catch (final PyJson.JsonDecodeException e) {
                 final String around = text.substring(Math.max(0, e.pos() - 30), Math.min(text.length(),
                         e.pos() + 30));
-                throw new ToolRefusal("mapping is text that is not JSON (" + e.msg() + " at character " + e.pos()
-                                      + ", around `" + around + "`): pass the mapping as an object, not a string. "
-                                      + MappingProblems.ESCAPING);
+                throw ToolArgs.notJson("mapping", ToolArgs.where(e) + ", around `" + around + "`",
+                        "pass the mapping as an object, not a string. " + MappingProblems.ESCAPING);
             }
         }
         final List<String> unknownKeys = new ArrayList<>();
@@ -520,8 +518,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         if (!b.unknownKeys.isEmpty()) {
             TranslationBuilds.warnings(b.result).add("mapping keys ignored, as a mapping has no such key: "
-                                                     + SampleArguments.pythonList(b.unknownKeys) + " (it has "
-                                                     + SampleArguments.pythonList(MappingProblems.mappingKeys())
+                                                     + PyText.list(b.unknownKeys) + " (it has "
+                                                     + PyText.list(MappingProblems.mappingKeys())
                                                      + ")");
         }
     }
@@ -537,9 +535,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             texts.notes().forEach(note -> warnings.add("sample: " + note));
         } else if (samples != null) {
             for (final String text : samples) {
-                SampleArguments.whyNotData(text, SAMPLE_ARG).ifPresent(why -> {
-                    throw new ToolRefusal(why);
-                });
+                SampleTexts.checkSample(text, SAMPLE_ARG);
             }
         }
         if (!request.streamIds().isEmpty()) {
@@ -565,8 +561,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, Object> check = MappingSampleCheck.check(b.mapping, samples, splitter, b.schema, inferred,
                 clock);
         b.result.put("sample_check", check);
-        strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
-        final List<String> found = strings(check.get("problems"));
+        JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
+        final List<String> found = JsonValues.strings(check.get("problems"));
         if (!found.isEmpty()) {
             // A time format no sample value fits fails every record at stepping: as good as a schema problem.
             found.forEach(problem -> TranslationBuilds.problems(b.result).add("sample: " + problem));
@@ -743,12 +739,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final Map<String, Object> check = b.result.get("sample_check") instanceof final Map<?, ?> map
                 ? mapOf(map)
                 : Map.of();
-        if (!BuildPlan.truthy(check.get("records"))) {
+        if (!JsonValues.truthy(check.get("records"))) {
             // The user is asked what they agree to: which records, with which values. Without the sample the form
             // said "no sample records checked", and logoffs went to Unknown unseen.
             throw new ToolRefusal("Keeping a rule as Unknown is put to the user with the sample records it catches: "
                                   + "call again with stream_ids (the sample streams) or sample, so the check can show "
-                                  + "them" + (BuildPlan.truthy(check.get("note"))
+                                  + "them" + (JsonValues.truthy(check.get("note"))
                     ? " (" + check.get("note") + ")"
                     : ""));
         }
@@ -833,20 +829,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private static SplitterSpec inferredSpec(final String sample) {
         try {
             return SplitterDryRun.inferSpec(sample).spec();
-        } catch (final SampleRefusal | IllegalArgumentException e) {
+        } catch (final ToolRefusal | IllegalArgumentException e) {
             return null;
         }
     }
 
     private static boolean ok(final Build b) {
         return Boolean.TRUE.equals(b.result.get("ok"));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<String> strings(final Object value) {
-        return value instanceof final List<?> list
-                ? (List<String>) list
-                : List.of();
     }
 
     private static Map<String, Object> mapOf(final Map<?, ?> map) {
@@ -905,8 +894,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             if (max != null && (max < 1 || max > MAX_RECORDS)) {
                 throw new ToolRefusal("max_records is 1 to " + MAX_RECORDS + ", not " + max);
             }
-            return new Request(TranslationArgs.value(call, MAPPING_ARG),
-                    TranslationArgs.value(call, CHANGES_ARG),
+            return new Request(ToolArgs.raw(call, MAPPING_ARG),
+                    ToolArgs.raw(call, CHANGES_ARG),
                     tool.stringArg(call, SCHEMA_VERSION_ARG),
                     stringListArg(call, FEEDS_ARG),
                     tool.stringArg(call, PIPELINE_UUID_ARG),
@@ -914,17 +903,17 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     max == null
                             ? DEFAULT_RECORDS
                             : max,
-                    CreateProcessorFilterTool.flag(call, FIELD_MAPPING_ARG),
-                    samples(TranslationArgs.value(call, SAMPLE_ARG)),
-                    splitter(TranslationArgs.value(call, SPLITTER_ARG)),
+                    ToolArgs.flag(call, FIELD_MAPPING_ARG),
+                    samples(ToolArgs.raw(call, SAMPLE_ARG)),
+                    splitter(ToolArgs.raw(call, SPLITTER_ARG)),
                     tool.stringArg(call, BUILD_ARG),
                     tool.stringArg(call, NAME_ARG),
                     tool.stringArg(call, UUID_ARG),
-                    CreateProcessorFilterTool.flag(call, INCLUDE_XSLT_ARG),
+                    ToolArgs.flag(call, INCLUDE_XSLT_ARG),
                     tool.stringArg(call, CONFIRMATION_ID_ARG),
-                    TranslationArgs.value(call, REVIEWED_ARG),
+                    ToolArgs.raw(call, REVIEWED_ARG),
                     tool.stringArg(call, CHANGE_ARG),
-                    CreateProcessorFilterTool.flag(call, DISCARD_HAND_EDIT_ARG),
+                    ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),
                     TranslationArgs.handEditChoices(call));
         }
 

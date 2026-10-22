@@ -17,9 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.EventRule;
@@ -293,8 +295,8 @@ class TranslationBuilds {
                     lines.add("  - " + part);
                 }
             }
-            if (BuildPlan.truthy(held.get("suggested"))) {
-                lines.add("- Their values suggest: " + held.get("suggested") + (BuildPlan.truthy(held.get(
+            if (JsonValues.truthy(held.get("suggested"))) {
+                lines.add("- Their values suggest: " + held.get("suggested") + (JsonValues.truthy(held.get(
                         "against_suggestion"))
                         ? " (kept as Unknown though, as asked)"
                         : ""));
@@ -395,7 +397,7 @@ class TranslationBuilds {
         final XsltDoc doc = translationDocs.readXslt(uuid);
         final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(doc.getDescription())
                 .filter(found -> KeptMapping.TRANSLATION.equals(found.kind())
-                                 && BuildPlan.truthy(found.payload().get("mapping")));
+                                 && JsonValues.truthy(found.payload().get("mapping")));
         if (kept.isPresent()) {
             return kept.get();
         }

@@ -17,9 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.validation.HeldSchemas;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
@@ -72,9 +72,9 @@ class TestCheckXsltTool {
     void setUp() {
         // This Stroom holds no event-logging schema.
         Mockito.when(heldSchemas.translationVersion(any(), any()))
-                .thenThrow(new ValidationException(HeldSchemas.NO_EVENT_LOGGING));
+                .thenThrow(new ToolRefusal(HeldSchemas.NO_EVENT_LOGGING));
         Mockito.when(heldSchemas.eventSchema(anyString()))
-                .thenThrow(new ValidationException(HeldSchemas.NO_EVENT_LOGGING));
+                .thenThrow(new ToolRefusal(HeldSchemas.NO_EVENT_LOGGING));
         Mockito.when(documentAccess.canView(any())).thenReturn(true);
         Mockito.when(compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of()));
     }
@@ -197,7 +197,7 @@ class TestCheckXsltTool {
         assertThat((List<?>) result.get("errors")).anySatisfy(error ->
                 assertThat(String.valueOf(error)).contains("two slashes"));
 
-        Mockito.when(heldSchemas.locationProblems(any())).thenThrow(new ValidationException("no schemas"));
+        Mockito.when(heldSchemas.locationProblems(any())).thenThrow(new ToolRefusal("no schemas"));
         assertThat(String.valueOf(call(located).get("warnings"))).contains("Schema locations not checked: no schemas");
     }
 

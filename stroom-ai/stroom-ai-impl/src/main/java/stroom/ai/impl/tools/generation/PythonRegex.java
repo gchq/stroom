@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -333,7 +335,7 @@ final class PythonRegex {
                         checkGroupName(name, 1);
                         final Integer id = named.get(name);
                         if (id == null) {
-                            throw error("unknown group name " + PythonRepr.repr(name), length(name) + 1);
+                            throw error("unknown group name " + PyText.repr(name), length(name) + 1);
                         }
                         if (open.contains(id)) {
                             throw error("cannot refer to an open group", length(name) + 1);
@@ -423,7 +425,7 @@ final class PythonRegex {
         if (!decimal) {
             checkGroupName(condition, 1);
             if (!named.containsKey(condition)) {
-                throw error("unknown group name " + PythonRepr.repr(condition), length(condition) + 1);
+                throw error("unknown group name " + PyText.repr(condition), length(condition) + 1);
             }
         } else {
             final long group = Long.parseLong(condition);
@@ -449,7 +451,7 @@ final class PythonRegex {
 
     private void checkGroupName(final String name, final int offset) {
         if (!isIdentifier(name)) {
-            throw error("bad character in group name " + PythonRepr.repr(name), length(name) + offset);
+            throw error("bad character in group name " + PyText.repr(name), length(name) + offset);
         }
     }
 
@@ -715,7 +717,7 @@ final class PythonRegex {
         try {
             return Character.codePointOf(name);
         } catch (final IllegalArgumentException e) {
-            throw error("undefined character name " + PythonRepr.repr(name), length(name) + 4);
+            throw error("undefined character name " + PyText.repr(name), length(name) + 4);
         }
     }
 

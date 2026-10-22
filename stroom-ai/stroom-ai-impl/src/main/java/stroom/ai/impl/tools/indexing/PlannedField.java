@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.ModelReader;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -112,7 +113,7 @@ public record PlannedField(@JsonProperty("name") String name,
     /// @param at The source relative to a template's element, or null for the source itself.
     /// @return The XPath for the value written.
     public String value(final String at) {
-        final String path = PyValues.truthy(at)
+        final String path = JsonValues.truthy(at)
                 ? at
                 : source;
         if ("outcome".equals(transform)) {

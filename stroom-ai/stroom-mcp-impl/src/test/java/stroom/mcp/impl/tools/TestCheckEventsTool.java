@@ -18,10 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.validation.EventChecks;
 import stroom.ai.impl.tools.validation.EventStreams;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -178,7 +178,7 @@ class TestCheckEventsTool {
     @Test
     void eventsThatCantBeCheckedAreRefusedSayingWhy() {
         Mockito.when(eventChecks.validateEvents(anyString(), any()))
-                .thenThrow(new ValidationException("Events XML is not well-formed XML: oops"));
+                .thenThrow(new ToolRefusal("Events XML is not well-formed XML: oops"));
 
         final ToolResult result = tool.execute(PortedToolCalls.call(CheckEventsTool.NAME,
                 JsonUtil.writeValueAsString(Map.of("events_xml", "<Events"), false)), PortedToolCalls.context());

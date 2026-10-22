@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.Fetched;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -45,7 +46,7 @@ public class EventStreams {
     /// @param streamIds Events streams.
     /// @param cap       The most records read in all (the Stroom MCP server's `max_sample_records`).
     /// @return Their events as one document, and how many records of each were read.
-    /// @throws ValidationException             if a stream can't be read or is not Events, or there are none.
+    /// @throws ToolRefusal             if a stream can't be read or is not Events, or there are none.
     /// @throws StreamReader.StreamReadException if the user may not read a stream.
     public Read read(final List<Long> streamIds, final int cap) {
         Element merged = null;
@@ -54,13 +55,13 @@ public class EventStreams {
         for (final Long streamId : streamIds) {
             final Fetched first = streamReader.fetch(streamId, 0, null);
             if (!first.errors().isEmpty()) {
-                throw new ValidationException("Stroom could not read stream " + streamId + ": "
-                                              + String.join("; ", first.errors()));
+                throw new ToolRefusal("Stroom could not read stream " + streamId + ": "
+                                      + String.join("; ", first.errors()));
             }
             if (first.streamTypeName() != null && !"Events".equals(first.streamTypeName())) {
-                throw new ValidationException("Stream " + streamId + " is " + first.streamTypeName() + ", not "
-                                              + "Events: give the Events streams processing wrote "
-                                              + "(wait_for_processing lists them)");
+                throw new ToolRefusal("Stream " + streamId + " is " + first.streamTypeName() + ", not "
+                                      + "Events: give the Events streams processing wrote "
+                                      + "(wait_for_processing lists them)");
             }
             final long count = first.totalItems() == null
                     ? 0
@@ -96,7 +97,7 @@ public class EventStreams {
             }
         }
         if (merged == null) {
-            throw new ValidationException("No Events records to check in those streams");
+            throw new ToolRefusal("No Events records to check in those streams");
         }
         return new Read(XmlTrees.serialise(merged), read);
     }

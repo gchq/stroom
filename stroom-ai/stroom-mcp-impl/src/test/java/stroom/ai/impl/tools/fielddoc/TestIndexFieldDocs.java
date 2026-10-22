@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -48,11 +49,14 @@ class TestIndexFieldDocs {
 
     @Test
     void indexFieldMappingTable() {
-        final FieldPlan plan = FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
-                        PlannedField.of("StreamId", "id", "@StreamId"),
-                        PlannedField.of("EventTime", "date", "EventTime/TimeCreated"),
-                        PlannedField.of("UserId", "keyword", "EventSource/User/Id")))
-                .withDropWhen(List.of("EventDetail/TypeId = 'hb'"));
+        final FieldPlan planned = FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"),
+                PlannedField.of("EventTime", "date", "EventTime/TimeCreated"),
+                PlannedField.of("UserId", "keyword", "EventSource/User/Id")));
+        final FieldPlan plan = new FieldPlan(planned.backend(), planned.indexName(), planned.timeField(),
+                planned.fields(), List.of("EventDetail/TypeId = 'hb'"), planned.discovery(), planned.imports(),
+                planned.shared(), planned.subobjects(), planned.convention(), planned.customNamespaces(),
+                planned.style());
         final Map<String, Double> population = new LinkedHashMap<>();
         population.put("EventTime/TimeCreated", 100.0);
         population.put("EventSource/User/Id", 66.7);
@@ -502,7 +506,7 @@ class TestIndexFieldDocs {
 
     // Python's strip('| `').
     private static String strip(final String text) {
-        return PythonStrings.strip(text, "| `");
+        return PyText.strip(text, "| `");
     }
 
     // A plan as the MCP server dumped it, read as the MCP server reads one.

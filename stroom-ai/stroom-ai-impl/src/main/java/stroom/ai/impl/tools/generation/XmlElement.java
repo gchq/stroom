@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -40,7 +42,7 @@ public final class XmlElement extends XmlNode {
     private static final Map<String, String> DEFAULT_PREFIXES = Map.of(
             "http://www.w3.org/XML/1998/namespace", "xml",
             "http://www.w3.org/1999/xhtml", "html",
-            "http://www.w3.org/1999/XSL/Transform", "xsl",
+            XmlTrees.XSL, "xsl",
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf",
             "http://schemas.xmlsoap.org/wsdl/", "wsdl",
             "http://www.w3.org/2001/XMLSchema", "xs",

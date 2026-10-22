@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.Fetched;
+import stroom.ai.impl.tools.ToolRefusal;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -69,7 +70,7 @@ class TestEventStreams {
     void testAStreamThatIsNotEventsIsRefused() {
         Mockito.when(streamReader.fetch(7L, 0, null)).thenReturn(fetched("Raw Events", "a,b", 1));
         assertThatThrownBy(() -> eventStreams.read(List.of(7L), 10))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessage("Stream 7 is Raw Events, not Events: give the Events streams processing wrote "
                             + "(wait_for_processing lists them)");
     }

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
@@ -111,10 +112,10 @@ final class EventTrees {
         if (allowed != null && !allowed.isEmpty()) {
             final List<String> bad = outputs.stream().filter(value -> !allowed.contains(value)).toList();
             if (!bad.isEmpty()) {
-                note(problems, where + ": " + PythonRepr.list(bad) + " not allowed; " + child.name()
-                               + " takes one of " + PythonRepr.list(allowed));
+                note(problems, where + ": " + PyText.list(bad) + " not allowed; " + child.name()
+                               + " takes one of " + PyText.list(allowed));
             } else if (entry.value() == null && !entry.hasMap()) {
-                note(warnings, where + ": " + child.name() + " only takes " + PythonRepr.list(allowed)
+                note(warnings, where + ": " + child.name() + " only takes " + PyText.list(allowed)
                                + "; the input value is written as it is, so add a map unless it already uses these "
                                + "values");
             }
@@ -124,7 +125,7 @@ final class EventTrees {
                     .filter(value -> !"true".equals(value) && !"false".equals(value))
                     .toList();
             if (!bad.isEmpty()) {
-                note(problems, where + ": " + child.name() + " is true or false, not " + PythonRepr.list(bad));
+                note(problems, where + ": " + child.name() + " is true or false, not " + PyText.list(bad));
             } else if (entry.value() == null && !entry.hasMap() && generator.sourceOf(entry).xpath() == null) {
                 note(warnings, where + ": " + child.name() + " is true/false; map the input values, e.g. {'ok': "
                                + "'true', 'fail': 'false'}, unless they already are");
@@ -151,7 +152,7 @@ final class EventTrees {
     // For a value given an element the schema hasn't got (Network/Protocol, Alert/AlertSeverity): it can be carried
     // as a Data entry of the action element, Name and Value, rather than invented or left Unknown.
     private String asData(final String path, final String dataName, final FieldMapping entry, final EventRule rule) {
-        final List<String> steps = PyStr.split(PyStr.stripSlashes(path), "/");
+        final List<String> steps = PyText.split(PyText.strip(path, "/"), "/");
         if (dataName != null || steps.size() < 3 || !"EventDetail".equals(steps.get(0))
             || "Unknown".equals(steps.get(1))) {
             return "";
@@ -159,7 +160,7 @@ final class EventTrees {
         // The action the rule already maps below the element (Network/Permit), where its Data goes.
         final List<String> siblings = new ArrayList<>();
         for (final FieldMapping field : rule.fields()) {
-            final List<String> mapped = PyStr.split(field.strippedPath(), "/");
+            final List<String> mapped = PyText.split(field.strippedPath(), "/");
             if (mapped.subList(0, Math.min(2, mapped.size())).equals(steps.subList(0, 2)) && mapped.size() > 3) {
                 siblings.add(String.join("/", mapped.subList(0, 3)) + "/Data");
             }
@@ -308,7 +309,7 @@ final class EventTrees {
                     example = SHAPES.get(List.of("", last.name()));
                 }
                 note(problems, where + ": " + last.name() + " holds other elements; map one of "
-                               + PythonRepr.list(options) + (example != null
+                               + PyText.list(options) + (example != null
                         ? ", e.g. " + example.stream().map(e -> path + "/" + e).collect(Collectors.joining(", "))
                         : ""));
                 continue;
@@ -332,7 +333,7 @@ final class EventTrees {
                 }
                 if (anchor < 0) {
                     note(problems, where + ": repeat needs an element on the path the schema lets repeat; none of "
-                                   + PythonRepr.list(chain.stream().map(Child::name).toList())
+                                   + PyText.list(chain.stream().map(Child::name).toList())
                                    + " may occur more than once");
                 } else {
                     walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
@@ -351,8 +352,8 @@ final class EventTrees {
                 note(problems, "[" + rule.name() + "] " + anchor.path + " is written once per value of "
                                + (input instanceof String
                         ? input
-                        : PythonRepr.repr(input)) + "; map nothing else below it (found "
-                               + PythonRepr.list(leaves.stream().map(n -> n.path).toList()) + ")");
+                        : PyText.repr(input)) + "; map nothing else below it (found "
+                               + PyText.list(leaves.stream().map(n -> n.path).toList()) + ")");
             }
         }
         for (final SharedTemplate use : m.shared()) {
@@ -360,7 +361,7 @@ final class EventTrees {
             // which would write it twice (or a second element the schema allows once).
             final List<Child> chain;
             try {
-                chain = schema.resolve(PyStr.stripSlashes(use.at()));
+                chain = schema.resolve(PyText.strip(use.at(), "/"));
             } catch (final IllegalArgumentException e) {
                 note(problems, "shared " + use.template() + " (" + use.href() + "): at " + use.at() + ": "
                                + e.getMessage());
@@ -383,7 +384,7 @@ final class EventTrees {
                 note(problems, "[" + rule.name() + "] " + use.at() + " is written by the shared template "
                                + use.template() + " (" + use.href() + "), so it must not be mapped as well: it would "
                                + "be written twice, which fails schema validation. Remove "
-                               + PythonRepr.list(mapped.isEmpty()
+                               + PyText.list(mapped.isEmpty()
                         ? List.of("the other shared template for it")
                         : mapped) + " from the mapping, or drop the shared template.");
                 continue;
@@ -409,7 +410,7 @@ final class EventTrees {
                                    .collect(Collectors.joining(", ")) + ", not Unknown. Remove it.");
         }
         if (detail != null && detail.kids.containsKey("Unknown") && rule.allowUnknown() != null
-            && PyStr.isBlank(rule.allowUnknown())) {
+            && PyText.isBlank(rule.allowUnknown())) {
             note(problems, "[" + rule.name() + "] allow_unknown takes the reason no action element describes these "
                            + "records, as text (in the user's words), not true.");
         }
@@ -445,7 +446,7 @@ final class EventTrees {
                            + "account.");
         }
         if (!conditional.isEmpty()) {
-            note(warnings, "[" + rule.name() + "] required " + PythonRepr.list(conditional) + " are left out when "
+            note(warnings, "[" + rule.name() + "] required " + PyText.list(conditional) + " are left out when "
                            + "their input fields are empty, which makes the event invalid. Fine if those fields are "
                            + "always filled; otherwise give the mapping a default.");
         }
@@ -460,7 +461,7 @@ final class EventTrees {
             if (leaf.path.startsWith(node.path + "/")) {
                 continue;
             }
-            final List<String> steps = PyStr.split(leaf.path, "/");
+            final List<String> steps = PyText.split(leaf.path, "/");
             int member = -1;
             for (int i = steps.size() - 2; i > 0; i--) {
                 if (members.contains(steps.get(i))) {
@@ -483,11 +484,11 @@ final class EventTrees {
             if (isSet(entry.field())) {
                 source = "field '" + entry.field() + "'";
             } else if (hasAnyOf(entry)) {
-                source = "any_of " + PythonRepr.list(entry.anyOf());
+                source = "any_of " + PyText.list(entry.anyOf());
             } else if (isSet(entry.xpath())) {
                 source = "xpath `" + entry.xpath() + "`";
             } else if (entry.value() != null) {
-                source = "value " + PythonRepr.repr(entry.value());
+                source = "value " + PyText.repr(entry.value());
             } else {
                 source = "a lookup";
             }
@@ -564,7 +565,7 @@ final class EventTrees {
                                + "placeholder for the action), and carry their values as " + into + "/Data, "
                                + "data_name kept, or map them where they belong");
             } else if (alternatives.size() > 1) {
-                note(problems, "[" + rule + "] " + node.path + ": " + PythonRepr.list(alternatives) + " are "
+                note(problems, "[" + rule + "] " + node.path + ": " + PyText.list(alternatives) + " are "
                                + "alternatives; an event has only one of them (use separate event rules)");
             }
         }
@@ -593,7 +594,7 @@ final class EventTrees {
         for (final Map.Entry<Integer, List<String>> choice : schema.requiredChoices().entrySet()) {
             if (allowed.stream().anyMatch(c -> choice.getKey().equals(c.choice()))
                 && choice.getValue().stream().noneMatch(present::contains)) {
-                note(problems, "[" + rule + "] " + node.path + " needs one of " + PythonRepr.list(choice.getValue())
+                note(problems, "[" + rule + "] " + node.path + " needs one of " + PyText.list(choice.getValue())
                                + mappedElsewhere(node, choice.getValue()));
             }
         }
@@ -610,11 +611,11 @@ final class EventTrees {
         for (final String x : new LinkedHashSet<>(MappingFacts.mappingXpaths(m))) {
             final String refused = XsltSafety.refused(x, bound);
             if (refused != null) {
-                note(problems, "xpath " + PythonRepr.repr(x) + ": " + refused);
+                note(problems, "xpath " + PyText.repr(x) + ": " + refused);
             }
             final List<String> read = MappingFacts.variableReads(x, derivedNames);
             if (!read.isEmpty()) {
-                note(problems, "xpath " + PythonRepr.repr(x) + " reads " + read.stream().map(n -> "$" + n)
+                note(problems, "xpath " + PyText.repr(x) + " reads " + read.stream().map(n -> "$" + n)
                         .collect(Collectors.joining(", ")) + ": an extract's names are fields, not variables, and "
                                + "the XSLT declares none by that name, so it wouldn't compile. Read one with field: '"
                                + read.getFirst() + "' (an extraction takes an earlier extraction's name as its field "
@@ -625,11 +626,11 @@ final class EventTrees {
             if (rooted != null) {
                 // Seen: .//*:EventData/*:Data written //*:EventData/*:Data, clean at stepping, then processing
                 // stopped: "A sequence of more than one item is not allowed as the first argument of fn:replace()".
-                final List<String> steps = PyStr.split(PyStr.rstrip(rooted, "/"), "/");
+                final List<String> steps = PyText.split(PyText.rstrip(rooted, "/"), "/");
                 final String relative = rooted.startsWith("//")
                         ? "." + rooted
                         : ".//" + or(steps.getLast(), "*");
-                final String said = "xpath " + PythonRepr.repr(x) + " starts at the document root (" + rooted + "), "
+                final String said = "xpath " + PyText.repr(x) + " starts at the document root (" + rooted + "), "
                                     + "not at the record. Stepping hands the XSLT one record at a time, so there it "
                                     + "finds that record's value; processing reads a stream's records as one "
                                     + "document, where " + rooted + " finds every record's: a function taking one "
@@ -717,7 +718,7 @@ final class EventTrees {
             note(problems, where + ": names every group '', so nothing is extracted");
         }
         if (ex.flags().chars().anyMatch(ch -> "imsxq".indexOf(ch) < 0)) {
-            note(problems, where + ": flags are any of i, m, s, x, q; not " + PythonRepr.repr(ex.flags()));
+            note(problems, where + ": flags are any of i, m, s, x, q; not " + PyText.repr(ex.flags()));
         }
     }
 

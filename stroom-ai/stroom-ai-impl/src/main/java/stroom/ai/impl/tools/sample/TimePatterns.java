@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

@@ -251,13 +251,13 @@ Where they differ from the Python server:
   server's dict unpacking left it in).
 * A delimited head whose last row was cut inside quotes no longer fails the survey with an index error: the row
   without columns is signed `row:all`.
-* `quoted_csv`'s header sniff can still fail on odd text, as it did in Python (`csv.Error`); `SampleRefusal` is
+* `quoted_csv`'s header sniff can still fail on odd text, as it did in Python (`csv.Error`); `ToolRefusal` is
   thrown where the server raised a `ToolError`.
 
 ## The sampling tools: `profile_sample`, `survey_feed` and `set_shape_handling`
 
 Ported as tools of their own (`stroom-mcp-impl`, category processing), on the sample analysis above and the build
-layer below. `profile_sample` shares start_onboarding's reading of samples (`SampleArguments`, `SampleStreamTexts`)
+layer below. `profile_sample` shares start_onboarding's reading of samples (`SampleTexts`, `SampleStreamTexts`)
 and its profiling (`SampleProfiling.profileAll`, which gives XML fragments their wrapper:
 `SampleProfiling.withFragmentSetup`, the MCP server's `with_fragment_setup`, with `FragmentWrappers` finding the
 environment's own XML_FRAGMENT converters and the event-logging version through `HeldSchemas`). `survey_feed` picks
@@ -467,7 +467,7 @@ generator above:
   `TRANSFORMS`, `FIELDS`), made from `XPathText` as the server made them; `ReadIdioms` and `MappingRebuild` hold the
   idioms and the rebuild.
 * **`utils/mappingchanges.py`**: `MappingChanges.applyChanges` and `applyPlanChanges` (an `Applied` merged mapping
-  and what each change did; a change that can't apply is a `MappingChangeException` with the server's message).
+  and what each change did; a change that can't apply is a `ToolRefusal` with the server's message).
 
 Parity is tested against the server's own code, run under a scratchpad Python with elementpath, lxml and pydantic:
 every expression the server's tests parsed (and more forms a hand edit may write) with elementpath's tree or its
@@ -572,11 +572,10 @@ Where the port differs from the MCP server:
   user's access token ran out during a form (`needs_retry`) is not ported.
 * **The remembered build** (`remember_build`) is kept per session (a chat, or an MCP session) in this node's memory,
   rather than per user: a call it can't help is told to name the build.
-* **Parts ported later** are bound with defaults until they are: `DraftedIndexPlans` (the index plans
-  draft_index_mapping keeps for a session: none until the indexing tools bind theirs). `MappingDrift` (whether an
-  XSLT is still what its mapping generates) is bound to `GeneratedDrift`, on the ported generators, and sample
-  profiling (`SampleProfiling`) to the ported profiler (`SampleProfiling.Profiled`). A port binds its own with
-  `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding()`.
+* **What the build tools share** is injected directly: whether an XSLT is still what its mapping generates
+  (`GeneratedDrift`, on the ported generators), the index plans draft_index_mapping keeps for a session
+  (`IndexingMemory`), and sample profiling (`SampleProfiling`, bound to the ported profiler,
+  `SampleProfiling.Profiled`).
 * **Over `/mcp`, a write call is approved** by the endpoint before the tool runs (`McpApprovals`), and a tool's own
   confirmation is then asked as well.
 
@@ -833,9 +832,9 @@ translation generator (`stroom.ai.impl.tools.generation`: its mapping records, `
   `ruleOf`, `sampledEvents`), `IndexFieldDocs` (`index_documents`, `object_arrays`, `written_fields_markdown`,
   `index_field_mapping_markdown`, `index_tables`, `grouped_fields`, `existing_index_summary`,
   `existing_index_markdown`, `not_listed`, `discovery_field_markdown`, `shown_type`, `ecs_says`),
-  `DocumentationText` (`titled`, `section_levels` and `_below_section` of `tools/builds.py`), and `PythonStrings`
-  (the Python string and number behaviours the text depends on: `str.strip`, `splitlines`, `{:g}`, `{:.0f}`,
-  truthiness, `json.dumps(indent=1, ensure_ascii=False)`).
+  `DocumentationText` (`titled`, `section_levels` and `_below_section` of `tools/builds.py`), on the shared
+  Python behaviours (`PyText`: `str.strip`, `splitlines`, `{:g}`, `{:.0f}`; `JsonValues.truthy`; `PyJson.dumps`
+  with `ensureAscii` off for `json.dumps(indent=1, ensure_ascii=False)`).
 * `stroom.ai.impl.tools.cef`: `CefKeys` (ArcSight's dictionary, slots, header, `NOT_ACTION`, `HOMES`), the plan's
   records `CefPlan`, `CefValue`, `CefField`, `CefOverride` (JSON as the pydantic models: `fromJson`, with pydantic's
   errors as `MappingValidationException`, and `toJson(DumpMode)`: `ALL` is `model_dump()`, `COMPACT` the
@@ -883,7 +882,7 @@ Where it differs from the Python server:
   reads them once. The functions that need ECS take the `EcsSchema` as an argument rather than reading a module
   global.
 * A text that can't be read is an `IllegalArgumentException` (the server's `ValueError`) with the same message;
-  `components_wanted`'s `ToolError` is an `IndexingRefusal`.
+  `components_wanted`'s `ToolError` is a `ToolRefusal`.
 * A document value as read from an indexing XSLT's output is a `TemplateCheck.DocValue(kind, text)` (the server's
   `(kind, text)` tuple).
 * What reads Stroom or the session (`with_cardinality`'s schema, `plan_given`'s kept and drafted plans,
@@ -912,7 +911,8 @@ editor does. Templates are inherited (`parentPipeline`), never copied: `copy_pip
   `PipelineReference` is `PipelineWrites.ReferenceRequest`.
 * **`PropertyValue`**: the `PropertyValue` model, with its reading of `translationFilter.xslt=<uuid>` and the other
   shapes agents send (`of`, `listOf`), and `PROPERTY_EXAMPLE` (`EXAMPLE`).
-* **`PipelineArguments`**: `utils/params.py`'s `ONE_OR_MORE` (`oneOrMore`) for the list arguments.
+* **`PipelineArguments`**: the pipeline tools' text mappings (`textMap`); their lists and flags are read by
+  `ToolArgs` (`utils/params.py`'s `ONE_OR_MORE` is `ToolArgs.oneOrMore`).
 * **`PipelinePropertyTypes`**: the MCP server's `property_types` (`/pipeline/v1/propertyTypes`), read from Stroom's
   element registry.
 * **`BuildIndexes`**: `tools/indexing.py`'s `_build_index_docs` (`indexDocs`), `_build_destinations`
@@ -1052,8 +1052,8 @@ is ported as helpers, named for the ports still to come (`create_indexing_pipeli
   `_traced`, `_trace_checks`, `_same_value`, `dashboard_config`, `window_start`, `SearchCheck`, `_as_searched`,
   `_searchable`), and `survey_index`, `index_profile` and `feeding_pipelines` (for read_document's survey of an
   index doc, describe_document's, and for write_documentation).
-* **`IndexingArgs`**: the arguments read as `utils/params.py`'s `ONE_OR_MORE` read them, and the plan, fields,
-  discovery and shared templates validated as pydantic validated them. `SharedXslt.jsonValues` is
+* **`IndexingArgs`**: the plan, fields, discovery and shared templates validated as pydantic validated them (the
+  lists, flags and objects themselves are read by `ToolArgs`, as `utils/params.py`'s `ONE_OR_MORE` read them). `SharedXslt.jsonValues` is
   `utils/sharedxslt.py`'s `json_values`; `ExampleNames.derive` (`_derive`) is now public.
 
 | Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
@@ -1182,7 +1182,7 @@ layer above. What they share is injectable, for the other tools that save transl
   `xpathcheck.py`'s `check_xpaths`, `check_extractions`, `record_documents` and `xpath_inputs` on `XPathChecks`),
   **`MappingProblems`** (`mapping_problems`, `_described`, `MAPPING_EXAMPLE`, `ESCAPING`), **`SentMappings`**
   (`_remember_mapping`, `_sent`), **`SampleStreams`** (`rebuild.py`'s `sample_streams`) and **`GeneratedDrift`**
-  (`builds.py`'s `_drift`, `_plan_drift` and `lost_mappings`: the `MappingDrift` binding).
+  (`builds.py`'s `_drift`, `_plan_drift` and `lost_mappings`).
 * `utils/sourcenotes.py`'s `merged` and `check_mapping` are added to `SourceNotes` (stroom-ai-impl);
   `SampleProfiler.inventory` and `XmlTree.toText` are now public.
 
@@ -1228,8 +1228,8 @@ Where they differ from the MCP server:
   refused mapping's `saved` and a version question's `saved` are left out.
 * **Refusals** for an argument that isn't what it should be (`max_records` outside 1 to 1000, a `hand_edit_choices`
   answer that isn't `keep`, `overwrite` or `per_field`, a `converter_type` that isn't one) say so in pydantic's place.
-* **The drafted index plans** (`drafted_plans`) come from `DraftedIndexPlans`, which knows of none until the indexing
-  tools bind theirs: save_xslt then saves from `index_plan` or the plan kept with the XSLT.
+* **The drafted index plans** (`drafted_plans`) come from `IndexingMemory`; with none, save_xslt saves from
+  `index_plan` or the plan kept with the XSLT.
 
 ## The builds' tools: `start_build`, `write_documentation` and `promote_build`
 
@@ -1355,3 +1355,38 @@ what `dev/e2e_plan_walk.py` (promotion held up by the build's own stale document
   the one reader (IS_DOC_REF, IN_DICTIONARY, comma lists, terms at any depth, and an Id term's stream's feed), where
   only a top-level Feed term's value was read; `ProcessorFilterWrites.filterFeeds`, which nothing used, is gone, and
   `ProcessorFilters.canManageProcessors` is `ProcessorFilterAccess`'s.
+
+## Shared helpers (one copy of each Python behaviour)
+
+The tools were ported in parallel, and the helpers they each ported are now one copy each, in stroom-ai-impl
+`stroom.ai.impl.tools`: `ToolRefusal` (the server's `ToolError`, for every tool and helper), `PyText` (Python's
+`str` methods, `re` flags, `repr()`/`str()`, `PyText.list`, number formats), `JsonValues` (truthiness, `x or {}`,
+the maps or strings a list holds, deep copies, `Counter`), `ToolArgs` (`ONE_OR_MORE`, flags, objects given as
+JSON text, the "not JSON" refusal) and `IpAddresses`; `SampleTexts` reads samples for every tool, `XmlTrees` reads
+XML (`tryParse`, `child`, `is`; `XmlTrees.XSL` is the one XSLT namespace), and `DocumentWrites` writes the build's
+Documentation docs. Where the copies differed, the one closest to Python is kept, so a few replies change:
+
+* **Field documentation and CEF regexes** take only `\n` for a line end (`$` doesn't match before a `\r`, and `.`
+  matches one), as Python's `re` does; no reference output changed.
+* **A value in a message** is written as Python's `repr()`/`str()` writes it everywhere: `'\x00'` for a NUL (it was
+  left raw), `None` for null (some said `null`), `True`/`False`, `1e+16`, and `['a']` for a list in an f-string.
+* **An IPv6 address with an IPv4 tail after `::`** (e.g. `64:ff9b::192.0.2.1`) is an address to the sample
+  profiler, as Python's `ipaddress` has it (its own reader refused them; the index template check's didn't).
+* **The "did you mean" ratio** (`CloseMatches.ratio`, and feed names) applies difflib's autojunk to a second string
+  of 200 or more characters, as `difflib.SequenceMatcher` does.
+* **A list argument given as text** is read the same by every tool: the indexing tools now also read Python's
+  `True`/`False`/`None` in a list literal, and an object in single quotes (`{'a': 'b'}`); a flag given as a number
+  is set when it isn't 0 (pydantic's `bool`).
+* **Text that is not JSON** is refused in the server's words, `{name} is text that is not JSON ({msg} at character
+  {pos}): ...`, for build_data_splitter's `spec`, the `hand_edit_choices` of save_xslt and build_translation_xslt,
+  and draft_cef_mapping's `header`, `style` and `hand_edit_choices` too (they gave Jackson's message, or none);
+  draft_cef_mapping's `overrides` gives Python's message rather than Jackson's.
+* **A feed name that is no feed's** is refused by upload_sample, the pipeline writes and the processor filter writes
+  (create_processor_filter, promote_build's processing) with the cluster advice `FeedNames.notFound` gives ("... in
+  this Stroom. If the user named it, they may mean a different Stroom cluster: stop, ..."), as describe_feed and
+  start_build do.
+* **A Documentation doc that can't be read back** while it is written (a survey, source notes, an index example) is
+  refused as `DocumentWrites` says it: "The Documentation doc ... can't be read: it doesn't exist, or you don't have
+  permission to view it".
+* **An error rule's element glob** (`stroom.ai.errorRules`) matches as `fnmatch.fnmatchcase` on lower-cased text
+  (`Globs`): `*` and `?` as before, and `[...]` sets too, as the server matched them.

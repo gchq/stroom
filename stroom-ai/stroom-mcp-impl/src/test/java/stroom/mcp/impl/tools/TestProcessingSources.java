@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 

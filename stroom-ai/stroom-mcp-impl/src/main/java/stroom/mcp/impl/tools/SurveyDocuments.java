@@ -17,12 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecords;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
 
 import jakarta.inject.Inject;
@@ -36,11 +36,13 @@ class SurveyDocuments {
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
 
     @Inject
-    SurveyDocuments(final WriteGuard guard, final DocumentAccess documentAccess) {
+    SurveyDocuments(final WriteGuard guard, final DocumentAccess documentAccess, final DocumentWrites documentWrites) {
         this.guard = guard;
         this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
     }
 
     /// @param build The build.
@@ -90,13 +92,8 @@ class SurveyDocuments {
         };
     }
 
-    @SuppressWarnings("unchecked")
     private SurveyRecord writeText(final DocRef ref, final String text) {
-        final DocumentationDoc doc = documentAccess.read(ref, DocumentationDoc.class)
-                .orElseThrow(() -> new ToolRefusal("The survey doc " + ref.getUuid() + " can't be read"));
-        final DocumentActionHandler<DocumentationDoc> handler = documentAccess.handler(DocumentationDoc.TYPE)
-                .orElseThrow(() -> new ToolRefusal("Stroom has no Documentation store"));
-        final DocumentationDoc saved = handler.writeDocument(BuildRecords.withBodyText(doc, text));
+        final DocumentationDoc saved = documentWrites.writeText(ref, text);
         return new SurveyRecord(saved.getUuid(), saved.getName(), text);
     }
 }

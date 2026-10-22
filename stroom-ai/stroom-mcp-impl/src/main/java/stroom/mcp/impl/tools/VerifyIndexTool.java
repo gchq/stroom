@@ -20,18 +20,21 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.IndexSearches;
 import stroom.ai.impl.tools.IndexSearches.Found;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MisleadingSearches;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.ComponentConfig;
@@ -271,7 +274,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final Map<String, Object> timeRange = timeRange(call);
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
         final List<IndexChecks.SearchCheck> searches = IndexChecks.asSearched(backend,
-                IndexingArgs.oneOrMore(call, SEARCHES_ARG).stream().map(IndexChecks.SearchCheck::of).toList());
+                ToolArgs.oneOrMore(call, SEARCHES_ARG).stream().map(IndexChecks.SearchCheck::of).toList());
         IndexChecks.searchable(backend, searches, Set.of(), List.of(), Map.of(), null, Map.of(), null);
 
         final String docType = IndexingHelpers.INDEX_TYPE.get(backend);
@@ -297,7 +300,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
 
         final String name = NullSafe.nonBlankStringElse(stringArg(call, DASHBOARD_NAME_ARG),
                 index.name() + "-VERIFY");
-        final List<String> fields = IndexingArgs.strings(call, FIELDS_ARG).stream()
+        final List<String> fields = ToolArgs.strings(call, FIELDS_ARG).stream()
                 .filter(field -> !IndexChecks.IDS.contains(field))
                 .toList();
         final String timeField = index.timeField();
@@ -316,7 +319,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final IndexChecks.Dashboard probe = IndexChecks.Dashboard.unsaved(name,
                 IndexChecks.dashboardConfig(source, fields, timeField, null));
         final Found sample = indexSearches.search(context, probe.probe(IndexChecks.byStream(streamIds)), 100,
-                "Reading a sample of streams " + PythonText.numbers(streamIds) + " from "
+                "Reading a sample of streams " + PyText.repr(streamIds) + " from "
                 + NullSafe.nonBlankStringElse(index.indexName(), index.name()));
         final String window = timeField == null
                 ? null
@@ -362,7 +365,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             searchedWith = IndexChecks.Dashboard.of(made.getUuid(), name, config);
         }
         final DocRef dashboardRef = new DocRef(DashboardDoc.TYPE, String.valueOf(dashboard.get("uuid")), name);
-        if (!BuildPlan.truthy(checksArg(call))) {
+        if (!JsonValues.truthy(checksArg(call))) {
             // Seen in testing: told to skip verification and give the dashboard, the agent went through making a
             // dashboard of its own (asking the user which kind), and the -VERIFY one was never finished.
             if (!Boolean.TRUE.equals(dashboard.get("saved"))) {
@@ -565,7 +568,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
 
     private static List<Map<String, String>> exact(final ToolCall call) {
         final List<Map<String, String>> exact = new ArrayList<>();
-        for (final Object item : IndexingArgs.oneOrMore(call, EXACT_ARG)) {
+        for (final Object item : ToolArgs.oneOrMore(call, EXACT_ARG)) {
             if (!(item instanceof final Map<?, ?> map) || map.get("field") == null) {
                 throw new ToolRefusal("exact are checks, each {'field': ..., 'value': ...}");
             }
@@ -581,7 +584,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> timeRange(final ToolCall call) {
-        final Object value = IndexingArgs.object(call, TIME_RANGE_ARG);
+        final Object value = ToolArgs.object(call, TIME_RANGE_ARG);
         if (value == null) {
             return null;
         }
@@ -593,7 +596,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     }
 
     private long whole(final ToolCall call, final String name, final Long otherwise, final Long most) {
-        final Object value = IndexingArgs.raw(call, name);
+        final Object value = ToolArgs.raw(call, name);
         if (value == null || (value instanceof final String text && text.isBlank())) {
             if (otherwise == null) {
                 throw new ToolRefusal("Give " + name);
@@ -617,7 +620,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     }
 
     private static Object checksArg(final ToolCall call) {
-        final Object value = IndexingArgs.raw(call, CHECKS_ARG);
+        final Object value = ToolArgs.raw(call, CHECKS_ARG);
         if (value == null) {
             return true;
         }

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.PyText;
+
 import org.w3c.dom.Element;
 
 import java.util.ArrayDeque;
@@ -250,14 +252,14 @@ public final class EventSchema {
         return "'" + walked + "' has no child '" + segment + "'."
                + (close.isEmpty()
                 ? ""
-                : " Did you mean " + PythonText.list(close) + "?")
+                : " Did you mean " + PyText.list(close) + "?")
                + (elsewhere.isEmpty()
                 ? ""
-                : " '" + segment + "' exists at: " + PythonText.list(elsewhere) + ".")
+                : " '" + segment + "' exists at: " + PyText.list(elsewhere) + ".")
                + (valueOf.isEmpty()
                 ? ""
-                : " '" + segment + "' is a value of: " + PythonText.list(valueOf) + " (map a constant to it).")
-               + " Allowed here: " + PythonText.list(names);
+                : " '" + segment + "' is a value of: " + PyText.list(valueOf) + " (map a constant to it).")
+               + " Allowed here: " + PyText.list(names);
     }
 
     // The paths below Event (six levels down) by their last element's name, and the leaf paths by the values

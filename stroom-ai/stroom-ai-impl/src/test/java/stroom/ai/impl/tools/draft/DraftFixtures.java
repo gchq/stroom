@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -145,7 +146,7 @@ class DraftFixtures {
     /// @return Its rules, by name.
     static Map<String, Map<String, Object>> rules(final Map<String, Object> draft) {
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        PyValues.maps(mappingOf(draft).get("events")).forEach(rule -> out.put((String) rule.get("name"), rule));
+        JsonValues.maps(mappingOf(draft).get("events")).forEach(rule -> out.put((String) rule.get("name"), rule));
         return out;
     }
 
@@ -153,7 +154,7 @@ class DraftFixtures {
     /// @return Its common entries, by path.
     static Map<String, Map<String, Object>> common(final Map<String, Object> draft) {
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        PyValues.maps(mappingOf(draft).get("common")).forEach(entry -> out.put((String) entry.get("path"), entry));
+        JsonValues.maps(mappingOf(draft).get("common")).forEach(entry -> out.put((String) entry.get("path"), entry));
         return out;
     }
 
@@ -161,7 +162,7 @@ class DraftFixtures {
     /// @return Its fields, by path (the last of a path standing).
     static Map<String, Map<String, Object>> fields(final Map<String, Object> rule) {
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        PyValues.maps(rule.get("fields")).forEach(entry -> out.put((String) entry.get("path"), entry));
+        JsonValues.maps(rule.get("fields")).forEach(entry -> out.put((String) entry.get("path"), entry));
         return out;
     }
 

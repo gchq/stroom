@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +41,7 @@ public final class StyledXslt {
 
     private static final Pattern XML_DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>",
             Pattern.UNICODE_CHARACTER_CLASS);
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
 
     private StyledXslt() {
         // Static only.
@@ -53,10 +56,10 @@ public final class StyledXslt {
         // Comments too: whitespace left after one stops the layout around it.
         for (final XmlNode node : root.iter()) {
             if (node instanceof final XmlElement element && !element.is(XSL, "text") && element.text() != null
-                && PyStr.isBlank(element.text()) && !element.children().isEmpty()) {
+                && PyText.isBlank(element.text()) && !element.children().isEmpty()) {
                 element.setText(null);
             }
-            if (node.tail() != null && PyStr.isBlank(node.tail())) {
+            if (node.tail() != null && PyText.isBlank(node.tail())) {
                 node.setTail(null);
             }
         }

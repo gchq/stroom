@@ -18,11 +18,14 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.indexing.EcsSchema;
@@ -32,7 +35,6 @@ import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.IndexingHelpers.TemplateTarget;
-import stroom.ai.impl.tools.indexing.IndexingRefusal;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -219,8 +221,6 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
             return UserActionEntries.withActions(JsonResults.of(result), result);
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final IndexingRefusal e) {
-            return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
         } catch (final RuntimeException e) {
@@ -235,10 +235,10 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give events_stream_ids: the Events streams to check the template against");
         }
         final Long priority = priority(call);
-        final boolean withoutExample = IndexingArgs.flag(call, WITHOUT_EXAMPLE_ARG);
+        final boolean withoutExample = ToolArgs.flag(call, WITHOUT_EXAMPLE_ARG);
         final String templateName = stringArg(call, TEMPLATE_NAME_ARG);
-        final List<String> without = IndexingArgs.strings(call, WITHOUT_COMPONENTS_ARG);
-        final List<String> nominated = IndexingArgs.strings(call, INCLUDE_COMPONENTS_ARG);
+        final List<String> without = ToolArgs.strings(call, WITHOUT_COMPONENTS_ARG);
+        final List<String> nominated = ToolArgs.strings(call, INCLUDE_COMPONENTS_ARG);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
         final String confirmationId = stringArg(call, CONFIRMATION_ID_ARG);
         final CallProgress progress = CallProgress.of(context);
@@ -272,7 +272,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         String example = NullSafe.isBlankString(given)
                 ? null
                 : given;
-        Object componentTemplates = IndexingArgs.raw(call, COMPONENT_TEMPLATES_ARG);
+        Object componentTemplates = ToolArgs.raw(call, COMPONENT_TEMPLATES_ARG);
         String keptNote = null;
         if (!withoutExample && (example == null || !IndexExamples.isTemplate(example))) {
             final Optional<IndexExamples.Kept> kept = examples.keptExample(pipelineUuid,
@@ -295,8 +295,8 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         if (example != null) {
             final NamedTemplate parsed = parse(example);
             final Map<String, Object> exampleBody = parsed.body();
-            final List<String> composition = ExampleTemplates.composition(strings(exampleBody.get("composed_of")),
-                    include, exclude);
+            final List<String> composition = ExampleTemplates.composition(
+                    JsonValues.strings(exampleBody.get("composed_of")), include, exclude);
             components = components(componentTemplates, composition, example);
             final Map<String, Object> wanted = IndexingHelpers.componentsWanted(Map.of("composed_of", composition),
                     components, without);
@@ -304,7 +304,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                 return wanted;
             }
             final List<String> named = new ArrayList<>(components.keySet());
-            named.addAll(strings(exampleBody.get("composed_of")));
+            named.addAll(JsonValues.strings(exampleBody.get("composed_of")));
             TemplateReviews.refuseTheirName(name, templateName, parsed.name(), named);
             // Every planned field: the example says what it is composed of, and so which fields are left to that.
             final Map<String, Object> full = body(forIndex.elasticTemplate(name, priority, false, ecs));
@@ -444,14 +444,6 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         } catch (final IllegalArgumentException e) {
             throw new ToolRefusal(e.getMessage());
         }
-    }
-
-    /// @param value A JSON value.
-    /// @return It as strings, if it is a list; else none.
-    static List<String> strings(final Object value) {
-        return value instanceof final List<?> list
-                ? list.stream().map(String::valueOf).toList()
-                : List.of();
     }
 
     @SuppressWarnings("unchecked")

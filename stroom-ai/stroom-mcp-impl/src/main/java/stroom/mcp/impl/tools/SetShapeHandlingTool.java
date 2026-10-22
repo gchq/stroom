@@ -21,10 +21,10 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
-import stroom.ai.impl.tools.sample.SampleRefusal;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.shared.AiToolCategory;
@@ -145,11 +145,7 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
                                   + "build first");
         }
         final List<String> signatures;
-        try {
-            signatures = SurveyDoc.resolve(state, names);
-        } catch (final SampleRefusal e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        signatures = SurveyDoc.resolve(state, names);
         if (DROP.equals(handling) && reason.isBlank()) {
             throw new ToolRefusal("Give the reason for leaving these records untranslated (the user's words)");
         }

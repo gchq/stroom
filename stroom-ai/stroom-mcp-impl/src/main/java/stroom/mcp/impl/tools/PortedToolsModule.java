@@ -27,12 +27,10 @@ import com.google.inject.multibindings.OptionalBinder;
 /// [stroom.ai.impl.tools.BuiltInToolsModule]): they are offered in the chat and over `/mcp` alike. Add a new
 /// [StroomTool] and a single `.addBinding(...)` line here.
 ///
-/// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]): sample
-/// profiling ([SampleProfiling]), [MappingDrift] (whether an XSLT is still what its mapping generates, bound to the
-/// ported generators: [GeneratedDrift]), and, with a default until the indexing tools bind theirs,
-/// [DraftedIndexPlans], and what read_document gives of an index doc and an XSLT ([DocumentAnalysesImpl]). A port
-/// that provides one binds it with
-/// `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding().to(...)`.
+/// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]): what they know
+/// of a build ([BuildFacts], read from Stroom by [StroomBuildFacts]), sample profiling ([SampleProfiling], bound to
+/// the ported profiler), and what read_document (stroom-ai-impl) gives of an index doc and an XSLT
+/// ([DocumentAnalysesImpl]).
 public class PortedToolsModule extends AbstractModule {
 
     @Override
@@ -93,11 +91,6 @@ public class PortedToolsModule extends AbstractModule {
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
                 .setDefault().to(SampleProfiling.Profiled.class);
-        OptionalBinder.newOptionalBinder(binder(), MappingDrift.class)
-                .setDefault().to(GeneratedDrift.class);
-        // The plans draft_index_mapping keeps for a session: none until the indexing tools bind theirs.
-        OptionalBinder.newOptionalBinder(binder(), DraftedIndexPlans.class)
-                .setDefault().to(IndexingMemory.class);
         // What read_document (stroom-ai-impl) gives of an index doc and an XSLT from the ported helpers.
         OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class)
                 .setBinding().to(DocumentAnalysesImpl.class);

@@ -19,11 +19,15 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
@@ -78,7 +82,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     private final IndexDocumentation indexDocumentation;
     private final KeptMappings keptMappings;
     private final PipelineShapes pipelineShapes;
-    private final MappingDrift mappingDrift;
+    private final GeneratedDrift mappingDrift;
     private final DocumentAccess documentAccess;
     private final DocumentPlaces places;
     private final DocumentWrites writes;
@@ -92,7 +96,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                            final IndexDocumentation indexDocumentation,
                            final KeptMappings keptMappings,
                            final PipelineShapes pipelineShapes,
-                           final MappingDrift mappingDrift,
+                           final GeneratedDrift mappingDrift,
                            final DocumentAccess documentAccess,
                            final DocumentPlaces places,
                            final DocumentWrites writes,
@@ -272,7 +276,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final String change = NullSafe.string(rawArg(call, CHANGE_ARG)).strip();
         final String layout = stringArg(call, FIELD_MAPPING_LAYOUT_ARG);
         if (layout != null && !FieldDocs.LAYOUTS.contains(layout)) {
-            throw new ToolRefusal("field_mapping_layout is one of " + SampleArguments.pythonList(FieldDocs.LAYOUTS)
+            throw new ToolRefusal("field_mapping_layout is one of " + PyText.list(FieldDocs.LAYOUTS)
                                   + ", not '" + layout + "'");
         }
         final Map<String, String> descriptions = fieldDescriptions(call);
@@ -289,7 +293,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                     new IndexDocumentation.Request(build, indexUuid, body, change.isEmpty()
                             ? "Created"
                             : change, stringArg(call, CONFIRMATION_ID_ARG), layout,
-                            flag(call, DOCUMENT_MISSING_FIELDS_ARG), descriptions, flag(call, INDEX_ITSELF_ARG))));
+                            ToolArgs.flag(call, DOCUMENT_MISSING_FIELDS_ARG), descriptions,
+                            ToolArgs.flag(call, INDEX_ITSELF_ARG))));
             if (!streamIds.isEmpty()) {
                 // Seen: refused for them, the agent sent its whole markdown again without them. They change nothing
                 // here.
@@ -303,7 +308,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         if (pipelineUuid == null) {
             throw new ToolRefusal("Give pipeline_uuid (a pipeline to document) or index_uuid (an existing index)");
         }
-        if (flag(call, EVALUATION_ARG)) {
+        if (ToolArgs.flag(call, EVALUATION_ARG)) {
             return writeEvaluation(context, build, pipelineUuid, body, change);
         }
         return documentPipeline(call, context, new Pipeline(build, readPipeline(pipelineUuid), body, change,
@@ -540,7 +545,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     private static String streamsNeeded(final KeptMappings.KeptXslt kept) {
         final String kind = kept.kept().kind();
         final boolean discovery = kept.kept().payload() != null
-                                  && BuildPlan.truthy(kept.kept().payload().get("discovery"));
+                                  && JsonValues.truthy(kept.kept().payload().get("discovery"));
         final String what = KeptMapping.TRANSLATION.equals(kind) || discovery
                 ? "sample raw streams"
                 : "cef".equals(kind)
@@ -645,10 +650,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 ? ""
                 : String.valueOf(description)));
         return out;
-    }
-
-    private boolean flag(final ToolCall call, final String name) {
-        return Boolean.parseBoolean(stringArg(call, name));
     }
 
     private static String text(final Object value) {

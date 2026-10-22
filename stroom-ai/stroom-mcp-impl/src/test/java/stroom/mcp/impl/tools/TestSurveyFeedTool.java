@@ -68,7 +68,8 @@ class TestSurveyFeedTool {
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final Consent consent = new Consent(securityContext, () -> auditLog);
     private final SurveyFeedTool tool = new SurveyFeedTool(streamReader, feedNames, world.guard(),
-            new SurveyDocuments(world.guard(), world.documentAccess), consent, new FewerStreams(securityContext),
+            new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
+            new FewerStreams(securityContext),
             world.documentAccess, auditLog);
 
     TestSurveyFeedTool() {

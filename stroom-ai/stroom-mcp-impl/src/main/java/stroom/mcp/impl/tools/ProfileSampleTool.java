@@ -22,11 +22,13 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -87,7 +89,7 @@ class ProfileSampleTool extends AbstractBuiltInTool {
                              + "start_onboarding profiles the samples itself, and each call sends the text again.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(SAMPLE_ARG, "A representative sample of the raw data, to tell the format "
-                                                       + "and fields from: " + SampleArguments.SAMPLE_GUIDE
+                                                       + "and fields from: " + SampleTexts.SAMPLE_GUIDE
                                                        + ". Never trimmed further, completed or repaired. The "
                                                        + "files themselves go to Stroom whole with upload_sample "
                                                        + "files=[their paths], never as this text.")
@@ -129,7 +131,7 @@ class ProfileSampleTool extends AbstractBuiltInTool {
             named = read.texts();
             notes = read.notes();
         } else {
-            named = SampleArguments.namedSamples(samples, sample);
+            named = SampleTexts.asNamedSamples(samples, sample);
         }
         if (named.isEmpty()) {
             throw new ToolRefusal("Give sample (the file's text), samples (several files' texts), or stream_ids");
@@ -137,7 +139,7 @@ class ProfileSampleTool extends AbstractBuiltInTool {
         // XML fragments with the environment's own wrapper.
         final Map<String, Object> result = new LinkedHashMap<>(sampleProfiler.profileAll(named));
         final Optional<String> tooLong = streamIds.isEmpty()
-                ? SampleArguments.longSamplesNote(named)
+                ? Optional.ofNullable(SampleTexts.longSamplesNote(named))
                 : Optional.empty();
         tooLong.ifPresent(note -> result.put("sample_note", note));
         if (!notes.isEmpty()) {

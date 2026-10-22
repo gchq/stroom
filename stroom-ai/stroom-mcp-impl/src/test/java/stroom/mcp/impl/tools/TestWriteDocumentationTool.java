@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -231,8 +232,9 @@ class TestWriteDocumentationTool {
         final IndexDocumentation indexing = Mockito.mock(IndexDocumentation.class);
         Mockito.when(indexing.documentIndex(any(), any(), any())).thenReturn(Map.of("type", "Documentation"));
         final WriteDocumentationTool withIndexing = new WriteDocumentationTool(world.docs, world.sections, indexing,
-                world.keptMappings, world.pipelineShapes, MappingDrift.NONE, world.world.documentAccess, world.places,
-                world.writes, world.world.guard(), world.translation.consent, world.translation.plan);
+                world.keptMappings, world.pipelineShapes, Mockito.mock(GeneratedDrift.class),
+                world.world.documentAccess, world.places, world.writes, world.world.guard(), world.translation.consent,
+                world.translation.plan);
 
         final Map<String, Object> result = world.call(withIndexing, context, "{\"build\": \"bb\", \"index_uuid\": "
                                                                              + "\"i\", \"markdown\": \"" + "## Purpose"

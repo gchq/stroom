@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
 
 import org.w3c.dom.Element;
@@ -44,7 +45,7 @@ public final class EventElements {
     /// @param version     The event-logging version, or null for `chosen`.
     /// @param chosen      The version the user chose for the build, or null for the newest this Stroom holds.
     /// @return What the element takes, as [#describe(EventSchema, String, String)] gives it.
-    /// @throws ValidationException if Stroom holds no such schema, or it has no such element.
+    /// @throws ToolRefusal if Stroom holds no such schema, or it has no such element.
     public static Map<String, Object> describe(final HeldSchemas heldSchemas,
                                                final String path,
                                                final String version,
@@ -61,7 +62,7 @@ public final class EventElements {
     /// @return `path` (from Event), `schema_version`, `description`; for a leaf `type` and `values`; otherwise
     /// `children` (each `name`, and as they apply `required`, `repeatable`, `choice`, `type`, `values` and
     /// `description`) and `choices` (each `choice`, `one_of` and `one_required`).
-    /// @throws ValidationException if the schema has no such element, saying what is allowed where it stops.
+    /// @throws ToolRefusal if the schema has no such element, saying what is allowed where it stops.
     public static Map<String, Object> describe(final EventSchema schema, final String path, final String version) {
         final List<Child> chain;
         try {
@@ -69,7 +70,7 @@ public final class EventElements {
                     ? ""
                     : path);
         } catch (final IllegalArgumentException e) {
-            throw new ValidationException(e.getMessage());
+            throw new ToolRefusal(e.getMessage());
         }
         final Element decl = chain.isEmpty()
                 ? schema.event()

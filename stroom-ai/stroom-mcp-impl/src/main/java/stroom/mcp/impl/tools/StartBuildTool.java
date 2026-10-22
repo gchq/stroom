@@ -18,10 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -154,7 +156,7 @@ class StartBuildTool extends AbstractBuiltInTool {
         }
         if (!missing.isEmpty()) {
             result.put("not_found", FeedNames.notFound("No feed named " + String.join(", ", missing.stream()
-                    .map(SampleArguments::pythonRepr)
+                    .map(PyText::repr)
                     .toList())) + " (A feed this build is to create is fine: it doesn't exist yet.)");
         }
         result.put("standing_instructions", agentInstructions.applicableInstructions(context.session(),

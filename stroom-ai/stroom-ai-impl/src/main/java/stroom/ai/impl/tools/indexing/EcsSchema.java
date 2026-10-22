@@ -17,7 +17,8 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.AgentKnowledge;
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.CloseMatches;
 
@@ -54,13 +55,13 @@ public final class EcsSchema {
     /// Elasticsearch types Stroom leaves out of an Elastic Index doc's fields, so it can neither search nor show a
     /// field of them (nor a subfield of one). Measured on the local stack (Stroom 7.x, Elasticsearch 9.5); seen in
     /// production: ecs@mappings maps message as match_only_text, and every search on it found nothing.
-    public static final Set<String> STROOM_UNLISTED = PyValues.nullSafeSet("match_only_text", "flattened", "geo_point",
-            "search_as_you_type");
+    public static final Set<String> STROOM_UNLISTED = JsonValues.nullSafeSet("match_only_text", "flattened",
+            "geo_point", "search_as_you_type");
     /// An index plan's types, and the ECS types each stands for, in the order they are tried.
     static final Map<String, Set<String>> PLAN_TYPES = planTypes();
 
     // Fields Stroom needs in every document, whatever the convention.
-    private static final Set<String> STROOM = PyValues.nullSafeSet("StreamId", "EventId");
+    private static final Set<String> STROOM = JsonValues.nullSafeSet("StreamId", "EventId");
     private static final Pattern VALUE_PART = Pattern.compile("\\{[^}]*\\}");
     private static final Pattern NOT_WORD = Pattern.compile("[^a-z0-9]+");
     private static final Pattern VERSION_WORD = Pattern.compile("v?\\d+");
@@ -177,9 +178,9 @@ public final class EcsSchema {
     public boolean mappedAsComponent(final String name, final Map<String, Object> spec) {
         final Object kind = spec.get("type");
         final String plan = planTypeOf(kind);
-        return PyValues.truthy(kind) && kind.equals(componentType(name))
+        return JsonValues.truthy(kind) && kind.equals(componentType(name))
                && Set.of("type", "ignore_above").containsAll(spec.keySet())
-               && PyValues.equalsNumber(spec.getOrDefault("ignore_above", 1024L), 1024)
+               && JsonValues.equalsNumber(spec.getOrDefault("ignore_above", 1024L), 1024)
                && plan != null && leftToComponent(name, plan);
     }
 
@@ -196,7 +197,7 @@ public final class EcsSchema {
     /// @param limit  The most to give.
     /// @return The ECS fields under it, each with its type and short description.
     public Map<String, String> fieldsIn(final String prefix, final int limit) {
-        final String at = PyValues.rstrip(PyValues.strip(prefix), ".");
+        final String at = PyText.rstrip(PyText.strip(prefix), ".");
         final Map<String, String> found = new LinkedHashMap<>();
         for (final Map.Entry<String, Map<String, Object>> entry : fields.entrySet()) {
             final String name = entry.getKey();
@@ -219,7 +220,7 @@ public final class EcsSchema {
         }
         final Map<String, Object> spec = field(name);
         if (spec != null && !spec.isEmpty()) {
-            final Set<String> kinds = PLAN_TYPES.getOrDefault(type, PyValues.nullSafeSet());
+            final Set<String> kinds = PLAN_TYPES.getOrDefault(type, JsonValues.nullSafeSet());
             final Object ecsType = spec.get("type");
             if (!kinds.contains(ecsType) && !"id".equals(type)) {
                 final String fits = planTypeOf(ecsType);
@@ -306,7 +307,7 @@ public final class EcsSchema {
                 ? ", ..."
                 : "")
                 + "): " + head + " is neither an ECS " + version + " field set nor a custom namespace the plan "
-                + "declares (" + PythonRepr.list(namespaces) + "). ECS puts a source's own fields under one namespace "
+                + "declares (" + PyText.list(namespaces) + "). ECS puts a source's own fields under one namespace "
                 + "named after it: move them there"
                 + (namespaces.isEmpty()
                 ? ""
@@ -329,8 +330,8 @@ public final class EcsSchema {
         if (words.isEmpty()) {
             return null;
         }
-        final String snake = String.join("_", words.stream().map(PyValues::lower).toList());
-        final List<String> candidates = new ArrayList<>(List.of(PyValues.lower(dataName), snake));
+        final String snake = String.join("_", words.stream().map(PyText::lower).toList());
+        final List<String> candidates = new ArrayList<>(List.of(PyText.lower(dataName), snake));
         final int separators = (int) snake.chars().filter(c -> c == '_').count();
         for (int n = 1; n <= separators; n++) {
             candidates.add(replaceFirst(snake, n));
@@ -381,13 +382,13 @@ public final class EcsSchema {
 
     private static Map<String, Set<String>> planTypes() {
         final Map<String, Set<String>> types = new LinkedHashMap<>();
-        types.put("keyword", PyValues.nullSafeSet("keyword", "constant_keyword", "wildcard", "flattened"));
-        types.put("text", PyValues.nullSafeSet("text", "match_only_text"));
-        types.put("long", PyValues.nullSafeSet("long", "integer", "short", "byte", "unsigned_long"));
-        types.put("double", PyValues.nullSafeSet("double", "float", "half_float", "scaled_float"));
-        types.put("date", PyValues.nullSafeSet("date"));
-        types.put("boolean", PyValues.nullSafeSet("boolean"));
-        types.put("ip", PyValues.nullSafeSet("ip"));
+        types.put("keyword", JsonValues.nullSafeSet("keyword", "constant_keyword", "wildcard", "flattened"));
+        types.put("text", JsonValues.nullSafeSet("text", "match_only_text"));
+        types.put("long", JsonValues.nullSafeSet("long", "integer", "short", "byte", "unsigned_long"));
+        types.put("double", JsonValues.nullSafeSet("double", "float", "half_float", "scaled_float"));
+        types.put("date", JsonValues.nullSafeSet("date"));
+        types.put("boolean", JsonValues.nullSafeSet("boolean"));
+        types.put("ip", JsonValues.nullSafeSet("ip"));
         return Collections.unmodifiableMap(types);
     }
 

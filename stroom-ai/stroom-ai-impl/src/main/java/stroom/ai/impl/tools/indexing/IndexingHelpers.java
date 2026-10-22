@@ -18,9 +18,11 @@ package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.Globs;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.KeptMapping.Kept;
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.TranslationDescriptions;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -126,7 +128,7 @@ public final class IndexingHelpers {
                 return drafted.get(name);
             }
         }
-        final boolean named = indexNames.stream().anyMatch(PyValues::truthy);
+        final boolean named = indexNames.stream().anyMatch(JsonValues::truthy);
         return drafted.size() == 1 && !named
                 ? drafted.values().iterator().next()
                 : null;
@@ -140,7 +142,7 @@ public final class IndexingHelpers {
     /// @param kept The plan kept or drafted for it, or null.
     /// @return The plan, with the kept one's convention when it has none and they share a field.
     public static FieldPlan withConvention(final FieldPlan plan, final FieldPlan kept) {
-        if (PyValues.truthy(plan.convention()) || kept == null || !PyValues.truthy(kept.convention())) {
+        if (JsonValues.truthy(plan.convention()) || kept == null || !JsonValues.truthy(kept.convention())) {
             return plan;
         }
         final Set<String> names = new HashSet<>();
@@ -196,7 +198,7 @@ public final class IndexingHelpers {
     /// @param indexName The Elastic Index doc's index name.
     /// @return True if it writes to it.
     public static boolean writesToIndex(final String written, final String indexName) {
-        if (written == null || !PyValues.truthy(indexName)) {
+        if (written == null || !JsonValues.truthy(indexName)) {
             return false;
         }
         final String pattern = VALUE_PART.matcher(written).replaceAll("*");
@@ -249,7 +251,7 @@ public final class IndexingHelpers {
         if (!index.contains("{")) {
             return new TemplateTarget(index, index);
         }
-        final String name = PyValues.strip(SEPARATORS.matcher(VALUE_PART.matcher(index).replaceAll(""))
+        final String name = PyText.strip(SEPARATORS.matcher(VALUE_PART.matcher(index).replaceAll(""))
                 .replaceAll("$1"), "-_.");
         return new TemplateTarget(name.isEmpty()
                 ? "index"
@@ -278,7 +280,7 @@ public final class IndexingHelpers {
         final List<String> said = new ArrayList<>();
         missing.forEach((pipeline, fields) -> said.add(String.join(", ", fields) + " (written by '" + pipeline
                                                        + "')"));
-        return "The index" + (PyValues.truthy(indexName)
+        return "The index" + (JsonValues.truthy(indexName)
                 ? " " + indexName
                 : "") + " has no field " + String.join("; ", said) + ": Stroom doesn't list them for it, though the "
                + "pipeline writes them. Tell the user, and ask them to either reindex (the data was indexed before "
@@ -296,24 +298,24 @@ public final class IndexingHelpers {
     /// @param components The component templates given, by name.
     /// @param without    The components the user can't give.
     /// @return The reply, or null if none is missing.
-    /// @throws IndexingRefusal for an ECS component template Elasticsearch doesn't have.
+    /// @throws ToolRefusal for an ECS component template Elasticsearch doesn't have.
     public static Map<String, Object> componentsWanted(final Map<String, Object> example,
                                                        final Map<String, ?> components,
                                                        final List<String> without) {
-        final List<String> composedOf = PyValues.strings(example.get("composed_of"));
+        final List<String> composedOf = JsonValues.strings(example.get("composed_of"));
         // Seen in testing: a proposed template composed ecs@settings, which Elasticsearch doesn't have (ecs@mappings
         // is its only ECS component template), let go as one the user couldn't give. Only its content, given,
         // shows it exists.
         final List<String> unknown = composedOf.stream()
-                .filter(n -> PyValues.lower(n).startsWith("ecs@") && !EcsSchema.COMPONENT.equals(n)
+                .filter(n -> PyText.lower(n).startsWith("ecs@") && !EcsSchema.COMPONENT.equals(n)
                              && !components.containsKey(n))
                 .toList();
         if (!unknown.isEmpty()) {
-            throw new IndexingRefusal(PythonRepr.list(unknown) + ": not a component template Elasticsearch has: "
-                                      + EcsSchema.COMPONENT + " is its only ECS one, built in. Don't compose it "
-                                      + "(leave it out of include_components). Only if the user's cluster has one by "
-                                      + "that name: its content in component_templates (GET _component_template/"
-                                      + unknown.getFirst() + ").");
+            throw new ToolRefusal(PyText.list(unknown) + ": not a component template Elasticsearch has: "
+                                  + EcsSchema.COMPONENT + " is its only ECS one, built in. Don't compose it "
+                                  + "(leave it out of include_components). Only if the user's cluster has one by "
+                                  + "that name: its content in component_templates (GET _component_template/"
+                                  + unknown.getFirst() + ").");
         }
         final List<String> missing = composedOf.stream()
                 .filter(n -> !components.containsKey(n) && !EcsSchema.COMPONENT.equals(n) && !without.contains(n))
@@ -352,7 +354,7 @@ public final class IndexingHelpers {
     public static List<String> componentNotes(final List<String> missing) {
         return missing.isEmpty()
                 ? List.of()
-                : List.of("composed_of " + PythonRepr.list(missing) + " not given, so not checked: their fields "
+                : List.of("composed_of " + PyText.list(missing) + " not given, so not checked: their fields "
                           + "aren't seen here. Ask the user for them (GET _component_template/<name>) and check "
                           + "again with component_templates.");
     }
@@ -366,7 +368,7 @@ public final class IndexingHelpers {
     /// @param example The example template's body.
     /// @return True if it composes ecs@mappings.
     public static boolean ecsBase(final Map<String, Object> example) {
-        return PyValues.strings(example.get("composed_of")).contains(EcsSchema.COMPONENT);
+        return JsonValues.strings(example.get("composed_of")).contains(EcsSchema.COMPONENT);
     }
 
     /// What the index being replaced wrote that the draft doesn't. Seen in VS Code: asked to make an indexing
@@ -393,7 +395,7 @@ public final class IndexingHelpers {
         }
         final List<Map<String, Object>> missing = new ArrayList<>();
         for (final Map<String, String> field : old) {
-            final String source = PyValues.strip(Objects.requireNonNullElse(field.get("source"), "")
+            final String source = PyText.strip(Objects.requireNonNullElse(field.get("source"), "")
                     .split(" ! ", -1)[0]);
             if (source.isEmpty() || covered(source, plan)) {
                 continue;
@@ -426,8 +428,8 @@ public final class IndexingHelpers {
         final Optional<Kept> kept = KeptMapping.readMapping(description);
         if (kept.isPresent() && "index".equals(kept.get().kind())) {
             final List<Map<String, String>> fields = new ArrayList<>();
-            for (final Object item : PyValues.listOrEmpty(kept.get().payload().get("fields"))) {
-                final Map<String, Object> field = PyValues.mapOrEmpty(item);
+            for (final Object item : JsonValues.listOrEmpty(kept.get().payload().get("fields"))) {
+                final Map<String, Object> field = JsonValues.mapOrEmpty(item);
                 final Map<String, String> entry = new LinkedHashMap<>();
                 entry.put("field", (String) field.get("name"));
                 entry.put("source", (String) field.get("source"));

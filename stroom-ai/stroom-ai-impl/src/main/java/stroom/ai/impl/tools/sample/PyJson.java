@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +73,7 @@ public final class PyJson {
     /// @return It written as `json.dumps(value)` writes it.
     public static String dumps(final Object value) {
         final StringBuilder out = new StringBuilder();
-        write(out, value, -1, 0);
+        write(out, value, -1, 0, true);
         return out.toString();
     }
 
@@ -79,8 +81,16 @@ public final class PyJson {
     /// @param indent The spaces each level is indented by.
     /// @return It written as `json.dumps(value, indent=indent)` writes it.
     public static String dumps(final Object value, final int indent) {
+        return dumps(value, indent, true);
+    }
+
+    /// @param value       A value read by [#loads(String)], or made of the same types.
+    /// @param indent      The spaces each level is indented by.
+    /// @param ensureAscii False to write characters past ASCII as they are (`ensure_ascii=False`).
+    /// @return It written as `json.dumps(value, indent=indent, ensure_ascii=ensureAscii)` writes it.
+    public static String dumps(final Object value, final int indent, final boolean ensureAscii) {
         final StringBuilder out = new StringBuilder();
-        write(out, value, indent, 0);
+        write(out, value, indent, 0, ensureAscii);
         return out.toString();
     }
 
@@ -127,7 +137,11 @@ public final class PyJson {
         return value;
     }
 
-    private static void write(final StringBuilder out, final Object value, final int indent, final int level) {
+    private static void write(final StringBuilder out,
+                              final Object value,
+                              final int indent,
+                              final int level,
+                              final boolean ensureAscii) {
         if (value == null) {
             out.append("null");
         } else if (value instanceof final Boolean bool) {
@@ -135,7 +149,7 @@ public final class PyJson {
                     ? "true"
                     : "false");
         } else if (value instanceof final String text) {
-            writeString(out, text);
+            writeString(out, text, ensureAscii);
         } else if (value instanceof final Double number) {
             out.append(floatText(number));
         } else if (value instanceof final Float number) {
@@ -143,11 +157,11 @@ public final class PyJson {
         } else if (value instanceof Number) {
             out.append(value);
         } else if (value instanceof final Map<?, ?> map) {
-            writeMap(out, map, indent, level);
+            writeMap(out, map, indent, level, ensureAscii);
         } else if (value instanceof final Collection<?> list) {
-            writeList(out, list, indent, level);
+            writeList(out, list, indent, level, ensureAscii);
         } else {
-            writeString(out, String.valueOf(value));
+            writeString(out, String.valueOf(value), ensureAscii);
         }
     }
 
@@ -179,13 +193,17 @@ public final class PyJson {
         } else if (value instanceof final String text) {
             writeString(out, text, false);
         } else if (value == null || value instanceof Boolean || value instanceof Number) {
-            write(out, value, -1, 0);
+            write(out, value, -1, 0, false);
         } else {
             writeString(out, String.valueOf(value), false);
         }
     }
 
-    private static void writeMap(final StringBuilder out, final Map<?, ?> map, final int indent, final int level) {
+    private static void writeMap(final StringBuilder out,
+                                 final Map<?, ?> map,
+                                 final int indent,
+                                 final int level,
+                                 final boolean ensureAscii) {
         if (map.isEmpty()) {
             out.append("{}");
             return;
@@ -195,16 +213,19 @@ public final class PyJson {
         for (final Map.Entry<?, ?> entry : map.entrySet()) {
             separate(out, first, indent, level + 1);
             first = false;
-            writeString(out, String.valueOf(entry.getKey()));
+            writeString(out, String.valueOf(entry.getKey()), ensureAscii);
             out.append(": ");
-            write(out, entry.getValue(), indent, level + 1);
+            write(out, entry.getValue(), indent, level + 1, ensureAscii);
         }
         close(out, indent, level);
         out.append('}');
     }
 
-    private static void writeList(final StringBuilder out, final Collection<?> list, final int indent,
-                                  final int level) {
+    private static void writeList(final StringBuilder out,
+                                  final Collection<?> list,
+                                  final int indent,
+                                  final int level,
+                                  final boolean ensureAscii) {
         if (list.isEmpty()) {
             out.append("[]");
             return;
@@ -214,7 +235,7 @@ public final class PyJson {
         for (final Object item : list) {
             separate(out, first, indent, level + 1);
             first = false;
-            write(out, item, indent, level + 1);
+            write(out, item, indent, level + 1, ensureAscii);
         }
         close(out, indent, level);
         out.append(']');
@@ -249,10 +270,6 @@ public final class PyJson {
                     : "-Infinity";
         }
         return PyText.floatRepr(value);
-    }
-
-    private static void writeString(final StringBuilder out, final String text) {
-        writeString(out, text, true);
     }
 
     // As json.dumps writes a string: with ensureAscii, every character past ASCII escaped too.

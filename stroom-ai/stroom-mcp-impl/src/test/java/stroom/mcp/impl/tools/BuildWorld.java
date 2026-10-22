@@ -86,7 +86,8 @@ final class BuildWorld {
         final BuildRecords[] holder = new BuildRecords[1];
         guard = new WriteGuard(() -> explorerService, () -> explorerNodeService, documentAccess, AiConfig::new,
                 () -> auditLog, () -> holder[0]);
-        records = new BuildRecords(() -> guard, documentAccess, () -> explorerService, pipelineShapes);
+        records = new BuildRecords(() -> guard, documentAccess, new DocumentWrites(documentAccess),
+                () -> explorerService, pipelineShapes);
         holder[0] = records;
         wireNodeService();
         wireExplorerService();

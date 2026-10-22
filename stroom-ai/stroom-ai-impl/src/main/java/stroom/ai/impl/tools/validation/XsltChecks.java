@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 
 import org.w3c.dom.Attr;
@@ -101,13 +103,13 @@ public final class XsltChecks {
     /// @param text XML text.
     /// @param what What it is, for the message, e.g. `Events XML`.
     /// @return Its root element.
-    /// @throws ValidationException if it is not well-formed, e.g. "Events XML is not well-formed XML: ...".
+    /// @throws ToolRefusal if it is not well-formed, e.g. "Events XML is not well-formed XML: ...".
     public static Element parse(final String text, final String what) {
         try {
             return XmlTrees.parse(text);
         } catch (final NotWellFormedException e) {
-            throw new ValidationException(what + " is not well-formed XML: " + e.getMessage()
-                                          + (e.getLine() > 0
+            throw new ToolRefusal(what + " is not well-formed XML: " + e.getMessage()
+                                  + (e.getLine() > 0
                     ? " (line " + e.getLine() + ")"
                     : ""));
         }
@@ -319,7 +321,7 @@ public final class XsltChecks {
                         ? options.getFirst() + "/" + name + " is not in the event-logging schema" + (reason != null
                         ? ": " + reason
                         : "")
-                        : name + " is not allowed below any of " + PythonText.list(options.subList(0,
+                        : name + " is not allowed below any of " + PyText.list(options.subList(0,
                                 Math.min(4, options.size()))) + " in the event-logging schema";
                 if (!problems.contains(message)) {
                     problems.add(message);

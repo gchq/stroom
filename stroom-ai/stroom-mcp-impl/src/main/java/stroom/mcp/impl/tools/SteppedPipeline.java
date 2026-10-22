@@ -18,7 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.validation.PythonText;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -63,7 +64,7 @@ final class SteppedPipeline {
                                   || (("int".equals(kind) || "long".equals(kind))
                                       && !(value instanceof Integer || value instanceof Long));
             if (wrong) {
-                mistyped.add(key.element() + "." + key.name() + " is " + repr(value) + ", where Stroom takes "
+                mistyped.add(key.element() + "." + key.name() + " is " + PyText.repr(value) + ", where Stroom takes "
                              + ("boolean".equals(kind)
                         ? "true or false"
                         : "a whole number"));
@@ -156,18 +157,5 @@ final class SteppedPipeline {
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
-    }
-
-    // A value as Python's repr writes it, as the Stroom MCP server said it.
-    private static String repr(final Object value) {
-        if (value instanceof final String text) {
-            return PythonText.repr(text);
-        }
-        if (value instanceof final Boolean bool) {
-            return bool
-                    ? "True"
-                    : "False";
-        }
-        return String.valueOf(value);
     }
 }

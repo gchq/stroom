@@ -97,11 +97,6 @@ public record CefValue(@JsonProperty("value") String value,
         return value;
     }
 
-    /// @return True if it is a constant.
-    public boolean isConstant() {
-        return value != null;
-    }
-
     /// @param mode How to write it.
     /// @return It as JSON, as the Python model's `model_dump` writes it.
     public Map<String, Object> toJson(final DumpMode mode) {

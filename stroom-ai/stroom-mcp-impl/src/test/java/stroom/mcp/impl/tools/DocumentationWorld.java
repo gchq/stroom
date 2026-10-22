@@ -74,8 +74,8 @@ final class DocumentationWorld {
     /// @return write_documentation, wired on the world.
     WriteDocumentationTool documentationTool() {
         return new WriteDocumentationTool(docs, sections, indexDocumentation, keptMappings, pipelineShapes,
-                MappingDrift.NONE, world.documentAccess, places, writes, world.guard(), translation.consent,
-                translation.plan);
+                Mockito.mock(GeneratedDrift.class), world.documentAccess, places, writes, world.guard(),
+                translation.consent, translation.plan);
     }
 
     /// @return A pipeline in the build, listed in its documents.

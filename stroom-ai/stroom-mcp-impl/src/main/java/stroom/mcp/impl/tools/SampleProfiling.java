@@ -16,8 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SampleProfiler;
-import stroom.ai.impl.tools.sample.SampleRefusal;
 
 import jakarta.inject.Inject;
 
@@ -32,7 +33,7 @@ import java.util.Objects;
 /// `profile_many`, and `tools/translation.py` `with_fragment_setup`).
 ///
 /// The plan ([BuildPlan]) and start_onboarding read samples through it. It is bound to [Profiled], the ported
-/// profiler ([stroom.ai.impl.tools.sample.SampleProfiler]); [Unavailable] is for tests of a plan without it.
+/// profiler ([stroom.ai.impl.tools.sample.SampleProfiler]).
 public interface SampleProfiling {
 
     /// @param sample One sample's text.
@@ -95,13 +96,13 @@ public interface SampleProfiling {
                 .<Map<?, ?>>map(value -> (Map<?, ?>) value)
                 .findFirst()
                 .orElse(profiled);
-        final Object record = truthy(profiled.get("record_element"))
+        final Object record = JsonValues.truthy(profiled.get("record_element"))
                 ? profiled.get("record_element")
                 : first.get("record_element");
-        if (!SampleProfiler.XML_FRAGMENTS.equals(profiled.get("format")) || !truthy(record)) {
+        if (!SampleProfiler.XML_FRAGMENTS.equals(profiled.get("format")) || !JsonValues.truthy(record)) {
             return profiled;
         }
-        final boolean events = truthy(first.get("event_logging"));
+        final boolean events = JsonValues.truthy(first.get("event_logging"));
         final List<Map<String, Object>> fitting = events
                 ? found.stream().filter(wrapper -> "event-logging:3".equals(wrapper.get("namespace"))).toList()
                 : found;
@@ -147,11 +148,6 @@ public interface SampleProfiling {
         return key;
     }
 
-    // Python's truth, for a profile's values.
-    private static boolean truthy(final Object value) {
-        return value != null && !Boolean.FALSE.equals(value) && !"".equals(value);
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -188,37 +184,12 @@ public interface SampleProfiling {
 
         @Override
         public Map<String, Object> profile(final String sample) {
-            try {
-                return SampleProfiler.profile(sample);
-            } catch (final SampleRefusal e) {
-                throw new ToolRefusal(e.getMessage());
-            }
+            return SampleProfiler.profile(sample);
         }
 
         @Override
         public Map<String, Object> profileMany(final Map<String, String> samples) {
-            try {
-                return SampleProfiler.profileMany(samples, SampleProfiler.MAX_RECORDS);
-            } catch (final SampleRefusal e) {
-                throw new ToolRefusal(e.getMessage());
-            }
-        }
-    }
-
-    /// Profiles nothing, and says so: for a plan without sample profiling (e.g. in tests).
-    final class Unavailable implements SampleProfiling {
-
-        /// What it says.
-        static final String NOT_AVAILABLE = "Profiling sample text isn't available in this Stroom yet.";
-
-        @Override
-        public Map<String, Object> profile(final String sample) {
-            throw new ToolRefusal(NOT_AVAILABLE);
-        }
-
-        @Override
-        public Map<String, Object> profileMany(final Map<String, String> samples) {
-            throw new ToolRefusal(NOT_AVAILABLE);
+            return SampleProfiler.profileMany(samples, SampleProfiler.MAX_RECORDS);
         }
     }
 }

@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
@@ -33,10 +34,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/// Whether a build's XSLTs are still what their kept mappings generate (the Stroom MCP server's `tools/builds.py`
-/// `_drift`, `_plan_drift` and `lost_mappings`), now the generators are ported: the [MappingDrift] the checks
-/// before promotion ([BuildChecks]) use.
-class GeneratedDrift implements MappingDrift {
+/// Whether a build's XSLTs are still what their kept mappings generate, for the checks before promotion
+/// ([BuildChecks]) and the Field mapping section: the Stroom MCP server's `tools/builds.py` `_drift`, `_plan_drift`
+/// and `lost_mappings`, which regenerate an XSLT from its mapping (the ported generators) and compare.
+class GeneratedDrift {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GeneratedDrift.class);
 
@@ -64,7 +65,9 @@ class GeneratedDrift implements MappingDrift {
         this.translationDocs = translationDocs;
     }
 
-    @Override
+    /// @param kept A translation mapping kept with its XSLT.
+    /// @return Why the XSLT is no longer what its mapping generates (edited by hand, an earlier generator, or a
+    /// mapping that no longer generates), or empty if it is.
     public Optional<String> drift(final KeptMappings.KeptXslt kept) {
         final XsltDoc xslt = kept.xslt();
         final String code = NullSafe.string(xslt.getData());
@@ -75,7 +78,7 @@ class GeneratedDrift implements MappingDrift {
             return Optional.of("the mapping kept with its XSLT no longer generates (" + e.getMessage() + ")");
         }
         if (!regenerated.ok()) {
-            return Optional.of("the mapping kept with its XSLT no longer generates: " + SampleArguments.pythonList(
+            return Optional.of("the mapping kept with its XSLT no longer generates: " + PyText.list(
                     regenerated.problems().subList(0, Math.min(2, regenerated.problems().size()))));
         }
         if (XsltCode.normalise(regenerated.xslt()).equals(XsltCode.normalise(code))) {
@@ -113,7 +116,8 @@ class GeneratedDrift implements MappingDrift {
                            + regenerate + "; carry any hand edit into the mapping first." + differs);
     }
 
-    @Override
+    /// @param kept An index or CEF plan kept with its XSLT.
+    /// @return Why the XSLT was edited by hand since it was saved from its plan, or empty if it wasn't.
     public Optional<String> planDrift(final KeptMappings.KeptXslt kept) {
         final XsltDoc xslt = kept.xslt();
         final String code = NullSafe.string(xslt.getData());
@@ -134,7 +138,8 @@ class GeneratedDrift implements MappingDrift {
                            + "undoes the edit is refused." + differs);
     }
 
-    @Override
+    /// @param pipelineUuid A pipeline whose own XSLTs keep no mapping.
+    /// @return For each of them saved with a mapping that its Documentation tab no longer holds: why.
     public List<String> lostMappings(final String pipelineUuid) {
         final List<TranslationDoc> docs;
         try {

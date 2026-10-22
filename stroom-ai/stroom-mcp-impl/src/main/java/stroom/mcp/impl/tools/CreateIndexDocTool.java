@@ -20,13 +20,14 @@ import stroom.ai.api.ElasticClusterTests;
 import stroom.ai.api.ElasticClusterTests.TestResult;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
@@ -273,7 +274,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                 buildIndexes.setIndexName(context.session(), pipeline, indexName);
             }
             if (!follow.isEmpty()) {
-                result.put("pipelines_renamed", PythonRepr.list(follow.stream().map(Destination::name).toList())
+                result.put("pipelines_renamed", PyText.list(follow.stream().map(Destination::name).toList())
                                                 + " now write to '" + indexName + "' too (they wrote to '" + proposed
                                                 + "'): its index template is agreed for '" + indexName + "'");
             }

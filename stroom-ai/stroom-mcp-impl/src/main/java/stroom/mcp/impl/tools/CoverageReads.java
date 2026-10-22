@@ -18,11 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.draft.LocalCheck;
-import stroom.ai.impl.tools.fielddoc.PythonStrings;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -228,13 +229,13 @@ class CoverageReads {
         if (record instanceof final Map<?, ?> map) {
             final List<String> fields = new ArrayList<>();
             map.entrySet().stream().limit(12).forEach(e -> fields.add(e.getKey() + "="
-                                                                      + PythonStrings.str(e.getValue())));
-            return PythonStrings.head(String.join(", ", fields), 400);
+                                                                      + PyText.str(e.getValue())));
+            return PyText.head(String.join(", ", fields), 400);
         }
         if (record instanceof final XmlTree.Element element) {
-            return PythonStrings.head(XmlTree.toText(element), 400);
+            return PyText.head(XmlTree.toText(element), 400);
         }
-        return PythonStrings.head(PythonStrings.str(record), 400);
+        return PyText.head(PyText.str(record), 400);
     }
 
     /// `_sampled_unknown`: for an XSLT that logs no Unknown records (saved before they were logged, or by hand):
