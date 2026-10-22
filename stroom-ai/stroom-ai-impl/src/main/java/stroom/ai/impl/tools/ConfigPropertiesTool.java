@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.config.global.api.GlobalConfigReader;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
@@ -210,6 +211,11 @@ class ConfigPropertiesTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .requires(AppPermission.MANAGE_PROPERTIES_PERMISSION)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.ADMINISTRATION;
     }
 
     @Override

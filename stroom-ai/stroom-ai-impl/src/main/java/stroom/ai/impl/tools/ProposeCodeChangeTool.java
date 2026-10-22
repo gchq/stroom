@@ -32,6 +32,7 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiSteppingContext;
 import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
@@ -133,6 +134,11 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
     }
 
     @Override

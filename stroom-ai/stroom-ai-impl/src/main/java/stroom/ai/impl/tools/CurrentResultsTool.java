@@ -30,6 +30,7 @@ import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.QueryTableContext;
@@ -152,6 +153,11 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.USE)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
     }
 
     @Override

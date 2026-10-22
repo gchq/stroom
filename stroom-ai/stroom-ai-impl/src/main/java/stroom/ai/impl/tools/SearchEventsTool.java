@@ -31,6 +31,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -75,6 +76,11 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     @Inject
     SearchEventsTool(final ChatWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
     }
 
     @Override

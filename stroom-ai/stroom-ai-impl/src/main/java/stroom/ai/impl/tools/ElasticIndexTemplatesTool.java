@@ -24,6 +24,7 @@ import stroom.ai.api.ElasticIndexTemplates.OverlappingTemplate;
 import stroom.ai.api.ElasticIndexTemplates.ReadException;
 import stroom.ai.api.ElasticIndexTemplates.Status;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -106,6 +107,11 @@ class ElasticIndexTemplatesTool extends AbstractBuiltInTool {
                       + "reads them with the document's cluster connection, whose credentials need the "
                       + "privileges to read templates.")
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.INDEXING;
     }
 
     @Override

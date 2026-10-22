@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -54,6 +55,11 @@ class GrepTool extends AbstractWorkspaceTool {
     @Inject
     GrepTool(final ChatWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override
