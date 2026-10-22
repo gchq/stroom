@@ -178,6 +178,10 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   (`DurationSetting`); only cosmetic, as the model always supplies a value.
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
+* Dictionary Effective Words: sorting by a column never breaks ties by the others, as
+  `WordListPresenter.buildComparator` adds `comparator.thenComparing(comparator)` (itself) rather
+  than each `subsequentComparator`, so e.g. words with the same source come in no set order. The
+  component model pilot's copy (`EffectiveWordsList`) breaks ties as intended.
 
 ### The Pathways editor can't create a pathway or add a constraint
 

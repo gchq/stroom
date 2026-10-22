@@ -1,0 +1,255 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dictionary.client.component;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.cell.info.client.CommandLink;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
+import stroom.dictionary.shared.Word;
+import stroom.dictionary.shared.WordList;
+import stroom.dictionary.shared.WordListResource;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Component;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/// The words a dictionary has once its imports are added (the dictionary's own and those of the
+/// dictionaries it imports, however deep), with where each comes from. Read only.
+public class EffectiveWordsList extends Component {
+
+    private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
+
+    private static final String FIELD_WORD = "Word";
+    private static final String FIELD_SOURCE_NAME = "SourceName";
+    private static final String FIELD_TYPE = "Types";
+
+    private final RestFactory restFactory;
+    private final PagerView pagerView;
+    private final MyDataGrid<Word> dataGrid;
+    // Fires app-wide events (alerts, opening a document) on the bus
+    private final HasHandlers bus;
+    private WordList wordList = WordList.EMPTY;
+    private DocRef docRef;
+    private CriteriaFieldSort fieldSort;
+
+    @Inject
+    public EffectiveWordsList(final EventBus eventBus,
+                              final PagerView pagerView,
+                              final RestFactory restFactory) {
+        super(eventBus);
+        this.restFactory = restFactory;
+        this.pagerView = pagerView;
+        this.bus = eventBus::fireEvent;
+
+        dataGrid = new MyDataGrid<>(bus);
+        dataGrid.setTableName("Words");
+        dataGrid.addDefaultSelectionModel(false);
+        pagerView.setDataWidget(dataGrid);
+        addColumns();
+        pagerView.getRefreshButton().setOnClick(this::refresh);
+        initWidget(pagerView.asWidget());
+    }
+
+    /// Shows a dictionary's effective words, fetching them.
+    ///
+    /// @param docRef The dictionary, or null to show none.
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
+        if (docRef != null && docRef.getName() != null) {
+            dataGrid.setTableName("Dictionary '" + docRef.getName() + "' Words");
+        }
+        refresh();
+    }
+
+    /// Fetches the words again.
+    public void refresh() {
+        if (docRef == null) {
+            setWordList(WordList.EMPTY);
+        } else {
+            final String uuid = docRef.getUuid();
+            restFactory
+                    .create(WORD_LIST_RESOURCE)
+                    .method(resource -> resource.getWords(uuid))
+                    .onSuccess(guard(this::setWordList))
+                    .onFailure(error -> {
+                        // Not a Consumer, so guard() can't wrap it (RestFactory.owner, Phase 3, will)
+                        if (!isDisposed()) {
+                            AlertEvent.fireError(bus, error.getMessage(), null);
+                        }
+                    })
+                    .taskMonitorFactory(pagerView)
+                    .exec();
+        }
+    }
+
+    private void addColumns() {
+        final Column<Word, String> wordColumn = DataGridUtil.textColumnBuilder(Word::getWord)
+                .withSorting(FIELD_WORD)
+                .build();
+        dataGrid.addAutoResizableColumn(
+                wordColumn,
+                DataGridUtil.headingBuilder("Word")
+                        .withToolTip("The Dictionary word or line.")
+                        .build(),
+                300);
+
+        final Column<Word, String> typeColumn = DataGridUtil.textColumnBuilder(this::getImportType)
+                .withSorting(FIELD_TYPE)
+                .build();
+        dataGrid.addResizableColumn(
+                typeColumn,
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("Whether the word is local to this dictionary or imported from another.")
+                        .build(),
+                80);
+
+        final Column<Word, CommandLink> sourceColumn = DataGridUtil.commandLinkColumnBuilder(this::getSourceLink)
+                .withSorting(FIELD_SOURCE_NAME)
+                .build();
+        DataGridUtil.addCommandLinkFieldUpdater(sourceColumn);
+        dataGrid.addResizableColumn(
+                sourceColumn,
+                DataGridUtil.headingBuilder("Source Dictionary")
+                        .withToolTip("The dictionary that contains the word.")
+                        .build(),
+                300);
+
+        final Column<Word, String> additionalSourcesColumn = DataGridUtil.textColumnBuilder(
+                        this::getAdditionalSourceNames)
+                .build();
+        dataGrid.addResizableColumn(
+                additionalSourcesColumn,
+                DataGridUtil.headingBuilder("Additional Source Dictionaries")
+                        .withToolTip("Additional Dictionaries that also contain the word.")
+                        .build(),
+                400);
+
+        dataGrid.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof final OrderByColumn<?, ?> orderByColumn) {
+                fieldSort = new CriteriaFieldSort(
+                        orderByColumn.getField(),
+                        !event.isSortAscending(),
+                        orderByColumn.isIgnoreCase());
+                showWords();
+            }
+        });
+    }
+
+    private void setWordList(final WordList wordList) {
+        this.wordList = wordList;
+        showWords();
+    }
+
+    private void showWords() {
+        final List<Word> words;
+        final Comparator<Word> comparator = getComparator();
+        if (comparator == null) {
+            words = wordList.getWordList();
+        } else {
+            words = wordList.getWordList()
+                    .stream()
+                    .sorted(comparator)
+                    .collect(Collectors.toList());
+        }
+        dataGrid.setRowData(0, words);
+        dataGrid.setRowCount(wordList.size());
+        dataGrid.redraw();
+    }
+
+    // The order the user chose, with ties broken by the other columns
+    private Comparator<Word> getComparator() {
+        if (fieldSort == null) {
+            return null;
+        }
+        final Comparator<Word> byWord = textOrder(Word::getWord);
+        final Comparator<Word> bySourceName = textOrder(this::getSourceName);
+        final Comparator<Word> byType = textOrder(this::getImportType);
+        final String sortId = fieldSort.getId();
+        final Comparator<Word> comparator;
+        if (FIELD_WORD.equals(sortId)) {
+            comparator = byWord.thenComparing(bySourceName);
+        } else if (FIELD_SOURCE_NAME.equals(sortId)) {
+            comparator = bySourceName.thenComparing(byWord);
+        } else if (FIELD_TYPE.equals(sortId)) {
+            comparator = byType.thenComparing(bySourceName).thenComparing(byWord);
+        } else {
+            return null;
+        }
+        return Comparator.nullsFirst(fieldSort.isDesc()
+                ? comparator.reversed()
+                : comparator);
+    }
+
+    private static Comparator<Word> textOrder(final Function<Word, String> text) {
+        return Comparator.comparing(text, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+    }
+
+    private String getImportType(final Word word) {
+        return Objects.equals(docRef, wordList.getSource(word).orElse(null))
+                ? "Local"
+                : "Imported";
+    }
+
+    private String getSourceName(final Word word) {
+        return wordList.getSource(word)
+                .map(DocRef::getName)
+                .orElse(null);
+    }
+
+    private CommandLink getSourceLink(final Word word) {
+        if (word == null) {
+            return null;
+        }
+        return wordList.getSource(word)
+                .map(source -> new CommandLink(
+                        source.getName(),
+                        "Open " + source.getType() + " '" + source.getName() + "'.",
+                        () -> OpenDocumentEvent.fire(bus, source, true)))
+                .orElse(null);
+    }
+
+    private String getAdditionalSourceNames(final Word word) {
+        if (word == null || NullSafe.isEmptyCollection(word.getAdditionalSourceUuids())) {
+            return null;
+        }
+        return word.getAdditionalSourceUuids()
+                .stream()
+                .map(wordList::getSource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(DocRef::getName)
+                .collect(Collectors.joining(", "));
+    }
+}
