@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,14 +32,12 @@ import java.util.Objects;
 /// @param names A field name per capture group, in order (at least one); `""` skips a group.
 /// @param flags XPath regex flags: i, m, s, x.
 /// @param scope With for_each: `record` when the text is the record's, not the item's.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"field", "xpath", "regex", "names", "flags", "scope"})
-public record Extraction(@JsonProperty("field") String field,
-                         @JsonProperty("xpath") String xpath,
-                         @JsonProperty("regex") String regex,
-                         @JsonProperty("names") List<String> names,
-                         @JsonProperty("flags") String flags,
-                         @JsonProperty("scope") String scope) {
+public record Extraction(String field,
+                         String xpath,
+                         String regex,
+                         List<String> names,
+                         String flags,
+                         String scope) {
 
     /// Fills in the defaults for nulls.
     public Extraction {
@@ -55,7 +48,6 @@ public record Extraction(@JsonProperty("field") String field,
     /// @param json An extraction as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Extraction fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("Extraction", read(reader, json, List.of()));

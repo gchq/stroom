@@ -20,9 +20,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.ModelReader;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,14 +39,12 @@ import java.util.Objects;
 /// @param multiple    Set by the tools: the source can hold several values in one event (a repeatable element on its
 ///                    path, by the event-logging schema, e.g. Data), so they are written as an array (Elasticsearch)
 ///                    or each as a value (Lucene).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"name", "type", "source", "description", "transform", "multiple"})
-public record PlannedField(@JsonProperty("name") String name,
-                           @JsonProperty("type") String type,
-                           @JsonProperty("source") String source,
-                           @JsonProperty("description") String description,
-                           @JsonProperty("transform") String transform,
-                           @JsonProperty("multiple") boolean multiple) {
+public record PlannedField(String name,
+                           String type,
+                           String source,
+                           String description,
+                           String transform,
+                           boolean multiple) {
 
     /// The transforms a field may have.
     public static final List<String> TRANSFORMS = List.of("outcome");
@@ -98,7 +94,8 @@ public record PlannedField(@JsonProperty("name") String name,
                 : null;
     }
 
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the Python model's `model_dump` writes it (and as Jackson writes it).
+    @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
         json.put("name", name);

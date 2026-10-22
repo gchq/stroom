@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,15 +39,13 @@ import java.util.Set;
 ///                     the action elements the records' values suggest.
 /// @param data         Input fields carried as Data of this rule's action element, each named after its field;
 ///                     always empty once validated, as each becomes a Data entry of fields.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"name", "when", "fields", "drop", "allow_unknown", "keep_unknown", "data"})
-public record EventRule(@JsonProperty("name") String name,
-                        @JsonProperty("when") List<Condition> when,
-                        @JsonProperty("fields") List<FieldMapping> fields,
-                        @JsonProperty("drop") boolean drop,
-                        @JsonProperty("allow_unknown") String allowUnknown,
-                        @JsonProperty("keep_unknown") boolean keepUnknown,
-                        @JsonProperty("data") List<String> data) {
+public record EventRule(String name,
+                        List<Condition> when,
+                        List<FieldMapping> fields,
+                        boolean drop,
+                        String allowUnknown,
+                        boolean keepUnknown,
+                        List<String> data) {
 
     /// Fills in empty lists for null ones.
     public EventRule {
@@ -76,7 +69,6 @@ public record EventRule(@JsonProperty("name") String name,
     /// @param json A rule as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static EventRule fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("EventRule", read(reader, json, List.of()));

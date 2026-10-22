@@ -197,9 +197,10 @@ _Steps for you_ card. The model can neither make nor click one.
 
 * Typing `/` in the input box lists the commands. The chat's own are `/compact [focus]`,
   `/mode agent|ask|plan`, `/plan <task>` (switches to Plan mode and asks), `/new [question]`, `/clear`
-  (deletes the chat's messages, attached data, workspace files and memory, keeping the chat, its mode and
-  its tool approvals), `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`) and
-  `/help`. A message starting with `//` is sent as it is, starting with `/`.
+  (asks first, stops anything the chat is doing, then deletes the chat's messages, attached data, workspace
+  files and the chat's own memory, keeping the chat, its mode, its tool approvals and the user's own memory)
+  and `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`). A message starting with
+  `//` is sent as it is, starting with `/`.
 * The list of chats can be searched, as you type, by the chats' titles and the user's questions in them
   (`POST /ai/v1/searchChats`; at least 2 characters, at most 50 chats). A search is only sent once the user
   pauses typing for 300ms, so typing doesn't load the database with a query per key. Matches are highlighted,

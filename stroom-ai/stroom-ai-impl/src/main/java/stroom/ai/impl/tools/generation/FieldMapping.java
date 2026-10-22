@@ -18,11 +18,6 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.PyText;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,25 +49,22 @@ import java.util.regex.Pattern;
 /// @param map          Input value -> output value, e.g. `{ok: true, fail: false}`.
 /// @param defaultValue `default`: output when the field is empty (or, with map, matches no key).
 /// @param dataName     `data_name`: for a path ending in Data, the Data element's Name.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"path", "field", "any_of", "value", "xpath", "meta", "lookup", "dictionary", "transform",
-        "repeat", "scope", "time_format", "timezone", "map", "default", "data_name"})
-public record FieldMapping(@JsonProperty("path") String path,
-                           @JsonProperty("field") String field,
-                           @JsonProperty("any_of") List<String> anyOf,
-                           @JsonProperty("value") String value,
-                           @JsonProperty("xpath") String xpath,
-                           @JsonProperty("meta") String meta,
-                           @JsonProperty("lookup") Lookup lookup,
-                           @JsonProperty("dictionary") String dictionary,
-                           @JsonProperty("transform") String transform,
-                           @JsonProperty("repeat") boolean repeat,
-                           @JsonProperty("scope") String scope,
-                           @JsonProperty("time_format") String timeFormat,
-                           @JsonProperty("timezone") String timezone,
-                           @JsonProperty("map") Map<String, String> map,
-                           @JsonProperty("default") String defaultValue,
-                           @JsonProperty("data_name") String dataName) {
+public record FieldMapping(String path,
+                           String field,
+                           List<String> anyOf,
+                           String value,
+                           String xpath,
+                           String meta,
+                           Lookup lookup,
+                           String dictionary,
+                           String transform,
+                           boolean repeat,
+                           String scope,
+                           String timeFormat,
+                           String timezone,
+                           Map<String, String> map,
+                           String defaultValue,
+                           String dataName) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -83,7 +75,6 @@ public record FieldMapping(@JsonProperty("path") String path,
     /// @param json A field mapping as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static FieldMapping fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("FieldMapping", read(reader, json, List.of()));

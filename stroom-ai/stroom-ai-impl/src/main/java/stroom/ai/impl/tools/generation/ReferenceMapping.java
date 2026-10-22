@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,15 +33,13 @@ import java.util.Objects;
 ///                   for you.
 /// @param dropWhen   `drop_when`: records to leave out of the reference data (disabled accounts, say); each
 ///                   entry's conditions must all hold.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"input", "json_layout", "root", "record", "maps", "imports", "drop_when"})
-public record ReferenceMapping(@JsonProperty("input") String input,
-                               @JsonProperty("json_layout") String jsonLayout,
-                               @JsonProperty("root") String root,
-                               @JsonProperty("record") String record,
-                               @JsonProperty("maps") List<ReferenceMap> maps,
-                               @JsonProperty("imports") List<String> imports,
-                               @JsonProperty("drop_when") List<DropRule> dropWhen) {
+public record ReferenceMapping(String input,
+                               String jsonLayout,
+                               String root,
+                               String record,
+                               List<ReferenceMap> maps,
+                               List<String> imports,
+                               List<DropRule> dropWhen) {
 
     /// The kinds of input.
     public static final List<String> INPUTS = List.of("data_splitter", "json");
@@ -62,7 +55,6 @@ public record ReferenceMapping(@JsonProperty("input") String input,
     /// @param json A reference mapping as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate, with every error pydantic would give.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static ReferenceMapping fromJson(final Map<String, Object> json) {
         return parse(json);
     }

@@ -16,10 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,10 +25,8 @@ import java.util.Objects;
 ///
 /// @param when   All must hold for the record to be dropped (at least one).
 /// @param reason Why, in the user's words; kept as a comment in the XSLT and in the documentation.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"when", "reason"})
-public record DropRule(@JsonProperty("when") List<Condition> when,
-                       @JsonProperty("reason") String reason) {
+public record DropRule(List<Condition> when,
+                       String reason) {
 
     /// Fills in an empty list for a null one.
     public DropRule {
