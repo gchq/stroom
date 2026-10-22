@@ -1,0 +1,80 @@
+{
+ "source": "xsltgen-v352-objects-from-a-repeating-choice-are-alternative",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "view",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "FileRead"
+     },
+     {
+      "path": "EventDetail/View/Outcome/Success",
+      "value": "true"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": false,
+  "problems": [
+   "[view] Event/EventDetail/View needs one of ['Association', 'Banner', 'Chat', 'Configuration', 'Criteria', 'Document', 'Email', 'File', 'Folder', 'Group', 'GroupChat', 'Object', 'SearchResult', 'SearchResults', 'Shortcut', 'User', 'VirtualSession', 'VOIP', 'Resource']. Already mapped elsewhere in the event: EventSource/User/Id (field 'user'). If the action is about one of them, map the same input here as well (EventDetail/View/User/Id), and keep the existing mapping: it says something different"
+  ],
+  "warnings": [
+   "[view] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[view] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "view",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/View/Outcome/Success",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

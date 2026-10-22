@@ -85,6 +85,16 @@ public final class PyJson {
     }
 
     /// @param value A value made of maps (with string keys), collections, strings, numbers, booleans or null.
+    /// @return It written as `json.dumps(value, ensure_ascii=False, separators=(',', ':'))` writes it: compact, and
+    /// characters past ASCII as they are, as the Stroom MCP server writes the JSON it keeps in a document's
+    /// description.
+    public static String dumpsCompact(final Object value) {
+        final StringBuilder out = new StringBuilder();
+        writeCompact(out, value);
+        return out.toString();
+    }
+
+    /// @param value A value made of maps (with string keys), collections, strings, numbers, booleans or null.
     /// @return It written as `json.dumps(value, sort_keys=True)` writes it, as the Stroom MCP server writes the
     /// JSON whose text matters (a build's record, and digests of JSON, which must come out the same from both).
     public static String dumpsSortedKeys(final Object value) {
@@ -138,6 +148,40 @@ public final class PyJson {
             writeList(out, list, indent, level);
         } else {
             writeString(out, String.valueOf(value));
+        }
+    }
+
+    private static void writeCompact(final StringBuilder out, final Object value) {
+        if (value instanceof final Map<?, ?> map) {
+            out.append('{');
+            boolean first = true;
+            for (final Map.Entry<?, ?> entry : map.entrySet()) {
+                if (!first) {
+                    out.append(',');
+                }
+                first = false;
+                writeString(out, String.valueOf(entry.getKey()), false);
+                out.append(':');
+                writeCompact(out, entry.getValue());
+            }
+            out.append('}');
+        } else if (value instanceof final Collection<?> list) {
+            out.append('[');
+            boolean first = true;
+            for (final Object item : list) {
+                if (!first) {
+                    out.append(',');
+                }
+                first = false;
+                writeCompact(out, item);
+            }
+            out.append(']');
+        } else if (value instanceof final String text) {
+            writeString(out, text, false);
+        } else if (value == null || value instanceof Boolean || value instanceof Number) {
+            write(out, value, -1, 0);
+        } else {
+            writeString(out, String.valueOf(value), false);
         }
     }
 
@@ -208,6 +252,11 @@ public final class PyJson {
     }
 
     private static void writeString(final StringBuilder out, final String text) {
+        writeString(out, text, true);
+    }
+
+    // As json.dumps writes a string: with ensureAscii, every character past ASCII escaped too.
+    private static void writeString(final StringBuilder out, final String text, final boolean ensureAscii) {
         out.append('"');
         for (int i = 0; i < text.length(); i++) {
             final char c = text.charAt(i);
@@ -220,7 +269,7 @@ public final class PyJson {
                 case '\b' -> out.append("\\b");
                 case '\f' -> out.append("\\f");
                 default -> {
-                    if (c < ' ' || c > '~') {
+                    if (c < ' ' || (ensureAscii && c > '~')) {
                         out.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
                     } else {
                         out.append(c);

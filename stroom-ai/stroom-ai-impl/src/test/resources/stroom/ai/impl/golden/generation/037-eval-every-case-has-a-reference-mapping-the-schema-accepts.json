@@ -1,0 +1,100 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Perimeter Firewall"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "firewall"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   }
+  ],
+  "events": [
+   {
+    "name": "connection",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "dport"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/TransportProtocol",
+      "field": "proto",
+      "map": {
+       "tcp": "TCP",
+       "udp": "UDP"
+      }
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "allow": "true",
+       "deny": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[connection] TypeId is read from action, which its records may lack: those get TypeId 'connection', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[connection] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "connection",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Destination/TransportProtocol",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

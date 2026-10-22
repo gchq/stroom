@@ -1,0 +1,164 @@
+{
+ "source": "draft-records-that-each-run-a-command-are-drafted-as-process",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])TTY=([^\\s,;\"]*)",
+    "names": [
+     "tty_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])PWD=([^\\s,;\"]*)",
+    "names": [
+     "pwd_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])USER=([^\\s,;\"]*)",
+    "names": [
+     "user_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])COMMAND=([^\\s,;\"]*)",
+    "names": [
+     "command_2"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "MMM dd HH:mm:ss",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Web"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventSource/RunAs/Id",
+    "field": "run_as"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "app"
+   }
+  ],
+  "events": [
+   {
+    "name": "command",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Command"
+     },
+     {
+      "path": "EventDetail/Process/Action",
+      "value": "Execute"
+     },
+     {
+      "path": "EventDetail/Process/Type",
+      "value": "Application"
+     },
+     {
+      "path": "EventDetail/Process/Command",
+      "field": "command"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "pri",
+      "data_name": "pri"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "tty",
+      "data_name": "tty"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "pwd",
+      "data_name": "pwd"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "tty_2",
+      "data_name": "tty_2"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "pwd_2",
+      "data_name": "pwd_2"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "user_2",
+      "data_name": "user_2"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "command_2",
+      "data_name": "command_2"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[command] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "command",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Process/Action",
+     "EventDetail/Process/Command",
+     "EventDetail/Process/Data[command_2]",
+     "EventDetail/Process/Data[pri]",
+     "EventDetail/Process/Data[pwd]",
+     "EventDetail/Process/Data[pwd_2]",
+     "EventDetail/Process/Data[tty]",
+     "EventDetail/Process/Data[tty_2]",
+     "EventDetail/Process/Data[user_2]",
+     "EventDetail/Process/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/RunAs/Id",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

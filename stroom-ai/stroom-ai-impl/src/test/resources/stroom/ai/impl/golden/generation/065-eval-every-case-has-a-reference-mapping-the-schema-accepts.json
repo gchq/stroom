@@ -1,0 +1,152 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "#Remark",
+    "regex": "^\\S+ \"([^\"]*)\" \"([^\"]*)\".*$",
+    "names": [
+     "proxy_name",
+     "proxy_ip"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "concat(data[@name='date']/@value, 'T', data[@name='time']/@value, 'Z')",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Blue Coat ProxySG"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "#Software"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "proxy_name"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "field": "proxy_ip"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "cs-username"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "c-ip"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "s-action"
+   }
+  ],
+  "events": [
+   {
+    "name": "request",
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "c-ip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/HostName",
+      "field": "cs-host"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "cs-uri-port"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "cs-uri-path",
+      "data_name": "path"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "cs-categories",
+      "data_name": "category"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "cs-method",
+      "data_name": "method"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "sc-status",
+      "data_name": "status"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "sc-bytes",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "x-virus-id",
+      "data_name": "virus"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "sc-filter-result",
+      "map": {
+       "OBSERVED": "true",
+       "DENIED": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[request] TypeId is read from s-action, which its records may lack: those get TypeId 'request', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[request] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "request",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Network/Open/Data[bytes_sent]",
+     "EventDetail/Network/Open/Data[method]",
+     "EventDetail/Network/Open/Data[status]",
+     "EventDetail/Network/Open/Data[virus]",
+     "EventDetail/Network/Open/Destination/Data[category]",
+     "EventDetail/Network/Open/Destination/Data[path]",
+     "EventDetail/Network/Open/Destination/Device/HostName",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Device/IPAddress",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

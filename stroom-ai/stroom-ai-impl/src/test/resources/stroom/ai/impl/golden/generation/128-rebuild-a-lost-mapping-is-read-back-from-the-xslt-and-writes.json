@@ -1,0 +1,671 @@
+{
+ "source": "rebuild-a-lost-mapping-is-read-back-from-the-xslt-and-writes",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)user=\"([^\"]*)\"",
+    "names": [
+     "user"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)srcip=\"([^\"]*)\"",
+    "names": [
+     "srcip"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)proto=(\\S+)",
+    "names": [
+     "msg_1"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)dstip=\"([^\"]*)\"",
+    "names": [
+     "dstip"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)dstintfrole=\"([^\"]*)\"",
+    "names": [
+     "dstintfrole"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "deny",
+    "when": [
+     {
+      "field": "action",
+      "equals": "deny"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "deny"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+      "field": "msg_1",
+      "map": {
+       "6": "TCP",
+       "17": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "dstintfrole",
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "msg_1",
+      "data_name": "proto"
+     }
+    ]
+   },
+   {
+    "name": "permit",
+    "when": [
+     {
+      "field": "action",
+      "equals": "accept"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "permit"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "msg_1",
+      "map": {
+       "6": "TCP",
+       "17": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "dstintfrole",
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "msg_1",
+      "data_name": "proto"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[deny] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[deny] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[permit] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[permit] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "deny",
+    "when": [
+     "data[@name='action']/@value = 'deny'"
+    ],
+    "fields": [
+     "EventDetail/Network/Deny/Data[dstintfrole]",
+     "EventDetail/Network/Deny/Data[proto]",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "permit",
+    "when": [
+     "data[@name='action']/@value = 'accept'"
+    ],
+    "fields": [
+     "EventDetail/Network/Permit/Data[dstintfrole]",
+     "EventDetail/Network/Permit/Data[proto]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ },
+ "full": {
+  "input": "data_splitter",
+  "root": null,
+  "record": null,
+  "xml_namespace": "",
+  "json_layout": "array",
+  "json_fields": [],
+  "xml_fields": [],
+  "pairs": [],
+  "extract": [
+   {
+    "field": "msg",
+    "xpath": null,
+    "regex": "(?:^|\\s)user=\"([^\"]*)\"",
+    "names": [
+     "user"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "msg",
+    "xpath": null,
+    "regex": "(?:^|\\s)srcip=\"([^\"]*)\"",
+    "names": [
+     "srcip"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "msg",
+    "xpath": null,
+    "regex": "(?:^|\\s)proto=(\\S+)",
+    "names": [
+     "msg_1"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "msg",
+    "xpath": null,
+    "regex": "(?:^|\\s)dstip=\"([^\"]*)\"",
+    "names": [
+     "dstip"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "msg",
+    "xpath": null,
+    "regex": "(?:^|\\s)dstintfrole=\"([^\"]*)\"",
+    "names": [
+     "dstintfrole"
+    ],
+    "flags": "",
+    "scope": null
+   }
+  ],
+  "for_each": null,
+  "nil_values": [],
+  "drop_when": [],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Name",
+    "field": null,
+    "any_of": null,
+    "value": "Acme VPN",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "field": null,
+    "any_of": null,
+    "value": "Dev",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": null,
+    "any_of": null,
+    "value": "vpnd",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": "unknown",
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   }
+  ],
+  "events": [
+   {
+    "name": "deny",
+    "when": [
+     {
+      "field": "action",
+      "xpath": null,
+      "equals": "deny",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "deny",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "srcip",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+      "field": "msg_1",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": {
+       "6": "TCP",
+       "17": "UDP"
+      },
+      "default": "Other",
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dstip",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "dstintfrole",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "msg_1",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "proto"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "permit",
+    "when": [
+     {
+      "field": "action",
+      "xpath": null,
+      "equals": "accept",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "permit",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "msg_1",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": {
+       "6": "TCP",
+       "17": "UDP"
+      },
+      "default": "Other",
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "dstintfrole",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "msg_1",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "proto"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   }
+  ],
+  "unmatched": "skip",
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "imports": [],
+  "shared": [],
+  "functions": []
+ }
+}

@@ -1,0 +1,100 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Print Services"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "print-server"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "printer"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "transform": "unescape_quotes"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "value": "print-job"
+   }
+  ],
+  "events": [
+   {
+    "name": "printed",
+    "fields": [
+     {
+      "path": "EventDetail/Print/Action",
+      "value": "FinishPrint"
+     },
+     {
+      "path": "EventDetail/Print/PrintJob/Document/Title",
+      "field": "document",
+      "transform": "unescape_quotes"
+     },
+     {
+      "path": "EventDetail/Print/PrintJob/Pages",
+      "field": "pages"
+     },
+     {
+      "path": "EventDetail/Print/Printer/Name",
+      "field": "printer"
+     },
+     {
+      "path": "EventDetail/Print/Data",
+      "field": "location",
+      "transform": "unescape_quotes",
+      "data_name": "printer_location"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[printed] required ['EventTime', 'EventSource/Device', 'EventDetail/Print/PrintJob', 'EventDetail/Print/PrintJob/Document'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "printed",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Print/Action",
+     "EventDetail/Print/Data[printer_location]",
+     "EventDetail/Print/PrintJob/Document/Title",
+     "EventDetail/Print/PrintJob/Pages",
+     "EventDetail/Print/Printer/Name",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}
