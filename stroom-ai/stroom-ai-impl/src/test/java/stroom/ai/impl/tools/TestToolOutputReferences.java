@@ -45,6 +45,7 @@ import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.shared.FeedDoc;
@@ -577,6 +578,7 @@ class TestToolOutputReferences {
         final MetaService metaService = Mockito.mock(MetaService.class);
         final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
         final ProcessorTaskService processorTaskService = Mockito.mock(ProcessorTaskService.class);
+        final ExplorerService explorerService = Mockito.mock(ExplorerService.class);
         final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final Map<String, List<DocRef>> children = new HashMap<>();
         for (final DocRef docRef : List.of(security, firewalls, feed, pipeline, xslt)) {
@@ -641,7 +643,7 @@ class TestToolOutputReferences {
         final FolderContentsTool tool = new FolderContentsTool(fixture.documentAccess(),
                 fixture.processorFilterAccess(processorFilterService), () -> metaService,
                 () -> processorFilterService, () -> processorTaskService, () -> docFinder,
-                fixture.agentInstructions(), fixture.auditLog());
+                fixture.agentInstructions(), fixture.auditLog(), () -> explorerService);
         final ToolRunner run = arguments -> tool.execute(request(FolderContentsTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, fixture.workspace)).text();
 
@@ -842,7 +844,8 @@ class TestToolOutputReferences {
             return source;
         });
         final StreamMetaTool tool = new StreamMetaTool(fixture.workspace, () -> metaService,
-                () -> attributeMapFactory, () -> store, fixture.documentAccess(), fixture.auditLog());
+                () -> attributeMapFactory, () -> store, fixture.documentAccess(), fixture.auditLog(),
+                Mockito.mock(StreamReader.class), fixture.feedAccess());
         final ToolRunner run = arguments -> tool.execute(request(StreamMetaTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, fixture.workspace)).text();
 

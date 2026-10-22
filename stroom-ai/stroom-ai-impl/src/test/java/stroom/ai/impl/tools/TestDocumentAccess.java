@@ -117,6 +117,45 @@ class TestDocumentAccess {
         Mockito.verify(auditLog).documentViewed(ToolSession.chat(3), XSLT, "Read");
     }
 
+    @Test
+    void pathsFromTheSystemRootAreTakenAsTheToolsTakeThem() {
+        // Seen with the Stroom MCP server: Stroom's folder tool refused find_documents' 'System / Feeds / Events'
+        // and took '/Feeds/Events'.
+        assertThat(DocumentAccess.withoutSystemRoot("System / Feeds / Events")).isEqualTo("/Feeds / Events");
+        assertThat(DocumentAccess.withoutSystemRoot("System/Feeds")).isEqualTo("/Feeds");
+        assertThat(DocumentAccess.withoutSystemRoot(" system ")).isEqualTo("/");
+        assertThat(DocumentAccess.withoutSystemRoot("/Feeds")).isEqualTo("/Feeds");
+        assertThat(DocumentAccess.withoutSystemRoot("Systems/Feeds")).isEqualTo("Systems/Feeds");
+        assertThat(DocumentAccess.withoutSystemRoot("xslt-uuid")).isEqualTo("xslt-uuid");
+        assertThat(DocumentAccess.withoutSystemRoot(null)).isEmpty();
+    }
+
+    @Test
+    void aFolderOrDocumentIsFoundByItsPathWithOrWithoutTheSystemRoot() {
+        final ExplorerNode feeds = folder("Feeds");
+        final ExplorerNode xslt = ExplorerNode.builder().docRef(XSLT).build();
+        final ExplorerNode pipeline = ExplorerNode.builder()
+                .docRef(new DocRef(PipelineDoc.TYPE, "pipe-uuid", XSLT.getName()))
+                .build();
+        Mockito.when(explorerNodeService.getNodesByName(ExplorerConstants.SYSTEM_NODE, "Feeds"))
+                .thenReturn(List.of(feeds));
+        Mockito.when(explorerNodeService.getNodesByName(feeds, XSLT.getName())).thenReturn(List.of(pipeline, xslt));
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.VIEW)))
+                .thenReturn(true);
+
+        assertThat(documentAccess.findFolder("System / Feeds")).map(DocRef::getUuid).contains("Feeds-uuid");
+        assertThat(documentAccess.findByPath("System / Feeds / Event translation", "XSLT"))
+                .map(ExplorerNode::getDocRef).contains(XSLT);
+        assertThat(documentAccess.findByPath("/Feeds/Event translation", null))
+                .map(node -> node.getDocRef().getType()).contains(PipelineDoc.TYPE);
+        assertThat(documentAccess.findByPath("/Elsewhere/Event translation", null)).isEmpty();
+        assertThat(documentAccess.findByPath("xslt-uuid", null)).isEmpty();
+
+        Mockito.when(securityContext.hasDocumentPermission(feeds.getDocRef(), DocumentPermission.VIEW))
+                .thenReturn(false);
+        assertThat(documentAccess.findByPath("/Feeds/Event translation", "XSLT")).isEmpty();
+    }
+
     private void nodeExists(final DocRef docRef) {
         Mockito.when(explorerNodeService.getNodeByUuid(docRef.getUuid()))
                 .thenReturn(Optional.of(ExplorerNode.builder().docRef(docRef).build()));

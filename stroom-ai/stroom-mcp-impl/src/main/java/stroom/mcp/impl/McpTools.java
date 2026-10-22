@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolCallGuard;
 import stroom.ai.impl.tools.ToolProgress;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -76,6 +77,7 @@ class McpTools {
     private final Provider<AiChatRunManager> runManagerProvider;
     private final Provider<AiAuditLog> auditLogProvider;
     private final Provider<UriFactory> uriFactoryProvider;
+    private final ToolCallGuard guard;
 
     @Inject
     McpTools(final Provider<BuiltInTools> builtInToolsProvider,
@@ -86,7 +88,8 @@ class McpTools {
              final Provider<ChatWorkspace> chatWorkspaceProvider,
              final Provider<AiChatRunManager> runManagerProvider,
              final Provider<AiAuditLog> auditLogProvider,
-             final Provider<UriFactory> uriFactoryProvider) {
+             final Provider<UriFactory> uriFactoryProvider,
+             final ToolCallGuard guard) {
         this.builtInToolsProvider = builtInToolsProvider;
         this.policiesProvider = policiesProvider;
         this.approvals = approvals;
@@ -96,6 +99,7 @@ class McpTools {
         this.runManagerProvider = runManagerProvider;
         this.auditLogProvider = auditLogProvider;
         this.uriFactoryProvider = uriFactoryProvider;
+        this.guard = guard;
     }
 
     /// @param session A session, whose user is the current user.
@@ -190,16 +194,21 @@ class McpTools {
                         + "again when one has finished.");
         }
         try (final RunSlot ignored = slot.get()) {
-            final ToolResult result = tool.execute(toolCall, context(session, exchange, request));
+            // As in the chat: arguments read leniently, and calls that keep failing stopped (see ToolCallGuard).
+            final ToolResult result = guard.run(tool, toolCall, context(session, exchange, request), tool::execute);
             final String text = NullSafe.string(result.text());
             final boolean error = result.isError() || text.startsWith("Error");
             audit(session, name, arguments, error
                     ? "Failed"
                     : "Run", !error);
-            return CallToolResult.builder()
+            final CallToolResult.Builder builder = CallToolResult.builder()
                     .content(List.of(new TextContent(text)))
-                    .isError(error)
-                    .build();
+                    .isError(error);
+            // A tool's structured form (e.g. the Stroom MCP server's JSON shape of a result), beside its text.
+            if (!result.structuredContent().isEmpty()) {
+                builder.structuredContent(result.structuredContent());
+            }
+            return builder.build();
         } catch (final RuntimeException e) {
             LOGGER.warn(() -> "Tool '" + name + "' failed in MCP session " + session.id(), e);
             audit(session, name, arguments, "Failed", false);
