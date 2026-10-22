@@ -31,6 +31,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineService;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
 
 import org.mockito.Mockito;
 
@@ -123,6 +126,12 @@ final class BuildWorld {
             docs.put(id, DocumentationDoc.builder().uuid(id).name(name).version("v0").build());
         } else if (FeedDoc.TYPE.equals(type)) {
             docs.put(id, FeedDoc.builder().uuid(id).name(name).version("v0").createTimeMs(createTimeMs).build());
+        } else if (PipelineDoc.TYPE.equals(type)) {
+            docs.put(id, PipelineDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (XsltDoc.TYPE.equals(type)) {
+            docs.put(id, XsltDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (TextConverterDoc.TYPE.equals(type)) {
+            docs.put(id, TextConverterDoc.builder().uuid(id).name(name).version("v0").build());
         }
         return node;
     }
