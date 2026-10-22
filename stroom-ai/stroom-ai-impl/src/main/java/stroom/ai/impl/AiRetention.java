@@ -48,7 +48,8 @@ import java.util.stream.Stream;
 /// - workspace files (which hold copies of Stroom data) past their retention age lose their content;
 /// - chats not changed for longer than the chat retention age are deleted, with their files and memory;
 /// - the chats and memory of users who have been deleted are deleted;
-/// - this node's local copies of workspace files that are no longer held are deleted.
+/// - this node's local copies of workspace files that are no longer held are deleted;
+/// - sample upload commands (`upload_sample files=`) that have run out are deleted, as are those of deleted users.
 ///
 /// Chats with a run working on them are left until it finishes.
 public class AiRetention {
@@ -69,6 +70,7 @@ public class AiRetention {
     private final UserService userService;
     private final SecurityContext securityContext;
     private final ToolApprovalService toolApprovalService;
+    private final AiSampleUploadDao sampleUploadDao;
 
     @Inject
     AiRetention(final AiDao aiDao,
@@ -81,7 +83,8 @@ public class AiRetention {
                 final Provider<AiConfig> aiConfigProvider,
                 final UserService userService,
                 final SecurityContext securityContext,
-                final ToolApprovalService toolApprovalService) {
+                final ToolApprovalService toolApprovalService,
+                final AiSampleUploadDao sampleUploadDao) {
         this.aiDao = aiDao;
         this.memoryDao = memoryDao;
         this.workspaceDao = workspaceDao;
@@ -93,6 +96,7 @@ public class AiRetention {
         this.userService = userService;
         this.securityContext = securityContext;
         this.toolApprovalService = toolApprovalService;
+        this.sampleUploadDao = sampleUploadDao;
     }
 
     /// Runs the job.
@@ -105,11 +109,13 @@ public class AiRetention {
             final int localCopies = deleteStaleLocalCopies();
             final int approvals = expireApprovals(now);
             final int sessions = deleteIdleSessionWorkspaces(now);
+            final int uploads = sampleUploadDao.deleteExpired(now);
             LOGGER.info(() -> JOB_NAME + ": removed " + files + " expired workspace file(s), deleted " + chats
                               + " old chat(s), removed the data of " + removedUsers + " deleted user(s) and "
                               + localCopies + " stale local file(s), expired " + approvals
-                              + " unanswered request(s) for approval, and deleted the workspaces of " + sessions
-                              + " idle MCP session(s)");
+                              + " unanswered request(s) for approval, deleted the workspaces of " + sessions
+                              + " idle MCP session(s), and deleted " + uploads
+                              + " set(s) of sample upload commands that had run out");
         });
     }
 
@@ -184,12 +190,15 @@ public class AiRetention {
     int deleteDataOfRemovedUsers() {
         final Set<String> users = new HashSet<>(aiDao.getChatOwners());
         users.addAll(memoryDao.getUserUuids());
+        users.addAll(sampleUploadDao.getUserUuids());
         int count = 0;
         for (final String userUuid : users) {
             if (userUuid != null && userService.loadByUuid(userUuid).isEmpty()) {
-                LOGGER.info(() -> "Deleting the 'Ask Stroom AI' chats and memory of deleted user " + userUuid);
+                LOGGER.info(() -> "Deleting the 'Ask Stroom AI' chats, memory and sample upload commands of deleted "
+                                  + "user " + userUuid);
                 aiDao.getChatIds(userUuid).forEach(this::deleteChat);
                 memoryDao.deleteAllForUser(userUuid);
+                sampleUploadDao.deleteAllForUser(userUuid);
                 count++;
             }
         }

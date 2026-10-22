@@ -10,6 +10,8 @@ import stroom.ai.impl.db.jooq.tables.AiChatFileChunk;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
 import stroom.ai.impl.db.jooq.tables.AiMemory;
+import stroom.ai.impl.db.jooq.tables.AiSampleUpload;
+import stroom.ai.impl.db.jooq.tables.AiSampleUploadFile;
 import stroom.ai.impl.db.jooq.tables.AiToolApproval;
 import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
 import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
@@ -51,6 +53,16 @@ public class Tables {
      * The table <code>stroom.ai_memory</code>.
      */
     public static final AiMemory AI_MEMORY = AiMemory.AI_MEMORY;
+
+    /**
+     * The table <code>stroom.ai_sample_upload</code>.
+     */
+    public static final AiSampleUpload AI_SAMPLE_UPLOAD = AiSampleUpload.AI_SAMPLE_UPLOAD;
+
+    /**
+     * The table <code>stroom.ai_sample_upload_file</code>.
+     */
+    public static final AiSampleUploadFile AI_SAMPLE_UPLOAD_FILE = AiSampleUploadFile.AI_SAMPLE_UPLOAD_FILE;
 
     /**
      * The table <code>stroom.ai_tool_approval</code>.

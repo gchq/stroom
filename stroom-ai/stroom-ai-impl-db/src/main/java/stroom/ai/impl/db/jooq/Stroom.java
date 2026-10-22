@@ -18,6 +18,8 @@ import stroom.ai.impl.db.jooq.tables.AiChatFileChunk;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
 import stroom.ai.impl.db.jooq.tables.AiMemory;
+import stroom.ai.impl.db.jooq.tables.AiSampleUpload;
+import stroom.ai.impl.db.jooq.tables.AiSampleUploadFile;
 import stroom.ai.impl.db.jooq.tables.AiToolApproval;
 import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
 import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
@@ -68,6 +70,16 @@ public class Stroom extends SchemaImpl {
     public final AiMemory AI_MEMORY = AiMemory.AI_MEMORY;
 
     /**
+     * The table <code>stroom.ai_sample_upload</code>.
+     */
+    public final AiSampleUpload AI_SAMPLE_UPLOAD = AiSampleUpload.AI_SAMPLE_UPLOAD;
+
+    /**
+     * The table <code>stroom.ai_sample_upload_file</code>.
+     */
+    public final AiSampleUploadFile AI_SAMPLE_UPLOAD_FILE = AiSampleUploadFile.AI_SAMPLE_UPLOAD_FILE;
+
+    /**
      * The table <code>stroom.ai_tool_approval</code>.
      */
     public final AiToolApproval AI_TOOL_APPROVAL = AiToolApproval.AI_TOOL_APPROVAL;
@@ -109,6 +121,8 @@ public class Stroom extends SchemaImpl {
             AiChatMessage.AI_CHAT_MESSAGE,
             AiChatRun.AI_CHAT_RUN,
             AiMemory.AI_MEMORY,
+            AiSampleUpload.AI_SAMPLE_UPLOAD,
+            AiSampleUploadFile.AI_SAMPLE_UPLOAD_FILE,
             AiToolApproval.AI_TOOL_APPROVAL,
             AiToolPolicy.AI_TOOL_POLICY,
             AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY,
