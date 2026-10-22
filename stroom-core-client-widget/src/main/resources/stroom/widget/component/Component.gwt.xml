@@ -9,7 +9,7 @@
     <inherits name="stroom.Stroom"/>
     <inherits name="stroom.task.Task"/>
     <!-- PresenterAdapter embeds MyPresenterWidget, until GWTP is removed -->
-    <inherits name="com.gwtplatform.mvp.Mvp"/>
+    <inherits name="stroom.widget.presenter.Presenter"/>
     <inherits name="stroom.widget.util.Util"/>
 
     <!--

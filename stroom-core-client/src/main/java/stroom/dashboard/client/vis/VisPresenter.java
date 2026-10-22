@@ -56,6 +56,8 @@ import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.LayerContainer;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -71,8 +73,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;

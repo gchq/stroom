@@ -16,12 +16,12 @@
 
 package stroom.explorer.client.event;
 
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.Layer;
 
 public class OpenExplorerTabEvent extends GwtEvent<OpenExplorerTabEvent.Handler> {
 

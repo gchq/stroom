@@ -20,12 +20,12 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         extends HandlerContainerImpl

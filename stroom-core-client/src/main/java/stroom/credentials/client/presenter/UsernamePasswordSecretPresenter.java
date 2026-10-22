@@ -20,10 +20,10 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.UsernamePasswordSecretPresenter.UsernamePasswordSecretView;
 import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;

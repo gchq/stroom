@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gwtplatform.mvp.client;
+package stroom.widget.presenter.client;
 
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
@@ -26,6 +26,8 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -29,6 +29,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
@@ -36,7 +37,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;

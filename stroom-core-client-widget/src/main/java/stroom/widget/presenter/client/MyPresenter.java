@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gwtplatform.mvp.client;
+package stroom.widget.presenter.client;
 
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
@@ -27,6 +27,8 @@ import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>

@@ -21,12 +21,12 @@ import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ContentSlot;

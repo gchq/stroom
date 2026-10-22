@@ -20,11 +20,11 @@ import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class AiConfigTableAnalysisPresenter

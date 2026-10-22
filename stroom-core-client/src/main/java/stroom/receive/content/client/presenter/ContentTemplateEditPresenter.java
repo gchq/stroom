@@ -30,12 +30,12 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;

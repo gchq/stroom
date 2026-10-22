@@ -42,6 +42,7 @@ import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 
@@ -51,7 +52,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 

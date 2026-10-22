@@ -22,12 +22,12 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.EnumMap;

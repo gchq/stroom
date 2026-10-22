@@ -30,6 +30,7 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -41,7 +42,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Arrays;

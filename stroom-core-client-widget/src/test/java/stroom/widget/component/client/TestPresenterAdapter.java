@@ -18,12 +18,12 @@ package stroom.widget.component.client;
 
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

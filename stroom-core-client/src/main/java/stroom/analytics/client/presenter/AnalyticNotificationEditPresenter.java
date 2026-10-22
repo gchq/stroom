@@ -33,11 +33,11 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class AnalyticNotificationEditPresenter

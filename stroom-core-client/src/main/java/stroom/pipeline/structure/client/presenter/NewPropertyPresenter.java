@@ -32,6 +32,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermission;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +43,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.stream.Collectors;

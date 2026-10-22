@@ -16,10 +16,11 @@
 
 package stroom.widget.util.client;
 
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

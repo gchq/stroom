@@ -47,6 +47,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
@@ -58,7 +59,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;

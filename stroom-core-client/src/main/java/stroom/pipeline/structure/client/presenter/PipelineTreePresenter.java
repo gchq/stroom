@@ -25,6 +25,7 @@ import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.view.client.SelectionModel;
@@ -32,7 +33,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;

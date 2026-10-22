@@ -22,10 +22,10 @@ import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class RulePresenter extends MyPresenterWidget<RuleView> {

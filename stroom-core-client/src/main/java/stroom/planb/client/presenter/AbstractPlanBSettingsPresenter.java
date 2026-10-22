@@ -21,10 +21,10 @@ import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.HasChangeHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractPlanBSettingsPresenter<V extends View>

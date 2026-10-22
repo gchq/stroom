@@ -33,6 +33,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -41,7 +42,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;

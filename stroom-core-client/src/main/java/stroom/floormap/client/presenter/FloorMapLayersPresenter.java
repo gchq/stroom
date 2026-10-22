@@ -22,6 +22,7 @@ import stroom.floormap.shared.TypeStyle;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DataTransfer.DropEffect;
@@ -39,7 +40,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;

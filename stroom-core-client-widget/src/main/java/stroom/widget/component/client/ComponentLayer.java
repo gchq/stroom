@@ -16,11 +16,12 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.LayerContainer;
+
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
 
 import java.util.Objects;
 

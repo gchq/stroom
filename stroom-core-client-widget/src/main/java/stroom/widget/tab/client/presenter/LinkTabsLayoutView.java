@@ -16,7 +16,8 @@
 
 package stroom.widget.tab.client.presenter;
 
-import com.gwtplatform.mvp.client.LayerContainer;
+import stroom.widget.presenter.client.LayerContainer;
+
 import com.gwtplatform.mvp.client.View;
 
 public interface LinkTabsLayoutView extends View {

@@ -18,10 +18,10 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.CommentEditPresenter.CommentEditView;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class CommentEditPresenter

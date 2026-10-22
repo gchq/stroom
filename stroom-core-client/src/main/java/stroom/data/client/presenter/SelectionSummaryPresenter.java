@@ -27,6 +27,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Range;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.shared.GWT;
@@ -34,7 +35,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Set;
 

@@ -848,7 +848,8 @@ Measured again: the copy is 5 files, 677 lines (437 code), against the original'
 
 Give every presenter an owner without changing how screens are written.
 
-1. Move `MyPresenterWidget` out of the protected `com/` directory to a `stroom` package (decided 22 October 2026; the pilot does not touch it).
+1. Done: `MyPresenterWidget`, with Stroom's other classes in the protected `com/gwtplatform/mvp/client` directory (`MyPresenter`, `Layer`, `LayerContainer`, `HandlerRegistrations`), moved to `stroom.widget.presenter.client` (GWT module `stroom.widget.presenter.Presenter`, inherited by `stroom.widget.util.Util` and the component module), decided 22 October 2026. Only imports changed (340 files); the protected directory now holds none of Stroom's code.
+   Decided too: the child presenters injected into a presenter's constructor (307 in 198 classes, measured 22 October 2026) are owned explicitly, by a script that adds `own(child)` to each constructor (skipping shared ones), so that ownership nests as Phase 2's context needs; and each presenter made on demand (`provider.get()`, about 251) is owned where it is made, `own(provider.get())`, area by area, shared ones marked shared.
 2. Adopt the pilot's framework classes, revised by what the pilot found.
 3. Give `MyPresenterWidget` a node; route `dispose()`, `addHandlerToSource` registrations and `onDispose()` through it; add `own()` and `listen()`.
 4. Make roots explicit: a node per open tab in `ContentManager`, per dialog in `PopupManager`, per story in the workbench.

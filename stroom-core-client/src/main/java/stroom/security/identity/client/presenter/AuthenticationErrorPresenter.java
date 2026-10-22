@@ -21,6 +21,7 @@ import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.Au
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;
 import com.gwtplatform.mvp.client.proxy.Proxy;

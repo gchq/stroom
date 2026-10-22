@@ -18,11 +18,11 @@ package stroom.document.client.event;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.Handler;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Objects;
 import java.util.Optional;

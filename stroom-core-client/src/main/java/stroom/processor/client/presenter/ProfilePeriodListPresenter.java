@@ -25,12 +25,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;

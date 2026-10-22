@@ -17,13 +17,13 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.LayoutConstraints;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import javax.inject.Inject;

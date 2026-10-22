@@ -16,14 +16,15 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.LayerContainer;
+
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
 
 import java.util.HashSet;
 import java.util.Iterator;

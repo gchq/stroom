@@ -32,6 +32,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.cache.CacheInfo;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -44,7 +45,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

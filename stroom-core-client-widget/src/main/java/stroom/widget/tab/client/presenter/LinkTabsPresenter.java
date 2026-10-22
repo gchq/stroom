@@ -16,12 +16,13 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;

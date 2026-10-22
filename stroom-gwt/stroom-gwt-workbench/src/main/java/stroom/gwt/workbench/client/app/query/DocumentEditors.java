@@ -28,9 +28,9 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.security.shared.DocumentPermission;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.Map;

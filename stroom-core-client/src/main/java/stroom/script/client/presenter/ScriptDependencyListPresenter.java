@@ -29,11 +29,11 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;

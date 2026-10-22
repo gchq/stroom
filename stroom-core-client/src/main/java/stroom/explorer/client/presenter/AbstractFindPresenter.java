@@ -23,6 +23,7 @@ import stroom.explorer.shared.FindResult;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -30,7 +31,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 

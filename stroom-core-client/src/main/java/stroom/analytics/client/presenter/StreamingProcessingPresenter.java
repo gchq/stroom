@@ -23,11 +23,11 @@ import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class StreamingProcessingPresenter

@@ -22,6 +22,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.table.client.MyCellTable;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -42,7 +43,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashSet;
 import java.util.List;

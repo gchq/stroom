@@ -208,31 +208,21 @@ basic use:
 * `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java`
   (`onReadOnly`, line 138)
 
-### Three workbench stories fail
+### Workbench stories that fail
 
-**Confirmed** (by `workbenchTest`, October 2026, and the code). Not fixed; two are stories left
-behind by changes to Stroom, and one is a contrast failure in Stroom's help popup.
+**Confirmed** (by a full `workbenchTest`, 22 October 2026: 1,195 of 1,197 pass). The three listed
+here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterRejected`,
+`ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded`) now pass.
 
-* `App/Main/QuickFilterHistory` `AdvancedQueryUnconvertible` waits for a "Replace the filter
-  text?" confirmation that no app code shows any more: #5740 (`943ba04085`) removed it from
-  `AdvancedQuickFilterPresenter`, which now replaces a filter it couldn't convert on OK without
-  asking, as its class comment says. Fix: the story should expect the text to be replaced on OK.
-* `App/Main/QuickFilterHistory` `FilterRejected` breaks `color-contrast` on the help popup's
-  Field qualifier cells (`tr:nth-child(6..10) > td:nth-child(2) > code`): `.infoTable code` uses
-  `--code-color` (`--pink-300` in the dark theme), which looks to be below 4.5:1 on the popup's
-  background. The story is the one that ends with the help popup open on a screen with
-  qualified fields. Fix: a lighter `--code-color` for the dark theme, or the popup's own code
-  colour.
-* `Widgets/Query/ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded` sees `loadFields`
-  where it expects `findFieldByName:UserId`: #5740 (`28b78bf26e`) changed
-  `StringExpressionUtil.equalTo` (used by `DataSourceClient.findFieldByName`) from `=="UserId"`
-  to `="UserId"`, and the story's `FieldFixture.nameOf` only recognises `==`, so it describes the
-  lookup as a whole-list fetch. Fix: `FieldFixture` should accept `=` (and match by name).
+* `App/Main/CredentialsScreen` `KeyStore` expects the stored credential's own `keyStoreType` to be
+  `PKCS12`, but #5796 (`62501f0de8`, Key Store File credentials) sends it only in the secret
+  (`secret.keyStoreType`), with `credential.keyStoreType` null. The story was last changed before
+  #5796. Fails every time. Fix: the story should expect the type in the secret, unless the
+  credential is meant to carry it too (then `CredentialEditPresenter` should set it).
+* `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
+  full run, with 8 workers, and passes when run alone.
 
-* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/QuickFilterHistoryStories.java`
-* `stroom-core-client/src/main/java/stroom/quickfilter/client/presenter/AdvancedQuickFilterPresenter.java`
-* `stroom-app/src/main/resources/ui/css/components.css` (`.infoTable code`) and `theme-dark.css`
-* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/query/FieldFixture.java`
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 
 ## Controls that stay enabled but do nothing
 

@@ -44,10 +44,10 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 import java.util.Objects;

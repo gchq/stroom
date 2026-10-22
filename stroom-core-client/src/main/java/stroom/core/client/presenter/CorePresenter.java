@@ -30,12 +30,12 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ContentSlot;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;

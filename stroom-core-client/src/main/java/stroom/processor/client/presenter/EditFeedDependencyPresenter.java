@@ -26,6 +26,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.processor.shared.FeedDependency;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;

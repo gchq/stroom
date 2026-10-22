@@ -23,13 +23,13 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 import java.util.function.Function;

@@ -24,6 +24,8 @@ import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -37,8 +39,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;

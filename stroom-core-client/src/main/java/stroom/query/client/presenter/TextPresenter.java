@@ -30,6 +30,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -40,7 +41,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;

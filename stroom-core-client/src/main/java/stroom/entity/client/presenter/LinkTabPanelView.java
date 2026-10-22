@@ -16,10 +16,10 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 public interface LinkTabPanelView extends View {

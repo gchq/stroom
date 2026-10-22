@@ -17,10 +17,10 @@
 package stroom.widget.component.client;
 
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;

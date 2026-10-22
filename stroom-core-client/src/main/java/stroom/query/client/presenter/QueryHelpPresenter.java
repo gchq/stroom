@@ -31,6 +31,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -40,7 +41,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 

@@ -16,7 +16,7 @@
 
 package stroom.widget.util.client;
 
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;

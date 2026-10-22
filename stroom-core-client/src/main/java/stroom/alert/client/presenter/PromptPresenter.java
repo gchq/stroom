@@ -17,10 +17,10 @@
 package stroom.alert.client.presenter;
 
 import stroom.alert.client.event.PromptEvent;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.annotations.ProxyStandard;

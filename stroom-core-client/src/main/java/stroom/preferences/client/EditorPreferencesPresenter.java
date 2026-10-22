@@ -27,13 +27,13 @@ import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;

@@ -21,6 +21,8 @@ import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -32,8 +34,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
 
 import java.util.ArrayList;
 import java.util.List;

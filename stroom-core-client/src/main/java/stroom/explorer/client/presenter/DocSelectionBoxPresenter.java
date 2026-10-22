@@ -30,13 +30,13 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collection;
 import java.util.Objects;

@@ -22,6 +22,7 @@ import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.LayerContainer;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
 

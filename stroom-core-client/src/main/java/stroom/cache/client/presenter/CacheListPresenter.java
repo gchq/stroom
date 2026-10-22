@@ -31,6 +31,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheIdentity;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -43,7 +44,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.HashSet;

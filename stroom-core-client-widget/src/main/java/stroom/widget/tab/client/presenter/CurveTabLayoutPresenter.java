@@ -16,12 +16,12 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;

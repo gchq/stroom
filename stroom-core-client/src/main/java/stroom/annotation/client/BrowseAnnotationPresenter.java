@@ -22,13 +22,13 @@ import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public class BrowseAnnotationPresenter
         extends MyPresenterWidget<FindView>

@@ -24,13 +24,13 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.TextAttributes;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class RulePresenter

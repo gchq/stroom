@@ -22,12 +22,12 @@ import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.UserRef;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 /**

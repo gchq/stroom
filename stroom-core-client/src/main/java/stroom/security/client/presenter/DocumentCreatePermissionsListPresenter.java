@@ -33,6 +33,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -42,7 +43,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;

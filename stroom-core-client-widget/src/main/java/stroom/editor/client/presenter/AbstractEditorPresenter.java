@@ -18,6 +18,7 @@ package stroom.editor.client.presenter;
 
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.Scheduler;
@@ -26,7 +27,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 

@@ -17,15 +17,15 @@
 package stroom.floormap.client.presenter;
 
 import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
+import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 

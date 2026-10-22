@@ -29,13 +29,13 @@ import stroom.query.api.SpecialColumns;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;

@@ -23,13 +23,13 @@ import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
 import stroom.query.api.UserTimeZone;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public final class TimePreferencesPresenter

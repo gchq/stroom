@@ -25,13 +25,13 @@ import stroom.docref.DocRef;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Selection;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;

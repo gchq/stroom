@@ -19,12 +19,12 @@ package stroom.dashboard.client.query;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.CurrentSelectionPresenter.CurrentSelectionView;
 import stroom.data.client.presenter.CopyTextUtil;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;

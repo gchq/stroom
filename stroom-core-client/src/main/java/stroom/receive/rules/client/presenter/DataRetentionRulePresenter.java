@@ -25,11 +25,11 @@ import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {

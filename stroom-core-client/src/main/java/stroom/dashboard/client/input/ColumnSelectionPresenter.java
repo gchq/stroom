@@ -28,6 +28,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ColumnRef;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -41,7 +42,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Comparator;
 import java.util.HashSet;

@@ -16,11 +16,11 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.tab.client.event.HasShowTabMenuHandlers;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 public interface CurveTabLayoutView extends View, HasUiHandlers<CurveTabLayoutUiHandlers>, HasShowTabMenuHandlers {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gwtplatform.mvp.client;
+package stroom.widget.presenter.client;
 
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
