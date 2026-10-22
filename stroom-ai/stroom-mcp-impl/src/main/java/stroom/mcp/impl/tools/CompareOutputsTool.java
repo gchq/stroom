@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
@@ -147,13 +148,16 @@ class CompareOutputsTool extends AbstractBuiltInTool {
                     stringArg(call, ELEMENT_ARG),
                     maxRecords(call),
                     events(call));
-            return JsonResults.of(compareOutputs(context, request));
+            return JsonResults.of(compareOutputs(call, context, request));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final EventLocations.LocateException e) {
             return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -164,8 +168,8 @@ class CompareOutputsTool extends AbstractBuiltInTool {
     /// `unchanged`; and `stopped_early` and `hint` when the call's time ran out first.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
-    Map<String, Object> compareOutputs(final ToolCallContext context, final Request request) {
-        final Sides sides = sides(request, !request.events().isEmpty());
+    Map<String, Object> compareOutputs(final ToolCall call, final ToolCallContext context, final Request request) {
+        final Sides sides = sides(call, context, request, !request.events().isEmpty());
         final List<Map<String, Object>> locations = request.events().isEmpty()
                 ? List.of()
                 : eventLocations.eventLocations(request.events());
@@ -175,6 +179,7 @@ class CompareOutputsTool extends AbstractBuiltInTool {
     /// The comparison over the request's streams and records already located (the Stroom MCP server's `compare`
     /// with `locations`, as summarise_fix calls it); the request's `events` are not read.
     ///
+    /// @param call      The call, whose id tells its forms apart.
     /// @param context   The call's context.
     /// @param request   What to compare.
     /// @param locations Records to compare exactly, each `raw`, `part` and `record` (from
@@ -182,20 +187,24 @@ class CompareOutputsTool extends AbstractBuiltInTool {
     /// @return The comparison, as [#compareOutputs] gives it.
     /// @throws ToolRefusal if there is nothing to compare, or nothing to compare against.
     /// @throws ToolTimeoutException if the call is cancelled.
-    Map<String, Object> compareLocated(final ToolCallContext context,
+    Map<String, Object> compareLocated(final ToolCall call,
+                                       final ToolCallContext context,
                                        final Request request,
                                        final List<Map<String, Object>> locations) {
-        return compare(context, request, sides(request, !locations.isEmpty()), locations);
+        return compare(context, request, sides(call, context, request, !locations.isEmpty()), locations);
     }
 
     // The pipelines and elements compared, once what is asked for is checked.
-    private Sides sides(final Request request, final boolean hasRecords) {
+    private Sides sides(final ToolCall call,
+                        final ToolCallContext context,
+                        final Request request,
+                        final boolean hasRecords) {
         if (request.draftCode() == null && request.otherPipelineUuid() == null) {
             throw new ToolRefusal("Give draft_code or other_pipeline_uuid to compare against");
         }
         stepping.checkCanStep();
         // The candidate runs with Stroom's access, as processing would: what the tools won't save isn't stepped.
-        stepping.refuseUnsafeDrafts(request.pipelineUuid(), request.draftCode());
+        stepping.refuseUnsafeDrafts(call, context, request.pipelineUuid(), request.draftCode());
         final SteppedPipeline base = stepping.load(request.pipelineUuid());
         final SteppedPipeline other = request.otherPipelineUuid() != null
                 ? stepping.load(request.otherPipelineUuid())

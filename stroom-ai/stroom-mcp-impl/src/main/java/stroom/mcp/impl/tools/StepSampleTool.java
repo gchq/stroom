@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
@@ -160,12 +161,15 @@ class StepSampleTool extends AbstractBuiltInTool {
             final Integer maxRecords = atLeastOne(call, MAX_RECORDS_ARG);
             final Integer recordsPerStream = atLeastOne(call, RECORDS_PER_STREAM_ARG);
             final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
-            return JsonResults.of(stepSample(context, pipelineUuid, streamIds, draftCode, maxRecords,
+            return JsonResults.of(stepSample(call, context, pipelineUuid, streamIds, draftCode, maxRecords,
                     recordsPerStream));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -176,14 +180,15 @@ class StepSampleTool extends AbstractBuiltInTool {
     /// `first_record_output`, and any `hint`, `stopped_early`, `record` and `next`.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
-    Map<String, Object> stepSample(final ToolCallContext context,
+    Map<String, Object> stepSample(final ToolCall call,
+                                   final ToolCallContext context,
                                    final String pipelineUuid,
                                    final List<Long> streamIds,
                                    final Map<String, String> draftCode,
                                    final Integer maxRecords,
                                    final Integer recordsPerStream) {
         stepping.checkCanStep();
-        stepping.checkDrafts(pipelineUuid, draftCode);
+        stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         stepping.refuseOlderThanFeed(streamIds);
         final SteppedPipeline pipeline = stepping.load(pipelineUuid);
         pipeline.refuseMistyped();

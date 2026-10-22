@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
@@ -134,7 +135,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
                                       + "'");
             }
             final Map<String, String> draftCode = PipelineStepping.draftCode(call, DRAFT_CODE_ARG);
-            final Map<String, Object> result = PipelineStepping.withinTimeLimit(context, () -> step(context,
+            final Map<String, Object> result = PipelineStepping.withinTimeLimit(context, () -> step(call, context,
                     pipelineUuid, streamId, record, part == null
                             ? 0
                             : part, draftCode, stringListArg(call, SHOW_ARG)));
@@ -147,6 +148,9 @@ class StepPipelineTool extends AbstractBuiltInTool {
                     : "The step ran past this session's time limit for a call ("
                       + PipelineStepping.timeLimit(context).map(limit -> limit.toSeconds() + " s").orElse("none")
                       + "): step a smaller stream, or call again.");
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -155,7 +159,8 @@ class StepPipelineTool extends AbstractBuiltInTool {
     /// One record stepped, as the Stroom MCP server gave it: `pipeline`, `stream_id`, `part`, `record`,
     /// `draft_code_used`, `elements` (each chosen element's `type`, `input` and `output`), and the triage
     /// (`verdict`, `groups_by_class`, `groups`).
-    Map<String, Object> step(final ToolCallContext context,
+    Map<String, Object> step(final ToolCall call,
+                             final ToolCallContext context,
                              final String pipelineUuid,
                              final long streamId,
                              final Record record,
@@ -163,7 +168,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
                              final Map<String, String> draftCode,
                              final List<String> show) {
         stepping.checkCanStep();
-        stepping.checkDrafts(pipelineUuid, draftCode);
+        stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         final SteppedPipeline pipeline = stepping.load(pipelineUuid);
         pipeline.refuseMistyped();
         CallProgress.of(context).say("Stepping record " + record.said() + " of stream " + streamId + " through "

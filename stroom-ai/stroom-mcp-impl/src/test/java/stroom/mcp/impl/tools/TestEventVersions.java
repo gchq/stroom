@@ -153,7 +153,8 @@ class TestEventVersions {
         final String code = XsltGenerator.generate(TranslationWorld.parsed(), TranslationWorld.SCHEMA, "4.0.2")
                 .xslt();
 
-        final Map<String, Object> saved = world.docs.createXslt(context, "acme-v1", "ACME-Events", code,
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"), context,
+                "acme-v1", "ACME-Events", code,
                 TranslationDocs.Source.of(TranslationWorld.parsed()), null);
 
         final XsltDoc doc = world.xslt(String.valueOf(saved.get("uuid")));

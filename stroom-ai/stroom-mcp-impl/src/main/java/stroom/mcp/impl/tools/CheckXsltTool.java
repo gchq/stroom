@@ -101,9 +101,12 @@ class CheckXsltTool extends AbstractBuiltInTool {
                              + "slashes, say), and xsl:import / xsl:include targets that exist as XSLT documents in "
                              + "Stroom. Calls that read the environment, files or network (doc(), unparsed-text(), "
                              + "environment-variable() and the like), instructions that read or write a document "
-                             + "by URI (xsl:result-document, xsl:evaluate, ...) and imports by URL are refused. When "
-                             + "all that passes, it is compiled as Stroom compiles it, with Stroom's own functions "
-                             + "and its imports, so an undeclared variable or a wrong call is found before stepping.")
+                             + "by URI (xsl:result-document, xsl:evaluate, ...) and imports by URL are refused, as "
+                             + "are stroom:http-call(), stroom:fetch-json() and stroom:ask-ai(). stroom:host-name() "
+                             + "and stroom:host-address() (DNS lookups) only warn: saving or stepping the XSLT asks "
+                             + "the user to agree to them. When all that passes, it is compiled as Stroom compiles "
+                             + "it, with Stroom's own functions and its imports, so an undeclared variable or a "
+                             + "wrong call is found before stepping.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(XSLT_ARG, "Full XSLT document text.")
                         .addStringProperty(SCHEMA_VERSION_ARG, "Event-logging version the output must follow, e.g. "
@@ -139,6 +142,17 @@ class CheckXsltTool extends AbstractBuiltInTool {
         return JsonResults.of(check(xslt, stringArg(call, SCHEMA_VERSION_ARG), rawArg(call, INPUT_NAMESPACE_ARG)));
     }
 
+    /// What check_xslt warns of a DNS lookup: it is not refused, but saving or stepping the XSLT asks the user to
+    /// agree to it ([LookupAgreements]).
+    ///
+    /// @param lookup A DNS lookup the XSLT calls.
+    /// @return The warning.
+    static String lookupWarning(final XsltSafety.Lookup lookup) {
+        return lookup.said() + " calls " + lookup.function() + ", which " + XsltSafety.LOOKUP_EFFECT + ": saving "
+               + "the XSLT, or stepping it as draft code, asks the user to agree to it first (unless the XSLT it "
+               + "replaces already calls it)";
+    }
+
     /// @param text           An XSLT's text, as sent.
     /// @param schemaVersion  The event-logging version its output must follow, or null.
     /// @param inputNamespace The namespace of its input when known ("" for none), or null.
@@ -168,6 +182,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
         final XsltChecks.FunctionProblems functions = XsltChecks.functionProblems(xslt, root);
         errors.addAll(functions.errors());
         XsltSafety.unsafeInXslt(xslt).forEach(unsafe -> errors.add(unsafe.why()));
+        XsltSafety.lookupsInXslt(xslt).forEach(lookup -> warnings.add(lookupWarning(lookup)));
         errors.addAll(XsltChecks.namespaceProblems(root, inputNamespace));
         if (xslt.contains("schemaLocation")) {
             try {

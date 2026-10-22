@@ -96,6 +96,7 @@ public class TranslationDocs {
     private final EventVersions eventVersions;
     private final HandEditGate handEditGate;
     private final XsltHistory history;
+    private final LookupAgreements lookups;
     private final Provider<AgentKnowledge> knowledgeProvider;
 
     /// @param guard             Creates the documents in the build, and checks one is the tools' own.
@@ -106,6 +107,7 @@ public class TranslationDocs {
     /// @param eventVersions     The event-logging schemas a translation is generated against.
     /// @param handEditGate      Keeps an edit made by hand since the tools saved an XSLT.
     /// @param history           Keeps each XSLT's version history.
+    /// @param lookups           Asks the user to agree to the DNS lookups an XSLT calls.
     /// @param knowledgeProvider The bundled ECS reference, for an index plan's convention.
     @Inject
     TranslationDocs(final WriteGuard guard,
@@ -116,6 +118,7 @@ public class TranslationDocs {
                     final EventVersions eventVersions,
                     final HandEditGate handEditGate,
                     final XsltHistory history,
+                    final LookupAgreements lookups,
                     final Provider<AgentKnowledge> knowledgeProvider) {
         this.guard = guard;
         this.documentAccess = documentAccess;
@@ -125,6 +128,7 @@ public class TranslationDocs {
         this.eventVersions = eventVersions;
         this.handEditGate = handEditGate;
         this.history = history;
+        this.lookups = lookups;
         this.knowledgeProvider = knowledgeProvider;
     }
 
@@ -228,8 +232,9 @@ public class TranslationDocs {
 
     /// Creates an XSLT in the build folder. It is checked with check_xslt first and not saved if that fails. The
     /// mapping (or plan) it was generated from is kept with it, and the pipeline's documentation is generated from
-    /// it.
+    /// it. One calling Stroom's DNS lookup functions is saved once the user agrees ([LookupAgreements]).
     ///
+    /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
     /// @param build   The build.
     /// @param name    The document's name.
@@ -238,8 +243,10 @@ public class TranslationDocs {
     /// @param change  What this change is, for the version history, or null (`Created`).
     /// @return The document, with `matches_mapping`, `warning` or `ecs_check` where they apply, and the build's
     /// next step.
-    /// @throws ToolRefusal if the checks fail, a required import is missing, or the build has an XSLT of the name.
-    public Map<String, Object> createXslt(final ToolCallContext context,
+    /// @throws ToolRefusal if the checks fail, a required import is missing, the build has an XSLT of the name, or
+    ///                     the user didn't agree to its DNS lookups.
+    public Map<String, Object> createXslt(final ToolCall call,
+                                          final ToolCallContext context,
                                           final String build,
                                           final String name,
                                           final String code,
@@ -253,6 +260,8 @@ public class TranslationDocs {
                         ? "CEF"
                         : RequiredImports.xsltRole(code);
         requiredImports.refuseWithout(context.session(), code, build, role);
+        lookups.require(call, context, build + "/" + name, "Save XSLT '" + name + "'", "XSLT not saved",
+                XsltChecks.unescaped(code).text(), null);
         final Map<String, Object> extra = new LinkedHashMap<>();
         final XsltDoc saved = guard.createFilled(XsltDoc.TYPE, name, build, ref -> {
             final XsltDoc made = read(ref, XsltDoc.class);
@@ -271,7 +280,8 @@ public class TranslationDocs {
     /// Replaces an XSLT's code, after check_xslt passes. Only XSLTs the tools created (including working copies of
     /// production XSLTs) can be changed. Code that undoes an edit made by hand since the tools saved the XSLT is
     /// refused, unless the user said to drop it; where the change is to a field the edit changed too, the user is
-    /// asked whether to keep their edit or overwrite it.
+    /// asked whether to keep their edit or overwrite it. Code calling one of Stroom's DNS lookup functions the XSLT
+    /// doesn't call already is saved once the user agrees ([LookupAgreements]).
     ///
     /// @param call            The call, whose id tells its forms apart.
     /// @param context         The call's context.
@@ -285,7 +295,8 @@ public class TranslationDocs {
     /// @return The document, with the build's next step; or the question about a hand edit (a result with
     /// `status` and no `uuid`), for the caller to return: nothing is saved then.
     /// @throws ToolRefusal if the checks fail, it isn't the tools' own, a required import is missing, the code
-    ///                     undoes a hand edit, or it changed since it was read.
+    ///                     undoes a hand edit, it changed since it was read, or the user didn't agree to its DNS
+    ///                     lookups.
     public Map<String, Object> updateXslt(final ToolCall call,
                                           final ToolCallContext context,
                                           final String uuid,
@@ -315,6 +326,8 @@ public class TranslationDocs {
             }
         }
         checkVersion(doc, version);
+        lookups.require(call, context, uuid, "Save XSLT '" + doc.getName() + "'", "XSLT not saved",
+                XsltChecks.unescaped(code).text(), doc.getData());
         // The history lives in the description, not the code: one an earlier version kept in the code moves there.
         String description = XsltVersionHistory.adopt(doc.getDescription(), doc.getData());
         final String data = XsltVersionHistory.strip(code);
@@ -362,7 +375,8 @@ public class TranslationDocs {
     }
 
     /// check_xslt, or a refusal. With the code being replaced, its refused calls and instructions stay allowed: a
-    /// working copy keeps what its production XSLT already did, written by a person.
+    /// working copy keeps what its production XSLT already did, written by a person. Stroom's DNS lookup functions
+    /// are not refused here: the save asks the user to agree to them ([LookupAgreements]).
     ///
     /// @param context  The call's context.
     /// @param xslt     The XSLT.
