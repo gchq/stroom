@@ -61,4 +61,14 @@ public interface AgentKnowledge {
     default Optional<String> conventionsFile(final String fileName) {
         return Optional.empty();
     }
+
+    /// The instructions for the tools that build Stroom content (onboarding a source: the order of work, the rules
+    /// for every run, how to ask the user), as the Stroom MCP server gave them to every client when it connected.
+    /// MCP clients are given them when they connect to `/mcp`; the chat is given them with its system prompt when
+    /// it is offered those tools.
+    ///
+    /// @return The instructions (Markdown), or empty if none are bundled.
+    default Optional<String> buildInstructions() {
+        return Optional.empty();
+    }
 }
