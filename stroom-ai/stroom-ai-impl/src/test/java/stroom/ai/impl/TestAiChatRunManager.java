@@ -29,9 +29,11 @@ import stroom.security.shared.User;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -57,6 +60,7 @@ class TestAiChatRunManager {
     private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final UserService userService = Mockito.mock(UserService.class);
     private AiConfig aiConfig = new AiConfig();
+    private final HttpServletRequestHolder requestHolder = new HttpServletRequestHolder();
     private final AiChatRun run = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
     private AiChatRunManager runManager;
 
@@ -79,7 +83,7 @@ class TestAiChatRunManager {
         Mockito.when(securityContext.asProcessingUserResult(any()))
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(0)).get());
         runManager = new AiChatRunManager(runDao, new SimpleTaskContextFactory(), executorProvider, nodeInfo,
-                securityContext, aiService, aiDao, userService, () -> aiConfig);
+                securityContext, aiService, aiDao, userService, () -> aiConfig, requestHolder);
     }
 
     @Test
@@ -94,6 +98,20 @@ class TestAiChatRunManager {
         assertThat(worked).isTrue();
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.DONE),
                 isNull(), isNull());
+    }
+
+    @Test
+    void testStart_theRunDoesNotSeeARequestItsThreadHeld() {
+        // Seen: a pool thread made while a request was served inherited it, and once it had finished, reading it
+        // failed, so the run's audit events were lost and its searches gave no response.
+        requestHolder.set(Mockito.mock(HttpServletRequest.class));
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .thenReturn(Optional.of(run));
+        final AtomicReference<HttpServletRequest> seen = new AtomicReference<>();
+
+        runManager.start(1, r -> seen.set(requestHolder.get()));
+
+        assertThat(seen).hasNullValue();
     }
 
     @Test

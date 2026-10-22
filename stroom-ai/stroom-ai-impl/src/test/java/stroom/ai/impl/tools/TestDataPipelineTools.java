@@ -427,6 +427,21 @@ class TestDataPipelineTools {
         // A search that failed is removed too.
         Mockito.verify(agentSearches).destroy(new QueryKey("q"));
 
+        // A search that fails after it has started says so, as it may have done some of its work.
+        Mockito.when(queryService.search(Mockito.any()))
+                .thenReturn(response(new QueryKey("q"), false, null),
+                        response(new QueryKey("q"), true, List.of("Elasticsearch is unavailable")));
+        assertThat(run(tool, "{\"query\":\"from x\"}")).isEqualTo("Error: The query started, but failed while it "
+                                                              + "ran: Elasticsearch is unavailable");
+        // As does one the query service gave no response for.
+        Mockito.when(queryService.search(Mockito.any())).thenReturn(null);
+        assertThat(run(tool, "{\"query\":\"from x\"}")).isEqualTo("Error: The query did not run: Stroom's query "
+                                                              + "service gave no response.");
+        Mockito.when(queryService.search(Mockito.any()))
+                .thenReturn(response(new QueryKey("q"), false, null), null);
+        assertThat(run(tool, "{\"query\":\"from x\"}")).isEqualTo("Error: The query started, but Stroom's query "
+                                                              + "service then gave no response.");
+
         // A query that never finishes is stopped at the limit.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800),
