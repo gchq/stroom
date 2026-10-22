@@ -42,7 +42,9 @@ import java.util.Set;
 /// The MCP Streamable HTTP transport serves the requests: POST for messages, GET for the server's stream, DELETE
 /// to end a session (see [StroomMcpServer]). A session lives on the node that started it, so a load balancer must
 /// send a session's requests to the same node (by its `Mcp-Session-Id` header); a request for a session this node
-/// doesn't have is answered 404, which tells the client to start a new one.
+/// doesn't have is answered 404, which tells the client to start a new one. So is any request (a call, an answer to
+/// a form, a listening stream, or a DELETE) for a session that isn't the user's: as far as they can tell, there is
+/// no such session.
 public class McpServlet extends HttpServlet implements IsServlet {
 
     /// The endpoint's path.
@@ -80,13 +82,13 @@ public class McpServlet extends HttpServlet implements IsServlet {
                                                                  + "' permission.");
         } else {
             final StroomMcpServer server = serverProvider.get();
-            server.endIdleSessions(System.currentTimeMillis());
             final String sessionId = request.getHeader(HttpHeaders.MCP_SESSION_ID);
-            if (sessionId != null && !server.isOpen(sessionId)) {
+            if (sessionId != null && !server.isOpenFor(sessionId, securityContext.getUserRef())) {
                 // As the protocol says, so the client starts a new session.
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "There is no such MCP session. Start a new one.");
             } else {
-                server.transport().service(request, response);
+                // So the work on a request knows when the client's request has ended (see McpRequestEnd).
+                server.transport().service(McpRequestEnd.watch(request), response);
             }
         }
     }

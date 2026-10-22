@@ -37,6 +37,7 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     static final StroomDuration DEFAULT_APPROVAL_TIMEOUT = StroomDuration.ofMinutes(10);
     static final StroomDuration DEFAULT_KEEP_ALIVE_INTERVAL = StroomDuration.ofSeconds(20);
     static final StroomDuration DEFAULT_SESSION_RETENTION = StroomDuration.ofDays(1);
+    static final int DEFAULT_MAX_SESSIONS_PER_USER = 20;
 
     private final boolean enabled;
     private final StroomDuration formTimeout;
@@ -44,6 +45,7 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     private final StroomDuration approvalTimeout;
     private final StroomDuration keepAliveInterval;
     private final StroomDuration sessionRetention;
+    private final int maxSessionsPerUser;
 
     public McpEndpointConfig() {
         enabled = true;
@@ -52,6 +54,7 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
         approvalTimeout = DEFAULT_APPROVAL_TIMEOUT;
         keepAliveInterval = DEFAULT_KEEP_ALIVE_INTERVAL;
         sessionRetention = DEFAULT_SESSION_RETENTION;
+        maxSessionsPerUser = DEFAULT_MAX_SESSIONS_PER_USER;
     }
 
     @JsonCreator
@@ -60,13 +63,16 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxFormsPerNode") final Integer maxFormsPerNode,
                              @JsonProperty("approvalTimeout") final StroomDuration approvalTimeout,
                              @JsonProperty("keepAliveInterval") final StroomDuration keepAliveInterval,
-                             @JsonProperty("sessionRetention") final StroomDuration sessionRetention) {
+                             @JsonProperty("sessionRetention") final StroomDuration sessionRetention,
+                             @JsonProperty("maxSessionsPerUser") final Integer maxSessionsPerUser) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.formTimeout = Objects.requireNonNullElse(formTimeout, DEFAULT_FORM_TIMEOUT);
         this.maxFormsPerNode = Math.max(0, Objects.requireNonNullElse(maxFormsPerNode, DEFAULT_MAX_FORMS_PER_NODE));
         this.approvalTimeout = Objects.requireNonNullElse(approvalTimeout, DEFAULT_APPROVAL_TIMEOUT);
         this.keepAliveInterval = Objects.requireNonNullElse(keepAliveInterval, DEFAULT_KEEP_ALIVE_INTERVAL);
         this.sessionRetention = Objects.requireNonNullElse(sessionRetention, DEFAULT_SESSION_RETENTION);
+        this.maxSessionsPerUser = Math.max(1, Objects.requireNonNullElse(maxSessionsPerUser,
+                DEFAULT_MAX_SESSIONS_PER_USER));
     }
 
     /// @return True if the endpoint serves MCP clients. Each user also needs the Use MCP Tools permission.
@@ -89,8 +95,8 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
 
     /// @return The most forms that may wait for answers from MCP clients' users on a node at once.
     @JsonPropertyDescription("The most forms (MCP elicitation) that may wait for answers from MCP clients' users "
-                             + "on a node at once, as each holds a thread while it waits. Separate from the chat's "
-                             + "maxElicitationsPerNode.")
+                             + "on a node at once, as each holds a thread while it waits. One user may have at most "
+                             + "half of them waiting. Separate from the chat's maxElicitationsPerNode.")
     @JsonProperty("maxFormsPerNode")
     public int getMaxFormsPerNode() {
         return maxFormsPerNode;
@@ -122,6 +128,16 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
         return sessionRetention;
     }
 
+    /// @return The most MCP sessions one user may have open on a node at once.
+    @JsonPropertyDescription("The most MCP sessions one user may have open on a node at once. When a user starts "
+                             + "one more, their least recently used session that has no call running is ended "
+                             + "(clients often go away without ending theirs); if every one has a call running, "
+                             + "the new session is refused.")
+    @JsonProperty("maxSessionsPerUser")
+    public int getMaxSessionsPerUser() {
+        return maxSessionsPerUser;
+    }
+
     @Override
     public String toString() {
         return "McpEndpointConfig{" +
@@ -131,6 +147,7 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
                ", approvalTimeout=" + approvalTimeout +
                ", keepAliveInterval=" + keepAliveInterval +
                ", sessionRetention=" + sessionRetention +
+               ", maxSessionsPerUser=" + maxSessionsPerUser +
                '}';
     }
 }

@@ -63,13 +63,22 @@ class TestToolCategories {
 
     @Test
     void testAToolFromAnotherServerIsInTheCategoryItsServerNames() {
-        assertThat(McpToolset.categoryOf("search", null)).isEqualTo(AiToolCategory.SEARCH);
-        assertThat(McpToolset.categoryOf("Administration", AiToolCategory.SEARCH))
+        assertThat(McpToolset.categoryOf("search", null, true)).isEqualTo(AiToolCategory.SEARCH);
+        assertThat(McpToolset.categoryOf("Administration", AiToolCategory.SEARCH, true))
                 .isEqualTo(AiToolCategory.ADMINISTRATION);
         // A group that isn't a category gives way to the server's category, then Core.
-        assertThat(McpToolset.categoryOf("streams", AiToolCategory.PROCESSING)).isEqualTo(AiToolCategory.PROCESSING);
-        assertThat(McpToolset.categoryOf(null, AiToolCategory.CONTENT)).isEqualTo(AiToolCategory.CONTENT);
-        assertThat(McpToolset.categoryOf("streams", null)).isEqualTo(AiToolCategory.CORE);
+        assertThat(McpToolset.categoryOf("streams", AiToolCategory.PROCESSING, true))
+                .isEqualTo(AiToolCategory.PROCESSING);
+        assertThat(McpToolset.categoryOf(null, AiToolCategory.CONTENT, true)).isEqualTo(AiToolCategory.CONTENT);
+        assertThat(McpToolset.categoryOf("streams", null, true)).isEqualTo(AiToolCategory.CORE);
+    }
+
+    @Test
+    void testAnUntrustedServerCannotPutItsToolsInAnotherCategory() {
+        // Its _meta.group is only a hint: a server could name a category its users' policies grant for writing.
+        assertThat(McpToolset.categoryOf("Core", AiToolCategory.ADMINISTRATION, false))
+                .isEqualTo(AiToolCategory.ADMINISTRATION);
+        assertThat(McpToolset.categoryOf("search", null, false)).isEqualTo(AiToolCategory.CORE);
     }
 
     @Test
