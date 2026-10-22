@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -55,6 +56,8 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(scheduledProcessingPresenter);
         own(tableBuilderProcessingPresenter);
         own(streamingProcessingPresenter);
@@ -155,6 +158,11 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void addProcessingType(AnalyticProcessType processingType);
 

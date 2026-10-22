@@ -20,7 +20,6 @@ import stroom.analytics.client.presenter.AnalyticSettingsPresenter.AnalyticSetti
 import stroom.analytics.client.presenter.SettingsUiHandlers;
 import stroom.analytics.shared.AnalyticRuleLevel;
 import stroom.analytics.shared.AnalyticRuleStatus;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -38,7 +37,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticSettingsViewImpl
         extends ViewWithUiHandlers<SettingsUiHandlers>
-        implements AnalyticSettingsView, ReadOnlyChangeHandler {
+        implements AnalyticSettingsView {
 
     private final Widget widget;
 

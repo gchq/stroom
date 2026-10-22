@@ -16,7 +16,6 @@
 
 package stroom.index.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.client.presenter.IndexSettingsUiHandlers;
@@ -39,7 +38,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers>
-        implements IndexSettingsView, ReadOnlyChangeHandler {
+        implements IndexSettingsView {
 
     private final Widget widget;
 

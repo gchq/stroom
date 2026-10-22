@@ -17,7 +17,6 @@
 package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.PublishingSettingsView;
@@ -98,8 +97,12 @@ public class TraceSettingsPresenter
             SharedFileStoreSettingsView,
             PublishingSettingsView,
             RetentionSettingsView,
-            ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         Long getMaxSpansPerTrace();
 

@@ -16,7 +16,6 @@
 
 package stroom.http.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
 import stroom.http.client.presenter.HttpClientConfigUiHandlers;
 import stroom.util.shared.NullSafe;
@@ -37,7 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class HttpClientConfigViewImpl
         extends ViewWithUiHandlers<HttpClientConfigUiHandlers>
-        implements HttpClientConfigView, ReadOnlyChangeHandler {
+        implements HttpClientConfigView {
 
     private final Widget widget;
 

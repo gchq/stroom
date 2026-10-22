@@ -17,12 +17,16 @@
 package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.RangeKeySchema;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public interface RangeKeySchemaSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
+public interface RangeKeySchemaSettingsView extends HasUiHandlers<ChangeUiHandlers> {
+
+    /// Shows whether the user may change what this shows.
+    ///
+    /// @param readOnly Whether it may not be changed.
+    void onReadOnly(boolean readOnly);
 
     RangeKeySchema getKeySchema();
 

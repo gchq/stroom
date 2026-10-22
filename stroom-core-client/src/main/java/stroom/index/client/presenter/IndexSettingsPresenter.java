@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,6 +37,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.inject.Inject;
@@ -67,6 +67,8 @@ public class IndexSettingsPresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(pipelinePickerPresenter);
         this.pipelinePresenter = pipelinePickerPresenter;
         this.restFactory = restFactory;
@@ -184,7 +186,12 @@ public class IndexSettingsPresenter
                 .exec();
     }
 
-    public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {
+    public interface IndexSettingsView extends View, HasUiHandlers<IndexSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         int getMaxDocsPerShard();
 

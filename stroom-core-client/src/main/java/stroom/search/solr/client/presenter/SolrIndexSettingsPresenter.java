@@ -22,7 +22,6 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
@@ -35,6 +34,7 @@ import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -64,6 +64,8 @@ public class SolrIndexSettingsPresenter
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(editExpressionPresenter);
         own(pipelinePresenter);
         this.editExpressionPresenter = editExpressionPresenter;
@@ -162,7 +164,12 @@ public class SolrIndexSettingsPresenter
     }
 
     public interface SolrIndexSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
+            extends View, HasUiHandlers<SolrIndexSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         String getCollection();
 

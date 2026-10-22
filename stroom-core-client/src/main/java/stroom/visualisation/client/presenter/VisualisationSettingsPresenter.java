@@ -25,6 +25,7 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -45,6 +46,8 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
                                           final DocSelectionBoxPresenter scriptPresenter,
                                           final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(scriptPresenter);
         own(editorPresenter);
         this.scriptPresenter = scriptPresenter;
@@ -100,6 +103,11 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
 
 
     public interface VisualisationSettingsView extends View {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         TextBox getFunctionName();
 

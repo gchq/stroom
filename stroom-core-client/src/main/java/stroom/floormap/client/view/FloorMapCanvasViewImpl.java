@@ -17,7 +17,6 @@
 package stroom.floormap.client.view;
 
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
@@ -86,7 +85,7 @@ import java.util.function.Function;
 /// SVG `<g>` group.
 public class FloorMapCanvasViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements FloorMapCanvasView, ReadOnlyChangeHandler {
+        implements FloorMapCanvasView {
 
     /// The local display width of an image fact in SVG user-units. The height is
     /// derived from this and the image's aspect ratio; the fact's world-to-map
@@ -507,9 +506,6 @@ public class FloorMapCanvasViewImpl
     }
 
     /// {@inheritDoc} — no read-only visual changes required for the canvas.
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-    }
 
     /// Handles resize events. If the parent container has no size yet (e.g. during
     /// initial attachment), the call is deferred until layout completes.

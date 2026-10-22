@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,6 +45,8 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
                                                 final DuplicateManagementListPresenter
                                                         duplicateManagementListPresenter) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(duplicateManagementListPresenter);
         view.setUiHandlers(this);
         this.duplicateManagementListPresenter = duplicateManagementListPresenter;
@@ -78,6 +81,11 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
 
 
     public interface DuplicateManagementView extends View, HasUiHandlers<ChangeUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setRememberNotifications(boolean rememberNotifications);
 

@@ -19,11 +19,11 @@ package stroom.floormap.client.presenter;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.floormap.client.presenter.FloorMapEventStoreSettingsPresenter.FloorMapEventStoreSettingsView;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,6 +43,8 @@ public class FloorMapEventStoreSettingsPresenter
     public FloorMapEventStoreSettingsPresenter(final EventBus eventBus,
                                                final FloorMapEventStoreSettingsView view) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         view.setUiHandlers(this);
     }
 
@@ -54,7 +56,6 @@ public class FloorMapEventStoreSettingsPresenter
     @Override
     protected void onRead(final DocRef docRef,
                           final FloorMapEventStoreDoc doc) {
-        getView().onReadOnly(isReadOnly());
         getView().setSettings(doc.getSettings());
         // The resolved value, not the raw one: an unset document shows 24 hours rather than an empty
         // box, and saving then writes that 24 hours down explicitly. Adopting the default on first
@@ -72,7 +73,12 @@ public class FloorMapEventStoreSettingsPresenter
     }
 
     public interface FloorMapEventStoreSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<DirtyUiHandlers> {
+            extends View, HasUiHandlers<DirtyUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         AbstractPlanBSettings getSettings();
 

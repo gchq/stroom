@@ -16,7 +16,6 @@
 
 package stroom.pipeline.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
@@ -28,7 +27,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TextConverterSettingsViewImpl extends ViewImpl
-        implements TextConverterSettingsView, ReadOnlyChangeHandler {
+        implements TextConverterSettingsView {
 
     private final Widget widget;
 

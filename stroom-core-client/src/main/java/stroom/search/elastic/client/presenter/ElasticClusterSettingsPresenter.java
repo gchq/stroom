@@ -20,12 +20,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -50,6 +50,8 @@ public class ElasticClusterSettingsPresenter
             final ElasticClusterSettingsView view,
             final RestFactory restFactory) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
 
         this.restFactory = restFactory;
 
@@ -110,7 +112,12 @@ public class ElasticClusterSettingsPresenter
     }
 
     public interface ElasticClusterSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
+            extends View, HasUiHandlers<ElasticClusterSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         List<String> getConnectionUrls();
 

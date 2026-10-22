@@ -19,7 +19,6 @@ package stroom.analytics.client.view;
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.analytics.shared.AnalyticProcessType;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,7 +33,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticProcessingViewImpl
         extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
-        implements AnalyticProcessingView, ReadOnlyChangeHandler {
+        implements AnalyticProcessingView {
 
     private final Widget widget;
 

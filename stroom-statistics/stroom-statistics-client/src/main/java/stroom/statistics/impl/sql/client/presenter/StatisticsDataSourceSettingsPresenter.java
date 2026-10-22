@@ -18,12 +18,12 @@ package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.inject.Inject;
@@ -38,12 +38,13 @@ public class StatisticsDataSourceSettingsPresenter
     @Inject
     public StatisticsDataSourceSettingsPresenter(final EventBus eventBus, final StatisticsDataSourceSettingsView view) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         view.setUiHandlers(this);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final StatisticStoreDoc document) {
-        getView().onReadOnly(isReadOnly());
         getView().setStatisticType(document.getStatisticType());
         getView().getEnabled().setValue(document.isEnabled());
         getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));
@@ -62,7 +63,12 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     public interface StatisticsDataSourceSettingsView
-            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers>, ReadOnlyChangeHandler {
+            extends View, HasUiHandlers<StatisticsDataSourceSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         StatisticType getStatisticType();
 

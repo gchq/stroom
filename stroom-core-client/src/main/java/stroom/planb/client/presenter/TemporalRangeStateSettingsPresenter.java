@@ -17,7 +17,6 @@
 package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter.TemporalRangeStateSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
@@ -84,8 +83,11 @@ public class TemporalRangeStateSettingsPresenter
             HttpStoreSettingsView,
             TemporalRangeKeySchemaSettingsView,
             StateValueSchemaSettingsView,
-            ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
 
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
     }
 }

@@ -24,7 +24,6 @@ import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
@@ -32,6 +31,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -62,6 +62,8 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
             final CredentialClient credentialClient,
             final Provider<HttpClientConfigPresenter> httpClientSettingsPresenterProvider) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
         this.httpClientSettingsPresenterProvider = httpClientSettingsPresenterProvider;
@@ -138,7 +140,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
     public void onSetHttpClientConfiguration() {
         final HttpClientConfigPresenter httpClientSettingsPresenter =
                 ownUntilHidden(httpClientSettingsPresenterProvider.get());
-        httpClientSettingsPresenter.show(httpClientConfiguration, isReadOnly(), updated -> {
+        httpClientSettingsPresenter.show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();
@@ -147,7 +149,12 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
     }
 
     public interface OpenAIModelSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<OpenAIModelSettingsUiHandlers> {
+            extends View, HasUiHandlers<OpenAIModelSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         String getBaseUrl();
 

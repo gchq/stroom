@@ -16,7 +16,6 @@
 
 package stroom.feed.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -30,7 +29,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, ReadOnlyChangeHandler {
+public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView {
 
     private final Widget widget;
 

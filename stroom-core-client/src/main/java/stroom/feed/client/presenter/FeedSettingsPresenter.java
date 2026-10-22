@@ -33,6 +33,7 @@ import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
@@ -67,6 +68,8 @@ public class FeedSettingsPresenter
                                  final RestFactory restFactory,
                                  final FeedClient feedClient) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.uiConfigCache = uiConfigCache;
         this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
@@ -226,6 +229,11 @@ public class FeedSettingsPresenter
 
 
     public interface FeedSettingsView extends View {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         TextBox getClassification();
 

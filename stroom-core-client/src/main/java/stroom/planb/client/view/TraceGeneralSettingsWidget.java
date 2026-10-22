@@ -16,7 +16,6 @@
 
 package stroom.planb.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.ModelStringUtil;
 
@@ -32,7 +31,7 @@ import com.google.inject.Inject;
  * General settings that only apply to a Traces store, shown alongside
  * {@link GeneralSettingsWidget} so that widget stays store-type agnostic.
  */
-public class TraceGeneralSettingsWidget extends AbstractSettingsWidget implements ReadOnlyChangeHandler {
+public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
 
     private final Widget widget;
 
@@ -69,7 +68,9 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget implement
                 : maxSpansPerTrace));
     }
 
-    @Override
+    /// Shows whether the user may change the settings.
+    ///
+    /// @param readOnly Whether they may not be changed.
     public void onReadOnly(final boolean readOnly) {
         maxSpansPerTrace.setReadOnly(readOnly);
     }

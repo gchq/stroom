@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pathways.client.presenter.TracesSettingsPresenter.TracesSettingsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,7 +28,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TracesSettingsViewImpl
          extends ViewImpl
-         implements TracesSettingsView, ReadOnlyChangeHandler {
+         implements TracesSettingsView {
 
     private final Widget widget;
 
@@ -51,10 +50,6 @@ public class TracesSettingsViewImpl
         this.settings.setWidget(view.asWidget());
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-        // No-op (read-only state is propagated to child panels directly)
-    }
 
     public interface Binder extends UiBinder<Widget, TracesSettingsViewImpl> {
 

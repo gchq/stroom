@@ -17,7 +17,6 @@
 package stroom.floormap.client.view;
 
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 
@@ -41,7 +40,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 /// `FloorMapSettingsViewImpl.ui.xml`.
 public class FloorMapSettingsViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements FloorMapSettingsView, ReadOnlyChangeHandler {
+        implements FloorMapSettingsView {
 
     private final Widget widget;
 

@@ -18,7 +18,6 @@ package stroom.document.asset.client.view;
 
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,7 +30,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DocumentAssetViewImpl extends ViewImpl
-        implements DocumentAssetView, ReadOnlyChangeHandler {
+        implements DocumentAssetView {
 
     private final Widget widget;
     // Shown in the editor's place while no file is selected, so the area says what it is for
@@ -52,11 +51,6 @@ public class DocumentAssetViewImpl extends ViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-
     }
 
     @Override

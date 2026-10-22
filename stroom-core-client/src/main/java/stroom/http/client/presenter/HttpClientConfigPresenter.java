@@ -16,11 +16,11 @@
 
 package stroom.http.client.presenter;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpTlsConfig;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -41,7 +41,6 @@ public class HttpClientConfigPresenter
 
     private final Provider<HttpTlsConfigPresenter> httpTlsConfigPresenterProvider;
     private HttpTlsConfig httpTlsConfig;
-    private boolean readOnly;
 
     @Inject
     public HttpClientConfigPresenter(
@@ -49,16 +48,15 @@ public class HttpClientConfigPresenter
             final HttpClientConfigView view,
             final Provider<HttpTlsConfigPresenter> httpTlsConfigPresenterProvider) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.httpTlsConfigPresenterProvider = httpTlsConfigPresenterProvider;
         view.setUiHandlers(this);
     }
 
     public void show(final HttpClientConfig httpClientConfig,
-                     final boolean readOnly,
                      final Consumer<HttpClientConfig> consumer) {
-        this.readOnly = readOnly;
         read(httpClientConfig);
-        getView().onReadOnly(readOnly);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .modal()
@@ -78,7 +76,7 @@ public class HttpClientConfigPresenter
     @Override
     public void onSetHttpTlsConfig() {
         final HttpTlsConfigPresenter httpTlsConfigPresenter = ownUntilHidden(httpTlsConfigPresenterProvider.get());
-        httpTlsConfigPresenter.show(httpTlsConfig, readOnly, updated -> {
+        httpTlsConfigPresenter.show(httpTlsConfig, updated -> {
             if (!Objects.equals(httpTlsConfig, updated)) {
                 httpTlsConfig = updated;
             }
@@ -123,7 +121,12 @@ public class HttpClientConfigPresenter
     }
 
     public interface HttpClientConfigView
-            extends View, Focus, ReadOnlyChangeHandler, HasUiHandlers<HttpClientConfigUiHandlers> {
+            extends View, Focus, HasUiHandlers<HttpClientConfigUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setTimeout(SimpleDuration timeout);
 

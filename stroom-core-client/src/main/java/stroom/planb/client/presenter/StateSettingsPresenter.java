@@ -17,7 +17,6 @@
 package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.HttpStoreSettingsView;
@@ -81,8 +80,11 @@ public class StateSettingsPresenter
             HttpStoreSettingsView,
             StateKeySchemaSettingsView,
             StateValueSchemaSettingsView,
-            ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
 
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
     }
 }

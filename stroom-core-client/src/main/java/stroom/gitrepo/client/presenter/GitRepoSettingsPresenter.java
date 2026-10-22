@@ -24,7 +24,6 @@ import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.shared.GitRepoDoc;
@@ -35,6 +34,7 @@ import stroom.item.client.SelectionBox;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -99,6 +99,8 @@ public class GitRepoSettingsPresenter
                                     final CredentialClient credentialClient,
                                     final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(commitDialog);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
@@ -188,7 +190,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
-        ownUntilHidden(httpClientConfigPresenterProvider.get()).show(httpClientConfiguration, isReadOnly(), updated -> {
+        ownUntilHidden(httpClientConfigPresenterProvider.get()).show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();
@@ -355,7 +357,12 @@ public class GitRepoSettingsPresenter
     }
 
     public interface GitRepoSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
+            extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         SelectionBox<Credential> getCredentialSelectionBox();
 

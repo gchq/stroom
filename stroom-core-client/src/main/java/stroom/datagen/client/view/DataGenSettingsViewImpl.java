@@ -18,7 +18,6 @@ package stroom.datagen.client.view;
 
 import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,7 +34,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
  */
 public class DataGenSettingsViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements DataGenSettingsView, ReadOnlyChangeHandler {
+        implements DataGenSettingsView {
 
     private final Widget widget;
 
@@ -65,9 +64,6 @@ public class DataGenSettingsViewImpl
         templateEditor.setWidget(view.asWidget());
     }
 
-    @Override
-    public void onReadOnly(final boolean readOnly) {
-    }
 
 
     // --------------------------------------------------------------------------------

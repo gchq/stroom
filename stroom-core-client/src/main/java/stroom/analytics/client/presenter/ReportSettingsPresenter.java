@@ -28,6 +28,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -47,6 +48,8 @@ public class ReportSettingsPresenter
                                    final UiConfigCache uiConfigCache,
                                    final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view, errorFeedPresenter, uiConfigCache, configDefaultSetter);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(aiSummaryModelPresenter);
         this.aiSummaryModelPresenter = aiSummaryModelPresenter;
 
@@ -119,6 +122,11 @@ public class ReportSettingsPresenter
 
 
     public interface ReportSettingsView extends SettingsView, Focus {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         DownloadSearchResultFileType getFileType();
 

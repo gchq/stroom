@@ -16,7 +16,6 @@
 
 package stroom.search.solr.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
@@ -44,7 +43,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSettingsUiHandlers>
-        implements SolrIndexSettingsView, ReadOnlyChangeHandler {
+        implements SolrIndexSettingsView {
 
     private final Widget widget;
 

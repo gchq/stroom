@@ -97,10 +97,6 @@ public abstract class DocPresenter<V extends View, D>
         this.entity = document;
         setDirty(false);
         documentContext.set(docRef);
-
-        if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
-            changeHandler.onReadOnly(isReadOnly());
-        }
         if (docRef != null && document != null) {
             onRead(docRef, document);
         }

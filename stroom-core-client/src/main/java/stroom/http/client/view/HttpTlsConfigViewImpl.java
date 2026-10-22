@@ -17,7 +17,6 @@
 package stroom.http.client.view;
 
 import stroom.credentials.shared.Credential;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
 
 public class HttpTlsConfigViewImpl
         extends ViewImpl
-        implements HttpTlsConfigView, ReadOnlyChangeHandler {
+        implements HttpTlsConfigView {
 
     private final Widget widget;
 

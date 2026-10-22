@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -31,6 +30,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -63,6 +63,8 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
             final RestFactory restFactory,
             final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(clusterPresenter);
         own(vectorGenerationModelPresenter);
         own(rerankModelPresenter);
@@ -163,7 +165,12 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
     }
 
     public interface ElasticIndexSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
+            extends View, HasUiHandlers<ElasticIndexSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setClusterView(final View view);
 

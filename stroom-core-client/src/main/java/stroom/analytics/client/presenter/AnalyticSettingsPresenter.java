@@ -25,6 +25,7 @@ import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -40,6 +41,8 @@ public class AnalyticSettingsPresenter
                                      final UiConfigCache uiConfigCache,
                                      final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view, errorFeedPresenter, uiConfigCache, configDefaultSetter);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
     }
 
     @Override
@@ -65,6 +68,11 @@ public class AnalyticSettingsPresenter
 
 
     public interface AnalyticSettingsView extends SettingsView, Focus {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         AnalyticRuleLevel getLevel();
 

@@ -18,7 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
@@ -26,6 +25,7 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,6 +44,8 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
                                      final DocSelectionBoxPresenter traceStorePresenter,
                                      final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         own(traceStorePresenter);
         own(feedPresenter);
         this.traceStorePresenter = traceStorePresenter;
@@ -94,7 +96,12 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
     }
 
     public interface PathwaysSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<PathwaysSettingsUiHandlers> {
+            extends View, HasUiHandlers<PathwaysSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setTraceStoreView(View view);
 

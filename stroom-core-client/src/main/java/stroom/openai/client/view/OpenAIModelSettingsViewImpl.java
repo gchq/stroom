@@ -17,7 +17,6 @@
 package stroom.openai.client.view;
 
 import stroom.credentials.shared.Credential;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
@@ -37,7 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class OpenAIModelSettingsViewImpl
         extends ViewWithUiHandlers<OpenAIModelSettingsUiHandlers>
-        implements OpenAIModelSettingsView, ReadOnlyChangeHandler {
+        implements OpenAIModelSettingsView {
 
     private final Widget widget;
 

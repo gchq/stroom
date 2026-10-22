@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
@@ -36,7 +35,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers>
-        implements ElasticIndexSettingsView, ReadOnlyChangeHandler {
+        implements ElasticIndexSettingsView {
 
     private final Widget widget;
 

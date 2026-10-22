@@ -939,6 +939,7 @@ Progress:
   Presenters stopped passing their task monitor on to the presenters they own (ten overrides and twelve `child.setTaskMonitorFactory(this)` calls); plain models (query, search and selection list models, completion providers) are given their presenter once, in its constructor, so they show what it would.
   `setTaskMonitorFactory` stays on `MyPresenterWidget` and `MyPresenter` for a presenter given one of its own (e.g. a refresh button's spinner), and `MyPresenter` now falls back to its context's, as `MyPresenterWidget` does (`TestMyPresenter`).
   A dashboard component's settings dialog is now owned by its component (it was never released).
+- Done (22 October 2026), `ReadOnlyChangeHandler` is gone. `DocPresenter.read` no longer calls a view's `onReadOnly` behind its presenter's back: each view that shows read-only declares `onReadOnly` itself, and its presenter calls `watch(Contexts.READ_ONLY, getView()::onReadOnly)` (19 settings presenters, and the two HTTP dialogs, which lost their `readOnly` argument and follow the document that opens them). Four views whose `onReadOnly` did nothing no longer have one. Every `onReadOnly` only set its fields' state from the flag, so being told when the presenter is connected, and on a change, rather than before each read, changes nothing.
 
 ### Phase 6: Remove GWTP
 

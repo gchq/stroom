@@ -17,7 +17,6 @@
 package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.BucketGranularity;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -27,7 +26,12 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
  * How and when a store's data becomes queryable: the width of the buckets queries read, and the
  * longest an incomplete record waits before it is published with whatever it has.
  */
-public interface PublishingSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
+public interface PublishingSettingsView extends HasUiHandlers<ChangeUiHandlers> {
+
+    /// Shows whether the user may change what this shows.
+    ///
+    /// @param readOnly Whether it may not be changed.
+    void onReadOnly(boolean readOnly);
 
     BucketGranularity getGranularity();
 

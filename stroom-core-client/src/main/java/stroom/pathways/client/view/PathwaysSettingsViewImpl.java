@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.client.presenter.PathwaysSettingsUiHandlers;
 import stroom.util.shared.time.SimpleDuration;
@@ -37,7 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class PathwaysSettingsViewImpl
         extends ViewWithUiHandlers<PathwaysSettingsUiHandlers>
-        implements PathwaysSettingsView, ReadOnlyChangeHandler {
+        implements PathwaysSettingsView {
 
     private final Widget widget;
 

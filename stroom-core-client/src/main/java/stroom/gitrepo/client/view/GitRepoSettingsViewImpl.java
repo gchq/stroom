@@ -17,7 +17,6 @@
 package stroom.gitrepo.client.view;
 
 import stroom.credentials.shared.Credential;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.item.client.SelectionBox;

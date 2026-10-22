@@ -17,7 +17,7 @@
 package stroom.planb.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -25,7 +25,7 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public abstract class AbstractPlanBSettingsPresenter<V extends View>
+public abstract class AbstractPlanBSettingsPresenter<V extends View & GeneralSettingsView>
         extends MyPresenterWidget<V>
         implements ChangeUiHandlers {
 
@@ -51,9 +51,7 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
 
     private void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
-            changeHandler.onReadOnly(readOnly);
-        }
+        getView().onReadOnly(readOnly);
     }
 
     @Override

@@ -19,6 +19,7 @@ package stroom.xmlschema.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -35,6 +36,8 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
     @Inject
     public XMLSchemaSettingsPresenter(final EventBus eventBus, final XMLSchemaSettingsView view) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
     }
 
     @Override
@@ -72,6 +75,11 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
     }
 
     public interface XMLSchemaSettingsView extends View {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         TextBox getNamespaceURI();
 

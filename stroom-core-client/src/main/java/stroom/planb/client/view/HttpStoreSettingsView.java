@@ -17,7 +17,6 @@
 package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.SnapshotSettings;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -26,7 +25,12 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
  * The settings of a store whose parts are transferred between nodes over HTTP, mirroring
  * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
  */
-public interface HttpStoreSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
+public interface HttpStoreSettingsView extends HasUiHandlers<ChangeUiHandlers> {
+
+    /// Shows whether the user may change what this shows.
+    ///
+    /// @param readOnly Whether it may not be changed.
+    void onReadOnly(boolean readOnly);
 
     SnapshotSettings getSnapshotSettings();
 

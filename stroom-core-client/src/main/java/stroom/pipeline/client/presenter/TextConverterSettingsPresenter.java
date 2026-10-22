@@ -22,6 +22,7 @@ import stroom.item.client.SelectionBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,6 +34,8 @@ public class TextConverterSettingsPresenter
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
 
         view.getConverterType().addItem(TextConverterType.NONE);
         view.getConverterType().addItem(TextConverterType.DATA_SPLITTER);
@@ -58,6 +61,11 @@ public class TextConverterSettingsPresenter
     }
 
     public interface TextConverterSettingsView extends View {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         SelectionBox<TextConverterDoc.TextConverterType> getConverterType();
     }

@@ -18,7 +18,6 @@ package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
@@ -299,7 +298,12 @@ public class PlanBSettingsPresenter
     }
 
     public interface PlanBSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<StateTypeChangeUiHandlers> {
+            extends View, HasUiHandlers<StateTypeChangeUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         StateType getStateType();
 

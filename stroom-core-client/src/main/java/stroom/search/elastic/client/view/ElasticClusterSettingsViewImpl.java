@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
@@ -41,7 +40,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticClusterSettingsUiHandlers>
-        implements ElasticClusterSettingsView, ReadOnlyChangeHandler {
+        implements ElasticClusterSettingsView {
 
     private final Widget widget;
 

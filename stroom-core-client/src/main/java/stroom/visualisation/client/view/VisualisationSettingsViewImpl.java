@@ -16,7 +16,6 @@
 
 package stroom.visualisation.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,7 +28,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class VisualisationSettingsViewImpl extends ViewImpl
-        implements VisualisationSettingsView, ReadOnlyChangeHandler {
+        implements VisualisationSettingsView {
 
     private final Widget widget;
 

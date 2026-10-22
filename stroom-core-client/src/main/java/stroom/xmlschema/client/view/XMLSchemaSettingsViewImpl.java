@@ -16,7 +16,6 @@
 
 package stroom.xmlschema.client.view;
 
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 
@@ -27,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSettingsView, ReadOnlyChangeHandler {
+public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSettingsView {
 
     private final Widget widget;
 

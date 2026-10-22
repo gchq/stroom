@@ -18,7 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pathways.client.presenter.TracesSettingsPresenter.TracesSettingsView;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.client.presenter.PlanBSettingsPresenter;
@@ -64,7 +63,6 @@ public class TracesSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final TracesDoc doc) {
-        getView().onReadOnly(isReadOnly());
         planBSettingsPresenter.readSettings(doc.getSettings(), StateType.TRACE);
         planBSettingsPresenter.setSharedFileStoreLocked(doc.hasSharedFileStoreData());
     }
@@ -77,7 +75,7 @@ public class TracesSettingsPresenter
                 .build();
     }
 
-    public interface TracesSettingsView extends View, ReadOnlyChangeHandler {
+    public interface TracesSettingsView extends View {
 
         void setSettingsView(View view);
     }

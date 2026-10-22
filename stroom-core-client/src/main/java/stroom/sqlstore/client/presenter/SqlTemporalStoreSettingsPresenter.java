@@ -20,9 +20,9 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreResource;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -44,13 +44,14 @@ public class SqlTemporalStoreSettingsPresenter
             final SqlTemporalStoreSettingsView view,
             final RestFactory restFactory) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final SqlTemporalStoreDoc doc) {
-        getView().onReadOnly(isReadOnly());
         updateCount(docRef);
     }
 
@@ -87,7 +88,12 @@ public class SqlTemporalStoreSettingsPresenter
     }
 
     public interface SqlTemporalStoreSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<SqlTemporalStoreSettingsUiHandlers> {
+            extends View, HasUiHandlers<SqlTemporalStoreSettingsUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setCount(long count);
     }

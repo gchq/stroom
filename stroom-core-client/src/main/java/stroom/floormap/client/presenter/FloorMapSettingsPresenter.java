@@ -21,7 +21,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
@@ -40,6 +39,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
@@ -125,6 +125,8 @@ public class FloorMapSettingsPresenter
                                      final FloorMapSettingsView view,
                                      final Provider<DocSelectionBoxPresenter> docSelectionBoxPresenterProvider) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
 
         view.setUiHandlers(this);
 
@@ -615,7 +617,12 @@ public class FloorMapSettingsPresenter
     ///
     /// Provides slots for the events/facts store selection widgets, the value
     /// format dropdown, and the value schema grid with its toolbar.
-    public interface FloorMapSettingsView extends View, HasUiHandlers<DirtyUiHandlers>, ReadOnlyChangeHandler {
+    public interface FloorMapSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         /// Sets the view widget for the Events Store document-selection box.
         ///

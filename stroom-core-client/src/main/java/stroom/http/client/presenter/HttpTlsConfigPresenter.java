@@ -20,11 +20,11 @@ import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
-import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpTlsConfig;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -49,6 +49,8 @@ public class HttpTlsConfigPresenter
             final HttpTlsConfigView view,
             final CredentialClient credentialClient) {
         super(eventBus, view);
+        // Read only as its document is
+        watch(Contexts.READ_ONLY, getView()::onReadOnly);
         this.credentialClient = credentialClient;
 
         final CredentialListModel keyStoreListModel = new CredentialListModel(
@@ -67,10 +69,8 @@ public class HttpTlsConfigPresenter
     }
 
     public void show(final HttpTlsConfig httpTlsConfiguration,
-                     final boolean readOnly,
                      final Consumer<HttpTlsConfig> consumer) {
         read(httpTlsConfiguration);
-        getView().onReadOnly(readOnly);
 //        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -136,7 +136,12 @@ public class HttpTlsConfigPresenter
     }
 
     public interface HttpTlsConfigView
-            extends View, Focus, ReadOnlyChangeHandler {
+            extends View, Focus {
+
+        /// Shows whether the user may change what this shows.
+        ///
+        /// @param readOnly Whether it may not be changed.
+        void onReadOnly(boolean readOnly);
 
         void setProtocol(String protocol);
 
