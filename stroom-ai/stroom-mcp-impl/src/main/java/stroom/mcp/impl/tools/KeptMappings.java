@@ -18,7 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.mcp.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.pipeline.shared.XsltDoc;
 
 import jakarta.inject.Inject;
