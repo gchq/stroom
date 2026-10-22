@@ -39,7 +39,7 @@ export function readColumn(page, name) {
     const strip = (t) => norm(t).replace(/\s+\d+$/, '');
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    for (const g of scope.querySelectorAll('.dataGridWidget, [role=grid]')) {
+    for (const g of scope.querySelectorAll('.data-grid, [role=grid]')) {
       if (!(g.offsetWidth > 0)) continue;
       const heads = [...g.querySelectorAll('thead th, [role=columnheader]')];
       const idx = heads.findIndex((h) => strip(h.querySelector('.column-label')?.textContent ?? h.textContent) === wanted);

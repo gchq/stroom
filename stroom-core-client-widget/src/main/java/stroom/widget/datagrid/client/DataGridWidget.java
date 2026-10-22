@@ -1979,6 +1979,10 @@ public class DataGridWidget<R> extends Widget
                 e -> Scheduler.get().scheduleDeferred(this::updateHasFocus)));
         nativeListeners.add(DataGridDom.addListener(getElement(), BrowserEvents.BLUR, true,
                 this::dispatchEvent));
+        // A cell's field changing as it is typed in, pasted into or cleared, which a cell that keeps
+        // its field's text when its row is drawn again (ValueSpinnerCell) records
+        nativeListeners.add(DataGridDom.addListener(getElement(), "input", false,
+                this::dispatchEvent));
         scrollbars.attach();
         columnInteractions.attach();
         GlobalResizeObserver.addListener(getElement(), element -> onResize());

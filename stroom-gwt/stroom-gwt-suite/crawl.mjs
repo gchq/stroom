@@ -172,7 +172,7 @@ async function clickAffordance(label, timeout = 3000) {
   const candidates = [
     // A sortable column header: match the header cell by its name, without the sort index.
     ...(isColumnHeader(label)
-      ? [page.locator('.dataGridHeader, [role=columnheader], th').filter({ hasText: columnName(label) })]
+      ? [page.locator('[role=columnheader], th').filter({ hasText: columnName(label) })]
       : []),
     page.locator(`button[title="${label}"]:not([disabled])`),
     page.locator(`button[aria-label="${label}"]:not([disabled])`),
@@ -339,7 +339,7 @@ async function navigate(node) {
       await waitUntil(page, async () => !(await menuIsOpen()), { budget: 1_500, label: `leaf:${step.leaf}`, kind: 'screen' })
         .catch(() => {});
       await waitForStableCount(page, () => page.evaluate(() =>
-        document.querySelectorAll('.dataGridRow, .dataGridCell, tr').length),
+        document.querySelectorAll('.data-grid__row, .data-grid__cell, tr').length),
       { budget: 1_500, poll: 150, stableFor: 2, label: `content:${step.leaf}`, kind: 'content', allowZero: true })
         .catch(() => {});
       // Leave no menu behind. A screen reached through the main menu is the screen, not the screen
@@ -511,10 +511,10 @@ async function survey() {
   // grid would be more precise and would also make every incidental re-render look like a change.
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.dataGridWidget')]
+    return [...document.querySelectorAll('.data-grid')]
       .filter((g) => g.offsetWidth > 0)
       .map((g) => {
-        const rows = [...g.querySelectorAll('tbody tr')];
+        const rows = [...g.querySelectorAll('[role=row][data-row]')];
         return { rows: rows.length, head: rows.slice(0, 3).map((r) => norm(r.textContent).slice(0, 80)) };
       });
   }).catch(() => []);

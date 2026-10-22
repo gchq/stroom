@@ -73,7 +73,10 @@ final class InteractiveCellGrids {
     // The row a tick can't be changed for: its change is refused and the rows are sent again
     static final String LOCKED = "David Brown";
 
-    private static final int SPINNER_POLL_MILLIS = 250;
+    // Often enough that a poll comes between every step of the spinner's play (clearing, typing,
+    // Enter), as one did now and then under load when it was 250ms: the row drawn again lost the
+    // cleared field's text, and the typed value wasn't committed
+    private static final int SPINNER_POLL_MILLIS = 10;
 
     private InteractiveCellGrids() {
         // Static utility

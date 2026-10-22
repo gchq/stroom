@@ -50,7 +50,7 @@ import { clickEditorTab } from './lib/tabs.mjs';
 async function restoreTabContext(page, home) {
   if (home) { await clickEditorTab(page, home, { timeout: 5_000 }).catch(() => {}); await page.waitForTimeout(1_200); }
   const at = await page.evaluate(() => {
-    const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=row]')]
+    const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
       .find((e) => e.offsetHeight > 0 && e.textContent.trim());
     if (!row) return null;
     const cell = [...row.querySelectorAll('td, [role=gridcell]')]

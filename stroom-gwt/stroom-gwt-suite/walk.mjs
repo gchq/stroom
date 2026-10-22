@@ -331,7 +331,7 @@ const TITLED = 'titled: ';
 const ENTRY = 'entry: ';
 const ENTRY_TYPES = { comment: '4' };
 /** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: a query result's link
- *  (`.dataGridWidget tbody u[link]`), whose text is the row's data. */
+ *  (`.data-grid [role=gridcell] u[link]`), whose text is the row's data. */
 const SELECTOR = 'selector: ';
 async function clickAffordance(label, timeout = 3000) {
   if (label.startsWith(COLUMN_MENU)) return clickDesignHeader(label.slice(COLUMN_MENU.length));
@@ -409,12 +409,12 @@ async function clickAffordance(label, timeout = 3000) {
   const top = (await popups.count().catch(() => 0)) ? popups.last() : null;
   const within = (root) => [
     ...(isColumnHeader(label)
-      ? [root.locator('.dataGridHeader, [role=columnheader], th').filter({ hasText: columnName(label) })]
+      ? [root.locator('[role=columnheader], th').filter({ hasText: columnName(label) })]
       : []),
     root.locator(`button[title="${label}"]:not([disabled])`),
     root.locator(`button[aria-label="${label}"]:not([disabled])`),
     root.locator('.Button, [role=button]').filter({ hasText: new RegExp(`^\\s*(${esc})(\\s*\\1)?\\s*$`) }),
-    ...(isColumnHeader(label) ? [] : [root.locator('.dataGridHeader, [role=columnheader], th')
+    ...(isColumnHeader(label) ? [] : [root.locator('[role=columnheader], th')
       .filter({ hasText: new RegExp(`^\\s*${esc}(\\s+\\d+)?\\s*$`) })]),
   ];
   const candidates = [...(top ? within(top) : []), ...within(page)];
@@ -442,7 +442,7 @@ async function clickAffordance(label, timeout = 3000) {
  * default — MyDataGrid's default — so its header menu (Filter, Format, Conditional Formatting, …)
  * opens on any results table with no mode to enter.
  */
-let columnScope = { selector: '.dashboard-panel .dataGridWidget th, .dashboard-panel [role=columnheader]', design: true };
+let columnScope = { selector: '.dashboard-panel [role=columnheader]', design: true };
 async function readDesignHeaders() {
   return page.evaluate(({ selector, design, designOn }) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
@@ -533,9 +533,9 @@ async function survey() {
   // finds them.
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    // GWT's `.dataGridWidget` table, with an ARIA grid (`role=grid`, whose header is
-    // `[role=row][aria-rowindex="1"]` and whose data rows follow it) as a fallback.
-    return [...document.querySelectorAll('.dataGridWidget, [role=grid]')]
+    // The data grid (`.data-grid`, a `grid` or a `treegrid`, whose header is
+    // `[role=row][aria-rowindex="1"]` and whose data rows follow it), or another ARIA grid.
+    return [...document.querySelectorAll('.data-grid, [role=grid]')]
       .filter((g) => g.offsetWidth > 0)
       .map((g) => {
         const rows = [...g.querySelectorAll('tbody tr, [role=row]:not([aria-rowindex="1"])')];
@@ -1075,7 +1075,7 @@ async function driveStep(step) {
     await waitUntil(page, async () => !(await menuIsOpen()), { budget: 1_500, label: `leaf:${step.leaf}`, kind: 'screen' })
       .catch(() => {});
     await waitForStableCount(page, () => page.evaluate(() =>
-      document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+      document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: `content:${step.leaf}`, kind: 'content', allowZero: true })
       .catch(() => {});
     // Only if a menu is still open: `dismissMenus` presses Escape first, and a leaf that opens a
@@ -1113,7 +1113,7 @@ async function driveStep(step) {
       }
     } else if (step.opens === 'changed') {
       await waitForStableCount(page, () => page.evaluate(() =>
-        document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+        document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
       { budget: 1_000, poll: 150, stableFor: 2, label: `button:${step.label}`, kind: 'content', allowZero: true })
         .catch(() => {});
     } else {
@@ -1188,7 +1188,7 @@ async function driveStep(step) {
       const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const wanted = text ? new RegExp(text) : null;
-      for (const g of scope.querySelectorAll('.dataGridWidget, [role=grid]')) {
+      for (const g of scope.querySelectorAll('.data-grid, [role=grid]')) {
         if (!(g.offsetWidth > 0)) continue;
         // `match` is a selector the wanted row must contain — `.svg-image__users` is a GROUP row on
         // the Users screen, where the first row is the user `admin` and Edit stays disabled.
@@ -1219,7 +1219,7 @@ async function driveStep(step) {
     // And let the grid finish arriving: that same dialog repaints when its LAST node answers, and a
     // selection made on the first paint was gone by the survey (Store Settings still disabled).
     await waitForStableCount(page, () => page.evaluate(() =>
-      document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]').length),
+      document.querySelectorAll('.data-grid [role=row][data-row]').length),
     { budget: 2_000, poll: 300, stableFor: 3, label: 'select-row:settle', kind: 'content', allowZero: true }).catch(() => {});
     cell = (await findCell()) ?? cell;
     await page.mouse.click(cell.x, cell.y);
@@ -1232,7 +1232,7 @@ async function driveStep(step) {
     const box = await page.evaluate(() => {
       const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const tick = [...scope.querySelectorAll('.dataGridWidget tbody tr .tick-box--cell, [role=grid] [role=row] .tick-box--cell')].find((e) => e.offsetWidth > 0);
+      const tick = [...scope.querySelectorAll('.data-grid [role=row][data-row] .tick-box--cell')].find((e) => e.offsetWidth > 0);
       if (!tick) return null;
       const r = tick.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1249,7 +1249,7 @@ async function driveStep(step) {
     const box = await page.evaluate((nth) => {
       const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const rows = [...scope.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
+      const rows = [...scope.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
       const row = rows[nth ?? 0];
       const cell = row && [...row.querySelectorAll('.svgCell-button')].find((c) => c.offsetWidth > 0);
       if (!cell) return null;
@@ -1321,7 +1321,7 @@ async function driveStep(step) {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       // ON SCREEN: a popup is laid out off-viewport (−956,−938) before it is positioned, and another
       // SelectionList (the query help pane) may hold the same text; `offsetWidth > 0` passes both.
-      const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
+      const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
         .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
       if (!row) return null;
       const r = row.getBoundingClientRect();
@@ -1340,7 +1340,7 @@ async function driveStep(step) {
     // aimed at the icon: `QueryTableColumnsManager.onShowMenu` looks at the event's target.
     const box = await page.evaluate(([wanted, child]) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const th = [...document.querySelectorAll('.dataGridWidget th, [role=columnheader]')]
+      const th = [...document.querySelectorAll('[role=columnheader]')]
         .find((e) => e.offsetWidth > 30 && norm(e.querySelector('.column-label')?.textContent ?? e.textContent) === wanted);
       const el = th?.querySelector(child);
       if (!el) return null;
@@ -1706,7 +1706,7 @@ if (DIRECTED.includes('results')) {
   const withResults = run('from "Example Index" limit 20 select StreamId, EventTime, UserId');
   const annotations = run('from "Annotations" select Id, Title, Status');
   seeds.push(
-    { kind: 'post-action', presenter: 'QueryResultTablePresenter', columnMenus: { selector: '.dataGridWidget th, [role=columnheader]', design: false },
+    { kind: 'post-action', presenter: 'QueryResultTablePresenter', columnMenus: { selector: '[role=columnheader]', design: false },
       path: ['Query (document)', 'after query with results'], route: withResults },
     { kind: 'post-action', presenter: 'QueryResultTablePresenter', seedDepth: 3,
       path: ['Query (document)', 'after query with results (toolbar)'], route: withResults },
@@ -1744,7 +1744,7 @@ if (DIRECTED.includes('cf')) {
     { via: 'set-ace', text: 'from "Example Index" limit 20 select StreamId, EventTime, UserId', post: true, opens: 'changed' },
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
   ];
-  const scope = { selector: '.dataGridWidget th, [role=columnheader]', design: false };
+  const scope = { selector: '[role=columnheader]', design: false };
   seeds.push(
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId', 'Edit Conditional Formatting for Table', 'New Formatting Rule', 'after Formatting Type = Custom'],
@@ -1821,7 +1821,7 @@ if (DIRECTED.includes('datalink')) {
     { via: 'set-ace', text: "from \"Example Index\" limit 5 select StreamId, data('Open', StreamId, 1, 1, 1, 1, 10, 1, 'preview', 'tab') as Link", post: true, opens: 'changed' },
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
   ];
-  const link = `${SELECTOR}.dataGridWidget tbody u[link]`;
+  const link = `${SELECTOR}.data-grid [role=gridcell] u[link]`;
   seeds.push({ kind: 'post-action', presenter: 'QueryResultTablePresenter', seedDepth: 3,
     path: ['Query (document)', 'after query with data links'], route: linked, extra: [link] });
   // The tab the link opens, walked as an EDITOR and named — the same shape as the `stream` seed's
@@ -2747,7 +2747,7 @@ async function walk(node, state, arrivedAt) {
         // pop on it then "failed". Wait for READY, not PRESENT — the rule driveStep already applies.
         if (result.outcome === 'changed') {
           await waitForStableCount(page, () => page.evaluate(() =>
-            document.querySelectorAll('.dataGridRow, .dataGridCell, tr, [role=row]').length),
+            document.querySelectorAll('.data-grid__row, .data-grid__cell, tr, [role=row]').length),
           { budget: 1_500, poll: 150, stableFor: 2, label: `content:${label}`, kind: 'content', allowZero: true })
             .catch(() => {});
           after = await settledSurvey({ lead: 0 });
@@ -3146,7 +3146,7 @@ async function walk(node, state, arrivedAt) {
     // ticking a row is what enables the BATCH buttons — Download, Restore, Delete and Process
     // Selected Streams, `Show Summary of Selected Streams` (MetaPresenter's, all unreached in the handler inventory) — while a
     // click on the row selects it for the preview. Same shape as above, on the tick.
-    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr .tick-box--cell, [role=grid] [role=row] .tick-box--cell')]
+    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.data-grid [role=row][data-row] .tick-box--cell')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);
     if (hasTick) {
       const tick = { kind: 'post-action', path: [...node.path, `after tick row in ${node.path.at(-1)}`],
@@ -3183,7 +3183,7 @@ for (const seed of seeds) {
   const t0 = Date.now();
   // Where this seed's column headers are, BEFORE the route is driven: a route may itself click one.
   columnScope = typeof seed.columnMenus === 'object' ? seed.columnMenus
-    : seed.columnScope ?? { selector: '.dashboard-panel .dataGridWidget th, .dashboard-panel [role=columnheader]', design: true };
+    : seed.columnScope ?? { selector: '.dashboard-panel [role=columnheader]', design: true };
   try {
     await resync(seed);
   } catch (e) {

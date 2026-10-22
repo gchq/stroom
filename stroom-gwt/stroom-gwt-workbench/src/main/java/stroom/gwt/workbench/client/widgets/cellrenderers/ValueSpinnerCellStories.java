@@ -116,15 +116,35 @@ public final class ValueSpinnerCellStories {
                     play.expect(field(play, "Bravo")).toHaveValue(String.valueOf(MIN));
                     play.expect(onChange).toHaveBeenLastCalledWith("Bravo=" + MIN);
                 })
-                // A typed value is made into a number within the bounds when committed
-                .story("TypedValueKeptWithinBounds", ValueSpinnerCellStories::grid)
+                // A typed value that isn't a whole number within the bounds is rejected, not changed
+                // into one without a word (it once became 100): the value before it is put back, the
+                // field is marked invalid and described by why, and why is announced; a value then
+                // accepted clears it
+                .story("TypedValueOutOfBoundsRejected", ValueSpinnerCellStories::grid)
                 .withPlay(play -> {
                     final Spy onChange = play.spy(ON_CHANGE);
+                    final String message = "\"500\" isn't allowed. Enter a whole number from 1 to 100.";
                     play.waitFor(() -> play.expect(field(play, "Alpha")).toHaveValue("20"));
                     play.clear(field(play, "Alpha"));
                     play.type(field(play, "Alpha"), "500{Enter}");
-                    play.expect(field(play, "Alpha")).toHaveValue(String.valueOf(MAX));
-                    play.expect(onChange).toHaveBeenLastCalledWith("Alpha=" + MAX);
+                    play.expect(field(play, "Alpha")).toHaveValue("20");
+                    play.expect(onChange).not().toHaveBeenCalled();
+                    play.expect(field(play, "Alpha")).toHaveAttribute("aria-invalid", "true");
+                    play.expect(field(play, "Alpha")).toHaveAccessibleDescription(message);
+                    play.expect(field(play, "Alpha")).toHaveAttribute("title", message);
+                    play.expect(within(play, "Alpha").getByText(message)).toHaveAttribute("aria-live", "polite");
+
+                    play.clear(field(play, "Alpha"));
+                    play.type(field(play, "Alpha"), "7x{Enter}");
+                    play.expect(field(play, "Alpha")).toHaveValue("20");
+                    play.expect(onChange).not().toHaveBeenCalled();
+
+                    play.clear(field(play, "Alpha"));
+                    play.type(field(play, "Alpha"), "30{Enter}");
+                    play.expect(field(play, "Alpha")).toHaveValue("30");
+                    play.expect(onChange).toHaveBeenLastCalledWith("Alpha=30");
+                    play.expect(field(play, "Alpha")).not().toHaveAttribute("aria-invalid");
+                    play.expect(play.queryByText(message)).toBeNull();
                 })
                 // A value that can't be edited: its arrows are dimmed and do nothing
                 .story("ReadOnly", ValueSpinnerCellStories::grid)

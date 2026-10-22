@@ -47,7 +47,7 @@ export const TARGETS = [
   { sel: '.ExpressionTreeViewImpl-layoutPanel .expressionItem, .expressionItem', what: 'an expression term' },
   { sel: '.pipeline-element', what: 'a pipeline element' },
   { sel: '.ace_content', what: 'the editor' },
-  { sel: '.dataGridWidget tbody tr', what: 'a grid row' },
+  { sel: '.data-grid [role=row][data-row]', what: 'a grid row' },
 ];
 
 /** How many menu items are on screen — the before/after of every check here. */

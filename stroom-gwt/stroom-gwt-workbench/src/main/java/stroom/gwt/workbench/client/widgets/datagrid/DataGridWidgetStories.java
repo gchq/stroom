@@ -498,6 +498,18 @@ public final class DataGridWidgetStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(InteractiveCellGrids.ON_CHANGE))
                             .toHaveBeenLastCalledWith("Alice Johnson", 42));
+
+                    // A value rejected says why, still after polls have drawn the row again
+                    play.click(input);
+                    play.clear(input);
+                    play.type(input, "0");
+                    play.keyboard("{Enter}");
+                    play.sleep(1000);
+                    play.expect(input).toHaveValue("42");
+                    play.expect(input).toHaveAttribute("aria-invalid", "true");
+                    play.expect(input).toHaveAccessibleDescription(
+                            "\"0\" isn't allowed. Enter a whole number from 1 to 9999.");
+                    play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1);
                 })
                 // ExpanderCell: the expander opens and closes the tree without selecting the row
                 .story("ExpanderColumn", InteractiveCellGrids::expanderGrid)

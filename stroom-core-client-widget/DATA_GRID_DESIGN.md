@@ -1,9 +1,12 @@
 # Data grid — requirements and design
 
-**Status:** phases 0 to 2 done (§9), in the `datagrid` worktree, and continued in the components
-session 4 worktree (`session4_grids`, 2026-10-20), where the agreed row looks and keyboard were added
-(`stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Data grid). Those supersede R-S7 to R-S9, R-A2 and R-T1 below,
-as each says. Phase 3 has begun with the dashboard table (`TablePresenter`, §9).
+**Status:** done (2026-10-21). Phases 0 to 2 were done in the `datagrid` worktree, and continued in
+the components session 4 worktree (`session4_grids`, 2026-10-20), where the agreed row looks and
+keyboard were added (`stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Data grid). Those supersede R-S7 to R-S9,
+R-A2 and R-T1 below, as each says. Phase 3 switched every screen to `DataGridWidget`, and phase 4
+removed `MyDataGrid` and its classes and applied the §8 fixes (§9). What is left to do is in
+`stroom-gwt/ISSUES.md`: The data grid's follow-ups, and the grid's entries under Controls that can't
+be reached with the keyboard.
 
 **Scope:** a new GWT data grid widget, separate from `MyDataGrid`, built from plain DOM and modern CSS
 rather than on GWT's `cellview` classes. Once it is at parity, call sites switch over and the full
