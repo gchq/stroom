@@ -39,9 +39,14 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.shared.AppPermission;
+import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Component;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
@@ -158,6 +163,8 @@ public final class ScreenHarness {
     private final boolean probe;
     // The scope of the presenters made while opening the screen, for the probe to dispose
     private PresenterScope probeScope;
+    // Owns the components the story shows (see addComponent), made when first needed
+    private ComponentNode componentRoot;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
     private int probeCleanUpMark;
@@ -400,14 +407,50 @@ public final class ScreenHarness {
         return fill(presenter, false);
     }
 
+    /// Shows a component that Stroom shows in a tab (e.g. a document editor), filling the story's
+    /// canvas as [#addContent] does. The story's root ([#getComponentRoot()]) owns it, so it is
+    /// disposed, with everything it owns, when the story renders again or the leak probe closes it.
+    ///
+    /// @param component The component.
+    /// @param <C>       The component type.
+    /// @return The component.
+    public <C extends Component> C addComponent(final C component) {
+        getComponentRoot().adopt(component.getComponentNode());
+        fillWidget(component.asWidget(), component, true);
+        return component;
+    }
+
+    /// The story's root in the ownership tree, as an open document's tab is in Stroom: it owns the
+    /// components the story shows and provides them with a task monitor, as Stroom's tab does, which
+    /// fires task events on the harness's bus. It is disposed with the story's clean ups.
+    ///
+    /// @return The root.
+    public ComponentNode getComponentRoot() {
+        if (componentRoot == null || componentRoot.isDisposed()) {
+            final ComponentNode root = ComponentNode.root("story");
+            root.provide(Contexts.TASK_MONITOR, ContextValue.of(new DefaultTaskMonitorFactory(getHasHandlers())));
+            componentRoot = root;
+            addCleanUp(root::dispose);
+        }
+        return componentRoot;
+    }
+
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
     private <P extends PresenterWidget<?>> P fill(final P presenter, final boolean tab) {
+        fillWidget(presenter.getWidget(), presenter, tab);
+        if (probe) {
+            // Disposed with the scope it was made in when the probe closes the screen
+            return presenter;
+        }
+        return unbindOnCleanUp(presenter);
+    }
+
+    private void fillWidget(final Widget widget, final Object focusContent, final boolean tab) {
         final SimplePanel content = new SimplePanel();
         content.setStyleName(CONTENT_STYLE);
         content.getElement().getStyle().setProperty("position", "relative");
         content.getElement().getStyle().setProperty("width", "100%");
         content.getElement().getStyle().setProperty("height", "100vh");
-        final Widget widget = presenter.getWidget();
         widget.getElement().getStyle().setProperty("position", "absolute");
         widget.getElement().getStyle().setProperty("inset", "0");
         content.setWidget(widget);
@@ -415,13 +458,8 @@ public final class ScreenHarness {
         if (tab) {
             // For the test runner's focus check (test-runner/lib/focus-check.mjs): focuses the
             // screen as Stroom's tab pane does when it opens it
-            exposeContentFocus(presenter, content.getElement());
+            exposeContentFocus(focusContent, content.getElement());
         }
-        if (probe) {
-            // Disposed with the scope it was made in when the probe closes the screen
-            return presenter;
-        }
-        return unbindOnCleanUp(presenter);
     }
 
     /// Exposes `window.__workbenchContentFocus()`, which focuses the screen as Stroom's tab pane does

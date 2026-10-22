@@ -16,6 +16,8 @@
 
 package stroom.gwt.workbench.client.app.screen;
 
+import stroom.widget.component.client.ComponentChecks;
+
 import com.google.gwt.user.client.Window;
 
 /// The leak check's probe (see the test runner's `--leak-check`).
@@ -30,6 +32,8 @@ import com.google.gwt.user.client.Window;
 /// * `open()` opens the screen again, as the story did (usually with new presenters).
 /// * `shown()` is the number of widgets the opening has shown, and of popups shown.
 /// * `pending()` is the number of REST requests not yet answered.
+/// * `unowned()` is the number of live components that nothing owns (see [ComponentChecks]),
+///   which should be none once the screen is closed and disposed.
 final class LeakProbe {
 
     private final ScreenHarness harness;
@@ -69,6 +73,10 @@ final class LeakProbe {
         return harness.probePendingCount();
     }
 
+    private int unowned() {
+        return ComponentChecks.unownedCount();
+    }
+
     private static native void export(LeakProbe probe) /*-{
         $wnd.__leakProbe = {
             close: function (dispose) {
@@ -82,6 +90,9 @@ final class LeakProbe {
             },
             pending: function () {
                 return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::pending()();
+            },
+            unowned: function () {
+                return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::unowned()();
             }
         };
     }-*/;

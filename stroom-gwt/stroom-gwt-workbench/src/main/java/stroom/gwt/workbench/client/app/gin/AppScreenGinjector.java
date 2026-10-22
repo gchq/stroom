@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.gin;
 
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
+import stroom.dictionary.client.component.DictionaryEditor;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
@@ -101,4 +102,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
 
     /// @return A Dictionary's editor tab, as `DictionaryPlugin` creates it.
     DictionaryPresenter getDictionaryPresenter();
+
+    /// @return The component copy of a Dictionary's editor (the component model's pilot).
+    DictionaryEditor getDictionaryEditor();
 }
