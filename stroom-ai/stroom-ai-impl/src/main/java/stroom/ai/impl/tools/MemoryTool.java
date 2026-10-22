@@ -111,6 +111,14 @@ class MemoryTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesNeedApprovalAfterUntrustedContent() {
+        // A change to the user's memory, which outlives the chat, is put to the user by the memory service once the
+        // chat has read untrusted content (ToolConsentGate.lastingChangeApprovalReason), so it isn't asked about
+        // twice; the chat's session memory stays in the chat.
+        return false;
+    }
+
+    @Override
     public boolean readsUntrustedContent() {
         // Memory only holds what the user wrote, or changes they could see (and approve) being made.
         return false;

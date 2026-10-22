@@ -741,9 +741,25 @@ class McpAgentChat {
         }
     }
 
-    private static PendingCall pendingCall(final ToolExecutionRequest toolRequest,
-                                           final McpToolset toolset,
-                                           final ToolConsent.Verdict verdict) {
+    private PendingCall pendingCall(final ToolExecutionRequest toolRequest,
+                                    final McpToolset toolset,
+                                    final ToolConsent.Verdict verdict) {
+        if (isBuiltIn(toolRequest.name())) {
+            // Stroom's own tools are approved for the chat under a server of their own, with a hash of the tool's
+            // definition, so an approval is for the tool as it is now.
+            return new PendingCall(
+                    toolRequest.id(),
+                    toolRequest.name(),
+                    ToolConsent.BUILT_IN_SERVER_KEY,
+                    toolRequest.name(),
+                    toolRequest.arguments(),
+                    verdict.risks(),
+                    ToolConsent.builtInToolHash(builtInTools, toolRequest.name()),
+                    null,
+                    null,
+                    null,
+                    null);
+        }
         final McpToolInfo info = toolset.toolInfo(toolRequest.name()).orElse(null);
         return new PendingCall(
                 toolRequest.id(),

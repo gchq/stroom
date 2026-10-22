@@ -98,12 +98,24 @@ public interface StroomTool {
 
     /// Whether the tool asks the user itself before every change it makes, with a form that says what it will do
     /// and lets them change it (see the build layer's `Consent`), as the Stroom MCP server's write tools do. Over
-    /// MCP such a call isn't also approved as a whole first, so the user is asked once; in the chat, built-in tools
-    /// run without an approval card anyway.
+    /// MCP such a call isn't also approved as a whole first, so the user is asked once; in the chat, such a call
+    /// isn't put on an approval card after the chat has read untrusted content either (see
+    /// [#changesNeedApprovalAfterUntrustedContent()]).
     ///
     /// @return True if every change the tool makes is confirmed by the tool itself. Defaults to false.
     default boolean confirmsItself() {
         return false;
+    }
+
+    /// Whether, in the "Ask Stroom AI" chat, a call of the tool that changes something (see
+    /// [#isReadOnly(ToolCall)]) and that the tool doesn't confirm itself (see [#confirmsItself()]) needs the
+    /// user's approval on an approval card once the chat has read untrusted content (see
+    /// [#readsUntrustedContent()]), as that content could hold instructions planted to misuse the tool.
+    ///
+    /// @return False for a tool whose changes stay in the chat (e.g. its workspace files), or that asks the user
+    /// itself about a change that outlives the chat in that case (memory). Defaults to true.
+    default boolean changesNeedApprovalAfterUntrustedContent() {
+        return true;
     }
 
     /// @return True if the tool limits how much it returns itself (e.g. a page of a file), so its result is never
