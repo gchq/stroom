@@ -82,6 +82,14 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 `run_stroomql` checks no permission itself: Stroom's query service checks Use on the data source when the search
 runs. `read_document` and `xslt_lookups` also read the attached tab's unsaved content in a chat.
 
+Only these tools say they read only trusted content (`StroomTool.readsUntrustedContent()` false, MCP's
+`openWorldHint` false), so their results don't make a chat count as having read untrusted content (see Approvals in
+[README.md](README.md)): `ask_user`, `delete_file`, `get_current_date`, `get_current_datetime`, `get_current_time`,
+`get_utc_time_offset`, `memory`, `str_replace`, `task_list`, `wc` and `write_file`. Every other tool, the ported
+tools included, reads untrusted content: `propose_query`, `propose_dashboard` and `validate_stroomql` too, as they
+name the data source as Stroom holds it, and `read_turn` and `search_history`, as they copy the chat's stored tool
+results, which outlive the rows they came from if the user deletes those.
+
 ## How the overlapping tools differ
 
 The MCP server calls Stroom's REST API with the user's forwarded token, so Stroom checks the user's permissions; it

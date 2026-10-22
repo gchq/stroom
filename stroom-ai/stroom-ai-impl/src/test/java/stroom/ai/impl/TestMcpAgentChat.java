@@ -1752,6 +1752,32 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void earlierOutputOfAToolThatReadsUntrustedContentTaintsTheRun() {
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.TOOL_RESULT, null,
+                        "{\"callId\":\"call-1\",\"tool\":\"fetch_events\",\"text\":\"events\"}", 1, null)));
+        Mockito.when(builtInTools.readsUntrustedContent("fetch_events")).thenReturn(true);
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
+    void earlierOutputOfToolsThatReadOnlyTrustedContentDoesNotTaintTheRun() {
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.TOOL_RESULT, null,
+                        "{\"callId\":\"call-1\",\"tool\":\"get_current_time\",\"text\":\"12:00\"}", 1, null)));
+        Mockito.when(builtInTools.readsUntrustedContent("get_current_time")).thenReturn(false);
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager, Mockito.never()).markTainted(Mockito.anyInt());
+    }
+
+    @Test
     void aCleanChatIsNotTainted() {
         agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
                 new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
