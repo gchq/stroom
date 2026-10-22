@@ -28,7 +28,6 @@ import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -40,7 +39,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
 
     private TabData selectedTab;
-    private PresenterWidget<?> currentContent;
+    private MyPresenterWidget<?> currentContent;
 
     public LinkTabPanelPresenter(final EventBus eventBus, final LinkTabPanelView view) {
         super(eventBus, view);
@@ -106,7 +105,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
         });
     }
 
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     public TabData getSelectedTab() {

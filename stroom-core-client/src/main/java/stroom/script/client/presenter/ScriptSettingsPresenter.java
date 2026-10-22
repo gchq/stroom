@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, ScriptDoc> {
 

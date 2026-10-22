@@ -81,7 +81,6 @@ public final class AboutDialogStories {
         final AboutPresenter presenter = new AboutPresenter(
                 harness.getEventBus(),
                 new AboutViewImpl(GWT.create(AboutViewImpl.Binder.class)),
-                null,
                 harness.getRestFactory(),
                 harness.getUiConfigCache(),
                 harness.getDateTimeFormatter());

@@ -21,6 +21,8 @@ import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -38,8 +40,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class FindInContentViewImpl
         extends ViewWithUiHandlers<FindInContentUiHandlers>

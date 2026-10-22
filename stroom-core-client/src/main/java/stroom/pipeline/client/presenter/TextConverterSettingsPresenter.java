@@ -23,10 +23,10 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConve
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class TextConverterSettingsPresenter
         extends DocPresenter<TextConverterSettingsView, TextConverterDoc> {

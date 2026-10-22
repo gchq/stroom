@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
 import stroom.dashboard.shared.LayoutConstraints;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -31,7 +32,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class LayoutConstraintViewImpl extends ViewImpl
         implements LayoutConstraintView {

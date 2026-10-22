@@ -24,9 +24,9 @@ import stroom.dashboard.client.vis.VisPresenter;
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.dashboard.client.vis.VisViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 public class VisModule extends AbstractPresenterModule {
 

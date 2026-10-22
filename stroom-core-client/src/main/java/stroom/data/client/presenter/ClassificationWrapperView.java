@@ -16,7 +16,7 @@
 
 package stroom.data.client.presenter;
 
-import com.gwtplatform.mvp.client.View;
+import stroom.widget.presenter.client.View;
 
 public interface ClassificationWrapperView extends View {
 

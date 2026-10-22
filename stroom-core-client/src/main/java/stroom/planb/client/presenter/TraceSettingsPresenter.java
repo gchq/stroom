@@ -26,11 +26,11 @@ import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 /**
  * Settings for a Traces store. A trace store is only ever served from a shared file store, so this

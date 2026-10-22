@@ -21,10 +21,10 @@ import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcess
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 /**
  * The Execution tab, which hosts the scheduling editor shared with analytics.

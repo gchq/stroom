@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.input;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface TextInputUiHandlers extends UiHandlers {
 

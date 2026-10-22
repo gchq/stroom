@@ -16,13 +16,13 @@
 
 package stroom.iframe.client.presenter;
 
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
         implements IFrameLoadUiHandlers {

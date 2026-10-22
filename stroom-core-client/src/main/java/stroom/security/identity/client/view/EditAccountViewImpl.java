@@ -20,6 +20,7 @@ import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccoun
 import stroom.security.identity.client.presenter.EditAccountUiHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class EditAccountViewImpl
         extends ViewWithUiHandlers<EditAccountUiHandlers>

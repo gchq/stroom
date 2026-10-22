@@ -18,6 +18,7 @@ package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class AuthenticationErrorViewImpl extends ViewImpl implements AuthenticationErrorView {
 

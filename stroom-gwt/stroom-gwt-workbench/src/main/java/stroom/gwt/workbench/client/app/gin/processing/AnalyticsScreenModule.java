@@ -25,8 +25,7 @@ import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The execution schedule bindings of Stroom's `AnalyticsModule`
 /// (`stroom/analytics/client/gin/AnalyticsModule.java`): the schedule editor, batch editor and

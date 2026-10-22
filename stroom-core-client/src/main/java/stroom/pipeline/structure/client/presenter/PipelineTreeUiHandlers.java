@@ -17,8 +17,7 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.pipeline.shared.data.PipelineElement;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface PipelineTreeUiHandlers extends UiHandlers {
 

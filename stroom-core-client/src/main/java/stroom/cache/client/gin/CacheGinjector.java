@@ -16,14 +16,5 @@
 
 package stroom.cache.client.gin;
 
-import stroom.cache.client.CacheMonitoringPlugin;
-import stroom.cache.client.presenter.CachePresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface CacheGinjector {
-
-    AsyncProvider<CacheMonitoringPlugin> getCacheMonitoringPlugin();
-
-    AsyncProvider<CachePresenter> getCachePresenter();
 }

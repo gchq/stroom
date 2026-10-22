@@ -16,10 +16,11 @@
 
 package stroom.widget.tab.client.event;
 
+import stroom.widget.presenter.client.View;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class MaximiseEvent extends GwtEvent<MaximiseEvent.Handler> {
 

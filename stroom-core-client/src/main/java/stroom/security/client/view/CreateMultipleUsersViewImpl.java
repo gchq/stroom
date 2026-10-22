@@ -18,6 +18,7 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -27,7 +28,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CreateMultipleUsersViewImpl
         extends ViewImpl

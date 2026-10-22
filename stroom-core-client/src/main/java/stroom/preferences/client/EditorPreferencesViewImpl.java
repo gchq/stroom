@@ -23,6 +23,7 @@ import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesVie
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Arrays;
 import java.util.Comparator;

@@ -30,20 +30,18 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 
 public class ImportConfigPresenter
-        extends MyPresenter<ImportConfigPresenter.ImportConfigView, ImportConfigPresenter.ImportProxy>
+        extends MyPresenter<ImportConfigPresenter.ImportConfigView>
         implements ImportConfigEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
@@ -52,9 +50,9 @@ public class ImportConfigPresenter
     private HidePopupRequestEvent currentHidePopupRequestEvent;
 
     @Inject
-    public ImportConfigPresenter(final EventBus eventBus, final ImportConfigView view, final ImportProxy proxy,
+    public ImportConfigPresenter(final EventBus eventBus, final ImportConfigView view,
                                  final RestFactory restFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.restFactory = restFactory;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
@@ -119,7 +117,6 @@ public class ImportConfigPresenter
         AlertEvent.fireError(this, message, currentHidePopupRequestEvent::reset);
     }
 
-    @ProxyEvent
     @Override
     public void onImport(final ImportConfigEvent event) {
         forceReveal();
@@ -135,8 +132,12 @@ public class ImportConfigPresenter
         CustomFileUpload getFileUpload();
     }
 
-    @ProxyCodeSplit
-    public interface ImportProxy extends Proxy<ImportConfigPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ImportProxy {
 
+        @Inject
+        public ImportProxy(final EventBus eventBus, final Provider<ImportConfigPresenter> presenter) {
+            eventBus.addHandler(ImportConfigEvent.getType(), event -> presenter.get().onImport(event));
+        }
     }
 }

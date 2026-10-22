@@ -16,8 +16,9 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.dom.client.Element;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface MenuUiHandlers extends UiHandlers {
 

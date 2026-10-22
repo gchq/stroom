@@ -19,6 +19,8 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -34,8 +36,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class BasicEmbeddedQuerySettingsViewImpl
         extends ViewWithUiHandlers<BasicEmbeddedQuerySettingsUiHandlers>

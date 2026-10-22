@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The folder picker's tree comes from `POST /explorer/v2/fetchExplorerNodes` (the shared
 /// [ExplorerFixture]). The dialog is shown by firing `ShowCreateDocumentDialogEvent`, as the
 /// explorer's 'New' menu and 'Save As' do, with the presenter (from GIN) registered as its handler
-/// in place of its GWTP proxy.
+/// in place of its proxy.
 public final class CreateDocumentDialogStories {
 
     // GWT's folder picker is an EntityTreePresenter: a quick filter above the tree
@@ -147,7 +147,7 @@ public final class CreateDocumentDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
-        // As the presenter's GWTP proxy would
+        // As the presenter's proxy would
         final CreateDocumentPresenter presenter = injector.getCreateDocumentPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowCreateDocumentDialogEvent.getType(), presenter));

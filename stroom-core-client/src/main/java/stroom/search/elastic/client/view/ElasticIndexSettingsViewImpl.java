@@ -20,6 +20,8 @@ import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.Elas
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,8 +33,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticIndexSettingsUiHandlers>
         implements ElasticIndexSettingsView {

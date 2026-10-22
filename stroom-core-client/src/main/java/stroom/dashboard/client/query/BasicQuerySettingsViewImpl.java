@@ -17,6 +17,8 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -28,8 +30,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySettingsView {
 

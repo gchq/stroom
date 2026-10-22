@@ -16,14 +16,5 @@
 
 package stroom.aws.s3.client.gin;
 
-import stroom.aws.s3.client.S3ConfigPlugin;
-import stroom.aws.s3.client.presenter.S3ConfigPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface S3ConfigGinjector {
-
-    AsyncProvider<S3ConfigPlugin> getS3ConfigPlugin();
-
-    AsyncProvider<S3ConfigPresenter> getS3ConfigPresenter();
 }

@@ -32,7 +32,7 @@
  * asset tab is selected.</p>
  * <pre>
  * &#64;Override
- * protected void afterSelectTab(final PresenterWidget&lt;?&gt; content) {
+ * protected void afterSelectTab(final MyPresenterWidget&lt;?&gt; content) {
  *     if (content == documentAssetPresenter) {
  *         onChange();
  *     }

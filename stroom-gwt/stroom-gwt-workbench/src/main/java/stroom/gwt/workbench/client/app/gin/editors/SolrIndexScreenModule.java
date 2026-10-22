@@ -26,14 +26,13 @@ import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexS
 import stroom.search.solr.client.view.SolrIndexFieldEditViewImpl;
 import stroom.search.solr.client.view.SolrIndexFieldListViewImpl;
 import stroom.search.solr.client.view.SolrIndexSettingsViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `SolrIndexModule`
 /// (`stroom/search/solr/client/gin/SolrIndexModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class SolrIndexScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

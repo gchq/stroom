@@ -20,6 +20,7 @@ import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -29,7 +30,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class NameDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandlers> implements NameDocumentView {
 

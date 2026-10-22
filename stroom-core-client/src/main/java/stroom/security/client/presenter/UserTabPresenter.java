@@ -30,6 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
@@ -38,7 +39,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +84,7 @@ public class UserTabPresenter
 
     private UserRef userRef;
     private String label;
-    private PresenterWidget<?> currentContent;
+    private MyPresenterWidget<?> currentContent;
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
@@ -203,7 +203,7 @@ public class UserTabPresenter
         }
     }
 
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     private void addTab(final TabData tab) {

@@ -36,17 +36,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,7 +57,7 @@ import java.util.stream.Collectors;
  * See {@link ExplorerNodeRemoveTagsPresenter} for tag removal on multiple nodes.
  */
 public class ExplorerNodeEditTagsPresenter
-        extends MyPresenter<ExplorerNodeEditTagsView, ExplorerNodeEditTagsProxy>
+        extends MyPresenter<ExplorerNodeEditTagsView>
         implements ShowEditNodeTagsDialogEvent.Handler,
         HidePopupRequestEvent.Handler {
 
@@ -72,14 +70,12 @@ public class ExplorerNodeEditTagsPresenter
     @Inject
     public ExplorerNodeEditTagsPresenter(final EventBus eventBus,
                                          final RestFactory restFactory,
-                                         final ExplorerNodeEditTagsView view,
-                                         final ExplorerNodeEditTagsProxy proxy) {
-        super(eventBus, view, proxy);
+                                         final ExplorerNodeEditTagsView view) {
+        super(eventBus, view);
         this.restFactory = restFactory;
         view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
     }
 
-    @ProxyEvent
     @Override
     public void onCreate(final ShowEditNodeTagsDialogEvent event) {
 //        GWT.log("onCreate: " + NullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
@@ -252,9 +248,14 @@ public class ExplorerNodeEditTagsPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ExplorerNodeEditTagsProxy {
 
-    @ProxyCodeSplit
-    public interface ExplorerNodeEditTagsProxy extends Proxy<ExplorerNodeEditTagsPresenter> {
 
+        @Inject
+        public ExplorerNodeEditTagsProxy(final EventBus eventBus,
+                                         final Provider<ExplorerNodeEditTagsPresenter> presenter) {
+            eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event -> presenter.get().onCreate(event));
+        }
     }
 }

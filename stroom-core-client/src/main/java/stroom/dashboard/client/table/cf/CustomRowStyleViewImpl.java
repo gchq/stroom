@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table.cf;
 
 import stroom.query.api.TextAttributes;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,7 +27,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CustomRowStyleViewImpl extends ViewImpl implements CustomRowStylePresenter.CustomRowStyleView {
 

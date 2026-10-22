@@ -47,7 +47,6 @@ import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
 
 @GinModules({
         RestModule.class,
@@ -82,8 +81,6 @@ public interface DashboardAppGinjectorUser extends
 
     // Default implementation of standard resources
     EventBus getEventBus();
-
-    PlaceManager getPlaceManager();
 
     // Presenters
     Provider<CorePresenter> getCorePresenter();

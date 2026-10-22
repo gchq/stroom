@@ -22,12 +22,12 @@ import stroom.item.client.SelectionList;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.HashSet;
 import java.util.List;

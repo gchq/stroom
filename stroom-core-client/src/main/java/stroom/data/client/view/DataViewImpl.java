@@ -20,6 +20,7 @@ import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.view.LayerContainerImpl;
@@ -36,7 +37,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataViewImpl extends ViewImpl implements DataView {
 

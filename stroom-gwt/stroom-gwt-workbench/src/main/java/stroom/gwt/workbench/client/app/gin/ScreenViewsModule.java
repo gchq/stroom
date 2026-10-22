@@ -65,6 +65,7 @@ import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.presenter.TextBoxPopup;
 import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
 import stroom.widget.popup.client.view.TextBoxViewImpl;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
@@ -72,8 +73,6 @@ import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 import stroom.widget.tooltip.client.view.TooltipViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,

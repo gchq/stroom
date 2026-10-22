@@ -21,9 +21,8 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-
-import com.gwtplatform.mvp.client.HandlerContainer;
-import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.widget.presenter.client.HandlerContainer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -79,7 +78,7 @@ public final class StoryDocumentPlugins {
     /// @return This set up.
     public StoryDocumentPlugins showOpenedTabs() {
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event ->
-                harness.addContent((PresenterWidget<?>) event.getLayer())));
+                harness.addContent((MyPresenterWidget<?>) event.getLayer())));
         return this;
     }
 

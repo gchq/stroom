@@ -16,7 +16,7 @@
 
 package stroom.widget.popup.client.view;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface HideRequestUiHandlers extends UiHandlers {
 

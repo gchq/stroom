@@ -53,8 +53,7 @@ import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.query.client.presenter.TimeZones;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class TableModule extends AbstractPresenterModule {
 

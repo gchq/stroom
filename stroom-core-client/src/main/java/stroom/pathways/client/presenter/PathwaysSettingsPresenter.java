@@ -26,11 +26,11 @@ import stroom.pathways.shared.TracesDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView, PathwaysDoc>
         implements PathwaysSettingsUiHandlers {

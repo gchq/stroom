@@ -16,8 +16,9 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.widget.presenter.client.View;
+
 import com.google.gwt.user.client.ui.Focus;
-import com.gwtplatform.mvp.client.View;
 
 public interface BasicSettingsView extends View, Focus {
 

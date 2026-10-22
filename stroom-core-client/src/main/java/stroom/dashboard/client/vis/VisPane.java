@@ -18,11 +18,11 @@ package stroom.dashboard.client.vis;
 
 import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.presenter.VisFunction;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 
 import java.util.List;
 

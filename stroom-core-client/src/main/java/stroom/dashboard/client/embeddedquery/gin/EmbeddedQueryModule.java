@@ -24,9 +24,9 @@ import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 public class EmbeddedQueryModule extends AbstractPresenterModule {
 

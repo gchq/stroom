@@ -39,13 +39,12 @@ import stroom.schedule.client.ScheduleViewImpl;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.client.view.TaskManagerViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `MonitoringModule`
 /// (`stroom/monitoring/client/gin/MonitoringModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class MonitoringScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

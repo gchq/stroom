@@ -29,13 +29,11 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public class FindPresenter
-        extends AbstractFindPresenter<FindProxy>
+        extends AbstractFindPresenter
         implements ShowFindEvent.Handler {
 
     // Read by a screen reader when the filter is focused; the syntax help has the full detail
@@ -49,11 +47,10 @@ public class FindPresenter
     @Inject
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
-                         final FindProxy proxy,
                          final FindDocResultListPresenter findResultListPresenter,
                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
                          final UiConfigCache uiConfigCache) {
-        super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
+        super(eventBus, view, findResultListPresenter, quickFilterContextHandlerFactory);
 
         view.setFilterGuidance("Find by name", FILTER_DESCRIPTION);
         // The same fields as the explorer tree's filter
@@ -67,7 +64,6 @@ public class FindPresenter
         }, this);
     }
 
-    @ProxyEvent
     @Override
     public void onShow(final ShowFindEvent event) {
         if (!showing) {
@@ -99,8 +95,12 @@ public class FindPresenter
         }
     }
 
-    @ProxyCodeSplit
-    public interface FindProxy extends Proxy<FindPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class FindProxy {
 
+        @Inject
+        public FindProxy(final EventBus eventBus, final Provider<FindPresenter> presenter) {
+            eventBus.addHandler(ShowFindEvent.getType(), event -> presenter.get().onShow(event));
+        }
     }
 }

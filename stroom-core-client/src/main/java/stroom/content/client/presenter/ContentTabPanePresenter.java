@@ -37,6 +37,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.presenter.client.RevealContentEvent;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -48,17 +49,14 @@ import stroom.widget.util.client.ContentFocus;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.History;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContentTabPanePresenter
-        extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
+        extends CurveTabLayoutPresenter
         implements
         OpenContentTabHandler,
         CloseContentTabHandler,
@@ -76,9 +74,8 @@ public class ContentTabPanePresenter
     @Inject
     public ContentTabPanePresenter(final EventBus eventBus,
                                    final CurveTabLayoutView view,
-                                   final ContentTabPaneProxy proxy,
                                    final RecentItems recentItems) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.recentItems = recentItems;
         view.setUiHandlers(this);
 
@@ -159,7 +156,6 @@ public class ContentTabPanePresenter
         RevealContentEvent.fire(this, MainPresenter.CONTENT, this);
     }
 
-    @ProxyEvent
     @Override
     public void onOpen(final OpenContentTabEvent event) {
         // Make sure this tab pane is revealed before we try and reveal child
@@ -183,7 +179,6 @@ public class ContentTabPanePresenter
         }
     }
 
-    @ProxyEvent
     @Override
     public void onClose(final CloseContentTabEvent event) {
         remove(event.getTabData(), event.resizeTabBar());
@@ -199,19 +194,16 @@ public class ContentTabPanePresenter
         }
     }
 
-    @ProxyEvent
     @Override
     public void onSelect(final SelectContentTabEvent event) {
         selectTab(event.getTabData());
     }
 
-    @ProxyEvent
     @Override
     public void onRefresh(final RefreshContentTabEvent event) {
         refresh(event.getTabData());
     }
 
-    @ProxyEvent
     @Override
     public void onMove(final MoveContentTabEvent event) {
         moveTab(event.getTabData(), event.getTabPos());
@@ -248,9 +240,17 @@ public class ContentTabPanePresenter
         ContentTabSelectionChangeEvent.fire(this, tabData);
     }
 
-    @ProxyCodeSplit
-    public interface ContentTabPaneProxy extends Proxy<ContentTabPanePresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ContentTabPaneProxy {
 
+        @Inject
+        public ContentTabPaneProxy(final EventBus eventBus, final Provider<ContentTabPanePresenter> presenter) {
+            eventBus.addHandler(OpenContentTabEvent.getType(), event -> presenter.get().onOpen(event));
+            eventBus.addHandler(CloseContentTabEvent.getType(), event -> presenter.get().onClose(event));
+            eventBus.addHandler(SelectContentTabEvent.getType(), event -> presenter.get().onSelect(event));
+            eventBus.addHandler(RefreshContentTabEvent.getType(), event -> presenter.get().onRefresh(event));
+            eventBus.addHandler(MoveContentTabEvent.getType(), event -> presenter.get().onMove(event));
+        }
     }
 
 

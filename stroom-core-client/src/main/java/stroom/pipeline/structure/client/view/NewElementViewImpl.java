@@ -17,6 +17,7 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,7 +27,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class NewElementViewImpl extends ViewImpl implements NewElementView {
 

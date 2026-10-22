@@ -34,6 +34,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
@@ -55,7 +56,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.ArrayList;
 import java.util.Collections;

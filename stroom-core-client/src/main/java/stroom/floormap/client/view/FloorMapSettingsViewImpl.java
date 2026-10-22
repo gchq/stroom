@@ -19,6 +19,8 @@ package stroom.floormap.client.view;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,8 +30,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 /// GWT UiBinder view implementation for [stroom.floormap.client.presenter.FloorMapSettingsPresenter].
 ///

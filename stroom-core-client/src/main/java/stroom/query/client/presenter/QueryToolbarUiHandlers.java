@@ -17,8 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.query.api.TimeRange;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface QueryToolbarUiHandlers extends UiHandlers {
 

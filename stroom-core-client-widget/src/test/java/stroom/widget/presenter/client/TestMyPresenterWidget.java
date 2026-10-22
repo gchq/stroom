@@ -27,7 +27,7 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.View;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -39,8 +39,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMyPresenterWidget {
 
+    private static final Object SLOT = new Object();
+    private static final Object OTHER_SLOT = new Object();
+
     private final EventBus eventBus = new SimpleEventBus();
     private final List<String> events = new ArrayList<>();
+
+    @AfterEach
+    void showNoPage() {
+        RootPresenter.setRootContent(null);
+    }
 
     @Test
     void disposeUnbindsAndCallsOnDisposeOnce() {
@@ -187,6 +195,91 @@ class TestMyPresenterWidget {
 
         assertThat(presenter.isDisposed()).isTrue();
         assertThat(events).containsExactly("presenter disposed");
+    }
+
+    @Test
+    void aPresenterInASlotOfThePageIsRevealed() {
+        final TestPresenter page = new TestPresenter("page");
+        final TestPresenter content = new TestPresenter("content");
+        final TestPresenter tab = new TestPresenter("tab");
+        RootPresenter.setRootContent(page);
+
+        page.setInSlot(SLOT, content);
+        content.addToSlot(OTHER_SLOT, tab);
+
+        assertThat(page.isRevealed()).isTrue();
+        assertThat(content.isRevealed()).isTrue();
+        assertThat(tab.isRevealed()).isTrue();
+    }
+
+    @Test
+    void aPresenterInNoSlotOrUnderOneNotOnThePageIsNotRevealed() {
+        // e.g. a tab's content or a dialog, which Stroom shows outside slots
+        final TestPresenter parent = new TestPresenter("parent");
+        final TestPresenter child = new TestPresenter("child");
+
+        parent.setInSlot(SLOT, child);
+
+        assertThat(parent.isRevealed()).isFalse();
+        assertThat(child.isRevealed()).isFalse();
+    }
+
+    @Test
+    void replacingASlotsContentTakesTheOldOut() {
+        final TestPresenter page = new TestPresenter("page");
+        final TestPresenter first = new TestPresenter("first");
+        final TestPresenter second = new TestPresenter("second");
+        RootPresenter.setRootContent(page);
+        page.setInSlot(SLOT, first);
+
+        page.setInSlot(SLOT, second);
+
+        assertThat(first.isRevealed()).isFalse();
+        assertThat(second.isRevealed()).isTrue();
+    }
+
+    @Test
+    void emptyingOrRemovingFromASlotTakesItsContentOut() {
+        final TestPresenter page = new TestPresenter("page");
+        final TestPresenter single = new TestPresenter("single");
+        final TestPresenter cleared = new TestPresenter("cleared");
+        final TestPresenter removed = new TestPresenter("removed");
+        final TestPresenter kept = new TestPresenter("kept");
+        RootPresenter.setRootContent(page);
+        page.setInSlot(SLOT, single);
+        page.addToSlot(OTHER_SLOT, removed);
+        page.addToSlot(OTHER_SLOT, kept);
+
+        page.setInSlot(SLOT, null);
+        page.removeFromSlot(OTHER_SLOT, removed);
+
+        assertThat(single.isRevealed()).isFalse();
+        assertThat(removed.isRevealed()).isFalse();
+        assertThat(kept.isRevealed()).isTrue();
+
+        page.addToSlot(SLOT, cleared);
+        page.clearSlot(SLOT);
+
+        assertThat(cleared.isRevealed()).isFalse();
+    }
+
+    @Test
+    void puttingAPresenterInAnotherSlotTakesItOutOfTheFirst() {
+        final TestPresenter page = new TestPresenter("page");
+        final TestPresenter elsewhere = new TestPresenter("elsewhere");
+        final TestPresenter moved = new TestPresenter("moved");
+        RootPresenter.setRootContent(page);
+        page.addToSlot(SLOT, moved);
+
+        elsewhere.setInSlot(SLOT, moved);
+
+        assertThat(moved.isRevealed()).isFalse();
+
+        // Back on the page: emptying the other presenter's slot then leaves it where it is
+        page.addToSlot(SLOT, moved);
+        elsewhere.clearSlot(SLOT);
+
+        assertThat(moved.isRevealed()).isTrue();
     }
 
     // --------------------------------------------------------------------------------

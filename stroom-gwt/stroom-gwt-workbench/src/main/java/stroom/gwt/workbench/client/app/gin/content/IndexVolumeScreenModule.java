@@ -23,8 +23,7 @@ import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGr
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.index.client.view.IndexVolumeEditViewImpl;
 import stroom.index.client.view.IndexVolumeGroupEditViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The index volume bindings of Stroom's `IndexModule` (`stroom/index/client/gin/IndexModule.java`):
 /// the 'Index Volumes' tab and its group and volume dialogs, without the index editor's graph.

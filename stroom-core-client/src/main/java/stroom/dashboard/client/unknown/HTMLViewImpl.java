@@ -16,10 +16,11 @@
 
 package stroom.dashboard.client.unknown;
 
+import stroom.widget.presenter.client.ViewImpl;
+
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class HTMLViewImpl extends ViewImpl implements HTMLView {
     private final HTML html;

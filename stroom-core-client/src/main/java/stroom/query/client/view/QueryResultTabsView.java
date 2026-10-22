@@ -17,9 +17,8 @@
 package stroom.query.client.view;
 
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabBar;
-
-import com.gwtplatform.mvp.client.View;
 
 public interface QueryResultTabsView extends View {
 

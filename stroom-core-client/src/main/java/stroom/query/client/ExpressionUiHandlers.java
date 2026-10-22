@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ExpressionUiHandlers extends UiHandlers {
 

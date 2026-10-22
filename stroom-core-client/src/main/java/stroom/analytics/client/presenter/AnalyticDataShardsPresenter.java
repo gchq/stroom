@@ -30,12 +30,12 @@ import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Collections;
 import java.util.List;

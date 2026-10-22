@@ -19,13 +19,13 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View implementation for the floor map canvas area.
 ///
@@ -59,7 +59,7 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
         return widget;
     }
 
-    /// Routes GWTP slot content into the map, dock, or timeline panel.
+    /// Routes slot content into the map, dock, or timeline panel.
     @Override
     public void setInSlot(final Object slot, final Widget content) {
         if (FloorMapMapPresenter.MAP.equals(slot)) {

@@ -17,7 +17,6 @@
 package stroom.dashboard.client.gin;
 
 import stroom.core.client.UrlParameters;
-import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
@@ -86,6 +85,8 @@ import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
+import stroom.widget.presenter.client.RootPresenter;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
@@ -94,11 +95,6 @@ import stroom.widget.util.client.GlobalKeyHandler;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.RootPresenter;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
-import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 
 public class DashboardAppModule extends AbstractPresenterModule {
 
@@ -106,12 +102,10 @@ public class DashboardAppModule extends AbstractPresenterModule {
     protected void configure() {
         // Default implementation of standard resources
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
-        bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         // For widgets with no event bus of their own (form help, date and time dialogs, the time
         // range), as the app's AppModule does
         bind(StaticEventBus.class).asEagerSingleton();
-        bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);
         bind(DelegatingAceCompleter.class).asEagerSingleton();

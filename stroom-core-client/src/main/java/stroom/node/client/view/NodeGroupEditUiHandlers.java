@@ -16,7 +16,7 @@
 
 package stroom.node.client.view;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface NodeGroupEditUiHandlers extends UiHandlers {
 

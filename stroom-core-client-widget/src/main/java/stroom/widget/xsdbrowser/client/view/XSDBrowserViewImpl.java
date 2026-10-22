@@ -17,6 +17,7 @@
 package stroom.widget.xsdbrowser.client.view;
 
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserUiHandlers;
 
@@ -28,7 +29,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers> implements XSDBrowserView {
 

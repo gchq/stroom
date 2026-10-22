@@ -493,7 +493,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //     * 8.2. This method will move an document.
 //     */
 //    @SuppressWarnings("unchecked")
-//    void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    void moveDocument(final MyPresenterWidget<?> popup, final DocRef document,
 //    final DocRef folder, final PermissionInheritance permissionInheritance) {
 //        // Find out if we currently have the document open.
 //        final DocumentTabData tabData = documentToTabDataMap.get(document);
@@ -519,7 +519,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //        }
 //    }
 //
-//    private void moveDocument(final PresenterWidget<?> popup, final DocRef document,
+//    private void moveDocument(final MyPresenterWidget<?> popup, final DocRef document,
 //    final DocRef folder, final PermissionInheritance permissionInheritance,
 //                              final EntityEditPresenter<?, D> editPresenter) {
 //        move(document, folder, permissionInheritance).onSuccess(newDocRef -> {
@@ -540,7 +540,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //     * 9. This method will rename an document.
 //     */
 //    @SuppressWarnings("unchecked")
-//    void renameDocument(final PresenterWidget<?> dialog, final DocRef document,
+//    void renameDocument(final MyPresenterWidget<?> dialog, final DocRef document,
 //                        final String name) {
 //        // Find out if we currently have the document open.
 //        final DocumentTabData tabData = documentToTabDataMap.get(document);
@@ -566,7 +566,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //        }
 //    }
 //
-//    private void renameDocument(final PresenterWidget<?> popup, final DocRef document, final String name,
+//    private void renameDocument(final MyPresenterWidget<?> popup, final DocRef document, final String name,
 //                                final EntityEditPresenter<?, D> editPresenter) {
 //        rename(document, name).onSuccess(newDocRef -> {
 //            // Hide the rename document presenter.

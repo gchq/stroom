@@ -25,6 +25,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
 
@@ -38,7 +39,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 

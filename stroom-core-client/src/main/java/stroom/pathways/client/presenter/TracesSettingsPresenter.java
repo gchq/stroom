@@ -22,10 +22,10 @@ import stroom.pathways.client.presenter.TracesSettingsPresenter.TracesSettingsVi
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.client.presenter.PlanBSettingsPresenter;
 import stroom.planb.shared.StateType;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 /**
  * Settings tab presenter for {@link TracesDoc}.

@@ -28,14 +28,14 @@ import stroom.dashboard.client.main.RenameTabViewImpl;
 import stroom.dashboard.client.unknown.HTMLView;
 import stroom.dashboard.client.unknown.HTMLViewImpl;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `DashboardModule`
 /// (`stroom/dashboard/client/gin/DashboardModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 ///
 /// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
 /// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`

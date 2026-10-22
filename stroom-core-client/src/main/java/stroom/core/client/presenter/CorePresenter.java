@@ -31,39 +31,35 @@ import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.RevealRootContentEvent;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ContentSlot;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 
-public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
+public class CorePresenter extends MyPresenter<CoreView>
         implements TaskStartHandler, TaskEndHandler, CurrentUserChangedHandler {
 
-    @ContentSlot
-    public static final Type<RevealContentHandler<?>> CORE = new Type<>();
+    public static final GwtEvent.Type<RevealContentEvent.Handler> CORE = new GwtEvent.Type<>();
 
     private final ClientSecurityContext securityContext;
     private final UrlParameters urlParameters;
     private int taskCount;
 
     @Inject
-    public CorePresenter(final EventBus eventBus, final CoreView view, final CoreProxy proxy,
+    public CorePresenter(final EventBus eventBus, final CoreView view,
                          final ClientSecurityContext securityContext,
                          final UrlParameters urlParameters) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.securityContext = securityContext;
         this.urlParameters = urlParameters;
     }
 
-    @ProxyEvent
     @Override
     public void onTaskStart(final TaskStartEvent event) {
         taskCount++;
@@ -79,7 +75,6 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
         }
     }
 
-    @ProxyEvent
     @Override
     public void onTaskEnd(final TaskEndEvent event) {
         taskCount--;
@@ -93,7 +88,6 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
         }
     }
 
-    @ProxyEvent
     @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
         final String type = urlParameters.getType();
@@ -125,9 +119,19 @@ public class CorePresenter extends MyPresenter<CoreView, CoreProxy>
         RevealRootContentEvent.fire(this, this);
     }
 
-    @ProxyStandard
-    public interface CoreProxy extends Proxy<CorePresenter> {
+    /// Hears the app-wide events the screen handles, making the screen when it is first needed, and
+    /// shows the screens asked for in its slots, showing it first.
+    public static final class CoreProxy {
 
+        @Inject
+        public CoreProxy(final EventBus eventBus, final Provider<CorePresenter> presenter) {
+            eventBus.addHandler(TaskStartEvent.getType(), event -> presenter.get().onTaskStart(event));
+            eventBus.addHandler(TaskEndEvent.getType(), event -> presenter.get().onTaskEnd(event));
+            eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->
+                    presenter.get().onCurrentUserChanged(event));
+            RevealContentEvent.showIn(eventBus, CORE, presenter::get);
+
+        }
     }
 
 

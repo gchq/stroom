@@ -16,12 +16,13 @@
 
 package stroom.security.identity.client.presenter;
 
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorProxy;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.RevealRootContentEvent;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -32,13 +33,9 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 
 public class AuthenticationErrorPresenter
-        extends MyPresenter<AuthenticationErrorView, AuthenticationErrorProxy> {
+        extends MyPresenter<AuthenticationErrorView> {
 
     private final Element loadingText;
     private final Element loading;
@@ -47,9 +44,8 @@ public class AuthenticationErrorPresenter
     @Inject
     public AuthenticationErrorPresenter(final EventBus eventBus,
                                         final AuthenticationErrorView authenticationErrorView,
-                                        final AuthenticationErrorProxy authenticationErrorProxy,
                                         final UiConfigCache uiConfigCache) {
-        super(eventBus, authenticationErrorView, authenticationErrorProxy);
+        super(eventBus, authenticationErrorView);
         this.uiConfigCache = uiConfigCache;
 
         loadingText = RootPanel.get("loadingText").getElement();
@@ -75,13 +71,6 @@ public class AuthenticationErrorPresenter
 
 
     // --------------------------------------------------------------------------------
-
-
-    @ProxyStandard
-    public interface AuthenticationErrorProxy extends Proxy<AuthenticationErrorPresenter> {
-
-    }
-
 
     // --------------------------------------------------------------------------------
 

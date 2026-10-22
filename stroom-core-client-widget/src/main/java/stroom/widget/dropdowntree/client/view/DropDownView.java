@@ -16,9 +16,10 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
+
 import com.google.gwt.user.client.ui.Focus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public interface DropDownView extends View, Focus, HasUiHandlers<DropDownUiHandlers> {
 

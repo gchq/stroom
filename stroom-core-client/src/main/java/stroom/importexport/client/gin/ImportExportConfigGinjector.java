@@ -16,26 +16,5 @@
 
 package stroom.importexport.client.gin;
 
-import stroom.importexport.client.ExportConfigPlugin;
-import stroom.importexport.client.ImportConfigPlugin;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.client.presenter.ImportConfigPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ImportExportConfigGinjector {
-
-    AsyncProvider<ExportConfigPlugin> getExportPlugin();
-
-    AsyncProvider<ImportConfigPlugin> getImportPlugin();
-
-    AsyncProvider<ExportConfigPresenter> getExportPresenter();
-
-    AsyncProvider<ImportConfigPresenter> getImportPresenter();
-
-    AsyncProvider<ImportConfigConfirmPresenter> getImportConfirmPresenter();
-
-    AsyncProvider<DependenciesInfoPresenter> getDependenciesInfoPresenter();
 }

@@ -18,8 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.RangeKeySchema;
-
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 public interface RangeKeySchemaSettingsView extends HasUiHandlers<ChangeUiHandlers> {
 

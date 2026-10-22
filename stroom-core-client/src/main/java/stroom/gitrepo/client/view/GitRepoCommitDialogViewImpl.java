@@ -17,13 +17,13 @@
 package stroom.gitrepo.client.view;
 
 import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter;
+import stroom.widget.presenter.client.UiHandlers;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.UiHandlers;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import javax.inject.Inject;
 

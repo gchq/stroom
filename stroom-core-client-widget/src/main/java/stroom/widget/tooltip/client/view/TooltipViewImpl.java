@@ -16,12 +16,12 @@
 
 package stroom.widget.tooltip.client.view;
 
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {
 

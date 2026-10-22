@@ -16,14 +16,5 @@
 
 package stroom.gitrepo.client.gin;
 
-import stroom.gitrepo.client.GitRepoPlugin;
-import stroom.gitrepo.client.presenter.GitRepoPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface GitRepoGinjector {
-
-    AsyncProvider<GitRepoPlugin> getGitRepoPlugin();
-
-    AsyncProvider<GitRepoPresenter> getGitRepoPresenter();
 }

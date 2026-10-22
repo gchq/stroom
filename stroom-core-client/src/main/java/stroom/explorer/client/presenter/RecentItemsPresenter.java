@@ -27,13 +27,11 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public class RecentItemsPresenter
-        extends AbstractFindPresenter<RecentItemsProxy>
+        extends AbstractFindPresenter
         implements ShowRecentItemsEvent.Handler {
 
     private final RecentItems recentItems;
@@ -42,16 +40,14 @@ public class RecentItemsPresenter
     @Inject
     public RecentItemsPresenter(final EventBus eventBus,
                                 final FindView view,
-                                final RecentItemsProxy proxy,
                                 final FindDocResultListPresenter findResultListPresenter,
                                 final RecentItems recentItems,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
+        super(eventBus, view, findResultListPresenter, quickFilterContextHandlerFactory);
         this.recentItems = recentItems;
         view.setFilterGuidance("Filter recent items by name", null);
     }
 
-    @ProxyEvent
     @Override
     public void onShowRecentItems(final ShowRecentItemsEvent event) {
         if (!showing) {
@@ -87,9 +83,13 @@ public class RecentItemsPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class RecentItemsProxy {
 
-    @ProxyCodeSplit
-    public interface RecentItemsProxy extends Proxy<RecentItemsPresenter> {
 
+        @Inject
+        public RecentItemsProxy(final EventBus eventBus, final Provider<RecentItemsPresenter> presenter) {
+            eventBus.addHandler(ShowRecentItemsEvent.getType(), event -> presenter.get().onShowRecentItems(event));
+        }
     }
 }

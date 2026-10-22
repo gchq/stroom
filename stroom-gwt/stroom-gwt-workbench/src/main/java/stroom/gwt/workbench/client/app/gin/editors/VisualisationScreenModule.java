@@ -32,15 +32,14 @@ import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.client.view.VisualisationSettingsViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `VisualisationModule`
 /// (`stroom/visualisation/client/gin/VisualisationModule.java`) and of the document asset
 /// presenters its 'Assets' tab uses (`stroom/document/asset/client/gin/DocumentAssetModule.java`),
 /// without their plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class VisualisationScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

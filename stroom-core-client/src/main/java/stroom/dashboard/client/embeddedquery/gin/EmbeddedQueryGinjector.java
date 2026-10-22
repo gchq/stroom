@@ -16,14 +16,5 @@
 
 package stroom.dashboard.client.embeddedquery.gin;
 
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPlugin;
-import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface EmbeddedQueryGinjector {
-
-    AsyncProvider<EmbeddedQueryPlugin> getEmbeddedQueryPlugin();
-
-    AsyncProvider<EmbeddedQueryPresenter> getEmbeddedQueryPresenter();
 }

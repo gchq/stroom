@@ -18,6 +18,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.util.shared.Count;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.i18n.client.NumberFormat;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.Optional;
 

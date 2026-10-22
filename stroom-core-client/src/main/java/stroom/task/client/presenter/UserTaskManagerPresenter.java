@@ -34,6 +34,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -42,10 +43,6 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,7 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserTaskManagerPresenter
-        extends MyPresenter<UserTaskManagerView, UserTaskManagerProxy>
+        extends MyPresenter<UserTaskManagerView>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
@@ -78,11 +75,10 @@ public class UserTaskManagerPresenter
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
                                     final UserTaskManagerView view,
-                                    final UserTaskManagerProxy proxy,
                                     final Provider<UserTaskPresenter> taskPresenterProvider,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.taskPresenterProvider = taskPresenterProvider;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
@@ -98,7 +94,6 @@ public class UserTaskManagerPresenter
         criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
     }
 
-    @ProxyEvent
     @Override
     public void onOpen(final OpenUserTaskManagerEvent event) {
         setData(null);
@@ -244,9 +239,13 @@ public class UserTaskManagerPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class UserTaskManagerProxy {
 
-    @ProxyCodeSplit
-    public interface UserTaskManagerProxy extends Proxy<UserTaskManagerPresenter> {
 
+        @Inject
+        public UserTaskManagerProxy(final EventBus eventBus, final Provider<UserTaskManagerPresenter> presenter) {
+            eventBus.addHandler(OpenUserTaskManagerEvent.getType(), event -> presenter.get().onOpen(event));
+        }
     }
 }

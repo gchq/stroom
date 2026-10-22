@@ -19,6 +19,7 @@ package stroom.processor.client.view;
 import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
 import stroom.util.shared.time.Days;
 import stroom.widget.datepicker.client.TimeBox;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -28,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ProfilePeriodEditViewImpl
         extends ViewImpl

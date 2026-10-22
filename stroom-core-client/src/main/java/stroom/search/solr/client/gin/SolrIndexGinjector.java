@@ -16,20 +16,5 @@
 
 package stroom.search.solr.client.gin;
 
-import stroom.search.solr.client.SolrIndexPlugin;
-import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter;
-import stroom.search.solr.client.presenter.SolrIndexPresenter;
-import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface SolrIndexGinjector {
-
-    AsyncProvider<SolrIndexPlugin> getSolrIndexPlugin();
-
-    AsyncProvider<SolrIndexPresenter> getSolrIndexPresenter();
-
-    AsyncProvider<SolrIndexSettingsPresenter> getSolrIndexSettingsPresenter();
-
-    AsyncProvider<SolrIndexFieldEditPresenter> getSolrIndexFieldEditPresenter();
 }

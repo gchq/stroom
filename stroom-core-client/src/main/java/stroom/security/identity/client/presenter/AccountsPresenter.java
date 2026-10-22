@@ -21,11 +21,11 @@ import stroom.data.table.client.Refreshable;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class AccountsPresenter
         extends ContentTabPresenter<AccountsView>

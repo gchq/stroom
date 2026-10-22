@@ -22,6 +22,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,7 +31,6 @@ import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import javax.inject.Inject;
 

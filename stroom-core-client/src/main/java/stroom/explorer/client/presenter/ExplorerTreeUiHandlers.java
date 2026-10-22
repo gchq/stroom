@@ -16,8 +16,9 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.dom.client.NativeEvent;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 import java.util.function.Consumer;
 

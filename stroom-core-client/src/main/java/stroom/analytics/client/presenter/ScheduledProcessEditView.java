@@ -18,10 +18,10 @@ package stroom.analytics.client.presenter;
 
 import stroom.schedule.client.ScheduleBox;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 

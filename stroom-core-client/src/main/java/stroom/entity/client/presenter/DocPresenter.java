@@ -23,10 +23,10 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;

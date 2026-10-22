@@ -18,12 +18,12 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.util.client.DisabledState;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class StepLocationLinkViewImpl extends ViewImpl implements StepLocationLinkView {
 

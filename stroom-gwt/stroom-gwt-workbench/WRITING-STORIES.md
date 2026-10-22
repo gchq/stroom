@@ -126,8 +126,8 @@ harness.getSecurityContext().setDocumentPermission(DocumentPermission.VIEW);
 Get the screen's presenter from **`AppScreenGinjector`** (`client/app/gin`), or the area's own
 ginjector (see [Support by area](#support-by-area)), so the presenter and its graph of child
 presenters and views are created (and bound) as in Stroom; give it to the harness with
-`.injector(...)`. Small presenters with no graph may still be created with `new` (pass `null` for a
-GWTP proxy), as `RecentItemsDialogStories` does.
+`.injector(...)`. Small presenters with no graph may still be created with `new`, as `RecentItemsDialogStories`
+does.
 
 ```java
 final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
@@ -137,7 +137,7 @@ return harness.asWidget();
 ```
 
 A screen opened by an event is shown by registering the presenter as the event's handler and
-firing the event, as GWTP's proxy would; a tab's content (not a popup) is added with
+firing the event, as its proxy would; a tab's content (not a popup) is added with
 `harness.addContent(presenter)`, which fills the canvas (the full page height, as Stroom's content
 pane does) and unbinds the presenter on re-render.
 
@@ -594,14 +594,14 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `create(context, fixtures, options)` builds the harness (with `realAlerts()`);
   `start(initialDocRef)` then logs in as Stroom does: every main menu plugin, the
   Dictionary/Feed/Folder document plugins and `DocumentPluginEventManager` are created, the dialogs
-  GWTP proxies would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
+  their proxies would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
   Export, Edit Tags), then the splash screen, the initial activity chooser and `ShowMainEvent`,
   which shows the main view and the explorer and opens the initial document (a deep link).
   `startFullScreen(docRef)` is Stroom's embedded view instead. Reuse it for any story about the
   shell, the explorer, the main menu or opening documents from the explorer.
   `ContentTabPanePresenter.onOpen` calls `forceReveal()`, whose `revealInParent()` clears every
   tab, so a tab pane that isn't visible keeps only the last tab opened; the shell makes the main
-  view visible as GWTP's root would (JSNI `PresenterWidget.internalReveal()`), with the tab pane
+  view count as revealed, as `RootPresenter` would (JSNI, setting its root content), with the tab pane
   already in its content slot, and puts the explorer in its slot after
   `NavigationPresenter.onShowMain`; stories that only need one tab can use
   `harness.addContent(tabPane)` instead. Its ginjector adds `ShellAppScreenModule` (the main view,
@@ -644,7 +644,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
   with `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`. It creates the
-  presenter on the first event, as its GWTP proxy does, i.e. after start-up.
+  presenter on the first event, as its proxy does, i.e. after start-up.
 
 ## Play functions
 

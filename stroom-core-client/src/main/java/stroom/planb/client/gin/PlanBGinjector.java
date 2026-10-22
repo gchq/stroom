@@ -16,16 +16,5 @@
 
 package stroom.planb.client.gin;
 
-import stroom.planb.client.PlanBPlugin;
-import stroom.planb.client.presenter.PlanBPresenter;
-import stroom.planb.client.presenter.PlanBSettingsPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface PlanBGinjector {
-    AsyncProvider<PlanBPlugin> getPlanBPlugin();
-
-    AsyncProvider<PlanBPresenter> getPlanBPresenter();
-
-    AsyncProvider<PlanBSettingsPresenter> getPlanBSettingsPresenter();
 }

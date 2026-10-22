@@ -16,8 +16,9 @@
 
 package stroom.importexport.client.presenter;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 import java.util.function.Consumer;
 

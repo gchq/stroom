@@ -16,7 +16,7 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface StepControlUIHandlers extends UiHandlers {
     void filter();

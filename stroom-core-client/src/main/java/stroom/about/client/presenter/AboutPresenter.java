@@ -25,17 +25,15 @@ import stroom.util.shared.BuildInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public class AboutPresenter
-        extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
+        extends MyPresenter<AboutPresenter.AboutView> {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
     private final RestFactory restFactory;
@@ -45,11 +43,10 @@ public class AboutPresenter
     @Inject
     public AboutPresenter(final EventBus eventBus,
                           final AboutView view,
-                          final AboutProxy proxy,
                           final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache,
                           final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.clientPropertyCache = clientPropertyCache;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -91,11 +88,6 @@ public class AboutPresenter
 
     public void show() {
         revealInParent();
-    }
-
-    @ProxyCodeSplit
-    public interface AboutProxy extends Proxy<AboutPresenter> {
-
     }
 
     public interface AboutView extends View {

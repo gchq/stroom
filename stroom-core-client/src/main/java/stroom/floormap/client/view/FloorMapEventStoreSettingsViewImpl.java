@@ -27,6 +27,7 @@ import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -37,7 +38,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 /// Composes the Plan B settings widgets this store needs, and adds the one setting that is ours.
 ///

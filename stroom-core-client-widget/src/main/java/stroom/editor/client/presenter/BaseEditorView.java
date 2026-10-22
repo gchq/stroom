@@ -17,6 +17,7 @@
 package stroom.editor.client.presenter;
 
 import stroom.ui.config.shared.AceEditorTheme;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
@@ -24,7 +25,6 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public interface BaseEditorView

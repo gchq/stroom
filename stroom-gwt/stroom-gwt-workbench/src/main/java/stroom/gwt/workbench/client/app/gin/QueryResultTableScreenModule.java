@@ -39,8 +39,7 @@ import stroom.dashboard.client.table.cf.RulesViewImpl;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.view.QueryResultTableViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of a query's results table (`QueryResultTablePresenter`) and the dialogs it opens
 /// (column filters, formats, downloads and conditional formatting), for screens that show one

@@ -29,6 +29,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -37,16 +38,13 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Set;
 
 public class InfoDocumentPresenter
-        extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
+        extends MyPresenter<InfoDocumentPresenter.InfoDocumentView>
         implements ShowInfoDocumentDialogEvent.Handler {
 
     private final DateTimeFormatter dateTimeFormatter;
@@ -55,9 +53,8 @@ public class InfoDocumentPresenter
     @Inject
     public InfoDocumentPresenter(final EventBus eventBus,
                                  final InfoDocumentView view,
-                                 final InfoDocumentProxy proxy,
                                  final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
     }
 
@@ -86,7 +83,6 @@ public class InfoDocumentPresenter
         }
     }
 
-    @ProxyEvent
     @Override
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
         final ExplorerNodeInfo explorerNodeInfo = event.getExplorerNodeInfo();
@@ -168,8 +164,13 @@ public class InfoDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
-    @ProxyCodeSplit
-    public interface InfoDocumentProxy extends Proxy<InfoDocumentPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class InfoDocumentProxy {
 
+
+        @Inject
+        public InfoDocumentProxy(final EventBus eventBus, final Provider<InfoDocumentPresenter> presenter) {
+            eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event -> presenter.get().onCreate(event));
+        }
     }
 }

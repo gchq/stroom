@@ -17,11 +17,11 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.Automate;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractRefreshableComponentPresenter<V extends View>
         extends AbstractComponentPresenter<V> implements Refreshable, Queryable {

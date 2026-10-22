@@ -22,12 +22,12 @@ import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SnapshotSettings;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class SessionSettingsViewImpl
         extends ViewWithUiHandlers<ChangeUiHandlers>

@@ -21,10 +21,10 @@ import stroom.data.client.SourceKey;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 

@@ -20,15 +20,17 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ChangePasswordRequest;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.client.RedirectUrlUtil;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.RevealRootContentEvent;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -39,13 +41,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 
-public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implements LoginUiHandlers {
+public class LoginPresenter extends MyPresenter<LoginView> implements LoginUiHandlers {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
@@ -59,11 +56,10 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
     @Inject
     public LoginPresenter(final EventBus eventBus,
                           final LoginView view,
-                          final LoginProxy loginProxy,
                           final RestFactory restFactory,
                           final Provider<ChangePasswordPresenter> changePasswordPresenterProvider,
                           final Provider<EmailResetPasswordPresenter> emailResetPasswordPresenterProvider) {
-        super(eventBus, view, loginProxy);
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.changePasswordPresenterProvider = changePasswordPresenterProvider;
         this.emailResetPasswordPresenterProvider = emailResetPasswordPresenterProvider;
@@ -184,13 +180,6 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
 
 
     // --------------------------------------------------------------------------------
-
-
-    @ProxyStandard
-    public interface LoginProxy extends Proxy<LoginPresenter> {
-
-    }
-
 
     // --------------------------------------------------------------------------------
 

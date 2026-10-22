@@ -19,6 +19,8 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.ReplaceSecretPresenter.ReplaceSecretView;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -29,8 +31,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import javax.inject.Inject;
 

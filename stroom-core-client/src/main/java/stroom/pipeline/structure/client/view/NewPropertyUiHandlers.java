@@ -17,8 +17,7 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface NewPropertyUiHandlers extends UiHandlers {
 

@@ -16,11 +16,5 @@
 
 package stroom.dictionary.client.gin;
 
-import stroom.dictionary.client.DictionaryPlugin;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface DictionaryGinjector {
-
-    AsyncProvider<DictionaryPlugin> getDictionaryPlugin();
 }

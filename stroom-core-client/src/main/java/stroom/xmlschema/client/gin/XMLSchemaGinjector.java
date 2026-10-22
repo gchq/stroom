@@ -16,14 +16,5 @@
 
 package stroom.xmlschema.client.gin;
 
-import stroom.xmlschema.client.XMLSchemaPlugin;
-import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface XMLSchemaGinjector {
-
-    AsyncProvider<XMLSchemaPlugin> getXMLSchemaPlugin();
-
-    AsyncProvider<XMLSchemaPresenter> getXmlSchemaEditPresenter();
 }

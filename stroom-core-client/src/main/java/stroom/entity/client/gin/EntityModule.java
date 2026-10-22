@@ -42,8 +42,7 @@ import stroom.entity.client.view.MarkdownEditViewImpl;
 import stroom.entity.client.view.MarkdownPreviewViewImpl;
 import stroom.entity.client.view.MoveDocumentViewImpl;
 import stroom.entity.client.view.NameDocumentViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class EntityModule extends AbstractPresenterModule {
 

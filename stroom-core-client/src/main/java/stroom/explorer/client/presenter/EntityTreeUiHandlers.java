@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface EntityTreeUiHandlers extends UiHandlers {
 

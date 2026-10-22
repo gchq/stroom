@@ -17,8 +17,7 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface AiConfigGeneralUiHandlers extends UiHandlers {
 

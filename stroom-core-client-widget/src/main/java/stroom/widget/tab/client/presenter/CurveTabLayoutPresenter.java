@@ -22,20 +22,19 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPresenter<CurveTabLayoutView, P> {
+public abstract class CurveTabLayoutPresenter extends MyPresenter<CurveTabLayoutView> {
 
     private final Map<TabData, Layer> tabContentMap = new HashMap<>();
 
     @Inject
-    public CurveTabLayoutPresenter(final EventBus eventBus, final CurveTabLayoutView view, final P proxy) {
-        super(eventBus, view, proxy);
+    public CurveTabLayoutPresenter(final EventBus eventBus, final CurveTabLayoutView view) {
+        super(eventBus, view);
     }
 
     @Override

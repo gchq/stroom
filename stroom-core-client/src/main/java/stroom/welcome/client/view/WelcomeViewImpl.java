@@ -17,6 +17,7 @@
 package stroom.welcome.client.view;
 
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +26,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
 

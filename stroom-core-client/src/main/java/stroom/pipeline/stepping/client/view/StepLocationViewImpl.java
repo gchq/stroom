@@ -18,13 +18,13 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class StepLocationViewImpl extends ViewImpl implements StepLocationView {
 

@@ -37,6 +37,8 @@ import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.DoubleClickTester;
@@ -48,29 +50,23 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ContentSlot;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
-import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
 import java.util.List;
 
 public class MainPresenter
-        extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy>
+        extends MyPresenter<MainPresenter.MainView>
         implements MainUiHandlers {
 
-    @ContentSlot
-    public static final Type<RevealContentHandler<?>> EXPLORER = new Type<>();
-    @ContentSlot
-    public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
+    public static final GwtEvent.Type<RevealContentEvent.Handler> EXPLORER = new GwtEvent.Type<>();
+    public static final GwtEvent.Type<RevealContentEvent.Handler> CONTENT = new GwtEvent.Type<>();
     private final Timer refreshTimer;
     private boolean click;
     private final MenuItems menuItems;
@@ -82,11 +78,10 @@ public class MainPresenter
     @Inject
     public MainPresenter(final EventBus eventBus,
                          final MainView view,
-                         final MainProxy proxy,
                          final MenuItems menuItems,
                          final UiConfigCache uiConfigCache,
                          final GlobalKeyHandler globalKeyHandler) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.menuItems = menuItems;
         view.getMainToolBar().setMainUiHandlers(this);
 
@@ -256,9 +251,14 @@ public class MainPresenter
         return window.parent.frameElement;
     }-*/;
 
-    @ProxyCodeSplit
-    public interface MainProxy extends Proxy<MainPresenter> {
+    /// Shows the screens asked for in its slots, showing it first.
+    public static final class MainProxy {
 
+        @Inject
+        public MainProxy(final EventBus eventBus, final Provider<MainPresenter> presenter) {
+            RevealContentEvent.showIn(eventBus, EXPLORER, presenter::get);
+            RevealContentEvent.showIn(eventBus, CONTENT, presenter::get);
+        }
     }
 
 

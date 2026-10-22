@@ -20,6 +20,8 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.FabButton;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,8 +31,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SourceViewImpl extends ViewImpl implements SourceView {
 

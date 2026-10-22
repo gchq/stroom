@@ -20,6 +20,8 @@ import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
@@ -38,8 +40,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.Objects;
 

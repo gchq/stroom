@@ -20,6 +20,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.widget.button.client.QuickSettings;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -30,7 +31,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// The content of the Time Range dialog ([TimeRangeDialog]): quick settings for common ranges, and
 /// the After and Before times, each a date-time box that also takes expressions such as `now()-1d`.

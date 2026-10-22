@@ -19,6 +19,7 @@ package stroom.document.asset.client.view;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DocumentAssetViewImpl extends ViewImpl
         implements DocumentAssetView {

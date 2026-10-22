@@ -16,7 +16,6 @@
 
 package stroom.ai.client;
 
-import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChat;
@@ -52,8 +51,10 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -72,17 +73,12 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AskStroomAiPresenter
-        extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
+        extends MyPresenter<AskStroomAiView>
         implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
@@ -123,7 +119,6 @@ public class AskStroomAiPresenter
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
                                 final AskStroomAiView view,
-                                final AskStroomAiProxy askStroomAiProxy,
                                 final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
@@ -133,7 +128,7 @@ public class AskStroomAiPresenter
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, view, askStroomAiProxy);
+        super(eventBus, view);
         own(docSelectionBoxPresenter);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
@@ -228,7 +223,6 @@ public class AskStroomAiPresenter
 
     }
 
-    @ProxyEvent
     @Override
     public void onAsk(final AskStroomAiEvent event) {
         // Show if not already showing.
@@ -263,7 +257,6 @@ public class AskStroomAiPresenter
         });
     }
 
-    @ProxyEvent
     @Override
     public void onShow(final ShowAskStroomAiEvent event) {
         getDockSize(dockSize -> {
@@ -393,9 +386,14 @@ public class AskStroomAiPresenter
         });
     }
 
-    @ProxyCodeSplit
-    public interface AskStroomAiProxy extends Proxy<AskStroomAiPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class AskStroomAiProxy {
 
+        @Inject
+        public AskStroomAiProxy(final EventBus eventBus, final Provider<AskStroomAiPresenter> presenter) {
+            eventBus.addHandler(AskStroomAiEvent.getType(), event -> presenter.get().onAsk(event));
+            eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> presenter.get().onShow(event));
+        }
     }
 
     @Override

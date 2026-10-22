@@ -20,6 +20,8 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.presenter.TextUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.FabButton;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,8 +30,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
 

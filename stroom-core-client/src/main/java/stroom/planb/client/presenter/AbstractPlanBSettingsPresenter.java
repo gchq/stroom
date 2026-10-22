@@ -21,9 +21,9 @@ import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractPlanBSettingsPresenter<V extends View & GeneralSettingsView>
         extends MyPresenterWidget<V>

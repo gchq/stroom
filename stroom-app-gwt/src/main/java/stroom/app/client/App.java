@@ -24,7 +24,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
-import com.gwtplatform.mvp.client.DelayedBindRegistry;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -40,8 +39,6 @@ public class App implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
-        // This is required for Gwt-Platform proxy's generator.
-        DelayedBindRegistry.bind(ginjector);
 
 //        GWT.setUncaughtExceptionHandler(e -> {
 //            GWT.log(e.getClass().getName());

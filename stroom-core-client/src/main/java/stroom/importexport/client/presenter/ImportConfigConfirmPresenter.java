@@ -48,6 +48,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -61,11 +62,8 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,8 +73,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ImportConfigConfirmPresenter extends
-        MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
-                ImportConfigConfirmPresenter.ImportConfirmProxy>
+        MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView>
         implements ImportConfigConfirmEvent.Handler, HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
@@ -95,11 +92,10 @@ public class ImportConfigConfirmPresenter extends
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
                                         final ImportConfigConfirmView view,
-                                        final ImportConfirmProxy proxy,
                                         final TooltipPresenter tooltipPresenter,
                                         final DocSelectionBoxPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(tooltipPresenter);
         own(rootFolderPresenter);
         this.rootFolderPresenter = rootFolderPresenter;
@@ -155,7 +151,6 @@ public class ImportConfigConfirmPresenter extends
         }));
     }
 
-    @ProxyEvent
     @Override
     public void onConfirmImport(final ImportConfigConfirmEvent event) {
         resourceKey = event.getResponse().getResourceKey();
@@ -585,8 +580,12 @@ public class ImportConfigConfirmPresenter extends
         Widget getDataGridViewWidget();
     }
 
-    @ProxyCodeSplit
-    public interface ImportConfirmProxy extends Proxy<ImportConfigConfirmPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ImportConfirmProxy {
 
+        @Inject
+        public ImportConfirmProxy(final EventBus eventBus, final Provider<ImportConfigConfirmPresenter> presenter) {
+            eventBus.addHandler(ImportConfigConfirmEvent.getType(), event -> presenter.get().onConfirmImport(event));
+        }
     }
 }

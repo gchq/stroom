@@ -17,23 +17,23 @@
 package stroom.widget.popup.client.event;
 
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final DialogAction action;
 
-    private DisablePopupEvent(final PresenterWidget<?> presenterWidget, final DialogAction action) {
+    private DisablePopupEvent(final MyPresenterWidget<?> presenterWidget, final DialogAction action) {
         this.presenterWidget = presenterWidget;
         this.action = action;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
         return new Builder(presenterWidget);
     }
 
@@ -54,7 +54,7 @@ public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
         handler.onDisable(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 
@@ -69,10 +69,10 @@ public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final MyPresenterWidget<?> presenterWidget;
         private DialogAction action;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
+        public Builder(final MyPresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 

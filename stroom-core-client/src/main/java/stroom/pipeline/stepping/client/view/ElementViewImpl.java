@@ -18,10 +18,10 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ElementViewImpl extends ViewImpl implements ElementView {
 

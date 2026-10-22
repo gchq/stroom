@@ -22,13 +22,12 @@ import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.client.view.ContentTemplateEditViewImpl;
 import stroom.receive.content.client.view.ContentTemplateTabViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ContentTemplateModule`
 /// (`stroom/receive/content/client/gin/ContentTemplateModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class ContentTemplateScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

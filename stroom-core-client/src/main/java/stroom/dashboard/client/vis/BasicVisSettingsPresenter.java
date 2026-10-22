@@ -31,6 +31,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
@@ -39,8 +41,6 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Comparator;

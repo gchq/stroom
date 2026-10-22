@@ -18,27 +18,27 @@ package stroom.widget.popup.client.event;
 
 import stroom.widget.popup.client.event.DialogEvent.Handler;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class DialogEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final DialogAction action;
 
-    private DialogEvent(final PresenterWidget<?> presenterWidget,
+    private DialogEvent(final MyPresenterWidget<?> presenterWidget,
                        final DialogAction action) {
         this.presenterWidget = presenterWidget;
         this.action = action;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
+                            final MyPresenterWidget<?> presenterWidget,
                             final DialogAction action) {
         handlers.fireEvent(new DialogEvent(presenterWidget, action));
     }
@@ -60,7 +60,7 @@ public class DialogEvent extends GwtEvent<Handler> {
         handler.onDialogAction(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 

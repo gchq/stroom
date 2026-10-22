@@ -18,13 +18,13 @@ package stroom.document.asset.client.view;
 
 import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter.DocumentAssetEditAssetDialogView;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /**
  * View for the dialog that renames an existing asset in the document asset manager.

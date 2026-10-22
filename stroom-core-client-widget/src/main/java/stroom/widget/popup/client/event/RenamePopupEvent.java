@@ -16,22 +16,23 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final String caption;
 
-    private RenamePopupEvent(final PresenterWidget<?> presenterWidget, final String caption) {
+    private RenamePopupEvent(final MyPresenterWidget<?> presenterWidget, final String caption) {
         this.presenterWidget = presenterWidget;
         this.caption = caption;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
         return new Builder(presenterWidget);
     }
 
@@ -52,7 +53,7 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
         handler.onRename(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 
@@ -67,10 +68,10 @@ public class RenamePopupEvent extends GwtEvent<RenamePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final MyPresenterWidget<?> presenterWidget;
         private String caption;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
+        public Builder(final MyPresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 

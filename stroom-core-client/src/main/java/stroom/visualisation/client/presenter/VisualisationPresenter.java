@@ -25,12 +25,12 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -80,7 +80,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     }
 
     @Override
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
         if (content == documentAssetPresenter) {
             onChange();
         }

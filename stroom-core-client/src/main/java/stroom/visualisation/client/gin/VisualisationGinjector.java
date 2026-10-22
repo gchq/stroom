@@ -16,14 +16,5 @@
 
 package stroom.visualisation.client.gin;
 
-import stroom.visualisation.client.VisualisationPlugin;
-import stroom.visualisation.client.presenter.VisualisationPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface VisualisationGinjector {
-
-    AsyncProvider<VisualisationPlugin> getVisualisationPlugin();
-
-    AsyncProvider<VisualisationPresenter> getVisualisationPresenter();
 }

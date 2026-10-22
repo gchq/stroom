@@ -34,13 +34,13 @@ import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 

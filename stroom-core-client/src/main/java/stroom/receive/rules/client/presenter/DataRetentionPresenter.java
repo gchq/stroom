@@ -28,6 +28,7 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -36,7 +37,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public class DataRetentionPresenter
     private final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider;
 
     private final boolean readOnly = true;
-    private PresenterWidget<?> currentContent;
+    private MyPresenterWidget<?> currentContent;
     private DataRetentionImpactPresenter dataRetentionImpactPresenter;
     private TabData selectedTab;
     private final List<TabData> tabs = new ArrayList<>();
@@ -149,7 +149,7 @@ public class DataRetentionPresenter
         return selectedTab;
     }
 
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     @Override

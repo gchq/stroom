@@ -17,8 +17,7 @@
 package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
-
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 public interface GeneralSettingsView extends HasUiHandlers<ChangeUiHandlers> {
 

@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
@@ -24,13 +25,11 @@ import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.client.view.XMLSchemaSettingsViewImpl;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 /// The presenter and view bindings of Stroom's `XMLSchemaModule`
 /// (`stroom/xmlschema/client/gin/XMLSchemaModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class XMLSchemaScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

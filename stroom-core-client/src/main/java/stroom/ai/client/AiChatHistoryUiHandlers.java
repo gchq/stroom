@@ -16,8 +16,9 @@
 
 package stroom.ai.client;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AiChatHistoryUiHandlers extends UiHandlers {
 

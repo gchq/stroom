@@ -26,8 +26,6 @@ import stroom.widget.component.client.HasComponentNode;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -93,18 +91,42 @@ class TestMyPresenter {
         assertThat(presenter.getComponentNode().childCount()).isEqualTo(1);
     }
 
+    @Test
+    void forceRevealShowsAScreenNotOnThePage() {
+        final TestPresenter presenter = new TestPresenter(eventBus);
+
+        presenter.forceReveal();
+
+        assertThat(presenter.reveals).isEqualTo(1);
+    }
+
+    @Test
+    void forceRevealLeavesAScreenAlreadyOnThePage() {
+        // e.g. the tab pane, whose revealInParent() would close every tab
+        final TestPresenter presenter = new TestPresenter(eventBus);
+        RootPresenter.setRootContent(presenter);
+        try {
+            presenter.forceReveal();
+        } finally {
+            RootPresenter.setRootContent(null);
+        }
+
+        assertThat(presenter.reveals).isZero();
+    }
+
     // --------------------------------------------------------------------------------
 
-
-    private static final class TestPresenter extends MyPresenter<View, Proxy<?>> {
+    private static final class TestPresenter extends MyPresenter<View> {
 
         private TestPresenter(final EventBus eventBus) {
-            super(eventBus, Mockito.mock(View.class), Mockito.mock(Proxy.class));
+            super(eventBus, Mockito.mock(View.class));
         }
+
+        private int reveals;
 
         @Override
         protected void revealInParent() {
-            // Never revealed
+            reveals++;
         }
 
         void ownChild(final HasComponentNode child) {

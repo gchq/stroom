@@ -17,10 +17,10 @@
 package stroom.alert.client.view;
 
 import stroom.alert.client.presenter.PromptPresenter;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class PromptViewImpl extends ViewImpl implements PromptPresenter.PromptView {
 

@@ -21,10 +21,10 @@ import stroom.credentials.client.presenter.AccessTokenSecretPresenter.AccessToke
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Secret;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;

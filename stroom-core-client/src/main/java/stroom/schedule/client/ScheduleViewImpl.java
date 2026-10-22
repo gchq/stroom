@@ -27,6 +27,7 @@ import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.QuickSettings;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -39,7 +40,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> implements ScheduleView {
 

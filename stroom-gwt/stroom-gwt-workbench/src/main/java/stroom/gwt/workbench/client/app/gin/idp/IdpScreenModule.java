@@ -17,32 +17,27 @@
 package stroom.gwt.workbench.client.app.gin.idp;
 
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorProxy;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordProxy;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
 import stroom.security.identity.client.view.ChangePasswordViewImpl;
 import stroom.security.identity.client.view.EmailResetPasswordViewImpl;
 import stroom.security.identity.client.view.LoginViewImpl;
 import stroom.security.identity.client.view.ResetPasswordViewImpl;
-
-import com.google.inject.Provides;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of the internal identity provider's pages and dialogs from Stroom's
 /// `ChangePasswordModule` (`stroom/security/identity/client/gin/ChangePasswordModule.java`):
 /// the sign in page (`LoginPresenter`), the authentication error page, the password reset page and
 /// the change password and 'Reset Your Password' dialogs, without its plugins and the accounts
-/// screens. Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a
+/// screens. Presenters that Stroom binds with a proxy are bound as presenter widgets with a
 /// null proxy: Stroom's `App.onModuleLoad` reveals them with `forceReveal()`, which a story does by
 /// calling their `revealInParent()` (see `client.app.idp.IdpPage`).
 public class IdpScreenModule extends AbstractPresenterModule {
@@ -68,23 +63,5 @@ public class IdpScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(EmailResetPasswordPresenter.class,
                 EmailResetPasswordView.class,
                 EmailResetPasswordViewImpl.class);
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    LoginProxy provideLoginProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    AuthenticationErrorProxy provideAuthenticationErrorProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    ResetPasswordProxy provideResetPasswordProxy() {
-        return null;
     }
 }

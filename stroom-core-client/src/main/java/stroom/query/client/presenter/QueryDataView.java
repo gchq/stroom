@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 public interface QueryDataView extends View, HasUiHandlers<QueryDataUiHandlers> {
     void setQuery(String query);

@@ -19,6 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.util.shared.time.Time;
 import stroom.widget.datepicker.client.TimePopup.TimeView;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TimeViewImpl extends ViewImpl implements TimeView {
 

@@ -20,13 +20,13 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.client.presenter.KeyStoreFileSecretPresenter.KeyStoreFileSecretView;
 import stroom.item.client.SelectionBox;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;

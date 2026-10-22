@@ -21,6 +21,8 @@ import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettings
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ColumnRef;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -34,8 +36,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Comparator;
 import java.util.List;

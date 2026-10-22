@@ -16,8 +16,9 @@
 
 package stroom.annotation.client;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.dom.client.Element;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AnnotationEditUiHandlers extends UiHandlers {
 

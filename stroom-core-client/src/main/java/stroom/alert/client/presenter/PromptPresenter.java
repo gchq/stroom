@@ -18,23 +18,20 @@ package stroom.alert.client.presenter;
 
 import stroom.alert.client.event.PromptEvent;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
-public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, PromptPresenter.PromptProxy>
+public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView>
         implements PromptEvent.Handler {
 
     @Inject
-    public PromptPresenter(final EventBus eventBus, final PromptView view, final PromptProxy proxy) {
-        super(eventBus, view, proxy);
+    public PromptPresenter(final EventBus eventBus, final PromptView view) {
+        super(eventBus, view);
     }
 
-    @ProxyEvent
     @Override
     public void onPrompt(final PromptEvent event) {
         final String result = getView().prompt(event.getMessage(), event.getInitialValue());
@@ -46,9 +43,13 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView, Pro
         // Do nothing.
     }
 
-    @ProxyStandard
-    public interface PromptProxy extends Proxy<PromptPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class PromptProxy {
 
+        @Inject
+        public PromptProxy(final EventBus eventBus, final Provider<PromptPresenter> presenter) {
+            eventBus.addHandler(PromptEvent.getType(), event -> presenter.get().onPrompt(event));
+        }
     }
 
     public interface PromptView extends View {

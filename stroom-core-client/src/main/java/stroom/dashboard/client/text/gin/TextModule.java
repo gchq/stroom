@@ -23,8 +23,7 @@ import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.text.TextPresenter;
 import stroom.dashboard.client.text.TextPresenter.TextView;
 import stroom.dashboard.client.text.TextViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class TextModule extends AbstractPresenterModule {
 

@@ -25,11 +25,11 @@ import stroom.planb.client.view.RetentionSettingsView;
 import stroom.planb.client.view.SessionKeySchemaSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.SessionSettings;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class SessionSettingsPresenter
         extends AbstractPlanBSettingsPresenter<SessionSettingsView> {

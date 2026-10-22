@@ -33,10 +33,10 @@ import stroom.ui.config.shared.QueryConfig;
 import stroom.util.shared.NullSafe;
 import stroom.view.client.presenter.ViewSettingsPresenter.ViewSettingsView;
 import stroom.view.shared.ViewDoc;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDoc> {
 

@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -36,7 +37,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 /// A picker: a button (BEM block `drop-down`, `drop-down.css`) showing the chosen value, with a "…"
 /// icon at its end, that opens a dialog to choose another. A problem with the value (e.g. the

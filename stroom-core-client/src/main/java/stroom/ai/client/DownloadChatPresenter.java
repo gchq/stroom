@@ -17,11 +17,11 @@
 package stroom.ai.client;
 
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class DownloadChatPresenter extends MyPresenterWidget<DownloadChatPresenter.DownloadChatView> {
 

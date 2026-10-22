@@ -19,6 +19,7 @@ package stroom.preferences.client;
 import stroom.preferences.client.KeyShortcutRecorderPresenter.KeyShortcutRecorderView;
 import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public final class KeyShortcutRecorderViewImpl
         extends ViewWithUiHandlers<KeyShortcutRecorderUiHandlers>

@@ -16,7 +16,7 @@
 
 package stroom.data.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ProcessChoiceUiHandler extends UiHandlers {
 

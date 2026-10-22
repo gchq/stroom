@@ -58,6 +58,7 @@ import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.GWT;
@@ -65,7 +66,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -76,7 +76,7 @@ import java.util.function.Supplier;
 /// ([ContentTabPanePresenter]) in its content slot, every plugin that adds to the main menu (and
 /// binds keyboard shortcuts), the Dictionary, Feed and Folder document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
-/// the dialogs that GWTP's proxies would show for their events (Find, Recent Items, New, Copy, Move,
+/// the dialogs that the proxies would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
 ///
 /// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CorePresenter` do once the harness has
@@ -157,7 +157,7 @@ final class ShellScreen {
     private void createMain() {
         final EventBus eventBus = harness.getEventBus();
 
-        // The document tabs, registered for the content events as their GWTP proxy would be
+        // The document tabs, registered for the content events as their proxy would be
         final ContentTabPanePresenter tabPane = injector.getContentTabPanePresenter();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), tabPane));
@@ -171,7 +171,6 @@ final class ShellScreen {
         harness.addCleanUp(keyHandler::stop);
         final MainPresenter main = new MainPresenter(eventBus,
                 injector.getMainView(),
-                null,
                 new MenuItems(),
                 harness.getUiConfigCache(),
                 keyHandler);
@@ -180,9 +179,9 @@ final class ShellScreen {
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
         // As Stroom shows them for ShowMainEvent, once the user has logged in: the main view (made
-        // visible as GWTP's root presenter would make it) with the tab pane in its content slot,
+        // visible as the root presenter would make it) with the tab pane in its content slot,
         // then the explorer, which shows itself (NavigationPresenter.onShowMain, registered as its
-        // GWTP proxy would be), and is put in the main view's explorer slot as the main view's
+        // proxy would be), and is put in the main view's explorer slot as the main view's
         // proxy would do for the explorer's RevealContentEvent
         final NavigationPresenter navigation = injector.getNavigationPresenter();
         harness.unbindOnCleanUp(navigation);
@@ -190,6 +189,7 @@ final class ShellScreen {
             main.setInSlot(MainPresenter.CONTENT, tabPane);
             harness.addContent(main);
             reveal(main);
+            harness.addCleanUp(() -> unreveal(main));
         }));
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), navigation));
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event ->
@@ -273,7 +273,7 @@ final class ShellScreen {
         harness.addCleanUp(plugin::unbind);
     }
 
-    // The dialogs that Stroom's GWTP proxies create and show for their events
+    // The dialogs that Stroom's proxies create and show for their events
     private void registerDialogs() {
         final Lazy<FindPresenter> findPresenter = new Lazy<>(injector::getFindPresenter);
         final Lazy<FindInContentPresenter> findInContentPresenter = new Lazy<>(injector::getFindInContentPresenter);
@@ -313,11 +313,18 @@ final class ShellScreen {
                 explorerNodeRemoveTagsPresenter.get().onCreate(event)));
     }
 
-    // Makes a presenter visible (calling its onReveal and its children's), as GWTP does when it
-    // reveals a presenter in its parent's slot (here the root, which the story has no presenter for).
-    // A visible tab pane keeps its tabs when it is asked to reveal itself for each new tab
+    // Makes the main presenter count as the page, as Stroom's root presenter does when it shows it
+    // (the story has no root presenter: it has its own page), so the screens in its slots are on the
+    // page too. A tab pane on the page keeps its tabs when it is asked to reveal itself for each tab
     private static native void reveal(MainPresenter presenter) /*-{
-        presenter.@com.gwtplatform.mvp.client.PresenterWidget::internalReveal()();
+        @stroom.widget.presenter.client.RootPresenter::rootContent = presenter;
+    }-*/;
+
+    // The next story starts with no page
+    private static native void unreveal(MainPresenter presenter) /*-{
+        if (@stroom.widget.presenter.client.RootPresenter::rootContent === presenter) {
+            @stroom.widget.presenter.client.RootPresenter::rootContent = null;
+        }
     }-*/;
 
     // MainPresenter's refresh timer (it fires RefreshCurrentContentTabEvent every 30 seconds) is
@@ -361,8 +368,7 @@ final class ShellScreen {
 
     // --------------------------------------------------------------------------------
 
-
-    /// Creates a value when it is first asked for, as a GWTP proxy creates its presenter when its
+    /// Creates a value when it is first asked for, as a proxy creates its presenter when its
     /// event first fires, and gives the same one after that.
     private static final class Lazy<T> implements Supplier<T> {
 

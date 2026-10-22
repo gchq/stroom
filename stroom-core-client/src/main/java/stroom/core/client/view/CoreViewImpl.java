@@ -17,13 +17,13 @@
 package stroom.core.client.view;
 
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CoreViewImpl extends ViewImpl implements CoreView {
 

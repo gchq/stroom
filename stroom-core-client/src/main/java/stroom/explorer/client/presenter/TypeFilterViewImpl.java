@@ -17,10 +17,10 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TypeFilterViewImpl extends ViewImpl implements TypeFilterView {
     private final ScrollPanel scrollPanel;

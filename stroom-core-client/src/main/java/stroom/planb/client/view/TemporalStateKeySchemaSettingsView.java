@@ -18,8 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.TemporalStateKeySchema;
-
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 public interface TemporalStateKeySchemaSettingsView extends HasUiHandlers<ChangeUiHandlers> {
 

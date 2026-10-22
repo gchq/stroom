@@ -22,8 +22,7 @@ import stroom.data.client.view.DataUploadViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's GIN modules whose other bindings the query batch's screens don't
 /// need: `DataUploadPresenter` from `FeedModule` (`MetaPresenter`, which a query's data links

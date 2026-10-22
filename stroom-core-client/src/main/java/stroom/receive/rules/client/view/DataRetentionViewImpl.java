@@ -18,6 +18,7 @@ package stroom.receive.rules.client.view;
 
 import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
@@ -25,7 +26,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataRetentionViewImpl extends ViewImpl implements DataRetentionView {
 

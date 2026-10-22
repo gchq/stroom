@@ -17,8 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.query.api.Format.Type;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface FormatUihandlers extends UiHandlers {
 

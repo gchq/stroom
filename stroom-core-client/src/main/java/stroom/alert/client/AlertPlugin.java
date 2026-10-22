@@ -19,10 +19,10 @@ package stroom.alert.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.CommonAlertPresenter;
+import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 public class AlertPlugin extends HandlerContainerImpl implements AlertEvent.Handler, ConfirmEvent.Handler {
 

@@ -19,6 +19,7 @@ package stroom.iframe.client.view;
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -28,7 +29,6 @@ import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Arrays;
 import java.util.Objects;

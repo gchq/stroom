@@ -16,9 +16,8 @@
 
 package stroom.preferences.client;
 
+import stroom.widget.presenter.client.UiHandlers;
 import stroom.widget.util.client.KeyStroke;
-
-import com.gwtplatform.mvp.client.UiHandlers;
 
 /// Handles the key presses of a [KeyShortcutRecorderPresenter.KeyShortcutRecorderView].
 public interface KeyShortcutRecorderUiHandlers extends UiHandlers {

@@ -226,7 +226,7 @@ public final class SourceViewerStories {
         // Stroom's Menu (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
         final DataPresenter presenter = dataPresenter(harness);
-        // As GWTP does when the presenter is revealed
+        // As the presenter's tab does when it is shown
         presenter.bind();
         harness.unbindOnCleanUp(presenter);
         if (sourceLocation != null) {

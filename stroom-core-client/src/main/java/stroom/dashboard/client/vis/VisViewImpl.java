@@ -20,6 +20,7 @@ import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.data.grid.client.MessagePanelImpl;
 import stroom.data.pager.client.RefreshButton;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
@@ -29,7 +30,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class VisViewImpl extends ViewImpl implements VisView {
 

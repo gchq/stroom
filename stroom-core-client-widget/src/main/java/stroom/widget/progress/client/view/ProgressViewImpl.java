@@ -16,6 +16,7 @@
 
 package stroom.widget.progress.client.view;
 
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.dom.client.Style;
@@ -28,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.function.Consumer;
 

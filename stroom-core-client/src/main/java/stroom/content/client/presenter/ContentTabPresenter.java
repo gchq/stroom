@@ -19,9 +19,9 @@ package stroom.content.client.presenter;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class ContentTabPresenter<V extends View>
         extends MyPresenterWidget<V>

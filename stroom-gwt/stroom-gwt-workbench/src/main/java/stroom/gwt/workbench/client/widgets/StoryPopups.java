@@ -29,10 +29,10 @@ import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +47,7 @@ import java.util.List;
 public final class StoryPopups {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final List<PresenterWidget<?>> openPopups = new ArrayList<>();
+    private final List<MyPresenterWidget<?>> openPopups = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private boolean disposed;
 
@@ -132,7 +132,7 @@ public final class StoryPopups {
     }
 
     private void onShow(final ShowPopupEvent event) {
-        final PresenterWidget<?> presenter = event.getPresenterWidget();
+        final MyPresenterWidget<?> presenter = event.getPresenterWidget();
         // PopupManager toggles a popup that is shown twice
         if (!openPopups.remove(presenter)) {
             openPopups.add(presenter);
@@ -145,7 +145,7 @@ public final class StoryPopups {
         }
         disposed = true;
         // Hide the popups as Stroom would, most recently shown first
-        final List<PresenterWidget<?>> popups = new ArrayList<>(openPopups);
+        final List<MyPresenterWidget<?>> popups = new ArrayList<>(openPopups);
         for (int i = popups.size() - 1; i >= 0; i--) {
             HidePopupEvent.builder(popups.get(i)).autoClose(true).ok(false).fire();
         }

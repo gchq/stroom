@@ -16,22 +16,23 @@
 
 package stroom.core.client.event;
 
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
 
-    private ShowFullScreenEvent(final PresenterWidget<?> presenterWidget) {
+    private ShowFullScreenEvent(final MyPresenterWidget<?> presenterWidget) {
         this.presenterWidget = presenterWidget;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget) {
+                            final MyPresenterWidget<?> presenterWidget) {
         handlers.fireEvent(new ShowFullScreenEvent(presenterWidget));
     }
 
@@ -52,7 +53,7 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
         handler.onShowFullScreen(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 

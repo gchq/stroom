@@ -20,10 +20,10 @@ import stroom.docref.DocRef;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.View;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 

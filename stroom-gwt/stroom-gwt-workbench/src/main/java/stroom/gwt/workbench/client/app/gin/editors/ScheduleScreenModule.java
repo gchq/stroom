@@ -28,14 +28,13 @@ import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AnalyticsModule`
 /// (`stroom/analytics/client/gin/AnalyticsModule.java`) for execution schedules, without its
 /// plugins, app services and analytic rule screens.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class ScheduleScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

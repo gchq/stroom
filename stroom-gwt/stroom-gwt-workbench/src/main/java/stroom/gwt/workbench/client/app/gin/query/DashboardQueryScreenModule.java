@@ -43,13 +43,12 @@ import stroom.dashboard.client.query.SelectionHandlerPresenter;
 import stroom.dashboard.client.query.SelectionHandlerViewImpl;
 import stroom.dashboard.client.query.SelectionHandlersPresenter;
 import stroom.dashboard.client.query.SelectionHandlersViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `QueryModule`
 /// (`stroom/dashboard/client/query/gin/QueryModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class DashboardQueryScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

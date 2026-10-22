@@ -18,13 +18,13 @@ package stroom.floormap.client.view;
 
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapLayersPresenter.FloorMapLayersView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View implementation for the Layers panel — a scrolling list of layer rows.
 /// The panel needs no title of its own (the dock tab already reads "Layers").

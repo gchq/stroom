@@ -22,6 +22,8 @@ import stroom.security.client.presenter.BatchDocumentPermissionsEditPresenter.Ba
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionChange;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,8 +32,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.List;
 

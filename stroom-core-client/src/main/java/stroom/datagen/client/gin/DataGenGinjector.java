@@ -16,18 +16,9 @@
 
 package stroom.datagen.client.gin;
 
-import stroom.datagen.client.DataGenPlugin;
-import stroom.datagen.client.presenter.DataGenPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 /**
  * Async providers for the data generator's client code, so GWT can split it into its own code
  * fragment and only download it when a data generator is first opened.
  */
 public interface DataGenGinjector {
-
-    AsyncProvider<DataGenPlugin> getDataGenPlugin();
-
-    AsyncProvider<DataGenPresenter> getDataGenPresenter();
 }

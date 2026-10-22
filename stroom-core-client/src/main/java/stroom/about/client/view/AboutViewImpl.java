@@ -18,6 +18,7 @@ package stroom.about.client.view;
 
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView {
 

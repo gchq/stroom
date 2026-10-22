@@ -19,13 +19,13 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View implementation for the FloorMap Editor tab.
 ///
@@ -162,7 +162,7 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
         return outerSplitPane;
     }
 
-    /// Routes GWTP slot content into the correct panel — all five slots:
+    /// Routes slot content into the correct panel — all five slots:
     ///
     /// - [FloorMapEditorPresenter#MAIN]       → canvas panel (centre of the top area)
     /// - [FloorMapEditorPresenter#DOCK]       → right-hand dock, beside the canvas

@@ -21,14 +21,14 @@ import stroom.floormap.client.presenter.FloorMapClusterUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 import javax.inject.Inject;

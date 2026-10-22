@@ -19,11 +19,11 @@ package stroom.widget.component.client;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.View;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ class TestPresenterAdapter {
 
     @Test
     void presentersThePresenterOwnsAreDisposedToo() {
-        // GWTP doesn't unbind these when their parent is unbound
+        // A presenter doesn't unbind these when its parent is unbound
         final ComponentNode root = ComponentNode.root("story");
         final PresenterAdapter<ParentPresenter> adapter = PresenterAdapter.of(ParentPresenter::new);
         root.adopt(adapter.getComponentNode());

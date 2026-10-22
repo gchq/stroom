@@ -20,6 +20,7 @@ import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +28,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public final class ExecutionScheduleRunNowViewImpl
         extends ViewWithUiHandlers<ProcessingStatusUiHandlers>

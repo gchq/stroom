@@ -44,8 +44,7 @@ import stroom.dashboard.client.query.SelectionHandlerPresenter;
 import stroom.dashboard.client.query.SelectionHandlerViewImpl;
 import stroom.dashboard.client.query.SelectionHandlersPresenter;
 import stroom.dashboard.client.query.SelectionHandlersViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class QueryModule extends AbstractPresenterModule {
 

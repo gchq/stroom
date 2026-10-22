@@ -21,6 +21,7 @@ import stroom.floormap.client.presenter.FloorMapSetScalePresenter.FloorMapSetSca
 import stroom.floormap.shared.FloorMapMeasurementUnits.Family;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.item.client.SelectionBox;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
@@ -28,7 +29,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View implementation for the Set Scale dialog.
 ///

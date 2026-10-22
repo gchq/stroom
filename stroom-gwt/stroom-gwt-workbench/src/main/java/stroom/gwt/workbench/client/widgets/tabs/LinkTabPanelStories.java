@@ -37,7 +37,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,7 +126,7 @@ public final class LinkTabPanelStories {
                                 final boolean narrow) {
         final ScreenHarness harness = TabWidgets.menuHarness(context);
         final EventBus eventBus = harness.getEventBus();
-        final Map<TabData, PresenterWidget<?>> contents = new HashMap<>();
+        final Map<TabData, MyPresenterWidget<?>> contents = new HashMap<>();
         final List<TabData> tabs = new ArrayList<>();
         for (final String label : labels) {
             final TabData tab = new StoryTab(label, label, null, null, false);
@@ -182,12 +181,12 @@ public final class LinkTabPanelStories {
     /// A link tab panel with fixed content for each tab.
     private static final class StoryLinkTabPanelPresenter extends LinkTabPanelPresenter {
 
-        private final Map<TabData, PresenterWidget<?>> contents;
+        private final Map<TabData, MyPresenterWidget<?>> contents;
         private final Toolbar toolbar;
 
         private StoryLinkTabPanelPresenter(final EventBus eventBus,
                                            final LinkTabPanelViewImpl view,
-                                           final Map<TabData, PresenterWidget<?>> contents,
+                                           final Map<TabData, MyPresenterWidget<?>> contents,
                                            final Toolbar toolbar) {
             super(eventBus, view);
             this.contents = contents;
@@ -206,7 +205,7 @@ public final class LinkTabPanelStories {
         }
 
         @Override
-        protected void afterSelectTab(final PresenterWidget<?> content) {
+        protected void afterSelectTab(final MyPresenterWidget<?> content) {
             // As DocTabPresenter updates the toolbar for the selected content
             getView().clearToolbar();
             if (toolbar != null) {

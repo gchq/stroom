@@ -25,11 +25,11 @@ import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HistogramSettings;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class HistogramSettingsPresenter
         extends AbstractPlanBSettingsPresenter<HistogramSettingsView> {

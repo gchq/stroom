@@ -16,51 +16,5 @@
 
 package stroom.monitoring.client.gin;
 
-import stroom.config.global.client.presenter.ConfigPropertyClusterValuesListPresenter;
-import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
-import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
-import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
-import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
-import stroom.index.client.ManageIndexVolumesPlugin;
-import stroom.job.client.presenter.JobListPresenter;
-import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
-import stroom.monitoring.client.JobListPlugin;
-import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
-import stroom.node.client.presenter.NodePresenter;
-import stroom.task.client.TaskManagerPlugin;
-import stroom.task.client.presenter.TaskManagerPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface MonitoringGinjector {
-
-    AsyncProvider<DatabaseTablesMonitoringPlugin> getDatabaseTablesMonitoringPlugin();
-
-    AsyncProvider<DatabaseTablesMonitoringPresenter> getDatabaseTablesMonitoringPresenter();
-
-    AsyncProvider<JobListPlugin> getJobListPlugin();
-
-    AsyncProvider<JobListPresenter> getJobListPresenter();
-
-    AsyncProvider<NodeMonitoringPlugin> getNodeMonitoringPlugin();
-
-    AsyncProvider<NodePresenter> getNodeMonitoringPresenter();
-
-    AsyncProvider<ManageIndexVolumesPlugin> getManageIndexVolumesPlugin();
-
-    // Global properties.
-    AsyncProvider<GlobalPropertyTabPresenter> getManageGlobalPropertyPresenter();
-
-    AsyncProvider<ManageGlobalPropertyListPresenter> getManageGlobalPropertyListPresenter();
-
-    AsyncProvider<ManageGlobalPropertyEditPresenter> getManageGlobalPropertyEditPresenter();
-
-    AsyncProvider<ConfigPropertyClusterValuesPresenter> getConfigPropertyClusterValuesPresenter();
-
-    AsyncProvider<ConfigPropertyClusterValuesListPresenter> getConfigPropertyClusterValuesListPresenter();
-
-    AsyncProvider<TaskManagerPlugin> getTaskProgressMonitoringPlugin();
-
-    AsyncProvider<TaskManagerPresenter> getTaskProgressMonitoringPresenter();
 }

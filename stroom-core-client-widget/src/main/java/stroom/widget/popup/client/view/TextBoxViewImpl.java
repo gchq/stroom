@@ -18,6 +18,7 @@ package stroom.widget.popup.client.view;
 
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +26,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TextBoxViewImpl extends ViewImpl implements TextBoxView {
 

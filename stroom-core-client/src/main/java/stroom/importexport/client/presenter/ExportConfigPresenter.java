@@ -41,26 +41,24 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class ExportConfigPresenter
-        extends MyPresenter<ExportConfigPresenter.ExportConfigView, ExportConfigPresenter.ExportProxy>
+        extends MyPresenter<ExportConfigPresenter.ExportConfigView>
         implements ExportConfigUiHandlers, ExportConfigEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
@@ -77,14 +75,13 @@ public class ExportConfigPresenter
     @Inject
     public ExportConfigPresenter(final EventBus eventBus,
                                  final ExportConfigView view,
-                                 final ExportProxy proxy,
                                  final LocationManager locationManager,
                                  final EntityCheckTreePresenter treePresenter,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final RestFactory restFactory,
                                  final DocumentTypeCache documentTypeCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(treePresenter);
         own(typeFilterPresenter);
         this.locationManager = locationManager;
@@ -127,7 +124,6 @@ public class ExportConfigPresenter
         filter.setState(hasActiveFilter);
     }
 
-    @ProxyEvent
     @Override
     public void onExport(final ExportConfigEvent event) {
         if (event.getSelection() != null) {
@@ -233,9 +229,13 @@ public class ExportConfigPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ExportProxy {
 
-    @ProxyCodeSplit
-    public interface ExportProxy extends Proxy<ExportConfigPresenter> {
 
+        @Inject
+        public ExportProxy(final EventBus eventBus, final Provider<ExportConfigPresenter> presenter) {
+            eventBus.addHandler(ExportConfigEvent.getType(), event -> presenter.get().onExport(event));
+        }
     }
 }

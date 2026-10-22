@@ -23,6 +23,7 @@ import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Visibility;
@@ -33,7 +34,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class QueryToolbarViewImpl
         extends ViewWithUiHandlers<QueryToolbarUiHandlers>

@@ -16,14 +16,5 @@
 
 package stroom.documentation.client.gin;
 
-import stroom.documentation.client.DocumentationPlugin;
-import stroom.documentation.client.presenter.DocumentationPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface DocumentationGinjector {
-
-    AsyncProvider<DocumentationPlugin> getDocumentationPlugin();
-
-    AsyncProvider<DocumentationPresenter> getDocumentationPresenter();
 }

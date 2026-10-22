@@ -26,10 +26,10 @@ import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTa
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskView> {
 

@@ -16,7 +16,7 @@
 
 package stroom.document.client.event;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ChangeUiHandlers extends UiHandlers {
 

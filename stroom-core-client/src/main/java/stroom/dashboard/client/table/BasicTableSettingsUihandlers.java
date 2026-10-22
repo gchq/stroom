@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface BasicTableSettingsUihandlers extends UiHandlers {
 

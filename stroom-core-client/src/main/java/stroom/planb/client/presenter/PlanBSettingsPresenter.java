@@ -30,12 +30,12 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class PlanBSettingsPresenter
         extends DocPresenter<PlanBSettingsView, PlanBDoc>

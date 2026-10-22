@@ -18,8 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.SnapshotSettings;
-
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 /**
  * The settings of a store whose parts are transferred between nodes over HTTP, mirroring

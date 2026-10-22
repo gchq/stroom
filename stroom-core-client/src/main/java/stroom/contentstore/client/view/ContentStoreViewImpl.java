@@ -18,13 +18,13 @@ package stroom.contentstore.client.view;
 
 import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /**
  * GWT View implementation for the top-level view of the App Store page.

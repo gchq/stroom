@@ -17,13 +17,13 @@
 package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTreeView {
 

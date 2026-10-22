@@ -19,6 +19,8 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.vis.BasicVisSettingsPresenter.BasicVisSettingsView;
 import stroom.item.client.SelectionBox;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,8 +32,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 

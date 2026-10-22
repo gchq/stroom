@@ -18,13 +18,8 @@ package stroom.app.client.gin;
 
 import stroom.explorer.client.NavigationPlugin;
 import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.help.client.HelpPlugin;
-
-import com.google.gwt.inject.client.AsyncProvider;
 
 public interface PluginsGinjector {
-
-    AsyncProvider<HelpPlugin> getHelpPlugin();
 
     TabSessionManager getTabSessionManager();
 

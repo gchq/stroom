@@ -21,6 +21,8 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,8 +31,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFieldView {
 

@@ -25,6 +25,5 @@ dependencies {
 
     implementation libs.gin
     implementation libs.gwt.user
-    implementation libs.gwtp.mvp.client
     implementation libs.restygwt
 }

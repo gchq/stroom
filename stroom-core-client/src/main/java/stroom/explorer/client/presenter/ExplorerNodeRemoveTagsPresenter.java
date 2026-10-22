@@ -35,17 +35,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,7 +55,7 @@ import java.util.stream.Collectors;
  * See {@link ExplorerNodeRemoveTagsPresenter} for tag removal on multiple nodes.
  */
 public class ExplorerNodeRemoveTagsPresenter
-        extends MyPresenter<ExplorerNodeRemoveTagsView, ExplorerNodeRemoveTagsProxy>
+        extends MyPresenter<ExplorerNodeRemoveTagsView>
         implements ShowRemoveNodeTagsDialogEvent.Handler,
         HidePopupRequestEvent.Handler {
 
@@ -70,14 +68,12 @@ public class ExplorerNodeRemoveTagsPresenter
     @Inject
     public ExplorerNodeRemoveTagsPresenter(final EventBus eventBus,
                                            final RestFactory restFactory,
-                                           final ExplorerNodeRemoveTagsView view,
-                                           final ExplorerNodeRemoveTagsProxy proxy) {
-        super(eventBus, view, proxy);
+                                           final ExplorerNodeRemoveTagsView view) {
+        super(eventBus, view);
         this.restFactory = restFactory;
         view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
     }
 
-    @ProxyEvent
     @Override
     public void onCreate(final ShowRemoveNodeTagsDialogEvent event) {
 //        GWT.log("onCreate: " + NullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
@@ -197,9 +193,14 @@ public class ExplorerNodeRemoveTagsPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class ExplorerNodeRemoveTagsProxy {
 
-    @ProxyCodeSplit
-    public interface ExplorerNodeRemoveTagsProxy extends Proxy<ExplorerNodeRemoveTagsPresenter> {
 
+        @Inject
+        public ExplorerNodeRemoveTagsProxy(final EventBus eventBus,
+                                           final Provider<ExplorerNodeRemoveTagsPresenter> presenter) {
+            eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event -> presenter.get().onCreate(event));
+        }
     }
 }

@@ -34,21 +34,19 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.function.Consumer;
 
 public class CreateDocumentPresenter
-        extends MyPresenter<CreateDocumentView, CreateDocumentProxy>
+        extends MyPresenter<CreateDocumentView>
         implements ShowCreateDocumentDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
@@ -63,9 +61,8 @@ public class CreateDocumentPresenter
     @Inject
     public CreateDocumentPresenter(final EventBus eventBus,
                                    final CreateDocumentView view,
-                                   final CreateDocumentProxy proxy,
                                    final EntityTreePresenter entityTreePresenter) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(entityTreePresenter);
 
         this.entityTreePresenter = entityTreePresenter;
@@ -76,7 +73,6 @@ public class CreateDocumentPresenter
         entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
-    @ProxyEvent
     @Override
     public void onCreate(final ShowCreateDocumentDialogEvent event) {
         docType = event.getDocType();
@@ -190,9 +186,13 @@ public class CreateDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class CreateDocumentProxy {
 
-    @ProxyCodeSplit
-    public interface CreateDocumentProxy extends Proxy<CreateDocumentPresenter> {
 
+        @Inject
+        public CreateDocumentProxy(final EventBus eventBus, final Provider<CreateDocumentPresenter> presenter) {
+            eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event -> presenter.get().onCreate(event));
+        }
     }
 }

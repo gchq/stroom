@@ -34,13 +34,11 @@ import stroom.widget.presenter.client.MyPresenter;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 public class FindAnnotationPresenter
-        extends MyPresenter<FindView, FindAnnotationProxy>
+        extends MyPresenter<FindView>
         implements ShowFindAnnotationEvent.Handler, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private boolean showing;
@@ -49,10 +47,9 @@ public class FindAnnotationPresenter
     @Inject
     public FindAnnotationPresenter(final EventBus eventBus,
                                    final FindView view,
-                                   final FindAnnotationProxy proxy,
                                    final FindAnnotationListPresenter findResultListPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(findResultListPresenter);
         getView().setDialogMode(false);
         this.findResultListPresenter = findResultListPresenter;
@@ -70,7 +67,6 @@ public class FindAnnotationPresenter
         getView().focus();
     }
 
-    @ProxyEvent
     public void onShow(final ShowFindAnnotationEvent event) {
         if (!showing) {
             showing = true;
@@ -133,8 +129,12 @@ public class FindAnnotationPresenter
         }
     }
 
-    @ProxyCodeSplit
-    public interface FindAnnotationProxy extends Proxy<FindAnnotationPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class FindAnnotationProxy {
 
+        @Inject
+        public FindAnnotationProxy(final EventBus eventBus, final Provider<FindAnnotationPresenter> presenter) {
+            eventBus.addHandler(ShowFindAnnotationEvent.getType(), event -> presenter.get().onShow(event));
+        }
     }
 }

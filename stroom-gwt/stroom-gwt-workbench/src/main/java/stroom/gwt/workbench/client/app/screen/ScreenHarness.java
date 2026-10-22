@@ -57,6 +57,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ContentFocus;
 
 import com.google.gwt.core.client.GWT;
@@ -70,7 +71,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import org.fusesource.restygwt.client.Defaults;
 
 import java.util.ArrayList;
@@ -99,7 +99,7 @@ import java.util.function.Consumer;
 /// returns [#asWidget()], e.g.
 /// ```
 /// final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
-/// final AboutPresenter presenter = new AboutPresenter(harness.getEventBus(), view, null,
+/// final AboutPresenter presenter = new AboutPresenter(harness.getEventBus(), view,
 ///         harness.getRestFactory(), harness.getUiConfigCache(), harness.getDateTimeFormatter());
 /// presenter.show();
 /// return harness.asWidget();
@@ -119,7 +119,7 @@ import java.util.function.Consumer;
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
 /// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers, handlers
 /// and presenters registered with [#addTimer(Timer)], [#addRegistration(HandlerRegistration)] and
-/// [#unbindOnCleanUp(PresenterWidget)] are stopped, and the event bus is switched off.
+/// [#unbindOnCleanUp(MyPresenterWidget)] are stopped, and the event bus is switched off.
 public final class ScreenHarness {
 
     /// The name of the spy that records each REST request, as `METHOD /path?query body`.
@@ -155,9 +155,9 @@ public final class ScreenHarness {
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final StoryLocationManager locationManager;
-    private final PopupTracker<PresenterWidget<?>> popups = new PopupTracker<>();
+    private final PopupTracker<MyPresenterWidget<?>> popups = new PopupTracker<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
-    private final List<PresenterWidget<?>> closeOnCleanUp = new ArrayList<>();
+    private final List<MyPresenterWidget<?>> closeOnCleanUp = new ArrayList<>();
     private final Map<String, Spy> spies = new HashMap<>();
     private final FlowPanel host = new FlowPanel();
     private boolean disposed;
@@ -167,7 +167,7 @@ public final class ScreenHarness {
     // Owns the components the story shows (see addComponent), made when first needed
     private ComponentNode componentRoot;
     private Component shownComponent;
-    private PresenterWidget<?> shownContent;
+    private MyPresenterWidget<?> shownContent;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
     private int probeCleanUpMark;
@@ -394,7 +394,7 @@ public final class ScreenHarness {
     /// @param presenter The tab's presenter.
     /// @param <P>       The presenter type.
     /// @return The presenter.
-    public <P extends PresenterWidget<?>> P addContent(final P presenter) {
+    public <P extends MyPresenterWidget<?>> P addContent(final P presenter) {
         return fill(presenter, true);
     }
 
@@ -406,7 +406,7 @@ public final class ScreenHarness {
     /// @param presenter The page's presenter.
     /// @param <P>       The presenter type.
     /// @return The presenter.
-    public <P extends PresenterWidget<?>> P addPage(final P presenter) {
+    public <P extends MyPresenterWidget<?>> P addPage(final P presenter) {
         return fill(presenter, false);
     }
 
@@ -446,7 +446,7 @@ public final class ScreenHarness {
     /// @return The presenter.
     /// @throws IllegalStateException If the story shows none.
     @SuppressWarnings("unchecked")
-    public static <P extends PresenterWidget<?>> P shownContent() {
+    public static <P extends MyPresenterWidget<?>> P shownContent() {
         if (shown == null || shown.shownContent == null) {
             throw new IllegalStateException("The story shows no presenter");
         }
@@ -480,7 +480,7 @@ public final class ScreenHarness {
     }
 
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
-    private <P extends PresenterWidget<?>> P fill(final P presenter, final boolean tab) {
+    private <P extends MyPresenterWidget<?>> P fill(final P presenter, final boolean tab) {
         fillWidget(presenter.getWidget(), presenter, tab);
         shownContent = presenter;
         shown = this;
@@ -539,7 +539,7 @@ public final class ScreenHarness {
     /// @param dispose Whether to dispose the screen's presenters and run its clean ups.
     void probeClose(final boolean dispose) {
         // Popups (dialogs) are hidden as Stroom hides them, which unbinds their presenters
-        for (final PresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
+        for (final MyPresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
             HidePopupEvent.builder(popup).autoClose(true).ok(false).fire();
         }
         for (int i = host.getWidgetCount() - 1; i >= probeWidgetMark; i--) {
@@ -607,7 +607,7 @@ public final class ScreenHarness {
     /// @param presenter The presenter.
     /// @param <P>       The presenter type.
     /// @return The presenter.
-    public <P extends PresenterWidget<?>> P unbindOnCleanUp(final P presenter) {
+    public <P extends MyPresenterWidget<?>> P unbindOnCleanUp(final P presenter) {
         if (presenter instanceof final HasComponentNode hasComponentNode
             && hasComponentNode.getComponentNode() != null
             && hasComponentNode.getComponentNode().parent() == null) {
@@ -628,7 +628,7 @@ public final class ScreenHarness {
     /// @param popup The popup's presenter.
     /// @param <P>   The presenter type.
     /// @return The presenter.
-    public <P extends PresenterWidget<?>> P closeOnCleanUp(final P popup) {
+    public <P extends MyPresenterWidget<?>> P closeOnCleanUp(final P popup) {
         closeOnCleanUp.add(Objects.requireNonNull(popup));
         return popup;
     }
@@ -662,14 +662,14 @@ public final class ScreenHarness {
 
         // Close the popups that must be asked to close (e.g. to stop polling), as their Close
         // buttons would
-        for (final PresenterWidget<?> popup : closeOnCleanUp) {
+        for (final MyPresenterWidget<?> popup : closeOnCleanUp) {
             runSafely("closing a popup", () -> HidePopupRequestEvent.builder(popup)
                     .action(DialogAction.CLOSE)
                     .fire());
         }
         // Hide the popups as Stroom would, which unbinds their presenters and restores the focus.
         // The bus is still live for this, but spies ignore calls now the harness is disposed.
-        for (final PresenterWidget<?> popup : popups.getOpenPopups()) {
+        for (final MyPresenterWidget<?> popup : popups.getOpenPopups()) {
             runSafely("hiding a popup", () -> HidePopupEvent.builder(popup).autoClose(true).ok(false).fire());
         }
         for (int i = cleanUps.size() - 1; i >= 0; i--) {

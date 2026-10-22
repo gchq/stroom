@@ -17,11 +17,11 @@
 package stroom.editor.client.view;
 
 import stroom.editor.client.presenter.HtmlPresenter.HtmlView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class HtmlViewImpl extends ViewImpl implements HtmlView {
 

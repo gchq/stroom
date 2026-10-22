@@ -49,7 +49,7 @@ import java.util.List;
 /// (`POST /explorer/v2/fetchExplorerNodeTagsByDocRefs`), and setting (`PUT /explorer/v2/tags`),
 /// adding (`PUT /explorer/v2/addTags`) and removing (`DELETE /explorer/v2/removeTags`) tags,
 /// checked on the request spy. The dialogs are opened as the explorer's menu does, by firing their
-/// events, with the presenters (from GIN) registered as the events' handlers in place of their GWTP
+/// events, with the presenters (from GIN) registered as the events' handlers in place of their
 /// proxies. A chained request: the edit dialog fetches all tags, then the node's own tags, before
 /// it shows.
 public final class EditTagsDialogStories {
@@ -398,7 +398,7 @@ public final class EditTagsDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures(nodeTags, allTags))
                 .injector(injector)
                 .build();
-        // As the presenter's GWTP proxy would
+        // As the presenter's proxy would
         final ExplorerNodeEditTagsPresenter presenter = injector.getExplorerNodeEditTagsPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowEditNodeTagsDialogEvent.getType(), presenter));
         // As the explorer's 'Edit Tags'/'Add Tags' menu item does

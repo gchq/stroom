@@ -24,11 +24,11 @@ import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> implements Refreshable {
 

@@ -16,7 +16,7 @@
 
 package stroom.security.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ApiKeyUiHandlers extends UiHandlers {
 

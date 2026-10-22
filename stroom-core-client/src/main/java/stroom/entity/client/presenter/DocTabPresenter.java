@@ -34,6 +34,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.presenter.client.Layer;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -42,7 +43,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -73,7 +73,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     // Says that the document is read only, at the far right of the tab bar; a polite status, so
     // screen readers announce it (and why) when a read-only document opens
     private final HTML readOnlyStatus = new HTML();
-    private PresenterWidget<?> currentContent;
+    private MyPresenterWidget<?> currentContent;
     protected DocRef docRef;
     private TabData defaultTab;
 
@@ -232,7 +232,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         });
     }
 
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
     }
 
     public TabData getSelectedTab() {

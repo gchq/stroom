@@ -22,10 +22,10 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.widget.help.client.presenter.HelpManager;
+import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.Presenter;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -61,7 +61,7 @@ final class SignInPages {
                          final Map<String, String> parameters,
                          final Function<String, Widget> message,
                          final boolean replacePage,
-                         final BiFunction<IdpScreenGinjector, ScreenHarness, Presenter<?, ?>> page) {
+                         final BiFunction<IdpScreenGinjector, ScreenHarness, MyPresenter<?>> page) {
         final IdpScreenGinjector injector = GWT.create(IdpScreenGinjector.class);
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -74,7 +74,7 @@ final class SignInPages {
         // events on the static event bus, which the help manager shows
         new StaticEventBus(harness.getEventBus());
         new HelpManager(harness.getEventBus());
-        final Presenter<?, ?>[] shown = new Presenter<?, ?>[1];
+        final MyPresenter<?>[] shown = new MyPresenter<?>[1];
         IdpPage.setUp(harness, parameters, url -> {
             if (replacePage && shown[0] != null) {
                 shown[0].getWidget().getParent().setVisible(false);
@@ -83,7 +83,7 @@ final class SignInPages {
         });
         // As Stroom's App.onModuleLoad does for '/signIn' and '/resetPassword'
         harness.afterStartUp(() -> {
-            final Presenter<?, ?> presenter = page.apply(injector, harness);
+            final MyPresenter<?> presenter = page.apply(injector, harness);
             shown[0] = presenter;
             harness.addPage(presenter);
             IdpPage.reveal(presenter);

@@ -17,13 +17,13 @@
 package stroom.statistics.impl.sql.client.view;
 
 import stroom.statistics.impl.sql.client.presenter.StatisticsFieldEditPresenter.StatisticsFieldEditView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class StatisticsFieldEditViewImpl extends ViewImpl implements StatisticsFieldEditView {
 

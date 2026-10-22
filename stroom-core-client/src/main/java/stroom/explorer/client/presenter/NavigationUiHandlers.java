@@ -16,9 +16,10 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface NavigationUiHandlers extends UiHandlers {
 

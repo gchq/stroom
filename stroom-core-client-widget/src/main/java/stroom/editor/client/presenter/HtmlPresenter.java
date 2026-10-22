@@ -18,10 +18,10 @@ package stroom.editor.client.presenter;
 
 import stroom.editor.client.view.HtmlViewImpl;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class HtmlPresenter extends MyPresenterWidget<HtmlPresenter.HtmlView> {
 

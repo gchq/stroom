@@ -57,16 +57,15 @@ import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
 /// The presenter and view bindings of Stroom's `StreamStoreModule`
 /// (`stroom/data/client/gin/StreamStoreModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class StreamStoreScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

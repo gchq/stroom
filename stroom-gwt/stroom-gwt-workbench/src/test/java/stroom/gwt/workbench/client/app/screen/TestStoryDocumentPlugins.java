@@ -20,8 +20,8 @@ import stroom.gwt.workbench.client.app.rest.FixtureSession;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.widget.presenter.client.HandlerContainer;
 
-import com.gwtplatform.mvp.client.HandlerContainer;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -112,8 +112,7 @@ class TestStoryDocumentPlugins {
 
     // --------------------------------------------------------------------------------
 
-
-    // A plugin's bound state, as GWTP's HandlerContainerImpl keeps it
+    // A plugin's bound state, as HandlerContainerImpl keeps it
     private static final class FakeContainer implements HandlerContainer {
 
         private boolean bound = true;

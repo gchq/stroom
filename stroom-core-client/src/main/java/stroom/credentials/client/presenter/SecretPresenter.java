@@ -18,8 +18,7 @@ package stroom.credentials.client.presenter;
 
 
 import stroom.credentials.shared.Secret;
-
-import com.gwtplatform.mvp.client.View;
+import stroom.widget.presenter.client.View;
 
 import java.util.function.Consumer;
 

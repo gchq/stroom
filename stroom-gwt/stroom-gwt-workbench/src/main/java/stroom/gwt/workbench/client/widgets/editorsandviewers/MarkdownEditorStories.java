@@ -176,7 +176,7 @@ public final class MarkdownEditorStories {
                 harness.getUiConfigCache(),
                 userPreferencesManager,
                 markdownConverter);
-        // As GWTP does when the presenter is revealed in its document tab
+        // As the presenter's document tab does when it is shown
         presenter.bind();
         harness.unbindOnCleanUp(presenter);
 

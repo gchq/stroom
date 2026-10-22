@@ -17,20 +17,20 @@
 package stroom.widget.popup.client.event;
 
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final DialogAction action;
     private final Runnable resetHandler;
 
-    private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget,
+    private HidePopupRequestEvent(final MyPresenterWidget<?> presenterWidget,
                                   final boolean autoClose,
                                   final DialogAction action,
                                   final Runnable resetHandler) {
@@ -40,7 +40,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         this.resetHandler = resetHandler;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
         return new Builder(presenterWidget);
     }
 
@@ -61,7 +61,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         handler.onHideRequest(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 
@@ -108,13 +108,13 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final MyPresenterWidget<?> presenterWidget;
 
         private boolean autoClose;
         private DialogAction action = DialogAction.OK;
         private Runnable cancelHandler;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
+        public Builder(final MyPresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 

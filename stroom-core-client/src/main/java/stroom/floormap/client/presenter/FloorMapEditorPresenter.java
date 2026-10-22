@@ -63,12 +63,12 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -2204,8 +2204,8 @@ public class FloorMapEditorPresenter
 
     /// View interface for the Editor tab.
     ///
-    /// Child content is routed through GWTP's standard
-    /// [com.gwtplatform.mvp.client.View#setInSlot] mechanism, overridden in
+    /// Child content is routed through the standard
+    /// [stroom.widget.presenter.client.View#setInSlot] mechanism, overridden in
     /// [stroom.floormap.client.view.FloorMapEditorViewImpl].
     public interface FloorMapEditorView extends View {
 

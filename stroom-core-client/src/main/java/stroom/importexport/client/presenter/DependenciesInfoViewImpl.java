@@ -17,10 +17,10 @@
 package stroom.importexport.client.presenter;
 
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import javax.inject.Inject;
 

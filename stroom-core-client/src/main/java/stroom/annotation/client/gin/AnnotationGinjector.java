@@ -16,11 +16,5 @@
 
 package stroom.annotation.client.gin;
 
-import stroom.annotation.client.FindAnnotationPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface AnnotationGinjector {
-
-    AsyncProvider<FindAnnotationPresenter> getFindAnnotationPresenter();
 }

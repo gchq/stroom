@@ -16,14 +16,5 @@
 
 package stroom.feed.client.gin;
 
-import stroom.feed.client.FeedPlugin;
-import stroom.feed.client.presenter.FeedPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface FeedGinjector {
-
-    AsyncProvider<FeedPlugin> getFeedPlugin();
-
-    AsyncProvider<FeedPresenter> getFeedPresenter();
 }

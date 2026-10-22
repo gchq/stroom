@@ -19,6 +19,7 @@ package stroom.pathways.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.shared.pathway.ConstraintValueType;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,7 +27,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ConstraintEditViewImpl extends ViewImpl implements ConstraintEditView {
 

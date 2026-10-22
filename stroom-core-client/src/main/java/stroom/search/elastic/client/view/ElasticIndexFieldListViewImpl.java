@@ -17,6 +17,8 @@
 package stroom.search.elastic.client.view;
 
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,8 +27,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ElasticIndexFieldListViewImpl extends ViewImpl implements ElasticIndexFieldListView {
 

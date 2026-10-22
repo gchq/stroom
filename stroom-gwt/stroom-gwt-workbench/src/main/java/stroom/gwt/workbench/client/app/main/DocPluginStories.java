@@ -32,10 +32,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 /// Stories of `App/Main/docPlugin`: a document plugin transforms the document on its way to the
 /// server when it is saved, not as it is edited (GWT's `DocPresenter.onWrite`).
@@ -126,7 +126,7 @@ public final class DocPluginStories {
         harness.addCleanUp(injector.getXMLSchemaPlugin()::unbind);
         // The tab the plugin opens is shown as the story's content, as the tab pane would show it
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event ->
-                harness.addContent((PresenterWidget<?>) event.getLayer())));
+                harness.addContent((MyPresenterWidget<?>) event.getLayer())));
         // As the explorer does when the document is opened
         harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));
         return harness.asWidget();

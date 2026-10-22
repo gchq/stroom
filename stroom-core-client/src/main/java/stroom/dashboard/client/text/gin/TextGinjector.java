@@ -16,14 +16,5 @@
 
 package stroom.dashboard.client.text.gin;
 
-import stroom.dashboard.client.text.TextPlugin;
-import stroom.dashboard.client.text.TextPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface TextGinjector {
-
-    AsyncProvider<TextPlugin> getTextPlugin();
-
-    AsyncProvider<TextPresenter> getTextPresenter();
 }

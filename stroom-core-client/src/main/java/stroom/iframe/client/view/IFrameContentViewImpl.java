@@ -18,6 +18,7 @@ package stroom.iframe.client.view;
 
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
@@ -30,7 +31,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Objects;
 

@@ -19,8 +19,7 @@ package stroom.quickfilter.client.gin;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
 import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class QuickFilterModule extends AbstractPresenterModule {
 

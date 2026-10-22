@@ -37,13 +37,13 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPanePresenter] (the
 /// document tabs) and its tab menu, built by Stroom's real `DocumentPluginEventManager` for a tab's
@@ -123,7 +123,7 @@ public final class ContentTabPaneStories {
                 .injector(injector)
                 .build();
         final EventBus eventBus = harness.getEventBus();
-        // The tab pane, registered for the content events as its GWTP proxy would be
+        // The tab pane, registered for the content events as its proxy would be
         final ContentTabPanePresenter pane = injector.getContentTabPanePresenter();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));

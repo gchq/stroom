@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 /// GWT-free model for the FloorMap Editor tab.
 ///
 /// Holds the Editor's shared selection state and its pure business logic, kept
-/// out of the GWT presenter. It has no dependencies on GWT, GWTP, or any
+/// out of the GWT presenter. It has no dependencies on GWT, presenters, or any
 /// client-side framework, making it fully testable with standard JUnit.
 ///
 /// ### Shared selection model (single source of truth)

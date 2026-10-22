@@ -16,24 +16,25 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final boolean ok;
 
-    private HidePopupEvent(final PresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
+    private HidePopupEvent(final MyPresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;
         this.ok = ok;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
         return new Builder(presenterWidget);
     }
 
@@ -54,7 +55,7 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
         handler.onHide(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 
@@ -81,11 +82,11 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final MyPresenterWidget<?> presenterWidget;
         private boolean autoClose;
         private boolean ok = true;
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
+        public Builder(final MyPresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 

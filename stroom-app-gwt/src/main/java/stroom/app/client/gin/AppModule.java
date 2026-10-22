@@ -21,8 +21,6 @@ import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPanePro
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.LocationManager;
-import stroom.core.client.NameTokens;
-import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
@@ -90,6 +88,8 @@ import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.presenter.TextBoxPopup;
 import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
 import stroom.widget.popup.client.view.TextBoxViewImpl;
+import stroom.widget.presenter.client.RootPresenter;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -100,11 +100,6 @@ import stroom.widget.util.client.GlobalKeyHandler;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.RootPresenter;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
-import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 
 public class AppModule extends AbstractPresenterModule {
 
@@ -114,12 +109,8 @@ public class AppModule extends AbstractPresenterModule {
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
         bind(StaticEventBus.class).asEagerSingleton();
 
-        bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
-        bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
-        // bind(PlaceManager.class).to(AppPlaceManager.class).in(Singleton.class);
-        // install(new DefaultModule(AppPlaceManager.class));
 
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
@@ -128,9 +119,6 @@ public class AppModule extends AbstractPresenterModule {
         bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
-
-        // Constants
-        bindConstant().annotatedWith(DefaultPlace.class).to(NameTokens.LOGIN);
 
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);

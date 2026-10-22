@@ -33,18 +33,16 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
 
 public class CopyDocumentPresenter
-        extends MyPresenter<CopyDocumentView, CopyDocumentProxy>
+        extends MyPresenter<CopyDocumentView>
         implements ShowCopyDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
@@ -55,9 +53,8 @@ public class CopyDocumentPresenter
     @Inject
     public CopyDocumentPresenter(final EventBus eventBus,
                                  final CopyDocumentView view,
-                                 final CopyDocumentProxy proxy,
                                  final EntityTreePresenter entityTreePresenter) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(entityTreePresenter);
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());
@@ -66,7 +63,6 @@ public class CopyDocumentPresenter
         entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
-    @ProxyEvent
     @Override
     public void onCopy(final ShowCopyDocumentDialogEvent event) {
         this.explorerNodeList = event.getExplorerNodeList();
@@ -161,9 +157,13 @@ public class CopyDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class CopyDocumentProxy {
 
-    @ProxyCodeSplit
-    public interface CopyDocumentProxy extends Proxy<CopyDocumentPresenter> {
 
+        @Inject
+        public CopyDocumentProxy(final EventBus eventBus, final Provider<CopyDocumentPresenter> presenter) {
+            eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event -> presenter.get().onCopy(event));
+        }
     }
 }

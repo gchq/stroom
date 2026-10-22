@@ -19,13 +19,13 @@ package stroom.task.client.presenter;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
 

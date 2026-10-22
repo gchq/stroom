@@ -21,6 +21,7 @@ import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorM
 import stroom.util.client.Console;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View implementation for the timeline settings popup dialog.
 ///

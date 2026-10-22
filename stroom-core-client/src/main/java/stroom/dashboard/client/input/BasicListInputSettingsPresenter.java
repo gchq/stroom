@@ -24,11 +24,11 @@ import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;

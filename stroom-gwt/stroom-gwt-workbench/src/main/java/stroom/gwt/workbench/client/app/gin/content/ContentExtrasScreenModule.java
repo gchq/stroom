@@ -22,8 +22,7 @@ import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.client.view.DataUploadViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's modules that the content screens need (the data browser, through
 /// the annotation editor's linked events) without the rest of their module: `AlertModule`'s alert

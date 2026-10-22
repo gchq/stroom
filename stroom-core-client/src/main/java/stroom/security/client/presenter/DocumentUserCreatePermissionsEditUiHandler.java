@@ -17,8 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.task.client.TaskMonitorFactory;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface DocumentUserCreatePermissionsEditUiHandler extends UiHandlers {
 

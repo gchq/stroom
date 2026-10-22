@@ -160,7 +160,7 @@ Stroom expects Java 25 (Eclipse Temurin)
 
 ### GWT UI components
 
-New GWT screens, dialogs and tabs are components (`stroom.widget.component.client.Component`), not GWTP presenters.
+New GWT screens, dialogs and tabs are components (`stroom.widget.component.client.Component`), not presenters (`MyPresenterWidget`).
 The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md`; the receive rules (`stroom.receive.rules.client.component`), the Dictionary editor and `FolderTabs` are worked examples.
 
 * **Make one.** Extend `Component`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
@@ -181,12 +181,16 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the component is disposed before the reply.
 
-* **A dialog.** Make it for one use and show it with `ComponentDialog.showOnce(opener, dialog)`, which returns GWTP's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
+* **A dialog.** Make it for one use and show it with `ComponentDialog.showOnce(opener, dialog)`, which returns the popup's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
   Give the dialog a method that shows it and takes a callback for its result (see `FieldEditor.edit`).
 
 * **A tab body.** Show a component in a `LayerContainer` with `new ComponentLayer(component)`, or add it to a `TabbedComponent` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
 
 * **A document.** Extend `DocumentEditor<D>` (Save, Save As, read-only status and dirty state), add its tabs, and have its plugin's `createEditor()` return `new DocumentEditorHost<>(eventBus, editorProvider.get(), TYPE)`.
+
+* **App-wide screens.** A screen that opens on an app-wide event is a `MyPresenter` with a small `public static final class ...Proxy` at its bottom, bound with `bindPresenter(presenter, view, viewImpl, proxy)`: an eager singleton that adds the event's handler and makes the screen through a GIN `Provider` when the event first fires.
+  A layout screen's slots are `GwtEvent.Type<RevealContentEvent.Handler>` constants, filled by `RevealContentEvent.fire(source, slot, content)` and hooked up in the proxy with `RevealContentEvent.showIn(eventBus, slot, presenter::get)`.
+  There is no code splitting: everything is in the initial download.
 
 * **Test it.** Unit test what runs without a browser with JUnit (see `TestComponent`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
 

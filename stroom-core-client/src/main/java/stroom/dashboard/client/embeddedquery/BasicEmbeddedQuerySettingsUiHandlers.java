@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.embeddedquery;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface BasicEmbeddedQuerySettingsUiHandlers extends UiHandlers {
 

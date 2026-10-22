@@ -17,14 +17,13 @@
 package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
-
-import com.gwtplatform.mvp.client.PresenterWidget;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 public class DefaultHideRequestUiHandlers implements HideRequestUiHandlers {
 
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
 
-    public DefaultHideRequestUiHandlers(final PresenterWidget<?> presenterWidget) {
+    public DefaultHideRequestUiHandlers(final MyPresenterWidget<?> presenterWidget) {
         this.presenterWidget = presenterWidget;
     }
 

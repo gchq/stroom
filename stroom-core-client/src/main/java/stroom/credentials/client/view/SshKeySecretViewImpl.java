@@ -19,6 +19,7 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.widget.form.client.PasswordBox;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -26,7 +27,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import javax.inject.Inject;
 

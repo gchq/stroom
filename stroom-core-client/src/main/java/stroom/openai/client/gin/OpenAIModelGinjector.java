@@ -16,16 +16,5 @@
 
 package stroom.openai.client.gin;
 
-import stroom.openai.client.OpenAIModelPlugin;
-import stroom.openai.client.presenter.OpenAIModelPresenter;
-import stroom.openai.client.presenter.OpenAIModelSettingsPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface OpenAIModelGinjector {
-    AsyncProvider<OpenAIModelPlugin> getOpenAIModelPlugin();
-
-    AsyncProvider<OpenAIModelPresenter> getOpenAIModelPresenter();
-
-    AsyncProvider<OpenAIModelSettingsPresenter> getOpenAIModelSettingsPresenter();
 }

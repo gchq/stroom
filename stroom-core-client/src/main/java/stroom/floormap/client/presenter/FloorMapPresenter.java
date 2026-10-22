@@ -27,12 +27,12 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -64,7 +64,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     /// Tracks the presenter that was active before the most recent tab switch.
     /// Used to pause the timeline when the user navigates away from the Map or
     /// Editor tab.
-    private PresenterWidget<?> previousContent;
+    private MyPresenterWidget<?> previousContent;
 
     /// Set when the Editor tab enables area support on this document, so a
     /// Settings tab created *afterwards* still gets its grid patched
@@ -263,7 +263,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     /// the user navigates away from those tabs, and triggers asset change
     /// detection.
     @Override
-    protected void afterSelectTab(final PresenterWidget<?> content) {
+    protected void afterSelectTab(final MyPresenterWidget<?> content) {
         // Pause whichever timeline-bearing tab the user just left.
         if (previousContent != content) {
             if (previousContent == floorMapMapPresenter && floorMapMapPresenter != null) {

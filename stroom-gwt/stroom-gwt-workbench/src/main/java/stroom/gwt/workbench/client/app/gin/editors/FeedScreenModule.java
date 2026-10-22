@@ -23,14 +23,13 @@ import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.client.view.FeedSettingsViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FeedModule`
 /// (`stroom/feed/client/gin/FeedModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class FeedScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

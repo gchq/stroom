@@ -16,7 +16,7 @@
 
 package stroom.widget.tab.client.view;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface CurveTabLayoutUiHandlers extends UiHandlers {
 

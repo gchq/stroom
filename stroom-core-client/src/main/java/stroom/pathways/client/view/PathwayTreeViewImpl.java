@@ -18,12 +18,12 @@ package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import javax.inject.Inject;
 

@@ -18,13 +18,13 @@ package stroom.iframe.client.presenter;
 
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class IFrameContentPresenter
         extends MyPresenterWidget<IFrameContentPresenter.IFrameContentView>

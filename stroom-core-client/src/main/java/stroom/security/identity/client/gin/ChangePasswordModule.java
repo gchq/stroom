@@ -22,7 +22,6 @@ import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.client.presenter.AccountsPresenter.AccountsView;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
-import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorProxy;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
@@ -33,10 +32,8 @@ import stroom.security.identity.client.presenter.EditAccountPresenter.EditAccoun
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.security.identity.client.presenter.LoginPresenter.LoginProxy;
 import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordProxy;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.client.view.AccountsViewImpl;
 import stroom.security.identity.client.view.AuthenticationErrorViewImpl;
@@ -56,12 +53,10 @@ public class ChangePasswordModule extends PluginModule {
 
         bindPresenter(LoginPresenter.class,
                 LoginView.class,
-                LoginViewImpl.class,
-                LoginProxy.class);
+                LoginViewImpl.class);
         bindPresenter(AuthenticationErrorPresenter.class,
                 AuthenticationErrorView.class,
-                AuthenticationErrorViewImpl.class,
-                AuthenticationErrorProxy.class);
+                AuthenticationErrorViewImpl.class);
         bindPresenterWidget(CurrentPasswordPresenter.class,
                 CurrentPasswordView.class,
                 CurrentPasswordViewImpl.class);
@@ -70,8 +65,7 @@ public class ChangePasswordModule extends PluginModule {
                 ChangePasswordViewImpl.class);
         bindPresenter(ResetPasswordPresenter.class,
                 ResetPasswordView.class,
-                ResetPasswordViewImpl.class,
-                ResetPasswordProxy.class);
+                ResetPasswordViewImpl.class);
         bindPresenterWidget(EmailResetPasswordPresenter.class,
                 EmailResetPasswordView.class,
                 EmailResetPasswordViewImpl.class);

@@ -18,8 +18,7 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
-
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
+import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import javax.inject.Provider;
 

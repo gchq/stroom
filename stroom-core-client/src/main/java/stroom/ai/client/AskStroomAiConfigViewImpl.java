@@ -20,6 +20,7 @@ import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 
@@ -29,7 +30,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.function.Consumer;
 

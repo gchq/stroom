@@ -16,7 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ExplorerPopupUiHandlers extends UiHandlers {
 

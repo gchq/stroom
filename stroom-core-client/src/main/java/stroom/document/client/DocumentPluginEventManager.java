@@ -697,7 +697,7 @@ public class DocumentPluginEventManager extends Plugin {
 //    /**
 //     * 8.1. This method will copy documents.
 //     */
-//    void copyDocument(final PresenterWidget<?> popup, final DocRef document, final DocRef folder,
+//    void copyDocument(final MyPresenterWidget<?> popup, final DocRef document, final DocRef folder,
 //                      final PermissionInheritance permissionInheritance) {
 //        copy(document, folder, permissionInheritance).onSuccess(newDocRef -> {
 //            // Hide the copy document presenter.

@@ -59,13 +59,13 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.histogram.client.HistogramDataModel;
 import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.HistogramQueryHelper;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;

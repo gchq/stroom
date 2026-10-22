@@ -16,14 +16,15 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.presenter.client.ViewImpl;
+
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.Objects;
 
-/// The view of a presenter that shows a component, for the places that only take presenters
-/// while GWTP is in use: a dialog ([ComponentDialog]) and a document's tab
-/// (`DocumentEditorHost`). The presenter owns the component.
+/// The view of a presenter that shows a component, for the places that still take only
+/// presenters: a dialog ([ComponentDialog]) and a document's tab (`DocumentEditorHost`).
+/// The presenter owns the component.
 public final class ComponentView extends ViewImpl {
 
     private final Component content;

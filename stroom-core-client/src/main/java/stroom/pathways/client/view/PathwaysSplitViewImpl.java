@@ -17,6 +17,8 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,8 +27,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class PathwaysSplitViewImpl
         extends ViewImpl

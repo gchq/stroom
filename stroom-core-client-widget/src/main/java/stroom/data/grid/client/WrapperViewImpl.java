@@ -16,9 +16,10 @@
 
 package stroom.data.grid.client;
 
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
+
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class WrapperViewImpl extends ViewImpl implements WrapperView {
 

@@ -75,6 +75,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
@@ -87,8 +88,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -519,7 +518,7 @@ public class SteppingPresenter
         }
     }
 
-    private PresenterWidget<?> getContent(final PipelineElement element) {
+    private MyPresenterWidget<?> getContent(final PipelineElement element) {
         if (PipelineModel.SOURCE_ELEMENT.getType().equals(element.getType())) {
             currentElementPresenter = null;
             updateToggleConsoleBtn(null);
@@ -1212,7 +1211,7 @@ public class SteppingPresenter
             taskMonitor.onStart(task);
             Scheduler.get().scheduleDeferred(() ->
                     pipelineElementTypesFactory.get(this, elementTypes -> {
-                        final PresenterWidget<?> content = getContent(element);
+                        final MyPresenterWidget<?> content = getContent(element);
                         if (content != null) {
                             // Set the content.
                             getView().getLayerContainer().show((Layer) content);

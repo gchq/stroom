@@ -135,7 +135,6 @@ dependencies {
     // These source deps are all needed for the GWT transpiling to javascript
     implementation libs.gin
     implementation libs.gwt.user
-    implementation libs.gwtp.mvp.client
     implementation libs.jackson.annotations
     implementation libs.jaxb.api.gwt
     implementation libs.restygwt
@@ -144,7 +143,6 @@ dependencies {
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt.user
-    gwtSourceImplementation libs.gwtp.mvp.client
     gwtSourceImplementation libs.jaxb.api.gwt
     gwtSourceImplementation libs.swagger.annotations
     gwtSourceImplementation libs.restygwt

@@ -18,13 +18,13 @@ package stroom.floormap.client.view;
 
 import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
 import stroom.widget.presenter.client.LayerContainer;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View for [stroom.floormap.client.presenter.FloorMapDockPresenter] — a
 /// curve-tab bar over a layer container. Structurally the same as

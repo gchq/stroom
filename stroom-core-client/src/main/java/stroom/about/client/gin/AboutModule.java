@@ -18,7 +18,6 @@ package stroom.about.client.gin;
 
 import stroom.about.client.AboutPlugin;
 import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
 import stroom.core.client.gin.PluginModule;
@@ -29,6 +28,6 @@ public class AboutModule extends PluginModule {
     protected void configure() {
         bind(AboutPlugin.class).asEagerSingleton();
 
-        bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
+        bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class);
     }
 }

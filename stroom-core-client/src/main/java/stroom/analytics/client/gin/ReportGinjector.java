@@ -16,14 +16,5 @@
 
 package stroom.analytics.client.gin;
 
-import stroom.analytics.client.ReportPlugin;
-import stroom.analytics.client.presenter.ReportPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ReportGinjector {
-
-    AsyncProvider<ReportPlugin> getReportPlugin();
-
-    AsyncProvider<ReportPresenter> getReportPresenter();
 }

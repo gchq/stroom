@@ -42,14 +42,13 @@ import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.client.view.ProfilePeriodEditViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `PipelineModule`
 /// (`stroom/pipeline/client/gin/PipelineModule.java`) for the XSLT and Text Converter editors and
 /// the processor screens, without its plugins, app services, pipeline editor and stepping.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class PipelineScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

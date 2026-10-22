@@ -27,26 +27,32 @@ import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
-/// Stroom's presenter, built on GWTP's [PresenterWidget], with a place in the ownership tree (see
-/// [ComponentNode]): the presenters and components it owns ([#own(HasComponentNode)]), and the
-/// registrations made through it ([#listen(Type, Object)], [#own(HandlerRegistration)]), are
-/// released when it is disposed ([#dispose()]), as a component's are.
+/// Stroom's presenter: it shows a view, registers handlers while it is bound ([#onBind()]), and has a
+/// place in the ownership tree (see [ComponentNode]): the presenters and components it owns
+/// ([#own(HasComponentNode)]), and the registrations made through it ([#listen(Type, Object)],
+/// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]), as a component's
+/// are. One made by GIN is bound once it is made.
 ///
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
-        extends PresenterWidget<V>
-        implements Layer, TaskMonitorFactory, HasComponentNode, IsWidget {
+        extends HandlerContainerImpl
+        implements HasHandlers, Layer, TaskMonitorFactory, HasComponentNode, IsWidget {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
@@ -55,11 +61,151 @@ public class MyPresenterWidget<V extends View>
     // Set explicitly (e.g. a list's own spinner), or null to use the context's (see createTaskMonitor)
     private TaskMonitorFactory taskMonitorFactory;
     private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
+    private final EventBus eventBus;
+    private final V view;
+    // The presenters shown in this one's view's slots
+    private final Map<Object, List<MyPresenterWidget<?>>> slots = new HashMap<>();
+    // The presenter, and its slot, showing this one, if any
+    private MyPresenterWidget<?> slotOwner;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
-        super(eventBus, view);
+        this.eventBus = eventBus;
+        this.view = view;
         // Run after what it owns is disposed and its registrations are removed
         node.onDispose(this::release);
+    }
+
+    /// @return Its view.
+    public V getView() {
+        return view;
+    }
+
+    /// @return Its view's widget, or null if it has no view.
+    public Widget getWidget() {
+        return view == null
+                ? null
+                : view.asWidget();
+    }
+
+    /// @return The application's event bus.
+    protected final EventBus getEventBus() {
+        return eventBus;
+    }
+
+    /// Fires an event on the event bus, from this presenter.
+    ///
+    /// @param event The event.
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEventFromSource(event, this);
+    }
+
+    /// Adds a handler to the event bus.
+    ///
+    /// @param type    The event's type.
+    /// @param handler The handler.
+    /// @param <H>     The handler's type.
+    /// @return The registration, which the caller removes.
+    protected final <H extends EventHandler> HandlerRegistration addHandler(final GwtEvent.Type<H> type,
+                                                                            final H handler) {
+        return eventBus.addHandler(type, handler);
+    }
+
+    /// Adds a handler to the event bus until this presenter is unbound.
+    ///
+    /// @param type    The event's type.
+    /// @param handler The handler.
+    /// @param <H>     The handler's type.
+    protected final <H extends EventHandler> void addRegisteredHandler(final GwtEvent.Type<H> type,
+                                                                       final H handler) {
+        registerHandler(addHandler(type, handler));
+    }
+
+    /// Shows a presenter in a slot of this one's view, in place of what was there.
+    ///
+    /// @param slot    The slot, a constant of this presenter.
+    /// @param content The presenter, or null to empty the slot.
+    public void setInSlot(final Object slot, final MyPresenterWidget<?> content) {
+        if (content == null) {
+            clearSlot(slot);
+            return;
+        }
+        final List<MyPresenterWidget<?>> children = slots.computeIfAbsent(slot, k -> new ArrayList<>());
+        for (final MyPresenterWidget<?> child : children) {
+            if (child != content) {
+                child.slotOwner = null;
+            }
+        }
+        children.clear();
+        children.add(content);
+        content.moveTo(this);
+        getView().setInSlot(slot, content.getWidget());
+    }
+
+    /// Adds a presenter to a slot of this one's view that holds several.
+    ///
+    /// @param slot    The slot.
+    /// @param content The presenter.
+    public final void addToSlot(final Object slot, final MyPresenterWidget<?> content) {
+        if (content != null) {
+            slots.computeIfAbsent(slot, k -> new ArrayList<>()).add(content);
+            content.moveTo(this);
+            getView().addToSlot(slot, content.getWidget());
+        }
+    }
+
+    /// Removes a presenter from a slot of this one's view.
+    ///
+    /// @param slot    The slot.
+    /// @param content The presenter.
+    public final void removeFromSlot(final Object slot, final MyPresenterWidget<?> content) {
+        if (content != null) {
+            final List<MyPresenterWidget<?>> children = slots.get(slot);
+            if (children != null && children.remove(content)) {
+                content.slotOwner = null;
+            }
+            getView().removeFromSlot(slot, content.getWidget());
+        }
+    }
+
+    /// Empties a slot of this one's view.
+    ///
+    /// @param slot The slot.
+    public final void clearSlot(final Object slot) {
+        final List<MyPresenterWidget<?>> children = slots.remove(slot);
+        if (children != null) {
+            for (final MyPresenterWidget<?> child : children) {
+                child.slotOwner = null;
+            }
+        }
+        getView().setInSlot(slot, null);
+    }
+
+    /// @return Whether it is on the page through slots: it is the page ([RootPresenter]), or in a
+    ///         slot of one that is.
+    public final boolean isRevealed() {
+        if (RootPresenter.isRootContent(this)) {
+            return true;
+        }
+        return slotOwner != null && slotOwner.holds(this) && slotOwner.isRevealed();
+    }
+
+    private void moveTo(final MyPresenterWidget<?> newOwner) {
+        if (slotOwner != null && slotOwner != newOwner) {
+            for (final List<MyPresenterWidget<?>> children : slotOwner.slots.values()) {
+                children.remove(this);
+            }
+        }
+        slotOwner = newOwner;
+    }
+
+    private boolean holds(final MyPresenterWidget<?> child) {
+        for (final List<MyPresenterWidget<?>> children : slots.values()) {
+            if (children.contains(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @return Its view's widget, so a presenter can go where a component can, e.g. a tab of a

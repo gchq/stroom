@@ -19,12 +19,12 @@ package stroom.entity.client.presenter;
 import stroom.docref.DocRef;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.presenter.client.HandlerContainer;
+import stroom.widget.presenter.client.HandlerContainerImpl;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HandlerContainer;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,7 +79,7 @@ public class TabContentProvider<E>
             HandlerContainer,
             HasClose {
 
-        PresenterWidget<?> getPresenter();
+        MyPresenterWidget<?> getPresenter();
     }
 
     public void add(final TabData tab, final TabProvider<E> provider) {
@@ -96,11 +96,11 @@ public class TabContentProvider<E>
     ///
     /// @param tab The tab.
     /// @return Its presenter.
-    public PresenterWidget<?> getPresenter(final TabData tab) {
+    public MyPresenterWidget<?> getPresenter(final TabData tab) {
         return createPresenter(tab);
     }
 
-    private PresenterWidget<?> createPresenter(final TabData tab) {
+    private MyPresenterWidget<?> createPresenter(final TabData tab) {
         currentTabProvider = presenterCache.get(tab);
         if (currentTabProvider == null) {
             final TabProvider<E> provider = tabProviders.get(tab);
@@ -120,8 +120,8 @@ public class TabContentProvider<E>
     }
 
     // The owner owns each tab presenter once it is made (a provider makes it when first asked)
-    private PresenterWidget<?> ownPresenter(final TabProvider<E> tabProvider) {
-        final PresenterWidget<?> presenter = tabProvider.getPresenter();
+    private MyPresenterWidget<?> ownPresenter(final TabProvider<E> tabProvider) {
+        final MyPresenterWidget<?> presenter = tabProvider.getPresenter();
         if (presenter instanceof final HasComponentNode hasComponentNode) {
             final ComponentNode node = hasComponentNode.getComponentNode();
             if (node != null && node.parent() != owner && !node.isDisposed()) {

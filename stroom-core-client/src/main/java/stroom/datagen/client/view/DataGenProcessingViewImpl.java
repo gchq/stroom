@@ -17,14 +17,14 @@
 package stroom.datagen.client.view;
 
 import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /**
  * Lays out the Execution tab, which is a single panel holding the shared scheduling editor's view.

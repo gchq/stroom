@@ -16,14 +16,5 @@
 
 package stroom.dashboard.client.input.gin;
 
-import stroom.dashboard.client.input.KeyValueInputPlugin;
-import stroom.dashboard.client.input.KeyValueInputPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface InputGinjector {
-
-    AsyncProvider<KeyValueInputPlugin> getKeyValueInputPlugin();
-
-    AsyncProvider<KeyValueInputPresenter> getKeyValueInputPresenter();
 }

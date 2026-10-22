@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 
 /// Shows Stroom's real 'Ask Stroom AI' chat ([AskStroomAiPresenter]) for the app events that open it,
 /// `AskStroomAiEvent` (a table's 'Ask Stroom AI' button) and `ShowAskStroomAiEvent` (the toolbar's
-/// AI toggle), as the presenter's GWTP proxy does in Stroom.
+/// AI toggle), as the presenter's proxy does in Stroom.
 ///
 /// Like the proxy (`@ProxyCodeSplit`), it creates the presenter only when the first of those events
 /// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The presenter reads its

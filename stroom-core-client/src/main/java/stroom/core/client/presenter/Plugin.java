@@ -17,11 +17,11 @@
 package stroom.core.client.presenter;
 
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 public abstract class Plugin extends HandlerContainerImpl implements HasHandlers, BeforeRevealMenubarEvent.Handler {
 

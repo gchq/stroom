@@ -20,14 +20,13 @@ import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,7 +36,7 @@ import java.util.Map;
 /// same chrome as the document tab bar) and shows the active tab's content in a
 /// [LayerContainer].
 ///
-/// Panels are registered with [#addTab(String, PresenterWidget)]; the
+/// Panels are registered with [#addTab(String, MyPresenterWidget)]; the
 /// first tab added becomes the active tab. This single call is the integration
 /// point for further panels — nothing else in the dock needs to
 /// change to host a new tab.
@@ -47,7 +46,7 @@ import java.util.Map;
 public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
 
     /// Tab → its content presenter, in insertion (display) order.
-    private final Map<TabData, PresenterWidget<?>> tabContent = new LinkedHashMap<>();
+    private final Map<TabData, MyPresenterWidget<?>> tabContent = new LinkedHashMap<>();
 
     private TabData selectedTab;
 
@@ -64,7 +63,7 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
     /// @param label   the tab label
     /// @param content the presenter shown when the tab is active
     /// @return the [TabData] handle for the new tab
-    public TabData addTab(final String label, final PresenterWidget<?> content) {
+    public TabData addTab(final String label, final MyPresenterWidget<?> content) {
         final TabData tab = new TabDataImpl(label);
         addTab(tab, content);
         return tab;
@@ -75,7 +74,7 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
     ///
     /// @param tab     the tab descriptor
     /// @param content the presenter shown when the tab is active
-    public void addTab(final TabData tab, final PresenterWidget<?> content) {
+    public void addTab(final TabData tab, final MyPresenterWidget<?> content) {
         tabContent.put(tab, content);
         getView().getTabBar().addTab(tab);
         // The first tab added becomes the active tab.
@@ -91,7 +90,7 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
         if (tab == null) {
             return;
         }
-        final PresenterWidget<?> content = tabContent.get(tab);
+        final MyPresenterWidget<?> content = tabContent.get(tab);
         if (content == null) {
             return;
         }

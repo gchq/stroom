@@ -16,14 +16,5 @@
 
 package stroom.analytics.client.gin;
 
-import stroom.analytics.client.AnalyticsPlugin;
-import stroom.analytics.client.presenter.AnalyticRulePresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface AnalyticsGinjector {
-
-    AsyncProvider<AnalyticsPlugin> getAnalyticsRulePlugin();
-
-    AsyncProvider<AnalyticRulePresenter> getAnalyticsRulePresenter();
 }

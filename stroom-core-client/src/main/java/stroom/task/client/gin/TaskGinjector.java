@@ -16,11 +16,5 @@
 
 package stroom.task.client.gin;
 
-import stroom.task.client.presenter.UserTaskManagerPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface TaskGinjector {
-
-    AsyncProvider<UserTaskManagerPresenter> getUserTaskManagerPresenter();
 }

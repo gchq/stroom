@@ -42,7 +42,9 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -55,12 +57,8 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +66,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class FindInContentPresenter
-        extends MyPresenter<FindInContentView, FindInContentProxy>
+        extends MyPresenter<FindInContentView>
         implements FindInContentUiHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -99,11 +97,10 @@ public class FindInContentPresenter
     @Inject
     public FindInContentPresenter(final EventBus eventBus,
                                   final FindInContentView view,
-                                  final FindInContentProxy proxy,
                                   final PagerView pagerView,
                                   final EditorPresenter editorPresenter,
                                   final RestFactory restFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(editorPresenter);
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
@@ -246,7 +243,6 @@ public class FindInContentPresenter
         }
     }
 
-    @ProxyEvent
     public void onShow(final ShowFindInContentEvent event) {
         show();
     }
@@ -319,9 +315,13 @@ public class FindInContentPresenter
         HidePopupRequestEvent.builder(this).fire();
     }
 
-    @ProxyCodeSplit
-    public interface FindInContentProxy extends Proxy<FindInContentPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class FindInContentProxy {
 
+        @Inject
+        public FindInContentProxy(final EventBus eventBus, final Provider<FindInContentPresenter> presenter) {
+            eventBus.addHandler(ShowFindInContentEvent.getType(), event -> presenter.get().onShow(event));
+        }
     }
 
 

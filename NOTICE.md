@@ -54,16 +54,6 @@ The table below includes licences for all Maven dependencies.
 | com.google.inject.extensions     | guice-assistedinject                         | 3.0-rc2          | APL 2.0       |           |               |
 | com.google.inject.extensions     | guice-servlet                                | 3                | APL 2.0       |           |               |
 | com.google.protobuf              | protobuf-java                                | 2.5.0            | Custom BSD    |           |               |
-| com.gwtplatform                  | gwtp-all                                     | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-clients-common                          | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-crawler                                 | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-client                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-server                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-server-guice                   | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-dispatch-shared                         | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-mvp-client                              | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-processors                              | 0.7              | APL 2.0       |           |               |
-| com.gwtplatform                  | gwtp-tester                                  | 0.7              | APL 2.0       |           |               |
 | com.jamesmurty.utils             | java-xmlbuilder                              | 0.4              | APL 2.0       |           |               |
 | com.jcraft                       | jsch                                         | 0.1.42           | Custom BSD    |           |               |
 | com.lmax                         | disruptor                                    | 3.3.0            | APL 2.0       |           |               |

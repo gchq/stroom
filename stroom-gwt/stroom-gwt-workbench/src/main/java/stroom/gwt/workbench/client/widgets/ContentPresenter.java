@@ -17,12 +17,12 @@
 package stroom.gwt.workbench.client.widgets;
 
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// A presenter whose view is a given widget, for showing story content in Stroom's popups and
 /// dialogs with `ShowPopupEvent`, which only shows presenters. It stands in for the presenter of

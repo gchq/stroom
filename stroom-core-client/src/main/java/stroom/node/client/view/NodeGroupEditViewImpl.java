@@ -19,6 +19,8 @@ package stroom.node.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.shared.NodeInclusionBehaviour;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -29,8 +31,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 

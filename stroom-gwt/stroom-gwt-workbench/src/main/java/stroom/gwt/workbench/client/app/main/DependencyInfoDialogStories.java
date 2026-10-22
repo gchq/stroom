@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// (the Dependencies screen's 'Properties' dialog).
 ///
 /// In Stroom the Dependencies screen's action menu fires `ShowDependenciesInfoDialogEvent`, which
-/// the presenter's GWTP proxy passes on to it. The story fires the event, with the presenter (from
+/// the presenter's proxy passes on to it. The story fires the event, with the presenter (from
 /// GIN) registered as its handler. The dialog makes no requests.
 public final class DependencyInfoDialogStories {
 
@@ -89,7 +89,7 @@ public final class DependencyInfoDialogStories {
                 .injector(injector)
                 .withoutStartupFixtures()
                 .build();
-        // As the presenter's GWTP proxy would
+        // As the presenter's proxy would
         final DependenciesInfoPresenter presenter = injector.getDependenciesInfoPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowDependenciesInfoDialogEvent.getType(), presenter));

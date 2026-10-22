@@ -19,8 +19,7 @@ package stroom.planb.client.view;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.BucketGranularity;
 import stroom.util.shared.time.SimpleDuration;
-
-import com.gwtplatform.mvp.client.HasUiHandlers;
+import stroom.widget.presenter.client.HasUiHandlers;
 
 /**
  * How and when a store's data becomes queryable: the width of the buckets queries read, and the

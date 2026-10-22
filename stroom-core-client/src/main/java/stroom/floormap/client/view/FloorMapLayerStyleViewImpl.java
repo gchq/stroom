@@ -26,6 +26,7 @@ import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.colour.client.ColourBox;
 import stroom.widget.form.client.RadioGroup;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
@@ -34,7 +35,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /// View for the layer appearance dialog.
 ///

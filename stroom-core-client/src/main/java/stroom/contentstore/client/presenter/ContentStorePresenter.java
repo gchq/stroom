@@ -22,13 +22,13 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 /**
  * Represents the Content Tab of the UI when displaying the App Store.

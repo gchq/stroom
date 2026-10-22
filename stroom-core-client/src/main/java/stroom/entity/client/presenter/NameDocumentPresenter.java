@@ -31,15 +31,13 @@ import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
 
 public class NameDocumentPresenter
-        extends MyPresenter<NameDocumentView, NameDocumentProxy>
+        extends MyPresenter<NameDocumentView>
         implements ShowRenameDocumentDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
         HidePopupEvent.Handler,
@@ -49,12 +47,11 @@ public class NameDocumentPresenter
     private ExplorerNode entity;
 
     @Inject
-    public NameDocumentPresenter(final EventBus eventBus, final NameDocumentView view, final NameDocumentProxy proxy) {
-        super(eventBus, view, proxy);
+    public NameDocumentPresenter(final EventBus eventBus, final NameDocumentView view) {
+        super(eventBus, view);
         view.setUiHandlers(this);
     }
 
-    @ProxyEvent
     @Override
     public void onRename(final ShowRenameDocumentDialogEvent event) {
         explorerNodeList = event.getExplorerNodeList();
@@ -127,8 +124,12 @@ public class NameDocumentPresenter
         DialogEvent.fire(this, this, action);
     }
 
-    @ProxyCodeSplit
-    public interface NameDocumentProxy extends Proxy<NameDocumentPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class NameDocumentProxy {
 
+        @Inject
+        public NameDocumentProxy(final EventBus eventBus, final Provider<NameDocumentPresenter> presenter) {
+            eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event -> presenter.get().onRename(event));
+        }
     }
 }

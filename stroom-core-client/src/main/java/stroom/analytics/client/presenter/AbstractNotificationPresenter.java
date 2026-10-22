@@ -22,10 +22,10 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.View;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticNotificationView, D> {

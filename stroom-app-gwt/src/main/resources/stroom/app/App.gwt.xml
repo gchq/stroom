@@ -170,9 +170,6 @@
     <inherits name="stroom.data.pager.Pager" />
     <inherits name="stroom.cell.Cell" />
 
-    <!-- Include GWTP -->
-    <inherits name="com.gwtplatform.mvp.Mvp"/>
-
     <!-- Specify the app entry point class. -->
     <entry-point class='stroom.app.client.App'/>
 

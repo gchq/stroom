@@ -16,17 +16,5 @@
 
 package stroom.folder.client.gin;
 
-import stroom.folder.client.FolderFavouritesPlugin;
-import stroom.folder.client.FolderPlugin;
-import stroom.folder.client.FolderRootPlugin;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface FolderGinjector {
-
-    AsyncProvider<FolderRootPlugin> getFolderRootPlugin();
-
-    AsyncProvider<FolderFavouritesPlugin> getFolderFavouritesPlugin();
-
-    AsyncProvider<FolderPlugin> getFolderPlugin();
 }

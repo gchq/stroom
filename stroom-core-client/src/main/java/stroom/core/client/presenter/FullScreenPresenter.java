@@ -22,44 +22,37 @@ import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ContentSlot;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
-import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
 import javax.inject.Inject;
 
 public class FullScreenPresenter
-        extends MyPresenter<FullScreenView, FullScreenProxy>
+        extends MyPresenter<FullScreenView>
         implements ShowFullScreenEvent.Handler {
 
-    @ContentSlot
-    public static final GwtEvent.Type<RevealContentHandler<?>> CONTENT = new GwtEvent.Type<>();
+    public static final GwtEvent.Type<RevealContentEvent.Handler> CONTENT = new GwtEvent.Type<>();
 
     private final UrlParameters urlParameters;
 
     @Inject
     public FullScreenPresenter(final EventBus eventBus,
                                final FullScreenView view,
-                               final FullScreenProxy proxy,
                                final UrlParameters urlParameters) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.urlParameters = urlParameters;
     }
 
-    @ProxyEvent
     @Override
     public void onShowFullScreen(final ShowFullScreenEvent e) {
-        final PresenterWidget<?> presenterWidget = e.getPresenterWidget();
+        final MyPresenterWidget<?> presenterWidget = e.getPresenterWidget();
         setInSlot(CONTENT, presenterWidget);
         forceReveal();
 
@@ -85,9 +78,15 @@ public class FullScreenPresenter
         RootPanel.get("logo").setVisible(false);
     }
 
-    @ProxyStandard
-    public interface FullScreenProxy extends Proxy<FullScreenPresenter> {
+    /// Hears the app-wide events the screen handles, making the screen when it is first needed, and
+    /// shows the screens asked for in its slots, showing it first.
+    public static final class FullScreenProxy {
 
+        @Inject
+        public FullScreenProxy(final EventBus eventBus, final Provider<FullScreenPresenter> presenter) {
+            eventBus.addHandler(ShowFullScreenEvent.getType(), event -> presenter.get().onShowFullScreen(event));
+            RevealContentEvent.showIn(eventBus, CONTENT, presenter::get);
+        }
     }
 
     public interface FullScreenView extends View {

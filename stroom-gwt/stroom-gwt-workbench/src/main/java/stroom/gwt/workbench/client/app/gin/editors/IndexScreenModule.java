@@ -43,14 +43,13 @@ import stroom.index.client.view.IndexFieldEditViewImpl;
 import stroom.index.client.view.IndexSettingsViewImpl;
 import stroom.index.client.view.IndexVolumeEditViewImpl;
 import stroom.index.client.view.IndexVolumeGroupEditViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `IndexModule`
 /// (`stroom/index/client/gin/IndexModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class IndexScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

@@ -38,8 +38,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -54,7 +52,7 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     public DocumentPermissionsPlugin(final EventBus eventBus,
                                      final ContentManager contentManager,
                                      final Provider<BatchDocumentPermissionsPresenter> presenterProvider,
-                                     final AsyncProvider<DocumentUserPermissionsPresenter>
+                                     final Provider<DocumentUserPermissionsPresenter>
                                              documentPermissionsPresenterProvider,
                                      final ClientSecurityContext securityContext,
                                      final DocumentPluginRegistry documentPluginRegistry) {
@@ -62,32 +60,24 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
-            documentPermissionsPresenterProvider.get(new AsyncCallback<DocumentUserPermissionsPresenter>() {
-                @Override
-                public void onSuccess(final DocumentUserPermissionsPresenter presenter) {
-                    presenter.setDocRef(event.getDocRef());
-                    final CloseContentEvent.Handler closeHandler = (event) -> {
-                        if (presenter instanceof CloseContentEvent.Handler) {
-                            final Callback callback = ok -> {
-                                event.getCallback().closeTab(ok);
-                            };
-
-                            ((CloseContentEvent.Handler) presenter)
-                                    .onCloseRequest(new CloseContentEvent(event.getDirtyMode(), callback));
-                        } else {
-                            // Give the content manager the ok to close the tab.
-                            event.getCallback().closeTab(true);
-                        }
+            final DocumentUserPermissionsPresenter presenter = documentPermissionsPresenterProvider.get();
+            presenter.setDocRef(event.getDocRef());
+            final CloseContentEvent.Handler closeHandler = closeEvent -> {
+                if (presenter instanceof CloseContentEvent.Handler) {
+                    final Callback callback = ok -> {
+                        closeEvent.getCallback().closeTab(ok);
                     };
 
-                    // Tell the content manager to open the tab.
-                    contentManager.open(closeHandler, presenter, presenter);
+                    ((CloseContentEvent.Handler) presenter)
+                            .onCloseRequest(new CloseContentEvent(closeEvent.getDirtyMode(), callback));
+                } else {
+                    // Give the content manager the ok to close the tab.
+                    closeEvent.getCallback().closeTab(true);
                 }
+            };
 
-                @Override
-                public void onFailure(final Throwable caught) {
-                }
-            });
+            // Tell the content manager to open the tab.
+            contentManager.open(closeHandler, presenter, presenter);
         });
     }
 

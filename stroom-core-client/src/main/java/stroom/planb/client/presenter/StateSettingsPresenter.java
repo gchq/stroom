@@ -25,11 +25,11 @@ import stroom.planb.client.view.StateKeySchemaSettingsView;
 import stroom.planb.client.view.StateValueSchemaSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.StateSettings;
+import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class StateSettingsPresenter
         extends AbstractPlanBSettingsPresenter<StateSettingsView> {

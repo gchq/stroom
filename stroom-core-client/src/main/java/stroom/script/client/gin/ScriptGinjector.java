@@ -16,14 +16,5 @@
 
 package stroom.script.client.gin;
 
-import stroom.script.client.ScriptPlugin;
-import stroom.script.client.presenter.ScriptPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ScriptGinjector {
-
-    AsyncProvider<ScriptPlugin> getScriptPlugin();
-
-    AsyncProvider<ScriptPresenter> getScriptPresenter();
 }

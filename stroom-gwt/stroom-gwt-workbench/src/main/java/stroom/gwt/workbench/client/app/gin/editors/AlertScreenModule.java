@@ -19,13 +19,12 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.alert.client.view.CommonAlertViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `AlertModule`
 /// (`stroom/alert/client/gin/AlertModule.java`), without its plugins, app services and prompt.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class AlertScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

@@ -23,6 +23,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.FabButton;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,8 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements TextView {
 

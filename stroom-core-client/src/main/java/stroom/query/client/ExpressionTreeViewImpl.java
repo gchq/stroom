@@ -31,6 +31,7 @@ import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.JsArray;
@@ -45,7 +46,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.ArrayList;
 import java.util.List;

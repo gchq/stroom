@@ -24,17 +24,17 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.PopupSupportImpl;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class PopupManager implements DialogEvent.Handler {
 
-    private Map<PresenterWidget<?>, PopupSupport> popupMap;
+    private Map<MyPresenterWidget<?>, PopupSupport> popupMap;
 
     @Inject
     public PopupManager(final EventBus eventBus) {
@@ -48,7 +48,7 @@ public class PopupManager implements DialogEvent.Handler {
     }
 
     private void show(final ShowPopupEvent event) {
-        final PresenterWidget<?> presenterWidget = event.getPresenterWidget();
+        final MyPresenterWidget<?> presenterWidget = event.getPresenterWidget();
 
         if (popupMap == null) {
             popupMap = new HashMap<>();

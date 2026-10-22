@@ -18,14 +18,11 @@
 package stroom.gwt.workbench.client.app.gin.shell;
 
 import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
 import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
@@ -57,9 +54,7 @@ import stroom.security.identity.client.view.CurrentPasswordViewImpl;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.welcome.client.presenter.WelcomePresenter.WelcomeView;
 import stroom.welcome.client.view.WelcomeViewImpl;
-
-import com.google.inject.Provides;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The bindings of Stroom's app shell that the `shell` batch's `App/Main/AppShell` stories need and
 /// no other batch's module has: the main view and the explorer's navigation panel (Stroom's
@@ -69,7 +64,7 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 /// ginjector binds).
 ///
 /// Plugins are left out, as in the other mirrors: the story gets them from the ginjector, which
-/// registers them. Presenters that Stroom binds with a GWTP proxy are bound with a null proxy: the
+/// registers them. Presenters that Stroom binds with a proxy are bound with a null proxy: the
 /// story registers a presenter as its event's handler, as the proxy would.
 public class ShellAppScreenModule extends AbstractPresenterModule {
 
@@ -123,23 +118,5 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
         bindSharedView(FeedSettingsView.class,
                 FeedSettingsViewImpl.class);
         bind(FeedSettingsPresenter.class);
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    NavigationProxy provideNavigationProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    RecentItemsProxy provideRecentItemsProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    AboutProxy provideAboutProxy() {
-        return null;
     }
 }

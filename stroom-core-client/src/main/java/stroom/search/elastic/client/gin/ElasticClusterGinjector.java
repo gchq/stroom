@@ -16,16 +16,5 @@
 
 package stroom.search.elastic.client.gin;
 
-import stroom.search.elastic.client.ElasticClusterPlugin;
-import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
-import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ElasticClusterGinjector {
-    AsyncProvider<ElasticClusterPlugin> getElasticClusterPlugin();
-
-    AsyncProvider<ElasticClusterPresenter> getElasticClusterPresenter();
-
-    AsyncProvider<ElasticClusterSettingsPresenter> getElasticClusterSettingsPresenter();
 }

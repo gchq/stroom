@@ -22,23 +22,21 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import javax.inject.Inject;
 
-public class DependenciesInfoPresenter extends MyPresenter<DependenciesInfoPresenter.DependenciesInfoView,
-        DependenciesInfoPresenter.DependenciesInfoProxy> implements ShowDependenciesInfoDialogEvent.Handler {
+public class DependenciesInfoPresenter
+        extends MyPresenter<DependenciesInfoPresenter.DependenciesInfoView>
+        implements ShowDependenciesInfoDialogEvent.Handler {
 
     @Inject
     public DependenciesInfoPresenter(final EventBus eventBus,
-                                     final DependenciesInfoView view,
-                                     final DependenciesInfoProxy proxy) {
-        super(eventBus, view, proxy);
+                                     final DependenciesInfoView view) {
+        super(eventBus, view);
     }
 
     @Override
@@ -51,7 +49,6 @@ public class DependenciesInfoPresenter extends MyPresenter<DependenciesInfoPrese
                 .fire();
     }
 
-    @ProxyEvent
     @Override
     public void onShow(final ShowDependenciesInfoDialogEvent event) {
         final DocRef docRef = event.getDocRef();
@@ -68,9 +65,13 @@ public class DependenciesInfoPresenter extends MyPresenter<DependenciesInfoPrese
         forceReveal();
     }
 
-    @ProxyCodeSplit
-    public interface DependenciesInfoProxy extends Proxy<DependenciesInfoPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class DependenciesInfoProxy {
 
+        @Inject
+        public DependenciesInfoProxy(final EventBus eventBus, final Provider<DependenciesInfoPresenter> presenter) {
+            eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event -> presenter.get().onShow(event));
+        }
     }
 
     public interface DependenciesInfoView extends View {

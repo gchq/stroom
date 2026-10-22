@@ -35,8 +35,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /// Opens a [DocumentEditor], or another [TabbedComponent] such as a folder's tabs, as a tab of
-/// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents through presenters while
-/// GWTP is in use. It owns the component, and:
+/// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents through presenters.
+/// It owns the component, and:
 ///
 /// * reads the document into it as the plugin reads it (when it is opened, saved, or its lock
 ///   changes), telling a document editor whether the user may change it;

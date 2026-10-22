@@ -20,6 +20,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -33,7 +34,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 

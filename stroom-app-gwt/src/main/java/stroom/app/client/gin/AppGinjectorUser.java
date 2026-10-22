@@ -33,7 +33,6 @@ import stroom.aws.s3.client.gin.S3ConfigGinjector;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
-import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.contentstore.client.gin.ContentStoreModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
@@ -60,12 +59,6 @@ import stroom.documentation.client.gin.DocumentationGinjector;
 import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
 import stroom.floormap.client.gin.FloorMapGinjector;
@@ -82,7 +75,6 @@ import stroom.index.client.gin.IndexGinjector;
 import stroom.index.client.gin.IndexModule;
 import stroom.kafka.client.gin.KafkaConfigGinjector;
 import stroom.kafka.client.gin.KafkaConfigModule;
-import stroom.main.client.presenter.MainPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.openai.client.gin.OpenAIModelGinjector;
@@ -129,12 +121,10 @@ import stroom.widget.popup.client.gin.PopupModule;
 import stroom.xmlschema.client.gin.XMLSchemaGinjector;
 import stroom.xmlschema.client.gin.XMLSchemaModule;
 
-import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
 
 @GinModules({
         AboutModule.class,
@@ -251,36 +241,9 @@ public interface AppGinjectorUser extends
     @SuppressWarnings("unused")
     EventBus getEventBus();
 
-    @SuppressWarnings("unused")
-    PlaceManager getPlaceManager();
-
     // Presenters
     Provider<CorePresenter> getCorePresenter();
 
     @SuppressWarnings("unused")
-    AsyncProvider<MainPresenter> getMainPresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<NavigationPresenter> getExplorerTabPanePresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<ContentTabPanePresenter> getContentTabPanePresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<FindPresenter> getFindPresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<RecentItemsPresenter> getRecentItemsPresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<FindInContentPresenter> getFindInContentPresenter();
-
-    @SuppressWarnings("unused")
     Provider<FullScreenPresenter> getFullScreenPresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<ExplorerNodeEditTagsPresenter> getExplorerNodeEditPresenter();
-
-    @SuppressWarnings("unused")
-    AsyncProvider<ExplorerNodeRemoveTagsPresenter> getExplorerNodeRemovePresenter();
 }

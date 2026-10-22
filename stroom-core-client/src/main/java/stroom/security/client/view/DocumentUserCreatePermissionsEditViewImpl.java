@@ -23,6 +23,9 @@ import stroom.security.client.presenter.DocumentUserPermissionsEditUiHandler;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.presenter.client.View;
+import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -33,9 +36,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public final class DocumentUserCreatePermissionsEditViewImpl
         extends ViewWithUiHandlers<DocumentUserCreatePermissionsEditUiHandler>

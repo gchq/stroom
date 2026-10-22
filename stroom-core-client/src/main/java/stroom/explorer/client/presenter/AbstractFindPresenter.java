@@ -23,31 +23,29 @@ import stroom.explorer.shared.FindResult;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.function.Supplier;
 
-public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
-        extends MyPresenter<FindView, T_PROXY>
+public abstract class AbstractFindPresenter
+        extends MyPresenter<FindView>
         implements FindUiHandlers, FindDocResultListHandler<FindResult> {
 
     private final FindDocResultListPresenter findResultListPresenter;
 
     public AbstractFindPresenter(final EventBus eventBus,
                                  final FindView view,
-                                 final T_PROXY proxy,
                                  final FindDocResultListPresenter findResultListPresenter,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
         // The find dialog's text is parsed by NodeInclusionChecker against the explorer tree's

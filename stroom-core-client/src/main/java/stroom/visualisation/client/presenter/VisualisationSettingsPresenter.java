@@ -26,13 +26,13 @@ import stroom.security.shared.DocumentPermission;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSettingsView, VisualisationDoc> {

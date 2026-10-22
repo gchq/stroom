@@ -17,8 +17,7 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.table.ComponentSelection;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 import java.util.List;
 

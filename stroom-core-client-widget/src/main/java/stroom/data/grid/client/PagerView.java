@@ -19,10 +19,10 @@ package stroom.data.grid.client;
 import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HTML;
-import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskMonitorFactory {
 

@@ -26,9 +26,9 @@ import stroom.dashboard.client.query.ProcessorLimitsViewImpl;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.client.view.DataUploadViewImpl;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 import com.google.inject.Singleton;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's modules that the processing screens need without the rest of
 /// their module: `AlertModule`'s alert dialog (the data browser's selection summary shows one),

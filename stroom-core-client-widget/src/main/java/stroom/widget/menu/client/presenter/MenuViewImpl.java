@@ -19,6 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.InputModality;
@@ -42,7 +43,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 import java.util.Locale;

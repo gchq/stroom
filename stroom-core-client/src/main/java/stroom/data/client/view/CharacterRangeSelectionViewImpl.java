@@ -23,6 +23,7 @@ import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.linecolinput.client.LineColInput;
+import stroom.widget.presenter.client.ViewImpl;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -33,7 +34,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class CharacterRangeSelectionViewImpl
         extends ViewImpl

@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 /// What the cluster dialog's view tells its presenter: one of the three controls
 /// — the search box, the Area dropdown or the Group dropdown — has changed.

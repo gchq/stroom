@@ -19,6 +19,7 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter.CredentialsManagerDialogView;
 import stroom.credentials.client.presenter.CredentialsManagerDialogUiHandlers;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 /**
  * Provides a dialog box holding the Credentials Manager UI.

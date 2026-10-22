@@ -17,11 +17,11 @@
 package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 /**
  * The backdrop for the password reset page. The form itself is the standard change password dialog,

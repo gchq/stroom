@@ -21,10 +21,10 @@ import stroom.data.client.DataPreviewKey;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabView> {
 

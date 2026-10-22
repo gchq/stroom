@@ -20,6 +20,7 @@ import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.presenter.client.View;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -29,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsView, XmlSchemaDoc> {
 

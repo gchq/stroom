@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;
+import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -32,7 +33,6 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> implements UserTaskView {
 

@@ -17,8 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.ListInputPresenter.WordItem;
-
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.widget.presenter.client.UiHandlers;
 
 public interface ListInputUiHandlers extends UiHandlers {
 

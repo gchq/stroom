@@ -16,14 +16,5 @@
 
 package stroom.view.client.gin;
 
-import stroom.view.client.ViewPlugin;
-import stroom.view.client.presenter.ViewPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ViewGinjector {
-
-    AsyncProvider<ViewPlugin> getViewPlugin();
-
-    AsyncProvider<ViewPresenter> getViewPresenter();
 }

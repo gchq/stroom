@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.unknown;
 
-import com.gwtplatform.mvp.client.View;
+import stroom.widget.presenter.client.View;
 
 public interface HTMLView extends View {
     void setHTML(String html);

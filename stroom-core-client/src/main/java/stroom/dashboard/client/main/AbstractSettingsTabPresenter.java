@@ -17,10 +17,10 @@
 package stroom.dashboard.client.main;
 
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractSettingsTabPresenter<V extends View> extends MyPresenterWidget<V>
         implements ComponentDataModifier {

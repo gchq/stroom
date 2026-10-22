@@ -16,16 +16,5 @@
 
 package stroom.search.elastic.client.gin;
 
-import stroom.search.elastic.client.ElasticIndexPlugin;
-import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
-import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter;
-
-import com.google.gwt.inject.client.AsyncProvider;
-
 public interface ElasticIndexGinjector {
-    AsyncProvider<ElasticIndexPlugin> getElasticIndexPlugin();
-
-    AsyncProvider<ElasticIndexPresenter> getElasticIndexPresenter();
-
-    AsyncProvider<ElasticIndexSettingsPresenter> getElasticIndexSettingsPresenter();
 }

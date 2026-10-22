@@ -17,6 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
+import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +26,6 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
 
 public class BasicTextInputSettingsViewImpl extends ViewImpl implements BasicTextInputSettingsView {
 

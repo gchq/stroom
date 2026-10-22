@@ -39,14 +39,13 @@ import stroom.pathways.client.view.PathwaysSettingsViewImpl;
 import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.pathways.client.view.TracesSettingsViewImpl;
 import stroom.pathways.client.view.TracesViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `PathwaysModule`
 /// (`stroom/pathways/client/gin/PathwaysModule.java`),
 /// without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class PathwaysScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

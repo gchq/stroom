@@ -23,8 +23,7 @@ import stroom.query.client.presenter.ResultStoreSettingsPresenter;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The result store bindings of Stroom's `QueryModule` (`stroom/query/client/gin/QueryModule.java`):
 /// the 'Search Result Stores' dialog and its settings dialog, without the rest of the module (the

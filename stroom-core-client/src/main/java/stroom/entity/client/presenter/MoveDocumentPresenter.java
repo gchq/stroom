@@ -31,27 +31,25 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
 
 public class MoveDocumentPresenter
-        extends MyPresenter<MoveDocumentView, MoveDocumentProxy>
+        extends MyPresenter<MoveDocumentView>
         implements ShowMoveDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
 
     @Inject
-    public MoveDocumentPresenter(final EventBus eventBus, final MoveDocumentView view, final MoveDocumentProxy proxy,
+    public MoveDocumentPresenter(final EventBus eventBus, final MoveDocumentView view,
                                  final EntityTreePresenter entityTreePresenter) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(entityTreePresenter);
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());
@@ -60,7 +58,6 @@ public class MoveDocumentPresenter
         entityTreePresenter.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }
 
-    @ProxyEvent
     @Override
     public void onMove(final ShowMoveDocumentDialogEvent event) {
         this.explorerNodeList = event.getExplorerNodeList();
@@ -137,9 +134,13 @@ public class MoveDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
 
-    @ProxyCodeSplit
-    public interface MoveDocumentProxy extends Proxy<MoveDocumentPresenter> {
+    public static final class MoveDocumentProxy {
 
+        @Inject
+        public MoveDocumentProxy(final EventBus eventBus, final Provider<MoveDocumentPresenter> presenter) {
+            eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event -> presenter.get().onMove(event));
+        }
     }
 }

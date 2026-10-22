@@ -29,6 +29,7 @@ import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -37,7 +38,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;

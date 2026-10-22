@@ -18,9 +18,8 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
+import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.presenter.client.MyPresenterWidget;
-
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         extends HandlerContainerImpl

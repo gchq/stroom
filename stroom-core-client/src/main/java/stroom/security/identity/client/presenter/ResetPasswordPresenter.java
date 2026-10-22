@@ -19,7 +19,6 @@ package stroom.security.identity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordProxy;
 import stroom.security.identity.client.presenter.ResetPasswordPresenter.ResetPasswordView;
 import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ResetPasswordRequest;
@@ -27,6 +26,8 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.RevealRootContentEvent;
+import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -36,17 +37,13 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyStandard;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 
 /**
  * The page a user lands on after following the password reset link that was emailed to them. It collects
  * a new password using the same form as a normal password change and submits it along with the token from
  * the link. The user is not signed in as a result, they must sign in with the new password afterwards.
  */
-public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, ResetPasswordProxy> {
+public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView> {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
@@ -70,10 +67,9 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, Reset
     @Inject
     public ResetPasswordPresenter(final EventBus eventBus,
                                   final ResetPasswordView view,
-                                  final ResetPasswordProxy proxy,
                                   final RestFactory restFactory,
                                   final Provider<ChangePasswordPresenter> changePasswordPresenterProvider) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.changePasswordPresenterProvider = changePasswordPresenterProvider;
 
@@ -146,13 +142,6 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, Reset
 
 
     // --------------------------------------------------------------------------------
-
-
-    @ProxyStandard
-    public interface ResetPasswordProxy extends Proxy<ResetPasswordPresenter> {
-
-    }
-
 
     // --------------------------------------------------------------------------------
 

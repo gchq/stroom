@@ -21,11 +21,11 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final PresenterWidget<?> presenterWidget;
+    private final MyPresenterWidget<?> presenterWidget;
     private final PopupType popupType;
     private final PopupPosition popupPosition;
     private final PopupSize popupSize;
@@ -46,7 +46,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     private final Boolean modal;
     private final Element[] autoHidePartners;
 
-    private ShowPopupEvent(final PresenterWidget<?> presenterWidget,
+    private ShowPopupEvent(final MyPresenterWidget<?> presenterWidget,
                            final PopupType popupType,
                            final PopupPosition popupPosition,
                            final PopupSize popupSize,
@@ -70,7 +70,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         this.autoHidePartners = autoHidePartners;
     }
 
-    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+    public static Builder builder(final MyPresenterWidget<?> presenterWidget) {
         return new Builder(presenterWidget);
     }
 
@@ -91,7 +91,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         handler.onShow(this);
     }
 
-    public PresenterWidget<?> getPresenterWidget() {
+    public MyPresenterWidget<?> getPresenterWidget() {
         return presenterWidget;
     }
 
@@ -150,7 +150,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     public static class Builder {
 
-        private final PresenterWidget<?> presenterWidget;
+        private final MyPresenterWidget<?> presenterWidget;
         private PopupType popupType;
         private PopupPosition popupPosition;
         private PopupSize popupSize;
@@ -162,7 +162,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         private Boolean modal;
         private final List<Element> autoHidePartners = new ArrayList<>();
 
-        public Builder(final PresenterWidget<?> presenterWidget) {
+        public Builder(final MyPresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 

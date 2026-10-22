@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.widget.presenter.client;
 
-import com.google.inject.BindingAnnotation;
+/// Something that registers handlers while it is bound, and removes them when it is unbound.
+public interface HandlerContainer {
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+    /// Registers its handlers, if it hasn't already ([HandlerContainerImpl#onBind()]).
+    void bind();
 
-@BindingAnnotation
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface DefaultPlace {
+    /// @return Whether it is bound.
+    boolean isBound();
 
+    /// Removes the handlers it registered, if it is bound.
+    void unbind();
 }

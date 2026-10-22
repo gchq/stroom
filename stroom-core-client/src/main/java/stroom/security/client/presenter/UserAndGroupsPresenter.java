@@ -34,13 +34,13 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;

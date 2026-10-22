@@ -16,14 +16,14 @@
 
 package stroom.widget.xsdbrowser.client.presenter;
 
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
 import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class XSDBrowserPresenter
         extends MyPresenterWidget<XSDBrowserPresenter.XSDBrowserView>

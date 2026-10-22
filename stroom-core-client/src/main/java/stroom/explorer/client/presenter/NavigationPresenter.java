@@ -78,7 +78,10 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -89,18 +92,13 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public class NavigationPresenter extends MyPresenter<NavigationView, NavigationProxy>
+public class NavigationPresenter extends MyPresenter<NavigationView>
         implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
@@ -134,7 +132,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     @Inject
     public NavigationPresenter(final EventBus eventBus,
                                final NavigationView view,
-                               final NavigationProxy proxy,
                                final MenuItems menuItems,
                                final RestFactory restFactory,
                                final DocumentTypeCache documentTypeCache,
@@ -143,7 +140,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                                final CurrentActivity currentActivity,
                                final UiConfigCache uiConfigCache,
                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         own(typeFilterPresenter);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
@@ -411,7 +408,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         filter.setPressed(hasActiveFilter);
     }
 
-    @ProxyEvent
     @Override
     public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();
@@ -467,9 +463,13 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         explorerTree.focus();
     }
 
-    @ProxyCodeSplit
-    public interface NavigationProxy extends Proxy<NavigationPresenter> {
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
+    public static final class NavigationProxy {
 
+        @Inject
+        public NavigationProxy(final EventBus eventBus, final Provider<NavigationPresenter> presenter) {
+            eventBus.addHandler(ShowMainEvent.getType(), event -> presenter.get().onShowMain(event));
+        }
     }
 
 

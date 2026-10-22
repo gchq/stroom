@@ -22,7 +22,6 @@ import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.gwtplatform.mvp.client.DelayedBindRegistry;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -35,8 +34,6 @@ public class DashboardApp implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
-        // This is required for Gwt-Platform proxy's generator.
-        DelayedBindRegistry.bind(ginjector);
 
         final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
         userPreferencesManager.fetch(preferences -> {

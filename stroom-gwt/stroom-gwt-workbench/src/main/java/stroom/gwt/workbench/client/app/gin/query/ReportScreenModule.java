@@ -20,13 +20,12 @@ import stroom.analytics.client.presenter.ReportPresenter;
 import stroom.analytics.client.presenter.ReportSettingsPresenter;
 import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
 import stroom.analytics.client.view.ReportSettingsViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ReportModule`
 /// (`stroom/analytics/client/gin/ReportModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class ReportScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

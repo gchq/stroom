@@ -19,10 +19,10 @@ package stroom.cache.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
 

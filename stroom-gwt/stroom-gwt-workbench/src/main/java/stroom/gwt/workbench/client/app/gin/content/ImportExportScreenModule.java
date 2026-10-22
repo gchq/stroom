@@ -17,31 +17,25 @@
 package stroom.gwt.workbench.client.app.gin.content;
 
 import stroom.importexport.client.presenter.DependenciesInfoPresenter;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoProxy;
 import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoView;
 import stroom.importexport.client.presenter.DependenciesInfoViewImpl;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
-import stroom.importexport.client.presenter.ExportConfigPresenter.ExportProxy;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
-import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfirmProxy;
 import stroom.importexport.client.presenter.ImportConfigPresenter;
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
-import stroom.importexport.client.presenter.ImportConfigPresenter.ImportProxy;
 import stroom.importexport.client.view.DependenciesTabViewImpl;
 import stroom.importexport.client.view.ExportConfigViewImpl;
 import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 import stroom.importexport.client.view.ImportConfigViewImpl;
-
-import com.google.inject.Provides;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `ImportExportConfigModule`
 /// (`stroom/importexport/client/gin/ImportExportConfigModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
-/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the proxy would.
 public class ImportExportScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.
@@ -62,29 +56,5 @@ public class ImportExportScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(DependenciesTabPresenter.class,
                 DependenciesTabPresenter.DependenciesTabView.class,
                 DependenciesTabViewImpl.class);
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    DependenciesInfoProxy provideDependenciesInfoProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    ImportProxy provideImportProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    ImportConfirmProxy provideImportConfirmProxy() {
-        return null;
-    }
-
-    /// @return No proxy, see the class description.
-    @Provides
-    ExportProxy provideExportProxy() {
-        return null;
     }
 }

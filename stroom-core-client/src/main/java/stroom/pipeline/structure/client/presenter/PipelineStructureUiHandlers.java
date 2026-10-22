@@ -16,8 +16,9 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import stroom.widget.presenter.client.UiHandlers;
+
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface PipelineStructureUiHandlers extends UiHandlers {
 

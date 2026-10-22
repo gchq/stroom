@@ -47,8 +47,7 @@ import stroom.dashboard.client.input.TextInputPlugin;
 import stroom.dashboard.client.input.TextInputPresenter;
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.dashboard.client.input.TextInputViewImpl;
-
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 public class InputModule extends AbstractPresenterModule {
 

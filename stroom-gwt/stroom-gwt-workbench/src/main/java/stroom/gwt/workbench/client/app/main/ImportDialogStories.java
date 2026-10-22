@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `POST /content/v1/abortImport` (the request spy) | aborting the import |
 ///
 /// The story fires `ImportConfigEvent` (as the main menu's 'Import' item does) with both dialogs
-/// registered as their events' handlers, as their GWTP proxies would be. The confirm dialog's root
+/// registered as their events' handlers, as their proxies would be. The confirm dialog's root
 /// folder picker gets its folder from the explorer ([TreeFixtures]).
 public final class ImportDialogStories {
 
@@ -231,7 +231,7 @@ public final class ImportDialogStories {
                 // The confirmations and alerts are shown in Stroom's real dialogs
                 .realAlerts()
                 .build();
-        // As the presenters' GWTP proxies would
+        // As the presenters' proxies would
         final ImportConfigPresenter importPresenter = injector.getImportConfigPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ImportConfigEvent.getType(), importPresenter));
         final ImportConfigConfirmPresenter confirmPresenter = injector.getImportConfigConfirmPresenter();
