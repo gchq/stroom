@@ -79,6 +79,12 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean usesRunSlot() {
+        // It runs a search.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.SEARCH;
     }

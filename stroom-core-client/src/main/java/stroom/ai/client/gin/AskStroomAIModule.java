@@ -31,6 +31,13 @@ import stroom.ai.client.AiMemoryViewImpl;
 import stroom.ai.client.AiToolApprovalsPresenter;
 import stroom.ai.client.AiToolApprovalsPresenter.AiToolApprovalsView;
 import stroom.ai.client.AiToolApprovalsViewImpl;
+import stroom.ai.client.AiToolPoliciesPlugin;
+import stroom.ai.client.AiToolPoliciesPresenter;
+import stroom.ai.client.AiToolPoliciesPresenter.AiToolPoliciesView;
+import stroom.ai.client.AiToolPoliciesViewImpl;
+import stroom.ai.client.AiToolPolicyEditPresenter;
+import stroom.ai.client.AiToolPolicyEditPresenter.AiToolPolicyEditView;
+import stroom.ai.client.AiToolPolicyEditViewImpl;
 import stroom.ai.client.AskStroomAiConfigPresenter;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
@@ -43,10 +50,9 @@ import stroom.ai.client.AskStroomAiViewImpl;
 import stroom.ai.client.DownloadChatPresenter;
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
 import stroom.ai.client.DownloadChatViewImpl;
+import stroom.core.client.gin.PluginModule;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
-public class AskStroomAIModule extends AbstractPresenterModule {
+public class AskStroomAIModule extends PluginModule {
 
     @Override
     protected void configure() {
@@ -87,5 +93,16 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AiToolApprovalsPresenter.class,
                 AiToolApprovalsView.class,
                 AiToolApprovalsViewImpl.class);
+
+        // Administration > MCP Tool Policies
+        bindPlugin(AiToolPoliciesPlugin.class);
+        bindPresenterWidget(
+                AiToolPoliciesPresenter.class,
+                AiToolPoliciesView.class,
+                AiToolPoliciesViewImpl.class);
+        bindPresenterWidget(
+                AiToolPolicyEditPresenter.class,
+                AiToolPolicyEditView.class,
+                AiToolPolicyEditViewImpl.class);
     }
 }

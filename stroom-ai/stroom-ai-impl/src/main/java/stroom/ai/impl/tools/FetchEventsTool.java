@@ -96,6 +96,12 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean usesRunSlot() {
+        // It reads many streams.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.SEARCH;
     }

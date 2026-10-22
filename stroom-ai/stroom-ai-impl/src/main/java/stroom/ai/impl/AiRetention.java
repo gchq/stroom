@@ -104,10 +104,12 @@ public class AiRetention {
             final int removedUsers = deleteDataOfRemovedUsers();
             final int localCopies = deleteStaleLocalCopies();
             final int approvals = expireApprovals(now);
+            final int sessions = deleteIdleSessionWorkspaces(now);
             LOGGER.info(() -> JOB_NAME + ": removed " + files + " expired workspace file(s), deleted " + chats
                               + " old chat(s), removed the data of " + removedUsers + " deleted user(s) and "
-                              + localCopies + " stale local file(s), and expired " + approvals
-                              + " unanswered request(s) for approval");
+                              + localCopies + " stale local file(s), expired " + approvals
+                              + " unanswered request(s) for approval, and deleted the workspaces of " + sessions
+                              + " idle MCP session(s)");
         });
     }
 
@@ -151,6 +153,32 @@ public class AiRetention {
                     : List.of();
         }
         return count;
+    }
+
+    /// Deletes the workspaces (hidden chats) of MCP sessions that have had no requests for the session retention
+    /// time, e.g. of sessions on a node that stopped, which never deleted theirs.
+    int deleteIdleSessionWorkspaces(final long now) {
+        final StroomDuration retention = NullSafe.get(aiConfigProvider.get(), AiConfig::getMcpEndpoint,
+                McpEndpointConfig::getSessionRetention);
+        if (retention == null || retention.toMillis() <= 0) {
+            return 0;
+        }
+        int count = 0;
+        for (final int chatId : aiDao.findSessionChatsNotUpdatedSince(now - retention.toMillis())) {
+            if (deleteChat(chatId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /// Deletes a chat, its messages and its workspace files, unless a run is working on it. For the hidden chat of
+    /// an MCP session that has ended.
+    ///
+    /// @param chatId The chat.
+    /// @return True if the chat was deleted, false if a run is working on it.
+    public boolean deleteChatAndFiles(final int chatId) {
+        return deleteChat(chatId);
     }
 
     int deleteDataOfRemovedUsers() {

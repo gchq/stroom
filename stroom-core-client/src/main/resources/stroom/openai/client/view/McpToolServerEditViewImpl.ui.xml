@@ -72,6 +72,11 @@
                 </g:FlowPanel>
             </g:FlowPanel>
             <g:FlowPanel ui:field="toolsTab" styleName="form-padding form">
+                <form:FormGroup identity="mcpToolServerToolCategory"
+                                label="Tool category"
+                                helpText="The category of tool policy (Administration > MCP Tool Policies) that grants this server's tools to users, for each tool that does not name a category itself. Default (Core) means Core.">
+                    <l:SelectionBox ui:field="toolCategory"/>
+                </form:FormGroup>
                 <form:FormGroup identity="mcpToolServerToolPolicies"
                                 label="Tool policies"
                                 helpText="What happens when the model wants to use a tool. Each policy has a regular expression that must match the tool's whole name, ignoring case, e.g. 'find_.*' or '(get|list)_feeds?'. The first policy that matches a tool applies: Allow runs it without asking, Ask every time asks the user each time, and Deny never offers it to the model. A tool no policy matches runs without asking if the server is trusted and the tool is read-only, and otherwise asks.">

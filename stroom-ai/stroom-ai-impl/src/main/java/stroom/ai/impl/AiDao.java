@@ -36,6 +36,26 @@ public interface AiDao {
 
     AiChat createChat(UserRef userRef);
 
+    /// @param userRef      The user whose MCP session it is.
+    /// @param mcpSessionId The MCP session's id.
+    /// @return A hidden chat that holds the session's workspace: it is never listed with the user's chats.
+    AiChat createSessionChat(UserRef userRef, String mcpSessionId);
+
+    /// @param mcpSessionId An MCP session's id.
+    /// @return The id of the hidden chat that holds the session's workspace, if it has one.
+    Optional<Integer> findSessionChat(String mcpSessionId);
+
+    /// @param timeMs A time.
+    /// @return The hidden chats of MCP sessions not changed since then, e.g. of sessions that ended on a node
+    /// that then stopped, so never deleted their chat.
+    List<Integer> findSessionChatsNotUpdatedSince(long timeMs);
+
+    /// Marks a chat as just used, e.g. an MCP session's hidden chat on each call, so it isn't taken for idle.
+    ///
+    /// @param chatId        The chat.
+    /// @param minIntervalMs Not changed if it was marked this recently, to save writes.
+    void touchChat(int chatId, long minIntervalMs);
+
     ResultPage<AiChat> listChats(UserRef userRef, FindAiChatHistoryCriteria criteria);
 
     Optional<AiChat> getChat(int chatId);

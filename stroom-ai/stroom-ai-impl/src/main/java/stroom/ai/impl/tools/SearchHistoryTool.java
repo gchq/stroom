@@ -53,6 +53,12 @@ class SearchHistoryTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It searches the user's chats.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.SEARCH;
     }

@@ -54,6 +54,17 @@ public interface ResourcePaths {
     String API_ROOT_PATH = "/api";
 
     /**
+     * The path of Stroom's MCP endpoint, through which MCP clients use Stroom's tools.
+     */
+    String MCP_PATH = "/mcp";
+
+    /**
+     * The path of the OAuth 2.0 protected resource metadata (RFC 9728) that tells an MCP client where to sign in
+     * to use the MCP endpoint.
+     */
+    String OAUTH_PROTECTED_RESOURCE_PATH = "/.well-known/oauth-protected-resource";
+
+    /**
      * Used as the base path for all servlets. This is because in earlier versions
      * servlets were all under /stroom because the React UI was using /. We could move
      * them all down to / but that is a breaking API change.

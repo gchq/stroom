@@ -407,6 +407,41 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testTakeToolCallSlot_countsAgainstTheUsersLimitUntilClosed() {
+        aiConfig = new AiConfig(null, null, null, null, 2, 20, null, null, null, null, null, null, null, null, null,
+                null, null, null);
+        Mockito.when(runDao.countWorking("user1")).thenReturn(1);
+
+        final Optional<AiChatRunManager.RunSlot> slot = runManager.takeToolCallSlot("user1");
+
+        // One chat run and one tool call: the user is at their limit of two.
+        assertThat(slot).isPresent();
+        assertThat(runManager.takeToolCallSlot("user1")).isEmpty();
+        // Others' limits are their own.
+        assertThat(runManager.takeToolCallSlot("user2")).isPresent();
+
+        slot.get().close();
+        // Closing twice frees only one slot.
+        slot.get().close();
+        final Optional<AiChatRunManager.RunSlot> again = runManager.takeToolCallSlot("user1");
+        assertThat(again).isPresent();
+        assertThat(runManager.takeToolCallSlot("user1")).isEmpty();
+    }
+
+    @Test
+    void testTakeToolCallSlot_countsAgainstTheNodesLimit() {
+        aiConfig = new AiConfig(null, null, null, null, 5, 1, null, null, null, null, null, null, null, null, null,
+                null, null, null);
+
+        final Optional<AiChatRunManager.RunSlot> slot = runManager.takeToolCallSlot("user1");
+
+        assertThat(slot).isPresent();
+        assertThat(runManager.takeToolCallSlot("user2")).isEmpty();
+        slot.get().close();
+        assertThat(runManager.takeToolCallSlot("user2")).isPresent();
+    }
+
+    @Test
     void testStartQueued_runStoppedWhileQueuedIsDropped() {
         aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null,
                 null, null, null);

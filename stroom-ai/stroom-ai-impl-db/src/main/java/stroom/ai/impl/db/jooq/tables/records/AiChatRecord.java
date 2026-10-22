@@ -284,6 +284,20 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         return (Byte) get(18);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat.mcp_session_id</code>.
+     */
+    public void setMcpSessionId(String value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.mcp_session_id</code>.
+     */
+    public String getMcpSessionId() {
+        return (String) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -307,7 +321,7 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
     /**
      * Create a detached, initialised AiChatRecord
      */
-    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title, String modelDocUuid, Integer contextWindowTokens, Integer lastInputTokens, Long totalInputTokens, Long totalOutputTokens, Long lastOpenedMs, Integer lastReadMessageId, Long lastPollMs, Boolean autoApprove, Byte agentMode, Byte titleSetByUser) {
+    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title, String modelDocUuid, Integer contextWindowTokens, Integer lastInputTokens, Long totalInputTokens, Long totalOutputTokens, Long lastOpenedMs, Integer lastReadMessageId, Long lastPollMs, Boolean autoApprove, Byte agentMode, Byte titleSetByUser, String mcpSessionId) {
         super(AiChat.AI_CHAT);
 
         setId(id);
@@ -329,6 +343,7 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         setAutoApprove(autoApprove);
         setAgentMode(agentMode);
         setTitleSetByUser(titleSetByUser);
+        setMcpSessionId(mcpSessionId);
         resetTouchedOnNotNull();
     }
 }

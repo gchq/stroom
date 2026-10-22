@@ -137,6 +137,12 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It proposes a change to the tab the user attached to the chat.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CONTENT;
     }
