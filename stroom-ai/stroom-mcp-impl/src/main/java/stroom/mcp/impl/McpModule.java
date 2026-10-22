@@ -17,14 +17,20 @@
 package stroom.mcp.impl;
 
 import stroom.ai.impl.tools.AgentKnowledge;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.mcp.impl.tools.PortedToolsModule;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 /// Stroom's MCP endpoint, `/mcp`, where sample files are posted (`/mcp/upload`), the metadata that tells MCP
 /// clients where to sign in to it, and the knowledge bundled for agents.
 public class McpModule extends AbstractModule {
+
+    /// The job that ends idle MCP sessions, and those the transport has dropped.
+    static final String SESSION_JOB_NAME = "MCP Session Maintenance";
 
     @Override
     protected void configure() {
@@ -37,5 +43,26 @@ public class McpModule extends AbstractModule {
                 .bind(McpServlet.class)
                 .bind(McpUploadServlet.class)
                 .bind(McpProtectedResourceServlet.class);
+
+        // On every node, as each holds its own sessions; not inside users' requests.
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(McpSessionMaintenance.class, builder -> builder
+                        .name(SESSION_JOB_NAME)
+                        .description("Ends MCP sessions that have been idle for the session retention time, and "
+                                     + "those whose clients have gone, deleting their workspaces")
+                        .managed(false)
+                        .frequencySchedule("1m"));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class McpSessionMaintenance extends RunnableWrapper {
+
+        @Inject
+        McpSessionMaintenance(final StroomMcpServer server) {
+            super(server::maintain);
+        }
     }
 }

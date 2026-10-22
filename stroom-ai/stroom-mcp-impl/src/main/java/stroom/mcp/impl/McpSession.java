@@ -28,19 +28,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /// A session of an MCP client on Stroom's `/mcp` endpoint, as this node holds it: who it belongs to, what the
-/// client says it can do, the hidden chat holding its workspace (made when a tool first needs it), and the calls
-/// waiting for the user's approval.
+/// client says it can do, the hidden chat holding its workspace (made when a tool first needs it), the calls
+/// running in it, and the calls waiting for the user's approval.
 final class McpSession {
 
     private final String id;
     private final UserRef owner;
     private final Implementation clientInfo;
     private final ClientCapabilities capabilities;
-    private final AtomicReference<Integer> workspaceChatId = new AtomicReference<>();
-    private final AtomicLong lastUsedMs = new AtomicLong(System.currentTimeMillis());
+    private final McpWorkspaces.State workspace = new McpWorkspaces.State();
+    private final RunningCalls runningCalls = new RunningCalls();
+    private final long startedMs = System.currentTimeMillis();
+    private final AtomicLong lastUsedMs = new AtomicLong(startedMs);
     private final Map<String, McpApprovals.PendingCall> pendingCalls = new ConcurrentHashMap<>();
 
     /// @param id           The session's id, as the client sends it in its `Mcp-Session-Id` header.
@@ -83,9 +84,20 @@ final class McpSession {
                 new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, clientName()));
     }
 
-    /// @return The hidden chat holding the session's workspace, once one has been made.
-    AtomicReference<Integer> workspaceChatId() {
-        return workspaceChatId;
+    /// @return The session's workspace: the hidden chat holding it (once one has been made), and how many calls
+    /// are using it (see [McpWorkspaces]).
+    McpWorkspaces.State workspace() {
+        return workspace;
+    }
+
+    /// @return The calls running in the session, by the id of the client's request, so they can be cancelled.
+    RunningCalls runningCalls() {
+        return runningCalls;
+    }
+
+    /// @return When the session was started.
+    long startedMs() {
+        return startedMs;
     }
 
     /// Marks the session as used now.

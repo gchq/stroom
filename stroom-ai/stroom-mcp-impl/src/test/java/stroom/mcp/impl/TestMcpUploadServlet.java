@@ -72,7 +72,7 @@ class TestMcpUploadServlet {
     @BeforeEach
     void setUp() throws Exception {
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig());
-        Mockito.when(aiConfig.getSampleUploads()).thenReturn(new AiSampleUploadsConfig(1, null));
+        Mockito.when(aiConfig.getSampleUploads()).thenReturn(new AiSampleUploadsConfig(1, null, null));
         Mockito.when(securityContext.hasAppPermission(AppPermission.USE_MCP_TOOLS)).thenReturn(true);
         Mockito.when(securityContext.getUserRef()).thenAnswer(inv -> currentUser);
         Mockito.when(feedUploads.send(anyString(), anyString(), anyMap(), anyString(), any(InputStream.class),
@@ -171,6 +171,45 @@ class TestMcpUploadServlet {
     }
 
     @Test
+    void aBodySentAsAFormArrivesWhole() throws Exception {
+        // curl --data-binary sends application/x-www-form-urlencoded unless told otherwise: reading the file's name
+        // as a request parameter had the container parse the body as a form, and refuse one past its size limit.
+        Mockito.when(aiConfig.getSampleUploads()).thenReturn(new AiSampleUploadsConfig(10, null, null));
+        final String id = waiting("a&b=c.json");
+        final String body = "k=v&x=%41&".repeat(300_000);
+
+        final HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create(base + id
+                                                                                            + "?file=a%26b%3Dc.json"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
+
+        assertThat(body.length()).isGreaterThanOrEqualTo(3_000_000);
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(sent).singleElement().asString().endsWith("|a&b=c.json|" + body);
+    }
+
+    @Test
+    void anyFailureLetsTheFileBeSentAgain() throws Exception {
+        final String id = waiting("001_1.json");
+        Mockito.when(feedUploads.send(anyString(), anyString(), anyMap(), anyString(), any(InputStream.class),
+                anyLong())).thenThrow(new IllegalStateException("disk full"));
+
+        final HttpResponse<String> failed = post(id + "?file=001_1.json", "x");
+
+        assertThat(failed.statusCode()).isEqualTo(500);
+        assertThat(String.valueOf(json(failed).get("error"))).contains("disk full");
+        assertThat(sampleUploads.claim(id, "alice", "001_1.json")).isPresent();
+    }
+
+    @Test
+    void whatTheClientNamedIsLoggedWithoutControlCharacters() {
+        // A file name with a line break would otherwise forge a line in the log.
+        assertThat(McpUploadServlet.forLog("a.json\n2026-10-23 INFO forged\r\u001b[31m"))
+                .isEqualTo("a.json?2026-10-23 INFO forged??[31m");
+        assertThat(McpUploadServlet.forLog("x".repeat(400))).hasSize(McpUploadServlet.MAX_LOGGED_CHARS + 1);
+    }
+
+    @Test
     void aUserWithoutThePermissionIsRefused() throws Exception {
         final String id = waiting("001_1.json");
         Mockito.when(securityContext.hasAppPermission(AppPermission.USE_MCP_TOOLS)).thenReturn(false);
@@ -186,7 +225,7 @@ class TestMcpUploadServlet {
     void whenTheEndpointIsTurnedOffThereIsNoUpload() throws Exception {
         final String id = waiting("001_1.json");
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
-                null));
+                null, null));
 
         assertThat(post(id + "?file=001_1.json", "x").statusCode()).isEqualTo(404);
         assertThat(sent).isEmpty();

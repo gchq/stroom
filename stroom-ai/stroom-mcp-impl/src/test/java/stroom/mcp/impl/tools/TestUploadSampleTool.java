@@ -154,10 +154,11 @@ class TestUploadSampleTool {
         assertThat(commands).extracting(command -> command.get("file"))
                 .containsExactly("sample-data/fortios/001_1.json", "002.json");
         assertThat(commands.getFirst().get("bash")).matches("curl -sS --fail-with-body -H \"Authorization: Bearer "
-                                                            + "\\$STROOM_API_KEY\" --data-binary "
-                                                            + "\"@sample-data/fortios/001_1.json\" "
-                                                            + "\"https://stroom.example/mcp/upload/[A-Za-z0-9_-]{12}"
-                                                            + "\\?file=sample-data%2Ffortios%2F001_1.json\"");
+                                                            + "\\$STROOM_API_KEY\" -H 'Content-Type: "
+                                                            + "application/octet-stream' --data-binary "
+                                                            + "'@sample-data/fortios/001_1.json' "
+                                                            + "'https://stroom.example/mcp/upload/[A-Za-z0-9_-]{12}"
+                                                            + "\\?file=sample-data%2Ffortios%2F001_1.json'");
         final String hint = String.valueOf(result.get("hint"));
         assertThat(hint).contains("STROOM_API_KEY").contains("never ask for the key in the chat")
                 .contains("build_status build=fortios").contains("The commands last 15 minute(s), each file once");
@@ -176,7 +177,7 @@ class TestUploadSampleTool {
     void filesWithoutTheMcpEndpointAreTheUsersToUploadInStroom() {
         feeds.buildFeed("fortios", "FORTIOS-EVENTS-V1.0");
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
-                null));
+                null, null));
 
         assertThat(call("{\"feed\": \"FORTIOS-EVENTS-V1.0\", \"files\": [\"a.json\"]}").text())
                 .contains("(/mcp/upload), which is turned off: the user uploads the files in Stroom instead")

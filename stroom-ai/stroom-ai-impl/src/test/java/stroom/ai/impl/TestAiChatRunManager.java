@@ -442,6 +442,28 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testTakeToolCallSlot_aQueuedRunThatFailsToStartDoesNotFailTheCall() {
+        // The slot is closed once the call's result is made: a queued run that can't be started then is logged,
+        // not thrown to the call.
+        aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null,
+                null, null, null);
+        final Optional<AiChatRunManager.RunSlot> slot = runManager.takeToolCallSlot("user1");
+        final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
+                .thenReturn(Optional.of(queued));
+        runManager.start(1, r -> {
+        });
+        Mockito.when(runDao.compareAndSetStatus(eq(7), anyCollection(), eq(AiChatRunStatus.RUNNING), isNull(),
+                isNull())).thenThrow(new IllegalStateException("database gone"));
+
+        assertThat(slot).isPresent();
+        slot.get().close();
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(7), anyCollection(), eq(AiChatRunStatus.RUNNING), isNull(),
+                isNull());
+    }
+
+    @Test
     void testStartQueued_runStoppedWhileQueuedIsDropped() {
         aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null,
                 null, null, null);

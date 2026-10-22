@@ -128,6 +128,16 @@ class TestAiToolPolicyService {
     }
 
     @Test
+    void testPoliciesReadBeforeAChangeAreNotKeptAsCurrent() {
+        // A change saved while another thread read the policies: what it read is out of date.
+        dao.whileListing = () -> service.create(policy("Bob").members(List.of(BOB))
+                .categories(List.of(AiToolCategory.CORE)).build());
+
+        assertThat(service.grantsFor(BOB).isEmpty()).isTrue();
+        assertThat(service.grantsFor(BOB).access(AiToolCategory.CORE)).contains(AiToolAccess.READ_ONLY);
+    }
+
+    @Test
     void testPoliciesAreCheckedBeforeTheyAreSaved() {
         assertThatThrownBy(() -> service.create(policy(" ").categories(List.of(AiToolCategory.CORE)).build()))
                 .hasMessageContaining("Give the policy a name");
@@ -196,10 +206,19 @@ class TestAiToolPolicyService {
 
         private final List<AiToolPolicy> policies = new ArrayList<>();
         private final AtomicInteger nextId = new AtomicInteger(1);
+        // Run once, after the next list is read and before it is returned.
+        private Runnable whileListing;
 
         @Override
         public List<AiToolPolicy> list() {
-            return policies.stream().sorted(Comparator.comparing(AiToolPolicy::getName)).toList();
+            final List<AiToolPolicy> read = policies.stream().sorted(Comparator.comparing(AiToolPolicy::getName))
+                    .toList();
+            final Runnable hook = whileListing;
+            whileListing = null;
+            if (hook != null) {
+                hook.run();
+            }
+            return read;
         }
 
         @Override

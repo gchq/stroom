@@ -31,14 +31,15 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CancellationException;
 
 /// Shows an MCP client's user a form (MCP elicitation) and waits for their answer, for one of Stroom's tools: its
 /// questions (e.g. ask_user's), or a request to approve a call that changes something.
 ///
 /// A form holds its call's thread while it waits, so a node lets only so many wait at once (separately from the
-/// chat's forms), and each waits only so long.
+/// chat's forms), one user at most half of them, and each waits only so long.
 @Singleton
 class McpForms {
 
@@ -48,7 +49,9 @@ class McpForms {
     static final Map<String, Object> NO_FIELDS = Map.of("type", "object", "properties", Map.of());
 
     private final Provider<AiConfig> aiConfigProvider;
-    private final AtomicInteger waiting = new AtomicInteger();
+    // The forms waiting on this node, and how many of them are each user's, by user UUID. Guarded by this.
+    private final Map<String, Integer> waitingByUser = new HashMap<>();
+    private int waiting;
 
     @Inject
     McpForms(final Provider<AiConfig> aiConfigProvider) {
@@ -59,8 +62,10 @@ class McpForms {
     /// @param exchange The request the form is part of.
     /// @param message  What the form is for, shown to the user.
     /// @param schema   Its fields, as a flat JSON schema ([#NO_FIELDS] for a yes or no).
-    /// @return The user's answer; or a cancel if the client can't show forms, too many are waiting on this node,
-    /// or the user doesn't answer in time.
+    /// @return The user's answer; or a cancel if the client can't show forms, too many are waiting on this node
+    /// (or for this user), or the user doesn't answer in time.
+    /// @throws CancellationException if the call is cancelled (its thread interrupted) while the form waits: the
+    ///                               thread's interrupt is kept, so the call stops.
     ElicitResult ask(final McpSession session,
                      final McpAsyncServerExchange exchange,
                      final String message,
@@ -69,11 +74,11 @@ class McpForms {
             return new ElicitResult(Action.CANCEL, null, null);
         }
         final McpEndpointConfig config = config();
-        if (waiting.incrementAndGet() > config.getMaxFormsPerNode()) {
-            waiting.decrementAndGet();
-            LOGGER.warn(() -> "Not showing a form in MCP session " + session.id() + " as "
-                              + config.getMaxFormsPerNode() + " are already waiting on this node (see "
-                              + "stroom.ai.mcpEndpoint.maxFormsPerNode)");
+        final String user = session.owner().getUuid();
+        if (!take(user, config.getMaxFormsPerNode())) {
+            LOGGER.warn(() -> "Not showing a form to " + session.owner().toDisplayString() + " as "
+                              + config.getMaxFormsPerNode() + " are already waiting on this node, or half of them "
+                              + "for this user (see stroom.ai.mcpEndpoint.maxFormsPerNode)");
             return new ElicitResult(Action.CANCEL, null, null);
         }
         try {
@@ -85,17 +90,53 @@ class McpForms {
                     ? new ElicitResult(Action.CANCEL, null, null)
                     : result;
         } catch (final RuntimeException e) {
+            if (isInterrupt(e)) {
+                // The call was cancelled: block() wraps the interrupt, which must not be lost, or the call goes on.
+                Thread.currentThread().interrupt();
+                throw new CancellationException("The call was cancelled while it waited for the user's answer.");
+            }
             // E.g. the user didn't answer in time, or the client went away.
-            LOGGER.debug(() -> "A form in MCP session " + session.id() + " wasn't answered: " + e.getMessage(), e);
+            LOGGER.debug(() -> "A form for " + session.owner().toDisplayString() + " wasn't answered: "
+                               + e.getMessage(), e);
             return new ElicitResult(Action.CANCEL, null, null);
         } finally {
-            waiting.decrementAndGet();
+            release(user);
         }
     }
 
     /// @return How many forms are waiting for answers on this node.
-    int waitingCount() {
-        return waiting.get();
+    synchronized int waitingCount() {
+        return waiting;
+    }
+
+    // A user may have at most half the node's forms waiting, so one can't keep everyone else's from being shown.
+    private synchronized boolean take(final String user, final int maxPerNode) {
+        final int maxPerUser = Math.max(1, maxPerNode / 2);
+        final int usersWaiting = waitingByUser.getOrDefault(user, 0);
+        if (waiting >= maxPerNode || usersWaiting >= maxPerUser) {
+            return false;
+        }
+        waiting++;
+        waitingByUser.put(user, usersWaiting + 1);
+        return true;
+    }
+
+    private synchronized void release(final String user) {
+        waiting--;
+        waitingByUser.computeIfPresent(user, (uuid, count) -> count <= 1
+                ? null
+                : count - 1);
+    }
+
+    private static boolean isInterrupt(final Throwable e) {
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause instanceof InterruptedException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return Thread.currentThread().isInterrupted();
     }
 
     private McpEndpointConfig config() {
