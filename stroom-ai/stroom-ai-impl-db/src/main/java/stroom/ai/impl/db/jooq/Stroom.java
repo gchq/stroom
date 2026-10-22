@@ -19,6 +19,9 @@ import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
 import stroom.ai.impl.db.jooq.tables.AiMemory;
 import stroom.ai.impl.db.jooq.tables.AiToolApproval;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyMember;
 
 
 /**
@@ -70,6 +73,21 @@ public class Stroom extends SchemaImpl {
     public final AiToolApproval AI_TOOL_APPROVAL = AiToolApproval.AI_TOOL_APPROVAL;
 
     /**
+     * The table <code>stroom.ai_tool_policy</code>.
+     */
+    public final AiToolPolicy AI_TOOL_POLICY = AiToolPolicy.AI_TOOL_POLICY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_category</code>.
+     */
+    public final AiToolPolicyCategory AI_TOOL_POLICY_CATEGORY = AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_member</code>.
+     */
+    public final AiToolPolicyMember AI_TOOL_POLICY_MEMBER = AiToolPolicyMember.AI_TOOL_POLICY_MEMBER;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -91,7 +109,10 @@ public class Stroom extends SchemaImpl {
             AiChatMessage.AI_CHAT_MESSAGE,
             AiChatRun.AI_CHAT_RUN,
             AiMemory.AI_MEMORY,
-            AiToolApproval.AI_TOOL_APPROVAL
+            AiToolApproval.AI_TOOL_APPROVAL,
+            AiToolPolicy.AI_TOOL_POLICY,
+            AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY,
+            AiToolPolicyMember.AI_TOOL_POLICY_MEMBER
         );
     }
 }

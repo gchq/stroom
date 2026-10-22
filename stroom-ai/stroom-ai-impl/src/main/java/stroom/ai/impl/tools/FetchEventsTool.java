@@ -29,6 +29,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
@@ -92,6 +93,11 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .requires(AppPermission.VIEW_DATA_PERMISSION)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
     }
 
     @Override

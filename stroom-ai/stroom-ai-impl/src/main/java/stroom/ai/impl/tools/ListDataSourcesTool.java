@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.AgentInstructions.Ignored;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
@@ -77,6 +78,11 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
     }
 
     @Override

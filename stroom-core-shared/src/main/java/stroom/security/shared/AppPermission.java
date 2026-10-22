@@ -98,6 +98,15 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_JOBS_PERMISSION(
             "Manage Jobs",
             "Access the Jobs screen to manage Stroom's background jobs."),
+    USE_MCP_TOOLS(
+            "Use MCP Tools",
+            "Connect an MCP client (e.g. VS Code or Claude) to Stroom's /mcp endpoint and call, as the user, the " +
+            "tools their MCP tool policies allow. Each call is also checked against the user's other " +
+            "permissions."),
+    MANAGE_MCP_TOOL_POLICIES(
+            "Manage MCP Tool Policies",
+            "Access the MCP Tool Policies screen to view and manage which tools users and groups may use, over " +
+            "MCP and in Stroom AI."),
     MANAGE_PROPERTIES_PERMISSION(
             "Manage Properties",
             "Access to the Properties to manage the system configuration."),

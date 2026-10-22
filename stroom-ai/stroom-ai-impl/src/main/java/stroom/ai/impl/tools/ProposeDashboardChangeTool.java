@@ -38,6 +38,7 @@ import stroom.ai.impl.workspace.TableExpression;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -122,6 +123,11 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
     }
 
     @Override

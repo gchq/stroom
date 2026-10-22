@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.shared.DocumentPermission;
@@ -51,6 +52,11 @@ class GetInstructionsTool extends AbstractBuiltInTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

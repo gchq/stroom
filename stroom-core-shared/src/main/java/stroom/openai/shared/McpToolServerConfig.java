@@ -16,6 +16,7 @@
 
 package stroom.openai.shared;
 
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.http.HttpClientConfig;
 
@@ -110,6 +111,11 @@ public class McpToolServerConfig {
     @JsonProperty
     private final List<McpToolPolicyRule> toolPolicies;
 
+    @JsonPropertyDescription("The category of tool policy that grants this server's tools, for a tool that doesn't " +
+                             "name a category itself (as its _meta.group). If not set, such tools are in Core.")
+    @JsonProperty
+    private final AiToolCategory toolCategory;
+
     @JsonCreator
     public McpToolServerConfig(
             @JsonProperty("enabled") final Boolean enabled,
@@ -122,7 +128,8 @@ public class McpToolServerConfig {
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
             @JsonProperty("trusted") final Boolean trusted,
             @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies,
-            @JsonProperty("audience") final String audience) {
+            @JsonProperty("audience") final String audience,
+            @JsonProperty("toolCategory") final AiToolCategory toolCategory) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -134,6 +141,13 @@ public class McpToolServerConfig {
         this.trusted = Objects.requireNonNullElse(trusted, false);
         this.toolPolicies = toolPolicies;
         this.audience = audience;
+        this.toolCategory = toolCategory;
+    }
+
+    /// @return The category of tool policy that grants this server's tools when a tool names none itself, or null
+    /// for Core.
+    public AiToolCategory getToolCategory() {
+        return toolCategory;
     }
 
     public String getAudience() {
@@ -205,7 +219,8 @@ public class McpToolServerConfig {
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
                trusted == that.trusted &&
                Objects.equals(toolPolicies, that.toolPolicies) &&
-               Objects.equals(audience, that.audience);
+               Objects.equals(audience, that.audience) &&
+               toolCategory == that.toolCategory;
     }
 
     @Override
@@ -220,7 +235,8 @@ public class McpToolServerConfig {
                 httpClientConfiguration,
                 trusted,
                 toolPolicies,
-                audience);
+                audience,
+                toolCategory);
     }
 
     @Override
@@ -236,6 +252,7 @@ public class McpToolServerConfig {
                ", trusted=" + trusted +
                ", toolPolicies=" + toolPolicies +
                ", audience='" + audience + '\'' +
+               ", toolCategory=" + toolCategory +
                '}';
     }
 
@@ -260,6 +277,7 @@ public class McpToolServerConfig {
         private boolean trusted;
         private List<McpToolPolicyRule> toolPolicies;
         private String audience;
+        private AiToolCategory toolCategory;
 
         private Builder() {
         }
@@ -276,6 +294,12 @@ public class McpToolServerConfig {
             this.trusted = config.trusted;
             this.toolPolicies = config.toolPolicies;
             this.audience = config.audience;
+            this.toolCategory = config.toolCategory;
+        }
+
+        public Builder toolCategory(final AiToolCategory toolCategory) {
+            this.toolCategory = toolCategory;
+            return self();
         }
 
         public Builder audience(final String audience) {
@@ -350,7 +374,8 @@ public class McpToolServerConfig {
                     httpClientConfiguration,
                     trusted,
                     toolPolicies,
-                    audience);
+                    audience,
+                    toolCategory);
         }
     }
 }

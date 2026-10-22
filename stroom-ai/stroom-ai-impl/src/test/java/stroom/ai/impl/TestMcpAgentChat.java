@@ -37,6 +37,8 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolAccess;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
@@ -53,6 +55,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.FinishReason;
+import dev.langchain4j.service.tool.ToolExecutor;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -70,6 +73,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -96,10 +100,13 @@ class TestMcpAgentChat {
     private final UserActions userActions = new UserActions(userActionLookup);
     private final ChatWorkspace chatWorkspace = Mockito.mock(ChatWorkspace.class);
     private final WorkspaceArguments workspaceArguments = new WorkspaceArguments(chatWorkspace);
+    // What the user's tool policies grant: everything, unless a test says otherwise.
+    private ToolGrants grants = ToolGrants.all();
+    private final CurrentToolGrants toolGrants = () -> grants;
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog, new ModelStreamer(aiService),
             new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
-            workspaceArguments);
+            workspaceArguments, toolGrants);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -495,7 +502,7 @@ class TestMcpAgentChat {
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
-                workspaceArguments);
+                workspaceArguments, toolGrants);
         final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
                 .id("1")
                 .name("search")
@@ -562,7 +569,7 @@ class TestMcpAgentChat {
                 usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
                 new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
-                workspaceArguments);
+                workspaceArguments, toolGrants);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -629,7 +636,7 @@ class TestMcpAgentChat {
                 Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
                 auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions,
-                workspaceArguments);
+                workspaceArguments, toolGrants);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -793,7 +800,7 @@ class TestMcpAgentChat {
         final McpAgentChat answeredAtOnce = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, gate, auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions,
-                workspaceArguments);
+                workspaceArguments, toolGrants);
         final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
                 ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build())));
 
@@ -1042,6 +1049,11 @@ class TestMcpAgentChat {
                 .build();
         final StroomTool proposeTool = new StroomTool() {
             @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CORE;
+            }
+
+            @Override
             public ToolDefinition definition() {
                 return ToolDefinition.builder().name("propose_query").description("built in").build();
             }
@@ -1076,6 +1088,86 @@ class TestMcpAgentChat {
             assertThat(action.name()).isEqualTo("Windows users");
             assertThat(action.request()).isEqualTo(query);
         });
+    }
+
+    @Test
+    void theUsersToolPoliciesDecideWhichToolsAreOffered() {
+        // Core is granted for reading only; nothing else is.
+        grants = new ToolGrants(Map.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY));
+        final AtomicBoolean ran = new AtomicBoolean();
+        policyTools(ran);
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
+        final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // A Core tool that reads, and one with calls that read, are offered. A Content tool isn't, nor is the
+        // server's search tool, which isn't known to be read-only (its server isn't trusted).
+        assertThat(model.requests.getFirst().toolSpecifications()).extracting(ToolSpecification::name)
+                .contains("read_document", "memory")
+                .doesNotContain("propose_query", "search");
+    }
+
+    @Test
+    void aCallThatChangesSomethingIsRefusedWhenItsCategoryIsGrantedOnlyForReading() {
+        grants = new ToolGrants(Map.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY));
+        final AtomicBoolean ran = new AtomicBoolean();
+        policyTools(ran);
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("memory")
+                        .arguments("{\"command\":\"write\"}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(ran).isFalse();
+        final ArgumentCaptor<String> results = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_RESULT),
+                results.capture());
+        assertThat(JsonUtil.readValue(results.getValue(), ToolResultRecord.class).text())
+                .startsWith("Not run: the user's tool policies allow only the Core tools and calls that cannot "
+                            + "change anything");
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "memory", "{\"command\":\"write\"}",
+                "Not allowed by tool policy", false, false);
+    }
+
+    @Test
+    void aUserWithNoPolicyIsOfferedNoTools() {
+        grants = ToolGrants.NONE;
+        policyTools(new AtomicBoolean());
+        final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(Mockito.mock(McpSyncClient.class), searchTool()), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(model.requests).singleElement().satisfies(request ->
+                assertThat(request.toolSpecifications()).isNullOrEmpty());
+    }
+
+    // Built-in tools of different categories: one that reads (Core), one with calls that read (memory, Core) and
+    // one that changes things (Content). Each records if it ran.
+    private void policyTools(final AtomicBoolean ran) {
+        final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
+        for (final String name : List.of("read_document", "memory", "propose_query")) {
+            map.put(ToolSpecification.builder().name(name).description(name).build(), (request, memoryId) -> {
+                ran.set(true);
+                return "ran";
+            });
+        }
+        Mockito.when(builtInTools.toolMap()).thenReturn(map);
+        Mockito.when(builtInTools.category("read_document")).thenReturn(Optional.of(AiToolCategory.CORE));
+        Mockito.when(builtInTools.category("memory")).thenReturn(Optional.of(AiToolCategory.CORE));
+        Mockito.when(builtInTools.category("propose_query")).thenReturn(Optional.of(AiToolCategory.CONTENT));
+        Mockito.when(builtInTools.isReadOnly("read_document")).thenReturn(true);
+        Mockito.when(builtInTools.hasReadOnlyCalls("read_document")).thenReturn(true);
+        Mockito.when(builtInTools.hasReadOnlyCalls("memory")).thenReturn(true);
+        Mockito.when(builtInTools.isReadOnlyCall(Mockito.eq("memory"), Mockito.anyString()))
+                .thenAnswer(invocation -> invocation.<String>getArgument(1).contains("read"));
     }
 
     private List<String> toolResults(final stroom.openai.shared.McpToolServerConfig config,
