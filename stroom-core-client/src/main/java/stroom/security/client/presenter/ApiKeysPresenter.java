@@ -129,11 +129,10 @@ public class ApiKeysPresenter
     }
 
     private void createNewKey() {
-        final boolean allowOwnerSelection = owner == null;
         editApiKeyPresenterProvider.get().showCreateDialog(
                 Mode.PRE_CREATE,
                 listPresenter::refresh,
-                allowOwnerSelection);
+                owner);
     }
 
     private void editSelectedKey() {
