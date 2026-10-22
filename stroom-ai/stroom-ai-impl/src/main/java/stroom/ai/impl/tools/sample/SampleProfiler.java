@@ -265,7 +265,7 @@ public final class SampleProfiler {
     /// @return The root's name and namespace with its complete records, or null when the text isn't the start of
     /// one document (fragments, a syntax error, not XML, or a whole document, which the XML parser reads or
     /// rejects).
-    static XmlTree.Pull cutDocument(final String text) {
+    public static XmlTree.Pull cutDocument(final String text) {
         final XmlTree.Pull pull = XmlTree.pull(PyText.subFirst(XML_DECL, "", PyText.strip(text, "\uFEFF\r\n ")),
                 Integer.MAX_VALUE);
         if (pull.syntaxError() || pull.closed() || pull.root() == null || pull.records().isEmpty()) {
@@ -277,7 +277,7 @@ public final class SampleProfiler {
     /// @param text A text.
     /// @return The top-level elements of text that is XML fragments (several root elements, e.g. one `<Event>` a
     /// line); null for a single document or anything that isn't XML.
-    static List<XmlTree.Element> xmlFragments(final String text) {
+    public static List<XmlTree.Element> xmlFragments(final String text) {
         final String body = PyText.subFirst(XML_DECL, "", text);
         final XmlTree.Element root;
         try {

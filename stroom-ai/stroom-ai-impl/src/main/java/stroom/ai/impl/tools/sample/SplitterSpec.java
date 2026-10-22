@@ -123,6 +123,45 @@ public record SplitterSpec(String kind,
         return new Builder(kind);
     }
 
+    /// Reads a spec from its JSON, as the Python model's `model_validate` does (the form [#toMap()] writes).
+    ///
+    /// @param json The spec as JSON: `kind`, and any of `delimiter`, `header` (true or false, or the column
+    ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `body` (a spec), `body_field`,
+    ///             `quoted_newlines`, `record_end`, `record_start`, `comment_prefix`, `header_directive` and
+    ///             `directives`.
+    /// @return The spec.
+    /// @throws IllegalArgumentException if it isn't a consistent spec.
+    @SuppressWarnings("unchecked")
+    public static SplitterSpec fromMap(final Map<String, ?> json) {
+        if (!(json.get("kind") instanceof final String kind)) {
+            throw new IllegalArgumentException("kind must be one of " + KINDS);
+        }
+        final Builder builder = builder(kind);
+        builder.delimiter = (String) json.get("delimiter");
+        final Object header = json.get("header");
+        if (header instanceof final List<?> columns) {
+            builder.columns = (List<String>) columns;
+        } else {
+            builder.headerLine = Boolean.TRUE.equals(header);
+        }
+        builder.quote = (String) json.get("quote");
+        builder.pattern = (String) json.get("pattern");
+        builder.names = (List<String>) json.get("names");
+        builder.pairSeparator = (String) json.get("pair_separator");
+        builder.rfc = (String) json.get("rfc");
+        if (json.get("body") instanceof final Map<?, ?> body) {
+            builder.body = fromMap((Map<String, ?>) body);
+        }
+        builder.bodyField = (String) json.get("body_field");
+        builder.quotedNewlines = Boolean.TRUE.equals(json.get("quoted_newlines"));
+        builder.recordEnd = (String) json.get("record_end");
+        builder.recordStart = (String) json.get("record_start");
+        builder.commentPrefix = (String) json.get("comment_prefix");
+        builder.headerDirective = (String) json.get("header_directive");
+        builder.directives = (List<String>) json.get("directives");
+        return builder.build();
+    }
+
     /// @return A builder holding this spec's values.
     public Builder toBuilder() {
         final Builder builder = new Builder(kind);
