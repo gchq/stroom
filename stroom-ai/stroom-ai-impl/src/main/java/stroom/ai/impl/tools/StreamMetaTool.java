@@ -42,7 +42,9 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -63,11 +65,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -85,6 +89,9 @@ import java.util.regex.Pattern;
 /// database never has. Reading the stream store needs permission to view data, as the Data screen does, and the
 /// store checks the user may view each stream's feed again when it opens it; without it, those values are left
 /// out and the summary says why. Reading the stream store is capped per call.
+///
+/// Given a stream id alone, it describes that stream instead, as the Stroom MCP server's describe_stream did: the
+/// streams produced from it, the receipt headers it carries (read with View Data) and its processing counts.
 class StreamMetaTool extends AbstractWorkspaceTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMetaTool.class);
@@ -93,6 +100,8 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     static final String TYPE_ID = "AskStroomAi." + NAME;
     static final String FEEDS_ARG = "feeds";
     static final String PIPELINE_ARG = "pipeline";
+    static final String PARENT_ID_ARG = "parentId";
+    static final String STREAM_ID_ARG = "streamId";
     static final String FOLDER_ARG = "folder";
     static final String TYPE_ARG = "type";
     static final String FROM_ARG = "from";
@@ -113,6 +122,10 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     /// The most columns in a table of streams or parts.
     static final int MAX_COLUMNS = 60;
     static final int PREVIEW_ROWS = 10;
+    /// The most streams produced from a stream that are described.
+    static final int MAX_CHILDREN = 100;
+    /// The processing counts a stream a pipeline wrote has, by the name given them and their meta name.
+    static final Map<String, String> PROCESSING_COUNTS = processingCounts();
 
     static final String ID_COLUMN = "Id";
     static final String FEED_COLUMN = "Feed";
@@ -140,6 +153,8 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     private final Provider<Store> storeProvider;
     private final DocumentAccess documentAccess;
     private final AiAuditLog auditLog;
+    private final StreamReader streamReader;
+    private final FeedAccess feedAccess;
 
     @Inject
     StreamMetaTool(final ChatWorkspace workspace,
@@ -147,19 +162,24 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                    final Provider<AttributeMapFactory> attributeMapFactoryProvider,
                    final Provider<Store> storeProvider,
                    final DocumentAccess documentAccess,
-                   final AiAuditLog auditLog) {
+                   final AiAuditLog auditLog,
+                   final StreamReader streamReader,
+                   final FeedAccess feedAccess) {
         super(workspace);
         this.metaServiceProvider = metaServiceProvider;
         this.attributeMapFactoryProvider = attributeMapFactoryProvider;
         this.storeProvider = storeProvider;
         this.documentAccess = documentAccess;
         this.auditLog = auditLog;
+        this.streamReader = streamReader;
+        this.feedAccess = feedAccess;
     }
 
     @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW)
                 .build();
     }
 
@@ -173,23 +193,36 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Finds streams (the data Stroom has received or produced) and writes a table of "
-                                 + "their meta")
+                        .general("Finds streams (the data Stroom has received or produced), newest first, and "
+                                 + "writes a table of their meta")
                         .chatOnly(" to the workspace, for the table tool")
-                        .general(". Give feeds and/or a pipeline (the streams it produced), or a folder (the streams "
-                                 + "of the feeds in it and produced by its pipelines), and optionally type, from/to "
-                                 + "(create time) and status. Each row is a stream, with the attributes asked for "
+                        .general(". Give feeds and/or a pipeline (the streams it produced), a folder "
+                                 + "(the streams of the feeds in it and produced by its pipelines), a parentId (the "
+                                 + "streams produced from that stream, e.g. the Events and Error streams of a Raw "
+                                 + "Events stream) or a type, and optionally type, from/to (create time) and "
+                                 + "status. Each row is a stream, with the attributes asked for "
                                  + "(e.g. 'Raw Size', 'Read Count', or a header the data arrived with such as "
                                  + "'RemoteHost'); give parts for a row per part with the headers each part was "
                                  + "received with. Give groupBy (day, hour, feed, type, pipeline) with aggregates "
                                  + "(e.g. ['count', 'sum(Raw Size)', 'max(Raw Size)']) for totals, e.g. how much a "
                                  + "feed received each day. Values come from the database while it keeps them, else "
                                  + "from the stream store (only for a limited number of streams per call); the "
-                                 + "result says how many came from each and how many weren't read.")
+                                 + "result says how many came from each and how many weren't read. Or give "
+                                 + "streamId alone to describe one stream: the streams produced from it (with a "
+                                 + "count per type; exactly one Events child per processed raw stream is expected), "
+                                 + "the attributes a raw stream carries (its receipt headers such as Feed, "
+                                 + "RemoteAddress, ReceivedTime or custom ones), usable in XSLT as "
+                                 + "stroom:meta('Name'), and, for a stream a pipeline wrote, its processing counts: "
+                                 + "records read and written, and errors, warnings and fatal errors, so how many "
+                                 + "events a large stream produced is known without reading it. Stroom records them "
+                                 + "a few seconds after the stream completes: when a stream just processed has none "
+                                 + "yet, describe it again shortly.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addProperty(FEEDS_ARG, stringArraySchema("Feed names or UUIDs."))
                         .addStringProperty(PIPELINE_ARG, "A pipeline's UUID: the streams it produced.")
+                        .addIntegerProperty(PARENT_ID_ARG, "Only streams produced from this stream.")
+                        .addIntegerProperty(STREAM_ID_ARG, "A stream (meta) id to describe, alone.")
                         .addStringProperty(FOLDER_ARG, "A folder's UUID or Explorer path, e.g. "
                                                        + "'/Security/Firewalls': the streams of the feeds in it "
                                                        + "(at any depth) and produced by its pipelines.")
@@ -229,6 +262,9 @@ class StreamMetaTool extends AbstractWorkspaceTool {
 
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        if (stringArg(request, STREAM_ID_ARG) != null) {
+            return describe(idArg(request, STREAM_ID_ARG), context);
+        }
         final SessionWorkspace workspace = sessionWorkspace(context);
         final long startNanos = System.nanoTime();
         final WorkspacePath requestedOut = outArg(request);
@@ -249,6 +285,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(criteria.expression());
         // One more than the limit, to tell if there are more.
         findMetaCriteria.setPageRequest(new PageRequest(0, limit + 1));
+        findMetaCriteria.setSort(MetaFields.FIELD_ID, true, false);
         final ResultPage<MetaRow> page = metaServiceProvider.get().findRows(findMetaCriteria);
         final List<MetaRow> found = NullSafe.list(NullSafe.get(page, ResultPage::getValues));
         final boolean more = found.size() > limit;
@@ -287,7 +324,23 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         }
         ToolTables.writeCsv(workspace, out, columns, rows, criteria.sourceDocUuid());
         logSearch(context, criteria, metaRows, reader);
-        return ToolResult.text(summary(out, metaRows.size(), more, rows, columns, reader, parts));
+        return ToolResult.text(summary(out, metaRows.size(), more, rows, columns, reader, parts)
+                               + unknownFeeds(metaRows, stringListArg(request, FEEDS_ARG)));
+    }
+
+    // A feed not here stops the work (another cluster's, perhaps), rather than reading as one with no streams.
+    private String unknownFeeds(final List<MetaRow> metaRows, final List<String> feeds) {
+        if (!metaRows.isEmpty()) {
+            return "";
+        }
+        final List<String> unknown = feeds.stream()
+                .filter(feed -> !UUID_PATTERN.matcher(feed).matches() && !feedAccess.canView(feed))
+                .toList();
+        return unknown.isEmpty()
+                ? ""
+                : " No feed named " + String.join(" or ", unknown.stream().map(f -> "'" + f + "'").toList())
+                  + " was found here (or you can't view it): ask the user for the feed's exact name, and whether "
+                  + "this Stroom is the cluster they mean. Don't go on until they say.";
     }
 
     /// @return The search, from the arguments.
@@ -299,8 +352,17 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         final List<String> feeds = stringListArg(request, FEEDS_ARG);
         final String pipeline = stringArg(request, PIPELINE_ARG);
         final String folder = stringArg(request, FOLDER_ARG);
-        if (feeds.isEmpty() && pipeline == null && folder == null) {
-            throw new WorkspaceException("Give feeds, a pipeline or a folder.");
+        final Long parentId = stringArg(request, PARENT_ID_ARG) == null
+                ? null
+                : idArg(request, PARENT_ID_ARG);
+        if (feeds.isEmpty() && pipeline == null && folder == null && parentId == null
+            && stringArg(request, TYPE_ARG) == null) {
+            throw new WorkspaceException("Give feeds, a pipeline or a folder (or a parentId or a type; or a "
+                                         + "streamId alone, to describe it).");
+        }
+        if (parentId != null) {
+            builder.addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId);
+            description.add("produced from stream " + parentId);
         }
         if (folder != null) {
             final DocRef folderRef = documentAccess.findFolder(folder)
@@ -652,6 +714,98 @@ class StreamMetaTool extends AbstractWorkspaceTool {
             sb.append(" The first rows:\n\n").append(ToolTables.preview(columns, rows, PREVIEW_ROWS));
         }
         return sb.toString();
+    }
+
+    // --------------------------------------------------------------------------------
+    // Describing one stream.
+    // --------------------------------------------------------------------------------
+
+    /// Describes one stream, as the Stroom MCP server's describe_stream did: its family, attributes and
+    /// processing counts.
+    private ToolResult describe(final long streamId, final ToolCallContext context) {
+        final Map<String, Object> result = describe(streamId);
+        auditLog.streamsSearched(context.session(), "stream " + streamId + " and the streams produced from it",
+                List.of(streamId), Map.of(), "Stream described by the " + NAME + " tool");
+        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+    }
+
+    /// @return The stream's children (and a count per type), attributes and processing counts.
+    Map<String, Object> describe(final long streamId) {
+        final Optional<MetaRow> found = streamReader.metaRow(streamId);
+        if (found.isEmpty()) {
+            throw new WorkspaceException("No stream with id " + streamId);
+        }
+        final List<Map<String, Object>> children = streamReader.children(streamId, MAX_CHILDREN).stream()
+                .map(StreamMetaTool::stream)
+                .toList();
+        final Map<String, Integer> byType = new LinkedHashMap<>();
+        children.forEach(child -> byType.merge(String.valueOf(child.get("type")), 1, Integer::sum));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("stream_id", streamId);
+        result.put("children", children);
+        result.put("children_by_type", byType);
+        if (!documentAccess.canViewData()) {
+            result.put("attributes_note", "You don't have permission to view data, so the stream's receipt "
+                                          + "headers can't be read.");
+        } else {
+            try {
+                result.put("attributes", streamReader.streamAttributes(streamId).get("attributes"));
+            } catch (final RuntimeException e) {
+                // An Events or Error stream has no receipt headers of its own.
+                LOGGER.debug(() -> "Unable to read the attributes of stream " + streamId, e);
+                result.put("attributes_note", StreamSummaries.reason(e));
+            }
+        }
+        final Map<String, String> attributes = caseInsensitive(found.get().getAttributes());
+        final Map<String, Object> processing = new LinkedHashMap<>();
+        PROCESSING_COUNTS.forEach((key, name) -> {
+            final String value = attributes.get(name);
+            if (NullSafe.isNonBlankString(value)) {
+                processing.put(key, value.strip().chars().allMatch(Character::isDigit)
+                        ? (Object) Long.parseLong(value.strip())
+                        : value);
+            }
+        });
+        if (!processing.isEmpty()) {
+            result.put("processing", processing);
+        }
+        return result;
+    }
+
+    /// @return A stream as the Stroom MCP server gave one: id, feed, type, status, created, parent_id and
+    /// pipeline_uuid.
+    static Map<String, Object> stream(final MetaRow row) {
+        final Meta meta = row.getMeta();
+        final Map<String, Object> stream = new LinkedHashMap<>();
+        stream.put("id", meta.getId());
+        stream.put("feed", meta.getFeedName());
+        stream.put("type", meta.getTypeName());
+        stream.put("status", NullSafe.get(meta.getStatus(), Status::name));
+        stream.put("created", meta.getCreateMs() == 0
+                ? null
+                : DateUtil.createNormalDateTimeString(meta.getCreateMs()));
+        stream.put("parent_id", meta.getParentMetaId());
+        stream.put("pipeline_uuid", meta.getPipelineUuid());
+        return stream;
+    }
+
+    private static Map<String, String> processingCounts() {
+        final Map<String, String> counts = new LinkedHashMap<>();
+        counts.put("records_read", MetaFields.REC_READ.getFldName());
+        counts.put("records_written", MetaFields.REC_WRITE.getFldName());
+        counts.put("errors", MetaFields.REC_ERROR.getFldName());
+        counts.put("warnings", MetaFields.REC_WARN.getFldName());
+        counts.put("fatal_errors", MetaFields.REC_FATAL.getFldName());
+        return Collections.unmodifiableMap(counts);
+    }
+
+    private long idArg(final ToolCall request, final String name) {
+        final String value = stringArg(request, name);
+        try {
+            return Long.parseLong(value.replace(",", ""));
+        } catch (final NumberFormatException e) {
+            throw new WorkspaceException("'" + value + "' isn't a stream id: give a whole number.");
+        }
     }
 
     @Override

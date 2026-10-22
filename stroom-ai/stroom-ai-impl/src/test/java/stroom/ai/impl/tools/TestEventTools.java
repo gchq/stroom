@@ -416,7 +416,7 @@ class TestEventTools {
 
     private FetchEventsTool fetchTool() {
         return new FetchEventsTool(workspace, () -> store, () -> securityContext,
-                new AiAuditLog(() -> eventLoggingService));
+                new AiAuditLog(() -> eventLoggingService), Mockito.mock(StreamReader.class));
     }
 
     private Source source(final long streamId) throws IOException {

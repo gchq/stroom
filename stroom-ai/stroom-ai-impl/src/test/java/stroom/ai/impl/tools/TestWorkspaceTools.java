@@ -160,7 +160,7 @@ class TestWorkspaceTools {
         Mockito.when(injectorSecurityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(true);
         final Store store = Mockito.mock(Store.class);
         final FetchEventsTool fetchEvents = new FetchEventsTool(workspace, () -> store, () -> injectorSecurityContext,
-                Mockito.mock(AiAuditLog.class));
+                Mockito.mock(AiAuditLog.class), Mockito.mock(StreamReader.class));
         final List<String> calls = List.of(
                 run(new LsTool(workspace), "{\"path\":" + path + "}"),
                 run(new ReadFileTool(workspace), "{\"path\":" + path + "}"),
