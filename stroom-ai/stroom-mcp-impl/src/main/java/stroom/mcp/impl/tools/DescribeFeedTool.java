@@ -33,8 +33,6 @@ import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.tools.GeneratedDocs.Found;
 import stroom.mcp.impl.tools.IndexDocs.Index;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.ExpressionTerm;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
@@ -174,7 +172,7 @@ class DescribeFeedTool extends AbstractBuiltInTool {
         out.put("feed", feedSummary(feedDoc, name));
 
         // The feed's pipelines: those reading its raw data, then those reading their Events (indexing, CEF).
-        final List<Map<String, Object>> pipelines = pipelinesReading(name);
+        final List<Map<String, Object>> pipelines = processorFilters.pipelinesReading(name);
         for (final Map<String, Object> pipeline : List.copyOf(pipelines)) {
             if (Boolean.TRUE.equals(pipeline.get("reads_events"))) {
                 continue;
@@ -263,32 +261,6 @@ class DescribeFeedTool extends AbstractBuiltInTool {
             summary.put("status", feedDoc.getStatus().name());
         }
         return summary;
-    }
-
-    // Pipelines whose processor filters read the feed (named, in a dictionary, or through its streams' ids), each
-    // with whether it reads another pipeline's output (an indexing or CEF pipeline) rather than the raw data.
-    private List<Map<String, Object>> pipelinesReading(final String feed) {
-        final Map<String, Map<String, Object>> found = new LinkedHashMap<>();
-        final Map<Object, Object> known = new LinkedHashMap<>();
-        for (final ProcessorFilter filter : processorFilters.all()) {
-            final List<ExpressionTerm> terms = ProcessorFilters.terms(filter);
-            if (!processorFilters.feeds(terms, known).contains(feed.toLowerCase(Locale.ROOT))) {
-                continue;
-            }
-            final boolean events = terms.stream()
-                    .anyMatch(term -> (ProcessorFilters.TYPE.equals(term.getField())
-                                       && ProcessorFilters.EVENTS.equals(term.getValue()))
-                                      || ProcessorFilters.PIPELINE.equals(term.getField()));
-            final Map<String, Object> entry = found.computeIfAbsent(filter.getPipelineUuid(), uuid -> {
-                final Map<String, Object> map = new LinkedHashMap<>();
-                map.put("uuid", uuid);
-                map.put("name", filter.getPipelineName());
-                map.put("reads_events", events);
-                return map;
-            });
-            entry.put("reads_events", Boolean.TRUE.equals(entry.get("reads_events")) && events);
-        }
-        return new ArrayList<>(found.values());
     }
 
     private void describePipeline(final String uuid, final StroomLinks links, final Described described) {

@@ -19,6 +19,8 @@ appConfig:
   ai:
     allowApproveEverything: false
     askReadOnlyToolsAfterUntrustedContent: false
+    builds:
+      workspaceFolder: "MCP Workspace"
     chatResponseCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"

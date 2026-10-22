@@ -40,6 +40,9 @@ public interface UserQuestions {
         }
     };
 
+    /// What separates a tool call's id from a form's key in the id of one of several forms the call asks.
+    String FORM_SEPARATOR = "#form:";
+
     /// @return False if the user can't be asked now, e.g. as they aren't watching the chat (an unattended run).
     boolean canAsk();
 
@@ -55,4 +58,26 @@ public interface UserQuestions {
     /// @throws stroom.ai.impl.AiChatRunManager.WaitingForUserException if the run is to stop until the user
     ///                                                                 answers.
     ElicitResult ask(String toolName, String callId, String intro, Map<String, Object> form);
+
+    /// The id to ask one of several forms of a tool call with. In a chat, the call is made again once a form is
+    /// answered, and each form it asks is told apart by its id: a call asking a confirmation and then a choice
+    /// gets the confirmation's answer again, then asks the choice.
+    ///
+    /// @param callId The tool call's id, or null if it has none.
+    /// @param key    The form's key, the same each time the call asks it, e.g. `confirmation-1a2b3c`.
+    /// @return The form's id, or null if the call has none.
+    static String formCallId(final String callId, final String key) {
+        return callId == null
+                ? null
+                : callId + FORM_SEPARATOR + key;
+    }
+
+    /// @param formCallId A form's id, from [#formCallId], or a tool call's own id.
+    /// @return The id of the tool call that asked it.
+    static String toolCallId(final String formCallId) {
+        final int at = formCallId.indexOf(FORM_SEPARATOR);
+        return at < 0
+                ? formCallId
+                : formCallId.substring(0, at);
+    }
 }
