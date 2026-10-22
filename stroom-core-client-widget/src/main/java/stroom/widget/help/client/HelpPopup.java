@@ -24,6 +24,7 @@ import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.popup.client.view.Popup;
 import stroom.widget.popup.client.view.PopupUtil;
+import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -31,9 +32,13 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A popup of help, shown beside the button that opens it: a form group's help and a quick
-/// filter's syntax help. It is a dialog that isn't modal, named for what it helps with; it doesn't
-/// take the focus, and closes on Escape, a click outside it, or a second press of its button
-/// (whose `aria-expanded` says whether it is open).
+/// filter's syntax help. It is a dialog that isn't modal, named for what it helps with, and closes
+/// on Escape, a click outside it, or a second press of its button (whose `aria-expanded` says
+/// whether it is open).
+///
+/// Opened from the keyboard (F1 in a form group's field, or Enter on a help button), it takes the
+/// focus, so that a screen reader reads it, and gives it back when it closes. Opened with the mouse
+/// it leaves the focus where it is, e.g. in the field being filled in.
 ///
 /// The BEM block `help-popup` (`help-popup.css`), its content `help-popup__content`.
 public final class HelpPopup extends AbstractPopupPanel implements Popup {
@@ -92,6 +97,8 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
     ///
     /// @param button The button's element.
     public static void markOpener(final Element button) {
+        // Listening from now, so that the press that opens the popup is seen
+        InputModality.install();
         button.setAttribute("aria-haspopup", "dialog");
         button.setAttribute(ARIA_EXPANDED, "false");
     }
@@ -108,14 +115,25 @@ public final class HelpPopup extends AbstractPopupPanel implements Popup {
         }
     }
 
-    /// Shows the popup, placed by `popupPosition`, without moving the focus.
+    /// Shows the popup, placed by `popupPosition`. It takes the focus if the keyboard is in use (see
+    /// the class comment).
     ///
     /// @param popupPosition Where to show it, e.g. below its button. Null centres it.
     public void show(final PopupPosition popupPosition) {
+        final boolean takeFocus = InputModality.isKeyboard();
         setVisible(false);
         setModal(false);
-        PopupUtil.showPopup(this, false, popupPosition, null, PopupType.POPUP, null);
+        PopupUtil.showPopup(this, false, popupPosition, null, PopupType.POPUP, takeFocus
+                ? this::focus
+                : null);
         setOpenerExpanded(true);
+    }
+
+    // The popup itself takes the focus (not its first link), so that a screen reader reads it from
+    // the start; the focus goes back to where it was when it closes (PopupUtil)
+    private void focus() {
+        getElement().setTabIndex(-1);
+        getElement().focus();
     }
 
     private void setOpenerExpanded(final boolean expanded) {

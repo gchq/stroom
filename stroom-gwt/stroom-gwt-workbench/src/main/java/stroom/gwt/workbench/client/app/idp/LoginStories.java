@@ -91,7 +91,7 @@ public final class LoginStories {
                     play.waitFor(() -> play.expect(password).toHaveAccessibleDescription(PASSWORD_HELP_RESETS));
                     play.expect(password).toHaveAttribute("aria-keyshortcuts", "F1");
                     // Clicking the help button shows it, leaving the focus in the user name
-                    play.click(play.getByTitle("Password - Click for help"));
+                    play.click(play.getByTitle("Password - Click for help (F1)"));
                     play.expect(play.screen().findByText(PASSWORD_HELP_RESETS, HELP_POPUP_TEXT)).toBeInTheDocument();
                     // The popup is a dialog (not modal) named Help, for screen readers
                     play.expect(play.screen().getByRole("dialog", "Help")).not().toHaveAttribute("aria-modal");
@@ -107,7 +107,7 @@ public final class LoginStories {
                     // The password's help points to the administrator, not the hidden link
                     play.expect(play.getByLabelText("Password")).toHaveAccessibleDescription(
                             PASSWORD_HELP_NO_RESETS);
-                    play.click(play.getByTitle("Password - Click for help"));
+                    play.click(play.getByTitle("Password - Click for help (F1)"));
                     play.expect(play.screen().findByText(PASSWORD_HELP_NO_RESETS, HELP_POPUP_TEXT)).toBeInTheDocument();
                 })
                 // The sign in request never completes

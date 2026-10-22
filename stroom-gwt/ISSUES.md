@@ -1239,6 +1239,18 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Help opened from the keyboard (F1 in a form group's field, Enter on a help button) takes the
+    focus, so that a screen reader reads it, and Escape gives it back; a mouse click leaves the
+    focus where it is (`HelpPopup`, #5400). Found doing it: F1 in a text field never opened its
+    help, though the field says it does (`aria-keyshortcuts`), as key bindings in inputs were tested
+    only for Escape (`KeyBinding` now tests the function keys too); and `InputModality` listened on
+    the document, after a key binding's capture listener, so it now listens on the window. Real
+    input checks: `test-runner/lib/real-input/help.mjs`.
+  * A field's help shortcut was announced as F1 (`aria-keyshortcuts`) whatever the user had bound
+    "Show help" to in their Keyboard Shortcuts preferences. It is now the user's binding (left off
+    when there is none, or when it is a key sequence), and the help button's tooltip shows it, as
+    menu items show theirs, e.g. "Email address - Click for help (F1)" (`FormGroup`;
+    `Widgets/Inputs/FormGroup` `HelpShortcutRebound` and `HelpShortcutRemoved`).
   * Dialogs are `role="dialog"`, named by their title, and modal ones `aria-modal`
     (`PopupUtil.setDialogRole`); tab bars are a `tablist` of `tab`s with `aria-selected` and
     `aria-controls` (`AbstractTabBar`); a content tab closes with Delete, its cross hidden from

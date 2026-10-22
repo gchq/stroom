@@ -137,6 +137,15 @@ public final class QuickFilterStories {
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
                     play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
+                    // Opened from the keyboard, the help takes the focus, so that a screen reader
+                    // reads it (#5400), and Escape gives it back to the button
+                    play.run("focus the help button", () -> helpButton.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query popup = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
+                    play.waitFor(() -> play.expect(popup).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
+                    play.expect(helpButton).toHaveFocus();
                 })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {

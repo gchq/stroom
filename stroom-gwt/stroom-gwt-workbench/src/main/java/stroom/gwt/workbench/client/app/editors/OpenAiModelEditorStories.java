@@ -153,9 +153,9 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(context).toHaveValue("128001"));
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // Every settings FormGroup has GWT's help text, so a help button
-                    play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help")))
+                    play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help (F1)")))
                             .toHaveLength(6);
-                    play.click(play.getByRole("button", "Base URL (optional) - Click for help"));
+                    play.click(play.getByRole("button", "Base URL (optional) - Click for help (F1)"));
                     // The help is a popup on the page's body (the help is also in the page, hidden,
                     // as the field's description)
                     play.expect(screen.findByText(TextMatch.containing("The base URL of an OpenAI-compatible API"),
@@ -274,8 +274,8 @@ public final class OpenAiModelEditorStories {
                 .withPlay(play -> {
                     showHttpClientConfig(play);
                     // Each tick box has help beside its label, as the dialog's other fields do
-                    play.expect(play.screen().getByTitle("Cookies Enabled - Click for help")).toBeVisible();
-                    play.expect(play.screen().getByTitle("Follow Redirects - Click for help")).toBeVisible();
+                    play.expect(play.screen().getByTitle("Cookies Enabled - Click for help (F1)")).toBeVisible();
+                    play.expect(play.screen().getByTitle("Follow Redirects - Click for help (F1)")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The HTTP client configuration dialog, read only: the partner of

@@ -112,8 +112,6 @@ public class FormGroup extends Composite implements HasWidgets {
     // A list of options to choose from that isn't a select element, e.g. a selection list
     private static final String LIST_BOX_ROLE = "listbox";
     private static final String LIST_BOX_SELECTOR = "[role=\"listbox\"]";
-    // The key that shows a group's help (see handleKeyEvent)
-    private static final String HELP_SHORTCUT = "F1";
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
             "hidden", "button", "submit", "reset", "image");
 
@@ -360,10 +358,10 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     // Tells assistive technology about the control the label is for (or the group of controls): its
-    // short description is read when it is focused, and F1 shows its help (as the help button isn't
-    // in the tab order). The description is the screen reader text, or else the plain help text;
-    // rich help (HTML) may be long, so without screen reader text it is only shown by F1 or the
-    // help button.
+    // short description is read when it is focused, and the help shortcut (F1 unless the user has
+    // changed it) shows its help (as the help button isn't in the tab order). The description is the
+    // screen reader text, or else the plain help text; rich help (HTML) may be long, so without
+    // screen reader text it is only shown by the help shortcut or the help button.
     private void updateHelpDescription() {
         final String helpDescriptionId = helpDescription.getElement().getId();
         if (describedControl != null) {
@@ -380,8 +378,9 @@ public class FormGroup extends Composite implements HasWidgets {
                 : groupElement;
         if (target != null && (helpButton.hasHelpContent() || !description.isEmpty())) {
             describedControl = target;
-            if (helpButton.hasHelpContent()) {
-                describedControl.setAttribute(ARIA_KEY_SHORTCUTS, HELP_SHORTCUT);
+            final String shortcut = getAriaHelpShortcut();
+            if (helpButton.hasHelpContent() && shortcut != null) {
+                describedControl.setAttribute(ARIA_KEY_SHORTCUTS, shortcut);
             }
             if (!description.isEmpty()) {
                 // After any validation feedback, which is read first
@@ -494,12 +493,27 @@ public class FormGroup extends Composite implements HasWidgets {
         final String label = NullSafe.isNonBlankString(getLabel())
                 ? getLabel()
                 : getTickBoxLabel();
+        // The shortcut, as menu items show theirs, so that it can be discovered
+        final String shortcut = KeyBinding.getShortcut(Action.HELP);
+        final String clickForHelp = shortcut == null
+                ? "Click for help"
+                : "Click for help (" + shortcut + ")";
         if (NullSafe.isBlankString(label)) {
-            helpButton.setTitle("Click for help");
+            helpButton.setTitle(clickForHelp);
         } else {
-            helpButton.setTitle(label + " - Click for help");
+            helpButton.setTitle(label + " - " + clickForHelp);
             helpButton.setHelpContentHeading(label);
         }
+    }
+
+    // The shortcut that shows help as the user has bound it (Keyboard Shortcuts preferences), in
+    // the form aria-keyshortcuts takes, e.g. F1 or Alt+H; null if there is none, or if it is a key
+    // sequence (e.g. "G H"), which the attribute can't express (a space separates alternatives)
+    private static String getAriaHelpShortcut() {
+        final String shortcut = KeyBinding.getShortcut(Action.HELP);
+        return shortcut == null || shortcut.contains(" ")
+                ? null
+                : shortcut;
     }
 
     private String getTickBoxLabel() {

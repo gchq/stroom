@@ -454,8 +454,9 @@ public class KeyBinding {
                 action = testAction(e, action);
 
             } else if (isInput(e)) {
-                // We will support some single key bindings in text boxes.
-                if (e.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                // We will support some single key bindings in text boxes: Escape, and the function
+                // keys, which type nothing (e.g. F1, a form group's help)
+                if (e.getKeyCode() == KeyCodes.KEY_ESCAPE || isFunctionKey(e.getKeyCode())) {
                     keySequences.clear();
                     action = getKeyDownAction(e);
                     action = testAction(e, action);
@@ -514,6 +515,11 @@ public class KeyBinding {
             }
         }
         return action;
+    }
+
+    // F1 to F12, by key code
+    private static boolean isFunctionKey(final int keyCode) {
+        return keyCode >= KeyCodes.KEY_F1 && keyCode <= KeyCodes.KEY_F12;
     }
 
     private static boolean isInput(final NativeEvent e) {
