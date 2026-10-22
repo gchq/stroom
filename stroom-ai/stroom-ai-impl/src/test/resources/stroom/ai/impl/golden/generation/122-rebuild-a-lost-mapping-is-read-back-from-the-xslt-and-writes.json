@@ -1,0 +1,160 @@
+{
+ "source": "rebuild-a-lost-mapping-is-read-back-from-the-xslt-and-writes",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "^(\\S+) (\\S+) (\\S+) (.*)$",
+    "names": [
+     "message_1",
+     "message_2",
+     "message_3",
+     "message_4"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "message_1"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "App"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "app"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "message_2"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "message_3"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message_4"
+   },
+   {
+    "path": "EventDetail/Authenticate/User/Id",
+    "field": "message_2"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "message_3",
+      "equals": "LOGIN"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "message_3",
+      "equals": "LOGOUT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   },
+   {
+    "name": "unparsed",
+    "when": [
+     {
+      "field": "message_1",
+      "present": false
+     }
+    ],
+    "drop": true
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "message_3 = 'LOGIN'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "message_3 = 'LOGOUT'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "unparsed",
+    "when": [
+     "not(exists(message_1[normalize-space(.)]))"
+    ],
+    "dropped": true
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

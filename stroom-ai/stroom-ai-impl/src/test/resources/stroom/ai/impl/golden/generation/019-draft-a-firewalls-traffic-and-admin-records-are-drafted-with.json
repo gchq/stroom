@@ -1,0 +1,206 @@
+{
+ "source": "draft-a-firewalls-traffic-and-admin-records-are-drafted-with",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FW"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src_ip"
+   },
+   {
+    "path": "EventSource/Client/Port",
+    "field": "src_port"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dst_ip"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "dst_port"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "username"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "Firewall"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "event_type"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic_permitted",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     },
+     {
+      "field": "action",
+      "equals": "ALLOW"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "protocol",
+      "map": {
+       "TCP": "TCP",
+       "UDP": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Port",
+      "field": "dst_port"
+     }
+    ]
+   },
+   {
+    "name": "traffic_denied",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     },
+     {
+      "field": "action",
+      "equals": "DENY"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+      "field": "protocol",
+      "map": {
+       "TCP": "TCP",
+       "UDP": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Port",
+      "field": "dst_port"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic_permitted] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[traffic_denied] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic_permitted",
+    "when": [
+     "data[@name='event_type']/@value = 'TRAFFIC'",
+     "data[@name='action']/@value = 'ALLOW'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Destination/Port",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Port",
+     "EventDetail/Network/Permit/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "traffic_denied",
+    "when": [
+     "data[@name='event_type']/@value = 'TRAFFIC'",
+     "data[@name='action']/@value = 'DENY'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Destination/Port",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/Port",
+     "EventDetail/Network/Deny/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

@@ -1,0 +1,1113 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "xml_fragments",
+  "record": "Event",
+  "xml_namespace": "http://schemas.microsoft.com/win/2004/08/events/event",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "replace(System/TimeCreated/@SystemTime, '(\\.\\d{3})\\d*Z$', '$1Z')",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Active Directory"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "System/Provider/@Name"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "System/Computer"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "System/EventID"
+   }
+  ],
+  "events": [
+   {
+    "name": "an account was successfully logged on",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4624"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account was successfully logged on"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "EventData/Data[@Name='IpAddress']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "an account failed to log on",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4625"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account failed to log on"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "EventData/Data[@Name='IpAddress']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "value": "false"
+     }
+    ]
+   },
+   {
+    "name": "an account was logged off",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4634"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An account was logged off"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "user initiated logoff",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4647"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "User initiated logoff"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a logon was attempted using explicit credentials",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4648"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A logon was attempted using explicit credentials"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "EventData/Data[@Name='TargetServerName']",
+      "data_name": "target_server"
+     }
+    ]
+   },
+   {
+    "name": "special privileges assigned to new logon",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4672"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "Special privileges assigned to new logon"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "ElevatePrivilege"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "EventData/Data[@Name='PrivilegeList']",
+      "data_name": "privileges"
+     }
+    ]
+   },
+   {
+    "name": "a new process has been created",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4688"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A new process has been created"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Process/Action",
+      "value": "Execute"
+     },
+     {
+      "path": "EventDetail/Process/Type",
+      "value": "Application"
+     },
+     {
+      "path": "EventDetail/Process/Command",
+      "field": "EventData/Data[@Name='NewProcessName']"
+     },
+     {
+      "path": "EventDetail/Process/Arguments",
+      "field": "EventData/Data[@Name='CommandLine']"
+     }
+    ]
+   },
+   {
+    "name": "a process has exited",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4689"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A process has exited"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Process/Action",
+      "value": "Terminate"
+     },
+     {
+      "path": "EventDetail/Process/Type",
+      "value": "Application"
+     },
+     {
+      "path": "EventDetail/Process/Command",
+      "field": "EventData/Data[@Name='ProcessName']"
+     }
+    ]
+   },
+   {
+    "name": "a service was installed in the system",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4697"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A service was installed in the system"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Install/Software/Name",
+      "field": "EventData/Data[@Name='ServiceName']"
+     },
+     {
+      "path": "EventDetail/Install/Software/Data",
+      "field": "EventData/Data[@Name='ServiceFileName']",
+      "data_name": "file"
+     }
+    ]
+   },
+   {
+    "name": "system audit policy was changed",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4719"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "System audit policy was changed"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Update/After/Configuration/Type",
+      "value": "Audit policy"
+     },
+     {
+      "path": "EventDetail/Update/After/Configuration/Name",
+      "field": "EventData/Data[@Name='CategoryId']"
+     },
+     {
+      "path": "EventDetail/Update/After/Configuration/Data",
+      "field": "EventData/Data[@Name='AuditPolicyChanges']",
+      "data_name": "change"
+     }
+    ]
+   },
+   {
+    "name": "a user account was created",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4720"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was created"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Create/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a user account was enabled",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4722"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was enabled"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Data",
+      "value": "enabled",
+      "data_name": "change"
+     }
+    ]
+   },
+   {
+    "name": "an attempt was made to change an accounts password",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4723"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An attempt was made to change an account's password"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "ChangePassword"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "an attempt was made to reset an accounts password",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4724"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "An attempt was made to reset an account's password"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "ResetPassword"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a user account was disabled",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4725"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was disabled"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     },
+     {
+      "path": "EventDetail/Update/After/User/Data",
+      "value": "disabled",
+      "data_name": "change"
+     }
+    ]
+   },
+   {
+    "name": "a user account was deleted",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4726"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was deleted"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Delete/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a member was added to a security-enabled global group",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4728"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A member was added to a security-enabled global group"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authorise/Action",
+      "value": "Modify"
+     },
+     {
+      "path": "EventDetail/Authorise/User/Id",
+      "field": "EventData/Data[@Name='MemberName']"
+     },
+     {
+      "path": "EventDetail/Authorise/AddGroups/Group/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a member was removed from a security-enabled global group",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4729"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A member was removed from a security-enabled global group"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authorise/Action",
+      "value": "Modify"
+     },
+     {
+      "path": "EventDetail/Authorise/User/Id",
+      "field": "EventData/Data[@Name='MemberName']"
+     },
+     {
+      "path": "EventDetail/Authorise/RemoveGroups/Group/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a user account was locked out",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4740"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was locked out"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "AccountLock"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "a user account was unlocked",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "4767"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A user account was unlocked"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "AccountUnlock"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "EventData/Data[@Name='TargetUserName']"
+     }
+    ]
+   },
+   {
+    "name": "the audit log was cleared",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "1102"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "The audit log was cleared"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventDetail/Delete/Object/Type",
+      "value": "Event log"
+     },
+     {
+      "path": "EventDetail/Delete/Object/Name",
+      "value": "Security"
+     }
+    ]
+   },
+   {
+    "name": "a network share object was accessed",
+    "when": [
+     {
+      "field": "System/EventID",
+      "equals": "5140"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Description",
+      "value": "A network share object was accessed"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "EventData/Data[@Name='SubjectUserName']"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "EventData/Data[@Name='IpAddress']"
+     },
+     {
+      "path": "EventDetail/View/Folder/Path",
+      "field": "EventData/Data[@Name='ShareName']"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[an account was successfully logged on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[an account failed to log on] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[an account was logged off] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[user initiated logoff] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a logon was attempted using explicit credentials] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[special privileges assigned to new logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a new process has been created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a process has exited] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a service was installed in the system] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Install/Software/Name'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[system audit policy was changed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was created] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was enabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[an attempt was made to change an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[an attempt was made to reset an accounts password] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was disabled] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was deleted] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a member was added to a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a member was removed from a security-enabled global group] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was locked out] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a user account was unlocked] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[the audit log was cleared] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[a network share object was accessed] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "an account was successfully logged on",
+    "when": [
+     "System/EventID = '4624'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "an account failed to log on",
+    "when": [
+     "System/EventID = '4625'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "an account was logged off",
+    "when": [
+     "System/EventID = '4634'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "user initiated logoff",
+    "when": [
+     "System/EventID = '4647'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a logon was attempted using explicit credentials",
+    "when": [
+     "System/EventID = '4648'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[target_server]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "special privileges assigned to new logon",
+    "when": [
+     "System/EventID = '4672'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[privileges]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a new process has been created",
+    "when": [
+     "System/EventID = '4688'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Process/Action",
+     "EventDetail/Process/Arguments",
+     "EventDetail/Process/Command",
+     "EventDetail/Process/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a process has exited",
+    "when": [
+     "System/EventID = '4689'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Process/Action",
+     "EventDetail/Process/Command",
+     "EventDetail/Process/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a service was installed in the system",
+    "when": [
+     "System/EventID = '4697'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Install/Software/Data[file]",
+     "EventDetail/Install/Software/Name",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "system audit policy was changed",
+    "when": [
+     "System/EventID = '4719'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Configuration/Data[change]",
+     "EventDetail/Update/After/Configuration/Name",
+     "EventDetail/Update/After/Configuration/Type",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was created",
+    "when": [
+     "System/EventID = '4720'"
+    ],
+    "fields": [
+     "EventDetail/Create/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was enabled",
+    "when": [
+     "System/EventID = '4722'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/User/Data[change]",
+     "EventDetail/Update/After/User/Id",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "an attempt was made to change an accounts password",
+    "when": [
+     "System/EventID = '4723'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "an attempt was made to reset an accounts password",
+    "when": [
+     "System/EventID = '4724'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was disabled",
+    "when": [
+     "System/EventID = '4725'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/User/Data[change]",
+     "EventDetail/Update/After/User/Id",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was deleted",
+    "when": [
+     "System/EventID = '4726'"
+    ],
+    "fields": [
+     "EventDetail/Delete/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a member was added to a security-enabled global group",
+    "when": [
+     "System/EventID = '4728'"
+    ],
+    "fields": [
+     "EventDetail/Authorise/Action",
+     "EventDetail/Authorise/AddGroups/Group/Id",
+     "EventDetail/Authorise/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a member was removed from a security-enabled global group",
+    "when": [
+     "System/EventID = '4729'"
+    ],
+    "fields": [
+     "EventDetail/Authorise/Action",
+     "EventDetail/Authorise/RemoveGroups/Group/Id",
+     "EventDetail/Authorise/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was locked out",
+    "when": [
+     "System/EventID = '4740'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a user account was unlocked",
+    "when": [
+     "System/EventID = '4767'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "the audit log was cleared",
+    "when": [
+     "System/EventID = '1102'"
+    ],
+    "fields": [
+     "EventDetail/Delete/Object/Name",
+     "EventDetail/Delete/Object/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "a network share object was accessed",
+    "when": [
+     "System/EventID = '5140'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/View/Folder/Path",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

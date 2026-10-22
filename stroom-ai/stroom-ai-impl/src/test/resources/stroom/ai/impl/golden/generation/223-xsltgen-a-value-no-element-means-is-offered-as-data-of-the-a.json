@@ -1,0 +1,127 @@
+{
+ "source": "xsltgen-a-value-no-element-means-is-offered-as-data-of-the-a",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic",
+    "when": [
+     {
+      "field": "action",
+      "equals": "connect"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Traffic"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "result",
+      "data_name": "result"
+     }
+    ]
+   },
+   {
+    "name": "alert",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Alert"
+     },
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Other"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "result",
+      "data_name": "result"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[traffic] required ['EventTime', 'EventDetail/Network/Permit/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[alert] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[alert] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic",
+    "when": [
+     "data[@name='action']/@value = 'connect'"
+    ],
+    "fields": [
+     "EventDetail/Network/Permit/Data[result]",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "alert",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Alert/Data[result]",
+     "EventDetail/Alert/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

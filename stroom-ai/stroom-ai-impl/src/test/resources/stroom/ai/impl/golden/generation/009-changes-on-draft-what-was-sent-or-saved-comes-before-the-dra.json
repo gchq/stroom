@@ -1,0 +1,253 @@
+{
+ "source": "changes-on-draft-what-was-sent-or-saved-comes-before-the-dra",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "extract": [
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])logid=\"([^\"]*)\"",
+    "names": [
+     "logid"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])type=\"([^\"]*)\"",
+    "names": [
+     "type"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])action=\"([^\"]*)\"",
+    "names": [
+     "action"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])msg=\"([^\"]*)\"",
+    "names": [
+     "msg"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])user=\"([^\"]*)\"",
+    "names": [
+     "user"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])srcip=([^\\s,;\"]*)",
+    "names": [
+     "srcip"
+    ]
+   },
+   {
+    "field": "body",
+    "regex": "(?:^|[\\s,;])dstip=([^\\s,;\"]*)",
+    "names": [
+     "dstip"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FortiOS"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "TODO e.g. Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "srcip"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dstip"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "msg"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "TODO generator"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "type"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic_permitted",
+    "when": [
+     {
+      "field": "type",
+      "equals": "traffic"
+     },
+     {
+      "field": "action",
+      "equals": "accept"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "logid",
+      "data_name": "logid"
+     }
+    ]
+   },
+   {
+    "name": "event_permitted",
+    "when": [
+     {
+      "field": "type",
+      "equals": "event"
+     },
+     {
+      "field": "action",
+      "equals": "accept"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "logid",
+      "data_name": "logid"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic_permitted] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Permit/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[event_permitted] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Permit/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from type, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic_permitted",
+    "when": [
+     "type = 'traffic'",
+     "action = 'accept'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Permit/Data[logid]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "event_permitted",
+    "when": [
+     "type = 'event'",
+     "action = 'accept'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Permit/Data[logid]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventDetail/Unknown/Data[logid]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

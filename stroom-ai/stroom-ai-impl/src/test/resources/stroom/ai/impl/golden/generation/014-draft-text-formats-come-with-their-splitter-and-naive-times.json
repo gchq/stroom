@@ -1,0 +1,189 @@
+{
+ "source": "draft-text-formats-come-with-their-splitter-and-naive-times",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
+    "time_format": "yyyy-MM-dd HH:mm:ss",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FortiOS"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "TODO e.g. Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "devname"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "srcip"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dstip"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "dstport"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "FortiOS"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   }
+  ],
+  "events": [
+   {
+    "name": "permitted",
+    "when": [
+     {
+      "field": "action",
+      "equals": "accept"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Port",
+      "field": "dstport"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "logid",
+      "data_name": "logid"
+     }
+    ]
+   },
+   {
+    "name": "denied",
+    "when": [
+     {
+      "field": "action",
+      "equals": "deny"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Port",
+      "field": "dstport"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "logid",
+      "data_name": "logid"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "logid",
+      "data_name": "logid"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[permitted] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Permit/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[denied] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Network/Deny/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from action, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "permitted",
+    "when": [
+     "data[@name='action']/@value = 'accept'"
+    ],
+    "fields": [
+     "EventDetail/Network/Permit/Data[logid]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Destination/Port",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "denied",
+    "when": [
+     "data[@name='action']/@value = 'deny'"
+    ],
+    "fields": [
+     "EventDetail/Network/Deny/Data[logid]",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Destination/Port",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[logid]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

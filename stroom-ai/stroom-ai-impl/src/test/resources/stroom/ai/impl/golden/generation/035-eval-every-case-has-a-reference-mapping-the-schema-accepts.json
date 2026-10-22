@@ -1,0 +1,106 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Bastion"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "app"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "ip"
+   },
+   {
+    "path": "EventSource/Client/Port",
+    "field": "port"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "ssh logon",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "SSH-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "result",
+      "map": {
+       "Accepted": "true",
+       "Failed": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "method",
+      "data_name": "method"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[ssh logon] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "ssh logon",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[method]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}
