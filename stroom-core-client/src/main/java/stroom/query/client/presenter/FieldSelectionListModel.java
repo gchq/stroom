@@ -18,12 +18,16 @@ package stroom.query.client.presenter;
 
 import stroom.item.client.SelectionListModel;
 import stroom.query.api.datasource.QueryField;
-import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 
 import java.util.function.Consumer;
 
 public interface FieldSelectionListModel extends
-        SelectionListModel<QueryField, FieldInfoSelectionItem>,
-        HasTaskMonitorFactory {
+        SelectionListModel<QueryField, FieldInfoSelectionItem> {
     void findFieldByName(String fieldName, Consumer<QueryField> consumer);
+
+    /// Says what shows the progress of the requests it makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
+    void setTaskMonitorFactory(TaskMonitorFactory taskMonitorFactory);
 }

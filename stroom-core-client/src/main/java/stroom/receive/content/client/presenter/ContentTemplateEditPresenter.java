@@ -62,6 +62,8 @@ public class ContentTemplateEditPresenter
         own(pipelineSelectionPresenter);
         own(editExpressionPresenter);
         this.fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
+        // Shows its requests' progress as this presenter does (its context's)
+        fieldSelectionBoxModel.setTaskMonitorFactory(this);
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
@@ -127,12 +129,6 @@ public class ContentTemplateEditPresenter
                 .withProcessorPriority(view.getProcessorPriority())
                 .withProcessorMaxConcurrent(view.getProcessorMaxConcurrent())
                 .build();
-    }
-
-    @Override
-    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
 

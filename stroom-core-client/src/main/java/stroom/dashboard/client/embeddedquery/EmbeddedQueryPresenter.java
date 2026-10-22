@@ -310,6 +310,8 @@ public class EmbeddedQueryPresenter
                         .copy()
                         .selectionFilter(getCurrentSelectionFilter())
                         .build());
+        // Shows its requests' progress as this presenter does (its context's)
+        queryModel.setTaskMonitorFactory(this);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
         queryModel.addSearchStateListener(this);
@@ -489,7 +491,6 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
                     setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
             currentTablePresenter.setQueryModel(queryModel);
-            currentTablePresenter.setTaskMonitorFactory(this);
             currentTablePresenter.updateQueryTablePreferences();
             currentTablePresenter.setOnChange(this::onChange);
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
@@ -524,7 +525,6 @@ public class EmbeddedQueryPresenter
 
             currentVisPresenter = own(visPresenterProvider.get());
             currentVisPresenter.setQueryModel(queryModel);
-            currentVisPresenter.setTaskMonitorFactory(this);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
 
             if (currentTablePresenter != null) {
@@ -629,11 +629,6 @@ public class EmbeddedQueryPresenter
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
         this.queryOnOpen = queryOnOpen;
-    }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        queryModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     @Override

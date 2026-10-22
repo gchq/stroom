@@ -66,7 +66,6 @@ public class SettingsPresenter
         getView().getTabBar().addTab(tab);
 
         if (layer instanceof final ComponentDataModifier componentDataModifier) {
-            componentDataModifier.setTaskMonitorFactory(this);
             modifiers.put(tab, componentDataModifier);
         }
 

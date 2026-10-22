@@ -137,7 +137,6 @@ public class GlobalPropertyTabPresenter
         if (e != null) {
             if (editProvider != null) {
                 final ManageGlobalPropertyEditPresenter editor = ownUntilHidden(editProvider.get());
-                editor.setTaskMonitorFactory(this);
                 editor.showEntity(e, listPresenter::refresh);
             }
         }

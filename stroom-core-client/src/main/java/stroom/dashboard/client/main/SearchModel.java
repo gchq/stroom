@@ -40,7 +40,6 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
@@ -59,7 +58,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
+public class SearchModel implements HasHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
@@ -588,7 +587,9 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

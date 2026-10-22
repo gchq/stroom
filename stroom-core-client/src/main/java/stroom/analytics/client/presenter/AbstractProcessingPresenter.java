@@ -150,14 +150,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         return analyticProcessConfig;
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        this.scheduledProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
-        this.tableBuilderProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
-        this.streamingProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
 
     // --------------------------------------------------------------------------------
 

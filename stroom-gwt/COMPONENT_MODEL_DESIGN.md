@@ -935,6 +935,10 @@ Progress:
   `TabContentProvider` owns a tab's presenter before it reads into it, so that it reads as its document is (`TestDocPresenter`).
   Two parts that were told "editable" whatever their document was now follow it: the query editor in a floor map, and the query document a dashboard's embedded query opens.
   A document's settings presenter still sets its own fields and reusable editors (`editor.setReadOnly(isReadOnly())`), as an owner gives a widget its input.
+- Done (22 October 2026), task monitors: `HasTaskMonitorFactory` is gone. The tab pane and the popup manager only provide the tab's or dialog's `TASK_MONITOR` (no longer setting it on the content, nor resetting it when a tab closes), and `DocumentPlugin` no longer gives an opening document the opener's.
+  Presenters stopped passing their task monitor on to the presenters they own (ten overrides and twelve `child.setTaskMonitorFactory(this)` calls); plain models (query, search and selection list models, completion providers) are given their presenter once, in its constructor, so they show what it would.
+  `setTaskMonitorFactory` stays on `MyPresenterWidget` and `MyPresenter` for a presenter given one of its own (e.g. a refresh button's spinner), and `MyPresenter` now falls back to its context's, as `MyPresenterWidget` does (`TestMyPresenter`).
+  A dashboard component's settings dialog is now owned by its component (it was never released).
 
 ### Phase 6: Remove GWTP
 

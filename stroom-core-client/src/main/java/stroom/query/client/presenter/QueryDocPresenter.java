@@ -58,7 +58,6 @@ public class QueryDocPresenter
         own(queryDocEditPresenter);
         this.queryDocEditPresenter = queryDocEditPresenter;
 
-        queryDocEditPresenter.setTaskMonitorFactory(this);
         queryDocDocumentEditTabProvider = new DocTabProvider<>(() -> queryDocEditPresenter);
 
         addTab(QUERY, queryDocDocumentEditTabProvider);

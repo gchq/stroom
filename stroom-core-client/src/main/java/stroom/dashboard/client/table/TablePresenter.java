@@ -1445,12 +1445,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        columnSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
-    @Override
     public List<Column> getColumns() {
         return NullSafe.getOrElse(
                 getTableComponentSettings(),

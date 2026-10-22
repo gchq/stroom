@@ -498,10 +498,4 @@ public class QueryDocEditPresenter
     void stop() {
         queryEditPresenter.stop();
     }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
 }

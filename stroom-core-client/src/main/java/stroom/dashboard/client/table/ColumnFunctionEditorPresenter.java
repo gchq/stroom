@@ -128,7 +128,6 @@ public class ColumnFunctionEditorPresenter
 
     @Override
     public void onShow(final ShowPopupEvent e) {
-        queryHelpPresenter.setTaskMonitorFactory(this);
         queryHelpPresenter.setIncludedTypes(EnumSet.of(
                 QueryHelpType.FIELD,
                 QueryHelpType.FUNCTION));

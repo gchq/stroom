@@ -47,6 +47,8 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         super(eventBus, view);
         own(editExpressionPresenter);
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        // Shows its requests' progress as this presenter does (its context's)
+        fieldSelectionBoxModel.setTaskMonitorFactory(this);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
@@ -83,12 +85,6 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                 getView().getAge(),
                 getView().getTimeUnit(),
                 getView().isForever());
-    }
-
-    @Override
-    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface DataRetentionRuleView extends View {

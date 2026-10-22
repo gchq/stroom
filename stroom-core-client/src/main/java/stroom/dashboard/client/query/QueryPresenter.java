@@ -162,6 +162,8 @@ public class QueryPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        // Shows its requests' progress as this presenter does (its context's)
+        fieldSelectionBoxModel.setTaskMonitorFactory(this);
 
         view.setExpressionView(expressionPresenter.getView());
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
@@ -222,6 +224,8 @@ public class QueryPresenter
                 indexLoader,
                 dateTimeSettingsFactory,
                 resultStoreModel);
+        // Shows its requests' progress as this presenter does (its context's)
+        searchModel.setTaskMonitorFactory(this);
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
     }
@@ -896,12 +900,6 @@ public class QueryPresenter
         errorsButton.asWidget().getElement().getStyle().setVisibility(show
                 ? Visibility.VISIBLE
                 : Visibility.HIDDEN);
-    }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        searchModel.setTaskMonitorFactory(taskMonitorFactory);
-        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     @Override

@@ -25,7 +25,6 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
@@ -47,7 +46,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicQueryHelpSelectionListModel
-        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasTaskMonitorFactory, HasHandlers {
+        implements SelectionListModel<QueryHelpRow, QueryHelpSelectionItem>, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -188,7 +187,9 @@ public class DynamicQueryHelpSelectionListModel
         this.includedTypes = includedTypes;
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

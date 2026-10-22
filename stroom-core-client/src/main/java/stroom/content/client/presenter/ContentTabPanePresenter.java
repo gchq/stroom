@@ -33,7 +33,6 @@ import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
@@ -177,11 +176,7 @@ public class ContentTabPanePresenter
 
         final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
         final TabTaskMonitorFactory tabTaskMonitorFactory = new TabTaskMonitorFactory(tab);
-        // The content shows its tasks on the tab (replacing any it was given while it opened), and
-        // so does everything it owns, through its context
-        if (event.getLayer() instanceof HasTaskMonitorFactory) {
-            ((HasTaskMonitorFactory) event.getLayer()).setTaskMonitorFactory(tabTaskMonitorFactory);
-        }
+        // The content shows its tasks on the tab, and so does everything it owns, through its context
         if (event.getLayer() instanceof final HasComponentNode hasComponentNode
             && hasComponentNode.getComponentNode() != null) {
             hasComponentNode.getComponentNode().setProvided(Contexts.TASK_MONITOR, tabTaskMonitorFactory);
@@ -201,11 +196,6 @@ public class ContentTabPanePresenter
                     currentIndex--;
                 }
             }
-        }
-
-        if (event.getTabData() instanceof HasTaskMonitorFactory) {
-            ((HasTaskMonitorFactory) event.getTabData())
-                    .setTaskMonitorFactory(new DefaultTaskMonitorFactory(this));
         }
     }
 

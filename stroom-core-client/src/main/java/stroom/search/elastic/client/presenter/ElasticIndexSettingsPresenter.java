@@ -74,6 +74,8 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        // Shows its requests' progress as this presenter does (its context's)
+        fieldSelectionBoxModel.setTaskMonitorFactory(this);
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -158,12 +160,6 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
                 .rerankScoreMinimum(getView().getRerankScoreMinimum())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
                 .build();
-    }
-
-    @Override
-    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        fieldSelectionBoxModel.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public interface ElasticIndexSettingsView

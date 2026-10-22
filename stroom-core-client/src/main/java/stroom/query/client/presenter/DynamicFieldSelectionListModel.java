@@ -21,7 +21,6 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -38,7 +37,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicFieldSelectionListModel
-        implements FieldSelectionListModel, HasTaskMonitorFactory, HasHandlers {
+        implements FieldSelectionListModel, HasHandlers {
 
     private final EventBus eventBus;
     private final DataSourceClient dataSourceClient;

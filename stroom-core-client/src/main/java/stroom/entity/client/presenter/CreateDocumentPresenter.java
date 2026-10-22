@@ -163,12 +163,6 @@ public class CreateDocumentPresenter
         return entityTreePresenter.getSelectedItem();
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
     // --------------------------------------------------------------------------------
 
 

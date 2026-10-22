@@ -27,7 +27,6 @@ import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
@@ -48,7 +47,7 @@ import javax.inject.Inject;
 
 
 public class QueryHelpAceCompletionProvider
-        implements AceCompletionProvider, HasTaskMonitorFactory, HasHandlers {
+        implements AceCompletionProvider, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -155,7 +154,9 @@ public class QueryHelpAceCompletionProvider
         this.textType = textType;
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

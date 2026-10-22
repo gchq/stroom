@@ -113,7 +113,8 @@ public abstract class AbstractComponentPresenter<V extends View>
     public void showSettings() {
         if (settingsPresenterProvider != null) {
             if (settingsPresenter == null) {
-                settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
+                // Owned, so that it goes with the component and sees its dashboard's context
+                settingsPresenter = own((SettingsPresenter) settingsPresenterProvider.get());
             }
 
             settingsPresenter.setDashboardContext(dashboardContext);

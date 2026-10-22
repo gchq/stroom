@@ -70,8 +70,14 @@ public class QueryHelpPresenter
         super(eventBus, view);
         view.setUiHandlers(this);
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
+        // Shows its requests' progress as this presenter does (its context's)
+        keyedAceCompletionProvider.setTaskMonitorFactory(this);
         this.detailProvider = detailProvider;
+        // Shows its requests' progress as this presenter does (its context's)
+        detailProvider.setTaskMonitorFactory(this);
         this.model = model;
+        // Shows its requests' progress as this presenter does (its context's)
+        model.setTaskMonitorFactory(this);
         this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
@@ -211,13 +217,6 @@ public class QueryHelpPresenter
 
     public void setTextType(final TextType textType) {
         keyedAceCompletionProvider.setTextType(textType);
-    }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        model.setTaskMonitorFactory(taskMonitorFactory);
-        keyedAceCompletionProvider.setTaskMonitorFactory(taskMonitorFactory);
-        detailProvider.setTaskMonitorFactory(taskMonitorFactory);
     }
 
 

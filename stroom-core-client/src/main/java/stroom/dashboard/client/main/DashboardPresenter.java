@@ -57,7 +57,6 @@ import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
@@ -578,10 +577,7 @@ public class DashboardPresenter
             if (component instanceof final Queryable queryable) {
                 queryable.addSearchStateListener(this);
                 queryable.addSearchErrorListener(this);
-                queryable.setTaskMonitorFactory(this);
                 queryable.setQueryInfo(queryInfo);
-            } else if (component instanceof HasTaskMonitorFactory) {
-                ((HasTaskMonitorFactory) component).setTaskMonitorFactory(this);
             }
 
             component.read(componentConfig);

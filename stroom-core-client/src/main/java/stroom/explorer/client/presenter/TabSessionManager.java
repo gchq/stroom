@@ -34,7 +34,6 @@ import stroom.explorer.shared.TabSessionAddRequest;
 import stroom.explorer.shared.TabSessionDeleteRequest;
 import stroom.explorer.shared.TabSessionResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -58,7 +57,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
-public class TabSessionManager extends Plugin implements TaskMonitorFactory, HasTaskMonitorFactory {
+public class TabSessionManager extends Plugin implements TaskMonitorFactory {
 
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
@@ -262,7 +261,9 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         });
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

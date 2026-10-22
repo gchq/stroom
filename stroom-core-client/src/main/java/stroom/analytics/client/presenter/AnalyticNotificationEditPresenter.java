@@ -195,12 +195,6 @@ public class AnalyticNotificationEditPresenter
         setDestinationPresenter(getView().getDestinationType());
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        analyticEmailDestinationPresenter.setTaskMonitorFactory(taskMonitorFactory);
-//        analyticStreamDestinationPresenter.setTaskListener(taskListener);
-    }
-
     public interface AnalyticNotificationEditView extends View, HasUiHandlers<ChangeUiHandlers> {
 
 

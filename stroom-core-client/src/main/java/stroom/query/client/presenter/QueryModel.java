@@ -34,7 +34,6 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
@@ -55,7 +54,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
+public class QueryModel implements HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -498,7 +497,9 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         this.sourceType = sourceType;
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

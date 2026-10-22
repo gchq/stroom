@@ -144,7 +144,6 @@ public class ScheduledProcessingPresenter
                     null);
 
         } else {
-            scheduledProcessEditPresenter.setTaskMonitorFactory(this);
             scheduledProcessEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
@@ -164,7 +163,6 @@ public class ScheduledProcessingPresenter
     public void edit() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
         if (selected != null && !readOnly) {
-            scheduledProcessEditPresenter.setTaskMonitorFactory(this);
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory

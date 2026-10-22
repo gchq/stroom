@@ -17,7 +17,6 @@
 package stroom.dashboard.client.vis;
 
 import stroom.script.shared.ScriptDoc;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
@@ -40,7 +39,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 
-public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactory {
+public class VisFrame extends Composite implements VisPane {
 
     private final MessageSupport messageSupport;
     private VisFunction function;
@@ -277,7 +276,9 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
         // Do nothing...
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         messageSupport.setTaskMonitorFactory(taskMonitorFactory);
     }

@@ -204,6 +204,8 @@ public class QueryEditPresenter
                 dateTimeSettingsFactory,
                 resultStoreModel,
                 () -> queryTablePreferences);
+        // Shows its requests' progress as this presenter does (its context's)
+        queryModel.setTaskMonitorFactory(this);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, queryResultPresenter);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, resultConsumer);
 
@@ -287,7 +289,6 @@ public class QueryEditPresenter
         destroyCurrentVis();
         currentVisPresenter = own(visPresenterProvider.get());
         currentVisPresenter.setQueryModel(queryModel);
-        currentVisPresenter.setTaskMonitorFactory(this);
         queryResultPresenter.setQueryResultVisPresenter(currentVisPresenter);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
@@ -512,12 +513,6 @@ public class QueryEditPresenter
     /// @param onChange What to run when the user changes the query or its settings.
     public void setOnChange(final Runnable onChange) {
         this.onChange = onChange;
-    }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        queryModel.setTaskMonitorFactory(taskMonitorFactory);
-        queryHelpPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
     public QueryTablePreferences write() {

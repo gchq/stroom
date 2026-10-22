@@ -67,10 +67,4 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
         queryEditPresenter.onClose();
         super.onClose();
     }
-
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
 }

@@ -132,7 +132,6 @@ public class AnnotationTagEditPresenter
         final DocumentUserPermissionsPresenter presenter =
                 ownUntilHidden(documentUserPermissionsPresenterProvider.get());
         presenter.setDocRef(new DocRef(AnnotationTag.TYPE, annotationTag.getUuid(), annotationTag.getName()));
-        presenter.setTaskMonitorFactory(this);
         final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.CLOSE_DIALOG)

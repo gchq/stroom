@@ -23,7 +23,6 @@ import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -41,7 +40,6 @@ import java.util.stream.Collectors;
 public class NodeGroupListModel
         implements
         SelectionListModel<NodeGroup, SimpleSelectionItemWrapper<NodeGroup>>,
-        HasTaskMonitorFactory,
         HasHandlers {
 
     private final EventBus eventBus;
@@ -140,7 +138,9 @@ public class NodeGroupListModel
         return unwrap(selectionItem) == null;
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

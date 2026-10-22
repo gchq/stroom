@@ -21,7 +21,6 @@ import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.query.client.presenter.VisComponentSelection;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.JSONUtil;
 
@@ -40,7 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MessageSupport
-        implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers>, HasTaskMonitorFactory {
+        implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers> {
 
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
@@ -140,7 +139,9 @@ public class MessageSupport
         eventBus.fireEvent(event);
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

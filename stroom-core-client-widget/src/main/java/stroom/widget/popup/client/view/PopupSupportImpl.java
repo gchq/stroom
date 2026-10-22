@@ -17,7 +17,6 @@
 package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
@@ -46,7 +45,8 @@ public class PopupSupportImpl implements PopupSupport {
     private Boolean modal;
 
     private View view;
-    private HasTaskMonitorFactory hasTaskListener;
+    // The dialog's presenter, whose context gives the dialog's task monitor to all it owns
+    private Object dialogPresenter;
     private HidePopupRequestEvent.Handler hideRequestHandler;
     private HidePopupEvent.Handler hideHandler;
     private List<Element> autoHidePartners;
@@ -54,13 +54,13 @@ public class PopupSupportImpl implements PopupSupport {
     private DialogActionUiHandlers dialogActionHandler;
 
     public PopupSupportImpl(final View view,
-                            final HasTaskMonitorFactory hasTaskListener,
+                            final Object dialogPresenter,
                             final SvgImage icon,
                             final String caption,
                             final Boolean modal,
                             final Element... autoHidePartners) {
         setView(view);
-        setHasTaskListener(hasTaskListener);
+        this.dialogPresenter = dialogPresenter;
         setIcon(icon);
         setCaption(caption);
 
@@ -321,15 +321,10 @@ public class PopupSupportImpl implements PopupSupport {
     // The dialog's presenter, and everything it owns (through its context), show their tasks on the
     // dialog
     private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
-        hasTaskListener.setTaskMonitorFactory(taskMonitorFactory);
-        if (hasTaskListener instanceof final HasComponentNode hasComponentNode
+        if (dialogPresenter instanceof final HasComponentNode hasComponentNode
             && hasComponentNode.getComponentNode() != null) {
             hasComponentNode.getComponentNode().setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
         }
-    }
-
-    private void setHasTaskListener(final HasTaskMonitorFactory hasTaskListener) {
-        this.hasTaskListener = hasTaskListener;
     }
 
     @Override

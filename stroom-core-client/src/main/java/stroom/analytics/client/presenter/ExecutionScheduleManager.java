@@ -478,7 +478,6 @@ public class ExecutionScheduleManager
     private void onSingleEdit() {
         final ExecutionSchedule selected = selectionModel.getSelected();
         if (selected != null) {
-            scheduledProcessEditPresenter.setTaskMonitorFactory(this);
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory

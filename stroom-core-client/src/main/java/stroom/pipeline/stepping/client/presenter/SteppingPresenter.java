@@ -540,7 +540,6 @@ public class SteppingPresenter
 
                 final ElementPresenter presenter = own(elementPresenterProvider.get());
                 presenter.setPipelineModel(pipelineModel);
-                presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta == null

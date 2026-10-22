@@ -98,12 +98,6 @@ public class SelectionHandlerPresenter
                 .build();
     }
 
-    @Override
-    public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        fieldSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
     public interface SelectionHandlerView extends View, Focus {
 
         void setExpressionView(View view);

@@ -119,12 +119,6 @@ public class DependenciesTabPresenter
         return false;
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        dependenciesPresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
     // --------------------------------------------------------------------------------
 
 

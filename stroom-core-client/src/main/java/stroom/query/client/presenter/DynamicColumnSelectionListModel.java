@@ -34,7 +34,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -54,7 +53,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class DynamicColumnSelectionListModel
-        implements SelectionListModel<Column, ColumnSelectionItem>, HasTaskMonitorFactory, HasHandlers {
+        implements SelectionListModel<Column, ColumnSelectionItem>, HasHandlers {
 
     private static final String NONE_TITLE = "[ none ]";
 
@@ -284,7 +283,9 @@ public class DynamicColumnSelectionListModel
         return NONE_TITLE.equals(selectionItem.getLabel());
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

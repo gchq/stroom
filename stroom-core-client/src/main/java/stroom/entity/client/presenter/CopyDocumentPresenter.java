@@ -139,12 +139,6 @@ public class CopyDocumentPresenter
                 .fire();
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
 
     // --------------------------------------------------------------------------------
 

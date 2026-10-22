@@ -17,7 +17,6 @@
 package stroom.widget.presenter.client;
 
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
@@ -47,7 +46,7 @@ import java.util.function.Consumer;
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
-        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode, IsWidget {
+        implements Layer, TaskMonitorFactory, HasComponentNode, IsWidget {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
@@ -195,7 +194,10 @@ public class MyPresenterWidget<V extends View>
     protected void onDispose() {
     }
 
-    @Override
+    /// Gives this presenter a task monitor of its own, e.g. a list's pager spinner, rather than
+    /// its context's (its tab's or dialog's). Don't pass on an owner's: its context gives it.
+    ///
+    /// @param taskMonitorFactory What shows the progress of its requests.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

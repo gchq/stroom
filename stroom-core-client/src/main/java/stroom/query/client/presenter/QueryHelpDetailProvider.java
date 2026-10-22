@@ -21,7 +21,6 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -32,7 +31,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class QueryHelpDetailProvider implements HasTaskMonitorFactory, HasHandlers {
+public class QueryHelpDetailProvider implements HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -57,7 +56,9 @@ public class QueryHelpDetailProvider implements HasTaskMonitorFactory, HasHandle
                 .exec();
     }
 
-    @Override
+    /// Says what shows the progress of the requests this makes, e.g. the presenter that uses it.
+    ///
+    /// @param taskMonitorFactory What shows their progress.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }

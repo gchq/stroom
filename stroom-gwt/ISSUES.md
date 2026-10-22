@@ -281,6 +281,9 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
+* `App/Editors/DashboardEditor` `TableFilterDrivesQuery` and `App/Main/JobsScreen`
+  `CrossNavigation` (flaky): each failed once in a full run with the leak check (no "matched red"
+  row; the node link opened nothing) and passed when run alone.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 

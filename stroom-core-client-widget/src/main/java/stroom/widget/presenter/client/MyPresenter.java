@@ -17,10 +17,10 @@
 package stroom.widget.presenter.client;
 
 import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -42,9 +42,9 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 /// @param <T_PROXY> The proxy's type.
 public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         extends Presenter<T_VIEW, T_PROXY>
-        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode {
+        implements Layer, TaskMonitorFactory, HasComponentNode {
 
-    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
+    private TaskMonitorFactory taskMonitorFactory;
     private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
     private boolean firstReveal = true;
 
@@ -115,13 +115,27 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         }
     }
 
-    @Override
+    /// Gives this presenter a task monitor of its own, rather than its context's (its tab's).
+    ///
+    /// @param taskMonitorFactory What shows the progress of its requests.
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;
     }
 
+    /// Shows a task's progress: on the task monitor set on this presenter, if one was, otherwise on
+    /// the one its context provides ([Contexts#TASK_MONITOR], e.g. its tab's), otherwise as an
+    /// app-wide task (the main screen's spinner).
+    ///
+    /// @return A task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
-        return taskMonitorFactory.createTaskMonitor();
+        if (taskMonitorFactory != null) {
+            return taskMonitorFactory.createTaskMonitor();
+        }
+        final TaskMonitorFactory provided = node.lookup(Contexts.TASK_MONITOR);
+        if (provided != Contexts.TASK_MONITOR.getDefaultValue()) {
+            return provided.createTaskMonitor();
+        }
+        return new DefaultTaskMonitorFactory(this).createTaskMonitor();
     }
 }

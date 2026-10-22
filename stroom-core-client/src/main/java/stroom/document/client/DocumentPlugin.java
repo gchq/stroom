@@ -192,10 +192,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     }
                 }
 
-                if (documentEditPresenter != null) {
-                    documentEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
-                }
-
                 if (documentEditPresenter instanceof final DocumentTabData tabData) {
                     // Register the tab as being open.
                     documentTabManager.put(docRef, tabData);

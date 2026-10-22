@@ -173,7 +173,6 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 presenter.read(docRef, document.getEventsQuery(), document.getEventsQueryTimeRange(),
                         document.getEventsQueryTablePreferences(), document.getEventColumns(), true,
                         FloorMapQueryPresenter.buildQueryVariables(document));
-                presenter.setTaskMonitorFactory(FloorMapPresenter.this);
             }
 
             @Override

@@ -53,12 +53,6 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
         notificationList.read(docRef, analyticRuleDoc);
     }
 
-    @Override
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        super.setTaskMonitorFactory(taskMonitorFactory);
-        this.notificationList.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
     // --------------------------------------------------------------------------------
 
 

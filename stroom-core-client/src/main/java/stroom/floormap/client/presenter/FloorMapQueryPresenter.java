@@ -605,9 +605,6 @@ public class FloorMapQueryPresenter
         return getView().getEventColumns();
     }
 
-    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
-        queryEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
-    }
 
     @Override
     public List<Widget> getToolbars() {
