@@ -117,6 +117,17 @@ final class SampleArguments {
     /// @return The samples by name; none for null.
     /// @throws ToolRefusal if they are not sample data.
     static Map<String, String> namedSamples(final Object samples) {
+        return namedSamples(samples, null);
+    }
+
+    /// As [#namedSamples(Object)], with one sample given on its own as well (profile_sample's `sample`), named
+    /// `sample` unless the samples already have one of that name.
+    ///
+    /// @param samples The samples argument, as the call gave it, or null.
+    /// @param single  One sample's text, or null.
+    /// @return The samples by name; none for null.
+    /// @throws ToolRefusal if they are not sample data.
+    static Map<String, String> namedSamples(final Object samples, final String single) {
         final Map<String, Object> named = new LinkedHashMap<>();
         if (samples instanceof final Map<?, ?> map) {
             map.forEach((key, value) -> named.put(String.valueOf(key), value));
@@ -137,6 +148,9 @@ final class SampleArguments {
             }
         } else if (samples instanceof final String text) {
             named.put("sample", text);
+        }
+        if (NullSafe.isNonEmptyString(single)) {
+            named.putIfAbsent("sample", single);
         }
         final Optional<String> broken = whyBroken(named);
         if (broken.isPresent()) {

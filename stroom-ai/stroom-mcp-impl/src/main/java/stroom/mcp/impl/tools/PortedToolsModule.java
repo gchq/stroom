@@ -47,7 +47,10 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(BuildStatusTool.class)
                 .addBinding(CheckXsltTool.class)
                 .addBinding(CheckEventsTool.class)
-                .addBinding(WaitForProcessingTool.class);
+                .addBinding(WaitForProcessingTool.class)
+                .addBinding(ProfileSampleTool.class)
+                .addBinding(SurveyFeedTool.class)
+                .addBinding(SetShapeHandlingTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
