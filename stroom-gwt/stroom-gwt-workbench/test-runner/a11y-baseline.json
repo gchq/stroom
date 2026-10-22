@@ -11,12 +11,6 @@
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
   ],
-  "app-main-appshell--delete-with-dependants-warns": [
-    "scrollable-region-focusable"
-  ],
-  "app-main-datareceiptrulesscreen--obfuscation-warning": [
-    "scrollable-region-focusable"
-  ],
   "app-main-dataretentionscreen--expression-panel": [
     "target-size"
   ],
@@ -37,18 +31,6 @@
   ],
   "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
-  ],
-  "app-main-manageactivitydialog--validation-blocks-save": [
-    "scrollable-region-focusable"
-  ],
-  "app-main-resultstoresdialog--settings": [
-    "scrollable-region-focusable"
-  ],
-  "app-main-resultstoresdialog--stores": [
-    "scrollable-region-focusable"
-  ],
-  "app-main-tracesscreen--traces": [
-    "scrollable-region-focusable"
   ],
   "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
     "aria-hidden-focus"

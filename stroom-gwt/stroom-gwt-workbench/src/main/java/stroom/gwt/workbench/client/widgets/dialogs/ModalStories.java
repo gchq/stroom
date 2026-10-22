@@ -167,9 +167,9 @@ public final class ModalStories {
                     play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
                     play.expect(ok).toBeDisabled();
                     play.expect(cancel).toBeEnabled();
-                    // The focus should stay in the dialog, but it is left on the page's body:
-                    // DialogButtonAction.keepFocus only puts it back on the pressed button if that
-                    // button is enabled again, so that isn't checked here (a known bug)
+                    // The focus stays in the dialog: OK stays disabled, so it moves on to the dialog's
+                    // next tab stop, Cancel (it was left on the page's body, outside the dialog)
+                    play.waitFor(() -> play.expect(cancel).toHaveFocus());
                     play.keyboard("{Control>}{Enter}{/Control}");
                     play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
                     play.expect(ok).toBeDisabled();

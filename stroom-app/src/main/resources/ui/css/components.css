@@ -1973,6 +1973,14 @@
     display: flex;
 }
 
+/* A pane that scrolls and takes the keyboard focus so that it can be scrolled with the keys (as
+   WCAG 2.1.1 asks of a scrolling region with nothing focusable in it); its focus ring is inset, as
+   it fills its space */
+.scroll-region:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}
+
 /* ==== Content store CSS ==== */
 .contentstore-details {
     display: flex;

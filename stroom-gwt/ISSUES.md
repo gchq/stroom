@@ -266,7 +266,7 @@ Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help 
 
 ### A dialog's focus drops to the page when OK disables itself
 
-**Reproduced** (by `Widgets/Dialogs/Modal` `OkDisabledByItsRequest`, October 2026). When OK is
+**Fixed** (2026-10-22: `keepFocus` moves the focus to the dialog's next tab stop). **Reproduced** (by `Widgets/Dialogs/Modal` `OkDisabledByItsRequest`, October 2026). When OK is
 pressed and its hide request disables OK (`DisablePopupEvent`, e.g. on failed validation) and then
 resets, OK rightly stays disabled, but the focus, which was on OK, is left on the page's body,
 outside the dialog (and its focus trap): `DialogButtonAction.keepFocus` puts it back only on the
@@ -280,7 +280,8 @@ check the focus until then.
 
 ### A trace's operation list can't be scrolled with the keyboard
 
-**Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
+**Fixed** (2026-10-22: the list is a named region that takes the focus; a keyboard list or tree of
+its rows would still be better). **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
 operation list (`#operationList`, built by `TraceOverviewWidget`) is taller than its pane, it
 scrolls, but nothing in it can take the focus, so a keyboard user can't scroll it
 (`scrollable-region-focusable`). Seen once the workbench's screens fitted the window (see Fixed), which
@@ -1218,6 +1219,10 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Keyboard (batch 4 of `A11Y.md`): an alert's detail, the Result Stores dialog's info and the
+    traces' operation list scroll but held nothing that takes the focus; each is a named region that
+    does. A dialog whose OK disables itself now moves the focus to its next tab stop, rather than
+    leaving it on the page's body.
   * Roles and states (batch 3 of `A11Y.md`): the sign-in page has a `main` landmark, an `<h1>` for
     screen readers and `autocomplete` hints; the password strength meter is a `meter` and the
     policy message describes the field; the maintenance banner is an alert; a grid row's "..."
