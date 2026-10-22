@@ -45,6 +45,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -176,7 +177,7 @@ class IndexFields {
             }
         } catch (final RuntimeException e) {
             // A check on the searches, not a reason for verification to fail.
-            LOGGER.debug(() -> "Text fields of " + ref + " not read: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Text fields of {} not read: {}", ref, e.getMessage()));
         }
         return text;
     }
@@ -203,7 +204,7 @@ class IndexFields {
                 }
             } catch (final RuntimeException e) {
                 // A check on the searches, not a reason for verification to fail.
-                LOGGER.debug(() -> "Fields of " + doc.getName() + " not read: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Fields of {} not read: {}", doc.getName(), e.getMessage()));
             }
         }
         return typed;
@@ -230,7 +231,7 @@ class IndexFields {
             }
         } catch (final RuntimeException e) {
             // A check on the searches, not a reason for verification to fail.
-            LOGGER.debug(() -> "Fields of " + ref + " not read: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Fields of {} not read: {}", ref, e.getMessage()));
         }
         if (NullSafe.isNonBlankString(pipelineUuid) && ElasticIndexDoc.TYPE.equals(ref.getType())) {
             final Map<String, Object> mappings = agreedMappings(pipelineUuid);

@@ -115,7 +115,7 @@ public class ProcessorFilterAccess {
                     .toList();
             return new Filters(filters, null);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the processor filters of " + pipeline, e);
+            LOGGER.debug("Unable to list the processor filters of {}", pipeline, e);
             return new Filters(List.of(), NullSafe.nonBlankStringElse(e.getMessage(),
                     e.getClass().getSimpleName()));
         }

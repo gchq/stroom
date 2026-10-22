@@ -28,6 +28,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -113,7 +114,7 @@ public class AiToolPolicyService implements CurrentToolGrants {
         return secured(() -> {
             final AiToolPolicy checked = checked(policy, null);
             final AiToolPolicy saved = dao.create(checked, securityContext.getUserIdentityForAudit());
-            LOGGER.info(() -> "Created tool policy '" + saved.getName() + "'");
+            LOGGER.info(() -> LogUtil.message("Created tool policy '{}'", saved.getName()));
             changed();
             return withMemberDetails(saved);
         });
@@ -131,7 +132,7 @@ public class AiToolPolicyService implements CurrentToolGrants {
             }
             final AiToolPolicy checked = checked(policy.copy().id(id).build(), id);
             final AiToolPolicy saved = dao.update(checked, securityContext.getUserIdentityForAudit());
-            LOGGER.info(() -> "Updated tool policy '" + saved.getName() + "'");
+            LOGGER.info(() -> LogUtil.message("Updated tool policy '{}'", saved.getName()));
             changed();
             return withMemberDetails(saved);
         });
@@ -143,7 +144,7 @@ public class AiToolPolicyService implements CurrentToolGrants {
         return secured(() -> {
             final boolean deleted = dao.delete(id);
             if (deleted) {
-                LOGGER.info(() -> "Deleted tool policy " + id);
+                LOGGER.info("Deleted tool policy {}", id);
                 changed();
             }
             return deleted;
@@ -230,7 +231,7 @@ public class AiToolPolicyService implements CurrentToolGrants {
             try {
                 listener.run();
             } catch (final RuntimeException e) {
-                LOGGER.warn(() -> "A tool policy change listener failed", e);
+                LOGGER.warn("A tool policy change listener failed", e);
             }
         }
     }

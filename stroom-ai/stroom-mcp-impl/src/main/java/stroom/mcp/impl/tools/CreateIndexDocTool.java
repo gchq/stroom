@@ -43,6 +43,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -349,7 +350,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
             result.put("message", tested.message());
             outcome.put("result", result);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to test cluster " + cluster.getUuid(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to test cluster {}", cluster.getUuid()), e);
             outcome.put("error", PipelineShapes.reason(e));
         }
         return outcome;

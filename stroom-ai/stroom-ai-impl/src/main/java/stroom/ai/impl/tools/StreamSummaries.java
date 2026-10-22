@@ -29,6 +29,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StoredError;
@@ -86,6 +87,10 @@ public class StreamSummaries {
     private final AcceptedErrors acceptedErrors;
     private final Provider<AiConfig> aiConfigProvider;
 
+    /// @param streamReader     Reads the streams.
+    /// @param documentAccess   Reads pipelines' documents, as the user.
+    /// @param acceptedErrors   The errors each pipeline's builds accepted.
+    /// @param aiConfigProvider The environment's error triage rules.
     @Inject
     public StreamSummaries(final StreamReader streamReader,
                            final DocumentAccess documentAccess,
@@ -152,7 +157,7 @@ public class StreamSummaries {
             try {
                 markers.addAll(markers(errorStream.getId()));
             } catch (final IOException | RuntimeException e) {
-                LOGGER.debug(() -> "Unable to read Error stream " + errorStream.getId(), e);
+                LOGGER.debug(() -> LogUtil.message("Unable to read Error stream {}", errorStream.getId()), e);
                 unread.add("Error stream " + errorStream.getId() + ": " + reason(e));
                 continue;
             }

@@ -58,6 +58,7 @@ import stroom.security.shared.AppPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
@@ -163,7 +164,7 @@ class PipelineStepping {
         try {
             can = securityContextProvider.get().hasAppPermission(AppPermission.STEPPING_PERMISSION);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to check the Stepping permission", e);
+            LOGGER.debug("Unable to check the Stepping permission", e);
             can = false;
         }
         if (!can) {
@@ -241,7 +242,7 @@ class PipelineStepping {
                     .map(XsltDoc::getData)
                     .orElse(null);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the saved XSLT of " + element + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Unable to read the saved XSLT of {}: {}", element, e.getMessage()));
             return null;
         }
     }
@@ -477,8 +478,10 @@ class PipelineStepping {
             }
         } catch (final RuntimeException e) {
             // The check is a guard on top; never fail the step over it.
-            LOGGER.warn(() -> "Couldn't check pipeline " + pipeline.doc().getUuid() + " for Unknown events: "
-                              + e.getMessage());
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't check pipeline {} for Unknown events: {}",
+                    pipeline.doc().getUuid(),
+                    e.getMessage()));
             return null;
         }
         final String message = unknown.size() + " of " + total + " records come out as EventDetail/Unknown (e.g. "
@@ -506,7 +509,7 @@ class PipelineStepping {
             final String text = streamReader.readHead(streamId, 0, MAX_STREAM_CHARS).text();
             return SampleProfiler.JSON_ARRAY.equals(SampleProfiler.profile(text).get("format"));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to profile stream " + streamId, e);
+            LOGGER.debug("Unable to profile stream {}", streamId, e);
             return false;
         }
     }
@@ -553,7 +556,7 @@ class PipelineStepping {
         try {
             auditLog.streamsViewed(context.session(), new TreeSet<>(streamIds), purpose);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to audit the streams stepped", e);
+            LOGGER.debug("Unable to audit the streams stepped", e);
         }
     }
 
@@ -655,7 +658,7 @@ class PipelineStepping {
         try {
             return elementRegistryFactoryProvider.get().get();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the pipeline element types", e);
+            LOGGER.debug("Unable to read the pipeline element types", e);
             return null;
         }
     }

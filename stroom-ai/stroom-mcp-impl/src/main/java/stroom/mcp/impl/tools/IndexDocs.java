@@ -188,7 +188,7 @@ class IndexDocs {
                 entry.put("case_sensitive", false);
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read field " + name + " of " + index, e);
+            LOGGER.debug("Unable to read field {} of {}", name, index, e);
         }
     }
 

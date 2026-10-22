@@ -62,6 +62,7 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TimeRange;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -477,7 +478,7 @@ class IndexChecks {
             return memory.passedChecks(indexUuid + "\n" + new TreeSet<>(streamIds) + "\n" + expected + "\n" + code);
         } catch (final RuntimeException e) {
             // Kept for convenience: without it, every check runs.
-            LOGGER.debug(() -> "Passed checks not kept: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Passed checks not kept: {}", e.getMessage()));
             return new HashMap<>();
         }
     }
@@ -1200,6 +1201,29 @@ class IndexChecks {
         }
     }
 
+    /// What the user is shown of a verification dashboard before it is made or changed.
+    ///
+    /// @param fields    The table's columns.
+    /// @param timeField The index's time field, or null.
+    /// @param window    Where the query's time range starts, or null.
+    /// @return The design, as the confirmation's details.
+    static Map<String, Object> design(final List<String> fields,
+                                      final String timeField,
+                                      final String window) {
+        final Map<String, Object> design = new LinkedHashMap<>();
+        design.put("columns (newest first)", fields);
+        final List<String> hidden = new ArrayList<>(IDS);
+        if (timeField != null && !fields.contains(timeField)) {
+            hidden.add(timeField);
+        }
+        design.put("hidden", hidden);
+        design.put("initial query", window != null
+                ? timeField + " from " + window + " through today"
+                : "none");
+        design.put("text pane", "the selected row's record, with stepping; no extraction pipeline");
+        return design;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -1327,28 +1351,5 @@ class IndexChecks {
         Probe probe(final ExpressionOperator expression) {
             return new Probe(source, name, expression, columns, maxResults);
         }
-    }
-
-    /// What the user is shown of a verification dashboard before it is made or changed.
-    ///
-    /// @param fields    The table's columns.
-    /// @param timeField The index's time field, or null.
-    /// @param window    Where the query's time range starts, or null.
-    /// @return The design, as the confirmation's details.
-    static Map<String, Object> design(final List<String> fields,
-                                      final String timeField,
-                                      final String window) {
-        final Map<String, Object> design = new LinkedHashMap<>();
-        design.put("columns (newest first)", fields);
-        final List<String> hidden = new ArrayList<>(IDS);
-        if (timeField != null && !fields.contains(timeField)) {
-            hidden.add(timeField);
-        }
-        design.put("hidden", hidden);
-        design.put("initial query", window != null
-                ? timeField + " from " + window + " through today"
-                : "none");
-        design.put("text pane", "the selected row's record, with stepping; no extraction pipeline");
-        return design;
     }
 }

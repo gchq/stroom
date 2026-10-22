@@ -244,7 +244,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
                     .filter(docRef -> name.equals(docRef.getName()))
                     .anyMatch(documentAccess::canView);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the XSLT " + name, e);
+            LOGGER.debug("Unable to find the XSLT {}", name, e);
             return false;
         }
     }

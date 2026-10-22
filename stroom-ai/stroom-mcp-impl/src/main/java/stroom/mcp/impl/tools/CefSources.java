@@ -24,6 +24,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -143,7 +144,7 @@ class CefSources {
                             entry.put("inherits_from", inherits);
                         });
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Unable to read pipeline " + entry.get("uuid"), e);
+                LOGGER.debug(() -> LogUtil.message("Unable to read pipeline {}", entry.get("uuid")), e);
             }
         }
         if (!ranked.isEmpty()) {

@@ -28,6 +28,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -242,7 +243,7 @@ public class BuildPlan {
                     ? guard.buildOf(ref)
                     : Optional.empty();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to tell the build of " + ref, e);
+            LOGGER.debug("Unable to tell the build of {}", ref, e);
             return Optional.empty();
         }
     }
@@ -277,7 +278,7 @@ public class BuildPlan {
         try {
             return Optional.ofNullable(JsonValues.map(status(build, made).get("next")));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No next step for build " + build + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("No next step for build {}: {}", build, e.getMessage()), e);
             return Optional.empty();
         }
     }
@@ -862,7 +863,10 @@ public class BuildPlan {
         } catch (final ToolRefusal e) {
             // A sample that can't be profiled (or no profiling in this Stroom yet): the plan goes on without its
             // format, as it does before any sample is uploaded.
-            LOGGER.debug(() -> "The sample in stream " + streamId + " wasn't profiled: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message(
+                    "The sample in stream {} wasn't profiled: {}",
+                    streamId,
+                    e.getMessage()));
             return Optional.empty();
         }
         final Map<String, Object> format = new LinkedHashMap<>();
@@ -881,7 +885,7 @@ public class BuildPlan {
                 fmt = textFormat(facts.profile(String.valueOf(survey.get("sample"))));
             } catch (final ToolRefusal e) {
                 // Examples that don't profile together: the survey's own reading stands.
-                LOGGER.debug(() -> "A survey's examples didn't profile: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("A survey's examples didn't profile: {}", e.getMessage()));
             }
         }
         if (fmt == null) {
@@ -906,7 +910,7 @@ public class BuildPlan {
                 }
             } catch (final RuntimeException e) {
                 // That stream gone under retention: the examples' reading stands.
-                LOGGER.debug(() -> "A surveyed stream's head couldn't be read: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("A surveyed stream's head couldn't be read: {}", e.getMessage()));
             }
         }
         return fmt;

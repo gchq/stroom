@@ -105,7 +105,7 @@ class ProcessorFilters {
             }
             return filters;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the processor filters", e);
+            LOGGER.debug("Unable to find the processor filters", e);
             return List.of();
         }
     }

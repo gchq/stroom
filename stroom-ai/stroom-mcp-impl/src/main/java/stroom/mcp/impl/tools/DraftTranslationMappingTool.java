@@ -39,6 +39,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -240,7 +241,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             final EventSchema schema = eventVersions.eventSchema(version);
             return detail -> SourceNotes.detailProblem(schema, detail);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "The catalogue's event details not checked: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("The catalogue's event details not checked: {}", e.getMessage()));
             return null;
         }
     }

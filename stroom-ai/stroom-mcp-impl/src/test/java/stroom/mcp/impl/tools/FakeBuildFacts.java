@@ -46,7 +46,7 @@ final class FakeBuildFacts implements BuildFacts {
     String agreementProblem;
     Map<String, String> names = new LinkedHashMap<>();
     List<Map<String, Object>> translating = List.of();
-    List<String> columns = List.of();
+    final List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
 

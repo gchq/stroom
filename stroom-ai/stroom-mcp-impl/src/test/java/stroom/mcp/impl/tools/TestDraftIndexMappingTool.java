@@ -337,7 +337,8 @@ class TestDraftIndexMappingTool {
     @Test
     void aPlanIsMarkedFromTheSchema() throws IOException {
         final EventSchema schema;
-        try (InputStream xsd = getClass().getResourceAsStream("/stroom/mcp/impl/tools/event-logging-v4.1.0.xsd")) {
+        try (final InputStream xsd = getClass().getResourceAsStream(
+                "/stroom/mcp/impl/tools/event-logging-v4.1.0.xsd")) {
             schema = EventSchema.parse(new String(xsd.readAllBytes(), StandardCharsets.UTF_8));
         }
         Mockito.when(world.heldSchemas.chosenOrLatest(Mockito.any())).thenReturn("4.1.0");

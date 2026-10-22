@@ -80,7 +80,7 @@ class DraftFixtures {
     /// @param name A resource next to this class.
     /// @return Its text.
     static String resource(final String name) {
-        try (InputStream in = DraftFixtures.class.getResourceAsStream(name)) {
+        try (final InputStream in = DraftFixtures.class.getResourceAsStream(name)) {
             if (in == null) {
                 throw new IllegalStateException("no resource " + name);
             }

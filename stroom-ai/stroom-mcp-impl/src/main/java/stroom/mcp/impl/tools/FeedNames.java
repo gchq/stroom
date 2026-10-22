@@ -173,7 +173,7 @@ class FeedNames {
                     .filter(documentAccess::canView)
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the feed " + name, e);
+            LOGGER.debug("Unable to find the feed {}", name, e);
             return List.of();
         }
     }

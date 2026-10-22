@@ -44,6 +44,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -498,7 +499,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 }
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read dashboard " + dashboard + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Unable to read dashboard {}: {}", dashboard, e.getMessage()));
         }
         return found;
     }
@@ -522,7 +523,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                     predecessors.put(pipeline.getUuid(), String.valueOf(before));
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "No predecessor read for " + pipeline + ": " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("No predecessor read for {}: {}", pipeline, e.getMessage()));
             }
         }
         return predecessors;
@@ -828,7 +829,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
             return buttons;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No filters of the earlier version " + predecessor + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message(
+                    "No filters of the earlier version {}: {}",
+                    predecessor,
+                    e.getMessage()));
             return List.of();
         }
     }

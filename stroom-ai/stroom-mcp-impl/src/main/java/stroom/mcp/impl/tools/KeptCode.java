@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
@@ -56,7 +57,7 @@ class KeptCode {
                 default -> Optional.empty();
             };
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "The kept " + kind + " no longer generates: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("The kept {} no longer generates: {}", kind, e.getMessage()));
             return Optional.empty();
         }
     }

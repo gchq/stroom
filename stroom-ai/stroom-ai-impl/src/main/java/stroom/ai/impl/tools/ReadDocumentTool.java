@@ -46,6 +46,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -371,7 +372,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             survey = analyses.get().surveyIndex(context, docRef);
         } catch (final RuntimeException e) {
             // The cluster may be unreachable: the doc itself is still worth having (e.g. to copy its settings).
-            LOGGER.debug(() -> "Unable to survey " + docRef, e);
+            LOGGER.debug("Unable to survey {}", docRef, e);
             return "\n\n## Survey\nCould not survey the index through Stroom: " + e.getMessage();
         }
         return jsonSection(context, docRef, "Survey", "What the index holds, read through Stroom (its fields, a "
@@ -615,7 +616,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                 return JsonUtil.writeValueAsString(copy, true);
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read a part as JSON: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to read a part as JSON: {}", e.getMessage()), e);
         }
         return text;
     }
