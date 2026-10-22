@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiPipelineStageConfig;
 import stroom.ai.impl.AiPipelineStagesConfig;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.docref.DocRef;

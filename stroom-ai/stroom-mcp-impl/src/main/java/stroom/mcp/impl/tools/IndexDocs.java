@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /// The index documents an indexing pipeline writes to, and their fields as Stroom has them, for describe_feed.
 class IndexDocs {
@@ -55,7 +55,6 @@ class IndexDocs {
     /// The most Elastic Index documents read.
     static final int MAX_ELASTIC_INDEXES = 200;
 
-    private static final Pattern VALUE_PART = Pattern.compile("\\{[^}]*\\}");
 
     private final PipelineIndex pipelineIndex;
     private final DocumentAccess documentAccess;
@@ -128,12 +127,8 @@ class IndexDocs {
                 return true;
             }
             if (ElasticIndexDoc.TYPE.equals(docType) && "indexName".equals(name)
-                && value instanceof final String text && NullSafe.isNonEmptyString(indexName)) {
-                final String written = VALUE_PART.matcher(text).replaceAll("*");
-                if (written.equals(indexName) || Globs.matches(indexName, written)
-                    || Globs.matches(written.replace("*", ""), indexName)) {
-                    return true;
-                }
+                && value instanceof final String text && IndexingHelpers.writesToIndex(text, indexName)) {
+                return true;
             }
         }
         return false;

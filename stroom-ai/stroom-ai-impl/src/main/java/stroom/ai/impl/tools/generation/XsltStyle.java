@@ -90,7 +90,7 @@ public record XsltStyle(@JsonProperty("naming") String naming,
     /// @param input  The value given.
     /// @param loc    Where it is.
     /// @return It, or null (with the errors noted) if it doesn't validate.
-    static XsltStyle read(final ModelReader reader, final Object input, final List<Object> loc) {
+    public static XsltStyle read(final ModelReader reader, final Object input, final List<Object> loc) {
         final ModelReader.Fields fields = reader.fields(input, loc, "XsltStyle");
         if (fields == null) {
             return null;
