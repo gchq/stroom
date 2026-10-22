@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -86,6 +85,8 @@ public class WriteGuard {
     public static final List<String> SOURCE_ROLES = List.of("Events", "Records");
     /// The role of a pipeline of each stage.
     public static final Map<String, String> STAGE_ROLES = PipelineShapes.STAGE_ROLES;
+    /// How many locks folders are made under.
+    static final int FOLDER_LOCKS = 64;
 
     private static final Pattern BUILD = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9_.-]{1,63}$");
     private static final Set<String> TAGS = Set.of(MANAGED, GENERATED);
@@ -97,8 +98,9 @@ public class WriteGuard {
     private final Provider<AiAuditLog> auditLogProvider;
     private final Provider<BuildRecords> buildRecordsProvider;
     // One folder made at a time per parent and name: two calls at once (an agent's parallel tool calls) each found
-    // no folder and each made one.
-    private final Map<String, Object> folderLocks = new ConcurrentHashMap<>();
+    // no folder and each made one. A fixed set of locks, each parent and name always the same one (a lock per
+    // name, never removed, grew with every folder ever made).
+    private final Object[] folderLocks = folderLocks();
 
     /// @param explorerServiceProvider     Creates, moves, tags and deletes documents, as the user.
     /// @param explorerNodeServiceProvider Reads the explorer tree.
@@ -160,7 +162,7 @@ public class WriteGuard {
     /// @param tags   The tags a new folder is given.
     /// @return The folder.
     public Folder createFolder(final Folder parent, final String name, final Set<String> tags) {
-        final Object lock = folderLocks.computeIfAbsent(parent.docRef().getUuid() + "/" + name, key -> new Object());
+        final Object lock = folderLock(parent.docRef().getUuid(), name);
         synchronized (lock) {
             final Optional<Folder> found = findChildFolder(parent, name);
             if (found.isPresent()) {
@@ -171,6 +173,21 @@ public class WriteGuard {
             tag(List.of(made.getDocRef()), tags);
             return new Folder(made.getDocRef(), parent.path() + "/" + name, true);
         }
+    }
+
+    /// @param parentUuid A folder's parent.
+    /// @param name       The folder's name.
+    /// @return The lock a folder of that name is made under in that parent: always the same one, of a fixed set.
+    Object folderLock(final String parentUuid, final String name) {
+        return folderLocks[Math.floorMod((parentUuid + "/" + name).hashCode(), folderLocks.length)];
+    }
+
+    private static Object[] folderLocks() {
+        final Object[] locks = new Object[FOLDER_LOCKS];
+        for (int i = 0; i < locks.length; i++) {
+            locks[i] = new Object();
+        }
+        return locks;
     }
 
     /// The deepest folder that exists along an explorer path such as `System/Feeds/Events/Acme`, and the names

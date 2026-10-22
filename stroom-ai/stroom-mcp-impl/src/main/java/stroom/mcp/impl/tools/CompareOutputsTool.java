@@ -193,6 +193,8 @@ class CompareOutputsTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give draft_code or other_pipeline_uuid to compare against");
         }
         stepping.checkCanStep();
+        // The candidate runs with Stroom's access, as processing would: what the tools won't save isn't stepped.
+        stepping.refuseUnsafeDrafts(request.pipelineUuid(), request.draftCode());
         final SteppedPipeline base = stepping.load(request.pipelineUuid());
         final SteppedPipeline other = request.otherPipelineUuid() != null
                 ? stepping.load(request.otherPipelineUuid())

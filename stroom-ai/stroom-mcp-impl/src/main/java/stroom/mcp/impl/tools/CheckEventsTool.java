@@ -139,6 +139,12 @@ class CheckEventsTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean usesRunSlot() {
+        // It reads Events streams (up to MAX_RECORDS events) and validates them against the schema.
+        return true;
+    }
+
+    @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)

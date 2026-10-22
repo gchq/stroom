@@ -19,13 +19,14 @@ package stroom.ai.impl.tools.generation;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +78,16 @@ public final class XPathTreeParser {
     // The tokens a path step may be, by symbol (elementpath's PATH_STEP_SYMBOLS).
     private static final Set<String> STEP_TOKENS = Set.of("(integer)", "(string)", "(float)", "(decimal)", "(name)",
             "*", "@", "..", ".", "(", "{", "Q{", "$");
-    private static final Map<Map<String, String>, XPathTreeParser> PARSERS = new ConcurrentHashMap<>();
+    /// The most parsers kept, one per set of bindings: the least recently used are dropped first (the bindings
+    /// come from the XSLTs and mappings the agent sends, so there is no end to them).
+    static final int MAX_PARSERS = 64;
+    private static final Map<Map<String, String>, XPathTreeParser> PARSERS = Collections.synchronizedMap(
+            new LinkedHashMap<>(16, 0.75F, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<Map<String, String>, XPathTreeParser> eldest) {
+                    return size() > MAX_PARSERS;
+                }
+            });
 
     private final Map<String, String> namespaces;
 
@@ -94,7 +104,7 @@ public final class XPathTreeParser {
     }
 
     /// @param namespaces The stylesheet's namespace bindings.
-    /// @return A parser for them (one per set of bindings, as the Python server caches them).
+    /// @return A parser for them (one per set of bindings, as the Python server caches them, up to [#MAX_PARSERS]).
     public static XPathTreeParser parserFor(final Map<String, String> namespaces) {
         final Map<String, String> own = new TreeMap<>();
         namespaces.forEach((prefix, uri) -> {
@@ -103,6 +113,11 @@ public final class XPathTreeParser {
             }
         });
         return PARSERS.computeIfAbsent(Map.copyOf(own), XPathTreeParser::new);
+    }
+
+    /// @return How many parsers are kept, for tests.
+    static int parsersKept() {
+        return PARSERS.size();
     }
 
     /// @return The namespace bindings it parses with (no default namespace).

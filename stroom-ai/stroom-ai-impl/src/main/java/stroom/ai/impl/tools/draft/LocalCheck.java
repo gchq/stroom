@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.XmlTree;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.workspace.SafePattern;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -484,7 +485,7 @@ public final class LocalCheck {
         final Pattern pattern = compiled(c.matches(), 0);
         return pattern == null
                 ? null
-                : pattern.matcher(value).find();
+                : SafePattern.matcher(pattern, value).find();
     }
 
     // A regex compiled, or null if it can't be (Python's re.error).
@@ -497,7 +498,7 @@ public final class LocalCheck {
         }
         return PATTERNS.computeIfAbsent(flags + ":" + regex, key -> {
             try {
-                return Optional.of(PyText.re(regex, flags));
+                return Optional.of(SafePattern.compile(regex, PyText.FLAGS | flags));
             } catch (final PatternSyntaxException e) {
                 return Optional.empty();
             }
@@ -524,7 +525,7 @@ public final class LocalCheck {
             if (pattern == null) {
                 return null;
             }
-            final Matcher found = pattern.matcher(text == null
+            final Matcher found = SafePattern.matcher(pattern, text == null
                     ? ""
                     : text);
             final boolean matched = found.find();
@@ -934,8 +935,10 @@ public final class LocalCheck {
     /// @param records The sample's records ([#sampleRecords(TranslationMapping, Object, SplitterSpec)]).
     /// @return `records`, `problems`, `warnings`, `fields_seen`, and `not_checked` and `kept_unknown` when there
     /// are any.
+    /// @throws stroom.ai.impl.workspace.PatternTimeoutException if the mapping's regexes (its extractions' and
+    ///                                                          conditions') take too long to match.
     public static Map<String, Object> checkMapping(final TranslationMapping mapping, final List<Object> records) {
-        return new MappingCheck(mapping, records).check();
+        return SafePattern.limited(null, () -> new MappingCheck(mapping, records).check());
     }
 
     /// @param text A text, or null.

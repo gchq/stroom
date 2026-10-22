@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -90,12 +91,15 @@ class TestDescribeTemplateTool {
         xslt("common", "Common-Event-V1", COMMON);
         Mockito.when(docFinder.findByName(XsltDoc.TYPE, "Common-Event-V1"))
                 .thenReturn(List.of(new DocRef(XsltDoc.TYPE, "common", "Common-Event-V1")));
-        Mockito.when(processorFilters.all()).thenReturn(List.of(ProcessorFilter.builder()
+        final List<ProcessorFilter> filters = List.of(ProcessorFilter.builder()
                 .pipelineUuid("c")
                 .queryData(QueryData.builder().expression(ExpressionOperator.builder()
                         .addDocRefTerm("Feed", Condition.IS_DOC_REF, new DocRef(FeedDoc.TYPE, "f", "ACME"))
                         .build()).build())
-                .build()));
+                .build());
+        Mockito.when(processorFilters.all()).thenReturn(filters);
+        // As PipelineFeeds reads them (see TestProcessorFilters).
+        Mockito.when(processorFilters.feedsByPipeline(filters)).thenReturn(Map.of("c", Set.of("ACME")));
         final PipelineTemplates templates = new PipelineTemplates(pipelineIndex,
                 PipelineLayers.shapes(pipelineService, new AiConfig()), processorFilters, documentAccess,
                 () -> docFinder);

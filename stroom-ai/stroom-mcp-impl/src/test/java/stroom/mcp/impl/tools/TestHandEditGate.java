@@ -31,9 +31,11 @@ import org.mockito.Mockito;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -78,6 +80,32 @@ class TestHandEditGate {
     private final TranslationWorld world = new TranslationWorld();
     private final SaveXsltTool tool = world.saveXsltTool();
     private final String uuid = world.inBuild(BUILD, XsltDoc.TYPE, NAME).getUuid();
+
+    @Test
+    void theAnswersAreReadFromACopyTakenUnderTheirLock() throws Exception {
+        // Before, the answers (a synchronised map another call of the session may add to) were iterated without
+        // its lock, which can fail with a ConcurrentModificationException or miss an answer.
+        final Map<String, String> decided = Collections.synchronizedMap(new LinkedHashMap<>());
+        final AtomicBoolean stop = new AtomicBoolean();
+        final Thread writer = new Thread(() -> {
+            int i = 0;
+            while (!stop.get()) {
+                decided.put("field " + (i++ % 500), "keep");
+            }
+        });
+        writer.start();
+        try {
+            for (int i = 0; i < 2_000; i++) {
+                final Map<String, String> copy = HandEditGate.copied(decided);
+                assertThat(copy.entrySet().stream().filter(entry -> "keep".equals(entry.getValue())).count())
+                        .isEqualTo(copy.size());
+            }
+        } finally {
+            stop.set(true);
+            writer.join();
+        }
+        assertThat(HandEditGate.copied(decided)).isEqualTo(decided);
+    }
 
     @Test
     void aFieldAddedByHandIsKeptUntilCarriedIntoThePlan() {

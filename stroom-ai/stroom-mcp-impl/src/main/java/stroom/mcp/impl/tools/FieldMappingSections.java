@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /// The Field mapping section of a pipeline's documentation (the Stroom MCP server's `tools/builds.py`
 /// `field_mapping_section`, `written_fields_section`, `cef_written_section`, `_agreed_line` and `_no_events`):
@@ -250,19 +252,41 @@ class FieldMappingSections {
     /// `_no_events`: why stepping an events pipeline over the streams gave no events, stream by stream: missing, of
     /// another type (an Events stream where the raw input belongs), or stopped by an error before the first record.
     ///
+    /// Each stream is stepped within the session's time limit for a long call, as the records were: once it is up,
+    /// the streams left are named, not stepped.
+    ///
+    /// @param context   The call's context.
     /// @param pipeline  The pipeline stepped.
     /// @param streamIds The streams.
     /// @param element   The XSLT's element.
     /// @param code      The XSLT stepped with.
     /// @param records   How many records were stepped.
     /// @return What to refuse with.
-    String noEvents(final SteppedPipeline pipeline,
+    String noEvents(final ToolCallContext context,
+                    final SteppedPipeline pipeline,
                     final List<Long> streamIds,
                     final String element,
                     final String code,
                     final int records) {
+        final List<String> found = PipelineStepping.withinTimeLimit(context, () ->
+                whyNoEvents(pipeline, streamIds, element, code));
+        return "Field mapping not written: stepping the pipeline over stream_ids gave no events (" + records
+               + " records stepped). " + String.join("; ", found) + ". An events pipeline's stream_ids are its raw "
+               + "sample streams (Raw Events, as uploaded); build_status lists them.";
+    }
+
+    // Why each stream gave no events, until the time for stepping is up.
+    private List<String> whyNoEvents(final SteppedPipeline pipeline,
+                                     final List<Long> streamIds,
+                                     final String element,
+                                     final String code) {
         final List<String> found = new ArrayList<>();
-        for (final long streamId : streamIds) {
+        for (int i = 0; i < streamIds.size(); i++) {
+            final long streamId = streamIds.get(i);
+            if (PipelineStepping.timeIsUp()) {
+                found.add(notStepped(streamIds.subList(i, streamIds.size())));
+                break;
+            }
             final Optional<Meta> meta = metaOrNone(streamId);
             if (meta.isEmpty()) {
                 found.add("stream " + streamId + " does not exist");
@@ -284,11 +308,22 @@ class FieldMappingSections {
                             ? ""
                             : " (" + String.join("; ", shown) + ")"));
                 }
+            } catch (final ToolTimeoutException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e;
+                }
+                found.add(notStepped(streamIds.subList(i, streamIds.size())));
+                break;
             }
         }
-        return "Field mapping not written: stepping the pipeline over stream_ids gave no events (" + records
-               + " records stepped). " + String.join("; ", found) + ". An events pipeline's stream_ids are its raw "
-               + "sample streams (Raw Events, as uploaded); build_status lists them.";
+        return found;
+    }
+
+    private static String notStepped(final List<Long> streamIds) {
+        return (streamIds.size() == 1
+                ? "stream " + streamIds.getFirst()
+                : "streams " + streamIds.stream().map(String::valueOf).collect(Collectors.joining(", ")))
+               + " not stepped: the time for stepping ran out";
     }
 
     private String translationSection(final ToolCallContext context,
@@ -313,7 +348,8 @@ class FieldMappingSections {
         final List<XmlElement> events = EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
         if (events.isEmpty()) {
             // A section of "(not in the sample)" documents nothing: say what the streams are and what stopped them.
-            throw new ToolRefusal(noEvents(loaded, streamIds, kept.element(), marked.xslt(), outputs.size()));
+            throw new ToolRefusal(noEvents(context, loaded, streamIds, kept.element(), marked.xslt(),
+                    outputs.size()));
         }
         // Which records the counts are of: seen in VS Code, counts from a different sample (the first records of
         // one stream, then records spread over every stream) taken for a change in how events are routed.

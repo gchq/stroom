@@ -16,12 +16,20 @@
 
 package stroom.ai.impl.tools.sample;
 
-import org.junit.jupiter.api.Test;
+import stroom.ai.impl.workspace.PatternTimeoutException;
+import stroom.ai.impl.workspace.SafePattern;
+import stroom.ai.impl.workspace.ToolDeadline;
+import stroom.ai.impl.workspace.ToolTimeoutException;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.PatternSyntaxException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -296,6 +304,29 @@ class TestSplitterDryRun {
         assertThat(run.records()).hasSize(100);
         assertThat(run.records().getFirst()).containsEntry("n", "0");
         assertThat(run.records().getLast()).containsEntry("n", "4999");
+    }
+
+    @Test
+    @Timeout(120)
+    void aPatternThatBacktracksBadlyIsStoppedAndSaysSo() {
+        // Before, the agent's pattern ran on texts of up to a million characters with no time limit.
+        final SplitterSpec spec = SplitterSpec.builder("regex").pattern("(.*?,){25}x").names(List.of("a")).build();
+
+        assertThatThrownBy(() -> SplitterDryRun.dryRun(spec, "a,".repeat(40)))
+                .isInstanceOf(PatternTimeoutException.class)
+                .hasMessageStartingWith("The pattern '(.*?,){25}x' took too long to match");
+    }
+
+    @Test
+    @Timeout(60)
+    void aRecordStartThatBacktracksBadlyStopsAtTheCallsTimeLimit() {
+        // The first line starts a record whatever it is: the second is matched.
+        final List<String> lines = List.of("first", "a,".repeat(40));
+
+        assertThatThrownBy(() -> ToolDeadline.run(Duration.ofMillis(300),
+                () -> SplitterDryRun.groupLines(lines, "(.*?,){25}x"))).isInstanceOf(ToolTimeoutException.class);
+        assertThatThrownBy(() -> SplitterDryRun.groupLinesToEnd(lines, "a".repeat(SafePattern.MAX_REGEX_LENGTH + 1)))
+                .isInstanceOf(PatternSyntaxException.class);
     }
 
     @Test

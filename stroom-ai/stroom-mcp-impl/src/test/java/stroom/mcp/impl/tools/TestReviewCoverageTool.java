@@ -40,8 +40,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -102,8 +100,8 @@ class TestReviewCoverageTool {
 
     @Test
     void followOnPipelinesAreThoseWhoseFiltersReadItsEvents() {
-        final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
-        Mockito.when(securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)).thenReturn(true);
+        final ProcessorFilterAccess processorFilterAccess = Mockito.mock(ProcessorFilterAccess.class);
+        Mockito.when(processorFilterAccess.canManageProcessors()).thenReturn(true);
         final DocumentAccess access = Mockito.mock(DocumentAccess.class);
         Mockito.when(access.canView(any())).thenReturn(true);
         final ProcessorFilterService service = Mockito.mock(ProcessorFilterService.class);
@@ -129,7 +127,7 @@ class TestReviewCoverageTool {
         rows.add(row(filter(5, "ev", null, false, ExpressionOperator.builder().op(Op.AND)
                 .addTerm(term("Feed", "ACME")))));
         Mockito.when(service.find(any(FetchProcessorRequest.class))).thenReturn(new ResultPage<>(rows));
-        final ProcessorFilters filters = new ProcessorFilters(securityContext, () -> service, access,
+        final ProcessorFilters filters = new ProcessorFilters(processorFilterAccess, () -> service, access,
                 new PipelineFeeds(Mockito.mock(ProcessorFilterAccess.class), access,
                         Mockito.mock(StreamReader.class)));
 

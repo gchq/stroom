@@ -143,9 +143,11 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .requires(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.EDIT)
                 .note("Only for a pipeline in a build. Emptying a build's own Lucene index needs the Manage Index "
-                      + "Shards permission.")
+                      + "Shards permission. Reading why Elasticsearch refused earlier runs (their Error streams) "
+                      + "needs the View Data permission: without it, the index is taken to hold what they sent.")
                 .build();
     }
 

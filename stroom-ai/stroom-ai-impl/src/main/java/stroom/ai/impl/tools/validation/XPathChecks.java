@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.workspace.PatternTimeoutException;
+import stroom.ai.impl.workspace.SafePattern;
+import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,6 +29,7 @@ import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.s9api.XPathSelector;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.trans.UncheckedXPathException;
 import net.sf.saxon.trans.XPathException;
 
 import java.time.Clock;
@@ -407,6 +411,11 @@ public final class XPathChecks {
         final String flags = ex.flags() == null
                 ? ""
                 : ex.flags();
+        if (ex.regex().length() > SafePattern.MAX_REGEX_LENGTH) {
+            problems.add(where + ": the regex is " + ex.regex().length() + " characters long, and may be at most "
+                         + SafePattern.MAX_REGEX_LENGTH + ".");
+            return;
+        }
         final RegularExpression regex;
         try {
             regex = LockedSaxon.regex(ex.regex(), flags);
@@ -417,10 +426,45 @@ public final class XPathChecks {
                     : ""));
             return;
         }
+        try {
+            SafePattern.limited(ex.regex(), () -> {
+                checkMatches(where, ex, flags, regex, texts, problems, warnings);
+                return null;
+            });
+        } catch (final PatternTimeoutException e) {
+            problems.add(where + ": " + e.getMessage());
+        }
+    }
+
+    // Runs an extraction's regex on its texts, within the time limit of [SafePattern#limited(String, Supplier)].
+    // Saxon's regex engine copies the text before it matches and checks no time limit, so each text is matched
+    // first by the same regex in Java (close to XPath's), reading the text through a DeadlineCharSequence: a regex
+    // that backtracks badly is stopped there before Saxon runs it. Saxon's own backtracking limit (lowered in
+    // LockedSaxon) stops one the Java one can't read.
+    private static void checkMatches(final String where,
+                                     final Extraction ex,
+                                     final String flags,
+                                     final RegularExpression regex,
+                                     final List<String> texts,
+                                     final List<String> problems,
+                                     final List<String> warnings) {
+        final Pattern java = javaPattern(ex.regex(), javaFlags(flags));
         int matched = 0;
         String missed = null;
         for (final String text : texts) {
-            if (regex.containsMatch(text)) {
+            ToolDeadline.check();
+            if (java != null) {
+                SafePattern.matcher(java, text).find();
+            }
+            final boolean found;
+            try {
+                found = regex.containsMatch(text);
+            } catch (final UncheckedXPathException e) {
+                // Saxon's backtracking limit.
+                LOGGER.debug(() -> "Regex " + ex.regex() + " stopped: " + e.getMessage());
+                throw new PatternTimeoutException(ex.regex());
+            }
+            if (found) {
                 matched++;
             } else if (missed == null) {
                 missed = text;
@@ -434,6 +478,15 @@ public final class XPathChecks {
             warnings.add(where + ": the regex matches " + matched + " of the " + texts.size() + " sample texts; "
                          + "the rest leave " + names + " empty. E.g. " + shown(missed, 160) + ": "
                          + whereItStops(ex.regex(), flags, List.of(missed)));
+        }
+    }
+
+    // The regex as Java reads it, or null if Java can't (XPath has syntax Java doesn't, e.g. [a-z-[aeiou]]).
+    private static Pattern javaPattern(final String regex, final int javaFlags) {
+        try {
+            return SafePattern.compile(regex, javaFlags);
+        } catch (final PatternSyntaxException e) {
+            return null;
         }
     }
 
@@ -506,9 +559,10 @@ public final class XPathChecks {
                + shown(after, 30) + ".";
     }
 
+    // A matcher that checks the time limit as it reads (see SafePattern), or null if the regex isn't Java's.
     private static Matcher matcher(final String regex, final int javaFlags, final String text) {
         try {
-            return Pattern.compile(regex, javaFlags).matcher(text);
+            return SafePattern.matcher(SafePattern.compile(regex, javaFlags), text);
         } catch (final PatternSyntaxException e) {
             return null;
         }

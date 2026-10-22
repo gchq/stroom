@@ -627,7 +627,7 @@ ported as helpers, named for the builds' port (`start_build`, `promote_build`) t
 
 * **`ProcessorFilterWrites`**: `_term` (`term`, `anyOf`, `allOf`), `_managed_pipeline` (`managedPipeline`),
   `_create_filter` (`createFilter`), `_selected_ids`, `_already_processed`, `_feed_term`, `_pipeline_term`,
-  `feed_stream_type`, `filter_feeds`, `_pipeline_terms` (and `pipelineUuids`), `_names_pipeline`, `_feed_bounds`
+  `feed_stream_type`, `_pipeline_terms` (and `pipelineUuids`), `_names_pipeline`, `_feed_bounds`
   (`feedBounds`, with `feed_created_ms` as `feedCreatedMs`), `_refuse_duplicate`, and the settings
   `max_reprocess_streams`, `reprocess_max_tasks`, `sample_max_tasks` and `max_feed_filter_tasks` as constants (10,
   1, 1 and 2, their defaults: not Stroom config, so expected.yaml is unchanged).
@@ -1306,3 +1306,52 @@ Tests port `tests/test_promotion_layout.py` (`TestPromotionLayout`, `TestPromote
 (`TestStartBuildTool`), `tests/test_version_history.py`'s version control case (`TestDocumentationVersions`), and
 what `dev/e2e_plan_walk.py` (promotion held up by the build's own stale documentation, a hand edit only warning) and
 `dev/e2e_source_docs.py` (the source notes beside the feed) expect.
+
+## Hardening after review (where the ported tools now differ from the Stroom MCP server)
+
+* **Stroom functions that reach outside Stroom** (`XsltSafety.STROOM_REFUSED`): an XSLT the tools save, check
+  (check_xslt), compile or step as a draft (step_pipeline, step_sample, step_records, compare_outputs) may not call
+  `stroom:http-call()`, `stroom:fetch-json()` (both request a URL), `stroom:ask-ai()` (sends its text to a chat
+  model) or `stroom:host-name()` / `stroom:host-address()` (DNS lookups, which carry the name, and so a record's
+  data, to whichever server answers): Stroom would run them on its nodes for every record. Unless the XSLT being
+  replaced (a save) or the element's saved XSLT (a step) already calls the same function: the user put it there
+  (`XsltSafety.keptBy`, the one rule both use). A mapping's xpaths are not refused for these (they are only ever
+  saved as XSLT, where they are). The Python server let them all through.
+* **system-property() and available-system-properties()** are refused like environment-variable(): with Saxon's
+  external functions allowed, as Stroom runs XSLT, a name in no namespace reads the JVM's system properties. Saxon
+  gives system-property() to XSLT (and use-when) only, not to XPath. `LockedSaxon` now turns external functions off
+  (Stroom's functions are integrated ones, which Saxon still runs). environment-variable() and
+  available-environment-variables() were already hidden by `LockedSaxon`'s empty resolver (Saxon reads the resolver
+  only while external functions are on, so they are now hidden twice); XsltCompileCheck's processor hid neither.
+  `XsltCompileCheck` compiles with a processor locked down as `LockedSaxon`'s is (`LockedSaxon.newLocked`: no URI,
+  unparsed text, collection, environment variable or system property, external functions off, its source read
+  without external entities), with Stroom's functions and import resolver added; a DOCTYPE was already refused.
+* **Regular expressions the agent writes** (a splitter's pattern, record start and end; an extraction's regex; a
+  condition's `matches`) are compiled at most `SafePattern.MAX_REGEX_LENGTH` (2,000) characters long and matched
+  through `DeadlineCharSequence` within `SafePattern.REGEX_TIME_LIMIT` (10 s, or the call's own limit if sooner):
+  one that backtracks badly is stopped, and the tool says "The pattern '...' took too long to match (more than
+  10 s) and was stopped: it backtracks too much. Make it simpler: ...". build_data_splitter, build_translation_xslt
+  and draft_translation_mapping give it as their refusal; XPathChecks gives it as the extraction's problem. Saxon's
+  regex engine copies the text before matching and checks no time limit, so each text is matched first by the same
+  regex in Java (close to XPath's) through the deadline, and `LockedSaxon` lowers Saxon's own backtracking limit
+  (`REGEX_BACKTRACKING_LIMIT`, a million) for what Java can't read and for matches() in an agent's xpath.
+* **Reading a stream's text needs View Data**, checked by `StreamReader` itself (raw text, its cache, and Error
+  streams), whatever the caller checked: the stream store checks only the feed. Without it, create_processor_filter
+  and reprocess_streams don't read why Elasticsearch refused earlier runs (the index is taken to hold what they
+  sent), and the build plan (build_status and every tool's next step) goes without the sample's format, as before a
+  sample is uploaded. Declared on create_processor_filter, reprocess_streams and build_status.
+* **Shared state**: `EventSchema` works out everything it gives once, when it is made, into maps never changed after
+  (a Xerces DOM isn't safe to read from several threads, and `HeldSchemas` shares one per version); `HeldSchemas`
+  keeps the 8 most recently used schema models, `XPathTreeParser` the 64 most recently used parsers, and
+  `WriteGuard` makes folders under a fixed set of 64 locks; `HandEditGate` reads its answers from a copy taken under
+  their lock; `StreamReader` doesn't keep a text longer than its whole cache.
+* **Searches and stepping sessions** are ended even when the first request fails after Stroom started them: a search
+  by the owner made up for it alone (`AgentSearches.destroyOwnedBy`), and a stepping session by Stroom's stepping
+  service itself, which now ends a session it made for a step that failed (its id never reached the client).
+* **write_documentation's "no events" reason** steps each stream within the session's time limit for a long call;
+  once it is up, the streams left are named, not stepped.
+* **check_events takes a run slot**, as summarise_streams does: it reads and validates Events streams.
+* **Feeds by pipeline** (find_reference_data, review_coverage's templates) are read by `PipelineFeeds.filterFeeds`,
+  the one reader (IS_DOC_REF, IN_DICTIONARY, comma lists, terms at any depth, and an Id term's stream's feed), where
+  only a top-level Feed term's value was read; `ProcessorFilterWrites.filterFeeds`, which nothing used, is gone, and
+  `ProcessorFilters.canManageProcessors` is `ProcessorFilterAccess`'s.

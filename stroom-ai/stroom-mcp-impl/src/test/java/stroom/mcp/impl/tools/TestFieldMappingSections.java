@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -86,6 +87,32 @@ class TestFieldMappingSections {
                 List.of(873L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("streams ['873 (ACME, Events)'] hold no events");
+    }
+
+    @Test
+    void whyNoEventsCameIsSteppedWithinTheTimeLimit() {
+        // Before, each stream was stepped again to say why, whatever time the call had left.
+        Mockito.when(world.streamReader.meta(anyLong())).thenAnswer(invocation -> Meta.builder()
+                .id(invocation.<Long>getArgument(0)).feedName("ACME").typeName("Raw Events").build());
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of("873:0", "<Events xmlns=\"event-logging:3\"/>"),
+                        false));
+        final SteppingWalks.Walk walk = Mockito.mock(SteppingWalks.Walk.class);
+        final SteppingResult first = Mockito.mock(SteppingResult.class);
+        Mockito.when(first.isFoundRecord()).thenReturn(true);
+        Mockito.when(walk.first()).thenReturn(first).thenThrow(new ToolTimeoutException());
+        Mockito.when(stepping.open(any(), anyLong(), any())).thenReturn(walk);
+        final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", TranslationWorld.mapping()));
+
+        // The second stream's step runs out of time: it and the third are named, not stepped.
+        assertThatThrownBy(() -> sections.fieldMappingSection(PortedToolCalls.context(), "b", pipeline, kept,
+                List.of(873L, 874L, 875L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("stream 873 (ACME, Raw Events): its records produced no Event; streams 874, "
+                                      + "875 not stepped: the time for stepping ran out.");
+        Mockito.verify(stepping, Mockito.times(2)).open(any(), anyLong(), any());
     }
 
     @Test

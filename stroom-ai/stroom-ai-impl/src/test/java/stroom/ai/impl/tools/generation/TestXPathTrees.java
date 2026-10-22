@@ -135,6 +135,16 @@ class TestXPathTrees {
     }
 
     @Test
+    void theParsersKeptForEachSetOfBindingsAreBounded() {
+        // Before, one was kept for every set of bindings ever sent, for as long as the server ran.
+        for (int i = 0; i < XPathTreeParser.MAX_PARSERS * 2; i++) {
+            final XPathTreeParser parser = XPathTreeParser.parserFor(Map.of("p" + i, "urn:" + i));
+            assertThat(XPathTreeParser.parserFor(Map.of("p" + i, "urn:" + i))).isSameAs(parser);
+        }
+        assertThat(XPathTreeParser.parsersKept()).isLessThanOrEqualTo(XPathTreeParser.MAX_PARSERS);
+    }
+
+    @Test
     void aPrefixTheStylesheetDoesntBindIsAnErrorAsItIsInStroom() {
         assertThatThrownBy(() -> new XPathTreeParser(NS).parse("nope:thing(1)"))
                 .isInstanceOf(XPathParseException.class)

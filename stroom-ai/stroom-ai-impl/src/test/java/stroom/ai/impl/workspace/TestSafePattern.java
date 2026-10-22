@@ -21,6 +21,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -78,6 +80,41 @@ class TestSafePattern {
                 .isInstanceOf(ToolTimeoutException.class);
 
         assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(5));
+    }
+
+    @Test
+    void testAModelsRegexIsLimitedInLength() {
+        assertThat(SafePattern.compile("a".repeat(SafePattern.MAX_REGEX_LENGTH), 0).pattern())
+                .hasSize(SafePattern.MAX_REGEX_LENGTH);
+        // Said as a PatternSyntaxException, so a caller that says why a regex is invalid says so.
+        assertThatThrownBy(() -> SafePattern.compile("a".repeat(SafePattern.MAX_REGEX_LENGTH + 1), 0))
+                .isInstanceOf(PatternSyntaxException.class)
+                .hasMessageContaining("may be at most " + SafePattern.MAX_REGEX_LENGTH);
+    }
+
+    @Test
+    void testAModelsRegexIsStoppedWhereTheCallHasNoTimeLimit() {
+        // Before, a splitter's or extraction's regex ran with no time limit in a tool that sets none.
+        final long start = System.nanoTime();
+        final Pattern evil = SafePattern.compile("(.*?,){25}x", 0);
+
+        assertThatThrownBy(() -> SafePattern.limited("(.*?,){25}x",
+                () -> SafePattern.matcher(evil, "a,".repeat(40)).find()))
+                .isInstanceOf(PatternTimeoutException.class)
+                .hasMessageStartingWith("The pattern '(.*?,){25}x' took too long to match (more than "
+                                        + SafePattern.REGEX_TIME_LIMIT.toSeconds() + " s) and was stopped");
+        assertThat(Duration.ofNanos(System.nanoTime() - start))
+                .isLessThan(SafePattern.REGEX_TIME_LIMIT.plusSeconds(10));
+    }
+
+    @Test
+    void testTheCallsOwnSoonerTimeLimitIsTheCalls() {
+        assertThatThrownBy(() -> ToolDeadline.run(Duration.ofMillis(100), () -> SafePattern.limited("x", () -> {
+            busyWait(Duration.ofMillis(200));
+            ToolDeadline.check();
+            return null;
+        }))).isExactlyInstanceOf(ToolTimeoutException.class);
+        assertThat(SafePattern.limited("x", () -> "done")).isEqualTo("done");
     }
 
     @Test

@@ -38,6 +38,7 @@ import org.w3c.dom.Element;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -46,7 +47,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -87,6 +87,8 @@ public class HeldSchemas {
                                                   + "pack first.";
     /// The most errors a validation gives.
     public static final int MAX_ERRORS = 50;
+    /// The most event-logging schema models kept, the least recently used dropped first.
+    static final int MAX_EVENT_SCHEMAS = 8;
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HeldSchemas.class);
     private static final Pattern SCHEMA_LOCATION = Pattern.compile("schemaLocation=\"\\s*(\\S+)\\s+(\\S+)\\s*\"");
@@ -97,8 +99,15 @@ public class HeldSchemas {
     private final Provider<XmlSchemaStore> xmlSchemaStoreProvider;
     private final DocumentAccess documentAccess;
     private final Provider<SchemaPool> schemaPoolProvider;
-    // Each XSD's schema model, by its text: an XSD is parsed once however many users read it.
-    private final Map<String, EventSchema> eventSchemas = new ConcurrentHashMap<>();
+    // Each XSD's schema model, by its text: an XSD is parsed once however many users read it. Only the most
+    // recently used are kept: each edit of an XSD is a new text.
+    private final Map<String, EventSchema> eventSchemas = Collections.synchronizedMap(
+            new LinkedHashMap<>(16, 0.75F, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<String, EventSchema> eldest) {
+                    return size() > MAX_EVENT_SCHEMAS;
+                }
+            });
 
     /// @param xmlSchemaStoreProvider Lists Stroom's XMLSchema documents.
     /// @param documentAccess         Checks the user may view each, and reads it.
@@ -258,11 +267,25 @@ public class HeldSchemas {
     public EventSchema eventSchema(final String version) {
         final String xsd = source(eventLoggingSystemId(version));
         try {
-            return eventSchemas.computeIfAbsent(xsd, EventSchema::parse);
+            final EventSchema known = eventSchemas.get(xsd);
+            if (known != null) {
+                return known;
+            }
+            // Parsed outside the map's lock, so one schema being read doesn't hold up the rest.
+            final EventSchema parsed = EventSchema.parse(xsd);
+            final EventSchema raced = eventSchemas.putIfAbsent(xsd, parsed);
+            return raced != null
+                    ? raced
+                    : parsed;
         } catch (final RuntimeException e) {
             throw new ValidationException("The event-logging " + version + " schema in this Stroom can't be read: "
                                           + e.getMessage());
         }
+    }
+
+    /// @return How many schema models are kept, for tests.
+    int eventSchemasKept() {
+        return eventSchemas.size();
     }
 
     /// Validates XML against a schema this Stroom holds, compiled by Stroom's schema pool.

@@ -57,7 +57,11 @@ class TestXsltSafety {
             "transform(map{'stylesheet-text': '...'})",
             "EventSource/User/Id)) , doc('file:///etc/passwd') , ((.",
             "unparsed-text-lines('file:///etc/hosts')",
-            "fn:document('a')"})
+            "fn:document('a')",
+            // With external functions allowed (as Stroom runs XSLT), a name in no namespace reads the JVM's.
+            "system-property('java.home')",
+            "fn:system-property('user.dir')",
+            "available-system-properties()"})
     void testExpressionsReadingTheEnvironmentOrAResourceAreRefused(final String expression) {
         assertThat(XsltSafety.refused(expression, null)).isNotNull();
     }
@@ -67,7 +71,8 @@ class TestXsltSafety {
             "EventSource/System/Name", "json-to-xml(*[@key='event'])/*/*[@key='user']", "document-node()",
             "doc/id", "substring-after(data[@name='msg']/@value, 'user=')", "$doc('x')", "my-doc(1)",
             "matches(., 'transform-[a-z]+')", "format-dateTime(current-dateTime(), '[Y]')",
-            // Stroom's own functions, network ones included: enrichment pipelines need them (the user's call).
+            // Stroom's own functions, network ones included: an xpath is only ever saved as XSLT, where they are
+            // refused unless the XSLT replaced calls them (unsafeInXslt).
             "stroom:http-call('https://enrich/api', '', 'application/json', ., '')",
             "stroom:fetch-json('https://x/y', '')"})
     void testOrdinaryExpressionsPass(final String expression) {
@@ -173,6 +178,57 @@ class TestXsltSafety {
                 "version=\"3.0\" xmlns:f=\"http://www.w3.org/2005/xpath-functions\" expand-text=\"yes\">");
         final String body = "<x xmlns:f=\"" + GEO + "\"/>{f:doc('secret')}";
         assertThat(whats(XsltSafety.unsafeInXslt(rebound.replace("{BODY}", body)))).containsExactly("doc()");
+    }
+
+    static Stream<Arguments> outsideBodies() {
+        return Stream.of(
+                Arguments.of("<xsl:value-of select=\"stroom:http-call('https://x/y', '', 'text/plain', ., '')\"/>",
+                        "stroom:http-call()"),
+                Arguments.of("<xsl:copy-of select=\"stroom:fetch-json(concat('https://x/', .), '')\"/>",
+                        "stroom:fetch-json()"),
+                Arguments.of("<xsl:value-of select=\"stroom:ask-ai('model', .)\"/>", "stroom:ask-ai()"),
+                Arguments.of("<Data Name=\"h\" Value=\"{stroom:host-name(@ip)}\"/>", "stroom:host-name()"),
+                Arguments.of("<xsl:value-of select=\"s:host-address(concat(., '.example.com'))\" "
+                             + "xmlns:s=\"stroom\"/>", "stroom:host-address()"),
+                Arguments.of("<xsl:value-of select=\"Q{stroom}http-call#5\"/>", "stroom:http-call()"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("outsideBodies")
+    void testAnXsltCallingAStroomFunctionThatReachesOutsideStroomIsRefused(final String body, final String what) {
+        final String sheet = XSLT.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">");
+        assertThat(whats(XsltSafety.unsafeInXslt(sheet.replace("{BODY}", body)))).containsExactly(what);
+    }
+
+    @Test
+    void testAStroomFunctionThatReachesOutsideStroomSaysWhy() {
+        final String sheet = XSLT.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">");
+        assertThat(XsltSafety.unsafeInXslt(sheet.replace("{BODY}",
+                "<xsl:value-of select=\"stroom:http-call('https://x', '', 'text/plain', ., '')\"/>")))
+                .extracting(Unsafe::why)
+                .containsExactly("xsl:value-of/@select calls stroom:http-call(), which reaches outside Stroom (a "
+                                 + "URL, a chat model or a DNS lookup) with what it is given: Stroom would run it on "
+                                 + "its nodes for every record, so the tools don't save it unless the XSLT it "
+                                 + "replaces already calls it");
+        // Stroom's other functions, and one of the same name in another namespace, are the XSLT's business.
+        assertThat(XsltSafety.unsafeInXslt(sheet.replace("{BODY}",
+                "<xsl:value-of select=\"stroom:lookup('m', .), stroom:format-date(., 'x'), geo:host-name(.), "
+                + "host-name\" xmlns:geo=\"" + GEO + "\"/>"))).isEmpty();
+    }
+
+    @Test
+    void testWhatTheXsltReplacedAlreadyCalledIsKept() {
+        final String sheet = XSLT.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">");
+        final String previous = sheet.replace("{BODY}",
+                "<xsl:value-of select=\"stroom:http-call('https://enrich', '', 'text/plain', ., '')\"/>");
+        final String code = sheet.replace("{BODY}",
+                "<Data Value=\"{stroom:http-call('https://enrich', '', 'text/plain', @ip, '')}\"/>"
+                + "<xsl:value-of select=\"stroom:fetch-json('https://other', '')\"/>");
+        final List<Unsafe> unsafe = XsltSafety.unsafeInXslt(code);
+        assertThat(whats(unsafe)).containsExactly("stroom:http-call()", "stroom:fetch-json()");
+        assertThat(XsltSafety.keptBy(code, previous)).containsExactly(unsafe.getFirst().why());
+        assertThat(XsltSafety.keptBy(code, null)).isEmpty();
+        assertThat(XsltSafety.keptBy(code, "")).isEmpty();
     }
 
     @Test

@@ -43,7 +43,8 @@ interface BuildFacts {
 
     /// @param streamId A raw stream.
     /// @return Its head (the first 20,000 characters or so), cut at the end of its last whole line.
-    /// @throws RuntimeException if it can't be read.
+    /// @throws ToolRefusal      if its text can't be read (e.g. the user doesn't have the View Data permission).
+    /// @throws RuntimeException if it can't be read otherwise (e.g. it is gone).
     String streamHead(long streamId);
 
     /// @param text Sample text.

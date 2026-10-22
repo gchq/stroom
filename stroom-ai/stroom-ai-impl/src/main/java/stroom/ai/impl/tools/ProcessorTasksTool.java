@@ -1568,8 +1568,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     /// read.
     private ReadText readErrorStream(final long id) {
         try {
-            final StreamReader.RawText text = StreamReader.errorStreamText(storeProvider.get(), id,
-                    MAX_BYTES_PER_STREAM);
+            final StreamReader.RawText text = StreamReader.errorStreamText(storeProvider.get(),
+                    documentAccess::canViewData, id, MAX_BYTES_PER_STREAM);
             return new ReadText(text.text(), text.truncated());
         } catch (final ToolTimeoutException e) {
             throw e;

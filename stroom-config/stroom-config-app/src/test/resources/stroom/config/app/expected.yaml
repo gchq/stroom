@@ -65,6 +65,7 @@ appConfig:
       formTimeout: "PT10M"
       keepAliveInterval: "PT20S"
       maxFormsPerNode: 50
+      maxSessionsPerUser: 20
       sessionRetention: "P1D"
     pipelineStages:
       discovery:
@@ -116,6 +117,7 @@ appConfig:
         - "Event Data (*)"
     sampleUploads:
       commandsLast: "PT15M"
+      maxPendingPerUser: 20
       maxUploadMb: 100
     shareActiveTab: true
     suggestFollowUps: true

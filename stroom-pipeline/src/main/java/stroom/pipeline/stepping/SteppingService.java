@@ -68,6 +68,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -886,28 +887,39 @@ public class SteppingService {
                     streamIds,
                     () -> createSession(streamIds));
 
-            // The fingerprints are what this step is served under. If an element was edited they have
-            // changed, so it is served under new keys while the untouched elements are still read from what
-            // was already captured.
-            final SessionStepResult sessionResult;
             try {
-                sessionResult = sessionStepResolver.resolve(
-                        session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
-            } catch (final RuntimeException e) {
-                if (!session.isClosed()) {
-                    throw e;
+                // The fingerprints are what this step is served under. If an element was edited they have
+                // changed, so it is served under new keys while the untouched elements are still read from what
+                // was already captured.
+                final SessionStepResult sessionResult;
+                try {
+                    sessionResult = sessionStepResolver.resolve(
+                            session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
+                } catch (final RuntimeException e) {
+                    if (!session.isClosed()) {
+                        throw e;
+                    }
+                    // The session was terminated (the user pressed Stop) while this step was waiting on it, so
+                    // the step failed on a closed session or its deleted store. That is the termination, not an
+                    // error: answer as an unfinished step, which a client that has stopped simply drops.
+                    LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
+                            session.getSessionId(), LogUtil.exceptionMessage(e)));
+                    return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
                 }
-                // The session was terminated (the user pressed Stop) while this step was waiting on it, so the
-                // step failed on a closed session or its deleted store. That is the termination, not an error:
-                // answer as an unfinished step, which a client that has stopped simply drops.
-                LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
-                        session.getSessionId(), LogUtil.exceptionMessage(e)));
-                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+
+                sessionRegistry.reapIdle();
+
+                return resultMapper.toResult(request, session, sessionResult);
+            } catch (final RuntimeException e) {
+                if (!Objects.equals(session.getSessionId(), request.getSessionUuid())) {
+                    // A session made for this step, whose id never reaches the client as the step failed:
+                    // nothing could use or end it, so it would hold its capture until it went idle.
+                    LOGGER.debug(() -> "Ending stepping session " + session.getSessionId()
+                                       + " made for a step that failed");
+                    sessionRegistry.terminate(userIdentity, session.getSessionId());
+                }
+                throw e;
             }
-
-            sessionRegistry.reapIdle();
-
-            return resultMapper.toResult(request, session, sessionResult);
         });
     }
 

@@ -18,8 +18,10 @@ package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.validation.XPathChecks.Extraction;
 import stroom.ai.impl.tools.validation.XPathChecks.Findings;
+import stroom.ai.impl.workspace.SafePattern;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -208,6 +210,28 @@ class TestXPathChecks {
         assertThat(findings.problems()).isEmpty();
         assertThat(findings.warnings()).singleElement().asString()
                 .startsWith("extract[0] (body) not checked against the sample: the check's time ran out");
+    }
+
+    @Test
+    @Timeout(120)
+    void testARegexThatBacktracksBadlyIsAProblemNotAHang() {
+        // Before, an extraction's regex ran in Saxon with no time limit (Saxon copies the text and checks none).
+        final List<Map<String, ?>> records = List.of(Map.of("body", "a,".repeat(40)));
+        final Findings findings = XPathChecks.checkExtractions(List.of(new Extraction("body", null, "(.*?,){25}x",
+                null, List.of("x"))), true, records, List::of, JSON_NS, Map.of(), null, CLOCK);
+        assertThat(findings.problems()).singleElement().asString()
+                .startsWith("extract[0] (body): The pattern '(.*?,){25}x' took too long to match");
+    }
+
+    @Test
+    void testARegexTooLongIsAProblem() {
+        final List<Map<String, ?>> records = List.of(Map.of("body", "a"));
+        final Findings findings = XPathChecks.checkExtractions(List.of(new Extraction("body", null,
+                "a".repeat(SafePattern.MAX_REGEX_LENGTH + 1), null, List.of("x"))), true, records, List::of, JSON_NS,
+                Map.of(), null, CLOCK);
+        assertThat(findings.problems()).singleElement().asString()
+                .isEqualTo("extract[0] (body): the regex is " + (SafePattern.MAX_REGEX_LENGTH + 1) + " characters "
+                           + "long, and may be at most " + SafePattern.MAX_REGEX_LENGTH + ".");
     }
 
     @Test

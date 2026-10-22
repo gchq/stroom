@@ -73,6 +73,23 @@ class TestHeldSchemas {
     }
 
     @Test
+    void testOnlyTheMostRecentlyUsedSchemaModelsAreKept() {
+        // Before, a model was kept for every XSD text ever read (each edit of an XSD is a new text), for good.
+        final HeldSchemasWorld world = new HeldSchemasWorld();
+        final int versions = HeldSchemas.MAX_EVENT_SCHEMAS + 2;
+        for (int i = 0; i < versions; i++) {
+            world.hold("file://event-logging-v4.1." + i + ".xsd", "event-logging:3",
+                    HeldSchemasWorld.XSD_4_1_0 + "<!-- " + i + " -->");
+        }
+        final HeldSchemas schemas = world.heldSchemas();
+        for (int i = 0; i < versions; i++) {
+            final EventSchema schema = schemas.eventSchema("4.1." + i);
+            assertThat(schemas.eventSchema("4.1." + i)).isSameAs(schema);
+        }
+        assertThat(schemas.eventSchemasKept()).isEqualTo(HeldSchemas.MAX_EVENT_SCHEMAS);
+    }
+
+    @Test
     void testTheVersionsStroomHoldsComeNewestFirst() {
         final HeldSchemas versions = new HeldSchemasWorld()
                 .hold("file://event-logging-v3.5.2.xsd", "event-logging:3", "")

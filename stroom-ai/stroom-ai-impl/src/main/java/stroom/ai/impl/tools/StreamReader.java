@@ -40,6 +40,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Count;
@@ -62,6 +63,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,8 +74,9 @@ import java.util.regex.Pattern;
 /// Meta is found through [MetaService], which only finds streams of feeds the user may view. Records are read
 /// through [DataService], as the data viewer reads them, which needs the View Data permission. A raw stream's text
 /// is read through the stream store, which checks the user may view the stream's feed when it opens it, decoded
-/// with the feed's encoding as a pipeline decodes it (see [StreamCharsets]); callers check the View Data permission
-/// first. Each caller logs what it read.
+/// with the feed's encoding as a pipeline decodes it (see [StreamCharsets]); the store doesn't check the View Data
+/// permission the data viewer needs, so that is checked here, before any stream's text (raw, cached or an Error
+/// stream's) is read, whatever its caller checked. Each caller logs what it read.
 @Singleton
 public class StreamReader {
 
@@ -107,6 +110,7 @@ public class StreamReader {
     private final Provider<FeedProperties> feedPropertiesProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final LongSupplier clock;
+    private final long cacheChars;
     private final Map<List<Object>, CachedText> texts = new LinkedHashMap<>();
     private final Map<Long, Map<String, Object>> reports = new LinkedHashMap<>();
 
@@ -127,12 +131,25 @@ public class StreamReader {
                  final Provider<FeedProperties> feedPropertiesProvider,
                  final Provider<SecurityContext> securityContextProvider,
                  final LongSupplier clock) {
+        this(metaServiceProvider, dataServiceProvider, storeProvider, feedPropertiesProvider, securityContextProvider,
+                clock, SAMPLE_CACHE_CHARS);
+    }
+
+    /// As the injected constructor, with the clock and the most text kept given, for tests.
+    StreamReader(final Provider<MetaService> metaServiceProvider,
+                 final Provider<DataService> dataServiceProvider,
+                 final Provider<Store> storeProvider,
+                 final Provider<FeedProperties> feedPropertiesProvider,
+                 final Provider<SecurityContext> securityContextProvider,
+                 final LongSupplier clock,
+                 final long cacheChars) {
         this.metaServiceProvider = metaServiceProvider;
         this.dataServiceProvider = dataServiceProvider;
         this.storeProvider = storeProvider;
         this.feedPropertiesProvider = feedPropertiesProvider;
         this.securityContextProvider = securityContextProvider;
         this.clock = clock;
+        this.cacheChars = cacheChars;
     }
 
     // --------------------------------------------------------------------------------
@@ -309,8 +326,9 @@ public class StreamReader {
     /// @param part     The zero-based index of the part.
     /// @param maxChars The most characters.
     /// @return The text, whether it was cut short, and the number of parts the stream has.
-    /// @throws StreamReadException if the stream can't be read.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
     public RawHead readHead(final long streamId, final int part, final int maxChars) {
+        requireViewData(streamId);
         final int maxBytes = (int) Math.min(Integer.MAX_VALUE - 8L, (long) maxChars * MAX_BYTES_PER_CHAR);
         final byte[] bytes;
         final boolean moreBytes;
@@ -357,7 +375,10 @@ public class StreamReader {
     /// @param streamId The stream.
     /// @param maxChars The most characters.
     /// @return The text, and whether it was cut short.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission
+    ///                             (checked before the cache, as the permission may have been taken away).
     public RawText cachedRawText(final long streamId, final int maxChars) {
+        requireViewData(streamId);
         final List<Object> key = List.of(userKey(), streamId, maxChars);
         final long now = clock.getAsLong();
         synchronized (texts) {
@@ -368,9 +389,13 @@ public class StreamReader {
             }
         }
         final RawText text = rawText(streamId, maxChars);
+        if (text.text().length() > cacheChars) {
+            // Not kept: it would push out everything else and still be more than may be kept.
+            return text;
+        }
         synchronized (texts) {
             long held = texts.values().stream().mapToLong(cached -> cached.text().text().length()).sum();
-            while (!texts.isEmpty() && held + text.text().length() > SAMPLE_CACHE_CHARS) {
+            while (!texts.isEmpty() && held + text.text().length() > cacheChars) {
                 final List<Object> oldest = texts.keySet().iterator().next();
                 held -= texts.remove(oldest).text().text().length();
             }
@@ -409,6 +434,29 @@ public class StreamReader {
             LOGGER.debug(() -> "Unable to read the encoding of feed " + meta.getFeedName(), e);
             return null;
         }
+    }
+
+    // Refuses to read a stream's text without the View Data permission, as the data viewer does.
+    private void requireViewData(final long streamId) {
+        if (!canViewData()) {
+            throw noViewData(streamId);
+        }
+    }
+
+    // True if the user has the View Data permission; false if not, or if checking fails (failing closed).
+    private boolean canViewData() {
+        try {
+            return securityContextProvider.get().hasAppPermission(AppPermission.VIEW_DATA_PERMISSION);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check the View Data permission", e);
+            return false;
+        }
+    }
+
+    private static StreamReadException noViewData(final long streamId) {
+        return new StreamReadException("Stream " + streamId + "'s text can't be read: you don't have permission to "
+                                       + "view data (View Data), which reading a stream's text needs, as the data "
+                                       + "viewer does.");
     }
 
     private String userKey() {
@@ -539,16 +587,37 @@ public class StreamReader {
     // Error streams.
     // --------------------------------------------------------------------------------
 
-    /// The start of an Error stream's text, all its parts, as UTF-8.
+    /// The start of an Error stream's text, all its parts, as UTF-8, read as the user.
     ///
-    /// @param store    The stream store.
     /// @param streamId The Error stream.
     /// @param maxBytes The most bytes to read.
     /// @return The text, and whether it was cut short.
-    /// @throws IOException      if it can't be read.
-    /// @throws RuntimeException if it can't be opened, e.g. it has been deleted or the user may not view its feed.
-    public static RawText errorStreamText(final Store store, final long streamId, final int maxBytes)
-            throws IOException {
+    /// @throws IOException         if it can't be read.
+    /// @throws StreamReadException if the user doesn't have the View Data permission.
+    /// @throws RuntimeException    if it can't be opened, e.g. it has been deleted or the user may not view its
+    ///                             feed.
+    public RawText errorStreamText(final long streamId, final int maxBytes) throws IOException {
+        return errorStreamText(storeProvider.get(), this::canViewData, streamId, maxBytes);
+    }
+
+    /// The start of an Error stream's text, all its parts, as UTF-8, for a caller without a [StreamReader].
+    ///
+    /// @param store       The stream store.
+    /// @param canViewData Whether the user has the View Data permission (e.g. [DocumentAccess#canViewData()]).
+    /// @param streamId    The Error stream.
+    /// @param maxBytes    The most bytes to read.
+    /// @return The text, and whether it was cut short.
+    /// @throws IOException         if it can't be read.
+    /// @throws StreamReadException if the user doesn't have the View Data permission.
+    /// @throws RuntimeException    if it can't be opened, e.g. it has been deleted or the user may not view its
+    ///                             feed.
+    public static RawText errorStreamText(final Store store,
+                                          final BooleanSupplier canViewData,
+                                          final long streamId,
+                                          final int maxBytes) throws IOException {
+        if (!canViewData.getAsBoolean()) {
+            throw noViewData(streamId);
+        }
         try (final Source source = store.openSource(streamId)) {
             final long parts = source.count();
             final StringBuilder text = new StringBuilder();

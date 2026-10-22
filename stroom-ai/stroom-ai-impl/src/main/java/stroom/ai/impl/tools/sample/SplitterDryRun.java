@@ -16,7 +16,12 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.workspace.DeadlineCharSequence;
+import stroom.ai.impl.workspace.PatternTimeoutException;
+import stroom.ai.impl.workspace.SafePattern;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +203,7 @@ public final class SplitterDryRun {
         }
         Map<String, String> fields;
         if ("regex".equals(applied.kind())) {
-            final Matcher m = Pattern.compile(applied.pattern()).matcher(text);
+            final Matcher m = SafePattern.matcher(SafePattern.compile(applied.pattern(), 0), text);
             if (!m.lookingAt()) {
                 return null;
             }
@@ -226,7 +231,7 @@ public final class SplitterDryRun {
             }
         } else {
             // The same regex the converter runs.
-            final Matcher m = Pattern.compile(namedColumnsPattern(applied)).matcher(text);
+            final Matcher m = SafePattern.matcher(Pattern.compile(namedColumnsPattern(applied)), text);
             if (!m.lookingAt()) {
                 return null;
             }
@@ -253,7 +258,7 @@ public final class SplitterDryRun {
     }
 
     private static Map<String, String> applyCef(final SplitterSpec spec, final String text) {
-        final Matcher m = CEF.matcher(text);
+        final Matcher m = SafePattern.matcher(CEF, text);
         if (!m.lookingAt()) {
             return null;
         }
@@ -261,7 +266,7 @@ public final class SplitterDryRun {
         for (int n = 0; n < CEF_NAMES.size(); n++) {
             fields.put(CEF_NAMES.get(n), m.group(n + 2));
         }
-        final Matcher pair = CEF_PAIR_PATTERN.matcher(m.group(9));
+        final Matcher pair = SafePattern.matcher(CEF_PAIR_PATTERN, m.group(9));
         while (pair.find()) {
             fields.put(pair.group(1), pair.group(2));
         }
@@ -287,7 +292,7 @@ public final class SplitterDryRun {
         while (at < text.length()) {
             Matcher found = null;
             for (final Pattern pattern : patterns) {
-                final Matcher m = PyText.matchFrom(pattern, text, at);
+                final Matcher m = PyText.matchFrom(pattern, new DeadlineCharSequence(text), at);
                 if (m != null && m.end() > at) {
                     found = m;
                     break;
@@ -472,7 +477,27 @@ public final class SplitterDryRun {
     /// @param sample     The sample.
     /// @param maxRecords The most records to read.
     /// @return The records, the lines that match nothing, the field names seen, and the heading.
+    /// @throws PatternTimeoutException if the spec's patterns take too long to match.
     public static DryRun dryRun(final SplitterSpec spec, final String sample, final int maxRecords) {
+        return SafePattern.limited(patterns(spec), () -> dryRunLimited(spec, sample, maxRecords));
+    }
+
+    // The patterns a spec gives, for the message if they take too long.
+    private static String patterns(final SplitterSpec spec) {
+        final List<String> patterns = new ArrayList<>();
+        for (SplitterSpec part = spec; part != null; part = part.body()) {
+            for (final String pattern : Arrays.asList(part.recordStart(), part.recordEnd(), part.pattern())) {
+                if (pattern != null && !patterns.contains(pattern)) {
+                    patterns.add(pattern);
+                }
+            }
+        }
+        return patterns.isEmpty()
+                ? null
+                : String.join("', '", patterns);
+    }
+
+    private static DryRun dryRunLimited(final SplitterSpec spec, final String sample, final int maxRecords) {
         List<String> lines = PyText.nonBlankLines(sample);
         final boolean delimited = "delimited".equals(spec.kind());
         if (spec.recordStart() != null && !delimited) {
@@ -565,13 +590,18 @@ public final class SplitterDryRun {
     /// @param lines The lines.
     /// @param end   A regex the last line of a record matches at its start.
     /// @return The records.
+    /// @throws PatternTimeoutException if `end` takes too long to match.
     public static List<String> groupLinesToEnd(final List<String> lines, final String end) {
-        final Pattern ends = PyText.re(end);
+        return SafePattern.limited(end, () -> groupedToEnd(lines, end));
+    }
+
+    private static List<String> groupedToEnd(final List<String> lines, final String end) {
+        final Pattern ends = SafePattern.compile(end, PyText.FLAGS);
         final List<String> records = new ArrayList<>();
         final List<String> current = new ArrayList<>();
         for (final String line : lines) {
             current.add(line);
-            if (PyText.match(ends, line)) {
+            if (PyText.match(ends, new DeadlineCharSequence(line))) {
                 records.add(String.join("\n", current));
                 current.clear();
             }
@@ -588,11 +618,16 @@ public final class SplitterDryRun {
     /// @param lines The lines.
     /// @param start A regex the first line of a record matches at its start.
     /// @return The records.
+    /// @throws PatternTimeoutException if `start` takes too long to match.
     public static List<String> groupLines(final List<String> lines, final String start) {
-        final Pattern begins = PyText.re(start);
+        return SafePattern.limited(start, () -> grouped(lines, start));
+    }
+
+    private static List<String> grouped(final List<String> lines, final String start) {
+        final Pattern begins = SafePattern.compile(start, PyText.FLAGS);
         final List<String> records = new ArrayList<>();
         for (final String line : lines) {
-            if (records.isEmpty() || PyText.match(begins, line)) {
+            if (records.isEmpty() || PyText.match(begins, new DeadlineCharSequence(line))) {
                 records.add(line);
             } else {
                 records.set(records.size() - 1, records.getLast() + "\n" + line);
@@ -608,7 +643,14 @@ public final class SplitterDryRun {
     /// @param lines      The log's lines.
     /// @param maxRecords The most records to keep.
     /// @return The records, the lines that match nothing, the field names seen, and the last heading.
+    /// @throws PatternTimeoutException if the spec's patterns take too long to match.
     public static DryRun dryRunDirectives(final SplitterSpec spec, final List<String> lines, final int maxRecords) {
+        return SafePattern.limited(patterns(spec), () -> directivesLimited(spec, lines, maxRecords));
+    }
+
+    private static DryRun directivesLimited(final SplitterSpec spec,
+                                            final List<String> lines,
+                                            final int maxRecords) {
         List<String> heading = null;
         final Map<String, String> held = new LinkedHashMap<>();
         List<Map<String, String>> records = new ArrayList<>();

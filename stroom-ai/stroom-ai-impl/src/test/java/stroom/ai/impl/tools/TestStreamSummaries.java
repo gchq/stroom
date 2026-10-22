@@ -59,7 +59,7 @@ class TestStreamSummaries {
     void setUp() {
         fixture = new ToolTestFixture(tempDir);
         fixture.feedAccess();
-        summaries = new StreamSummaries(world.streamReader(), () -> world.store, fixture.documentAccess(),
+        summaries = new StreamSummaries(world.streamReader(), fixture.documentAccess(),
                 new AcceptedErrors(() -> fixture.docFinder, fixture.documentAccess()), () -> aiConfig);
     }
 
