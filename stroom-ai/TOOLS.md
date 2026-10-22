@@ -704,8 +704,8 @@ Where they differ from the Python server:
   yet has no `stream_id`.
 * **Paths** in refusals (`A feed named '...' (path) already exists`) are Stroom's explorer paths (`/Feeds/ACME`), not
   the find index's (`System / Feeds / ACME`). Feeds are found among those the user can view.
-* **record_source_notes**: the event catalogue is checked against the newest event-logging schema held (the build's
-  chosen version is kept by the translation tools, not ported yet). Its notes are validated as the Python models
+* **record_source_notes**: the event catalogue is checked against the event-logging schema of the version chosen for
+  the build (`EventVersions.chosenOrLatest`, as the translation tools read it), else the newest held. Its notes are validated as the Python models
   were (a field needs `field` and `meaning`, an event `event` and `description`, a document `title` and its text or
   uuid), with messages such as `fields[0].meaning is required` in place of pydantic's; numbers given for strings are
   taken as text. The block's JSON escapes non-ASCII characters (`json.dumps` with `ensure_ascii`), where the MCP
@@ -798,7 +798,7 @@ Where they differ from the Python server:
 ## The field-mapping documentation and the CEF mapping (`fielddoc`, `cef`)
 
 Ported from the MCP server's `utils/fielddoc.py` and `utils/cef.py` (stroom-ai-impl), for `write_documentation`,
-`draft_cef_mapping` and the coverage tools when they are ported; no tool uses them yet. They build on the
+`draft_cef_mapping` and the coverage tools (all ported since, and using them). They build on the
 translation generator (`stroom.ai.impl.tools.generation`: its mapping records, `XsltComments`, `StyledXslt`,
 `MappingFacts`, the XML tree) and `KeptMapping.readable` / `conditionText`, which already were `fielddoc`'s.
 
@@ -1090,7 +1090,7 @@ Where they differ from the MCP server:
   for the dashboard's window (the MCP server used its local zone). The dashboard is made through
   `WriteGuard.createFilled` (role Indexing) and written through Stroom's Dashboard store; the searches go through
   `IndexSearches` (unsorted), which gained an overload with an explicit wait for survey_index's sample.
-* **survey_index** (`IndexSurveys`, no tool yet) reads its further groups of columns one after another (the MCP
+* **survey_index** (`IndexSurveys`, used by write_documentation's index documentation) reads its further groups of columns one after another (the MCP
   server ran them at once); `feeding_pipelines` finds the pipelines with `PipelineIndex.containing` and a feed's
   description with `FeedNames.exact`.
 
@@ -1181,8 +1181,8 @@ Where they differ from the MCP server:
 * **The event-logging version chosen for a build** is kept in the build's record (`event_logging_version`: `version`
   and `how`) once the build has a folder, and in this node's memory for the session, so a later session doesn't ask
   again; the MCP server kept it per user in its memory only. draft_translation_mapping stays read-only (as check_events
-  does, the record is the tools' own bookkeeping). record_source_notes still checks its catalogue against the newest
-  version held.
+  does, the record is the tools' own bookkeeping). record_source_notes checks its catalogue against the same chosen
+  version.
 * **The mapping last sent and the session's draft** are kept in the session's workspace (`/outputs/mappings/`: the
   draft as `draft-<build>.json`, an XSLT's as `<uuid>.json`, a build and name by its digest), where the agent can read
   them too, falling back to the mapping saved with the XSLT; the MCP server kept them in the replica's memory. A
@@ -1205,3 +1205,79 @@ Where they differ from the MCP server:
   answer that isn't `keep`, `overwrite` or `per_field`, a `converter_type` that isn't one) say so in pydantic's place.
 * **The drafted index plans** (`drafted_plans`) come from `DraftedIndexPlans`, which knows of none until the indexing
   tools bind theirs: save_xslt then saves from `index_plan` or the plan kept with the XSLT.
+
+## The builds' tools: `start_build`, `write_documentation` and `promote_build`
+
+The last three of the MCP server's tools, ported as tools of their own (`stroom-mcp-impl`, category content) from
+`tools/builds.py`, on the build layer and the helpers above: `WriteGuard`, `BuildRecords`, `BuildPlan`, `Consent`,
+`BuildChecks` (whose `build_checks`, `mapping_digest` and `list_build`, in build_status, were ported before),
+`GeneratedDrift` (`_drift`, `_plan_drift`, `lost_mappings`), `KeptMappings` (`kept_mapping`),
+`IndexTemplateAgreements`, `PromotionProcessing`, `ProcessorFilterWrites`, `OutputFeeds.restoreOutputFeed`,
+`IndexingRuns.developmentBatch`, `IndexSurveys`, `IndexFields`, `EventVersions`, `PipelineStepping`,
+`DraftCefMappingTool.stepped` (cef's `_stepped`), `StreamSummaries`, `AcceptedErrors`, `TranslationBuilds.notesInBuild`,
+the field documentation (`EventFieldDocs`, `IndexFieldDocs`, `FieldDocs`, `Descriptions`, `DocumentationText`), the
+CEF core (`CefPlan`, `CefLines`) and `XsltVersionHistory`. The rest of `tools/builds.py` is ported as:
+
+* **`FieldMappingSections`**: `field_mapping_section`, `written_fields_section`, `cef_written_section`, `_agreed_line`
+  and `_no_events`.
+* **`BuildDocumentation`**: `_documentation_of`, `_stepped_streams`, `_raw_parents`, `_vendor_notes`,
+  `needs_descriptions`, `_layout`, `_errors_markdown`, `_errors_section`, `_with_change` and `_written`.
+* **`IndexDocumentation`**: `_document_index` and `_own_indexing_pipeline`.
+* **`PromotionLayout`**: `_version_folders`, `_joining` and `promotion_tree`; `consolidate_versions` is
+  `PromoteBuildTool.consolidateVersions`.
+* **`DocumentPlaces`**: `_folder_of`, `_path` and `_documentation_beside`, as the user (only what they can view).
+* **`DocumentWrites`**: `get_doc`/`put_doc` of a Documentation doc, and of a working copy's fields
+  (`data`, `converterType`, `documentation`, `description`) written over its original, for any type, through its
+  JSON.
+* **`DocumentationVersions`**: `utils/versionlog.py` (`body_of`, `rows_of`, `pending_of`, `block`, `with_pending`,
+  `consolidate` and `code_of`); `utils/sourcenotes.py`'s `fields_markdown` is
+  `WriteDocumentationTool.sourceFieldsMarkdown`.
+* `WriteGuard` gains `moveTo`, `copyTo` and `delete` (the explorer's move, copy and delete, as the user);
+  `UserActionEntries` gains `disable_filter` (`disableFilter`); `XsltHistory` gains `changedBy` (a doc row's `by`).
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `start_build` | no | no | no | no |
+| `write_documentation` | no | no | no | yes |
+| `promote_build` | no | no | yes | no |
+
+`promote_build` asks before every change: the layout is shown in the chat (`needs_review`), then approved in a short
+form bound to it, as the MCP server's was. `write_documentation` asks only to record errors as benign and to document
+an existing index doc, so over `/mcp` a call is approved as a whole; `start_build` asks nothing.
+
+Where they differ from the MCP server:
+
+* **Promotion is made through Stroom's explorer and stores as the user**: documents are moved with
+  `ExplorerService.move` (permissions the destination's), a production document is backed up with
+  `ExplorerService.copy` into `<workspace>/backups` (named `<name> backup <yyyyMMddHHmmss>`, UTC) before its working
+  copy's fields are written over it through its type's store, and working copies are deleted with
+  `ExplorerService.delete`; the user needs the permissions each of those needs. The MCP server's waits for a build
+  listed empty right after a write (`_LISTING_RETRIES`) are not ported: the explorer is read in-process.
+* **Folders** in the layout, the plan and the result are paths from System (`System/Feeds/Acme`), as the MCP server
+  wrote them; destinations are read in any form `WriteGuard.folderParts` takes (`/Feeds/Acme`, `System / Feeds`).
+  `destinations` may also be given as JSON text.
+* **write_documentation steps as the user** (the Stepping permission, checked first), within the session's time limit
+  for a long call, and the streams stepped are audited; cut short, the section is of the records stepped (its
+  "Counts are of N sample records" line says how many). It takes a run slot.
+* **An existing doc in the build is changed only when it is the tools' own** (`WriteGuard.checkInBuild`), as the
+  other ported tools change documents; the MCP server wrote any doc of the name in the build folder.
+* **The index section's event-logging schema** is the build's chosen version (`EventVersions.chosenOrLatest` with the
+  build), where the MCP server read the session's.
+* **A row's `by`** is `<user> (agent: Stroom <version>, <the session's caller>)`, the user as Stroom records a
+  document's updater, where the MCP server wrote `<preferred_username> (agent: stroom-mcp <version>, <client>, model
+  <model>)`.
+* **start_build's `not_found`** says the feed isn't `in this Stroom` (`FeedNames.notFound`), as the other ported tools
+  do, where the MCP server named the cluster and its URL.
+* **Arguments**: `build` is required by each, and a call without it is refused in words. `accept_errors` may be one
+  object or JSON text, and one without `example` or `reason` is refused as `accept_errors[0].example is required`, in
+  place of pydantic's message; `field_descriptions` may be JSON text (read with Python's `json`).
+* **Results' JSON leaves nulls out**, as every ported tool's does: start_build's `next` is absent where the plan has
+  none.
+
+Tests port `tests/test_promotion_layout.py` (`TestPromotionLayout`, `TestPromoteBuildTool`),
+`tests/test_surface.py`'s promotion cases, `tests/test_fielddoc.py`'s write_documentation, field_mapping_section,
+`_document_index` and agreed-template cases (`TestWriteDocumentationTool`, `TestFieldMappingSections`),
+`tests/test_choices_and_unknown.py`'s Unknown case, `tests/test_existing_data_plan.py`'s start_build case
+(`TestStartBuildTool`), `tests/test_version_history.py`'s version control case (`TestDocumentationVersions`), and
+what `dev/e2e_plan_walk.py` (promotion held up by the build's own stale documentation, a hand edit only warning) and
+`dev/e2e_source_docs.py` (the source notes beside the feed) expect.
