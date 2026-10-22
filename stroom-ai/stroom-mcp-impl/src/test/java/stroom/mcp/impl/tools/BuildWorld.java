@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.shared.AbstractDoc;
@@ -141,6 +142,8 @@ final class BuildWorld {
             docs.put(id, ElasticIndexDoc.builder().uuid(id).name(name).version("v0").build());
         } else if (DashboardDoc.TYPE.equals(type)) {
             docs.put(id, DashboardDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (DictionaryDoc.TYPE.equals(type)) {
+            docs.put(id, DictionaryDoc.builder().uuid(id).name(name).version("v0").build());
         }
         return node;
     }
@@ -258,9 +261,7 @@ final class BuildWorld {
                     throw new RuntimeException("DocRef{uuid='" + document.getUuid() + "'} has been modified by "
                                                + "another user");
                 }
-                final AbstractDoc saved = document instanceof final DocumentationDoc doc
-                        ? doc.copy().version("v" + saves.incrementAndGet()).build()
-                        : document;
+                final AbstractDoc saved = versioned(document, "v" + saves.incrementAndGet());
                 docs.put(document.getUuid(), saved);
                 return saved;
             }
@@ -271,6 +272,17 @@ final class BuildWorld {
             }
         };
         Mockito.when(documentAccess.handler(anyString())).thenReturn(Optional.of(handler));
+    }
+
+    // A saved document, with a new version as Stroom gives it (a feed keeps its own).
+    private static AbstractDoc versioned(final AbstractDoc document, final String version) {
+        return switch (document) {
+            case final DocumentationDoc doc -> doc.copy().version(version).build();
+            case final XsltDoc doc -> doc.copy().version(version).build();
+            case final TextConverterDoc doc -> doc.copy().version(version).build();
+            case final DictionaryDoc doc -> doc.copy().version(version).build();
+            default -> document;
+        };
     }
 
     private List<ExplorerNode> children(final String uuid) {
