@@ -24,8 +24,8 @@
 	align-items: center;
 	flex-shrink: 0;
     min-width: 50px;
-    min-height: 23px;
-    height: 23px;
+    min-height: 24px;
+    height: 24px;
 }
 
 .termEditor-item {
@@ -38,8 +38,8 @@
 	background-position: right;
 	background-origin: border-box;
     min-width: 50px;
-    min-height: 23px;
-    height: 23px;
+    min-height: 24px;
+    height: 24px;
 	flex-shrink: 0;
 }
 

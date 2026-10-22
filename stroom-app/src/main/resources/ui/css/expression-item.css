@@ -39,13 +39,14 @@
 	border-radius: 5px;
 }
 
-/* Its text, as tall as its editor's fields, and at least as wide as an operator's */
+/* Its text, as tall as its editor's fields (24px, the smallest target WCAG 2.5.8 allows when they
+   are packed against the rows round them), and at least as wide as an operator's */
 .expression-item__label {
 	display: flex;
 	align-items: center;
 	box-sizing: border-box;
 	min-width: 50px;
-	height: 23px;
+	height: 24px;
 	padding: 0 5px;
 	white-space: nowrap;
 }

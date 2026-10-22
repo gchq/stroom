@@ -1,41 +1,5 @@
 {
-  "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
-    "color-contrast"
-  ],
-  "app-editors-floormapforms--icon-picker": [
-    "color-contrast"
-  ],
-  "app-editors-floormapforms--icon-picker-rows": [
-    "color-contrast"
-  ],
-  "app-editors-floormapforms--layer-style": [
-    "color-contrast"
-  ],
-  "app-main-dataretentionscreen--expression-panel": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--impact-filter": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--impact-nested": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--impact-sorting": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--impact-summary": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--retention": [
-    "target-size"
-  ],
-  "app-main-dataretentionscreen--row-action-menu": [
-    "target-size"
-  ],
   "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
     "aria-hidden-focus"
-  ],
-  "widgets-editors-viewers-aceeditorfeatures--search-box": [
-    "color-contrast"
   ]
 }

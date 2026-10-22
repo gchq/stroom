@@ -939,6 +939,9 @@
     padding-left: 10px;
     padding-right: 3px;
     padding-top: 1px;
+    /* Keeps the toolbar below clear of the tabs: a tab under 24px high needs 12px from its centre to
+       its neighbours (WCAG 2.5.8), which the toolbar was half a pixel short of */
+    padding-bottom: 1px;
 }
 
 .dataRetentionViewImpl-tabBarInner {

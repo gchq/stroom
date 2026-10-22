@@ -942,7 +942,7 @@ Identification):
 
 ### An expression term being edited is under 24px high
 
-**Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
+**Fixed** (2026-10-22: the rows and term fields are 24px). **Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
 `.termEditor-inner`), under WCAG 2.5.8's 24px, which axe reports as `target-size` for a story that
 ends with a term open (found with `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, which now
 leaves the term with Escape before it ends). For the expression tree's own work (session 5).
@@ -1057,7 +1057,7 @@ Left as they are, on purpose:
 
 ### Dialogs larger than the window
 
-**Confirmed** (measured in the workbench at 1280 x 720). Many dialogs open at a fixed size larger than a
+**Fixed** (`PopupUtil.showPopup` limits a dialog to the window, its content scrolling). **Confirmed** (measured in the workbench at 1280 x 720). Many dialogs open at a fixed size larger than a
 small window, so part of them is off screen and can't be reached: e.g. the processor filter, Find In
 Content, Recent Items, Batch Change Permissions and Change Permissions (800 x 800), the volume group
 editors and the stream viewer (1400 wide), the Edit Account dialog (737 high) and the index field
@@ -1215,6 +1215,10 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Size and contrast (batch 5 of `A11Y.md`): the data retention tabs are clear of the toolbar
+    below them; the expression tree's rows and term fields are 24px; the floor map form's unused
+    rows' labels are in the disabled text colour; Ace's search counter is #555. The a11y baseline
+    holds one story (Ace's autocomplete, for the Ace editor work).
   * The annotation editor's settings (Status, Assigned To, Labels, Collections, Retain) were mouse
     only: each one's ⋮ is now a button named for what it changes, opening its chooser with Enter or
     Space. Bypass blocks (#5403): the explorer and content are landmarks, and F6 and Shift+F6
