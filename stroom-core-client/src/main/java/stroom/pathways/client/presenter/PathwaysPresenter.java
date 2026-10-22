@@ -52,7 +52,7 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
 
         addTab(PATHWAYS, new DocTabProvider<PathwaysDoc>(pathwaysSplitPresenterProvider::get));
         addTab(SETTINGS, new DocTabProvider<PathwaysDoc>(pathwaysSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<PathwaysDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

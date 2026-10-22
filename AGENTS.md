@@ -172,6 +172,9 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 
 * **Inputs and outputs.** Data comes in through methods named for what they do (`read(rules)`, `setFields(...)`), results go out through a callback its owner sets (`setOnChange(Runnable)`), or one passed to the call that starts it (`editor.edit(this, field, updated -> ...)`).
   A child never fires a bus event to reach its owner; use `listen(type, handler)` only for app-wide events, and `AlertEvent.fire...(this, ...)`, as a presenter does, for app-wide requests.
+  Where several may listen (e.g. a reusable selection box), keep a `Listeners<T>` list and return the registration from `add...Listener(Consumer<T>)`.
+
+* **Dirty state.** When the user changes something a document holds, call `markChanged()`: the document (its `Contexts.DIRTY` tracker) works out again whether it is dirty.
 
 * **Context, not arguments.** Read-only, the task monitor and the document come from whatever owns the component: `watch(Contexts.READ_ONLY, readOnly -> ...)`, `context(Contexts.TASK_MONITOR)`.
   Don't take or pass on a `readOnly` argument.

@@ -67,8 +67,8 @@ public final class DocSelectionBoxStories {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
                     final DocSelectionBoxPresenter box = box(context, harness, null);
                     final Label echo = echo("Nothing picked yet — click the box.");
-                    harness.addRegistration(box.addDataSelectionHandler(event -> {
-                        final DocRef docRef = event.getSelectedItem();
+                    harness.addRegistration(box.addSelectionListener(selected -> {
+                        final DocRef docRef = selected;
                         echo.setText(docRef == null
                                 ? "Picked: (none) — - (-)"
                                 : "Picked: " + docRef.getName() + " — " + docRef.getType()
@@ -217,10 +217,10 @@ public final class DocSelectionBoxStories {
         box.setItemType("Pipeline");
         box.setSelectedEntityReference(fixture.toDocRef("Ingest"), false);
         final Label echo = echo("Current value: \"Ingest\"");
-        harness.addRegistration(box.addDataSelectionHandler(event -> echo.setText(
-                "Current value: \"" + (event.getSelectedItem() == null
+        harness.addRegistration(box.addSelectionListener(selected -> echo.setText(
+                "Current value: \"" + (selected == null
                         ? "(none)"
-                        : event.getSelectedItem().getName()) + "\"")));
+                        : selected.getName()) + "\"")));
         return frame(harness, box.getWidget(), echo);
     }
 
@@ -247,9 +247,9 @@ public final class DocSelectionBoxStories {
         harness.unbindOnCleanUp(box);
         box.bind();
         final Spy onChange = context.fn(ON_CHANGE);
-        harness.addRegistration(box.addDataSelectionHandler(event -> onChange.call(event.getSelectedItem() == null
+        harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null
                 ? null
-                : event.getSelectedItem().getUuid())));
+                : selected.getUuid())));
         return box;
     }
 

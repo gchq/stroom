@@ -16,9 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DecorateRequest;
@@ -28,6 +25,7 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -44,7 +42,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, HasDataSelectionHandlers<DocRef>, Focus {
+        implements DropDownUiHandlers, Focus {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final String NONE_DISPLAY_VALUE = "None";
@@ -58,6 +56,8 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private String itemType = null;
     // The perms required on any selected docRef or nodes in the picker
     private Set<DocumentPermission> requiredPermissions = null;
+
+    private final Listeners<DocRef> selectionListeners = new Listeners<>();
 
     @Inject
     public DocSelectionBoxPresenter(final EventBus eventBus,
@@ -294,15 +294,18 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 //                GWT.log("currentSelectionRef: " + selectedDocRef);
                 if (!Objects.equals(oldDocRef, selectedDocRef)) {
                     setFieldValue(selectedDocRef);
-                    DataSelectionEvent.fire(DocSelectionBoxPresenter.this, selectedDocRef, true);
+                    selectionListeners.fire(selectedDocRef);
                 }
             });
         }
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<DocRef> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    /// Listens for the user choosing a document, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<DocRef> listener) {
+        return selectionListeners.add(listener);
     }
 
     private void changeSelection(final ExplorerNode selection) {

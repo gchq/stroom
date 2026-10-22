@@ -94,10 +94,10 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
-        registerHandler(clusterPresenter.addDataSelectionHandler(event -> onChange()));
-        registerHandler(vectorGenerationModelPresenter.addDataSelectionHandler(event -> onChange()));
-        registerHandler(rerankModelPresenter.addDataSelectionHandler(event -> onChange()));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
+        registerHandler(clusterPresenter.addSelectionListener(event -> onChange()));
+        registerHandler(vectorGenerationModelPresenter.addSelectionListener(event -> onChange()));
+        registerHandler(rerankModelPresenter.addSelectionListener(event -> onChange()));
+        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

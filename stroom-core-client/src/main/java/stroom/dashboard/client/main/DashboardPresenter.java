@@ -45,7 +45,6 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
@@ -236,12 +235,12 @@ public class DashboardPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
-        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
+        queryToolbarPresenter.setOnStart(this::toggleStart);
+        queryToolbarPresenter.setOnTimeRangeChange(() -> {
             onChange();
             dashboardContext.fireContextChangeEvent();
             start();
-        }));
+        });
     }
 
     private void onMaximiseTabs() {
@@ -290,7 +289,7 @@ public class DashboardPresenter
         }
 
         currentSelectionPresenter.refresh(dashboardContext, false);
-        final HandlerRegistration handlerRegistration = dashboardContext.addContextChangeHandler(e ->
+        final HandlerRegistration handlerRegistration = dashboardContext.addContextChangeListener(() ->
                 currentSelectionPresenter.refresh(dashboardContext, false));
         ShowPopupEvent.builder(currentSelectionPresenter)
                 .popupType(PopupType.CLOSE_DIALOG)
@@ -571,8 +570,8 @@ public class DashboardPresenter
             component.setDashboardContext(dashboardContext);
 //            component.setDesignMode(designMode);
 
-            if (component instanceof final HasChangeHandlers hasChangeHandlers) {
-                hasChangeHandlers.addChangeHandler(this::onChange);
+            if (component instanceof final AbstractComponentPresenter<?> presenter) {
+                presenter.setOnChange(this::onChange);
             }
 
             // Set params on the component if it needs them.

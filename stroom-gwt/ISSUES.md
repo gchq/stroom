@@ -187,6 +187,31 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
   `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
 
+### Events between screens and their parts that reached the wrong listeners
+
+**Fixed (22 October 2026), when they became callbacks** (component model, Phase 4).
+
+* A dashboard's Table Filter refreshed its columns and values whenever *any* table updated, in any
+  open dashboard or query: `TablePresenter.addUpdateHandler` (and `QueryResultTablePresenter`'s)
+  listened to every `TableUpdateEvent` on the app-wide bus rather than its own table's. Each table
+  now tells only its own listeners (`addUpdateListener`).
+* Two open copies of the same Floor Map document heard each other's event data: the Map and Editor
+  tabs took any `FloorMapDataEvent` stamped with their document's UUID. The document now passes
+  its own Events Query tab's data to its own tabs.
+
+### UI config failures and annotation changes go nowhere
+
+**Confirmed.** `UiConfigCache` fires its events on a private event bus of its own, which has no
+alert or annotation listeners:
+
+* When fetching the UI config fails, `onFailure` makes a `DefaultErrorHandler` and drops it, so no
+  error is shown and the caller's consumer is never called (not even with null, as the code means).
+* The `AnnotationChangeEvent` it fires when the server's last annotation change time moves reaches
+  no annotation screen.
+
+(`UiConfigCache.fireEvent` now does nothing and says so; the property listeners are a `Listeners`
+list.)
+
 ### Data Receipt Rules' Rules tab
 
 **Fixed (22 October 2026), when the tab and its dialogs became components** (component model,

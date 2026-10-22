@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.floormap.client.event;
+package stroom.floormap.client.presenter;
 
-import stroom.floormap.client.event.MapContextMenuEvent.Handler;
-
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-
-/// Event fired when the user right-clicks on the floor map canvas.
+/// What the user right-clicked on the floor map canvas, which the canvas gives its owner
+/// ([FloorMapCanvasPresenter#setOnContextMenu]).
 ///
 /// Carries the ID of the map object under the cursor (or `null` when the
 /// click landed on empty canvas), the logical map-space coordinates of the
 /// click, and the screen (client) coordinates suitable for positioning a popup
 /// context menu.
-public class MapContextMenuEvent extends GwtEvent<Handler> {
-    private static Type<Handler> TYPE;
+public final class MapContextMenu {
+
     private final String objectId;
     private final double mapX;
     private final double mapY;
@@ -37,7 +32,7 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
     private final int clientY;
     private final int vertexIndex;
 
-    /// Creates a new `MapContextMenuEvent` for a non-vertex right-click.
+    /// Creates a new `MapContextMenu` for a non-vertex right-click.
     ///
     /// @param objectId the ID of the right-clicked map object, or `null`
     ///         if the click was on empty canvas
@@ -45,7 +40,7 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
     /// @param mapY     the Y coordinate in map space
     /// @param clientX  the screen X coordinate for popup positioning
     /// @param clientY  the screen Y coordinate for popup positioning
-    public MapContextMenuEvent(final String objectId,
+    public MapContextMenu(final String objectId,
                                final double mapX,
                                final double mapY,
                                final int clientX,
@@ -53,7 +48,7 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
         this(objectId, mapX, mapY, clientX, clientY, -1);
     }
 
-    /// Creates a new `MapContextMenuEvent`.
+    /// Creates a new `MapContextMenu`.
     ///
     /// @param objectId    the ID of the right-clicked map object, or `null`
     ///         if the click was on empty canvas
@@ -63,7 +58,7 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
     /// @param clientY     the screen Y coordinate for popup positioning
     /// @param vertexIndex the index of the right-clicked area vertex handle, or
     ///         `-1` when the click was not on a vertex handle
-    public MapContextMenuEvent(final String objectId,
+    public MapContextMenu(final String objectId,
                                final double mapX,
                                final double mapY,
                                final int clientX,
@@ -75,64 +70,6 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
         this.clientX = clientX;
         this.clientY = clientY;
         this.vertexIndex = vertexIndex;
-    }
-
-    /// Fires a `MapContextMenuEvent` on the given handler source.
-    ///
-    /// @param handlers the source capable of firing events
-    /// @param objectId the ID of the right-clicked map object, or `null`
-    /// @param mapX     the X coordinate in map space
-    /// @param mapY     the Y coordinate in map space
-    /// @param clientX  the screen X coordinate for popup positioning
-    /// @param clientY  the screen Y coordinate for popup positioning
-    public static void fire(final HasHandlers handlers,
-                            final String objectId,
-                            final double mapX,
-                            final double mapY,
-                            final int clientX,
-                            final int clientY) {
-        handlers.fireEvent(new MapContextMenuEvent(objectId, mapX, mapY, clientX, clientY));
-    }
-
-    /// Fires a `MapContextMenuEvent` for a right-click on an area vertex
-    /// handle.
-    ///
-    /// @param handlers    the source capable of firing events
-    /// @param objectId    the area fact's key
-    /// @param mapX        the X coordinate in map space
-    /// @param mapY        the Y coordinate in map space
-    /// @param clientX     the screen X coordinate for popup positioning
-    /// @param clientY     the screen Y coordinate for popup positioning
-    /// @param vertexIndex the index of the right-clicked vertex handle
-    public static void fireVertex(final HasHandlers handlers,
-                                  final String objectId,
-                                  final double mapX,
-                                  final double mapY,
-                                  final int clientX,
-                                  final int clientY,
-                                  final int vertexIndex) {
-        handlers.fireEvent(new MapContextMenuEvent(
-                objectId, mapX, mapY, clientX, clientY, vertexIndex));
-    }
-
-    /// Returns the singleton event type, creating it on first access.
-    ///
-    /// @return the [Type] for `MapContextMenuEvent`
-    public static Type<Handler> getType() {
-        if (TYPE == null) {
-            TYPE = new Type<>();
-        }
-        return TYPE;
-    }
-
-    @Override
-    public final Type<Handler> getAssociatedType() {
-        return getType();
-    }
-
-    @Override
-    public void dispatch(final Handler handler) {
-        handler.onContextMenu(this);
     }
 
     /// Returns the ID of the map object that was right-clicked.
@@ -180,14 +117,4 @@ public class MapContextMenuEvent extends GwtEvent<Handler> {
         return vertexIndex;
     }
 
-    // --------------------------------------------------------------------------------
-
-    /// Handler interface for [MapContextMenuEvent].
-    public interface Handler extends EventHandler {
-
-        /// Called when a context menu event is fired on the floor map canvas.
-        ///
-        /// @param event the context menu event
-        void onContextMenu(MapContextMenuEvent event);
-    }
 }

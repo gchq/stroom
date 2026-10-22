@@ -18,7 +18,6 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.query.api.Column;
 import stroom.query.api.ConditionalFormattingRule;
 
@@ -38,5 +37,9 @@ public interface FilterableTable {
 
     FilterCellManager getFilterCellManager();
 
-    HandlerRegistration addUpdateHandler(TableUpdateEvent.Handler handler);
+    /// Listens for the table's columns or data changing, until the registration is removed.
+    ///
+    /// @param listener What to run.
+    /// @return The registration, for the listener's owner to own.
+    HandlerRegistration addUpdateListener(Runnable listener);
 }

@@ -319,15 +319,14 @@ public class TextPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
+        registerHandler(dashboardContext.addComponentChangeListener(component -> {
             if (getTextSettings() != null) {
-                final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
                     if (component instanceof HasComponentSelection) {
                         currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);
                     }
-                } else if (Objects.equals(getTextSettings().getTableId(), event.getComponentId())) {
+                } else if (Objects.equals(getTextSettings().getTableId(), component.getId())) {
                     if (component instanceof HasComponentSelection) {
                         currentTablePresenter = (HasComponentSelection) component;
                         update(currentTablePresenter);

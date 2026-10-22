@@ -17,9 +17,6 @@
 package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
@@ -38,13 +35,12 @@ import stroom.widget.component.client.Contexts;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class PlanBSettingsPresenter
         extends DocPresenter<PlanBSettingsView, PlanBDoc>
-        implements StateTypeChangeUiHandlers, HasChangeHandlers {
+        implements StateTypeChangeUiHandlers {
 
     private final Provider<StateSettingsPresenter> stateSettingsPresenterProvider;
     private final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider;
@@ -63,6 +59,9 @@ public class PlanBSettingsPresenter
     private Boolean overwrite;
     private DurationSetting condense;
     private RetentionSettings retention;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public PlanBSettingsPresenter(
@@ -215,13 +214,13 @@ public class PlanBSettingsPresenter
                 settingsPresenter.read(getEntity().getSettings());
             }
             getView().setSettingsView(settingsPresenter.getView());
-            settingsPresenter.addChangeHandler(() -> {
+            settingsPresenter.setOnChange(() -> {
                 if (getEntity() != null) {
                     onChange();
                 }
                 // For embedded use (e.g. TracesSettingsPresenter): propagate the
                 // change so listeners registered via addChangeHandler are notified.
-                ChangeEvent.fire(this);
+                onChange.run();
             });
         }
         currentStateType = stateType;
@@ -257,9 +256,9 @@ public class PlanBSettingsPresenter
         }
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a setting, for a screen this is embedded in.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     private Long getMaxStoreSize(final View view) {

@@ -63,7 +63,7 @@ public class DashboardSuperPresenter
         this.dashboardPresenter = dashboardPresenter;
 
         addTab(DASHBOARD, new DocTabProvider<>(() -> dashboardPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

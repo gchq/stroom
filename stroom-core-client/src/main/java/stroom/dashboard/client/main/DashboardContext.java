@@ -28,6 +28,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface DashboardContext extends ParamValues {
 
@@ -48,9 +49,18 @@ public interface DashboardContext extends ParamValues {
 
     Optional<ExpressionOperator> createSelectionHandlerExpression(List<ComponentSelectionHandler> selectionHandlers);
 
-    HandlerRegistration addComponentChangeHandler(ComponentChangeEvent.Handler handler);
+    /// Listens for a component's selection or settings changing, until the registration is removed.
+    ///
+    /// @param listener Told the component.
+    /// @return The registration, for the listener's owner to own.
+    HandlerRegistration addComponentChangeListener(Consumer<Component> listener);
 
-    HandlerRegistration addContextChangeHandler(DashboardContextChangeEvent.Handler handler);
+    /// Listens for anything the context gives changing (its parameters, time range or
+    /// selections), until the registration is removed.
+    ///
+    /// @param listener What to run.
+    /// @return The registration, for the listener's owner to own.
+    HandlerRegistration addContextChangeListener(Runnable listener);
 
     void fireComponentChangeEvent(Component component);
 

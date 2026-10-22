@@ -48,7 +48,7 @@ public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, Open
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(modelSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

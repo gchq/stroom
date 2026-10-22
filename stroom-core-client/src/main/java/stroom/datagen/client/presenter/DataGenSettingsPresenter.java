@@ -59,7 +59,7 @@ public class DataGenSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(destinationFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(destinationFeedPresenter.addSelectionListener(e -> onChange()));
         registerHandler(templatePresenter.addValueChangeHandler(e -> onChange()));
     }
 

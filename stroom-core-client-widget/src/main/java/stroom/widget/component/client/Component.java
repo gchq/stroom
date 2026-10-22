@@ -189,6 +189,12 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         return node.guard(callback);
     }
 
+    /// Tells the document this belongs to that the user changed something (its [Contexts#DIRTY]
+    /// tracker, looked up from this one's owner), so it can work out whether it is dirty.
+    protected final void markChanged() {
+        node.lookupAbove(Contexts.DIRTY).onChange();
+    }
+
     /// Looks up a context value now. To follow changes, use [#watch(ContextKey, Consumer)].
     ///
     /// @param key The key.

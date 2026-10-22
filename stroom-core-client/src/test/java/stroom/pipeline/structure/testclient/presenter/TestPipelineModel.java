@@ -664,7 +664,7 @@ class TestPipelineModel {
     void eachEditFiresASingleChangeEvent() {
         final PipelineModel model = createModel(createPipelineData());
         final AtomicInteger events = new AtomicInteger();
-        model.addChangeDataHandler(event -> events.incrementAndGet());
+        model.addChangeListener(changed -> events.incrementAndGet());
 
         model.renameElement(getElement(model, "test1"), "A new name");
 

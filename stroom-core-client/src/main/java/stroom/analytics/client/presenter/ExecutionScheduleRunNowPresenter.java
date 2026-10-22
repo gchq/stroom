@@ -17,9 +17,6 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -29,7 +26,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -37,7 +33,8 @@ import javax.inject.Inject;
 
 public class ExecutionScheduleRunNowPresenter
         extends MyPresenterWidget<ExecutionScheduleRunNowView>
-        implements ProcessingStatusUiHandlers, HasChangeHandlers {
+        implements ProcessingStatusUiHandlers {
+
 
     @Inject
     public ExecutionScheduleRunNowPresenter(final EventBus eventBus,
@@ -79,13 +76,9 @@ public class ExecutionScheduleRunNowPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        // Nothing to do: the dialog reads its fields when OK is pressed
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
-    }
 
     public interface ExecutionScheduleRunNowView
             extends View,

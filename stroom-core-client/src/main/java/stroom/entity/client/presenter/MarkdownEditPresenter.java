@@ -17,9 +17,6 @@
 package stroom.entity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
@@ -31,6 +28,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -49,7 +47,10 @@ import java.util.function.Consumer;
 
 public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
-        implements HasDirtyHandlers, HasToolbar {
+        implements HasToolbar {
+
+    // Told when the text becomes changed or unchanged
+    private final Listeners<Boolean> dirtyListeners = new Listeners<>();
 
     // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-light-theme
     // selectivity added into to stop it conflicting with the dark theme.
@@ -153,16 +154,23 @@ public class MarkdownEditPresenter
         }
     }
 
+    /// Listens for the text becoming changed or unchanged, until this presenter is disposed or the
+    /// registration removed. A document this is part of is told without a listener.
+    ///
+    /// @param listener Told whether it is now changed.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addDirtyListener(final Consumer<Boolean> listener) {
+        return dirtyListeners.add(listener);
+    }
+
     private void setDirty(final boolean dirty) {
         if (!reading && !readOnly) {
-            DirtyEvent.fire(this, dirty);
+            dirtyListeners.fire(dirty);
+            // e.g. the document whose Documentation tab this is
+            markChanged();
         }
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     public String getText() {
         return markdownPreviewPresenter.getText();

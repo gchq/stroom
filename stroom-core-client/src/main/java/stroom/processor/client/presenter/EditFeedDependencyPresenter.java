@@ -89,7 +89,7 @@ public class EditFeedDependencyPresenter
 
         updateDataTypes(feedDependency.getStreamType());
 
-        feedPresenter.addDataSelectionHandler(event -> {
+        feedPresenter.addSelectionListener(event -> {
             if (initialised) {
                 final String feedName = NullSafe.get(feedPresenter.getSelectedEntityReference(), DocRef::getName);
                 if (!Objects.equals(feedDependency.getFeedName(), feedName)) {

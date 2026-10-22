@@ -70,7 +70,7 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
         downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Kafka Config", null);
         downloadButton.setEnabled(false);
 
-        addTab(CONFIG, new AbstractTabProvider<KafkaConfigDoc, EditorPresenter>(eventBus) {
+        addTab(CONFIG, new AbstractTabProvider<KafkaConfigDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
@@ -98,7 +98,7 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

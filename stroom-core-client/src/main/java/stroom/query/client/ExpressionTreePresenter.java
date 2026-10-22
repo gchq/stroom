@@ -16,9 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
@@ -26,6 +23,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -46,12 +44,13 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
-        implements HasDataSelectionHandlers<Item>,
-        HasContextMenuHandlers {
+        implements HasContextMenuHandlers {
 
     private DefaultTreeForTreeLayout<Item> tree;
     private MySingleSelectionModel<Item> selectionModel;
     private ExpressionUiHandlers uiHandlers;
+
+    private final Listeners<Item> selectionListeners = new Listeners<>();
 
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view) {
@@ -77,7 +76,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         if (selectionModel != null) {
             registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-                DataSelectionEvent.fire(ExpressionTreePresenter.this, selectionModel.getSelectedObject(), false);
+                selectionListeners.fire(selectionModel.getSelectedObject());
                 getView().refresh();
             }));
         }
@@ -286,9 +285,12 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         }
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Item> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    /// Listens for the user selecting an item in the expression, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<Item> listener) {
+        return selectionListeners.add(listener);
     }
 
     public void fireDirty() {

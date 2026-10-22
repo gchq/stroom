@@ -70,7 +70,7 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
         downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download S3 Configuration", null);
         downloadButton.setEnabled(false);
 
-        addTab(CONFIG, new AbstractTabProvider<S3ConfigDoc, EditorPresenter>(eventBus) {
+        addTab(CONFIG, new AbstractTabProvider<S3ConfigDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
@@ -98,7 +98,7 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

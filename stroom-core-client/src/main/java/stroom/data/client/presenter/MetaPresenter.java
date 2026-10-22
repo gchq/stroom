@@ -17,8 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -65,8 +63,7 @@ import java.util.function.Consumer;
 
 public class MetaPresenter
         extends MyPresenterWidget<MetaView>
-        implements HasDataSelectionHandlers<Selection<Long>>,
-        HasDocumentRead<Object>,
+        implements HasDocumentRead<Object>,
         BeginSteppingHandler {
 
     public static final String DATA = "DATA";
@@ -278,12 +275,12 @@ public class MetaPresenter
                     !Status.UNLOCKED.equals(MetaExpressionUtil.getSingleStatus(getCriteria())));
             // showData() gets called by the metaRelationListPresenter selection handler
         }));
-        registerHandler(metaListPresenter.addDataSelectionHandler(event ->
-                setStreamListSelectableEnabled(event.getSelectedItem())));
+        registerHandler(metaListPresenter.addSelectionListener(selected ->
+                setStreamListSelectableEnabled(selected)));
         registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event ->
                 showData()));
-        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event ->
-                setStreamRelationListSelectableEnabled(event.getSelectedItem())));
+        registerHandler(metaRelationListPresenter.addSelectionListener(selected ->
+                setStreamRelationListSelectableEnabled(selected)));
     }
 
     private void setExpression(final ExpressionOperator expression) {
@@ -402,9 +399,12 @@ public class MetaPresenter
         return null;
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Selection<Long>> handler) {
-        return metaListPresenter.addDataSelectionHandler(handler);
+    /// Listens for the user selecting streams in the list, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<Selection<Long>> listener) {
+        return metaListPresenter.addSelectionListener(listener);
     }
 
     private void showUploadButton(final boolean visible) {

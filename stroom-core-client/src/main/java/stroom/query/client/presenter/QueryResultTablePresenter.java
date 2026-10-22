@@ -36,7 +36,6 @@ import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
-import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
@@ -45,9 +44,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
@@ -75,6 +71,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -108,7 +105,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection, HasChangeHandlers, HasHandlers, FilterableTable {
+        implements ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -155,6 +152,12 @@ public class QueryResultTablePresenter
     private boolean annotationChanged;
 
     private TableResult currentTableResult;
+
+    private Runnable onChange = () -> {
+    };
+
+    // Told when the table's columns or data change, e.g. a filter on it
+    private final Listeners<Boolean> updateListeners = new Listeners<>();
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -950,13 +953,13 @@ public class QueryResultTablePresenter
         refresh();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the table's settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
     public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
@@ -1046,12 +1049,12 @@ public class QueryResultTablePresenter
     }
 
     private void fireColumnAndDataUpdate() {
-        TableUpdateEvent.fire(this);
+        updateListeners.fire(true);
     }
 
     @Override
-    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
-        return eventBus.addHandler(TableUpdateEvent.getType(), handler);
+    public HandlerRegistration addUpdateListener(final Runnable listener) {
+        return updateListeners.add(ignored -> listener.run());
     }
 
     private void askStroomAi() {

@@ -84,7 +84,7 @@ public class AnnotationPresenter
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
         addTab(LINK_TO, new DocTabProvider<>(() -> linkTo));
         addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(() -> {
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = own(markdownEditPresenterProvider.get());
                 markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
@@ -92,7 +92,7 @@ public class AnnotationPresenter
                             this::saveDescription);
                     saveButton.setEnabled(descriptionDirty);
                 });
-                markdownEditPresenter.addDirtyHandler(e -> setDescriptionDirty(e.isDirty()));
+                markdownEditPresenter.addDirtyListener(this::setDescriptionDirty);
             }
             return markdownEditPresenter;
         }) {

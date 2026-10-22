@@ -83,8 +83,8 @@ public class AnalyticDataShardsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> update()));
-        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> update()));
+        queryToolbarPresenter.setOnStart(this::update);
+        queryToolbarPresenter.setOnTimeRangeChange(this::update);
         registerHandler(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
         registerHandler(tablePresenter.addRefreshRequestHandler(e -> update()));
     }

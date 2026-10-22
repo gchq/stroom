@@ -138,8 +138,8 @@ public class PipelineStructurePresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            final DocRef selectedDocRef = event.getSelectedItem();
+        registerHandler(pipelinePresenter.addSelectionListener(selected -> {
+            final DocRef selectedDocRef = selected;
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
                 if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(
@@ -226,7 +226,7 @@ public class PipelineStructurePresenter
                 // Every edit ends in a model change event, so this is the only place that needs to
                 // react to one. Anything that edits the pipeline via the model therefore enables the
                 // Save button without having to remember to say so.
-                registerHandler(model.addChangeDataHandler(event -> onPipelineModelChanged()));
+                registerHandler(model.addChangeListener(changed -> onPipelineModelChanged()));
             }
         }
         refreshTree();

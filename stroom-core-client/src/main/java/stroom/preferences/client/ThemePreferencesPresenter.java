@@ -16,10 +16,7 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -27,7 +24,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -36,9 +32,12 @@ import java.util.Objects;
 
 public final class ThemePreferencesPresenter
         extends MyPresenterWidget<ThemePreferencesView>
-        implements ChangeUiHandlers, HasChangeHandlers {
+        implements ChangeUiHandlers {
 
     private final UserPreferencesManager userPreferencesManager;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public ThemePreferencesPresenter(
@@ -52,7 +51,7 @@ public final class ThemePreferencesPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 //
 //    private void triggerThemeChange(final CurrentPreferences currentPreferences) {
@@ -85,9 +84,9 @@ public final class ThemePreferencesPresenter
                 .hideConditionalStyles(getView().isHideConditionalStyles());
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a theme preference.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
 

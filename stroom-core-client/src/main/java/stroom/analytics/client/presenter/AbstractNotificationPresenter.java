@@ -21,9 +21,6 @@ import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,8 +28,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocPresenter<AnalyticNotificationView, D>
-        implements HasChangeDataHandlers<AnalyticProcessType> {
+        extends DocPresenter<AnalyticNotificationView, D> {
 
     private final AbstractNotificationListPresenter<D> notificationList;
 
@@ -43,17 +39,6 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
         own(notificationList);
         this.notificationList = notificationList;
         getView().setTable(notificationList.getView());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(notificationList.addDirtyHandler(event -> onChange()));
-    }
-
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<AnalyticProcessType> handler) {
-        return addHandlerToSource(ChangeDataEvent.getType(), handler);
     }
 
     /**

@@ -16,9 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.NodeFlag;
@@ -35,7 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Set;
 
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
-        implements HasDataSelectionHandlers<Set<ExplorerNode>>, Focus {
+        implements Focus {
 
     private final ExplorerTickBoxTree explorerTree;
 
@@ -99,10 +96,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         return explorerTree.getSelectedSet();
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<ExplorerNode>> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
-    }
 
 
     // --------------------------------------------------------------------------------

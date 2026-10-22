@@ -20,9 +20,6 @@ import stroom.dashboard.client.input.ColumnValueRowStyles;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -71,7 +68,6 @@ import javax.inject.Provider;
 
 public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesFilterView>
         implements
-        HasDataSelectionHandlers<ColumnValuesFilterPresenter>,
         ColumnValuesFilterUiHandlers,
         QuickFilterUiHandlers {
 
@@ -246,11 +242,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         typeFilterSelectionEventManager.selectFirstItem();
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(
-            final DataSelectionHandler<ColumnValuesFilterPresenter> handler) {
-        return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
-    }
 
     private void toggle(final ColumnValue value) {
         if (value != null) {

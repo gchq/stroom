@@ -67,7 +67,7 @@ public abstract class AbstractSettingsPresenter<V extends SettingsView, D extend
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(errorFeedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override

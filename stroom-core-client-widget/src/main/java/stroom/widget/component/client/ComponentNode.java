@@ -251,6 +251,18 @@ public final class ComponentNode {
         }
     }
 
+    /// Looks up a context value from this node's owner, so that a node that provides a key itself
+    /// (e.g. a document part that is a document) finds the one above it.
+    ///
+    /// @param key The key.
+    /// @param <T> The type of the value.
+    /// @return The value, or the key's default if this node has no owner or nothing above provides it.
+    public <T> T lookupAbove(final ContextKey<T> key) {
+        return parent == null
+                ? key.getDefaultValue()
+                : parent.lookup(key);
+    }
+
     /// Looks up a value from the nearest node, this one or above, that provides it. For a
     /// narrowing key (see [ContextKey#narrowing]) every provider on the way up counts.
     ///

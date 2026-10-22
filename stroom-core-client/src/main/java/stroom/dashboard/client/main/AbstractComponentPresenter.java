@@ -20,9 +20,6 @@ import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -31,14 +28,13 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
 public abstract class AbstractComponentPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements Component, HasChangeHandlers {
+        implements Component {
 
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
@@ -47,6 +43,9 @@ public abstract class AbstractComponentPresenter<V extends View>
     private SettingsPresenter settingsPresenter;
     private DashboardContext dashboardContext;
     protected boolean designMode;
+
+    private Runnable onChange = () -> {
+    };
 
     public AbstractComponentPresenter(final EventBus eventBus,
                                       final V view,
@@ -162,7 +161,7 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
     @Override
@@ -185,9 +184,9 @@ public abstract class AbstractComponentPresenter<V extends View>
         return componentConfig.getName() + " (" + componentConfig.getId() + ")";
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the component's settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     @Override

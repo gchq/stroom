@@ -22,9 +22,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -47,7 +44,7 @@ import javax.inject.Provider;
 
 public class DataRetentionPresenter
         extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
-        implements HasDirtyHandlers, CloseContentEvent.Handler {
+        implements CloseContentEvent.Handler {
 
     public static final String TAB_TYPE = "DataRetentionRules";
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
@@ -171,7 +168,6 @@ public class DataRetentionPresenter
     void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
 
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
@@ -201,10 +197,6 @@ public class DataRetentionPresenter
         return dataRetentionImpactPresenter;
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     @Override
     public void onCloseRequest(final CloseContentEvent event) {

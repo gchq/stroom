@@ -84,7 +84,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
         // Mode / shape / colour changes all alter what the preview should show.
         view.setChangeHandler(this::refreshPreview);
         //noinspection unused event
-        assetDropDownPresenter.addDataSelectionHandler(event -> refreshPreview());
+        assetDropDownPresenter.addSelectionListener(event -> refreshPreview());
     }
 
     /// Sets the document whose asset store supplies layer graphics. Must be called

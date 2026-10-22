@@ -16,10 +16,7 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
 import stroom.query.api.UserTimeZone;
 import stroom.ui.config.shared.UserPreferences;
@@ -28,13 +25,15 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public final class TimePreferencesPresenter
         extends MyPresenterWidget<TimePreferencesView>
-        implements ChangeUiHandlers, HasChangeHandlers {
+        implements ChangeUiHandlers {
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public TimePreferencesPresenter(
@@ -46,7 +45,7 @@ public final class TimePreferencesPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
     public void read(final UserPreferences userPreferences) {
@@ -72,9 +71,9 @@ public final class TimePreferencesPresenter
                 .timeZone(timeZone);
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a time preference.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     public interface TimePreferencesView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {

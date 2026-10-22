@@ -107,6 +107,9 @@ public class ManageGlobalPropertyListPresenter
             new ArrayList<>(),
             null);
 
+    private Consumer<String> onErrors = errors -> {
+    };
+
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
                                              final PagerView view,
@@ -357,7 +360,7 @@ public class ManageGlobalPropertyListPresenter
                 .stream()
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.joining("\n"));
-        ErrorEvent.fire(this, errors);
+        onErrors.accept(errors);
     }
 
     private void initColumns() {
@@ -459,8 +462,10 @@ public class ManageGlobalPropertyListPresenter
         // TODO implement sorting for Name and Source
     }
 
-    public HandlerRegistration addErrorHandler(final ErrorEvent.Handler handler) {
-        return this.addHandlerToSource(ErrorEvent.getType(), handler);
+    /// @param onErrors What to run with the errors (the nodes that couldn't be reached, one per
+    ///                 line) once the properties are fetched.
+    public void setOnErrors(final Consumer<String> onErrors) {
+        this.onErrors = onErrors;
     }
 
     public MultiSelectionModelImpl<ConfigPropertyRow> getSelectionModel() {

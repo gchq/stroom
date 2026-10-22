@@ -164,18 +164,6 @@ class TestMyPresenterWidget {
     }
 
     @Test
-    void handlersAddedWithItAsSourceAreRemovedOutsideAScope() {
-        final TestPresenter presenter = new TestPresenter("presenter");
-        presenter.addTestHandler(() -> events.add("heard"));
-
-        presenter.fireTest();
-        presenter.dispose();
-        presenter.fireTest();
-
-        assertThat(events).containsExactly("heard", "presenter disposed");
-    }
-
-    @Test
     void listenStopsWhenDisposedNotWhenUnbound() {
         final TestPresenter presenter = new TestPresenter("presenter");
         presenter.listenToTest(() -> events.add("heard"));
@@ -221,10 +209,6 @@ class TestMyPresenterWidget {
 
         TestPresenter ownDialog(final TestPresenter dialog) {
             return ownUntilHidden(dialog);
-        }
-
-        void addTestHandler(final Runnable handler) {
-            addHandlerToSource(TYPE, handler);
         }
 
         void listenToTest(final Runnable handler) {

@@ -76,7 +76,7 @@ class TestPresenterAdapter {
     }
 
     @Test
-    void handlersAddedWithThePresenterAsSourceAreRemoved() {
+    void handlersThePresenterListensWithAreRemoved() {
         final ComponentNode root = ComponentNode.root("story");
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
         root.adopt(adapter.getComponentNode());
@@ -171,7 +171,7 @@ class TestPresenterAdapter {
         }
 
         void addTestHandler(final Runnable handler) {
-            addHandlerToSource(TYPE, handler);
+            listen(TYPE, handler);
         }
 
         void fireTest() {

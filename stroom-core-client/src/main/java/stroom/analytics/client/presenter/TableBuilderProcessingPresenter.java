@@ -24,9 +24,6 @@ import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
@@ -40,7 +37,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -48,7 +44,7 @@ import java.util.List;
 
 public class TableBuilderProcessingPresenter
         extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
-        implements ProcessingStatusUiHandlers, HasChangeHandlers {
+        implements ProcessingStatusUiHandlers {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
@@ -58,6 +54,9 @@ public class TableBuilderProcessingPresenter
     private final NodeClient nodeClient;
 
     private DocRef ruleDocRef;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public TableBuilderProcessingPresenter(final EventBus eventBus,
@@ -178,12 +177,12 @@ public class TableBuilderProcessingPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     public interface TableBuilderProcessingView extends View, HasUiHandlers<ProcessingStatusUiHandlers> {

@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,10 +82,70 @@ class TestDocPresenter {
         assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isTrue();
     }
 
+    @Test
+    void aPartThatBecomesDirtyTellsItsDocument() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+        final Doc part = new Doc();
+        document.getComponentNode().adopt(part.getComponentNode());
+        document.read(DOC_REF, "part", false);
+        part.read(DOC_REF, "part", false);
+        // Each writes what the part shows
+        part.writer = doc -> part.text;
+        document.writer = doc -> part.text;
+        final List<Boolean> documentDirty = new ArrayList<>();
+        document.addDirtyListener(documentDirty::add);
+
+        part.text = "changed";
+        part.onChange();
+
+        assertThat(part.isDirty()).isTrue();
+        assertThat(document.isDirty()).isTrue();
+        assertThat(documentDirty).containsExactly(true);
+
+        part.text = "part";
+        part.onChange();
+
+        assertThat(document.isDirty()).isFalse();
+        assertThat(documentDirty).containsExactly(true, false);
+    }
+
+    @Test
+    void anythingBelowADocumentCanTellItOfAChange() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+        document.read(DOC_REF, "contents", false);
+        document.writer = doc -> "changed";
+        // e.g. a field's node, two levels down
+        final ComponentNode panel = new ComponentNode("panel");
+        document.getComponentNode().adopt(panel);
+        final ComponentNode field = new ComponentNode("field");
+        panel.adopt(field);
+
+        field.lookupAbove(Contexts.DIRTY).onChange();
+
+        assertThat(document.isDirty()).isTrue();
+    }
+
+    @Test
+    void aReadOnlyDocumentIsNeverDirty() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+        document.read(DOC_REF, "contents", true);
+        document.writer = doc -> "changed";
+
+        document.onChange();
+
+        assertThat(document.isDirty()).isFalse();
+    }
+
     // --------------------------------------------------------------------------------
 
 
     private static final class Doc extends DocPresenter<View, String> {
+
+        private String text = "part";
+        private UnaryOperator<String> writer = UnaryOperator.identity();
 
         private Doc() {
             super(new SimpleEventBus(), Mockito.mock(View.class));
@@ -96,12 +157,12 @@ class TestDocPresenter {
 
         @Override
         protected void onRead(final DocRef docRef, final String document, final boolean readOnly) {
-            // Nothing to show
+            text = document;
         }
 
         @Override
         protected String onWrite(final String document) {
-            return document;
+            return writer.apply(document);
         }
     }
 }

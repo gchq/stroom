@@ -18,7 +18,6 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.HasParams;
@@ -76,7 +75,6 @@ public class ListInputPresenter
     @Override
     public void onValueChanged(final WordItem value) {
         setSettings(getListInputSettings().copy().value(value.getWord()).build());
-        ComponentChangeEvent.fire(this, this);
         onChange();
     }
 

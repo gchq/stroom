@@ -52,9 +52,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.index.shared.IndexConstants;
 import stroom.item.client.SelectionPopup;
@@ -108,6 +105,7 @@ import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -142,7 +140,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
+        implements ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -190,6 +188,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
+
+    // Told when the table's columns or data change, e.g. a filter on it
+    private final Listeners<Boolean> updateListeners = new Listeners<>();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -441,7 +442,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(getDashboardContext().addContextChangeHandler(event -> {
+        registerHandler(getDashboardContext().addContextChangeListener(() -> {
             if (initialised && updateSelectionFilter()) {
 //                reset();
                 refresh();
@@ -971,7 +972,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (currentSearchModel != null) {
             searchModelHandlerRegistrations.add(currentSearchModel.getIndexLoader()
-                    .addChangeDataHandler(event -> updateFields()));
+                    .addChangeListener(loader -> updateFields()));
         }
 
         updateFields();
@@ -1100,10 +1101,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         fireColumnAndDataUpdate();
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     @Override
     public ComponentType getComponentType() {
@@ -1479,11 +1476,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void fireColumnAndDataUpdate() {
-        TableUpdateEvent.fire(this);
+        updateListeners.fire(true);
     }
 
     @Override
-    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
-        return eventBus.addHandler(TableUpdateEvent.getType(), handler);
+    public HandlerRegistration addUpdateListener(final Runnable listener) {
+        return updateListeners.add(ignored -> listener.run());
     }
 }

@@ -903,7 +903,7 @@ public final class ExpressionBuilderStories {
         presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, dynamicFields));
         presenter.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
-        harness.addRegistration(presenter.addChangeHandler(() -> onChange.call(presenter.write().toString())));
+        presenter.setOnChange(() -> onChange.call(presenter.write().toString()));
         harness.add(frame(presenter.getWidget()));
         return harness.asWidget();
     }

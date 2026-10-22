@@ -105,7 +105,7 @@ public class GlobalPropertyTabPresenter
                 onOpen();
             }
         }));
-        registerHandler(listPresenter.addErrorHandler(event -> setErrors(event.getError())));
+        listPresenter.setOnErrors(this::setErrors);
         super.onBind();
         listPresenter.refresh();
         getView().focusFilter();

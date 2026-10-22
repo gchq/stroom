@@ -20,9 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeClient;
@@ -43,7 +40,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -53,13 +49,14 @@ import javax.inject.Inject;
 
 public class BatchExecutionScheduleEditPresenter
         extends MyPresenterWidget<BatchExecutionScheduleEditView>
-        implements ProcessingStatusUiHandlers, HasChangeHandlers {
+        implements ProcessingStatusUiHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final DocSelectionBoxPresenter errorFeedPresenter;
+
 
     @Inject
     public BatchExecutionScheduleEditPresenter(final EventBus eventBus,
@@ -102,9 +99,9 @@ public class BatchExecutionScheduleEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(errorFeedPresenter.addSelectionListener(e -> onChange()));
         registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
-        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(userRefSelectionBoxPresenter.addSelectionListener(e -> onChange()));
     }
 
     public void show() {
@@ -152,13 +149,9 @@ public class BatchExecutionScheduleEditPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        // Nothing to do: the dialog reads its fields when OK is pressed
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
-    }
 
     public interface BatchExecutionScheduleEditView
             extends View,

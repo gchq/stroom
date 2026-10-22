@@ -39,7 +39,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
@@ -56,6 +55,9 @@ public class QueryHelpPresenter
     private final QueryHelpAceCompletionProvider keyedAceCompletionProvider;
     private final QueryHelpDetailProvider detailProvider;
     private final MarkdownConverter markdownConverter;
+
+    // The editor items are inserted into, once linked
+    private EditorPresenter editorPresenter;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
@@ -152,10 +154,7 @@ public class QueryHelpPresenter
                     detail.getInsertType() != null &&
                     detail.getInsertType().isInsertable() &&
                     detail.getInsertText() != null) {
-                    InsertEditorTextEvent.fire(
-                            this,
-                            detail.getInsertText(),
-                            detail.getInsertType());
+                    insert(detail.getInsertText(), detail.getInsertType());
                 }
             });
         }
@@ -166,8 +165,16 @@ public class QueryHelpPresenter
         refresh();
     }
 
-    private HandlerRegistration addInsertHandler(final InsertEditorTextEvent.Handler handler) {
-        return addHandlerToSource(InsertEditorTextEvent.getType(), handler);
+    private void insert(final String text, final InsertType insertType) {
+        if (editorPresenter != null) {
+            if (InsertType.SNIPPET.equals(insertType)) {
+                editorPresenter.insertSnippet(text);
+                editorPresenter.focus();
+            } else if (insertType.isInsertable()) {
+                editorPresenter.insertTextAtCursor(text);
+                editorPresenter.focus();
+            }
+        }
     }
 
     /**
@@ -178,16 +185,8 @@ public class QueryHelpPresenter
     public void linkToEditor(final EditorPresenter editorPresenter) {
         Objects.requireNonNull(editorPresenter);
 
-        // Set up the insert handler
-        registerHandler(addInsertHandler(insertEditorTextEvent -> {
-            if (InsertType.SNIPPET.equals(insertEditorTextEvent.getInsertType())) {
-                editorPresenter.insertSnippet(insertEditorTextEvent.getText());
-                editorPresenter.focus();
-            } else if (insertEditorTextEvent.getInsertType().isInsertable()) {
-                editorPresenter.insertTextAtCursor(insertEditorTextEvent.getText());
-                editorPresenter.focus();
-            }
-        }));
+        // Items inserted from the help go into it
+        this.editorPresenter = editorPresenter;
 
         // This glues the editor code completion to the QueryHelpPresenter's completion provider
         // Need to do this via addAttachHandler so the editor is fully loaded

@@ -100,10 +100,10 @@ public final class UserPreferencesPresenter
     protected void onBind() {
         registerHandler(getView().getTabBar().addSelectionHandler(e ->
                 switchTab(e.getSelectedItem())));
-        registerHandler(themePreferencesPresenter.addChangeHandler(this::onChange));
-        registerHandler(editorPreferencesPresenter.addChangeHandler(this::onChange));
-        registerHandler(timePreferencesPresenter.addChangeHandler(this::onChange));
-        registerHandler(keyBindingPreferencesPresenter.addChangeHandler(this::onChange));
+        themePreferencesPresenter.setOnChange(this::onChange);
+        editorPreferencesPresenter.setOnChange(this::onChange);
+        timePreferencesPresenter.setOnChange(this::onChange);
+        keyBindingPreferencesPresenter.setOnChange(this::onChange);
     }
 
     private void switchTab(final TabData tabData) {

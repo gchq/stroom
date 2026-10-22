@@ -37,7 +37,6 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
@@ -94,7 +93,7 @@ import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractRefreshableComponentPresenter<QueryView>
-        implements HasChangeHandlers, SearchStateListener, SearchErrorListener {
+        implements SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -246,15 +245,15 @@ public class QueryPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
+        registerHandler(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (!menuItems.isEmpty()) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
-        registerHandler(indexLoader.addChangeDataHandler(event ->
-                loadedDataSource(indexLoader.getLoadedDataSourceRef())));
+        registerHandler(indexLoader.addChangeListener(loader ->
+                loadedDataSource(loader.getLoadedDataSourceRef())));
 
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
@@ -266,7 +265,7 @@ public class QueryPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addContextChangeHandler(event -> {
+        registerHandler(dashboardContext.addContextChangeListener(() -> {
             if (initialised) {
                 final ExpressionOperator selectionQuery = dashboardContext
                         .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())

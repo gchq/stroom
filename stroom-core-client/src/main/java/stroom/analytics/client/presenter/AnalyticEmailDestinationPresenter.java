@@ -22,10 +22,7 @@ import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.Analy
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.StringWrapper;
@@ -36,7 +33,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -49,7 +45,7 @@ import java.util.stream.Stream;
 
 public class AnalyticEmailDestinationPresenter
         extends MyPresenterWidget<AnalyticEmailDestinationView>
-        implements ChangeUiHandlers, HasChangeHandlers {
+        implements ChangeUiHandlers {
 
     // TODO Make a jinja mode
     private static final AceEditorMode ACE_EDITOR_MODE = AceEditorMode.TEXT;
@@ -58,6 +54,9 @@ public class AnalyticEmailDestinationPresenter
     private final EditorPresenter subjectEditorPresenter;
     private final EditorPresenter bodyEditorPresenter;
     private final RestFactory restFactory;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public AnalyticEmailDestinationPresenter(final EventBus eventBus,
@@ -237,12 +236,12 @@ public class AnalyticEmailDestinationPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the email settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     // --------------------------------------------------------------------------------

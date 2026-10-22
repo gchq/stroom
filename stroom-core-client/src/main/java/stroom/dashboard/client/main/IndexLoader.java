@@ -17,40 +17,36 @@
 package stroom.dashboard.client.main;
 
 import stroom.docref.DocRef;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
+import stroom.widget.component.client.Listeners;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
+public class IndexLoader {
 
-    private final EventBus eventBus;
+    // Told when a data source is loaded: the query, and the tables that show its results
+    private final Listeners<IndexLoader> listeners = new Listeners<>();
 
     private DocRef loadedDataSourceRef;
 
     @Inject
-    public IndexLoader(final EventBus eventBus) {
-        this.eventBus = eventBus;
+    public IndexLoader() {
+        // Made by GIN
     }
 
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<IndexLoader> handler) {
-        return eventBus.addHandlerToSource(ChangeDataEvent.getType(), this, handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
+    /// Listens for a data source being loaded, until the registration is removed.
+    ///
+    /// @param listener Told this loader, once it has loaded one.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addChangeListener(final Consumer<IndexLoader> listener) {
+        return listeners.add(listener);
     }
 
     public void loadDataSource(final DocRef dataSourceRef) {
         loadedDataSourceRef = dataSourceRef;
-        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+        listeners.fire(this);
     }
 
     public DocRef getLoadedDataSourceRef() {

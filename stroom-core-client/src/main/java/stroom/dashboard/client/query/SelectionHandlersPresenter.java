@@ -33,9 +33,6 @@ import stroom.dashboard.shared.HasSelectionQuery;
 import stroom.dashboard.shared.HasSelectionQueryBuilder;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.datasource.ConditionSet;
@@ -69,7 +66,7 @@ import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
         extends AbstractSettingsTabPresenter<SelectionHandlersView>
-        implements HasDirtyHandlers, Focus {
+        implements Focus {
 
     private final SelectionHandlerListPresenter listPresenter;
     private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
@@ -287,7 +284,7 @@ public class SelectionHandlersPresenter
         final DashboardContext dashboardContext = getDashboardContext();
         editSelectionHandlerPresenter.refreshSelection(dashboardContext);
         final HandlerRegistration handlerRegistration = dashboardContext
-                .addContextChangeHandler(e -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
+                .addContextChangeListener(() -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
 
         final PopupSize popupSize = PopupSize.resizable(1200, 1000, 800, 600);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -454,14 +451,9 @@ public class SelectionHandlersPresenter
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
         }
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     public void setUseForFilter(final boolean useForFilter) {
         this.useForFilter = useForFilter;

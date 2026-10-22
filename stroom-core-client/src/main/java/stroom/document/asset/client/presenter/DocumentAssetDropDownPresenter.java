@@ -1,9 +1,7 @@
 package stroom.document.asset.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -16,14 +14,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class DocumentAssetDropDownPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, HasDataSelectionHandlers<String>, Focus {
+        implements DropDownUiHandlers, Focus {
 
     private final Provider<DocumentAssetChooserPresenter> chooserPresenterProvider;
     private AbstractDoc document;
     private String selectedAssetPath;
     private boolean enabled = true;
+
+    private final Listeners<String> selectionListeners = new Listeners<>();
 
     @Inject
     public DocumentAssetDropDownPresenter(final EventBus eventBus,
@@ -69,7 +70,7 @@ public class DocumentAssetDropDownPresenter extends MyPresenterWidget<DropDownVi
                     final String newUrl = chooser.getSelectedAssetUrl();
                     if (!Objects.equals(selectedAssetPath, newUrl)) {
                         setSelectedAssetPath(newUrl);
-                        DataSelectionEvent.fire(DocumentAssetDropDownPresenter.this, newUrl, true);
+                        selectionListeners.fire(newUrl);
                     }
                     event.hide();
                 } else {
@@ -88,8 +89,11 @@ public class DocumentAssetDropDownPresenter extends MyPresenterWidget<DropDownVi
         }
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<String> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    /// Listens for the user choosing an asset, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<String> listener) {
+        return selectionListeners.add(listener);
     }
 }

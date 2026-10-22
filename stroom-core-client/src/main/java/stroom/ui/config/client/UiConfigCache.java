@@ -25,14 +25,13 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.widget.component.client.Listeners;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -47,7 +46,8 @@ public class UiConfigCache implements HasHandlers {
     private final RestFactory restFactory;
     private final Timer refreshTimer;
     private ExtendedUiConfig clientProperties;
-    private EventBus eventBus;
+    // Told the properties whenever they are fetched, e.g. the main screen for the page's title
+    private final Listeners<ExtendedUiConfig> propertyListeners = new Listeners<>();
     private long lastAnnotationChangeTime;
 
     @Inject
@@ -97,7 +97,7 @@ public class UiConfigCache implements HasHandlers {
                 .onSuccess(result -> {
                     clientProperties = result;
                     consumer.accept(result);
-                    PropertyChangeEvent.fire(UiConfigCache.this, result);
+                    propertyListeners.fire(result);
 
                     try {
                         if (lastAnnotationChangeTime != result.getLastAnnotationChangeTime()) {
@@ -133,22 +133,20 @@ public class UiConfigCache implements HasHandlers {
         }
     }
 
-    public HandlerRegistration addPropertyChangeHandler(final PropertyChangeEvent.Handler handler) {
-        if (eventBus == null) {
-            eventBus = new SimpleEventBus();
-        }
-
-        final HandlerRegistration handlerRegistration = eventBus.addHandlerToSource(PropertyChangeEvent.getType(),
-                this,
-                handler);
-        get(properties -> PropertyChangeEvent.fire(UiConfigCache.this, properties));
-        return handlerRegistration;
+    /// Listens for the properties, now (once fetched) and whenever they are fetched again, until the
+    /// registration is removed.
+    ///
+    /// @param listener Told the properties.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addPropertyChangeListener(final Consumer<ExtendedUiConfig> listener) {
+        final HandlerRegistration registration = propertyListeners.add(listener);
+        get(propertyListeners::fire);
+        return registration;
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        if (eventBus != null) {
-            eventBus.fireEventFromSource(event, this);
-        }
+        // Nothing listens to events fired from here (an annotation change, a failure to fetch the
+        // properties): see ISSUES.md, "UI config failures and annotation changes go nowhere"
     }
 }

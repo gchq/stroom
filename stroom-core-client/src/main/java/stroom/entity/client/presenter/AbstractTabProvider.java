@@ -17,26 +17,19 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         extends HandlerContainerImpl
         implements TabProvider<E> {
 
-    private final EventBus eventBus;
-
     private P presenterWidget;
 
-    public AbstractTabProvider(final EventBus eventBus) {
-        this.eventBus = eventBus;
+    public AbstractTabProvider() {
+        // A tab's presenter tells its document of changes itself (Contexts.DIRTY)
     }
 
     protected abstract P createPresenter();
@@ -73,17 +66,4 @@ public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         }
     }
 
-    protected void fireDirtyEvent(final boolean dirty) {
-        DirtyEvent.fire(this, dirty);
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return eventBus.addHandlerToSource(DirtyEvent.getType(), this, handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
-    }
 }

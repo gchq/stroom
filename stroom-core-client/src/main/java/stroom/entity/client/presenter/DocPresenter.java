@@ -18,11 +18,10 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.DirtyTracker;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,7 +34,7 @@ import java.util.function.Consumer;
 
 public abstract class DocPresenter<V extends View, D>
         extends MyPresenterWidget<V>
-        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose, ChangeUiHandlers {
+        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasClose, ChangeUiHandlers {
 
     private D entity;
     private boolean readOnly = true;
@@ -44,11 +43,15 @@ public abstract class DocPresenter<V extends View, D>
     // whether it may be changed (only narrowing what an owner provides) and which document it is
     private final ContextValue<Boolean> readOnlyContext = ContextValue.of(true);
     private final ContextValue<DocRef> documentContext = ContextValue.of(null);
+    // Told when the document becomes dirty or clean, e.g. to show it in a window's title
+    private final Listeners<Boolean> dirtyListeners = new Listeners<>();
 
     public DocPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
         provide(Contexts.READ_ONLY, readOnlyContext);
         provide(Contexts.DOCUMENT, documentContext);
+        // What this owns tells it of changes, however deep (markChanged)
+        provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
     }
 
     @Override
@@ -72,7 +75,9 @@ public abstract class DocPresenter<V extends View, D>
         if (this.dirty != dirty) {
             this.dirty = dirty;
             onDirty();
-            DirtyEvent.fire(this, dirty);
+            dirtyListeners.fire(dirty);
+            // A part of a document (e.g. one of its tabs) tells the document
+            markChanged();
         }
     }
 
@@ -134,9 +139,13 @@ public abstract class DocPresenter<V extends View, D>
 
     protected abstract D onWrite(D document);
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    /// Listens for the document becoming dirty or clean, until this presenter is disposed or the
+    /// registration removed. A part of the document tells the document itself, with no listener.
+    ///
+    /// @param listener Told whether it is now dirty.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addDirtyListener(final Consumer<Boolean> listener) {
+        return dirtyListeners.add(listener);
     }
 
     /**

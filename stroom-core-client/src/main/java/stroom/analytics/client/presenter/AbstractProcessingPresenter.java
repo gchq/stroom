@@ -23,9 +23,6 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
@@ -36,15 +33,19 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticProcessingView, D>
-        implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
+        implements AnalyticProcessingUiHandlers {
 
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
     private final UiConfigCache uiConfigCache;
+
+    private Consumer<AnalyticProcessType> onProcessingTypeChange = processingType -> {
+    };
 
     @Inject
     public AbstractProcessingPresenter(final EventBus eventBus,
@@ -72,19 +73,19 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(tableBuilderProcessingPresenter.addChangeHandler(this::onChange));
+        tableBuilderProcessingPresenter.setOnChange(this::onChange);
     }
 
     @Override
     public void onProcessingTypeChange() {
         onChange();
         setProcessType(getView().getProcessingType());
-        ChangeDataEvent.fire(this, getView().getProcessingType());
+        onProcessingTypeChange.accept(getView().getProcessingType());
     }
 
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<AnalyticProcessType> handler) {
-        return addHandlerToSource(ChangeDataEvent.getType(), handler);
+    /// @param onProcessingTypeChange What to run with the processing type when the user changes it.
+    public void setOnProcessingTypeChange(final Consumer<AnalyticProcessType> onProcessingTypeChange) {
+        this.onProcessingTypeChange = onProcessingTypeChange;
     }
 
     @Override

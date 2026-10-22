@@ -41,7 +41,7 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
 
     @Override
     protected void onBind() {
-        registerHandler(scriptDependencyListPresenter.addChangeHandler(this::onChange));
+        scriptDependencyListPresenter.setOnChange(this::onChange);
     }
 
     @Override

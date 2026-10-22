@@ -68,7 +68,7 @@ import java.util.Map;
 /// code edited while stepping.
 public final class PipelineEditorStories {
 
-    /// The name of the spy recording the editor's dirty state (its `DirtyEvent`s).
+    /// The name of the spy recording the editor's dirty state (its dirty listener).
     static final String ON_DIRTY = "onDirty";
     // The classes of the box a dragged element would be dropped on, and of one that won't take it
     private static final String HOTSPOT = "pipeline-element--target";
@@ -968,7 +968,7 @@ public final class PipelineEditorStories {
                     final Play screen = play.screen();
                     openStructure(play);
                     play.findByText("xslt");
-                    // The dirty state is a spy on the editor's DirtyEvent
+                    // The dirty state is a spy on the editor's dirty listener
                     play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
                     play.click(play.getByText("xslt"));
                     play.click(play.getByTitle("Remove Pipeline Element"));
@@ -1171,7 +1171,7 @@ public final class PipelineEditorStories {
                     .create(resource)
                     .method(res -> res.fetch(UUID))
                     .onSuccess(doc -> {
-                        harness.addRegistration(presenter.addDirtyHandler(event -> onDirty.call(event.isDirty())));
+                        harness.addRegistration(presenter.addDirtyListener(onDirty::call));
                         presenter.read(DOC_REF, doc, readOnly);
                         harness.addContent(presenter);
                     })

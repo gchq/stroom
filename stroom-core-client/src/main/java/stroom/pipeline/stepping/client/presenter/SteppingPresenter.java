@@ -25,9 +25,6 @@ import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -90,7 +87,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
@@ -109,7 +105,7 @@ import java.util.stream.Collectors;
 
 public class SteppingPresenter
         extends MyPresenterWidget<SteppingPresenter.SteppingView>
-        implements HasChangeHandlers, ClassificationUiHandlers {
+        implements ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
     private static final String LOG_PANE_TITLE = "Log Pane";
@@ -153,6 +149,9 @@ public class SteppingPresenter
     private PipelineDoc pipelineDoc;
     private String classification;
     private ElementPresenter currentElementPresenter = null;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public SteppingPresenter(final EventBus eventBus,
@@ -319,16 +318,14 @@ public class SteppingPresenter
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event -> {
-            step(event.getStepType(), event.getStepLocation());
-            final StepLocation stepLocation = event.getStepLocation();
+        stepLocationLinkPresenter.setOnStepLocation(stepLocation -> {
+            step(StepType.REFRESH, stepLocation);
             final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
             steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
-        }));
-        registerHandler(stepControlPresenter.addStepControlHandler(event ->
-                step(event.getStepType(), event.getStepLocation())));
-        registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
-                showChangeFiltersDialog()));
+        });
+        // The step controls step from the current location
+        stepControlPresenter.setOnStep(stepType -> step(stepType, null));
+        stepControlPresenter.setOnFilter(this::showChangeFiltersDialog);
 
         registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             if (runStepping) {
@@ -344,9 +341,9 @@ public class SteppingPresenter
             }
         }));
 
-        registerHandler(steppingMetaListPresenter.addChangeDataHandler(event -> {
-            if (event.getData().size() == 1) {
-                final MetaRow metaRow = event.getData().getFirst();
+        steppingMetaListPresenter.setOnResult(resultPage -> {
+            if (resultPage.size() == 1) {
+                final MetaRow metaRow = resultPage.getFirst();
                 steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
                 stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
                 // Begin stepping if not already stepping on this stream. This handles the case where the user
@@ -360,7 +357,7 @@ public class SteppingPresenter
             }
             // Update button state in case the meta list loaded after the last step result arrived
             updateStepControlButtons();
-        }));
+        });
 
         registerHandler(pipelinePathPresenter.addContextMenuHandler(event -> {
             final PipelineElement selectedPipeElement = getSelectedPipeElement();
@@ -531,13 +528,13 @@ public class SteppingPresenter
             final ElementId elementId = element.getElementId();
             ElementPresenter elementPresenter = elementPresenterMap.get(elementId);
             if (elementPresenter == null) {
-                // Editing element code (e.g. XSLT) fires a ChangeEvent ("something changed") which we
-                // relay up as our own ChangeEvent so the enclosing pipeline presenter re-evaluates Save
+                // Editing element code (e.g. XSLT) calls the element's change callback ("something
+                // changed"), which we relay up as our own so the enclosing pipeline presenter re-evaluates Save
                 // via onChange(). The authoritative dirty verdict is recomputed there by comparison, so a
                 // reverted edit correctly returns to clean. It must NOT rebuild the pipeline model/tree -
                 // the code content is not part of the pipeline structure, and doing so on every keypress
                 // caused the tree to flash and the UI to lag on large documents.
-                final ChangeHandler changeEditorHandler = () -> ChangeEvent.fire(SteppingPresenter.this);
+                final Runnable changeEditorHandler = () -> onChange.run();
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
@@ -552,7 +549,7 @@ public class SteppingPresenter
                 presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
-                presenter.addChangeHandler(changeEditorHandler);
+                presenter.setOnChange(changeEditorHandler);
 
                 // Allow step refresh to be called from the editor
                 presenter.setStepRequestHandler(stepType -> {
@@ -1239,9 +1236,9 @@ public class SteppingPresenter
         }
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes an element while stepping.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     // --------------------------------------------------------------------------------

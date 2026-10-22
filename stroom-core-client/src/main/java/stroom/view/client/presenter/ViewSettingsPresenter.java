@@ -91,9 +91,9 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
     }
 
     private void registerHandlers() {
-        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> onChange()));
-        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> onChange()));
-        registerHandler(expressionPresenter.addChangeHandler(this::onChange));
+        registerHandler(dataSourceSelectionPresenter.addSelectionListener(event -> onChange()));
+        registerHandler(pipelineSelectionPresenter.addSelectionListener(event -> onChange()));
+        expressionPresenter.setOnChange(this::onChange);
     }
 
     @Override

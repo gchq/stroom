@@ -137,9 +137,6 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     protected void onBind() {
         super.onBind();
         tabContentProvider.bind();
-        registerHandler(tabContentProvider.addDirtyHandler(event -> {
-            onChange();
-        }));
     }
 
     @Override

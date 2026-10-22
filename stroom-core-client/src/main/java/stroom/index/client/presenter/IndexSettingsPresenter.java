@@ -91,7 +91,7 @@ public class IndexSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
+        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

@@ -19,7 +19,6 @@ package stroom.floormap.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.event.TimeChangeEvent;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
@@ -141,6 +140,16 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
     private final DateTimeFormatter dateTimeFormatter;
 
+    // Told the time the user moves the timeline to
+    private Consumer<Long> onTimeChange = time -> {
+    };
+
+    /// @param onTimeChange What to run with the time (ms since the epoch) when the user moves the
+    ///                     timeline, or it plays on.
+    public void setOnTimeChange(final Consumer<Long> onTimeChange) {
+        this.onTimeChange = onTimeChange;
+    }
+
     @Inject
     public FloorMapTimelinePresenter(final EventBus eventBus,
                                      final FloorMapTimelineView view,
@@ -173,7 +182,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             final long newTime = startTime + (long) (duration * (percentage / 100.0));
             clearOutOfRange();
             setCurrentTime(newTime);
-            TimeChangeEvent.fire(this, newTime);
+            onTimeChange.accept(newTime);
         });
     }
 
@@ -384,7 +393,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
         fireDiscontinuity();
         setCurrentTime(newTime);
-        TimeChangeEvent.fire(this, newTime);
+        onTimeChange.accept(newTime);
     }
 
     /// Sets the total time range visible on the timeline.
@@ -481,13 +490,13 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// A backward wrap is self-evident from the time going down; a *forward* scrub or step is
     /// not, which is what this callback exists to report.
     ///
-    /// Fired **before** the `TimeChangeEvent` at each site, so a handler that arms state
+    /// Fired **before** the time change (`onTimeChange`) at each site, so a handler that arms state
     /// has done so by the time the read for the new position is decided.
     ///
     /// Also fired when Show All or a range edited in the settings popup moves a playhead that the
     /// new range left outside it — see `reconcilePlayhead`. A range change that leaves the
     /// playhead where it was fires nothing, and neither does `setTimeRange`: no
-    /// `TimeChangeEvent` is raised in either case, so there is no read to classify.
+    /// time change is told in either case, so there is no read to classify.
     ///
     /// @param handler the callback, or `null` to remove it
     public void setDiscontinuityHandler(final Runnable handler) {
@@ -573,7 +582,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         // Covers the step buttons and the keyboard nudge alike, since both funnel through here.
         fireDiscontinuity();
         setCurrentTime(newTime);
-        TimeChangeEvent.fire(this, newTime);
+        onTimeChange.accept(newTime);
     }
 
     /// Formats a millisecond timestamp as a short display string for the timeline labels.
@@ -681,7 +690,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                                 clearAnimationStateHandler.run();
                             }
                             fireDiscontinuity();
-                            TimeChangeEvent.fire(FloorMapTimelinePresenter.this, newTime);
+                            onTimeChange.accept(newTime);
                             return;
                         }
                     }
@@ -692,7 +701,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                     // Only fire a data query if enough wall-clock time has elapsed since
                     // the last one, preventing the server from being overwhelmed.
                     if (queryThrottle.shouldQuery(timestamp)) {
-                        TimeChangeEvent.fire(FloorMapTimelinePresenter.this, newTime);
+                        onTimeChange.accept(newTime);
                     }
                 }
 

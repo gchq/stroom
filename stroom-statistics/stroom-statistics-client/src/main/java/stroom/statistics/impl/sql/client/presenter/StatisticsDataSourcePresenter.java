@@ -74,7 +74,7 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
         addTab(SETTINGS, new DocTabProvider<>(statisticsDataSourceSettingsPresenterProvider::get));
         addTab(FIELDS, new DocTabProvider<>(() -> statisticsFieldListPresenter));
         addTab(CUSTOM_ROLLUPS, new DocTabProvider<>(() -> statisticsCustomMaskListPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<StatisticStoreDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<StatisticStoreDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

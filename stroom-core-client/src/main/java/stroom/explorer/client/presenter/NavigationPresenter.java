@@ -264,7 +264,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
                 taskMonitor.onEnd(e.getTask())));
 
-        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> explorerTree.setIncludedTypeSet(
+        registerHandler(typeFilterPresenter.addSelectionListener(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         // Fire events from the explorer tree globally.

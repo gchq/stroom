@@ -23,7 +23,6 @@ import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.client.presenter.State.Mask;
@@ -124,7 +123,7 @@ public class StatisticsCustomMaskListPresenter
             } else {
                 row.getMask().remove(statisticField);
             }
-            DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
+            StatisticsCustomMaskListPresenter.this.markChanged();
         });
 
         dataGrid.addResizableColumn(rolledUpColumn, statisticField.getName(), 100);
@@ -134,7 +133,7 @@ public class StatisticsCustomMaskListPresenter
     private void onAdd() {
         this.state.addMask(new HashSet<>());
         refresh();
-        DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
+        StatisticsCustomMaskListPresenter.this.markChanged();
     }
 
     private void onAutoGenerate() {
@@ -146,7 +145,7 @@ public class StatisticsCustomMaskListPresenter
                     if (result) {
                         state.allPermutations();
                         update();
-                        DirtyEvent.fire(thisInstance, true);
+                        thisInstance.markChanged();
                     }
                 });
     }
@@ -159,7 +158,7 @@ public class StatisticsCustomMaskListPresenter
             selectionModel.clear();
             refresh();
 
-            DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
+            StatisticsCustomMaskListPresenter.this.markChanged();
         }
     }
 

@@ -74,8 +74,7 @@ public class AnalyticRulePresenter
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = own(processPresenterProvider.get());
         analyticProcessingPresenter.setDocumentEditPresenter(this);
-        analyticProcessingPresenter.addChangeDataHandler(e ->
-                setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
+        analyticProcessingPresenter.setOnProcessingTypeChange(this::setRuleType);
 
         addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
@@ -83,7 +82,7 @@ public class AnalyticRulePresenter
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

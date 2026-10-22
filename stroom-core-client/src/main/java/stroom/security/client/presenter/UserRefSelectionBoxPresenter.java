@@ -16,11 +16,9 @@
 
 package stroom.security.client.presenter;
 
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -31,13 +29,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, HasDataSelectionHandlers<UserRef>, Focus {
+        implements DropDownUiHandlers, Focus {
 
     private final UserRefPopupPresenter userRefPopupPresenter;
     private boolean enabled = true;
     private boolean readOnly;
+
+    private final Listeners<UserRef> selectionListeners = new Listeners<>();
 
     @Inject
     public UserRefSelectionBoxPresenter(final EventBus eventBus,
@@ -72,15 +73,18 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
             userRefPopupPresenter.show(userRef -> {
                 final UserRef currentSelection = userRefPopupPresenter.getSelected();
                 if (!Objects.equals(initialSelection, currentSelection)) {
-                    DataSelectionEvent.fire(UserRefSelectionBoxPresenter.this, userRef, true);
+                    selectionListeners.fire(userRef);
                 }
             });
         }
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<UserRef> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    /// Listens for the user choosing a user or group, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<UserRef> listener) {
+        return selectionListeners.add(listener);
     }
 
     private void changeSelection(final UserRef selection) {

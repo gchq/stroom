@@ -416,9 +416,9 @@ public class FloorMapSettingsPresenter
         // No validation on selection: the picker only offers FloorMapEventStoreDoc, and that
         // type fixes its own state type, so there is no longer a wrong store to choose.
         //noinspection unused e
-        registerHandler(eventsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(eventsStoreRefPresenter.addSelectionListener(e -> onChange()));
         //noinspection unused e
-        registerHandler(factsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(factsStoreRefPresenter.addSelectionListener(e -> onChange()));
         //noinspection unused e
         registerHandler(schemaSelectionModel.addSelectionChangeHandler(
                 e -> removeButton.setEnabled(schemaSelectionModel.getSelectedObject() != null)));

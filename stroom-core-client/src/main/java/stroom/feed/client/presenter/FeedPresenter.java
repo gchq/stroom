@@ -59,7 +59,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         TabData selectedTab = SETTINGS;
 
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
-            addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>(eventBus) {
+            addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>() {
                 @Override
                 protected MetaPresenter createPresenter() {
                     return metaPresenterProvider.get();
@@ -84,7 +84,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         }
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            addTab(TASKS, new AbstractTabProvider<FeedDoc, ProcessorTaskPresenter>(eventBus) {
+            addTab(TASKS, new AbstractTabProvider<FeedDoc, ProcessorTaskPresenter>() {
                 @Override
                 protected ProcessorTaskPresenter createPresenter() {
                     return taskPresenterProvider.get();
@@ -101,7 +101,7 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
         }
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

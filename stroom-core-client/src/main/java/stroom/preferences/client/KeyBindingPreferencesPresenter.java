@@ -19,9 +19,6 @@ package stroom.preferences.client;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPreferencesView;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.shared.UserPreferences;
@@ -37,7 +34,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -51,7 +47,7 @@ import java.util.Objects;
 /// change, remove or reset them, and turn character key shortcuts off (WCAG 2.1.4).
 public final class KeyBindingPreferencesPresenter
         extends MyPresenterWidget<KeyBindingPreferencesView>
-        implements KeyBindingPreferencesUiHandlers, HasChangeHandlers {
+        implements KeyBindingPreferencesUiHandlers {
 
     private static final String NONE = "None";
 
@@ -67,6 +63,9 @@ public final class KeyBindingPreferencesPresenter
     // The user's shortcuts for every configurable action, as being edited
     private Map<Action, List<KeyShortcut>> bindings = KeyBinding.getDefaultBindings();
     private String filter;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public KeyBindingPreferencesPresenter(final EventBus eventBus,
@@ -166,7 +165,7 @@ public final class KeyBindingPreferencesPresenter
     public void onChange() {
         // Character key shortcuts turned on or off
         dataGrid.redraw();
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
     @Override
@@ -247,7 +246,7 @@ public final class KeyBindingPreferencesPresenter
 
     private void onBindingsChange(final KeyBindingRow rowToSelect) {
         refresh(rowToSelect);
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
     private void refresh(final KeyBindingRow rowToSelect) {
@@ -307,9 +306,9 @@ public final class KeyBindingPreferencesPresenter
         resetAllButton.setEnabled(KeyBinding.toUserBindings(bindings) != null);
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a key binding.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
 

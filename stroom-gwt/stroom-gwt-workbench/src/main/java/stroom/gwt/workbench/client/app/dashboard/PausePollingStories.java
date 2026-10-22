@@ -105,7 +105,7 @@ public final class PausePollingStories {
         host.getElement().setAttribute("data-testid", "host");
         harness.add(host);
         harness.afterStartUp(() -> {
-            final IndexLoader indexLoader = new IndexLoader(harness.getEventBus());
+            final IndexLoader indexLoader = new IndexLoader();
             final SearchModel searchModel = new SearchModel(harness.getEventBus(),
                     harness.getRestFactory(),
                     indexLoader,

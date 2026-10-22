@@ -68,7 +68,7 @@ public class FullScreenPresenter
             Window.setTitle(title.trim());
         } else {
             if (presenterWidget instanceof final DocTabPresenter<?, ?> tabPresenter) {
-                tabPresenter.addDirtyHandler(event -> Window.setTitle(tabPresenter.getLabel()));
+                tabPresenter.addDirtyListener(dirty -> Window.setTitle(tabPresenter.getLabel()));
                 Window.addWindowClosingHandler(event -> {
                     if (tabPresenter.isDirty()) {
                         event.setMessage(tabPresenter.getType() + " '" + tabPresenter.getLabel() + "' " +

@@ -104,12 +104,9 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 (effectiveWords, docRef, doc) -> effectiveWords.setDocRef(docRef));
         addTab(DOCUMENTATION,
                 () -> {
-                    final PresenterAdapter<MarkdownEditPresenter> documentation =
-                            PresenterAdapter.of(markdownEditPresenterProvider::get)
-                                    .onReadOnly(MarkdownEditPresenter::setReadOnly);
-                    // Removed with the presenter, as the adapter disposes it
-                    documentation.getPresenter().addDirtyHandler(event -> onChange());
-                    return documentation;
+                    // It tells the editor of changes itself (Contexts.DIRTY)
+                    return PresenterAdapter.of(markdownEditPresenterProvider::get)
+                            .onReadOnly(MarkdownEditPresenter::setReadOnly);
                 },
                 (documentation, docRef, doc) -> documentation.getPresenter().setText(doc.getDescription()),
                 (documentation, doc) -> doc.copy().description(documentation.getPresenter().getText()).build());

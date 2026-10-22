@@ -72,7 +72,7 @@ public class ReportPresenter
         addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

@@ -28,9 +28,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -50,6 +47,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ComponentLayer;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -70,7 +68,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
-        implements HasDirtyHandlers, CloseContentEvent.Handler, HasSave, DocumentTabData, ChangeUiHandlers {
+        implements CloseContentEvent.Handler, HasSave, DocumentTabData, ChangeUiHandlers {
 
     private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
@@ -108,6 +106,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         super(eventBus, view);
         // Its tabs may change the rules: they were never read only here
         provide(Contexts.READ_ONLY, ContextValue.of(false));
+        // Its tabs tell it of changes, however deep (markChanged)
+        provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
         this.ruleSetSettings = own(ruleSetSettings);
         ruleSetSettingsLayer = new ComponentLayer(ruleSetSettings);
         ruleSetSettings.setOnChange(this::onChange);
@@ -116,12 +116,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.lazyMarkdownEditPresenter = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
                 (Supplier<MarkdownEditPresenter>) () -> own(markdownEditPresenterProvider.get()),
-                markdownEditPresenter -> {
-                    setDescriptionOnPresenter(markdownEditPresenter);
-                    registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-                        onChange();
-                    }));
-                });
+                this::setDescriptionOnPresenter);
         this.restFactory = restFactory;
 
         this.hasSaveRegistry = hasSaveRegistry;
@@ -184,9 +179,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(fieldListPresenter.addDirtyHandler(event -> {
-            onChange();
-        }));
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
         registerHandler(getView().getTabBar().addShowMenuHandler(event ->
@@ -289,7 +281,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         if (this.dirty != dirty) {
             this.dirty = dirty;
             updateLabel();
-            DirtyEvent.fire(this, dirty);
         }
     }
 
@@ -314,10 +305,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 : TAB_LABEL;
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     private void getContent(final TabData tab, final Consumer<Layer> callback) {
         if (RULES_TAB.equals(tab)) {

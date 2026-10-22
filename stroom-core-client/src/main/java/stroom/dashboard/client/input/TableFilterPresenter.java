@@ -110,7 +110,7 @@ public class TableFilterPresenter
                     .get(getTableFilterSettings().getTableId());
             if (component instanceof final FilterableTable table) {
                 updateColumns(settings, table);
-                registrations.add(table.addUpdateHandler(e -> {
+                registrations.add(table.addUpdateListener(() -> {
                     updateColumns(settings, table);
                     columnFilterPresenters.values().forEach(ColumnValuesFilterPresenter::refresh);
                 }));

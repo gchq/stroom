@@ -98,6 +98,12 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
         addTab(MAP, new DocTabProvider<>(() -> {
             floorMapMapPresenter = own(floorMapMapPresenterProvider.get());
+            // Its events' types surface as provisional layers in the Editor's Layers panel
+            floorMapMapPresenter.setOnEventData(objects -> {
+                if (floorMapEditorPresenter != null) {
+                    floorMapEditorPresenter.addEventTypes(objects);
+                }
+            });
             // Stash the Map's zoom-to-fit initial view so the Editor tab adopts
             // the same zoom + translation (no jump on the first switch).
             floorMapMapPresenter.setInitialViewListener(initialView -> {
@@ -140,18 +146,23 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             return floorMapEditorPresenter;
         }));
 
-        addTab(EVENTS_QUERY, new AbstractTabProvider<FloorMapDoc, FloorMapQueryPresenter>(eventBus) {
+        addTab(EVENTS_QUERY, new AbstractTabProvider<FloorMapDoc, FloorMapQueryPresenter>() {
             @Override
             protected FloorMapQueryPresenter createPresenter() {
                 eventsQueryPresenter = floorMapQueryPresenterProvider.get();
-                // Scope this to the tab's own query editor. A bus-level
-                // addHandler(ChangeEvent.getType(), ...) hears ChangeEvent from the whole
-                // application — theme and editor preferences, dictionary lists, expression
-                // editors, query result tables, some of them per keystroke — so it marked
-                // this floor map dirty, and triggered a full document write-diff, whenever
-                // anything anywhere changed. addChangeHandler delegates to
-                // QueryEditPresenter.addHandlerToSource, so only an edit here fires it.
-                registerHandler(eventsQueryPresenter.addChangeHandler(() -> fireDirtyEvent(true)));
+                // Only an edit on this tab (its query, or its column dropdowns) marks the floor map
+                // dirty; it once heard every ChangeEvent on the app-wide bus, some per keystroke
+                eventsQueryPresenter.setOnChange(FloorMapPresenter.this::onChange);
+                // Its results are drawn on the Map tab, and their types surface as provisional
+                // layers in the Editor's Layers panel
+                eventsQueryPresenter.setOnEventData(objects -> {
+                    if (floorMapMapPresenter != null) {
+                        floorMapMapPresenter.showQueryEvents(objects);
+                    }
+                    if (floorMapEditorPresenter != null) {
+                        floorMapEditorPresenter.addEventTypes(objects);
+                    }
+                });
                 return eventsQueryPresenter;
             }
 
@@ -192,7 +203,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
 
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

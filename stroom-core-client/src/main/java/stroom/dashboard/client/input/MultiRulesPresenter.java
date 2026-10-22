@@ -22,7 +22,6 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableFilterComponentSettings;
-import stroom.document.client.event.DirtyEvent;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
@@ -94,7 +93,7 @@ public class MultiRulesPresenter extends AbstractSettingsTabPresenter<MultiRules
                 final RulesPresenter rulesPresenter = rulesPresenterMap
                         .computeIfAbsent(column.getId(), k -> {
                             final RulesPresenter presenter = ownUntilHidden(rulesPresenterProvider.get());
-                            registrations.add(presenter.addDirtyHandler(e -> setDirty(true)));
+                            presenter.setOnDirtyChange(() -> setDirty(true));
                             return presenter;
                         });
                 rulesPresenter.read(Collections.singletonList(field), rules);
@@ -122,7 +121,6 @@ public class MultiRulesPresenter extends AbstractSettingsTabPresenter<MultiRules
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
         }
     }
 

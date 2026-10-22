@@ -24,9 +24,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.dispatch.client.RestFactory;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.client.ExpressionTreePresenter;
@@ -59,7 +56,7 @@ import java.util.stream.Collectors;
 
 public class ContentTemplateTabPresenter
         extends ContentTabPresenter<ContentTemplateTabView>
-        implements HasDirtyHandlers, CloseContentEvent.Handler {
+        implements CloseContentEvent.Handler {
 
     public static final String TAB_TYPE = "ContentTemplates";
     private static final String TAB_LABEL = "Content Templates";
@@ -689,7 +686,6 @@ public class ContentTemplateTabPresenter
         if (this.dirty != dirty) {
             this.dirty = dirty;
             saveButton.setEnabled(dirty);
-            DirtyEvent.fire(this, dirty);
 
             if (lastLabel == null || !lastLabel.equals(getLabel())) {
                 lastLabel = getLabel();
@@ -698,10 +694,6 @@ public class ContentTemplateTabPresenter
         }
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
     @Override
     public void onCloseRequest(final CloseContentEvent event) {

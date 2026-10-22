@@ -65,7 +65,7 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
         addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
         addTab(SETTINGS, new DocTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
         addTab(DATA, new DocTabProvider<LuceneIndexDoc>(indexDataPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

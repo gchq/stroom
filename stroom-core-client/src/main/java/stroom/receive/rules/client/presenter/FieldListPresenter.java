@@ -276,7 +276,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 //
 //                refresh();
 //                enableButtons();
-//                DirtyEvent.fire(FieldListPresenter.this, true);
+//                onChange();
 //            }
 //        }
 //    }
@@ -291,7 +291,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 //
 //                refresh();
 //                enableButtons();
-//                DirtyEvent.fire(FieldListPresenter.this, true);
+//                onChange();
 //            }
 //        }
 //    }

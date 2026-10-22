@@ -19,9 +19,6 @@ package stroom.floormap.client.presenter;
 import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.cluster.FloorMapClusterLabel;
 import stroom.floormap.client.cluster.FloorMapClusterOverlay;
-import stroom.floormap.client.event.MapClusterSelectedEvent;
-import stroom.floormap.client.event.MapContextMenuEvent;
-import stroom.floormap.client.event.MapObjectSelectedEvent;
 import stroom.floormap.client.geometry.FloorMapScreenGeometry;
 import stroom.floormap.client.geometry.FloorMapViewport;
 import stroom.floormap.client.geometry.FloorMapZOrder;
@@ -430,6 +427,30 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
     // -------------------------------------------------------------------------
 
+    // Told what the user selects or right-clicks on the canvas
+    private Consumer<String> onObjectSelected = objectId -> {
+    };
+    private Consumer<FloorMapCluster> onClusterSelected = cluster -> {
+    };
+    private Consumer<MapContextMenu> onContextMenu = contextMenu -> {
+    };
+
+    /// @param onObjectSelected What to run with the id of a map object the user clicks.
+    public void setOnObjectSelected(final Consumer<String> onObjectSelected) {
+        this.onObjectSelected = onObjectSelected;
+    }
+
+    /// @param onClusterSelected What to run with a cluster of objects the user clicks.
+    public void setOnClusterSelected(final Consumer<FloorMapCluster> onClusterSelected) {
+        this.onClusterSelected = onClusterSelected;
+    }
+
+    /// @param onContextMenu What to run when the user right-clicks the canvas (or presses its
+    ///                      context menu key).
+    public void setOnContextMenu(final Consumer<MapContextMenu> onContextMenu) {
+        this.onContextMenu = onContextMenu;
+    }
+
     @Inject
     public FloorMapCanvasPresenter(final EventBus eventBus,
                                    final FloorMapCanvasView view) {
@@ -767,7 +788,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             if (hitId != null
                     && !backgroundKeys.contains(hitId)
                     && !areaKeys.contains(hitId)) {
-                MapObjectSelectedEvent.fire(this, hitId);
+                onObjectSelected.accept(hitId);
                 // Remember it so this same click's mouseup re-affirms the
                 // selection instead of clearing it. The parent responds to the
                 // event above by highlighting the object; without this the
@@ -1073,7 +1094,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                     final FloorMapCluster clicked =
                             lastClusterOverlay.getCluster(clickClusterKey);
                     if (clicked != null) {
-                        MapClusterSelectedEvent.fire(this, clicked);
+                        onClusterSelected.accept(clicked);
                     }
                 } else if (clickSelectId != null) {
                     selectedObjectIds.clear();
@@ -1124,7 +1145,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             redraw();
         }));
 
-        // Right-click context menu — suppress the browser default and fire a MapContextMenuEvent.
+        // Right-click context menu — suppress the browser default and tell the owner (onContextMenu).
         // Only fires in edit mode; in read-only (Map tab) mode the browser default is allowed.
         registerHandler(getView().getFocusPanel().addDomHandler(event -> {
             if (!editMode) {
@@ -1181,9 +1202,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                     final double[] vertexMap = screenToMapCoords(
                             clientX - panel.getAbsoluteLeft(),
                             clientY - panel.getAbsoluteTop());
-                    MapContextMenuEvent.fireVertex(this, area.getKey(),
+                    onContextMenu.accept(new MapContextMenu(area.getKey(),
                             vertexMap[0], vertexMap[1], clientX, clientY,
-                            parseHandleIndex(contextRole, "vertex-"));
+                            parseHandleIndex(contextRole, "vertex-")));
                 }
                 return;
             }
@@ -1206,7 +1227,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             // Convert element-relative position to map-space coordinates
             final double[] mapCoords = screenToMapCoords(elementX, elementY);
 
-            MapContextMenuEvent.fire(this, objectId, mapCoords[0], mapCoords[1], clientX, clientY);
+            onContextMenu.accept(new MapContextMenu(objectId, mapCoords[0], mapCoords[1], clientX, clientY));
         }, ContextMenuEvent.getType()));
 
         // Escape clears the selection, so you can pan again after selecting the
@@ -1335,7 +1356,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     ///   the standard keys for a context menu) opens the context menu
     ///   for the selection — see [#openKeyboardContextMenu()]. Edit mode
     ///   only, and only when no gesture is in progress, matching the mouse
-    ///   path: `MapContextMenuEvent` is handled by the Editor tab alone,
+    ///   path: the context menu is handled by the Editor tab alone,
     ///   and a menu must never open mid-draw.
     ///
     /// Tab is untouched, so it always leaves the map: entity-by-entity traversal
@@ -1372,7 +1393,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             case KeyCodes.KEY_ENTER:
             case KeyCodes.KEY_SPACE:
                 // Same guards as the mouse contextmenu handler: only the Editor tab
-                // handles MapContextMenuEvent, and no menu opens mid-gesture. Note
+                // handles the context menu, and no menu opens mid-gesture. Note
                 // the preventDefault sits *inside* the guard — swallowing Enter on
                 // the Map tab, where nothing would open, would be taking a key away
                 // for nothing.
@@ -1545,13 +1566,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : panel.getOffsetHeight() / 2.0;
 
         final double[] mapCoords = screenToMapCoords(elementX, elementY);
-        // MapContextMenuEvent positions the popup in viewport coordinates, so the
+        // The context menu positions the popup in viewport coordinates, so the
         // element-relative anchor has to be offset by the panel's own position.
         final int clientX = (int) Math.round(elementX + panel.getAbsoluteLeft());
         final int clientY = (int) Math.round(elementY + panel.getAbsoluteTop());
 
-        MapContextMenuEvent.fire(this, objectId, mapCoords[0], mapCoords[1],
-                clientX, clientY);
+        onContextMenu.accept(new MapContextMenu(objectId, mapCoords[0], mapCoords[1],
+                clientX, clientY));
     }
 
     /// Converts element-relative coordinates to map-space coordinates by

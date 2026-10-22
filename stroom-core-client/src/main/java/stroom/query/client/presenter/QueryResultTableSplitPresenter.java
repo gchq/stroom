@@ -16,10 +16,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasChangeHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.GroupSelection;
@@ -43,7 +39,7 @@ import java.util.function.Supplier;
 
 public class QueryResultTableSplitPresenter
         extends MyPresenterWidget<QueryResultTableSplitView>
-        implements ResultComponent, HasChangeHandlers {
+        implements ResultComponent {
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
@@ -193,9 +189,9 @@ public class QueryResultTableSplitPresenter
         tablePresenter.updateQueryTablePreferences();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return tablePresenter.addChangeHandler(handler);
+    /// @param onChange What to run when the user changes the table's settings.
+    public void setOnChange(final Runnable onChange) {
+        tablePresenter.setOnChange(onChange);
     }
 
     public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {

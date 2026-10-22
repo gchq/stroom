@@ -116,9 +116,8 @@ public class MainPresenter
         }));
         // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
         registerHandler(MenuRequest.relay(this));
-        registerHandler(uiConfigCache.addPropertyChangeHandler(
-                event -> {
-                    final ExtendedUiConfig uiConfig = event.getProperties();
+        registerHandler(uiConfigCache.addPropertyChangeListener(
+                uiConfig -> {
                     if (uiConfig.getHtmlTitle() != null) {
                         baseTitle = uiConfig.getHtmlTitle();
                         updatePageTitle();

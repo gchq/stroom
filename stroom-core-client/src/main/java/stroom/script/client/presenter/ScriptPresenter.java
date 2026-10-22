@@ -55,7 +55,7 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
                            final DocumentUserPermissionsTabProvider<ScriptDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SCRIPT, new AbstractTabProvider<ScriptDoc, EditorPresenter>(eventBus) {
+        addTab(SCRIPT, new AbstractTabProvider<ScriptDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
@@ -78,11 +78,11 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
                 if (loadCount > 1) {
                     // Remove the script function from the cache so dashboards reload
                     // it.
-                    ClearScriptCacheEvent.fire(this, docRef);
+                    ClearScriptCacheEvent.fire(ScriptPresenter.this, docRef);
 
                     // This script might be used by any visualisation so clear the vis
                     // function cache so that scripts are requested again if needed.
-                    ClearFunctionCacheEvent.fire(this);
+                    ClearFunctionCacheEvent.fire(ScriptPresenter.this);
                 }
             }
 
@@ -92,7 +92,7 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             }
         });
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ScriptDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

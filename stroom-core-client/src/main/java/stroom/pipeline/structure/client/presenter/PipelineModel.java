@@ -16,9 +16,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
@@ -34,11 +31,9 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.util.client.Pair;
+import stroom.widget.component.client.Listeners;
 
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,13 +47,14 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
+public class PipelineModel {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
 
     private final PipelineElementTypes elementTypes;
-    private final EventBus eventBus = new SimpleEventBus();
+    // Told when the model changes, e.g. the structure view and the stepping view
+    private final Listeners<PipelineModel> listeners = new Listeners<>();
     private Map<PipelineElement, List<PipelineElement>> childMap;
     private Map<PipelineElement, PipelineElement> parentMap;
     private PipelineLayer pipelineLayer;
@@ -343,7 +339,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         }
 
         // Let anybody that cares know that the model has changed.
-        ChangeDataEvent.fire(this, this);
+        listeners.fire(this);
     }
 
     public Map<PipelineElement, List<PipelineElement>> getChildMap() {
@@ -592,9 +588,12 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         list.removeIf(link -> link.getTo().equals(element));
     }
 
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
-        return eventBus.addHandler(ChangeDataEvent.getType(), handler);
+    /// Listens for the model changing, until the registration is removed.
+    ///
+    /// @param listener Told this model, once it has changed.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addChangeListener(final Consumer<PipelineModel> listener) {
+        return listeners.add(listener);
     }
 
 
@@ -618,10 +617,6 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return elementTypes.getPropertyType(element, property);
     }
 
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
-    }
 
     public boolean hasElement(final PipelineElement element) {
         return getCombinedData().getElements().containsValue(element);

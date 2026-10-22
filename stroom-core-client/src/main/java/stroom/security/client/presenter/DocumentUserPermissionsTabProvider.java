@@ -29,10 +29,8 @@ public class DocumentUserPermissionsTabProvider<E> extends AbstractTabProvider<E
     private final Provider<DocumentUserPermissionsPresenter> documentUserPermissionsPresenterProvider;
 
     @Inject
-    public DocumentUserPermissionsTabProvider(final EventBus eventBus,
-                                              final Provider<DocumentUserPermissionsPresenter>
+    public DocumentUserPermissionsTabProvider(final Provider<DocumentUserPermissionsPresenter>
                                                       documentUserPermissionsPresenterProvider) {
-        super(eventBus);
         this.documentUserPermissionsPresenterProvider = documentUserPermissionsPresenterProvider;
     }
 

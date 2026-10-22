@@ -17,9 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.docstore.shared.DocumentType;
@@ -27,6 +24,7 @@ import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -60,8 +58,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
-        implements HasDataSelectionHandlers<TypeFilterPresenter>,
-        DocumentTypeSelectionModel {
+        implements DocumentTypeSelectionModel {
 
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
@@ -77,6 +74,8 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
     private Consumer<Boolean> filterStateConsumer = null;
+
+    private final Listeners<TypeFilterPresenter> selectionListeners = new Listeners<>();
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
@@ -185,9 +184,12 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         return getIncludedTypes().isPresent();
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<TypeFilterPresenter> handler) {
-        return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
+    /// Listens for the user changing the types shown, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<TypeFilterPresenter> listener) {
+        return selectionListeners.add(listener);
     }
 
     private void selectAll() {
@@ -234,10 +236,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         }
 
         refreshView();
-        DataSelectionEvent.fire(
-                TypeFilterPresenter.this,
-                TypeFilterPresenter.this,
-                false);
+        selectionListeners.fire(TypeFilterPresenter.this);
     }
 
     @Override
@@ -299,10 +298,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         protected void onSelectAll(final CellPreviewEvent<DocumentType> e) {
             toggleSelectAll();
             refreshView();
-            DataSelectionEvent.fire(
-                    TypeFilterPresenter.this,
-                    TypeFilterPresenter.this,
-                    false);
+            selectionListeners.fire(TypeFilterPresenter.this);
         }
     }
 }

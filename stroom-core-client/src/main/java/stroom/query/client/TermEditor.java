@@ -559,7 +559,7 @@ public class TermEditor extends Composite implements HasComponentNode {
         registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
         if (docSelectionBoxPresenter != null) {
-            registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
+            registerHandler(docSelectionBoxPresenter.addSelectionListener(event -> {
                 final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
                 if (!Objects.equals(term.getDocRef(), selection)) {
                     write(term);

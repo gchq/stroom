@@ -55,7 +55,7 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(CONVERSION, new AbstractTabProvider<TextConverterDoc, EditorPresenter>(eventBus) {
+        addTab(CONVERSION, new AbstractTabProvider<TextConverterDoc, EditorPresenter>() {
 
             @Override
             public EditorPresenter createPresenter() {
@@ -93,7 +93,7 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
         });
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

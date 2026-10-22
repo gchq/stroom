@@ -144,11 +144,11 @@ public class ImportConfigConfirmPresenter extends
     protected void onBind() {
         super.onBind();
 
-        registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null &&
-                event.getSelectedItem().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
-                event.getSelectedItem().getUuid().length() > 1) {
-                setRootDocRef(event.getSelectedItem());
+        registerHandler(rootFolderPresenter.addSelectionListener(selected -> {
+            if (selected != null &&
+                selected.compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
+                selected.getUuid().length() > 1) {
+                setRootDocRef(selected);
             } else {
                 setRootDocRef(null);
             }

@@ -144,9 +144,9 @@ public class FloorMapInitPresenter
     protected void onBind() {
         super.onBind();
         //noinspection unused e
-        registerHandler(factsStorePresenter.addDataSelectionHandler(e -> validate()));
+        registerHandler(factsStorePresenter.addSelectionListener(e -> validate()));
         //noinspection unused e
-        registerHandler(eventsStorePresenter.addDataSelectionHandler(e -> validate()));
+        registerHandler(eventsStorePresenter.addSelectionListener(e -> validate()));
     }
 
     // -- Validation --

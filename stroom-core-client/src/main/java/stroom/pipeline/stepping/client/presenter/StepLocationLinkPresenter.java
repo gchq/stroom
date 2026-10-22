@@ -18,7 +18,6 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -27,8 +26,9 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Consumer;
 
 public class StepLocationLinkPresenter
         extends MyPresenterWidget<StepLocationLinkView> {
@@ -36,6 +36,9 @@ public class StepLocationLinkPresenter
     private final StepLocationPresenter stepLocationPresenter;
     private StepLocation stepLocation;
     private boolean enabled = true;
+
+    private Consumer<StepLocation> onStepLocation = stepLocation -> {
+    };
 
     @Inject
     public StepLocationLinkPresenter(final EventBus eventBus,
@@ -62,9 +65,7 @@ public class StepLocationLinkPresenter
                     .onShow(e -> stepLocationPresenter.focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            StepControlEvent.fire(this,
-                                    StepType.REFRESH,
-                                    stepLocationPresenter.getStepLocation());
+                            onStepLocation.accept(stepLocationPresenter.getStepLocation());
                         }
                         e.hide();
                     })
@@ -105,8 +106,9 @@ public class StepLocationLinkPresenter
         }
     }
 
-    public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {
-        return addHandlerToSource(StepControlEvent.getType(), handler);
+    /// @param onStepLocation What to run with the location the user asks to step to.
+    public void setOnStepLocation(final Consumer<StepLocation> onStepLocation) {
+        this.onStepLocation = onStepLocation;
     }
 
     public interface StepLocationLinkView extends View {

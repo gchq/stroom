@@ -30,7 +30,6 @@ import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -67,6 +66,7 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Listeners;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -74,7 +74,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -116,7 +115,8 @@ public class EmbeddedQueryPresenter
     private boolean initialised;
     private ExpressionOperator currentSelectionQuery;
     private DocRef loadedQueryRef;
-    private final EventBus tableEventBus = new SimpleEventBus();
+    // Told when the table's columns or data change, e.g. a filter on it
+    private final Listeners<Boolean> updateListeners = new Listeners<>();
 
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
@@ -398,7 +398,7 @@ public class EmbeddedQueryPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addContextChangeHandler(event -> {
+        registerHandler(dashboardContext.addContextChangeListener(() -> {
             if (initialised) {
                 final ExpressionOperator selectionQuery = dashboardContext
                         .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
@@ -489,7 +489,7 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
             currentTablePresenter.updateQueryTablePreferences();
-            tableHandlerRegistrations.add(currentTablePresenter.addChangeHandler(this::onChange));
+            currentTablePresenter.setOnChange(this::onChange);
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
                     .addSelectionHandler(event ->
                             getDashboardContext().fireComponentChangeEvent(this)));
@@ -499,8 +499,8 @@ public class EmbeddedQueryPresenter
             }
 
             // Chain update events.
-            tableHandlerRegistrations.add(currentTablePresenter.addUpdateHandler(e ->
-                    fireColumnAndDataUpdate()));
+            tableHandlerRegistrations.add(currentTablePresenter.addUpdateListener(
+                    this::fireColumnAndDataUpdate));
         }
     }
 
@@ -901,12 +901,12 @@ public class EmbeddedQueryPresenter
     }
 
     private void fireColumnAndDataUpdate() {
-        TableUpdateEvent.fire(tableEventBus::fireEvent);
+        updateListeners.fire(true);
     }
 
     @Override
-    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
-        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    public HandlerRegistration addUpdateListener(final Runnable listener) {
+        return updateListeners.add(ignored -> listener.run());
     }
 
     @Override

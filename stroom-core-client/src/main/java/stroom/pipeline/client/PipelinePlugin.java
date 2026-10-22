@@ -283,7 +283,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         // Only begin stepping when the pipeline model has been loaded.
                         // Then remove the handler because we dont want it to run again
                         final HandlerRegistration[] registration = new HandlerRegistration[1];
-                        registration[0] = pipelinePresenter.addDataLoadedHandler(event -> {
+                        registration[0] = pipelinePresenter.addDataLoadedListener(model -> {
                             registration[0].removeHandler();
                             pipelinePresenter.refreshSteppingMeta(
                                     () -> pipelinePresenter.beginStepping(stepType,

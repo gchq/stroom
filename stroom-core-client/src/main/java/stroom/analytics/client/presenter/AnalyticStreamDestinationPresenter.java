@@ -21,9 +21,6 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
@@ -32,17 +29,19 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
-        implements AnalyticStreamDestinationUiHandlers, HasChangeHandlers {
+        implements AnalyticStreamDestinationUiHandlers {
 
     private final DocSelectionBoxPresenter feedPresenter;
     private final ConfigDefaultSetter configDefaultSetter;
     private ConfigTarget configTarget = ConfigTarget.ANALYTIC_UI_DEFAULT;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public AnalyticStreamDestinationPresenter(final EventBus eventBus,
@@ -73,7 +72,7 @@ public class AnalyticStreamDestinationPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(feedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override
@@ -112,12 +111,12 @@ public class AnalyticStreamDestinationPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the destination.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
 

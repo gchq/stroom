@@ -48,7 +48,7 @@ public class ElasticClusterPresenter extends DocTabPresenter<LinkTabPanelView, E
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(clusterSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -132,7 +131,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                         refresh();
                         updateMasks();
                         e.hide();
-                        DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                        StatisticsFieldListPresenter.this.markChanged();
                     } catch (final RuntimeException ex) {
                         AlertEvent.fireError(this, ex.getMessage(), e::reset);
                     }
@@ -163,7 +162,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                             refresh();
                             updateMasks();
                             e.hide();
-                            DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                            StatisticsFieldListPresenter.this.markChanged();
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(this, ex.getMessage(), e::reset);
                         }
@@ -183,7 +182,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                 selectionModel.clear();
                 refresh();
                 updateMasks();
-                DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                StatisticsFieldListPresenter.this.markChanged();
             }
         }
     }

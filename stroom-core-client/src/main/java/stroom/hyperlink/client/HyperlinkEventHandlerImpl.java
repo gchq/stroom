@@ -275,7 +275,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         final IFramePresenter presenter = MyPresenterWidget.disposeWhenHidden(iFramePresenterProvider.get());
-        final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(ignored ->
+        presenter.setOnTitleChange(() ->
                 RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
@@ -285,7 +285,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 .popupSize(popupSize)
                 .caption(presenter.getLabel())
                 .onHide(ignored -> {
-                    handlerRegistration.removeHandler();
                     presenter.close();
                 })
                 .fire();

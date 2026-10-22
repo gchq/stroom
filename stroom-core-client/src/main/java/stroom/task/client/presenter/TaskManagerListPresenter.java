@@ -21,9 +21,6 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.DataViewType;
@@ -106,7 +103,7 @@ import java.util.stream.Collectors;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Set<String>>, Refreshable {
+        implements Refreshable {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
@@ -659,10 +656,6 @@ public class TaskManagerListPresenter
                 .exec();
     }
 
-    @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
-    }
 
     private void openFeed(final String feedName) {
         feedClient.getDocRefForName(feedName, docRef -> {

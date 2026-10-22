@@ -18,7 +18,6 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.HasParams;
@@ -57,7 +56,6 @@ public class KeyValueInputPresenter
     @Override
     public void onValueChanged(final String value) {
         setSettings(getKeyValueInputSettings().copy().text(value).build());
-        ComponentChangeEvent.fire(this, this);
         onChange();
     }
 

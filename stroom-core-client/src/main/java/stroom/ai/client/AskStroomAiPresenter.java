@@ -156,7 +156,7 @@ public class AskStroomAiPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
+        registerHandler(docSelectionBoxPresenter.addSelectionListener(event ->
                 writeModel()));
 
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {

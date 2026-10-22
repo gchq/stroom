@@ -81,8 +81,8 @@ public class SolrIndexSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(editExpressionPresenter.addChangeHandler(this::onChange));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
+        editExpressionPresenter.setOnChange(this::onChange);
+        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

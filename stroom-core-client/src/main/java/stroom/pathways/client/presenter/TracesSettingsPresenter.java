@@ -59,7 +59,7 @@ public class TracesSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(planBSettingsPresenter.addChangeHandler(this::onChange));
+        planBSettingsPresenter.setOnChange(this::onChange);
     }
 
     @Override

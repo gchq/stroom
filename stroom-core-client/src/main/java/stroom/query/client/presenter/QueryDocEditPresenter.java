@@ -106,7 +106,7 @@ public class QueryDocEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
+        queryEditPresenter.setOnChange(this::onChange);
     }
 
     private void createRule() {

@@ -18,9 +18,6 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
@@ -38,14 +35,13 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
-        implements HasChangeHandlers, Focus {
+        implements Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
 
@@ -54,6 +50,9 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     private final ButtonView copyButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public EditExpressionPresenter(final EventBus eventBus,
@@ -93,7 +92,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     protected void onBind() {
         super.onBind();
 
-        registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
+        registerHandler(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (NullSafe.hasItems(menuItems)) {
@@ -235,12 +234,12 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the expression.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     @Override

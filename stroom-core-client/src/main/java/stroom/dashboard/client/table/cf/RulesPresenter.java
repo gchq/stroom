@@ -23,9 +23,6 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.datasource.QueryField;
@@ -53,7 +50,7 @@ import java.util.stream.Collectors;
 
 public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
-        implements HasDirtyHandlers, Focus {
+        implements Focus {
 
     private final RuleListPresenter listPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -70,6 +67,8 @@ public class RulesPresenter
     private final ButtonView moveDownButton;
 
     private boolean dirty;
+    private Runnable onDirtyChange = () -> {
+    };
 
     @Inject
     public RulesPresenter(final EventBus eventBus,
@@ -198,7 +197,7 @@ public class RulesPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.addDirtyHandler(event -> setDirty(true)));
+        listPresenter.setOnChange(() -> setDirty(true));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
@@ -421,17 +420,18 @@ public class RulesPresenter
         moveDownButton.setEnabled(selected && index >= 0 && index < rules.size() - 1);
     }
 
+    /// @param onDirtyChange What to run when the rules become changed or unchanged.
+    public void setOnDirtyChange(final Runnable onDirtyChange) {
+        this.onDirtyChange = onDirtyChange;
+    }
+
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
+            onDirtyChange.run();
         }
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 
 
     // --------------------------------------------------------------------------------

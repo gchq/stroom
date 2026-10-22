@@ -124,8 +124,8 @@ public final class UserRefSelectionBoxStories {
             box.setSelected(selected);
         }
         echo.setText("Selected: " + display(selected));
-        harness.addRegistration(box.addDataSelectionHandler(event ->
-                echo.setText("Selected: " + display(event.getSelectedItem()))));
+        harness.addRegistration(box.addSelectionListener(userRef ->
+                echo.setText("Selected: " + display(userRef))));
 
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("width", "320px");
@@ -159,9 +159,9 @@ public final class UserRefSelectionBoxStories {
         harness.unbindOnCleanUp(box);
         box.bind();
         final Spy onChange = context.fn(ON_CHANGE);
-        harness.addRegistration(box.addDataSelectionHandler(event -> onChange.call(event.getSelectedItem() == null
+        harness.addRegistration(box.addSelectionListener(selected -> onChange.call(selected == null
                 ? null
-                : event.getSelectedItem().getUuid())));
+                : selected.getUuid())));
         return box;
     }
 }

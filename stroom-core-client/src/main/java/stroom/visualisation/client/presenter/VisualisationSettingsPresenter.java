@@ -70,7 +70,7 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
         };
         registerHandler(getView().getFunctionName().addKeyDownHandler(keyDownHander));
         registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
-        registerHandler(scriptPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(scriptPresenter.addSelectionListener(event -> onChange()));
         registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
     }
 

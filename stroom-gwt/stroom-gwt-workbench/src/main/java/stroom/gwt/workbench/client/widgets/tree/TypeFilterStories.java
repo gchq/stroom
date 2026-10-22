@@ -117,7 +117,7 @@ public final class TypeFilterStories {
 
         final Spy onIncludedTypesChange = context.fn(ON_INCLUDED_TYPES_CHANGE);
         final Spy onClose = context.fn(ON_CLOSE);
-        harness.addRegistration(presenter.addDataSelectionHandler(event -> {
+        harness.addRegistration(presenter.addSelectionListener(event -> {
             update.run();
             onIncludedTypesChange.call(echo.getText());
         }));

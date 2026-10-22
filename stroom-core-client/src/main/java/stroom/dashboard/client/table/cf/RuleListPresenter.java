@@ -20,9 +20,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -41,7 +38,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class RuleListPresenter extends MyPresenterWidget<PagerView> implements HasDirtyHandlers {
+public class RuleListPresenter extends MyPresenterWidget<PagerView> {
+
+    private Runnable onChange = () -> {
+    };
 
     private final MyDataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
@@ -173,14 +173,15 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
         return getView().getToolbar();
     }
 
-    public void setDirty(final boolean dirty) {
+    /// @param onChange What to run when the user changes a rule in the list.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    private void setDirty(final boolean dirty) {
         if (dirty) {
-            DirtyEvent.fire(this, dirty);
+            onChange.run();
         }
     }
 
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
 }

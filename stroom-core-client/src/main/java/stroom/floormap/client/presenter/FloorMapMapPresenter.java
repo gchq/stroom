@@ -21,10 +21,6 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.editor.FloorMapDocSession;
-import stroom.floormap.client.event.FloorMapDataEvent;
-import stroom.floormap.client.event.MapClusterSelectedEvent;
-import stroom.floormap.client.event.MapObjectSelectedEvent;
-import stroom.floormap.client.event.TimeChangeEvent;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapEntityList;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
@@ -76,6 +72,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /// Presenter for the Map (visualisation) tab of a [FloorMapDoc].
 ///
@@ -232,7 +229,7 @@ public class FloorMapMapPresenter
     ///
     /// **A timer is genuinely needed here, unlike for the events baseline.** The cadence was
     /// first written to be checked from [#onTimeChange], following the events state's
-    /// timer-free design — but `TimeChangeEvent` only fires while the timeline is
+    /// timer-free design — but the timeline only tells this while the timeline is
     /// *playing*, so on a paused map nothing ever asked and the 60-second re-read never
     /// happened at all. The interval was unreachable, not merely long.
     ///
@@ -349,9 +346,7 @@ public class FloorMapMapPresenter
     /// the user's chosen range (e.g. after "Show All").
     private boolean timelineInitialised;
 
-    /// UUID of the document this Map is showing, used to ignore
-    /// [FloorMapDataEvent]s fired by other open FloorMap documents on the
-    /// shared event bus (which would otherwise render another doc's entities here).
+    /// UUID of the document this Map is showing.
     private String docUuid;
 
     /// True once the document tab has been closed. Closing does not unbind this
@@ -380,6 +375,9 @@ public class FloorMapMapPresenter
     private String pathForRole(final Role role) {
         return FloorMapFieldMapping.findPath(valueSchema(), role);
     }
+
+    private Consumer<List<FloorMapObject>> onEventData = objects -> {
+    };
 
     @Inject
     public FloorMapMapPresenter(final EventBus eventBus,
@@ -500,72 +498,37 @@ public class FloorMapMapPresenter
     protected void onBind() {
         super.onBind();
 
-        // Only react to this tab's own timeline — the Editor tab has its own
-        // timeline firing the same event type, and the tabs must not time-sync.
-        registerHandler(getEventBus().addHandler(TimeChangeEvent.getType(), e -> {
-            if (e.getSource() == floorMapTimelinePresenter) {
-                onTimeChange(e.getTime());
-            }
-        }));
-        registerHandler(getEventBus().addHandler(FloorMapDataEvent.getType(), e -> {
-            // Fired by the Events Query tab, while it is open, as the user edits/runs the query.
-            // Ignore events from other open FloorMap documents (shared bus), and anything at all
-            // once this tab has been closed.
-            //
-            // Also ignore this tab's own fire. That is the outbound notification the Editor tab
-            // needs for its layer discovery, not an inbound update: the state has already been
-            // applied and pushed by then, and re-entering here would overwrite lastRawEventObjects
-            // with a payload the state did not sanction. The Events Query tab's pushes still reach
-            // the canvas exactly as before — it is a second producer on this channel, publishing
-            // over its own time range without any per-entity reduction, so its rows are a preview
-            // to draw and must never be merged into the accumulated state.
-            if (closed
-                || e.getSource() == this
-                || !java.util.Objects.equals(docUuid, e.getDocUuid())) {
-                return;
-            }
-            // Held raw so the placement can be redone against fresher facts —
-            // see reanchorEventEntities().
-            lastRawEventObjects = e.getObjects();
-            pushEventEntities(placeEventEntities());
-            // Entities have moved, so which areas they are in may have changed.
-            updateAreaMembership();
-        }));
+        // This tab's own timeline: the Editor tab has its own, and the tabs must not time-sync
+        floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
+
+
 
         // Re-run the histogram whenever the user changes the visible date range via the settings popup.
         floorMapTimelinePresenter.setTimeRangeChangeHandler(() ->
                 runHistogramQuery(floorMapTimelinePresenter.getStartTime(),
                         floorMapTimelinePresenter.getEndTime()));
 
-        // Canvas events are fired on the shared event bus by every FloorMap
-        // canvas instance (this tab, the Editor tab, and any other open
-        // FloorMap document), so each handler must ignore events from
-        // canvases other than its own — without the source guard a selection
-        // on the Editor tab's canvas would change this tab's tracking state.
-        //
         // Clicking an entity on this tab's canvas selects it in the tracking
         // panel and starts (or resumes) following it. The roster holds both
         // event entities and static facts; ids not (yet) in it are ignored.
         // The canvas never fires this for backgrounds or areas — their
         // clickable surface can cover most of the map, so a press over them
         // must stay a pan — but they can still be tracked from the panel.
-        registerHandler(getEventBus().addHandler(MapObjectSelectedEvent.getType(), e -> {
-            if (e.getSource() == floorMapCanvasPresenter
-                    && e.getObjectId() != null
-                    && entityList.contains(e.getObjectId())) {
-                floorMapTrackingPresenter.setSelected(e.getObjectId());
-                floorMapCanvasPresenter.setTrackedObjectId(e.getObjectId());
+        floorMapCanvasPresenter.setOnObjectSelected(objectId -> {
+            if (objectId != null && entityList.contains(objectId)) {
+                floorMapTrackingPresenter.setSelected(objectId);
+                floorMapCanvasPresenter.setTrackedObjectId(objectId);
             }
-        }));
+        });
+
 
         // Clicking a cluster lists its members, which is what makes entities
         // merged into one glyph reachable at all — until this, the nine users
-        // under the tenth could be counted and named but never got at. Same
-        // source guard as above: the bus is shared by every open canvas.
-        registerHandler(getEventBus().addHandler(MapClusterSelectedEvent.getType(), e -> {
-            if (e.getSource() == floorMapCanvasPresenter && e.getCluster() != null) {
+        // under the tenth could be counted and named but never got at.
+        floorMapCanvasPresenter.setOnClusterSelected(cluster -> {
+            if (cluster != null) {
                 ownUntilHidden(floorMapClusterPresenter.get()).show(
-                        e.getCluster(),
+                        cluster,
                         this::entityDisplayName,
                         lastAreaMembership,
                         this::entityType,
@@ -577,7 +540,8 @@ public class FloorMapMapPresenter
                             floorMapCanvasPresenter.setTrackedObjectId(memberId);
                         });
             }
-        }));
+        });
+
 
 
         // Drag-editing is performed on the Editor tab; the Map tab is view-focused,
@@ -809,6 +773,29 @@ public class FloorMapMapPresenter
     /// canvas animates between positions).
     ///
     /// @param time the new selected time in milliseconds since epoch
+    /// Shows events from the Events Query tab, while it is open, as the user edits and runs its
+    /// query. They are a preview to draw, published over the query's own time range without any
+    /// per-entity reduction, so they must never be merged into the accumulated state.
+    ///
+    /// @param objects The events.
+    public void showQueryEvents(final List<FloorMapObject> objects) {
+        if (closed) {
+            return;
+        }
+        // Held raw so the placement can be redone against fresher facts —
+        // see reanchorEventEntities().
+        lastRawEventObjects = objects;
+        pushEventEntities(placeEventEntities());
+        // Entities have moved, so which areas they are in may have changed.
+        updateAreaMembership();
+    }
+
+    /// @param onEventData What to run with every entity this tab reads, e.g. for the Editor tab's
+    ///                    layer discovery.
+    public void setOnEventData(final Consumer<List<FloorMapObject>> onEventData) {
+        this.onEventData = onEventData;
+    }
+
     private void onTimeChange(final long time) {
         this.selectedTime = time;
         // Keep the canvas's accessible summary and its live region on the same
@@ -1009,9 +996,8 @@ public class FloorMapMapPresenter
         pushEventEntities(placed);
         // Entities have moved, so which areas they are in may have changed.
         updateAreaMembership();
-        // The outbound notification the Editor tab's layer discovery accumulates from. This tab's
-        // own handler ignores it — see onBind().
-        FloorMapDataEvent.fire(this, docUuid, entities);
+        // For the Editor tab's layer discovery (through the document)
+        onEventData.accept(entities);
     }
 
     /// Reduces a result to one row per entity and parses those into map objects.

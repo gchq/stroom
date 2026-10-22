@@ -115,18 +115,6 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         }
     }
 
-    protected final void fireEventFromSource(final Event<?> event) {
-        getEventBus().fireEventFromSource(event, this);
-    }
-
-    protected final <H> HandlerRegistration addHandlerToSource(final Type<H> type, final H handler) {
-        return getEventBus().addHandlerToSource(type, this, handler);
-    }
-
-    protected final <H extends EventHandler> void addRegisteredHandlerToSource(final Type<H> type, final H handler) {
-        registerHandler(addHandlerToSource(type, handler));
-    }
-
     @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         this.taskMonitorFactory = taskMonitorFactory;

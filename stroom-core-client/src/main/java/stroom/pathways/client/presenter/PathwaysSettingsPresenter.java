@@ -62,8 +62,8 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(traceStorePresenter.addDataSelectionHandler(e -> onChange()));
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(traceStorePresenter.addSelectionListener(e -> onChange()));
+        registerHandler(feedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override

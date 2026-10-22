@@ -59,7 +59,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

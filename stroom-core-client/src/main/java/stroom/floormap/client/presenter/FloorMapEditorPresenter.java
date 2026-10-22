@@ -28,9 +28,6 @@ import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.editor.FloorMapFactEndMessages;
 import stroom.floormap.client.editor.FloorMapPendingChanges;
-import stroom.floormap.client.event.FloorMapDataEvent;
-import stroom.floormap.client.event.MapContextMenuEvent;
-import stroom.floormap.client.event.TimeChangeEvent;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
@@ -182,8 +179,8 @@ public class FloorMapEditorPresenter
     private final FloorMapLayerStylePresenter floorMapLayerStylePresenter;
 
     /// Cumulative set of types observed this document session — fact types from
-    /// the canvas plus event types seen via [FloorMapDataEvent]
-    /// (which fires from the Map tab's events query on the shared event bus).
+    /// the canvas plus event types from the events query and the Map tab
+    /// ([#addEventTypes]).
     /// Fed to the Layers panel so unsaved types appear as provisional layers.
     private final Set<String> observedTypes = new HashSet<>();
 
@@ -227,9 +224,7 @@ public class FloorMapEditorPresenter
     /// `FloorMapMapPresenter.timelineInitialised`.
     private boolean timelineInitialised;
 
-    /// UUID of the document this Editor is showing, used to ignore
-    /// [FloorMapDataEvent]s fired by other open FloorMap documents on the
-    /// shared event bus (which would otherwise pollute this doc's observed types).
+    /// UUID of the document this Editor is showing.
     private String docUuid;
 
     // -----------------------------------------------------------------------
@@ -336,38 +331,15 @@ public class FloorMapEditorPresenter
     protected void onBind() {
         super.onBind();
 
-        // Event objects are produced by the events query and broadcast
-        // on the shared event bus (driven by the Map tab). Listen here too so
-        // their types surface as provisional layers in the Editor's Layers panel.
-        registerHandler(getEventBus().addHandler(FloorMapDataEvent.getType(), event -> {
-            // Ignore events from other open FloorMap documents (shared event bus).
-            if (!java.util.Objects.equals(docUuid, event.getDocUuid())) {
-                return;
-            }
-            boolean added = false;
-            for (final FloorMapObject object : event.getObjects()) {
-                if (object.getType() != null && observedTypes.add(object.getType())) {
-                    added = true;
-                }
-            }
-            if (added) {
-                floorMapLayersPresenter.setSeenTypes(observedTypes);
-            }
-        }));
+
 
         // ---- Timeline events ------------------------------------------------
-        registerHandler(getEventBus().addHandler(TimeChangeEvent.getType(), event -> {
-            if (event.getSource() == floorMapTimelinePresenter) {
-                onTimeChange(event.getTime());
-            }
-        }));
+        floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
+
 
         // ---- Canvas context menu --------------------------------------------
-        registerHandler(getEventBus().addHandler(MapContextMenuEvent.getType(), event -> {
-            if (event.getSource() == floorMapCanvasPresenter) {
-                onCanvasContextMenu(event);
-            }
-        }));
+        floorMapCanvasPresenter.setOnContextMenu(this::onCanvasContextMenu);
+
 
         // ---- Fact List selection + Show All toggle --------------------------
         floorMapFactListPresenter.setMultiSelectionConsumer(this::onFactListSelectionChanged);
@@ -795,6 +767,22 @@ public class FloorMapEditorPresenter
     /// (no extra server call).
     ///
     /// @param timeMs the new timeline position in milliseconds
+    /// Adds the types of event objects (from the events query, through the Map tab) to the
+    /// Layers panel as provisional layers.
+    ///
+    /// @param objects The event objects.
+    public void addEventTypes(final List<FloorMapObject> objects) {
+        boolean added = false;
+        for (final FloorMapObject object : objects) {
+            if (object.getType() != null && observedTypes.add(object.getType())) {
+                added = true;
+            }
+        }
+        if (added) {
+            floorMapLayersPresenter.setSeenTypes(observedTypes);
+        }
+    }
+
     private void onTimeChange(final long timeMs) {
         model.setSelectedTime(timeMs);
         // Keep this canvas's accessible summary and live region on the same clock
@@ -973,7 +961,7 @@ public class FloorMapEditorPresenter
         floorMapCanvasPresenter.setFacts(facts);
         // Accumulate fact types seen on the canvas and surface any not yet
         // configured as layers in the Layers panel (event types are added
-        // separately via the FloorMapDataEvent handler).
+        // separately, through addEventTypes).
         boolean added = false;
         for (final Fact fact : facts) {
             if (fact.getType() != null && observedTypes.add(fact.getType())) {
@@ -1137,8 +1125,8 @@ public class FloorMapEditorPresenter
     ///
     /// Moves the timeline scrubber to the entry's effective time and reloads
     /// the canvas so all panels stay in sync. [FloorMapTimelinePresenter#setCurrentTime]
-    /// only repositions the scrubber — it does *not* fire a
-    /// [stroom.floormap.client.event.TimeChangeEvent] — so there is no
+    /// only repositions the scrubber — it does *not* tell the timeline's
+    /// time change callback — so there is no
     /// feedback loop back into [#onTimeChange].
     ///
     /// Selecting a shard first **stops playback** if the timeline
@@ -1402,7 +1390,7 @@ public class FloorMapEditorPresenter
     /// effective time.
     ///
     /// @param event the context menu event from the canvas
-    private void onCanvasContextMenu(final MapContextMenuEvent event) {
+    private void onCanvasContextMenu(final MapContextMenu event) {
         showCanvasContextMenu(
                 event.getObjectId(),
                 event.getMapX(),

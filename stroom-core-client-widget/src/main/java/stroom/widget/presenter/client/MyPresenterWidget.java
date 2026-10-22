@@ -41,8 +41,8 @@ import java.util.function.Consumer;
 
 /// Stroom's presenter, built on GWTP's [PresenterWidget], with a place in the ownership tree (see
 /// [ComponentNode]): the presenters and components it owns ([#own(HasComponentNode)]), and the
-/// registrations made through it ([#listen(Type, Object)], [#addHandlerToSource(Type, Object)]),
-/// are released when it is disposed ([#dispose()]), as a component's are.
+/// registrations made through it ([#listen(Type, Object)], [#own(HandlerRegistration)]), are
+/// released when it is disposed ([#dispose()]), as a component's are.
 ///
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
@@ -91,14 +91,6 @@ public class MyPresenterWidget<V extends View>
         if (getWidget() instanceof RequiresResize) {
             ((RequiresResize) getWidget()).onResize();
         }
-    }
-
-    protected final <H> HandlerRegistration addHandlerToSource(final Type<H> type, final H handler) {
-        final HandlerRegistration registration = getEventBus().addHandlerToSource(type, this, handler);
-        // Callers often throw the registration away, and the event bus would then keep the handler,
-        // and what it refers to, for good; it is removed when this is disposed
-        node.add(registration);
-        return registration;
     }
 
     /// Owns a presenter or component, which is then disposed with this presenter and sees its
@@ -223,6 +215,13 @@ public class MyPresenterWidget<V extends View>
             return provided.createTaskMonitor();
         }
         return new DefaultTaskMonitorFactory(this).createTaskMonitor();
+    }
+
+    /// Tells the document this belongs to that the user changed something (its [Contexts#DIRTY]
+    /// tracker, looked up from this presenter's owner, so a document part that is a document tells
+    /// the one above it), so it can work out whether it is dirty.
+    protected final void markChanged() {
+        node.lookupAbove(Contexts.DIRTY).onChange();
     }
 
     /// Looks up a context value now. To follow changes, use [#watch(ContextKey, Consumer)].

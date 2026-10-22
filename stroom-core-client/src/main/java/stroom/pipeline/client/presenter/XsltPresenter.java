@@ -48,7 +48,7 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
                          final DocumentUserPermissionsTabProvider<XsltDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(XSLT, new AbstractTabProvider<XsltDoc, EditorPresenter>(eventBus) {
+        addTab(XSLT, new AbstractTabProvider<XsltDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
@@ -78,7 +78,7 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
                 return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

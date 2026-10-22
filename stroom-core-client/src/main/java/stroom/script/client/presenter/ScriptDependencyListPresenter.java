@@ -19,9 +19,6 @@ package stroom.script.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.WrapperView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -33,13 +30,12 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc>, HasChangeHandlers {
+        implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc> {
 
     private final ScriptListPresenter scriptListPresenter;
     private final DocSelectionPopup explorerDropDownTreePresenter;
@@ -48,6 +44,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     private List<DocRef> scripts;
 
     private boolean readOnly = true;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
@@ -85,7 +84,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         explorerDropDownTreePresenter.show(script -> {
             if (script != null) {
                 if (!scripts.contains(script) && scripts.add(script)) {
-                    ChangeEvent.fire(ScriptDependencyListPresenter.this);
+                    onChange.run();
                     refresh();
                 }
             }
@@ -108,7 +107,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
                     }
 
                     scriptListPresenter.getSelectionModel().clear();
-                    ChangeEvent.fire(ScriptDependencyListPresenter.this);
+                    onChange.run();
                     refresh();
                 }
             });
@@ -159,8 +158,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         removeButton.setTitle("Remove Selected Script Dependency" + reason);
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the dependencies.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 }

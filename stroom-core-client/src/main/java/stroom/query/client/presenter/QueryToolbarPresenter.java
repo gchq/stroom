@@ -32,7 +32,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
@@ -51,6 +50,11 @@ public class QueryToolbarPresenter
     private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
 
     private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
+
+    private Runnable onStart = () -> {
+    };
+    private Runnable onTimeRangeChange = () -> {
+    };
 
     @Inject
     public QueryToolbarPresenter(final EventBus eventBus,
@@ -113,7 +117,7 @@ public class QueryToolbarPresenter
     public void onTimeRange(final TimeRange timeRange) {
         if (!currentTimeRange.equals(timeRange)) {
             currentTimeRange = timeRange;
-            TimeRangeChangeEvent.fire(this, timeRange);
+            onTimeRangeChange.run();
         }
     }
 
@@ -128,7 +132,7 @@ public class QueryToolbarPresenter
 
     @Override
     public void start() {
-        StartQueryEvent.fire(this);
+        onStart.run();
     }
 
     @Override
@@ -148,14 +152,14 @@ public class QueryToolbarPresenter
         getView().setParamValues(paramValues);
     }
 
-    public HandlerRegistration addStartQueryHandler(final StartQueryEvent.Handler handler) {
-//        return addHandlerToSource(StartQueryEvent.getType(), handler);
-
-        return addHandlerToSource(StartQueryEvent.getType(), handler);
+    /// @param onStart What to run when the user starts (or stops) the query.
+    public void setOnStart(final Runnable onStart) {
+        this.onStart = onStart;
     }
 
-    public HandlerRegistration addTimeRangeChangeHandler(final TimeRangeChangeEvent.Handler handler) {
-        return addHandlerToSource(TimeRangeChangeEvent.getType(), handler);
+    /// @param onTimeRangeChange What to run when the user changes the time range ([#getTimeRange()]).
+    public void setOnTimeRangeChange(final Runnable onTimeRangeChange) {
+        this.onTimeRangeChange = onTimeRangeChange;
     }
 
 

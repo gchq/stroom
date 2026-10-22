@@ -22,9 +22,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
-import stroom.data.client.event.DataSelectionEvent;
-import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
-import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -43,10 +40,7 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.CreateProcessorEvent;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -67,6 +61,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -93,7 +88,7 @@ import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable, HasChangeDataHandlers<ResultPage<MetaRow>> {
+        implements Refreshable {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -115,6 +110,11 @@ public abstract class AbstractMetaListPresenter
     final MyDataGrid<MetaRow> dataGrid;
     private final MultiSelectionModelImpl<MetaRow> selectionModel;
     private final DataGridSelectionEventManager<MetaRow> selectionEventManager;
+
+    private Consumer<ResultPage<MetaRow>> onResult = resultPage -> {
+    };
+
+    private final Listeners<Selection<Long>> selectionListeners = new Listeners<>();
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final PagerView view,
@@ -175,7 +175,7 @@ public abstract class AbstractMetaListPresenter
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(resultSet -> {
                                 dataConsumer.accept(resultSet);
-                                ChangeDataEvent.fire(AbstractMetaListPresenter.this, resultSet);
+                                onResult.accept(resultSet);
                             })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(view)
@@ -201,9 +201,9 @@ public abstract class AbstractMetaListPresenter
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<ResultPage<MetaRow>> handler) {
-        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
+    /// @param onResult What to run with each page of data the list fetches.
+    public void setOnResult(final Consumer<ResultPage<MetaRow>> onResult) {
+        this.onResult = onResult;
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -259,7 +259,7 @@ public abstract class AbstractMetaListPresenter
         }
 
         // There might have been a selection change so fire a data selection event.
-        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+        selectionListeners.fire(selection);
 
         final MetaRow selected = selectionModel.getSelected();
         if (selected != null) {
@@ -279,7 +279,7 @@ public abstract class AbstractMetaListPresenter
         if (dataProvider != null) {
             dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
         }
-        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+        selectionListeners.fire(selection);
     }
 
     void addSelectedColumn(final boolean allowSelectAll) {
@@ -338,7 +338,7 @@ public abstract class AbstractMetaListPresenter
                 selection.remove(row.getMeta().getId());
             }
             dataGrid.redrawHeaders();
-            DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+            selectionListeners.fire(selection);
         });
     }
 
@@ -968,10 +968,12 @@ public abstract class AbstractMetaListPresenter
         return selectionModel.getSelected();
     }
 
-    @Override
-    public com.google.web.bindery.event.shared.HandlerRegistration addDataSelectionHandler(
-            final DataSelectionHandler<Selection<Long>> handler) {
-        return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    /// Listens for the user selecting streams, until the registration is removed.
+    ///
+    /// @param listener Told what is selected.
+    /// @return The registration, for the listener's owner to own.
+    public HandlerRegistration addSelectionListener(final Consumer<Selection<Long>> listener) {
+        return selectionListeners.add(listener);
     }
 
     /// The toolbar beside the list's pager, for the screen's own buttons.

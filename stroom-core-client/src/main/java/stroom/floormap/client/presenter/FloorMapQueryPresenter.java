@@ -17,11 +17,8 @@
 package stroom.floormap.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.HasClose;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.floormap.client.event.FloorMapDataEvent;
 import stroom.floormap.client.model.FloorMapLocationResolver;
 import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
@@ -57,7 +54,7 @@ import javax.inject.Inject;
 ///
 /// Embeds a [QueryEditPresenter] for authoring and executing StroomQL
 /// queries, parses the resulting [TableResult] rows into
-/// [FloorMapObject] lists, and fires [FloorMapDataEvent] so the
+/// [FloorMapObject] lists, and gives them to its owner ([#setOnEventData]) so the
 /// canvas can display the matched entities.  Also provides column-mapping
 /// dropdowns that let the user choose which result columns contain the entity
 /// ID, both location forms and the entity type — one dropdown per [FloorMapEventRole],
@@ -66,15 +63,20 @@ import javax.inject.Inject;
 /// `@`-heuristic person fallback survives for data that carries no type at all.
 public class FloorMapQueryPresenter
         extends MyPresenterWidget<FloorMapQueryView>
-        implements HasToolbar, HasClose, HasChangeHandlers {
+        implements HasToolbar, HasClose {
 
     private final QueryEditPresenter queryEditPresenter;
     /// Which result column carries each event role. Never `null` once `read` has run.
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
-    /// UUID of the document being queried, stamped onto [FloorMapDataEvent].
+    /// UUID of the document being queried.
     private String docUuid;
     /// `true` while this tab's query is running — see [#onBind()].
     private boolean searching;
+
+    private Runnable onChange = () -> {
+    };
+    private Consumer<List<FloorMapObject>> onEventData = objects -> {
+    };
 
     @Inject
     public FloorMapQueryPresenter(final EventBus eventBus,
@@ -90,31 +92,25 @@ public class FloorMapQueryPresenter
     protected void onBind() {
         super.onBind();
 
-        // A dropdown change has to mark the document dirty, and nothing did it: the tab wires dirty
-        // to addChangeHandler, which tracks only the query editor. So the mapping was unsaveable on
-        // its own - the save icon stayed disabled and the edit was lost on the next tab switch,
-        // persisting only if an unrelated query-text edit happened to enable saving. Firing
-        // ChangeEvent from here is what the tab is already listening for.
+        // A dropdown change has to mark the document dirty, as a query edit does (the mapping was
+        // once unsaveable on its own, as only the query editor's changes were told)
         getView().setColumnChangeHandler(() -> {
             currentEventColumns = getView().getEventColumns();
-            ChangeEvent.fire(this);
+            onChange.run();
         });
 
-        // Listen to column updates inside the table so we can update the dropdown lists dynamically.
-        registerHandler(queryEditPresenter.addChangeHandler(this::updateColumnSelections));
+        // A query edit updates the dropdown lists (the table's columns may have changed), and is a
+        // change to the document
+        queryEditPresenter.setOnChange(() -> {
+            updateColumnSelections();
+            onChange.run();
+        });
 
-        // Listen to table data updates and fire FloorMapDataEvent.
-        //
-        // TableUpdateEvent is fired on the shared event bus by every query result
-        // table in the application, so the source guard is what keeps an unrelated
-        // table's update (a Dashboard, another Query document) from republishing
-        // this tab's last result set as the map overlay.
+        // Listen to this tab's table's data updates and publish the events (it once heard every
+        // query result table's in the application, and needed a source guard)
         final QueryResultTablePresenter tablePresenter =
                 queryEditPresenter.getQueryResultPresenter().getTablePresenter();
-        registerHandler(tablePresenter.addUpdateHandler(e -> {
-            if (e.getSource() != tablePresenter) {
-                return;
-            }
+        registerHandler(tablePresenter.addUpdateListener(() -> {
             // The dropdowns track whatever columns the table currently has, so
             // they follow every update, partial result set or not.
             updateColumnSelections();
@@ -155,9 +151,8 @@ public class FloorMapQueryPresenter
     /// Stops this tab's query when the document is closed.
     ///
     /// Without this the search outlives the document: the result store is left
-    /// on the server, the client keeps polling it, and each response still fires a
-    /// [FloorMapDataEvent] stamped with this document's UUID — which a
-    /// *reopened* copy of the same document accepts as live entity data.
+    /// on the server, the client keeps polling it, and each response is still published as
+    /// live entity data.
     /// Reachable only because this presenter declares [HasClose];
     /// `AbstractTabProvider` forwards the close hook to nothing else.
     @Override
@@ -177,7 +172,7 @@ public class FloorMapQueryPresenter
         if (tableResult != null) {
             final List<FloorMapObject> objects = parseRows(
                     tableResult, currentEventColumns, Console::error);
-            FloorMapDataEvent.fire(FloorMapQueryPresenter.this, docUuid, objects);
+            onEventData.accept(objects);
         }
     }
 
@@ -583,28 +578,15 @@ public class FloorMapQueryPresenter
                 .build();
     }
 
-    /// Registers a handler for changes the user makes on *this tab* — the query text, and the
-    /// per-role column dropdowns.
-    ///
-    /// Two sources, deliberately. The query editor's own `addChangeHandler` uses
-    /// `addHandlerToSource`, so it fires only for this editor rather than for every
-    /// `ChangeEvent` on the shared bus — which is why the tab uses it for dirty tracking. But
-    /// it knows nothing about the dropdowns, so registering only the delegate left the column
-    /// mapping **unsaveable on its own**: the save icon stayed disabled and the edit was lost on
-    /// the next tab switch, persisting only when an unrelated query-text edit happened to enable
-    /// saving.
-    ///
-    /// @param handler notified on either kind of change
-    /// @return a registration that removes both
-    public HandlerRegistration addChangeHandler(final ChangeEvent.ChangeHandler handler) {
-        // Both sources: the embedded query editor, and this presenter's own ChangeEvent for a
-        // dropdown change. Registering only the delegate is what left the mapping unsaveable.
-        final HandlerRegistration query = queryEditPresenter.addChangeHandler(handler);
-        final HandlerRegistration columns = addHandlerToSource(ChangeEvent.getType(), handler);
-        return () -> {
-            query.removeHandler();
-            columns.removeHandler();
-        };
+    /// @param onChange What to run when the user changes something on this tab: the query, or
+    ///                 one of the per-role column dropdowns.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    /// @param onEventData What to run with the events a finished query returns, as map objects.
+    public void setOnEventData(final Consumer<List<FloorMapObject>> onEventData) {
+        this.onEventData = onEventData;
     }
 
     public String getQuery() {

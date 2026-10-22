@@ -18,7 +18,6 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
-import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.HasParams;
@@ -58,7 +57,6 @@ public class TextInputPresenter
     @Override
     public void onValueChanged(final String value) {
         setSettings(getTextInputSettings().copy().value(value).build());
-        ComponentChangeEvent.fire(this, this);
         onChange();
     }
 

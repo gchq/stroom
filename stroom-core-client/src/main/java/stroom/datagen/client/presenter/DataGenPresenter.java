@@ -58,7 +58,7 @@ public class DataGenPresenter
 
         addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));
         addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

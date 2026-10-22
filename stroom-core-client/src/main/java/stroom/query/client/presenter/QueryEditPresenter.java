@@ -20,9 +20,6 @@ import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
@@ -73,7 +70,7 @@ import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
-        implements HasChangeHandlers, HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
+        implements HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final TabData TABLE = new TabDataImpl("Table");
@@ -94,6 +91,9 @@ public class QueryEditPresenter
     private String currentQuery;
     private Timer requestTimer;
     private Map<String, String> queryVariables;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -317,13 +317,11 @@ public class QueryEditPresenter
         }));
         //noinspection unused event
         registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
-        //noinspection unused e
-        registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
-        //noinspection unused e
-        registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
+        queryToolbarPresenter.setOnStart(this::toggleStart);
+        queryToolbarPresenter.setOnTimeRangeChange(() -> {
             run();
             onChange();
-        }));
+        });
         queryHelpPresenter.linkToEditor(editorPresenter);
 
         //noinspection unused event
@@ -333,7 +331,7 @@ public class QueryEditPresenter
         }));
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
-        registerHandler(queryResultPresenter.addChangeHandler(this::onChange));
+        queryResultPresenter.setOnChange(this::onChange);
     }
 
     public void updateQuery(final String query) {
@@ -505,12 +503,12 @@ public class QueryEditPresenter
     }
 
     private void onChange() {
-        ChangeEvent.fire(this);
+        onChange.run();
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the query or its settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     @Override

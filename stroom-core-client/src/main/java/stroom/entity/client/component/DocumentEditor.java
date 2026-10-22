@@ -21,6 +21,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -67,6 +68,9 @@ public abstract class DocumentEditor<D> extends TabbedComponent<D> {
     protected DocumentEditor(final EventBus eventBus, final LinkTabPanelView view) {
         super(eventBus, view);
         provide(Contexts.READ_ONLY, readOnly);
+        // Its tabs, however deep, may tell it of changes this way (markChanged) rather than
+        // through a callback
+        provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
 
         saveButton = getToolbar().button(SvgImage.SAVE, "Save", this::save);
         saveButton.setEnabled(false);

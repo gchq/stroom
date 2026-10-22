@@ -113,7 +113,7 @@ public class NewPipelineReferencePresenter
         feedPresenter.setSelectedEntityReference(pipelineReference.getFeed(), true);
         updateDataTypes(pipelineReference.getStreamType());
 
-        pipelinePresenter.addDataSelectionHandler(event -> {
+        pipelinePresenter.addSelectionListener(event -> {
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getPipeline(), selection)) {
@@ -121,7 +121,7 @@ public class NewPipelineReferencePresenter
                 }
             }
         });
-        feedPresenter.addDataSelectionHandler(event -> {
+        feedPresenter.addSelectionListener(event -> {
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getFeed(), selection)) {

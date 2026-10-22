@@ -16,26 +16,27 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import stroom.editor.client.event.ChangeFilterEvent;
-import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
-import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
-import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Consumer;
+
 public class StepControlPresenter
         extends MyPresenterWidget<StepControlPresenter.StepControlView>
-        implements StepControlUIHandlers,
-        HasChangeFilterHandlers {
+        implements StepControlUIHandlers {
 
     private StepLocation endLocation = null;
+
+    private Consumer<StepType> onStep = stepType -> {
+    };
+    private Runnable onFilter = () -> {
+    };
 
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
@@ -45,32 +46,32 @@ public class StepControlPresenter
 
     @Override
     public void filter() {
-        ChangeFilterEvent.fire(this);
+        onFilter.run();
     }
 
     @Override
     public void stepFirst() {
-        StepControlEvent.fire(this, StepType.FIRST);
+        onStep.accept(StepType.FIRST);
     }
 
     @Override
     public void stepBackward() {
-        StepControlEvent.fire(this, StepType.BACKWARD);
+        onStep.accept(StepType.BACKWARD);
     }
 
     @Override
     public void stepForward() {
-        StepControlEvent.fire(this, StepType.FORWARD);
+        onStep.accept(StepType.FORWARD);
     }
 
     @Override
     public void stepLast() {
-        StepControlEvent.fire(this, StepType.LAST);
+        onStep.accept(StepType.LAST);
     }
 
     @Override
     public void stepRefresh() {
-        StepControlEvent.fire(this, StepType.REFRESH);
+        onStep.accept(StepType.REFRESH);
     }
 
     public void step(final StepType stepType) {
@@ -176,13 +177,14 @@ public class StepControlPresenter
         }
     }
 
-    @Override
-    public HandlerRegistration addChangeFilterHandler(final ChangeFilterHandler handler) {
-        return addHandlerToSource(ChangeFilterEvent.TYPE, handler);
+    /// @param onStep What to run with the step the user asks for.
+    public void setOnStep(final Consumer<StepType> onStep) {
+        this.onStep = onStep;
     }
 
-    public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {
-        return addHandlerToSource(StepControlEvent.getType(), handler);
+    /// @param onFilter What to run when the user asks to change the step filters.
+    public void setOnFilter(final Runnable onFilter) {
+        this.onFilter = onFilter;
     }
 
 

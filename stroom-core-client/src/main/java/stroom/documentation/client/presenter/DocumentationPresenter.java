@@ -67,7 +67,7 @@ public class DocumentationPresenter
         downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Documentation", null);
         downloadButton.setEnabled(false);
 
-        addTab(DOCUMENTATION, new MarkdownTabProvider<DocumentationDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<DocumentationDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

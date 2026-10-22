@@ -25,9 +25,6 @@ import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
@@ -52,13 +49,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.function.Consumer;
 
 public class ScheduledProcessEditPresenter
         extends MyPresenterWidget<ScheduledProcessEditView>
-        implements ScheduledProcessEditUiHandlers, HasChangeHandlers {
+        implements ScheduledProcessEditUiHandlers {
 
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
@@ -69,6 +65,7 @@ public class ScheduledProcessEditPresenter
     private final UiConfigCache uiConfigCache;
     private final ConfigDefaultSetter configDefaultSetter;
     private ExecutionSchedule executionSchedule;
+
 
     @Inject
     public ScheduledProcessEditPresenter(final EventBus eventBus,
@@ -140,9 +137,9 @@ public class ScheduledProcessEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(errorFeedPresenter.addSelectionListener(e -> onChange()));
         registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
-        registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(userRefSelectionBoxPresenter.addSelectionListener(e -> onChange()));
     }
 
     public void show(final ExecutionSchedule executionSchedule,
@@ -228,7 +225,7 @@ public class ScheduledProcessEditPresenter
 
     @Override
     public void onChange() {
-        ChangeEvent.fire(this);
+        // Nothing to do: the dialog reads its fields when OK is pressed
     }
 
     @Override
@@ -252,10 +249,6 @@ public class ScheduledProcessEditPresenter
                 : ConfigTarget.ANALYTIC_UI_DEFAULT;
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
-    }
 
     /**
      * A new schedule has no node yet. Seed it with the configured default rather than leaving the view to select

@@ -59,7 +59,7 @@ public class ReportSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(aiSummaryModelPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(aiSummaryModelPresenter.addSelectionListener(event -> onChange()));
     }
 
     @Override

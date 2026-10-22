@@ -391,7 +391,7 @@ public class NewPropertyPresenter
 
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {
-            entityDropDownPresenter.addDataSelectionHandler(event -> {
+            entityDropDownPresenter.addSelectionListener(event -> {
                 onChange();
                 getView().setSource(Source.LOCAL);
             });

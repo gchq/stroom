@@ -23,9 +23,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -54,7 +51,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
@@ -68,7 +64,7 @@ import java.util.stream.Collectors;
 
 public class ElementPresenter
         extends MyPresenterWidget<ElementView>
-        implements HasChangeHandlers, ClassificationUiHandlers {
+        implements ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -101,6 +97,9 @@ public class ElementPresenter
     private ClassificationWrapperView outputView;
     private View logView;
     private Consumer<StepType> stepRequestHandler = null;
+
+    private Runnable onChange = () -> {
+    };
 
     @Inject
     public ElementPresenter(final EventBus eventBus,
@@ -296,7 +295,7 @@ public class ElementPresenter
 
     private void onCodeChange() {
         refreshDirty();
-        ChangeEvent.fire(ElementPresenter.this);
+        onChange.run();
     }
 
     private Document write() {
@@ -457,9 +456,9 @@ public class ElementPresenter
         }
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes the element's code or settings.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
     public PipelineElement getElement() {

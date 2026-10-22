@@ -99,7 +99,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
             }
         };
 
-        addTab(GRAPHICAL, new AbstractTabProvider<XmlSchemaDoc, XSDBrowserPresenter>(eventBus) {
+        addTab(GRAPHICAL, new AbstractTabProvider<XmlSchemaDoc, XSDBrowserPresenter>() {
             @Override
             protected XSDBrowserPresenter createPresenter() {
                 xsdBrowserPresenter = xsdBrowserPresenterProvider.get();
@@ -107,7 +107,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                 return xsdBrowserPresenter;
             }
         });
-        addTab(TEXT, new AbstractTabProvider<XmlSchemaDoc, EditorPresenter>(eventBus) {
+        addTab(TEXT, new AbstractTabProvider<XmlSchemaDoc, EditorPresenter>() {
             @Override
             protected EditorPresenter createPresenter() {
                 codePresenter = codePresenterProvider.get();
@@ -150,7 +150,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
             }
         });
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

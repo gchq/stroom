@@ -86,7 +86,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     @Override
     protected void onBind() {
-        registerHandler(visualisationPresenter.addDataSelectionHandler(event -> {
+        registerHandler(visualisationPresenter.addSelectionListener(event -> {
             if (!Objects.equals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
                 writeDynamicSettings(dynamicSettings);
                 loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);

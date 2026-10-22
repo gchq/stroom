@@ -17,16 +17,11 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainer;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import com.gwtplatform.mvp.client.PresenterWidget;
@@ -41,30 +36,25 @@ public class TabContentProvider<E>
         implements
         HasDocumentRead<E>,
         HasDocumentWrite<E>,
-        HasDirtyHandlers,
         HasClose {
 
     private final Map<TabData, TabProvider<E>> tabProviders = new HashMap<>();
     private final Map<TabData, TabProvider<E>> presenterCache = new HashMap<>();
 
     private final Set<TabProvider<E>> usedProviders = new HashSet<>();
-    private final Set<TabProvider<E>> dirtyHandlerProviders = new HashSet<>();
-
-    private final EventBus eventBus;
     private TabProvider<E> currentTabProvider;
     private DocRef docRef;
     private E entity;
     private boolean readOnly = true;
     private int readCount;
-    // What owns the tab presenters this makes (the document), so they are disposed with it and
-    // see its context. The owner must bind and unbind this along with itself, so its
-    // registrations and tab providers are released when the owner is
+    // What owns the tab presenters this makes (the document), so they are disposed with it, see
+    // its context and tell it of changes (Contexts.DIRTY). The owner must bind and unbind this
+    // along with itself, so its registrations and tab providers are released when the owner is
     private final ComponentNode owner;
 
     /// @param eventBus The application's event bus.
     /// @param owner    What owns the tab presenters this makes, e.g. the document's presenter.
     public TabContentProvider(final EventBus eventBus, final HasComponentNode owner) {
-        this.eventBus = eventBus;
         this.owner = owner.getComponentNode();
     }
 
@@ -87,7 +77,6 @@ public class TabContentProvider<E>
     public interface TabProvider<E> extends
             HasDocumentRead<E>,
             HasDocumentWrite<E>,
-            HasDirtyHandlers,
             HandlerContainer,
             HasClose {
 
@@ -101,11 +90,6 @@ public class TabContentProvider<E>
     public void replace(final TabData tab, final TabProvider<E> provider) {
         tabProviders.replace(tab, provider);
         presenterCache.replace(tab, provider);
-        // A replacement provider bypasses getPresenter(), so wire up its dirty events here or edits
-        // made in it would never reach the enclosing document.
-        if (dirtyHandlerProviders.add(provider)) {
-            registerHandler(provider.addDirtyHandler(this::fireEvent));
-        }
     }
 
     /// The presenter of a tab, made (and owned) when first asked for. It shows its tasks on the task
@@ -125,11 +109,6 @@ public class TabContentProvider<E>
                 provider.bind();
                 currentTabProvider = provider;
                 presenterCache.put(tab, currentTabProvider);
-
-                // Handle dirty events.
-                if (dirtyHandlerProviders.add(currentTabProvider)) {
-                    registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
-                }
             }
         }
 
@@ -199,15 +178,5 @@ public class TabContentProvider<E>
         for (final TabProvider<E> tabProvider : usedProviders) {
             tabProvider.onClose();
         }
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return eventBus.addHandlerToSource(DirtyEvent.getType(), this, handler);
-    }
-
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
     }
 }

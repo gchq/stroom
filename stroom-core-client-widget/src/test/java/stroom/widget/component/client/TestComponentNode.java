@@ -394,6 +394,19 @@ class TestComponentNode {
         private final ContextKey<String> colour = ContextKey.of("colour", "none");
 
         @Test
+        void lookupAboveSkipsWhatTheNodeProvidesItself() {
+            final ComponentNode root = ComponentNode.root("root");
+            root.provide(colour, ContextValue.of("red"));
+            final ComponentNode document = new ComponentNode("document");
+            root.adopt(document);
+            document.provide(colour, ContextValue.of("blue"));
+
+            assertThat(document.lookup(colour)).isEqualTo("blue");
+            assertThat(document.lookupAbove(colour)).isEqualTo("red");
+            assertThat(root.lookupAbove(colour)).isEqualTo("none");
+        }
+
+        @Test
         void theNearestProviderWins() {
             final ComponentNode root = ComponentNode.root("root");
             root.provide(colour, ContextValue.of("red"));

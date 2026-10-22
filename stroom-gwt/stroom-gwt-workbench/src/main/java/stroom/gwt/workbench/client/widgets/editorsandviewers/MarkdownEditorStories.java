@@ -184,7 +184,7 @@ public final class MarkdownEditorStories {
         harness.addRegistration(previewPresenter.addValueChangeHandler(event ->
                 onChange.call(previewPresenter.getText())));
         final Spy onDirty = harness.fn(ON_DIRTY);
-        harness.addRegistration(presenter.addDirtyHandler(event -> onDirty.call(event.isDirty())));
+        harness.addRegistration(presenter.addDirtyListener(onDirty::call));
 
         // As the document tab does: read only first, then the text
         presenter.setReadOnly(readOnly);

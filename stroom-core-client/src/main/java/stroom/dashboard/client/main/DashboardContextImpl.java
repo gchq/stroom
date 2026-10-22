@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.main.DashboardContextChangeEvent.Handler;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
@@ -35,6 +34,7 @@ import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Listeners;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -57,6 +57,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DashboardContextImpl implements HasHandlers, DashboardContext {
@@ -67,6 +68,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     private List<ComponentState> parentComponentStates = new ArrayList<>();
     private List<Param> linkParams = Collections.emptyList();
     private DocRef dashboardDocRef;
+
+    // The components that follow the dashboard's components and context
+    private final Listeners<Component> componentChangeListeners = new Listeners<>();
+    private final Listeners<DashboardContext> contextChangeListeners = new Listeners<>();
 
     public DashboardContextImpl(final EventBus eventBus,
                                 final Components components,
@@ -518,24 +523,24 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public HandlerRegistration addComponentChangeHandler(final ComponentChangeEvent.Handler handler) {
-        return eventBus.addHandlerToSource(ComponentChangeEvent.getType(), this, handler);
+    public HandlerRegistration addComponentChangeListener(final Consumer<Component> listener) {
+        return componentChangeListeners.add(listener);
     }
 
     @Override
-    public HandlerRegistration addContextChangeHandler(final Handler handler) {
-        return eventBus.addHandlerToSource(DashboardContextChangeEvent.getType(), this, handler);
+    public HandlerRegistration addContextChangeListener(final Runnable listener) {
+        return contextChangeListeners.add(ignored -> listener.run());
     }
 
     @Override
     public void fireComponentChangeEvent(final Component component) {
-        ComponentChangeEvent.fire(this, component);
+        componentChangeListeners.fire(component);
         fireContextChangeEvent();
     }
 
     @Override
     public void fireContextChangeEvent() {
-        DashboardContextChangeEvent.fire(this, this);
+        contextChangeListeners.fire(this);
     }
 
     private static class ComponentState {

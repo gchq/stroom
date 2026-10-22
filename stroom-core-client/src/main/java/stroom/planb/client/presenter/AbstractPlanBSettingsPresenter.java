@@ -16,24 +16,23 @@
 
 package stroom.planb.client.presenter;
 
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractPlanBSettingsPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements ChangeUiHandlers, HasChangeHandlers {
+        implements ChangeUiHandlers {
 
     private boolean readOnly = true;
+
+    private Runnable onChange = () -> {
+    };
 
     public AbstractPlanBSettingsPresenter(
             final EventBus eventBus,
@@ -60,12 +59,12 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
     @Override
     public void onChange() {
         if (!readOnly) {
-            ChangeEvent.fire(this);
+            onChange.run();
         }
     }
 
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
+    /// @param onChange What to run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 }

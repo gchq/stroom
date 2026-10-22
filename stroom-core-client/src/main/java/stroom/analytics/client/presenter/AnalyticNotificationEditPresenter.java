@@ -67,8 +67,8 @@ public class AnalyticNotificationEditPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(analyticStreamDestinationPresenter.addChangeHandler(this::onChange));
-        registerHandler(analyticEmailDestinationPresenter.addChangeHandler(this::onChange));
+        analyticStreamDestinationPresenter.setOnChange(this::onChange);
+        analyticEmailDestinationPresenter.setOnChange(this::onChange);
     }
 
     public void read(final DocRef docRef,

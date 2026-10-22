@@ -86,7 +86,7 @@ class TestStepControlPresenter {
     @Test
     void stepRefresh() {
         final List<StepType> steps = new ArrayList<>();
-        presenter.addStepControlHandler(event -> steps.add(event.getStepType()));
+        presenter.setOnStep(steps::add);
 
         presenter.step(StepType.REFRESH);
 
