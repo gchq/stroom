@@ -617,7 +617,8 @@ Ported as tools of their own (`stroom-mcp-impl`): `create_feed` and `record_sour
 processing write tools to reuse), `FeedNames.exact` (the MCP server's `/feed/v1/getDocRefForName`), `FeedUploads`
 (`utils/uploads.py`'s `send_to_feed` and `commands`), `SampleUploads` (in place of `UploadTickets`) and
 `SourceNotes` (`utils/sourcenotes.py`'s `REFERENCE_INFIX`, `block`, `read_notes`, `outcome_map`, `detail_problem`,
-`catalogue_problems` and `apply_to_draft`; `SourceNotes.applyToDraft` is public for the draft mapping's port).
+`catalogue_problems` and `apply_to_draft`; now in `stroom-ai-impl`, `stroom.ai.impl.tools.draft`, beside the draft
+mapping that calls `SourceNotes.applyToDraft`).
 `McpUploadServlet` serves `POST /mcp/upload` (`utils/uploads.py`'s `handle_upload`).
 
 | Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
@@ -706,3 +707,43 @@ Where it differs from the MCP server:
   passed neither, so they aren't used here; `MisleadingSearches` ports the `lucene_text` part, not `listed`
   (it needs the ECS component types), for `verify_index` when it is ported.
 * `search_events` now declares Use (document) for the index; its file search is unchanged.
+
+## The draft mapping core (`stroom.ai.impl.tools.draft`)
+
+The MCP server's draft mapping is ported as plain Java in `stroom-ai-impl`, package `stroom.ai.impl.tools.draft`, for
+`draft_translation_mapping` and `build_translation_xslt` to use when they are ported (no tool is offered yet):
+
+* `DraftMapping` (`utils/draftmap.py`): `draft(samples, sourceName, systemName, environment, sourceNotes,
+  detailCheck, splitter)` is `draft_mapping`, its result the same dict (`mapping`, `source_notes`, `splitter`,
+  `format`, `records`, `kinds`, `notes`, `unmapped_fields`, `fields_seen`), the mapping as JSON maps and lists for
+  `TranslationMapping.parse`; `records` is `_records`, `pairExtracts` and `withPairs` are `pair_extracts` and
+  `with_pairs`. The field homes (`HOMES`, `_matches`, `_keys`) are the generator's `FieldHomes`.
+* `LocalCheck` (`utils/localcheck.py`): `sampleRecords`, `checkMapping`, `checkSchemaValues`, `unknownCoverage`,
+  `sharedTypeIds`, `ruleOf`, `extractedValues`, `traits`, `valueOf` (`_value_of`), `itemsOf`, `xmlValue`, `xmlFlat`,
+  `withJsonFields` and `withXmlFields`. A record is a map, or an `XmlTree.Element` for XML input.
+* `ActionRules` (`utils/actions.py`): `actionRules`, `described`, `read`, `severityFields` and `networkFields`.
+* `SplitterXml` (`utils/dsgen.py`'s XML generation): `generateSplitter`, `recordRegex`, `recordEndRegex`, `DS_HEAD`,
+  `DS_TAIL` and `EXAMPLES`. `SplitterSpec.fromMap` reads a spec's JSON (pydantic's `model_validate`).
+* `SourceNotes`, moved here from `stroom-mcp-impl` (its callers there import it from here).
+
+To be reused from other packages, `XmlTree` (with `Element.localName`, `namespace`, `parent`, `attrib`, `get` and
+`itertext`), `PyText` (with `isUpper`), `SampleProfiler.cutDocument` and `SampleProfiler.xmlFragments` are now public.
+
+A test (`TestDraftParity`) holds the port to the Python server's own results: `draft_mapping` over every evaluation
+case's samples (the excerpt the user shows, with the case's own splitter where it has one, and the first 150 lines
+of its files), `dev/format_samples.py`'s samples and the Python tests' samples; `sample_records`, `check_mapping` and
+`check_schema_values` over each case's reference mapping and each draft; and `generate_splitter` for every spec
+those infer or give. The fixtures were made by running the server's code over the same samples.
+
+Where they differ from the Python server:
+
+* A condition's `matches` and an extraction's regex are run with Java's regex engine (as Stroom's XSLT runs them
+  in its own regex dialect); the Python server ran them with Python's `re`. A regex that doesn't compile is one that
+  can't be told here, as before.
+* A JSON record's value that isn't text (a number in a field the action rules read) is read as its text; the Python
+  server failed with an `AttributeError` (seen in eval case 49's sample check).
+* The values the source notes' catalogue doesn't list (`not_in_catalogue`) are in the catalogue's field order; the
+  Python server listed them in the order of a set, which differed from run to run.
+* `DraftMapping.records` refuses no samples with an `IllegalArgumentException`; the Python server failed with a
+  `StopIteration`.
+
