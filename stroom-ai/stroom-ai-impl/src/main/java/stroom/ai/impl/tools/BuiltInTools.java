@@ -196,6 +196,20 @@ public class BuiltInTools {
         return tool != null && tool.isReadOnly(new ToolCall(null, toolName, arguments));
     }
 
+    /// @param toolName  A tool name.
+    /// @param arguments The call's arguments as JSON, or null if not known (then a tool with some calls that change
+    ///                  something is judged as if this call changes something).
+    /// @return True if it is a built-in tool and this call changes something, the tool doesn't confirm the change
+    /// itself ([StroomTool#confirmsItself()]) and its changes need approval once the chat has read untrusted
+    /// content ([StroomTool#changesNeedApprovalAfterUntrustedContent()]). False for anything else.
+    public boolean changeNeedsApprovalAfterUntrustedContent(final String toolName, final String arguments) {
+        final StroomTool tool = toolsByName.get(toolName);
+        return tool != null
+               && !tool.isReadOnly(new ToolCall(null, toolName, arguments))
+               && !tool.confirmsItself()
+               && tool.changesNeedApprovalAfterUntrustedContent();
+    }
+
     /**
      * @param toolName A tool name.
      * @return True if what the tool returns could hold instructions planted by someone other than the user. True

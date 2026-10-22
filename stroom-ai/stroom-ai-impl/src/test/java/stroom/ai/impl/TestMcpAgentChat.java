@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.ToolConsent.Verdict;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.LangChain4jTools;
 import stroom.ai.impl.tools.StroomTool;
@@ -34,13 +35,18 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
+import stroom.ai.shared.AiApprovalScope;
 import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiToolAccess;
+import stroom.ai.shared.AiToolApprovalDecision;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.json.JsonUtil;
 
@@ -717,6 +723,69 @@ class TestMcpAgentChat {
         assertThat(approval.calls().getFirst().arguments()).isEqualTo("{\"q\":2}");
         assertThat(approval.allowForChat()).isTrue();
         Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", "{\"q\":1}", null, "Run", true, false);
+    }
+
+    @Test
+    void aBuiltInWriteCallAfterUntrustedContentIsPutOnTheCardAndAllowingItForTheChatHolds() {
+        final ToolSpecification saveXslt = ToolSpecification.builder()
+                .name("save_xslt")
+                .description("Saves an XSLT.")
+                .build();
+        final AtomicBoolean ran = new AtomicBoolean(false);
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(saveXslt, (request, memoryId) -> {
+            ran.set(true);
+            return "saved";
+        }));
+        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("save_xslt"), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
+                .thenReturn(Verdict.ask(ToolConsent.BUILT_IN_AFTER_UNTRUSTED_REASON, true, false,
+                        List.of("can modify", "after reading data")));
+        final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
+                ToolExecutionRequest.builder().id("1").name("save_xslt").arguments("{\"name\":\"x\"}").build())));
+
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        assertThat(ran).isFalse();
+        final ArgumentCaptor<String> request = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.APPROVAL_REQUEST),
+                request.capture());
+        final ToolApprovalRequest approval = JsonUtil.readValue(request.getValue(), ToolApprovalRequest.class);
+        assertThat(approval.reason()).isEqualTo(ToolConsent.BUILT_IN_AFTER_UNTRUSTED_REASON);
+        assertThat(approval.allowForChat()).isTrue();
+        assertThat(approval.allowServerReadOnly()).isFalse();
+        final ToolApprovalRequest.PendingCall call = approval.calls().getFirst();
+        // Under Stroom's own tools' server, with a hash of the tool's definition, so 'allow for this chat' is kept.
+        assertThat(call.serverKey()).isEqualTo(ToolConsent.BUILT_IN_SERVER_KEY);
+        assertThat(call.serverTool()).isEqualTo("save_xslt");
+        final String hash = ToolConsent.builtInToolHash(builtInTools, "save_xslt");
+        assertThat(call.toolHash()).isNotNull().isEqualTo(hash);
+        assertThat(call.risks()).containsExactly("can modify", "after reading data");
+
+        // The user allows it for the rest of the chat.
+        final AiToolApprovalDao approvalDao = Mockito.mock(AiToolApprovalDao.class);
+        final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.getUserIdentityForAudit()).thenReturn("user1");
+        Mockito.when(aiService.getChat(7)).thenReturn(new AiChat(7, 0L, 0L, "user1", "chat"));
+        Mockito.when(aiDao.compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(true);
+        final AiChatMessage card = new AiChatMessage(50, 7, System.currentTimeMillis(),
+                AiMessageType.APPROVAL_REQUEST, null, request.getValue(), 1, null);
+        new ToolApprovalService(aiService, aiDao, approvalDao, runManager, securityContext)
+                .answer(7, card, new AnswerAiApprovalRequest(null, 50, true, AiApprovalScope.CHAT, null, null));
+        Mockito.verify(approvalDao).save("user1", 7, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt", hash,
+                AiToolApprovalDecision.ALLOW, "user1");
+
+        // So the tool's next change in the chat runs without asking, though the chat has read untrusted content.
+        Mockito.when(approvalDao.find(7, ToolConsent.BUILT_IN_SERVER_KEY, "save_xslt"))
+                .thenReturn(Optional.of(new AiToolApprovalDao.Approval(1, ToolConsent.BUILT_IN_SERVER_KEY,
+                        "save_xslt", hash, AiToolApprovalDecision.ALLOW)));
+        Mockito.when(runManager.isTainted(7)).thenReturn(true);
+        Mockito.when(builtInTools.changeNeedsApprovalAfterUntrustedContent("save_xslt", "{}")).thenReturn(true);
+        final ToolConsent realConsent = new ToolConsent(approvalDao, aiDao, AiConfig::new, () -> runManager);
+        assertThat(realConsent.decide(7, "save_xslt", "{}", builtInTools, McpToolset.EMPTY, false))
+                .isEqualTo(Verdict.RUN);
     }
 
     @Test
