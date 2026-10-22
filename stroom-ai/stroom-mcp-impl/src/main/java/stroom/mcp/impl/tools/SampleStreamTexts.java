@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.StreamCharsets;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;

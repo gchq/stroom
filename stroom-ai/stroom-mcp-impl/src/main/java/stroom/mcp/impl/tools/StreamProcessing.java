@@ -18,8 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.FeedAccess;
 import stroom.ai.impl.tools.ProcessorTaskFinder;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -315,10 +315,10 @@ class StreamProcessing {
         String what() {
             final List<String> parts = new ArrayList<>();
             if (!disabled.isEmpty()) {
-                parts.add("filter(s) " + PythonText.numbers(disabled));
+                parts.add("filter(s) " + PyText.repr(disabled));
             }
             if (!stopped.isEmpty()) {
-                parts.add("the processor of filter(s) " + PythonText.numbers(stopped) + " (the pipeline's "
+                parts.add("the processor of filter(s) " + PyText.repr(stopped) + " (the pipeline's "
                           + "processor row, above its filters)");
             }
             return String.join(" and ", parts);

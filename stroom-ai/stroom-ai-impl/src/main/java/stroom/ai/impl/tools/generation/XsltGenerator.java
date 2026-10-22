@@ -16,8 +16,10 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +80,7 @@ public final class XsltGenerator {
             "lines", "/map/map");
     /// The guarded json-to-xml: an empty value, or one that isn't JSON, gives nothing rather than stopping the
     /// pipeline ("empty sequence" fatal errors, seen in a test environment).
-    public static final String SAFE_JSON = "<xsl:function xmlns:xsl=\"" + MappingFacts.XSL + "\" xmlns:mcp=\""
+    public static final String SAFE_JSON = "<xsl:function xmlns:xsl=\"" + XmlTrees.XSL + "\" xmlns:mcp=\""
                                            + MappingFacts.MCP_NS + "\" name=\"mcp:json-to-xml\" as=\"node()?\">"
                                            + "<xsl:param name=\"text\" as=\"item()*\"/>"
                                            + "<xsl:variable name=\"json\" select=\"string(($text)[1])\"/>"
@@ -87,7 +89,7 @@ public final class XsltGenerator {
                                            + "</xsl:function>";
     /// XML held in a field, read safely: an empty value, or one that isn't XML, gives nothing rather than stopping
     /// the pipeline.
-    public static final String SAFE_XML = "<xsl:function xmlns:xsl=\"" + MappingFacts.XSL + "\" xmlns:mcp=\""
+    public static final String SAFE_XML = "<xsl:function xmlns:xsl=\"" + XmlTrees.XSL + "\" xmlns:mcp=\""
                                           + MappingFacts.MCP_NS + "\" name=\"mcp:parse-xml\" as=\"node()?\">"
                                           + "<xsl:param name=\"text\" as=\"item()*\"/>"
                                           + "<xsl:variable name=\"xml\" select=\"string(($text)[1])\"/>"
@@ -100,7 +102,7 @@ public final class XsltGenerator {
     /// schema's three digits (asked for by the user): stroom:format-date truncates them (seen on the local stack:
     /// .456789 -> .456, 08:07:00.9996 -> 08:07:00.999), so a millisecond is added where the first digit it drops is
     /// 5 or more, carried into the second, minute and day as xs:dateTime arithmetic carries it.
-    public static final String TIME_MS = "<xsl:function xmlns:xsl=\"" + MappingFacts.XSL + "\" xmlns:mcp=\""
+    public static final String TIME_MS = "<xsl:function xmlns:xsl=\"" + XmlTrees.XSL + "\" xmlns:mcp=\""
                                          + MappingFacts.MCP_NS + "\" xmlns:stroom=\"stroom\" xmlns:xs=\""
                                          + MappingFacts.XS + "\" name=\"mcp:time-ms\" as=\"xs:string?\">"
                                          + "<xsl:param name=\"value\" as=\"xs:string?\"/><xsl:param name=\"pattern\" "
@@ -113,7 +115,7 @@ public final class XsltGenerator {
                                          + "'[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z') else $time\"/>"
                                          + "</xsl:function>";
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final Map<String, String> DEFAULT_ROOT = Map.of("data_splitter", "records", "json", "/",
             "xml_fragments", "/");
     private static final Map<String, String> DEFAULT_RECORD = Map.of("data_splitter", "record");
@@ -328,7 +330,7 @@ public final class XsltGenerator {
             if (found.isEmpty() && SNAKE_KEY.matcher(key).matches()) {
                 // Or the key as the text writes it, the name its snake case: source_ip from 'Source IP: (...)', as
                 // draft_translation_mapping names a text's keys.
-                final String words = String.join("[ _-]", PyStr.split(key, "_"));
+                final String words = String.join("[ _-]", PyText.split(key, "_"));
                 final int flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS;
                 found = finds(Pattern.compile("(?<![\\w\\\\])" + words + "(?![\\w])", flags), ex.regex());
             }
@@ -506,7 +508,7 @@ public final class XsltGenerator {
             // A key of the JSON a field holds: read through the guarded helper, so an empty field, or one that isn't
             // JSON, gives nothing (seen: a whole JSON line written into TypeId, and fatal "empty sequence" errors).
             final String base = source(held, null, inputScope);
-            final List<String> jsonKeys = PyStr.split(fieldName.substring(held.length() + 1), ".");
+            final List<String> jsonKeys = PyText.split(fieldName.substring(held.length() + 1), ".");
             return "mcp:json-to-xml((" + base + ")[1])/*" + jsonKeys.stream()
                     .map(key -> "/*[@key=" + XPathText.literal(key) + "]")
                     .collect(Collectors.joining());
@@ -714,7 +716,7 @@ public final class XsltGenerator {
         if (hasAnyOf(entry)) {
             return entry.anyOf().getFirst();
         }
-        final List<String> steps = PyStr.split(entry.strippedPath(), "/");
+        final List<String> steps = PyText.split(entry.strippedPath(), "/");
         return String.join("-", steps.subList(Math.max(0, steps.size() - 2), steps.size()));
     }
 
@@ -728,7 +730,7 @@ public final class XsltGenerator {
         final List<List<String>> items = items(entry);
         if (!maps.containsKey(items)) {
             final String naming = style.naming();
-            final List<String> steps = PyStr.split(entry.strippedPath(), "/");
+            final List<String> steps = PyText.split(entry.strippedPath(), "/");
             final String base = XsltNames.styleName(src.substring(1) + "-to-" + steps.getLast(), naming);
             final Set<String> taken = new HashSet<>(names.values());
             taken.addAll(maps.values());
@@ -1068,7 +1070,7 @@ public final class XsltGenerator {
             final Set<String> taken = takenTemplateNames();
             final List<String> words = new ArrayList<>();
             for (final FieldMapping entry : List.of(entries.getFirst(), entries.getLast())) {
-                final String word = PyStr.strip(NOT_ALPHANUMERIC.matcher(or(entry.dataName(), "")).replaceAll("-"),
+                final String word = PyText.strip(NOT_ALPHANUMERIC.matcher(or(entry.dataName(), "")).replaceAll("-"),
                         "-").toLowerCase(Locale.ROOT);
                 words.add(word.isEmpty()
                         ? "data"
@@ -1261,7 +1263,7 @@ public final class XsltGenerator {
                 // Only a test of whether the field has a value needs blank values left out. A value (after its
                 // guard, or after 'then'), a comparison and a [1] read the selector as it is.
                 final String after = value.substring(matcher.end());
-                final String before = PyStr.rstrip(value.substring(0, matcher.start()));
+                final String before = PyText.rstrip(value.substring(0, matcher.start()));
                 final boolean asIs = "Value".equals(read.attribute())
                                      || ("select".equals(read.attribute())
                                          && value.startsWith("mcp:" + dataFunction + "("))
@@ -1370,7 +1372,7 @@ public final class XsltGenerator {
             final String naming = style.naming();
             // Not a shared template's name either: the importing XSLT's own template would override it.
             final Set<String> taken = takenTemplateNames();
-            final List<String> steps = PyStr.split(node.path, "/");
+            final List<String> steps = PyText.split(node.path, "/");
             final List<String> pathParts = steps.subList(1, steps.size());
             final List<String> candidates = new ArrayList<>();
             for (int n = 1; n <= pathParts.size(); n++) {
@@ -1435,7 +1437,7 @@ public final class XsltGenerator {
                 .map(EventRule::name)
                 .toList();
         if (!catchAll.isEmpty()) {
-            note(problems, "Rules " + PythonRepr.list(catchAll) + " have no conditions, so the rules after them "
+            note(problems, "Rules " + PyText.list(catchAll) + " have no conditions, so the rules after them "
                            + "never run; put the rule without conditions last");
         }
         eventTrees.dataWithAHome(rules);
@@ -1445,7 +1447,7 @@ public final class XsltGenerator {
                     .forEach(unread::add);
         }
         if (!unread.isEmpty()) {
-            note(warnings, "extract names " + PythonRepr.list(unread) + ", which nothing reads: map each to the "
+            note(warnings, "extract names " + PyText.list(unread) + ", which nothing reads: map each to the "
                            + "element that means it (a Data entry if nothing else fits), or leave it out of names "
                            + "('').");
         }
@@ -1540,7 +1542,7 @@ public final class XsltGenerator {
         }
         declareMaps(sheet);
         if (!referenceMaps.isEmpty()) {
-            note(warnings, "Lookups read reference map(s) " + PythonRepr.list(new TreeSet<>(referenceMaps)) + ": "
+            note(warnings, "Lookups read reference map(s) " + PyText.list(new TreeSet<>(referenceMaps)) + ": "
                            + "the pipeline needs the feed that loads each as a pipeline reference (create_pipeline "
                            + "references, or update_pipeline (references=...)); find_reference_data lists the maps and "
                            + "their feeds.");
@@ -1555,7 +1557,7 @@ public final class XsltGenerator {
             sheet.append(new XmlComment(XsltComments.comment(template.getValue().name() + ": shared by the rule"
                                                              + (those.size() > 1
                     ? "s"
-                    : "") + " " + those.stream().map(PythonRepr::repr).collect(Collectors.joining(", ")))));
+                    : "") + " " + those.stream().map(PyText::repr).collect(Collectors.joining(", ")))));
             sheet.append(template.getValue().template());
         }
         ownFunctions().forEach(sheet::append);
@@ -1950,8 +1952,8 @@ public final class XsltGenerator {
         /// @return As Python's repr of the tuple the server keys it by, which orders the functions.
         String repr() {
             return isTime
-                    ? "('time', " + PythonRepr.repr(value) + ", " + PythonRepr.repr(timezone) + ")"
-                    : "('transform', " + PythonRepr.repr(value) + ")";
+                    ? "('time', " + PyText.repr(value) + ", " + PyText.repr(timezone) + ")"
+                    : "('transform', " + PyText.repr(value) + ")";
         }
     }
 }

@@ -18,10 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -98,21 +98,13 @@ public class EventVersions {
     /// @return Its schema.
     /// @throws ToolRefusal if this Stroom doesn't hold it, or it can't be read.
     public EventSchema eventSchema(final String version) {
-        try {
-            return heldSchemas.eventSchema(version);
-        } catch (final ValidationException e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        return heldSchemas.eventSchema(version);
     }
 
     /// @return The event-logging versions this Stroom holds, newest first.
     /// @throws ToolRefusal if it holds none.
     public List<String> eventVersions() {
-        try {
-            return heldSchemas.eventVersions();
-        } catch (final ValidationException e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        return heldSchemas.eventVersions();
     }
 
     /// @param keptVersion The version kept with a translation's mapping, or null.
@@ -121,11 +113,7 @@ public class EventVersions {
     /// one its code writes, else the newest this Stroom holds.
     /// @throws ToolRefusal if it names none and this Stroom holds none.
     public String translationVersion(final String keptVersion, final String code) {
-        try {
-            return heldSchemas.translationVersion(keptVersion, code);
-        } catch (final ValidationException e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        return heldSchemas.translationVersion(keptVersion, code);
     }
 
     /// @param context The call's context.

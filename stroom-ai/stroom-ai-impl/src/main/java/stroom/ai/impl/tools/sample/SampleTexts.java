@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -106,11 +109,11 @@ public final class SampleTexts {
 
     /// @param sample A sample's text.
     /// @param name   What the sample is called in the message.
-    /// @throws SampleRefusal if it isn't sample data, saying why (see [#whyNotData(String, String)]).
+    /// @throws ToolRefusal if it isn't sample data, saying why (see [#whyNotData(String, String)]).
     public static void checkSample(final String sample, final String name) {
         final String reason = whyNotData(sample, name);
         if (reason != null) {
-            throw new SampleRefusal(reason);
+            throw new ToolRefusal(reason);
         }
     }
 
@@ -165,7 +168,7 @@ public final class SampleTexts {
     /// @param samples The samples argument as the call gave it: a [Map], a [List], a [String] or null.
     /// @param single  A single sample given apart (named `sample` unless the samples have one so named), or null.
     /// @return The samples by name, their doubly escaped newlines restored.
-    /// @throws SampleRefusal if they arrived broken, or one isn't sample data.
+    /// @throws ToolRefusal if they arrived broken, or one isn't sample data.
     public static Map<String, String> asNamedSamples(final Object samples, final String single) {
         final Map<String, Object> named = new LinkedHashMap<>();
         if (samples instanceof final Map<?, ?> map) {
@@ -193,13 +196,13 @@ public final class SampleTexts {
         }
         final String broken = whyBroken(named);
         if (broken != null) {
-            throw new SampleRefusal(broken);
+            throw new ToolRefusal(broken);
         }
         final Map<String, String> out = new LinkedHashMap<>();
         for (final Map.Entry<String, Object> entry : named.entrySet()) {
             if (!(entry.getValue() instanceof final String text)) {
-                throw new SampleRefusal(entry.getKey() + ": a sample is the file's text, not "
-                                        + typeName(entry.getValue()));
+                throw new ToolRefusal(entry.getKey() + ": a sample is the file's text, not "
+                                      + typeName(entry.getValue()));
             }
             checkSample(text, entry.getKey());
             out.put(entry.getKey(), unescape(text));

@@ -67,7 +67,7 @@ class TestBuildChecks {
                 FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme"),
                 FakeBuildFacts.doc(PipelineDoc.TYPE, "q", "Other"),
                 FakeBuildFacts.doc(DocumentationDoc.TYPE, "d", "Other"));
-        assertThat(checks(MappingDrift.NONE).checks(docs)).containsExactly(
+        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(docs)).containsExactly(
                 "Pipeline 'Acme': no documentation (write_documentation)",
                 "Pipeline 'Other': no clean step_sample or step_records of its current code is recorded");
     }
@@ -75,8 +75,8 @@ class TestBuildChecks {
     @Test
     void aWorkingCopyNeedsNoDocumentationOfItsOwn() {
         world.records().recordPassed(new DocRef(PipelineDoc.TYPE, "p", "Acme"), BuildRecords.STEPPED, null, null);
-        assertThat(checks(MappingDrift.NONE).checks(List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme",
-                "working_copy_of", "prod")))).isEmpty();
+        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "p",
+                "Acme", "working_copy_of", "prod")))).isEmpty();
     }
 
     @Test
@@ -90,7 +90,7 @@ class TestBuildChecks {
                 .data("<!-- stroom-mcp field-mapping 0000000000000000 -->").build());
         final List<Map<String, Object>> docs = List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme"),
                 FakeBuildFacts.doc(DocumentationDoc.TYPE, "d", "Acme"));
-        assertThat(checks(MappingDrift.NONE).checks(docs)).singleElement().satisfies(problem ->
+        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(docs)).singleElement().satisfies(problem ->
                 assertThat(problem).startsWith("Pipeline 'Acme': the documentation's Field mapping predates the "
                                                + "current mapping or XSLT (write_documentation build=<this build> "
                                                + "pipeline_uuid='p'")
@@ -99,25 +99,11 @@ class TestBuildChecks {
         final KeptMappings.KeptXslt kept = keptMappings.keptXslt("p").orElseThrow();
         world.docs.put("d", DocumentationDoc.builder().uuid("d").name("Acme")
                 .data("<!-- stroom-mcp field-mapping " + BuildChecks.mappingDigest(kept) + " -->").build());
-        assertThat(checks(MappingDrift.NONE).checks(docs)).isEmpty();
+        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(docs)).isEmpty();
         // An XSLT edited by hand is said, and only warns.
         world.docs.put("d", DocumentationDoc.builder().uuid("d").name("Acme").data("").build());
-        final MappingDrift drifted = new MappingDrift() {
-            @Override
-            public Optional<String> drift(final KeptMappings.KeptXslt found) {
-                return Optional.of("its XSLT was edited by hand");
-            }
-
-            @Override
-            public Optional<String> planDrift(final KeptMappings.KeptXslt found) {
-                return Optional.empty();
-            }
-
-            @Override
-            public List<String> lostMappings(final String pipelineUuid) {
-                return List.of();
-            }
-        };
+        final GeneratedDrift drifted = Mockito.mock(GeneratedDrift.class);
+        Mockito.when(drifted.drift(Mockito.any())).thenReturn(Optional.of("its XSLT was edited by hand"));
         assertThat(checks(drifted).checks(docs)).hasSize(2)
                 .first().isEqualTo("Pipeline 'Acme': its XSLT was edited by hand");
         assertThat(checks(drifted).checks(docs).get(1)).doesNotEndWith(BuildChecks.BLOCKS);
@@ -128,13 +114,13 @@ class TestBuildChecks {
     void aPipelineStroomCantLoadIsOneProblemSaid() {
         Mockito.when(world.pipelineService.fetchPipelineLayers(new DocRef(PipelineDoc.TYPE, "q")))
                 .thenThrow(new IllegalStateException("Unknown property 'foo'"));
-        assertThat(checks(MappingDrift.NONE).checks(List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "q", "Other",
-                "working_copy_of", "prod")))).containsExactly(
+        assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "q",
+                "Other", "working_copy_of", "prod")))).containsExactly(
                 "Pipeline 'Other': no clean step_sample or step_records of its current code is recorded",
                 "Pipeline 'Other': Stroom can't load it: Unknown property 'foo'");
     }
 
-    private BuildChecks checks(final MappingDrift drift) {
+    private BuildChecks checks(final GeneratedDrift drift) {
         return new BuildChecks(world.records(), world.pipelineShapes, agreements, keptMappings, world.documentAccess,
                 drift);
     }

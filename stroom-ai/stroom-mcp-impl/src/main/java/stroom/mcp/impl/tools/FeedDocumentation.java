@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -309,7 +310,7 @@ final class FeedDocumentation {
             }
             for (final Object field : fields) {
                 if (field instanceof final Map<?, ?> map && map.get("path") instanceof final String path) {
-                    final String stripped = strip(path, '/');
+                    final String stripped = PyText.strip(path, "/");
                     final String[] parts = stripped.split("/");
                     if (stripped.startsWith("EventDetail/") && parts.length > 1
                         && !Set.of("TypeId", "Description").contains(parts[1])) {
@@ -351,7 +352,7 @@ final class FeedDocumentation {
     // An event-logging path as the events doc writes it, without Event/ and its Data name: comparable to an index
     // plan's source.
     private static String eventPath(final String path) {
-        String value = strip(path, '/');
+        String value = PyText.strip(path, "/");
         if (value.startsWith("Event/")) {
             value = value.substring("Event/".length());
         }
@@ -380,8 +381,8 @@ final class FeedDocumentation {
             return source.equals(path);
         }
         if (!source.contains("//")) {
-            final String[] want = strip(source, '/').split("/", -1);
-            final String[] have = strip(path, '/').split("/", -1);
+            final String[] want = PyText.strip(source, "/").split("/", -1);
+            final String[] have = PyText.strip(path, "/").split("/", -1);
             if (want.length != have.length) {
                 return false;
             }
@@ -393,7 +394,7 @@ final class FeedDocumentation {
             return true;
         }
         final StringBuilder pattern = new StringBuilder();
-        final String stripped = strip(source, '/');
+        final String stripped = PyText.strip(source, "/");
         int i = 0;
         while (i < stripped.length()) {
             if (stripped.startsWith("//", i)) {
@@ -410,7 +411,7 @@ final class FeedDocumentation {
         final String prefix = source.startsWith("//")
                 ? "(?:[^/]+/)*"
                 : "";
-        return Pattern.compile(prefix + pattern).matcher(strip(path, '/')).matches();
+        return Pattern.compile(prefix + pattern).matcher(PyText.strip(path, "/")).matches();
     }
 
 
@@ -422,18 +423,6 @@ final class FeedDocumentation {
         return Arrays.stream(CELL_SEPARATOR.split(inner, -1))
                 .map(cell -> cell.strip().replace("\\|", "|").replace("<br>", "\n"))
                 .toList();
-    }
-
-    private static String strip(final String value, final char c) {
-        int start = 0;
-        int end = value.length();
-        while (start < end && value.charAt(start) == c) {
-            start++;
-        }
-        while (end > start && value.charAt(end - 1) == c) {
-            end--;
-        }
-        return value.substring(start, end);
     }
 
 

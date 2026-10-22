@@ -19,10 +19,12 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -172,7 +174,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final Map<String, String> rename = PipelineArguments.textMap(argsMap(call).get(RENAME_ARG), RENAME_ARG);
         final List<PropertyValue> changes = PropertyValue.listOf(argsMap(call).get(SET_PROPERTIES_ARG),
                 SET_PROPERTIES_ARG);
-        final boolean workingCopy = PipelineArguments.flag(argsMap(call).get(WORKING_COPY_ARG));
+        final boolean workingCopy = ToolArgs.flag(call, WORKING_COPY_ARG);
         final PipelineDoc source = pipelineDocs.read(sourceUuid);
         final String reason = templates.templateReason(sourceUuid);
         if (reason != null) {

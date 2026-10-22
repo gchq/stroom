@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.DumpMode;
@@ -25,7 +27,6 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.sample.PyText;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -74,7 +75,7 @@ public final class LocalCheck {
     }
 
     private static Map<String, Object> dict(final Object... keysAndValues) {
-        return PyValues.dict(keysAndValues);
+        return JsonValues.dict(keysAndValues);
     }
 
     /// The text a simple relative path selects in a record, matching by local name: `System/Computer`,
@@ -190,7 +191,7 @@ public final class LocalCheck {
                 final Object held = parsedJson(record.get(field));
                 if (held instanceof Map) {
                     SampleProfiler.flatten(held).forEach((key, value) ->
-                            record.putIfAbsent(field + "." + key, PyValues.jsonText(value)));
+                            record.putIfAbsent(field + "." + key, JsonValues.jsonText(value)));
                 }
             }
         }
@@ -415,7 +416,7 @@ public final class LocalCheck {
             final Object value = map.get(field);
             return value == null
                     ? null
-                    : PyValues.jsonText(value);
+                    : JsonValues.jsonText(value);
         }
         return record instanceof final XmlTree.Element element
                 ? xmlValue(element, field)
@@ -620,7 +621,7 @@ public final class LocalCheck {
     public static String traits(final List<?> records) {
         final Map<String, List<String>> fields = new LinkedHashMap<>();
         String[] text = null;
-        for (final Map<String, Object> record : PyValues.maps(records)) {
+        for (final Map<String, Object> record : JsonValues.maps(records)) {
             for (final Map.Entry<String, Object> entry : record.entrySet()) {
                 if (!(entry.getValue() instanceof final String value) || PyText.isBlank(value)) {
                     continue;
@@ -717,7 +718,7 @@ public final class LocalCheck {
         // Values that show the action (ALLOW/DENY between addresses, LOGIN/LOGOUT, CONFIG_CHANGE) get the rules
         // for it.
         final Set<String> names = new LinkedHashSet<>();
-        PyValues.maps(found).forEach(r -> names.addAll(r.keySet()));
+        JsonValues.maps(found).forEach(r -> names.addAll(r.keySet()));
         final List<Map<String, Object>> base = new ArrayList<>();
         final Set<String> skip = new HashSet<>();
         for (final Condition c : rule.when()) {
@@ -738,7 +739,7 @@ public final class LocalCheck {
                   + ": " + PyJson.dumps(shown.rules());
         // Connections allowed or denied, and logons, are never unknown; a configuration change is the user's call.
         final List<Map<String, Object>> plain = shown.rules().stream()
-                .filter(r -> PyValues.maps(r.get("fields")).stream().anyMatch(f -> {
+                .filter(r -> JsonValues.maps(r.get("fields")).stream().anyMatch(f -> {
                     final String path = (String) f.get("path");
                     return path.startsWith("EventDetail/Network/") || path.startsWith("EventDetail/Authenticate/");
                 }))
@@ -753,8 +754,8 @@ public final class LocalCheck {
             (covered
                     ? shown.rules()
                     : plain).forEach(r -> values.addAll(ActionRules.conditionValues(
-                    PyValues.maps(r.get("when")).getLast())));
-            final long known = PyValues.maps(found).stream()
+                    JsonValues.maps(r.get("when")).getLast())));
+            final long known = JsonValues.maps(found).stream()
                     .filter(r -> r.get(shown.split()) instanceof final String v && values.contains(v))
                     .count();
             problems.add("[" + name + "] can't be kept as Unknown: " + known + " of its " + found.size()

@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -96,7 +97,8 @@ class TestProcessorFilterWrites {
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("already selects these streams");
         assertThatThrownBy(() -> w.filterWrites.feedTerm("NO-SUCH-FEED"))
-                .hasMessage("No feed named 'NO-SUCH-FEED' in Stroom: give the feed's exact name");
+                .hasMessageStartingWith("No feed named 'NO-SUCH-FEED' in this Stroom. If the user named it, they "
+                                        + "may mean a different Stroom cluster");
     }
 
     @Test

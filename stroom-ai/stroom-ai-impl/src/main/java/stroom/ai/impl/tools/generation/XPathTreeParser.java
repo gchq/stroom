@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -796,7 +798,7 @@ public final class XPathTreeParser {
                 return;
             }
             if (!bound) {
-                throw new XPathParseException("prefix " + PythonRepr.repr(prefix) + " isn't bound in the "
+                throw new XPathParseException("prefix " + PyText.repr(prefix) + " isn't bound in the "
                                               + "stylesheet (XPST0081)");
             }
         }
@@ -920,7 +922,7 @@ public final class XPathTreeParser {
             if (lexeme == null) {
                 return new XPathParseException("unexpected end of source (XPST0003)");
             }
-            return new XPathParseException("unexpected " + PythonRepr.repr(lexeme.text) + " at " + (lexeme.start + 1)
+            return new XPathParseException("unexpected " + PyText.repr(lexeme.text) + " at " + (lexeme.start + 1)
                                            + " in " + text + " (XPST0003)");
         }
     }

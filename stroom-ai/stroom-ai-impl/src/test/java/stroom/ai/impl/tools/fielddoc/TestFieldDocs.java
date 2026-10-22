@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.FieldMapping;
 
@@ -176,15 +177,15 @@ class TestFieldDocs {
 
     @Test
     void numbersAreFormattedAsPythonFormatsThem() {
-        assertThat(PythonStrings.formatG(30.0)).isEqualTo("30");
-        assertThat(PythonStrings.formatG(66.66666)).isEqualTo("66.6667");
-        assertThat(PythonStrings.formatG(100.0)).isEqualTo("100");
-        assertThat(PythonStrings.formatG(0.00001)).isEqualTo("1e-05");
-        assertThat(PythonStrings.formatG(1234567.0)).isEqualTo("1.23457e+06");
-        assertThat(PythonStrings.formatFixed0(12.5)).isEqualTo("12");
-        assertThat(PythonStrings.formatFixed0(66.666)).isEqualTo("67");
-        assertThat(PythonStrings.strip("  x \n")).isEqualTo("x");
-        assertThat(PythonStrings.head("abc", 2)).isEqualTo("ab");
-        assertThat(PythonStrings.split("a//b/", "/")).containsExactly("a", "", "b", "");
+        assertThat(PyText.formatG(30.0)).isEqualTo("30");
+        assertThat(PyText.formatG(66.66666)).isEqualTo("66.6667");
+        assertThat(PyText.formatG(100.0)).isEqualTo("100");
+        assertThat(PyText.formatG(0.00001)).isEqualTo("1e-05");
+        assertThat(PyText.formatG(1234567.0)).isEqualTo("1.23457e+06");
+        assertThat(PyText.formatFixed0(12.5)).isEqualTo("12");
+        assertThat(PyText.formatFixed0(66.666)).isEqualTo("67");
+        assertThat(PyText.strip("  x \n")).isEqualTo("x");
+        assertThat(PyText.head("abc", 2)).isEqualTo("ab");
+        assertThat(PyText.split("a//b/", "/")).containsExactly("a", "", "b", "");
     }
 }

@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.InstructionRules.ComponentRule;
 import stroom.ai.impl.tools.InstructionRules.ComponentRules;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;

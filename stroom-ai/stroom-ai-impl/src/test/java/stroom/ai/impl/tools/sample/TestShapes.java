@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -260,7 +262,7 @@ class TestShapes {
                     .isEqualTo(String.valueOf(python.get("profile_records")));
         } else {
             // Text that starts as JSON and isn't: refused, as the Python server refused it.
-            assertThatThrownBy(() -> SampleProfiler.profile(text)).as(name).isInstanceOf(SampleRefusal.class);
+            assertThatThrownBy(() -> SampleProfiler.profile(text)).as(name).isInstanceOf(ToolRefusal.class);
         }
         if (!python.containsKey("split_format")) {
             // A JSON line among JSON lines that doesn't parse: the Python splitter raised, and the survey said it

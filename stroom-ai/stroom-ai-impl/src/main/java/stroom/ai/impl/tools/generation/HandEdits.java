@@ -16,7 +16,10 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
@@ -48,7 +51,7 @@ import java.util.regex.Pattern;
 /// to the plan's fields the change touches.
 public final class HandEdits {
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final Pattern AVT = Pattern.compile("\\{([^{}]+)\\}");
     private static final Pattern SPACE = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>",
@@ -110,7 +113,7 @@ public final class HandEdits {
     private static List<String> written(final XmlElement element) {
         final String text = element.text() == null
                 ? ""
-                : PyStr.strip(element.text());
+                : PyText.strip(element.text());
         if (isXsl(element)) {
             if ("text".equals(element.localName()) && !text.isEmpty()) {
                 return List.of("text = " + text);
@@ -327,14 +330,6 @@ public final class HandEdits {
         }
     }
 
-    /// @param base    The code the server saved, regenerated, or null.
-    /// @param current The code as it is, edited by hand.
-    /// @param code    The new code.
-    /// @return What the new code undoes of the edit, said: `no longer writes number bytes`, `reads x again`.
-    public static List<String> lost(final String base, final String current, final String code) {
-        return undone(base, current, code).stream().map(Undone::toString).toList();
-    }
-
     /// A mapping's or plan's fields, by a label the user knows them by: an index field's name, a CEF key (per kind
     /// of event), a translation's path (per rule).
     ///
@@ -349,13 +344,13 @@ public final class HandEdits {
         }
         switch (kind) {
             case "index" -> {
-                for (final Map<String, Object> f : maps(payload.get("fields"))) {
+                for (final Map<String, Object> f : JsonValues.maps(payload.get("fields"))) {
                     final String name = (String) f.get("name");
-                    final List<String> parts = PyStr.split(name, ".");
-                    out.put(name, new PlanField(PyJson.dumpsSortedKeys(f), name + " (" + str(f.get("type"))
-                                                                          + ") from " + str(f.get("source"))
-                                                                          + (truthy(f.get("transform"))
-                            ? ", as " + str(f.get("transform"))
+                    final List<String> parts = PyText.split(name, ".");
+                    out.put(name, new PlanField(PyJson.dumpsSortedKeys(f), name + " (" + PyText.str(f.get("type"))
+                                                                          + ") from " + PyText.str(f.get("source"))
+                                                                          + (JsonValues.truthy(f.get("transform"))
+                            ? ", as " + PyText.str(f.get("transform"))
                             : ""), Set.of(parts.getLast()), Set.of(expression(
                             f.get("source") instanceof final String source
                                     ? source
@@ -367,13 +362,13 @@ public final class HandEdits {
                 final Map<String, Object> mapping = payload.containsKey("mapping")
                         ? (Map<String, Object>) payload.get("mapping")
                         : payload;
-                final String input = truthy(mapping.get("input"))
+                final String input = JsonValues.truthy(mapping.get("input"))
                         ? (String) mapping.get("input")
                         : "data_splitter";
                 final List<Object[]> rules = new ArrayList<>();
-                rules.add(new Object[]{"common", maps(mapping.get("common"))});
-                for (final Map<String, Object> rule : maps(mapping.get("events"))) {
-                    rules.add(new Object[]{rule.get("name"), maps(rule.get("fields"))});
+                rules.add(new Object[]{"common", JsonValues.maps(mapping.get("common"))});
+                for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+                    rules.add(new Object[]{rule.get("name"), JsonValues.maps(rule.get("fields"))});
                 }
                 for (final Object[] rule : rules) {
                     for (final Map<String, Object> e : (List<Map<String, Object>>) rule[1]) {
@@ -391,31 +386,33 @@ public final class HandEdits {
     private static void cefFields(final Map<String, Object> payload, final Map<String, PlanField> out) {
         for (final String header : List.of("vendor", "product", "version", "signature", "name", "severity")) {
             final Map<String, Object> value = payload.get(header) instanceof final Map<?, ?> given && !given.isEmpty()
-                    ? map(given)
+                    ? JsonValues.map(given)
                     : Map.of();
             final String said = "header " + header + ": " + (value.get("value") != null
-                    ? "'" + str(value.get("value")) + "'"
-                    : "from " + str(value.get("source")));
+                    ? "'" + PyText.str(value.get("value")) + "'"
+                    : "from " + PyText.str(value.get("source")));
             out.put("header " + header, new PlanField(PyJson.dumpsSortedKeys(value), said, Set.of(),
-                    truthy(value.get("source"))
+                    JsonValues.truthy(value.get("source"))
                             ? Set.of(expression((String) value.get("source")))
                             : Set.of()));
         }
         final List<Object[]> events = new ArrayList<>();
-        events.add(new Object[]{"common", maps(payload.get("common"))});
+        events.add(new Object[]{"common", JsonValues.maps(payload.get("common"))});
         if (payload.get("events") instanceof final Map<?, ?> byKind) {
-            byKind.forEach((event, fields) -> events.add(new Object[]{event, maps(fields)}));
+            byKind.forEach((event, fields) -> events.add(new Object[]{event, JsonValues.maps(fields)}));
         }
         for (final Object[] event : events) {
             @SuppressWarnings("unchecked") final List<Map<String, Object>> fields =
                     (List<Map<String, Object>>) event[1];
             for (final Map<String, Object> f : fields) {
-                final String key = str(f.get("key"));
+                final String key = PyText.str(f.get("key"));
+                final String label = JsonValues.truthy(f.get("label"))
+                        ? " (label '" + PyText.str(f.get("label")) + "')"
+                        : "";
                 out.put(event[0] + ": " + key, new PlanField(PyJson.dumpsSortedKeys(f), key + " from "
-                                                                                       + str(f.get("path"))
-                                                                                       + (truthy(f.get("label"))
-                        ? " (label '" + str(f.get("label")) + "')"
-                        : ""), Set.of(key), Set.of(expression(str(f.get("path"))), "'" + key + "'")));
+                                                                                       + PyText.str(f.get("path"))
+                                                                                       + label, Set.of(key),
+                        Set.of(expression(PyText.str(f.get("path"))), "'" + key + "'")));
             }
         }
     }
@@ -424,35 +421,35 @@ public final class HandEdits {
                                          final Map<String, Object> e,
                                          final String input,
                                          final Map<String, PlanField> out) {
-        final String path = str(e.get("path"));
-        final String label = rule + ": " + path + (truthy(e.get("data_name"))
-                ? " [" + str(e.get("data_name")) + "]"
+        final String path = PyText.str(e.get("path"));
+        final String label = rule + ": " + path + (JsonValues.truthy(e.get("data_name"))
+                ? " [" + PyText.str(e.get("data_name")) + "]"
                 : "");
         final List<String> inputs = new ArrayList<>();
-        if (truthy(e.get("field"))) {
-            inputs.add(str(e.get("field")));
+        if (JsonValues.truthy(e.get("field"))) {
+            inputs.add(PyText.str(e.get("field")));
         }
         if (e.get("any_of") instanceof final List<?> anyOf) {
-            anyOf.forEach(field -> inputs.add(str(field)));
+            anyOf.forEach(field -> inputs.add(PyText.str(field)));
         }
         final Set<String> sources = new HashSet<>();
         inputs.forEach(field -> sources.add(expression(XPathText.fieldText(input, field))));
-        if (truthy(e.get("xpath"))) {
-            sources.add(expression(str(e.get("xpath"))));
+        if (JsonValues.truthy(e.get("xpath"))) {
+            sources.add(expression(PyText.str(e.get("xpath"))));
         }
         final List<String> said = new ArrayList<>();
         e.forEach((key, value) -> {
             if (!"path".equals(key)) {
                 said.add(key + " " + (value instanceof final String text
                         ? text
-                        : PythonRepr.repr(value)));
+                        : PyText.repr(value)));
             }
         });
         final Set<String> names = new HashSet<>();
-        final List<String> steps = PyStr.split(path, "/");
+        final List<String> steps = PyText.split(path, "/");
         names.add(steps.getLast());
-        if (truthy(e.get("data_name"))) {
-            names.add(str(e.get("data_name")));
+        if (JsonValues.truthy(e.get("data_name"))) {
+            names.add(PyText.str(e.get("data_name")));
         }
         out.put(label, new PlanField(PyJson.dumpsSortedKeys(e), label + ": " + String.join(", ", said),
                 Set.copyOf(names), Set.copyOf(sources)));
@@ -518,38 +515,6 @@ public final class HandEdits {
             }
         }
         return out;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> maps(final Object value) {
-        if (!(value instanceof final List<?> list)) {
-            return List.of();
-        }
-        return list.stream().filter(Map.class::isInstance).map(item -> (Map<String, Object>) item).toList();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> map(final Map<?, ?> value) {
-        return (Map<String, Object>) value;
-    }
-
-    // Python's str() of a value in an f-string.
-    private static String str(final Object value) {
-        return value instanceof final String text
-                ? text
-                : PythonRepr.repr(value);
-    }
-
-    private static boolean truthy(final Object value) {
-        return switch (value) {
-            case null -> false;
-            case final String text -> !text.isEmpty();
-            case final Boolean bool -> bool;
-            case final List<?> list -> !list.isEmpty();
-            case final Map<?, ?> map -> !map.isEmpty();
-            case final Number number -> number.doubleValue() != 0;
-            default -> true;
-        };
     }
 
 

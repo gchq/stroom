@@ -31,7 +31,6 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
 
@@ -122,14 +121,14 @@ class SummariseStreamsTool extends AbstractBuiltInTool {
         try {
             streamIds = streamIds(call);
         } catch (final IllegalArgumentException e) {
-            return ToolResult.error("Error: " + e.getMessage());
+            return JsonResults.refused("Error: " + e.getMessage());
         }
         final String kind = stringArg(call, KIND_ARG);
         if (!ERRORS.equals(kind) && !EVENTS.equals(kind)) {
-            return ToolResult.error("Error: kind must be errors or events.");
+            return JsonResults.refused("Error: kind must be errors or events.");
         }
         if (!documentAccess.canViewData()) {
-            return ToolResult.error("Error: you don't have permission to view data, so streams can't be "
+            return JsonResults.refused("Error: you don't have permission to view data, so streams can't be "
                                     + "summarised.");
         }
         final int maxEvents = Math.max(1, Math.min(MAX_MAX_EVENTS,
@@ -140,13 +139,13 @@ class SummariseStreamsTool extends AbstractBuiltInTool {
                     ? streamSummaries.summariseEvents(streamIds, maxEvents)
                     : summariseErrors(streamIds);
         } catch (final RuntimeException e) {
-            return ToolResult.error("Error: " + StreamSummaries.reason(e));
+            return JsonResults.refused("Error: " + StreamSummaries.reason(e));
         } finally {
             auditLog.streamsViewed(context.session(), streamIds, "Summarised the " + kind + " of "
                                                                  + streamIds.size() + " stream(s) with the "
                                                                  + NAME + " tool");
         }
-        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+        return JsonResults.of(result);
     }
 
     private Map<String, Object> summariseErrors(final List<Long> streamIds) {

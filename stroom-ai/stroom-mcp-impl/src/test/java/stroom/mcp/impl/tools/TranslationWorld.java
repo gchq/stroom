@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
@@ -112,7 +113,7 @@ final class TranslationWorld {
     TranslationWorld() {
         Mockito.when(heldSchemas.eventVersions()).thenAnswer(inv -> {
             if (versions.isEmpty()) {
-                throw new stroom.ai.impl.tools.validation.ValidationException(HeldSchemas.NO_EVENT_LOGGING);
+                throw new stroom.ai.impl.tools.ToolRefusal(HeldSchemas.NO_EVENT_LOGGING);
             }
             return List.copyOf(versions);
         });
@@ -150,12 +151,15 @@ final class TranslationWorld {
 
     /// @return save_xslt, wired on the world, with no plans drafted.
     SaveXsltTool saveXsltTool() {
-        return saveXsltTool(DraftedIndexPlans.NONE);
+        return saveXsltTool(Map.of());
     }
 
+    /// @param drafted The plans drafted in the session, by index name.
     /// @return save_xslt, wired on the world, with the plans drafted given.
-    SaveXsltTool saveXsltTool(final DraftedIndexPlans drafted) {
-        return new SaveXsltTool(docs, requiredImports, drafted, eventVersions, world.guard());
+    SaveXsltTool saveXsltTool(final Map<String, FieldPlan> drafted) {
+        final IndexingMemory memory = Mockito.mock(IndexingMemory.class);
+        Mockito.when(memory.drafted(any())).thenReturn(drafted);
+        return new SaveXsltTool(docs, requiredImports, memory, eventVersions, world.guard());
     }
 
     /// @return The context of a call from an MCP client, with a workspace, that shows forms only when [#forms]

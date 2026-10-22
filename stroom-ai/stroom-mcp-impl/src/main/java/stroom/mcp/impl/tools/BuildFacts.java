@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolRefusal;
 
 import java.util.List;
 import java.util.Map;

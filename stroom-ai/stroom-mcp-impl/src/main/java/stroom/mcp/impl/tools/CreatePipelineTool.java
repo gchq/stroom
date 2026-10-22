@@ -18,10 +18,13 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
@@ -211,7 +214,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<PropertyValue> given = PropertyValue.listOf(argsMap(call).get(SET_PROPERTIES_ARG),
                 SET_PROPERTIES_ARG);
         final String description = NullSafe.string(rawArg(call, DESCRIPTION_ARG));
-        final boolean reuse = PipelineArguments.flag(argsMap(call).get(REUSE_EXISTING_DOCS_ARG));
+        final boolean reuse = ToolArgs.flag(call, REUSE_EXISTING_DOCS_ARG);
         final String templateGiven = stringArg(call, TEMPLATE_UUID_ARG) != null
                 ? stringArg(call, TEMPLATE_UUID_ARG)
                 : stringArg(call, TEMPLATE_ARG);
@@ -225,7 +228,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         return fromTemplate(call, context, new FromTemplate(build, proposed, templateGiven, given, description,
                 stringArg(call, REPLACE_PARSER_ARG),
                 ReferenceRequest.listOf(argsMap(call).get(REFERENCES_ARG), REFERENCES_ARG), reuse,
-                PipelineArguments.flag(argsMap(call).get(ACCEPT_PARSER_MISMATCH_ARG)),
+                ToolArgs.flag(call, ACCEPT_PARSER_MISMATCH_ARG),
                 stringArg(call, CONFIRMATION_ID_ARG)));
     }
 
@@ -265,8 +268,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(elements);
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("The pipeline has no element(s) " + SampleArguments.pythonList(
-                    PipelineWrites.sorted(unknown)) + "; its elements are " + SampleArguments.pythonList(
+            throw new ToolRefusal("The pipeline has no element(s) " + PyText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
                     PipelineWrites.sorted(elements)));
         }
         PipelineWrites.keepValidation(merged.elements(), given);
@@ -353,7 +356,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         }
         if (!slots.stillOpen().isEmpty()) {
             result.put("still_to_set", slots.stillOpen());
-            result.put("hint", "The pipeline cannot run until " + SampleArguments.pythonList(slots.stillOpen())
+            result.put("hint", "The pipeline cannot run until " + PyText.list(slots.stillOpen())
                                + " is set: save the translation XSLT (build_translation_xslt build=, name=) and "
                                + "update_pipeline with set_properties=[{element, name: 'xslt', doc_uuid, "
                                + "doc_type: 'XSLT'}]");
@@ -385,15 +388,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(types.keySet());
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("The Kafka pipeline has no element(s) " + SampleArguments.pythonList(
-                    PipelineWrites.sorted(unknown)) + "; its elements are " + SampleArguments.pythonList(
+            throw new ToolRefusal("The Kafka pipeline has no element(s) " + PyText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
                     List.copyOf(types.keySet())));
         }
         final List<String> missing = List.of("xsltFilter.xslt", "standardKafkaProducer.kafkaConfig").stream()
                 .filter(key -> !givenKeys.contains(key))
                 .toList();
         if (!missing.isEmpty()) {
-            throw new ToolRefusal("set_properties needs " + SampleArguments.pythonList(missing) + ": the CEF XSLT "
+            throw new ToolRefusal("set_properties needs " + PyText.list(missing) + ": the CEF XSLT "
                                   + "draft_cef_mapping saved, and the KafkaConfig the user picks "
                                   + "(draft_cef_mapping lists them as kafka_configs)");
         }

@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public final class TemplateMappings {
         if (mappings.containsKey("dynamic")) {
             out.dynamic().put("", mappings.get("dynamic"));
         }
-        walk(out, PyValues.map(mappings.get("properties")), "");
+        walk(out, JsonValues.map(mappings.get("properties")), "");
         return out;
     }
 
@@ -63,7 +65,7 @@ public final class TemplateMappings {
             final String path = prefix.isEmpty()
                     ? entry.getKey()
                     : prefix + "." + entry.getKey();
-            final Map<String, Object> spec = PyValues.mapOrEmpty(entry.getValue());
+            final Map<String, Object> spec = JsonValues.mapOrEmpty(entry.getValue());
             if (spec.containsKey("dynamic")) {
                 out.dynamic().put(path, spec.get("dynamic"));
             }
@@ -71,7 +73,7 @@ public final class TemplateMappings {
                 final Map<String, Object> object = new LinkedHashMap<>();
                 object.put("type", spec.getOrDefault("type", "object"));
                 out.fields().put(path, object);
-                walk(out, PyValues.map(spec.get("properties")), path);
+                walk(out, JsonValues.map(spec.get("properties")), path);
             } else {
                 out.fields().put(path, spec);
             }
@@ -87,7 +89,7 @@ public final class TemplateMappings {
     /// @param body A template's body (index or component).
     /// @return `(body.get('template') or {}).get('mappings') or {}`.
     static Map<String, Object> mappingsOf(final Map<String, Object> body) {
-        return PyValues.mapAt(PyValues.mapAt(body, "template"), "mappings");
+        return JsonValues.mapAt(JsonValues.mapAt(body, "template"), "mappings");
     }
 
     /// @param mappings A mapping.
@@ -95,7 +97,7 @@ public final class TemplateMappings {
     /// properties.
     public static Map<String, Map<String, Object>> objectNodes(final Map<String, Object> mappings) {
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        objects(out, PyValues.map(mappings.get("properties")), "");
+        objects(out, JsonValues.map(mappings.get("properties")), "");
         return out;
     }
 
@@ -107,18 +109,18 @@ public final class TemplateMappings {
         }
         for (final Map.Entry<String, Object> entry : properties.entrySet()) {
             if (entry.getValue() instanceof final Map<?, ?> given && given.containsKey("properties")) {
-                final Map<String, Object> spec = PyValues.map(given);
+                final Map<String, Object> spec = JsonValues.map(given);
                 final String path = prefix.isEmpty()
                         ? entry.getKey()
                         : prefix + "." + entry.getKey();
                 final Map<String, Object> own = new LinkedHashMap<>();
                 spec.forEach((key, value) -> {
                     if (!"properties".equals(key)) {
-                        own.put(key, PyValues.deepCopy(value));
+                        own.put(key, JsonValues.deepCopy(value));
                     }
                 });
                 out.put(path, own);
-                objects(out, PyValues.map(spec.get("properties")), path);
+                objects(out, JsonValues.map(spec.get("properties")), path);
             }
         }
     }
@@ -133,7 +135,7 @@ public final class TemplateMappings {
     public static NotIndexed notIndexed(final Map<String, Object> mappings) {
         final Set<String> fields = new TreeSet<>();
         final Set<String> objects = new TreeSet<>();
-        unindexed(fields, objects, PyValues.map(mappings.get("properties")), "");
+        unindexed(fields, objects, JsonValues.map(mappings.get("properties")), "");
         return new NotIndexed(fields, objects);
     }
 
@@ -145,17 +147,17 @@ public final class TemplateMappings {
             return;
         }
         for (final Map.Entry<String, Object> entry : properties.entrySet()) {
-            final Map<String, Object> spec = PyValues.mapOrEmpty(entry.getValue());
+            final Map<String, Object> spec = JsonValues.mapOrEmpty(entry.getValue());
             final String path = prefix.isEmpty()
                     ? entry.getKey()
                     : prefix + "." + entry.getKey();
-            if ("false".equals(PyValues.lower(PyValues.str(spec.getOrDefault("enabled", true))))) {
+            if ("false".equals(PyText.lower(PyText.str(spec.getOrDefault("enabled", true))))) {
                 objects.add(path);
-            } else if ("false".equals(PyValues.lower(PyValues.str(spec.getOrDefault("index", true))))) {
+            } else if ("false".equals(PyText.lower(PyText.str(spec.getOrDefault("index", true))))) {
                 fields.add(path);
             }
             if (spec.containsKey("properties")) {
-                unindexed(fields, objects, PyValues.map(spec.get("properties")), path);
+                unindexed(fields, objects, JsonValues.map(spec.get("properties")), path);
             }
         }
     }
@@ -183,7 +185,7 @@ public final class TemplateMappings {
             if (entry.getValue() instanceof Map<?, ?> && into.get(entry.getKey()) instanceof Map<?, ?>) {
                 merge((Map<String, Object>) into.get(entry.getKey()), (Map<String, Object>) entry.getValue());
             } else {
-                into.put(entry.getKey(), PyValues.deepCopy(entry.getValue()));
+                into.put(entry.getKey(), JsonValues.deepCopy(entry.getValue()));
             }
         }
         return into;
@@ -198,7 +200,7 @@ public final class TemplateMappings {
     public static Composed compose(final Map<String, Object> body, final Map<String, Map<String, Object>> components) {
         final Map<String, Object> merged = new LinkedHashMap<>();
         final List<String> missing = new ArrayList<>();
-        for (final String name : PyValues.strings(body.get("composed_of"))) {
+        for (final String name : JsonValues.strings(body.get("composed_of"))) {
             if (components.containsKey(name)) {
                 merge(merged, mappingsOf(components.get(name)));
             } else if (!EcsSchema.COMPONENT.equals(name)) {
@@ -207,7 +209,7 @@ public final class TemplateMappings {
             }
         }
         merge(merged, mappingsOf(body));
-        final Map<String, Object> template = new LinkedHashMap<>(PyValues.mapAt(body, "template"));
+        final Map<String, Object> template = new LinkedHashMap<>(JsonValues.mapAt(body, "template"));
         template.put("mappings", merged);
         final Map<String, Object> out = new LinkedHashMap<>(body);
         out.put("template", template);
@@ -241,7 +243,7 @@ public final class TemplateMappings {
             properties.remove(head);
             return true;
         }
-        final Map<String, Object> spec = PyValues.mapOrEmpty(properties.get(head));
+        final Map<String, Object> spec = JsonValues.mapOrEmpty(properties.get(head));
         final Object given = spec.get("properties");
         final Map<String, Object> inner = given instanceof Map<?, ?> && !((Map<?, ?>) given).isEmpty()
                 ? (Map<String, Object>) given
@@ -273,7 +275,7 @@ public final class TemplateMappings {
                 final String where = String.join(".", List.of(parts).subList(0, i + 1));
                 if (!node.containsKey(parts[i])) {
                     final Map<String, Object> params = objects.containsKey(where)
-                            ? PyValues.deepCopy(objects.get(where))
+                            ? JsonValues.deepCopy(objects.get(where))
                             : new LinkedHashMap<>(typed
                                     ? Map.of("type", "object")
                                     : Map.of());
@@ -285,7 +287,7 @@ public final class TemplateMappings {
                 node = (Map<String, Object>) object.computeIfAbsent("properties",
                         key -> new LinkedHashMap<String, Object>());
             }
-            node.put(parts[parts.length - 1], PyValues.deepCopy(entry.getValue()));
+            node.put(parts[parts.length - 1], JsonValues.deepCopy(entry.getValue()));
         }
         return properties;
     }
@@ -313,7 +315,7 @@ public final class TemplateMappings {
             specs.put(key, style);
         }
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        byType.forEach((type, counted) -> out.put(PyValues.str(type), specs.get(mostCommon(counted))));
+        byType.forEach((type, counted) -> out.put(PyText.str(type), specs.get(mostCommon(counted))));
         return out;
     }
 
@@ -359,7 +361,7 @@ public final class TemplateMappings {
             for (int n = parts.length - 1; n >= 0; n--) {
                 final String at = String.join(".", List.of(parts).subList(0, n));
                 if (dynamic.containsKey(at) && dynamic.get(at) != null) {
-                    return PyValues.lower(PyValues.str(dynamic.get(at)));
+                    return PyText.lower(PyText.str(dynamic.get(at)));
                 }
             }
             return "true";

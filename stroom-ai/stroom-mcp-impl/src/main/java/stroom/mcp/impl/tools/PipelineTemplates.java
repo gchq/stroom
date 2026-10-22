@@ -22,6 +22,8 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.mcp.impl.tools.PipelineIndex.Entry;
@@ -32,7 +34,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -466,15 +467,15 @@ class PipelineTemplates {
             entry.put("unreadable", "the document cannot be read (deleted, or no permission)");
             return entry;
         }
-        final Optional<Element> root = XmlDocs.parse(doc.get().getData());
+        final Optional<Element> root = XmlTrees.tryParse(doc.get().getData());
         if (root.isEmpty()) {
             entry.put("unreadable", "empty or not well-formed XML");
             return entry;
         }
         final Set<String> expressions = new TreeSet<>();
-        for (final Element node : XmlDocs.descendantsAndSelf(root.get())) {
+        for (final Element node : XmlTrees.descendantsAndSelf(root.get())) {
             for (final String attribute : XPATH_ATTRIBUTES) {
-                final String expression = XmlDocs.attribute(node, attribute);
+                final String expression = XmlTrees.attribute(node, attribute);
                 if (expression != null && !expression.isEmpty()) {
                     expressions.add(expression);
                 }

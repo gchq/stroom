@@ -17,9 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -118,7 +120,8 @@ class IndexTemplateAgreements {
             final String devTools = NullSafe.string(NullSafe.get(agreed.get("dev_tools"), String::valueOf));
             return Optional.of("The indexing XSLT changed since index template '" + agreed.get("name") + "' was "
                                + "agreed: check_index_template with it (and its component templates "
-                               + pythonList(agreed.get("component_templates")) + ") over the Events streams, so "
+                               + PyText.list(JsonValues.strings(agreed.get("component_templates")))
+                               + ") over the Events streams, so "
                                + "the user confirms it again for the documents the pipeline now writes (or, if the "
                                + "user says the template on the cluster is theirs and fits, call again with "
                                + "template_committed_by_user=true, which they confirm in a form). The agreed "
@@ -146,13 +149,5 @@ class IndexTemplateAgreements {
     /// @return It, if the user can read it.
     Optional<PipelineDoc> pipeline(final String pipelineUuid) {
         return documentAccess.read(new DocRef(PipelineDoc.TYPE, pipelineUuid), PipelineDoc.class);
-    }
-
-    // A list as Python writes it in text: ['a', 'b'].
-    private static String pythonList(final Object value) {
-        final List<String> items = BuildRecords.stringList(value);
-        return items.stream()
-                .map(item -> "'" + item + "'")
-                .collect(Collectors.joining(", ", "[", "]"));
     }
 }

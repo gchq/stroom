@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.StyledXslt;
 import stroom.ai.impl.tools.indexing.IndexingXslt.Part;
@@ -321,7 +322,7 @@ final class ElasticDocument {
         }
         final PlannedField field = (PlannedField) item;
         final String element = JSON_ELEMENT.getOrDefault(field.type(), "string");
-        final String at = PyValues.truthy(source)
+        final String at = JsonValues.truthy(source)
                 ? source
                 : field.source();
         final String single = "<" + element + " key=\"" + key + "\"><xsl:value-of select=\""

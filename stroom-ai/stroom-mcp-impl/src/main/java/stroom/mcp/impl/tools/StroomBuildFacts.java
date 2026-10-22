@@ -17,11 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -267,7 +268,7 @@ class StroomBuildFacts implements BuildFacts {
     public List<String> sourceFeeds(final String build, final List<Map<String, Object>> docs) {
         final List<String> found = new ArrayList<>();
         try {
-            found.addAll(BuildRecords.stringList(buildRecords.load(build).get(BuildRecords.SOURCE_FEEDS)));
+            found.addAll(JsonValues.strings(buildRecords.load(build).get(BuildRecords.SOURCE_FEEDS)));
         } catch (final RuntimeException e) {
             // Advice and promotion's filters: an unreadable record leaves the rest to go on.
             LOGGER.debug(() -> "Unable to read the record of build " + build, e);

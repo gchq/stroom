@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiBuildsConfig;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;

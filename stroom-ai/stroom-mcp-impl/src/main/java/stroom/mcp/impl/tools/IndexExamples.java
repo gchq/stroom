@@ -23,11 +23,11 @@ import stroom.ai.api.ElasticIndexTemplates.IndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.ReadException;
 import stroom.ai.api.ElasticIndexTemplates.Status;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
@@ -87,6 +87,7 @@ class IndexExamples {
     private final WriteGuard guard;
     private final BuildPlan plan;
     private final IndexingMemory memory;
+    private final DocumentWrites documentWrites;
 
     /// @param documentAccess                Reads the docs, as the user.
     /// @param pipelineIndex                 Lists the Elastic Index docs.
@@ -95,6 +96,7 @@ class IndexExamples {
     /// @param guard                         Lists and makes the build's documents.
     /// @param plan                          Says which build a pipeline is in.
     /// @param memory                        Keeps the component templates given in the session.
+    /// @param documentWrites                Writes the example docs, as the user.
     @Inject
     IndexExamples(final DocumentAccess documentAccess,
                   final PipelineIndex pipelineIndex,
@@ -102,7 +104,8 @@ class IndexExamples {
                   final Provider<QueryService> queryServiceProvider,
                   final WriteGuard guard,
                   final BuildPlan plan,
-                  final IndexingMemory memory) {
+                  final IndexingMemory memory,
+                  final DocumentWrites documentWrites) {
         this.documentAccess = documentAccess;
         this.pipelineIndex = pipelineIndex;
         this.elasticIndexTemplatesProvider = elasticIndexTemplatesProvider;
@@ -110,6 +113,7 @@ class IndexExamples {
         this.guard = guard;
         this.plan = plan;
         this.memory = memory;
+        this.documentWrites = documentWrites;
     }
 
     /// @param index An Elastic Index doc's uuid, or its exact name.
@@ -284,9 +288,10 @@ class IndexExamples {
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()))
                 .findFirst();
         if (there.isPresent()) {
-            write(there.get().docRef(), text.toString());
+            documentWrites.writeText(there.get().docRef(), text.toString());
         } else {
-            guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> write(ref, text.toString()), false, ROLE);
+            guard.createFilled(DocumentationDoc.TYPE, name, build,
+                    ref -> documentWrites.writeText(ref, text.toString()), false, ROLE);
         }
     }
 
@@ -393,15 +398,6 @@ class IndexExamples {
         final Map<String, Object> leaf = new LinkedHashMap<>();
         leaf.put("type", kind);
         node.put(parts[parts.length - 1], leaf);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Object write(final DocRef ref, final String text) {
-        final DocumentationDoc doc = documentAccess.read(ref, DocumentationDoc.class)
-                .orElseThrow(() -> new ToolRefusal("The example doc " + ref.getUuid() + " can't be read"));
-        final DocumentActionHandler<DocumentationDoc> handler = documentAccess.handler(DocumentationDoc.TYPE)
-                .orElseThrow(() -> new ToolRefusal("Stroom has no Documentation store"));
-        return handler.writeDocument(BuildRecords.withBodyText(doc, text));
     }
 
     private static String whyNot(final IndexTemplate template) {

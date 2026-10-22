@@ -16,9 +16,9 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ModelReader;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
 
@@ -206,13 +206,6 @@ public record FieldPlan(@JsonProperty("backend") String backend,
                 convention, customNamespaces, style);
     }
 
-    /// @param backend Another backend.
-    /// @return This plan for it.
-    public FieldPlan withBackend(final String backend) {
-        return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
-    }
-
     /// @param indexName Another index name.
     /// @return This plan for that index.
     public FieldPlan withIndexName(final String indexName) {
@@ -228,23 +221,9 @@ public record FieldPlan(@JsonProperty("backend") String backend,
                 convention, customNamespaces, style);
     }
 
-    /// @param subobjects The index template's subobjects setting.
-    /// @return This plan with it.
-    public FieldPlan withSubobjects(final boolean subobjects) {
-        return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
-    }
-
     /// @param style How the indexing XSLT is written.
     /// @return This plan written so.
     public FieldPlan withStyle(final XsltStyle style) {
-        return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style);
-    }
-
-    /// @param dropWhen Tests on an Event for events the index must not hold.
-    /// @return This plan dropping them.
-    public FieldPlan withDropWhen(final List<String> dropWhen) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
                 convention, customNamespaces, style);
     }
@@ -324,7 +303,7 @@ public record FieldPlan(@JsonProperty("backend") String backend,
                     .filter(n -> List.of(n.split("\\.", -1)).stream().anyMatch(part -> part.startsWith("_")))
                     .toList();
             if (!hidden.isEmpty()) {
-                problems.add(PythonRepr.list(hidden) + ": Stroom's Elasticsearch indexing filter drops fields whose "
+                problems.add(PyText.list(hidden) + ": Stroom's Elasticsearch indexing filter drops fields whose "
                              + "names start with _ (silently); rename them");
             }
             // Nested names make 'time' an object if 'time.min' exists; with subobjects: false (flat names) both
@@ -336,7 +315,7 @@ public record FieldPlan(@JsonProperty("backend") String backend,
                             .toList();
                     if (!inner.isEmpty()) {
                         problems.add("'" + name + "' is a value and also the object holding "
-                                     + PythonRepr.list(inner) + ": an Elasticsearch field cannot be both; rename one");
+                                     + PyText.list(inner) + ": an Elasticsearch field cannot be both; rename one");
                     }
                 }
             }

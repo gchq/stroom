@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.ai.impl.tools.sample;
+package stroom.ai.impl.tools;
 
-/// Why sample data can't be used as given, worded for the agent to act on (the Stroom MCP server raised these as
-/// `ToolError`s): a path where the file's text should be, text that starts as JSON and isn't, samples broken up by
-/// the tool call. A tool gives the message as its error.
-public class SampleRefusal extends RuntimeException {
+/// A ported tool's refusal: what the tool, or a helper it calls, tells the caller when it can't go on, worded for
+/// the agent to act on (as the Stroom MCP server's `ToolError`s were): e.g. a sample that is a file path, a check
+/// that can't be made because this Stroom holds no event-logging XML schema, or a mapping change that can't apply.
+/// A tool gives its message as an error result.
+public class ToolRefusal extends RuntimeException {
 
-    /// @param message Why, and what to do instead.
-    public SampleRefusal(final String message) {
+    /// @param message Why the tool can't go on, and what to do instead.
+    public ToolRefusal(final String message) {
         super(message);
     }
 }

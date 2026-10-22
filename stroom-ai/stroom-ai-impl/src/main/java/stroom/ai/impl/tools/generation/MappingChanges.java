@@ -16,8 +16,11 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,7 +44,7 @@ public final class MappingChanges {
     ///                others, or removed with `remove: true`), `common` (entries, each replacing the entry with its
     ///                path and Data name, added, or removed), any other key replacing that key whole.
     /// @return The mapping with the changes merged in, and what each change did.
-    /// @throws MappingChangeException if a change can't apply (no name, no path, removing what isn't there).
+    /// @throws ToolRefusal if a change can't apply (no name, no path, removing what isn't there).
     public static Applied applyChanges(final Map<String, Object> base, final Object changes) {
         final Map<String, Object> given = changesOf(changes, "changes is an object holding only what changes, e.g. "
                                                              + "{\"events\": [{the rule, whole}]} or {\"common\": "
@@ -68,7 +71,7 @@ public final class MappingChanges {
     /// @param changes What changes: `fields` (each replacing the field of its name whole, or added;
     ///                `{"name": ..., "remove": true}` removing one), any other key replacing that key whole.
     /// @return The plan with the changes merged in, and what each did.
-    /// @throws MappingChangeException if a change can't apply.
+    /// @throws ToolRefusal if a change can't apply.
     public static Applied applyPlanChanges(final Map<String, Object> base, final Object changes) {
         final Map<String, Object> given = changesOf(changes, "changes is an object holding only what changes, e.g. "
                                                              + "{\"fields\": [{\"name\": \"acme.ticket\", \"type\": "
@@ -84,16 +87,16 @@ public final class MappingChanges {
             }
             final List<Object> fields = listIn(merged, "fields");
             for (final Object field : each(change.getValue())) {
-                if (!(field instanceof final Map<?, ?> named) || !truthy(named.get("name"))) {
-                    throw new MappingChangeException("Each entry in changes.fields needs its name: it replaces the "
-                                                     + "field of that name whole, or is added");
+                if (!(field instanceof final Map<?, ?> named) || !JsonValues.truthy(named.get("name"))) {
+                    throw new ToolRefusal("Each entry in changes.fields needs its name: it replaces the "
+                                          + "field of that name whole, or is added");
                 }
                 final Object name = named.get("name");
                 final int at = indexOf(fields, "name", name);
-                if (truthy(named.get("remove"))) {
+                if (JsonValues.truthy(named.get("remove"))) {
                     if (at < 0) {
-                        throw new MappingChangeException("changes.fields removes '" + str(name) + "', which the plan "
-                                                         + "does not have (its fields: " + names(fields) + ")");
+                        throw new ToolRefusal("changes.fields removes '" + str(name) + "', which the plan "
+                                              + "does not have (its fields: " + names(fields) + ")");
                     }
                     fields.remove(at);
                     done.add("field '" + str(name) + "' removed");
@@ -111,16 +114,16 @@ public final class MappingChanges {
 
     private static void changeRules(final List<Object> rules, final Object value, final List<String> done) {
         for (final Object rule : each(value)) {
-            if (!(rule instanceof final Map<?, ?> named) || !truthy(named.get("name"))) {
-                throw new MappingChangeException("Each rule in changes.events needs its name: a rule replaces the one "
-                                                 + "of that name whole, or is added after the others");
+            if (!(rule instanceof final Map<?, ?> named) || !JsonValues.truthy(named.get("name"))) {
+                throw new ToolRefusal("Each rule in changes.events needs its name: a rule replaces the one "
+                                      + "of that name whole, or is added after the others");
             }
             final Object name = named.get("name");
             final int at = indexOf(rules, "name", name);
-            if (truthy(named.get("remove"))) {
+            if (JsonValues.truthy(named.get("remove"))) {
                 if (at < 0) {
-                    throw new MappingChangeException("changes.events removes rule '" + str(name) + "', which the "
-                                                     + "mapping does not have (its rules: " + names(rules) + ")");
+                    throw new ToolRefusal("changes.events removes rule '" + str(name) + "', which the "
+                                          + "mapping does not have (its rules: " + names(rules) + ")");
                 }
                 rules.remove(at);
                 done.add("rule '" + str(name) + "' removed");
@@ -136,9 +139,9 @@ public final class MappingChanges {
 
     private static void changeCommon(final List<Object> entries, final Object value, final List<String> done) {
         for (final Object entry : each(value)) {
-            if (!(entry instanceof final Map<?, ?> given) || !truthy(given.get("path"))) {
-                throw new MappingChangeException("Each entry in changes.common needs its path (and data_name for a "
-                                                 + "Data entry): it replaces the entry with that path, or is added");
+            if (!(entry instanceof final Map<?, ?> given) || !JsonValues.truthy(given.get("path"))) {
+                throw new ToolRefusal("Each entry in changes.common needs its path (and data_name for a "
+                                      + "Data entry): it replaces the entry with that path, or is added");
             }
             final List<String> found = commonKey(given);
             int at = -1;
@@ -148,10 +151,10 @@ public final class MappingChanges {
                     break;
                 }
             }
-            if (truthy(given.get("remove"))) {
+            if (JsonValues.truthy(given.get("remove"))) {
                 if (at < 0) {
-                    throw new MappingChangeException("changes.common removes " + said(found) + ", which the mapping "
-                                                     + "does not have");
+                    throw new ToolRefusal("changes.common removes " + said(found) + ", which the mapping "
+                                          + "does not have");
                 }
                 entries.remove(at);
                 done.add(said(found) + " removed");
@@ -168,7 +171,7 @@ public final class MappingChanges {
     // A common entry is known by its path and Data name.
     private static List<String> commonKey(final Map<?, ?> entry) {
         final Object dataName = entry.get("data_name");
-        return List.of(str(entry.get("path")), truthy(dataName)
+        return List.of(str(entry.get("path")), JsonValues.truthy(dataName)
                 ? str(dataName)
                 : "");
     }
@@ -182,7 +185,7 @@ public final class MappingChanges {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> changesOf(final Object changes, final String message) {
         if (!(changes instanceof final Map<?, ?> map) || map.isEmpty()) {
-            throw new MappingChangeException(message);
+            throw new ToolRefusal(message);
         }
         return (Map<String, Object>) map;
     }
@@ -222,27 +225,14 @@ public final class MappingChanges {
                     ? map.get("name")
                     : null);
         }
-        return PythonRepr.repr(names);
+        return PyText.repr(names);
     }
 
     // Python's str() of a JSON value.
     private static String str(final Object value) {
         return value instanceof final String text
                 ? text
-                : PythonRepr.repr(value);
-    }
-
-    // Python's truth of a JSON value.
-    private static boolean truthy(final Object value) {
-        return switch (value) {
-            case null -> false;
-            case final Boolean bool -> bool;
-            case final String text -> !text.isEmpty();
-            case final Number number -> number.doubleValue() != 0;
-            case final Collection<?> items -> !items.isEmpty();
-            case final Map<?, ?> map -> !map.isEmpty();
-            default -> true;
-        };
+                : PyText.repr(value);
     }
 
     // copy.deepcopy of JSON-like values: maps and lists copied, so the base is left alone.

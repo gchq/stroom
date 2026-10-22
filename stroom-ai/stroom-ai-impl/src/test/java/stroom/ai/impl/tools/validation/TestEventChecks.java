@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -84,7 +86,7 @@ class TestEventChecks {
     @Test
     void testUnknownSchemaVersionListsWhatStroomHas() {
         assertThatThrownBy(() -> checks.validateEvents(EVENT, "3.5.2"))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("versions it holds, newest first: 9.9.9");
     }
 
@@ -101,7 +103,7 @@ class TestEventChecks {
     @Test
     void testXmlThatIsNotWellFormedIsRefused() {
         assertThatThrownBy(() -> checks.validateEvents("<Events", null))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageStartingWith("Events XML is not well-formed XML: ");
     }
 

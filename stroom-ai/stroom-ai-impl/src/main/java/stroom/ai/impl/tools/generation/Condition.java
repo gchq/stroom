@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -90,7 +92,7 @@ public record Condition(@JsonProperty("field") String field,
                 ? ""
                 : condition.field);
         if (called != null) {
-            reader.valueError(loc, "A condition's field " + PythonRepr.repr(condition.field) + " " + called, input);
+            reader.valueError(loc, "A condition's field " + PyText.repr(condition.field) + " " + called, input);
             return null;
         }
         final long tests = Stream.of(condition.equalTo, condition.oneOf, condition.matches, condition.present,

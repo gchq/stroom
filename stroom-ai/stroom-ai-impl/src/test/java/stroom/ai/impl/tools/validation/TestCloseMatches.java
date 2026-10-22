@@ -35,6 +35,24 @@ class TestCloseMatches {
     }
 
     @Test
+    void testALongSecondStringHasItsPopularCharactersJunkedAsDifflibsAutojunkHasIt() {
+        // As Python's difflib.SequenceMatcher(None, a, b).ratio() gives them, autojunk on: b of 200 or more
+        // characters, the spaces (and letters) in more than 1% of it start no match.
+        final String fox = "the quick brown fox jumps over the lazy dog ".repeat(5);
+        final String cat = "the quick brown cat jumps over the lazy dog ".repeat(5);
+        assertThat(CloseMatches.ratio(fox, cat)).isCloseTo(0.07272727272727272, within(1e-12));
+        assertThat(CloseMatches.ratio("ab ".repeat(70) + "xyz", "ba ".repeat(70) + "xyz"))
+                .isCloseTo(0.018779342723004695, within(1e-12));
+        // A match still grows over a popular character from where none was found.
+        assertThat(CloseMatches.ratio("a".repeat(10), "a".repeat(200))).isCloseTo(0.09523809523809523,
+                within(1e-12));
+        assertThat(CloseMatches.ratio("b" + "a".repeat(10), "a".repeat(200))).isZero();
+        // Shorter than 200: no junk.
+        assertThat(CloseMatches.ratio("a".repeat(10), "a".repeat(199))).isCloseTo(0.09569377990430622,
+                within(1e-12));
+    }
+
+    @Test
     void testTheClosestComeFirstAndThoseBelowTheCutoffNot() {
         assertThat(CloseMatches.closeMatches("appel", List.of("ape", "apple", "peach", "puppy"), 3, 0.6))
                 .containsExactly("apple", "ape");

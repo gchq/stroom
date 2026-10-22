@@ -16,12 +16,13 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.sample.SampleRefusal;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
 
@@ -122,8 +123,8 @@ class TestDraftMapping extends DraftFixtures {
     static Map<String, Object> decided(final Map<String, Object> mapping) {
         final Map<String, Object> out = new LinkedHashMap<>(mapping);
         final List<Map<String, Object>> events = new ArrayList<>();
-        for (final Map<String, Object> rule : PyValues.maps(mapping.get("events"))) {
-            if (PyValues.maps(rule.get("fields")).stream()
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            if (JsonValues.maps(rule.get("fields")).stream()
                     .anyMatch(f -> ((String) f.get("path")).contains("/Unknown/"))) {
                 final Map<String, Object> kept = new LinkedHashMap<>(rule);
                 kept.put("allow_unknown", "kept unknown for the test");
@@ -159,10 +160,10 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> permitted = rules(draft).get("traffic_permitted");
         assertThat(permitted.get("when")).isEqualTo(json("""
                 [{"field": "event_type", "equals": "TRAFFIC"}, {"field": "action", "equals": "ALLOW"}]"""));
-        assertThat(PyValues.maps(permitted.get("fields")))
+        assertThat(JsonValues.maps(permitted.get("fields")))
                 .contains(map("path", "EventDetail/Network/Permit/Destination/Port", "field", "dst_port"))
                 .contains(map("path", "EventDetail/Network/Permit/Data", "data_name", "rule_id", "field", "rule_id"));
-        final List<Map<String, Object>> login = PyValues.maps(rules(draft).get("login").get("fields"));
+        final List<Map<String, Object>> login = JsonValues.maps(rules(draft).get("login").get("fields"));
         assertThat(login).contains(map("path", "EventDetail/Authenticate/Action", "value", "Logon"))
                 .contains(map("path", "EventDetail/Authenticate/User/Id", "field", "username"));
         assertThat(notes(draft)).anyMatch(n -> n.startsWith("Drafted from the sample's values")
@@ -184,7 +185,7 @@ class TestDraftMapping extends DraftFixtures {
         // draft_translation_mapping's environment, from the field inventory test.
         final Map<String, Object> drafted = DraftMapping.draft(Map.of("fw.jsonl", FW_JSON), "FortiOS firewall", null,
                 "Prod", null, null, null);
-        assertThat(PyValues.maps(mappingOf(drafted).get("common")).get(2).get("value")).isEqualTo("Prod");
+        assertThat(JsonValues.maps(mappingOf(drafted).get("common")).get(2).get("value")).isEqualTo("Prod");
         assertThat(generate(mappingOf(drafted), SCHEMA, "4.1.0").ok()).isTrue();
     }
 
@@ -235,7 +236,7 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(protocol.get("default")).isEqualTo("Other");
         assertThat(fields(rules.get("admin_logon")).get("EventDetail/Authenticate/Outcome/Success").get("map"))
                 .isEqualTo(map("LOGIN_SUCCESS", "true", "LOGIN_FAILED", "false"));
-        assertThat(PyValues.maps(rules.get("admin_logoff").get("fields")))
+        assertThat(JsonValues.maps(rules.get("admin_logoff").get("fields")))
                 .contains(map("path", "EventDetail/Authenticate/Action", "value", "Logoff"));
         assertThat(fields(rules.get("admin_config_change")).keySet())
                 .contains("EventDetail/Update/After/Configuration/Type");
@@ -268,7 +269,7 @@ class TestDraftMapping extends DraftFixtures {
                 pathAndName("EventDetail/Network/Connect/Data", "tls_ja3"));
         assertThat(pathsAndNames(rules.get("closed")))
                 .contains(pathAndName("EventDetail/Network/Close/Destination/Data", "destination_key"));
-        assertThat(PyValues.maps(mappingOf(draft).get("common")))
+        assertThat(JsonValues.maps(mappingOf(draft).get("common")))
                 .contains(map("path", "EventSource/Device/HostName", "field", "sensor"));
         // No kind is Unknown, and it generates as drafted.
         assertThat(generate(mappingOf(draft), SCHEMA, "4.1.0").ok()).isTrue();
@@ -276,7 +277,7 @@ class TestDraftMapping extends DraftFixtures {
 
     private static Set<List<Object>> pathsAndNames(final Map<String, Object> rule) {
         final Set<List<Object>> out = new HashSet<>();
-        PyValues.maps(rule.get("fields")).forEach(f -> out.add(pathAndName((String) f.get("path"),
+        JsonValues.maps(rule.get("fields")).forEach(f -> out.add(pathAndName((String) f.get("path"),
                 (String) f.get("data_name"))));
         return out;
     }
@@ -302,7 +303,7 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> draft = draft(Map.of("fw.csv", sample), "FW", "FW", "Prod");
         final Map<String, Map<String, Object>> rules = rules(draft);
         final Map<String, Map<String, Object>> alert = fields(rules.get("system_alert"));
-        assertThat(PyValues.maps(rules.get("system_alert").get("when")).getLast()).isEqualTo(map("field", "action",
+        assertThat(JsonValues.maps(rules.get("system_alert").get("when")).getLast()).isEqualTo(map("field", "action",
                 "one_of", List.of("HIGH_CPU", "VPN_TUNNEL_DOWN", "VPN_TUNNEL_UP")));
         assertThat(alert.get("EventDetail/Alert/Type").get("map")).isEqualTo(map("HIGH_CPU", "Other",
                 "VPN_TUNNEL_DOWN", "Network", "VPN_TUNNEL_UP", "Network"));
@@ -312,7 +313,7 @@ class TestDraftMapping extends DraftFixtures {
         // A word the sample lacks, written as the sample writes them.
         assertThat(severity.get("CRITICAL")).isEqualTo("Critical");
         assertThat(rules).containsKey("system_service");
-        assertThat(rules.values()).noneMatch(r -> PyValues.truthy(r.get("when")) && PyValues.maps(r.get("fields"))
+        assertThat(rules.values()).noneMatch(r -> JsonValues.truthy(r.get("when")) && JsonValues.maps(r.get("fields"))
                 .stream().anyMatch(f -> ((String) f.get("path")).startsWith("EventDetail/Unknown")));
         assertThat(generate(mappingOf(draft), SCHEMA_352, "3.5.2").problems()).isEmpty();
     }
@@ -333,7 +334,7 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> draft = DraftMapping.draft(List.of(sudo), "sudo", "Web", "Prod", null, null,
                 splitter);
         final Map<String, Object> m = mappingOf(draft);
-        assertThat(PyValues.maps(m.get("common"))).contains(map("path", "EventSource/RunAs/Id", "field", "run_as"));
+        assertThat(JsonValues.maps(m.get("common"))).contains(map("path", "EventSource/RunAs/Id", "field", "run_as"));
         assertThat(rules(draft).keySet()).containsExactly("command");
         assertThat(rules(draft).get("command")).doesNotContainKey("when");
         final Map<String, Map<String, Object>> fields = fields(rules(draft).get("command"));
@@ -405,7 +406,7 @@ class TestDraftMapping extends DraftFixtures {
                 "Secret Server", "Prod", null, null, null);
         final Map<String, Object> m = mappingOf(draft);
         final Map<String, Map<String, Object>> extracted = new LinkedHashMap<>();
-        PyValues.maps(m.get("extract")).forEach(e -> extracted.put(((List<String>) e.get("names")).getFirst(), e));
+        JsonValues.maps(m.get("extract")).forEach(e -> extracted.put(((List<String>) e.get("names")).getFirst(), e));
         assertThat(extracted.keySet()).containsExactly("user", "event", "action", "by_user", "item_id",
                 "source_ip", "session_id", "client", "secret", "secret_id");
         assertThat(extracted.values()).allMatch(e -> "EventData/Data".equals(e.get("field")));
@@ -417,7 +418,7 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> logon = rules(draft).get("user_logon");
         assertThat(logon.get("when")).isEqualTo(json("""
                 [{"field": "event", "equals": "User"}, {"field": "action", "one_of": ["Login", "Login Failed"]}]"""));
-        final List<Object> data = PyValues.maps(logon.get("fields")).stream()
+        final List<Object> data = JsonValues.maps(logon.get("fields")).stream()
                 .filter(f -> ((String) f.get("path")).endsWith("/Data"))
                 .map(f -> f.get("field"))
                 .toList();
@@ -464,12 +465,12 @@ class TestDraftMapping extends DraftFixtures {
                 samples("test fortigate"), "Fortigate")));
         final Map<String, Object> folded = MappingCompaction.compactPairs(drafted);
         assertThat(folded).doesNotContainKey("extract");
-        final List<Map<String, Object>> pairs = PyValues.maps(folded.get("pairs"));
+        final List<Map<String, Object>> pairs = JsonValues.maps(folded.get("pairs"));
         assertThat(pairs.stream().map(p -> p.get("style")).distinct().sorted().toList())
                 .isEqualTo(List.of("equals", "quoted"));
         final List<String> keys = new ArrayList<>();
         pairs.forEach(p -> keys.addAll(strings(p.get("keys"))));
-        final List<String> extractKeys = PyValues.maps(drafted.get("extract")).stream()
+        final List<String> extractKeys = JsonValues.maps(drafted.get("extract")).stream()
                 .map(e -> Pairs.keyName(Pairs.pairOf((String) e.get("regex")).orElseThrow().key()))
                 .sorted()
                 .toList();
@@ -488,7 +489,7 @@ class TestDraftMapping extends DraftFixtures {
 
     @Test
     void aSamplesRefusalSaysWhy() {
-        assertThatThrownBy(() -> draft(List.of(42), "S")).isInstanceOf(SampleRefusal.class)
+        assertThatThrownBy(() -> draft(List.of(42), "S")).isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("a sample is the file's text, not int");
     }
 
@@ -505,7 +506,7 @@ class TestDraftMapping extends DraftFixtures {
 
     @Test
     void aDoubledQuoteStaysDoubledAsInStroomAndTheDraftUnescapesIt() {
-        final Map<String, Object> message = PyValues.maps(mappingOf(draft(List.of(format(
+        final Map<String, Object> message = JsonValues.maps(mappingOf(draft(List.of(format(
                 "csv_quoted")), "")).get("common")).stream()
                 .filter(f -> "message".equals(f.get("field")))
                 .findFirst()
@@ -519,7 +520,7 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(mappingOf(drafted).get("nil_values")).isEqualTo(List.of("-"));
         // Not msgid's '-'.
         assertThat(rules(drafted).keySet()).containsExactlyInAnyOrder("permitted", "denied", "other");
-        assertThat(PyValues.maps(rules(drafted).get("permitted").get("fields"))).anyMatch(f ->
+        assertThat(JsonValues.maps(rules(drafted).get("permitted").get("fields"))).anyMatch(f ->
                 ((String) f.get("path")).endsWith("Network/Permit/Source/Device/IPAddress") && "src".equals(f.get(
                         "field")));
         assertThat(generate(mappingOf(drafted), SCHEMA, "4.1.0").xslt())
@@ -531,13 +532,13 @@ class TestDraftMapping extends DraftFixtures {
         // action="login" on an element.
         assertThat(formatRules("xml_attributes").keySet()).containsExactlyInAnyOrder("login", "logout", "other");
         // user.name is user_name.
-        assertThat(PyValues.maps(mappingOf(draft(List.of(format("json_lines")), "")).get("common")))
+        assertThat(JsonValues.maps(mappingOf(draft(List.of(format("json_lines")), "")).get("common")))
                 .contains(map("path", "EventSource/User/Id", "field", "user.name"));
         final Map<String, Map<String, Object>> windows = formatRules("xml_fragments_ns");
         final Map<String, Map<String, Object>> logon = fields(windows.get("4624"));
         assertThat(logon.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
         assertThat(logon.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("true");
-        assertThat(PyValues.maps(windows.get("4634").get("fields")).getFirst())
+        assertThat(JsonValues.maps(windows.get("4634").get("fields")).getFirst())
                 .isEqualTo(map("path", "EventDetail/Authenticate/Action", "value", "Logoff"));
         final SplitterSpec named = SplitterSpec.builder("delimited").header(List.of("time", "user", "src_ip",
                 "action")).build();
@@ -552,7 +553,7 @@ class TestDraftMapping extends DraftFixtures {
     void theRuleForTheRestAlwaysHasAnActionElement() {
         // Seen: every field mapped already left the catch-all with nothing, and the whole mapping failed.
         for (final String name : List.of("csv_quoted", "json_lines", "xml_records")) {
-            assertThat(PyValues.maps(formatRules(name).get("other").get("fields")))
+            assertThat(JsonValues.maps(formatRules(name).get("other").get("fields")))
                     .anyMatch(f -> ((String) f.get("path")).startsWith("EventDetail/Unknown/"));
         }
     }
@@ -642,9 +643,9 @@ class TestDraftMapping extends DraftFixtures {
                 """, "");
         assertThat((String) timeEntry(draft).get("time_format")).endsWith(" VV");
         assertThat(timeEntry(draft)).doesNotContainKey("timezone");
-        assertThat(PyValues.maps(mappingOf(draft).get("common")))
+        assertThat(JsonValues.maps(mappingOf(draft).get("common")))
                 .contains(map("path", "EventSource/Device/Location/TimeZoneName", "field", "time_zone"));
-        final Map<String, Object> extract = PyValues.maps(mappingOf(draft).get("extract")).getFirst();
+        final Map<String, Object> extract = JsonValues.maps(mappingOf(draft).get("extract")).getFirst();
         assertThat(extract.get("names")).isEqualTo(List.of("time_zone"));
         assertThat(extract.get("field")).isEqualTo("ts");
         // A field of zone names, beside zone-less times.
@@ -653,7 +654,7 @@ class TestDraftMapping extends DraftFixtures {
                 2026-10-01 18:00:00,Australia/Sydney,alice
                 2026-10-01 18:01:00,Europe/London,bob
                 """, "");
-        assertThat(PyValues.maps(mappingOf(zones).get("common")))
+        assertThat(JsonValues.maps(mappingOf(zones).get("common")))
                 .contains(map("path", "EventSource/Device/Location/TimeZoneName", "field", "tz"));
     }
 
@@ -709,7 +710,7 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Object> draft = draft(NOTES_SAMPLE, "Acme directory", "Acme", "Eval");
         assertThat(draft.get("source_notes")).isNull();
         final Map<String, Object> rule = rules(draft).get("4625");
-        assertThat(rule == null || PyValues.maps(rule.get("fields")).stream()
+        assertThat(rule == null || JsonValues.maps(rule.get("fields")).stream()
                 .noneMatch(f -> "EventDetail/Authenticate/Action".equals(f.get("path")))).isTrue();
     }
 
@@ -726,7 +727,7 @@ class TestDraftMapping extends DraftFixtures {
         final Map<String, Map<String, Object>> rules = rules(draft);
         assertThat(networkElements(rules.get("traffic_permitted"))).containsExactly("Permit");
         assertThat(networkElements(rules.get("traffic_denied"))).containsExactly("Deny");
-        assertThat(rules.values()).allMatch(r -> PyValues.maps(r.get("fields")).stream().noneMatch(f ->
+        assertThat(rules.values()).allMatch(r -> JsonValues.maps(r.get("fields")).stream().noneMatch(f ->
                 ((String) f.get("path")).startsWith("EventDetail/Allow")
                 || ((String) f.get("path")).startsWith("EventDetail/Deny")));
         assertThat(notes(draft)).anyMatch(n -> n.startsWith("Kept from the sample's values")
@@ -738,14 +739,14 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(login.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("true");
         assertThat(fields(rules.get("config_change"))).containsKey("EventDetail/Update/After/Configuration/Type");
         // Unknown is left for the user to agree when the XSLT is built, never agreed by the draft.
-        assertThat(rules.values()).noneMatch(r -> PyValues.truthy(r.get("allow_unknown")));
+        assertThat(rules.values()).noneMatch(r -> JsonValues.truthy(r.get("allow_unknown")));
         final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
         assertThat(checked.problems()).allMatch(p -> p.contains("vpn_down"));
     }
 
     private static Set<String> networkElements(final Map<String, Object> rule) {
         final Set<String> out = new HashSet<>();
-        PyValues.maps(rule.get("fields")).stream()
+        JsonValues.maps(rule.get("fields")).stream()
                 .map(f -> (String) f.get("path"))
                 .filter(path -> path.startsWith("EventDetail/Network/"))
                 .forEach(path -> out.add(path.split("/")[2]));

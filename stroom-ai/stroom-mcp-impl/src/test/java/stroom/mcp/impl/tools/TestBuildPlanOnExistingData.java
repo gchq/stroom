@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.security.api.SecurityContext;
 
 import org.junit.jupiter.api.Test;
@@ -237,8 +238,8 @@ class TestBuildPlanOnExistingData {
         assertThat(state(result, "processed")).isEqualTo("not needed");
         assertThat(next(result).get("step")).isEqualTo("index_template");
         // Raw streams: refused with one.
-        final BuildPlan.NextCall call = BuildPlan.nextCall("indexed", BuildPlan.CallArgs.of("b", List.of("RAW"),
-                List.of(1L), List.of(1L), null, "dp").withDiscovery(true));
+        final BuildPlan.NextCall call = BuildPlan.nextCall("indexed", new BuildPlan.CallArgs("b", List.of("RAW"),
+                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null));
         assertThat(((Map<?, ?>) call.call().get("arguments")).containsKey("source_pipeline_uuid")).isFalse();
     }
 

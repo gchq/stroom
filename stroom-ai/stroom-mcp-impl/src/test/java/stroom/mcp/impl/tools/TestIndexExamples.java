@@ -20,6 +20,7 @@ import stroom.ai.api.ElasticIndexTemplates.ComponentTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.Status;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;

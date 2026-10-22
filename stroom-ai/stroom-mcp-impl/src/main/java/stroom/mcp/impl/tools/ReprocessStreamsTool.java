@@ -17,13 +17,15 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -178,7 +180,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         final Set<Long> done = Set.copyOf(filterWrites.alreadyProcessed(ref, streamIds));
         final List<Long> fresh = streamIds.stream().filter(id -> !done.contains(id)).toList();
         if (!fresh.isEmpty()) {
-            throw new ToolRefusal("Stream(s) " + PythonText.numbers(fresh) + " have not been processed by '"
+            throw new ToolRefusal("Stream(s) " + PyText.repr(fresh) + " have not been processed by '"
                                   + pipeline.getName() + "': use create_processor_filter");
         }
         sources.buildFeedsOnly(ref, streamIds, null);
@@ -207,7 +209,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
-                    NAME, CreateProcessorFilterTool.flag(call,
+                    NAME, ToolArgs.flag(call,
                             CreateProcessorFilterTool.TEMPLATE_COMMITTED_BY_USER_ARG),
                     stringArg(call, CreateProcessorFilterTool.TEMPLATE_CONFIRMATION_ID_ARG));
             if (committed.round() != null) {
@@ -238,7 +240,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
             return plan.nextFor(context, ref, result);
         }
         if (details.containsKey(IndexingRuns.ALREADY_INDEXED)
-            && !CreateProcessorFilterTool.flag(call, CreateProcessorFilterTool.INDEX_DROPPED_ARG)) {
+            && !ToolArgs.flag(call, CreateProcessorFilterTool.INDEX_DROPPED_ARG)) {
             return plan.nextFor(context, ref, ProcessingApprovals.dropFirst(context.links(), pipeline, destination,
                     lucene, details, NAME));
         }

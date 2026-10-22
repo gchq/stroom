@@ -24,9 +24,9 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.sample.SampleRefusal;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.config.common.UriFactory;
@@ -218,11 +218,7 @@ class UploadSampleTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give files (the sample files' paths on the user's disk) or sample (only text the "
                                   + "user pasted into the chat)");
         }
-        try {
-            SampleTexts.checkSample(sample, SAMPLE_ARG);
-        } catch (final SampleRefusal e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        SampleTexts.checkSample(sample, SAMPLE_ARG);
         checkImportData(feed);
         // Before anything waits for them: a path no command can carry safely is refused.
         FeedUploads.checkPaths(files);

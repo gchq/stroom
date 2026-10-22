@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 
@@ -51,7 +52,7 @@ class TestMappingProblems {
         assertThat(MappingProblems.problems(e, List.of("rules")))
                 .contains("events[0].fields: Input should be a valid list (given \"all of them\")")
                 .contains("keys that are not part of a mapping: ['rules'] (it has "
-                          + SampleArguments.pythonList(MappingProblems.mappingKeys()) + ")");
+                          + PyText.list(MappingProblems.mappingKeys()) + ")");
         assertThat(MappingProblems.structural(e)).isTrue();
     }
 

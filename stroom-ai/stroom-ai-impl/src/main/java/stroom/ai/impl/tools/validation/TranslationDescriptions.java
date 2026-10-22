@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -53,7 +55,7 @@ public final class TranslationDescriptions {
     /// @param name Its document's name, or null for text given.
     /// @return `xslt` (the name), and for an indexing XSLT `kind` (`indexing`), `field_count` and what
     /// [#describe(Element)] gives; for a translation `mapping_counts` (by kind) and what [#describe(Element)] gives.
-    /// @throws ValidationException if it is not well-formed.
+    /// @throws ToolRefusal if it is not well-formed.
     public static Map<String, Object> describeTranslation(final String xslt, final String name) {
         final Map<String, Object> described = describe(XsltChecks.parse(xslt, "XSLT"));
         final Map<String, Object> result = new LinkedHashMap<>();

@@ -23,11 +23,11 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.validation.EventChecks;
 import stroom.ai.impl.tools.validation.EventStreams;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -170,7 +170,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
                     : checkStreams(context, streamIds, schemaVersion));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final ValidationException | StreamReader.StreamReadException e) {
+        } catch (final StreamReader.StreamReadException e) {
             return JsonResults.refused(e.getMessage());
         }
     }
@@ -180,7 +180,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
     /// @return `ok`, `schema` (as [EventChecks#validateEvents] gives it) and `quality` (as
     /// [EventChecks#checkEventQuality] gives it, or a note that the rules don't apply to XML that isn't Events),
     /// and `note` if it came HTML-escaped.
-    /// @throws ValidationException if it is not well-formed, or Stroom holds no such schema.
+    /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
     Map<String, Object> check(final String eventsXml, final String schemaVersion) {
         final XsltChecks.Unescaped unescaped = XsltChecks.unescaped(eventsXml);
         if (!unescaped.warnings().isEmpty()) {

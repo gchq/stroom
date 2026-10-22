@@ -18,10 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
@@ -114,7 +116,7 @@ class SetProcessorFilterEnabledTool extends AbstractBuiltInTool {
         if (filterId == null) {
             throw new ToolRefusal("Give filter_id: the processor filter's id, e.g. from processing_status.");
         }
-        final boolean enabled = CreateProcessorFilterTool.flag(call, ENABLED_ARG);
+        final boolean enabled = ToolArgs.flag(call, ENABLED_ARG);
         final ProcessorFilter current = fetch(filterId)
                 .orElseThrow(() -> new ToolRefusal("No processor filter " + filterId + " was found, or you don't "
                                                    + "have permission to see it (it needs the Manage Processors "

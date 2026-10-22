@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -39,7 +41,7 @@ public final class ReferenceGenerator {
     /// The reference-data schema version written by default.
     public static final String DEFAULT_VERSION = "2.0.1";
 
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final Map<String, String> INPUT_NAMESPACE = Map.of("data_splitter", "records:2", "json",
             "http://www.w3.org/2013/XSL/json");
 

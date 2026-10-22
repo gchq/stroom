@@ -16,7 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,14 +77,14 @@ public final class ExampleTemplates {
                                        final List<String> include,
                                        final List<String> exclude,
                                        final EcsSchema ecs) {
-        final Map<String, Object> out = PyValues.deepCopy(body);
-        final List<String> composedOf = composition(PyValues.strings(out.get("composed_of")), include, exclude);
+        final Map<String, Object> out = JsonValues.deepCopy(body);
+        final List<String> composedOf = composition(JsonValues.strings(out.get("composed_of")), include, exclude);
         final List<String> notes = new ArrayList<>();
         Map<String, Object> mappings = TemplateMappings.mappingsOf(out);
         final List<String> left = new ArrayList<>();
         for (final String name : include) {
             final Map<String, Map<String, Object>> fields = TemplateMappings.readMapping(
-                    TemplateMappings.mappingsOf(PyValues.mapOrEmpty(components.get(name)))).fields();
+                    TemplateMappings.mappingsOf(JsonValues.mapOrEmpty(components.get(name)))).fields();
             for (final Map.Entry<String, Map<String, Object>> entry : fields.entrySet()) {
                 if (!"object".equals(entry.getValue().get("type"))
                     && TemplateMappings.drop(propertiesOf(mappings), entry.getKey(),
@@ -109,11 +110,11 @@ public final class ExampleTemplates {
         }
         if (!include.isEmpty()) {
             notes.add("component templates nominated (by the user or their standing instructions), referenced: "
-                      + PythonRepr.list(new LinkedHashSet<>(include)));
+                      + PyText.list(new LinkedHashSet<>(include)));
         }
         if (!left.isEmpty()) {
             notes.add("left to the component templates (they map them): "
-                      + PythonRepr.list(left.stream().sorted().toList()));
+                      + PyText.list(left.stream().sorted().toList()));
         }
         return new Built(out, notes);
     }
@@ -135,7 +136,7 @@ public final class ExampleTemplates {
     /// @return The mappings (a copy) and the fields left to the component, sorted.
     @SuppressWarnings("unchecked")
     public static LeftToEcs leaveToEcsComponent(final Map<String, Object> given, final EcsSchema ecs) {
-        final Map<String, Object> mappings = PyValues.deepCopy(given);
+        final Map<String, Object> mappings = JsonValues.deepCopy(given);
         final boolean flat = Boolean.FALSE.equals(mappings.get("subobjects"));
         final List<String> left = new ArrayList<>();
         TemplateMappings.readMapping(mappings).fields().forEach((path, spec) -> {
@@ -157,7 +158,7 @@ public final class ExampleTemplates {
     /// @return The fields a template composing ecs@mappings maps explicitly just as the component does (mapped
     /// twice), sorted; none if it doesn't compose it.
     public static List<String> ecsDuplicates(final Map<String, Object> body, final EcsSchema ecs) {
-        if (!PyValues.strings(body.get("composed_of")).contains(EcsSchema.COMPONENT)) {
+        if (!JsonValues.strings(body.get("composed_of")).contains(EcsSchema.COMPONENT)) {
             return List.of();
         }
         final Set<String> found = new TreeSet<>();
@@ -215,7 +216,7 @@ public final class ExampleTemplates {
                     }
                 });
                 if (fields.isEmpty()) {
-                    unsure.put(name, PyValues.truthy(mappings.get("dynamic_templates"))
+                    unsure.put(name, JsonValues.truthy(mappings.get("dynamic_templates"))
                             ? "dynamic templates only"
                             : "settings only, no fields");
                 } else if (fields.stream().noneMatch(leaves::containsKey)) {
@@ -270,7 +271,7 @@ public final class ExampleTemplates {
         final long missing = docs.stream().filter(doc -> timeOf(doc).isEmpty()).count();
         if (missing > 0 || docs.isEmpty()) {
             return new DataStream(body, "a plain index, not a data stream: " + missing + " of " + docs.size()
-                                        + " sample records have no time in " + PythonRepr.repr(field)
+                                        + " sample records have no time in " + PyText.repr(field)
                                         + ", and a data stream rejects a document without @timestamp");
         }
         final Map<String, Object> out = new LinkedHashMap<>();
@@ -280,9 +281,9 @@ public final class ExampleTemplates {
             }
         });
         out.put("data_stream", new LinkedHashMap<>());
-        out.put("template", PyValues.mapOrEmpty(body.get("template")));
+        out.put("template", JsonValues.mapOrEmpty(body.get("template")));
         return new DataStream(out, "a data stream: all " + docs.size() + " sample records have their time in "
-                                   + PythonRepr.repr(field) + ", written as @timestamp");
+                                   + PyText.repr(field) + ", written as @timestamp");
     }
 
     private static String timeOf(final Map<String, Object> doc) {
@@ -291,8 +292,8 @@ public final class ExampleTemplates {
         if (value instanceof final TemplateCheck.DocValue read) {
             value = read.text();
         }
-        return PyValues.strip(PyValues.truthy(value)
-                ? PyValues.str(value)
+        return PyText.strip(JsonValues.truthy(value)
+                ? PyText.str(value)
                 : "");
     }
 

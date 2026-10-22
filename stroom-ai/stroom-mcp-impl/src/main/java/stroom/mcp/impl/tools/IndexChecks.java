@@ -23,16 +23,16 @@ import stroom.ai.impl.tools.IndexSearches.Found;
 import stroom.ai.impl.tools.IndexSearches.Probe;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.MisleadingSearches;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
-import stroom.ai.impl.tools.generation.PythonRepr;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -342,16 +342,6 @@ class IndexChecks {
         return IndexSearches.column(name);
     }
 
-    /// @param config A dashboard's settings.
-    /// @return Its table's columns.
-    static List<Column> tableColumns(final DashboardConfig config) {
-        return NullSafe.list(config.getComponents()).stream()
-                .filter(component -> component.getSettings() instanceof TableComponentSettings)
-                .map(component -> NullSafe.list(((TableComponentSettings) component.getSettings()).getColumns()))
-                .findFirst()
-                .orElse(List.of());
-    }
-
     /// The earliest time, rounded back to a 30-day boundary (days since the epoch), as the dashboard's start.
     ///
     /// @param times Times as a dashboard shows them; those that aren't times are passed over.
@@ -519,7 +509,7 @@ class IndexChecks {
             sleeper.sleep(CATCH_UP);
         }
         final Found found = search(context, dashboard, byStream(streamIds), PAGE,
-                "Reading the documents of streams " + PythonText.numbers(streamIds) + " in " + label);
+                "Reading the documents of streams " + PyText.repr(streamIds) + " in " + label);
         final Map<String, Object> out = new LinkedHashMap<>(complete);
         out.remove("progress");
         final List<Object> errors = new ArrayList<>(NullSafe.list((List<?>) complete.get("errors")));
@@ -554,7 +544,7 @@ class IndexChecks {
         if (several) {
             check.put("why", "if " + field + " holds several values (a dashboard shows them separated by commas), "
                              + "the index holds each on its own: search one of them, e.g. '"
-                             + stripChars(value.split(",", -1)[0], " []") + "'");
+                             + PyText.strip(value.split(",", -1)[0], " []") + "'");
         }
         check.put("_rows", res.rows());
         check.put("_spec", spec(field, "EQUALS", value));
@@ -660,7 +650,7 @@ class IndexChecks {
         if (!rest.isEmpty()) {
             final long want = expected - large.values().stream().mapToLong(Long::longValue).sum();
             final Counted counted = count(context, dashboard, of(rest),
-                    "Counting the documents of streams " + PythonText.numbers(rest) + " in " + label);
+                    "Counting the documents of streams " + PyText.repr(rest) + " in " + label);
             errors.addAll(counted.errors());
             final Map<String, Object> part = new LinkedHashMap<>();
             part.put("streams", rest);
@@ -701,7 +691,7 @@ class IndexChecks {
         });
         final boolean passed = parts.stream().allMatch(part -> Boolean.TRUE.equals(part.get("pass")));
         final Map<String, Object> check = new LinkedHashMap<>();
-        check.put("check", "documents for streams " + PythonText.numbers(streamIds));
+        check.put("check", "documents for streams " + PyText.repr(streamIds));
         check.put("expected", expected);
         if (large.isEmpty()) {
             final Map<String, Object> only = parts.getFirst();
@@ -959,9 +949,9 @@ class IndexChecks {
                 final List<Boolean> same = values.stream().map(value -> sameValue(column.getValue(), value))
                         .toList();
                 if (same.stream().allMatch(Boolean.FALSE::equals)) {
-                    out.put("why", "stepping " + at + " gives one document, numbered EventId " + pyStr(numbered)
+                    out.put("why", "stepping " + at + " gives one document, numbered EventId " + PyText.str(numbered)
                                    + " by stepping, and it isn't the hit's: its " + column.getKey() + " is "
-                                   + PythonRepr.list(values) + ", where the hit has " + column.getValue());
+                                   + PyText.list(values) + ", where the hit has " + column.getValue());
                     return out;
                 }
                 if (same.contains(Boolean.TRUE)) {
@@ -971,17 +961,17 @@ class IndexChecks {
             if (agreed.isEmpty()) {
                 final Set<String> others = new TreeSet<>(row.keySet());
                 others.removeAll(IDS);
-                out.put("why", "stepping " + at + " gives one document, numbered EventId " + pyStr(numbered)
-                               + " by stepping, and none of the hit's columns (" + PythonRepr.list(others) + ") has "
+                out.put("why", "stepping " + at + " gives one document, numbered EventId " + PyText.str(numbered)
+                               + " by stepping, and none of the hit's columns (" + PyText.list(others) + ") has "
                                + "a value to match it on");
                 return out;
             }
             out.put("matched_on", agreed);
         }
         if (document == null) {
-            out.put("why", "stepping " + at + " with element " + pyStr(element) + " gives " + (documents.isEmpty()
+            out.put("why", "stepping " + at + " with element " + PyText.str(element) + " gives " + (documents.isEmpty()
                     ? "no document"
-                    : documents.size() + " documents, EventIds " + PythonRepr.list(documents.stream()
+                    : documents.size() + " documents, EventIds " + PyText.list(documents.stream()
                             .flatMap(doc -> eventIds(doc).stream()).toList()) + ", none " + event));
             return out;
         }
@@ -997,7 +987,7 @@ class IndexChecks {
                 .contains(value.toLowerCase(Locale.ROOT)));
         out.put("traced", holds);
         if (!holds) {
-            out.put("why", "the document stepping " + at + " gives has " + field + " = " + PythonRepr.list(held)
+            out.put("why", "the document stepping " + at + " gives has " + field + " = " + PyText.list(held)
                            + ", not " + value);
         }
         return out;
@@ -1016,7 +1006,7 @@ class IndexChecks {
         // the hit's when it is one of them (asked about by the user; as a whole, numbers and times couldn't be
         // compared).
         final List<String> parts = java.util.Arrays.stream(shown.split(",", -1))
-                .map(part -> stripChars(part, " []"))
+                .map(part -> PyText.strip(part, " []"))
                 .filter(part -> !part.isEmpty())
                 .toList();
         if (!Boolean.TRUE.equals(same) && parts.size() > 1) {
@@ -1198,24 +1188,6 @@ class IndexChecks {
         } catch (final NumberFormatException e) {
             return null;
         }
-    }
-
-    private static String stripChars(final String text, final String chars) {
-        int start = 0;
-        int end = text.length();
-        while (start < end && chars.indexOf(text.charAt(start)) >= 0) {
-            start++;
-        }
-        while (end > start && chars.indexOf(text.charAt(end - 1)) >= 0) {
-            end--;
-        }
-        return text.substring(start, end);
-    }
-
-    private static String pyStr(final Object value) {
-        return value == null
-                ? "None"
-                : String.valueOf(value);
     }
 
     private static void sleep(final Duration wait) {

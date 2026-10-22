@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -60,14 +62,14 @@ class TestEventElements {
         assertThat(leaf.get("type")).isEqualTo("string");
 
         assertThatThrownBy(() -> EventElements.describe(held, "EventDetail/Acess", null, null))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("has no child 'Acess'");
     }
 
     @Test
     void testTheVersionChosenForTheBuildIsUsedWhereNoneIsGiven() {
         assertThatThrownBy(() -> EventElements.describe(held, "EventDetail", null, "3.5.2"))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("Stroom has no XML schema 'file://event-logging-v3.5.2.xsd'");
         assertThat(EventElements.describe(held, "EventDetail", "4.1.0", "3.5.2").get("schema_version"))
                 .isEqualTo("4.1.0");

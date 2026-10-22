@@ -19,7 +19,11 @@ package stroom.ai.impl.tools.validation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /// The names most like one given, as Python's `difflib.get_close_matches` finds them: the Stroom MCP server's
 /// "did you mean" suggestions (a stroom: function, an event-logging element) are worded around them.
@@ -29,6 +33,8 @@ public final class CloseMatches {
     public static final int DEFAULT_COUNT = 3;
     /// difflib's default cutoff.
     public static final double DEFAULT_CUTOFF = 0.6;
+    // The length from which SequenceMatcher's autojunk takes b's popular characters for junk.
+    private static final int AUTOJUNK_LENGTH = 200;
 
     private CloseMatches() {
         // Static only.
@@ -58,9 +64,10 @@ public final class CloseMatches {
                 .toList();
     }
 
-    /// How alike two strings are, as Python's `difflib.SequenceMatcher.ratio()` measures it (without its junk
-    /// heuristic, which only applies to strings of 200 or more characters): twice the characters in matching
-    /// blocks over the total length.
+    /// How alike two strings are, as Python's `difflib.SequenceMatcher(None, a, b).ratio()` measures it: twice the
+    /// characters in matching blocks over the total length. As difflib's autojunk has it, when b is 200 or more
+    /// characters long, a character in more than 1% of it (and one more) starts no match, though a match may grow
+    /// over it.
     ///
     /// @param a A string.
     /// @param b Another.
@@ -69,13 +76,33 @@ public final class CloseMatches {
         final int total = a.length() + b.length();
         return total == 0
                 ? 1.0
-                : 2.0 * matches(a, 0, a.length(), b, 0, b.length()) / total;
+                : 2.0 * matches(a, 0, a.length(), b, 0, b.length(), popular(b)) / total;
+    }
+
+    // The characters autojunk leaves out of b's index: none for a b shorter than 200, else those found more than
+    // len(b) // 100 + 1 times.
+    private static Set<Character> popular(final String b) {
+        final Set<Character> popular = new HashSet<>();
+        if (b.length() >= AUTOJUNK_LENGTH) {
+            final Map<Character, Integer> counts = new HashMap<>();
+            for (int j = 0; j < b.length(); j++) {
+                counts.merge(b.charAt(j), 1, Integer::sum);
+            }
+            final int most = b.length() / 100 + 1;
+            counts.forEach((c, count) -> {
+                if (count > most) {
+                    popular.add(c);
+                }
+            });
+        }
+        return popular;
     }
 
     // The characters in the matching blocks of a[alo:ahi] and b[blo:bhi]: the longest match (earliest in a, then
-    // in b), and those either side of it.
+    // in b) of characters not popular, grown over equal characters either side as difflib's find_longest_match
+    // grows it, and those either side of it.
     private static int matches(final String a, final int alo, final int ahi,
-                               final String b, final int blo, final int bhi) {
+                               final String b, final int blo, final int bhi, final Set<Character> popular) {
         int bestI = alo;
         int bestJ = blo;
         int bestSize = 0;
@@ -83,7 +110,7 @@ public final class CloseMatches {
         for (int i = alo; i < ahi; i++) {
             final int[] current = new int[bhi - blo + 1];
             for (int j = blo; j < bhi; j++) {
-                if (a.charAt(i) == b.charAt(j)) {
+                if (a.charAt(i) == b.charAt(j) && !popular.contains(b.charAt(j))) {
                     final int k = previous[j - blo] + 1;
                     current[j - blo + 1] = k;
                     if (k > bestSize) {
@@ -95,12 +122,21 @@ public final class CloseMatches {
             }
             previous = current;
         }
+        while (bestI > alo && bestJ > blo && a.charAt(bestI - 1) == b.charAt(bestJ - 1)) {
+            bestI--;
+            bestJ--;
+            bestSize++;
+        }
+        while (bestI + bestSize < ahi && bestJ + bestSize < bhi
+               && a.charAt(bestI + bestSize) == b.charAt(bestJ + bestSize)) {
+            bestSize++;
+        }
         if (bestSize == 0) {
             return 0;
         }
         return bestSize
-               + matches(a, alo, bestI, b, blo, bestJ)
-               + matches(a, bestI + bestSize, ahi, b, bestJ + bestSize, bhi);
+               + matches(a, alo, bestI, b, blo, bestJ, popular)
+               + matches(a, bestI + bestSize, ahi, b, bestJ + bestSize, bhi, popular);
     }
 
 

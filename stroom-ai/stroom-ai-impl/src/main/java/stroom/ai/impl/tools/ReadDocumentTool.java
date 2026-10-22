@@ -22,7 +22,6 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.validation.EventElements;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.TranslationDescriptions;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -314,7 +313,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         final Map<String, Object> json = new LinkedHashMap<>(NullSafe.map(fields));
         try {
             json.putAll(EventElements.describe(heldSchemas, element, version, null));
-        } catch (final ValidationException e) {
+        } catch (final ToolRefusal e) {
             return ToolResult.text("Error: " + e.getMessage());
         }
         if (fields != null) {
@@ -337,7 +336,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         final Map<String, Object> described;
         try {
             described = TranslationDescriptions.describeTranslation(code, docRef.getName());
-        } catch (final ValidationException e) {
+        } catch (final ToolRefusal e) {
             return "\n\n## Translation\nIt couldn't be described: " + e.getMessage();
         }
         return jsonSection(context, docRef, "Translation", "What it does (each output's source, the input fields "

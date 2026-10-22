@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 /// `build_checks`): a clean step of their current code (recorded in the build's record), a Documentation doc (for
 /// new pipelines), an Elasticsearch index template agreed and the sample indexed and verified (for indexing
 /// pipelines), a Field mapping section that matches the current mapping and XSLT, and an XSLT that is what its
-/// mapping generates ([MappingDrift]).
+/// mapping generates ([GeneratedDrift]).
 class BuildChecks {
 
     /// Said of a check promotion waits for, rather than one shown in the approval: documentation left behind by the
@@ -53,7 +53,7 @@ class BuildChecks {
     private final IndexTemplateAgreements agreements;
     private final KeptMappings keptMappings;
     private final DocumentAccess documentAccess;
-    private final MappingDrift mappingDrift;
+    private final GeneratedDrift mappingDrift;
 
     @Inject
     BuildChecks(final BuildRecords buildRecords,
@@ -61,7 +61,7 @@ class BuildChecks {
                 final IndexTemplateAgreements agreements,
                 final KeptMappings keptMappings,
                 final DocumentAccess documentAccess,
-                final MappingDrift mappingDrift) {
+                final GeneratedDrift mappingDrift) {
         this.buildRecords = buildRecords;
         this.pipelineShapes = pipelineShapes;
         this.agreements = agreements;

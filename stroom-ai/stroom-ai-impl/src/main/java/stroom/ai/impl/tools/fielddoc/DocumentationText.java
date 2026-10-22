@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.util.shared.NullSafe;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -66,7 +69,7 @@ public final class DocumentationText {
     /// @param markdown The documentation, or null.
     /// @return It with its sections at `## `, or as it is if none is at `# `.
     public static String sectionLevels(final String markdown) {
-        final List<String> lines = new ArrayList<>(PythonStrings.split(markdown == null
+        final List<String> lines = new ArrayList<>(PyText.split(markdown == null
                 ? ""
                 : markdown, "\n"));
         boolean fenced = false;
@@ -84,7 +87,7 @@ public final class DocumentationText {
         }
         Integer first = null;
         for (int n = 0; n < lines.size(); n++) {
-            if (!PythonStrings.strip(lines.get(n)).isEmpty()) {
+            if (!PyText.strip(lines.get(n)).isEmpty()) {
                 first = n;
                 break;
             }
@@ -101,7 +104,7 @@ public final class DocumentationText {
                 lines.set(n, "#" + line);
             }
         }
-        return PythonStrings.strip(String.join("\n", lines), "\n");
+        return PyText.strip(String.join("\n", lines), "\n");
     }
 
     /// `_below_section`: the documentation with text added at the end of the `## heading` section (the agent's own
@@ -115,22 +118,14 @@ public final class DocumentationText {
         final Matcher found = Pattern.compile("^## " + Pattern.quote(heading) + "[^\\n]*\\n(.*?)(?=^## |\\z)",
                 Pattern.MULTILINE | Pattern.DOTALL).matcher(markdown);
         if (!found.find()) {
-            return "## " + heading + "\n\n" + PythonStrings.strip(text) + "\n\n" + lstrip(markdown);
+            return "## " + heading + "\n\n" + PyText.strip(NullSafe.string(text)) + "\n\n" + PyText.lstrip(markdown);
         }
-        return PythonStrings.rstrip(markdown.substring(0, found.end(1))) + "\n\n" + PythonStrings.strip(text) + "\n\n"
-               + lstrip(markdown.substring(found.end(1)));
+        return PyText.rstrip(markdown.substring(0, found.end(1))) + "\n\n" + PyText.strip(NullSafe.string(text))
+               + "\n\n" + PyText.lstrip(markdown.substring(found.end(1)));
     }
 
     private static boolean isFence(final String line) {
-        final String stripped = lstrip(line);
+        final String stripped = PyText.lstrip(line);
         return stripped.startsWith("```") || stripped.startsWith("~~~");
-    }
-
-    private static String lstrip(final String text) {
-        int start = 0;
-        while (start < text.length() && PythonStrings.isSpace(text.charAt(start))) {
-            start++;
-        }
-        return text.substring(start);
     }
 }

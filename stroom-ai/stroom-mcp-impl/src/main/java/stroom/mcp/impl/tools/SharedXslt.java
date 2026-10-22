@@ -16,6 +16,9 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
+import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -48,7 +51,7 @@ import java.util.regex.Pattern;
 /// document's map for an indexing XSLT (a key such as guid).
 final class SharedXslt {
 
-    static final String XSL = XmlDocs.XSL;
+    static final String XSL = XmlTrees.XSL;
     static final String EVT = "event-logging:3";
     static final String FN = "http://www.w3.org/2005/xpath-functions";
     static final String RECORDS = "records:2";
@@ -63,14 +66,14 @@ final class SharedXslt {
     /// @param xslt An XSLT's text.
     /// @return The hrefs it imports or includes (Stroom resolves each to the XSLT document of that name).
     static List<String> importsOf(final String xslt) {
-        return XmlDocs.parse(xslt).map(SharedXslt::importsOf).orElse(List.of());
+        return XmlTrees.tryParse(xslt).map(SharedXslt::importsOf).orElse(List.of());
     }
 
     private static List<String> importsOf(final Element root) {
         final List<String> hrefs = new ArrayList<>();
-        for (final Element element : XmlDocs.descendantsAndSelf(root)) {
-            if ((XmlDocs.is(element, XSL, "import") || XmlDocs.is(element, XSL, "include"))
-                && nonEmpty(XmlDocs.attribute(element, "href"))) {
+        for (final Element element : XmlTrees.descendantsAndSelf(root)) {
+            if ((XmlTrees.is(element, XSL, "import") || XmlTrees.is(element, XSL, "include"))
+                && nonEmpty(XmlTrees.attribute(element, "href"))) {
                 hrefs.add(element.getAttribute("href"));
             }
         }
@@ -84,22 +87,23 @@ final class SharedXslt {
     /// @param xslt A shared XSLT's text.
     /// @return What it does, or `{unreadable: true}` if it doesn't parse.
     static Map<String, Object> describe(final String xslt) {
-        final Optional<Element> parsed = XmlDocs.parse(xslt);
+        final Optional<Element> parsed = XmlTrees.tryParse(xslt);
         if (parsed.isEmpty()) {
             return new LinkedHashMap<>(Map.of("unreadable", true));
         }
         final Element root = parsed.get();
         final Map<String, Object> templates = new LinkedHashMap<>();
         final List<Map<String, Object>> rules = new ArrayList<>();
-        for (final Element template : XmlDocs.elements(root, XSL, "template")) {
+        for (final Element template : XmlTrees.named(root, XSL, "template")) {
             final List<String> meta = metaRead(template);
-            final String name = XmlDocs.attribute(template, "name");
+            final String name = XmlTrees.attribute(template, "name");
             if (nonEmpty(name)) {
                 // Without required="yes", a parameter the call doesn't pass is its default (empty if none given).
                 final Map<String, Object> params = new LinkedHashMap<>();
-                for (final Element param : XmlDocs.children(template)) {
-                    if (XmlDocs.is(param, XSL, "param")) {
-                        params.put(XmlDocs.attribute(param, "name"), "yes".equals(XmlDocs.attribute(param, "required"))
+                for (final Element param : XmlTrees.children(template)) {
+                    if (XmlTrees.is(param, XSL, "param")) {
+                        params.put(XmlTrees.attribute(param, "name"),
+                                "yes".equals(XmlTrees.attribute(param, "required"))
                                 ? "required"
                                 : "optional");
                     }
@@ -116,8 +120,8 @@ final class SharedXslt {
                 templates.put(name, about);
             } else {
                 final Map<String, Object> rule = new LinkedHashMap<>();
-                rule.put("match", XmlDocs.attribute(template, "match"));
-                if (nonEmpty(XmlDocs.attribute(template, "mode"))) {
+                rule.put("match", XmlTrees.attribute(template, "match"));
+                if (nonEmpty(XmlTrees.attribute(template, "mode"))) {
                     rule.put("mode", template.getAttribute("mode"));
                 }
                 final List<String> writes = paths(template, List.of());
@@ -154,18 +158,18 @@ final class SharedXslt {
         if (root == null) {
             return functions;
         }
-        for (final Element function : XmlDocs.elements(root, XSL, "function")) {
-            final String name = Objects.requireNonNullElse(XmlDocs.attribute(function, "name"), "");
+        for (final Element function : XmlTrees.named(root, XSL, "function")) {
+            final String name = Objects.requireNonNullElse(XmlTrees.attribute(function, "name"), "");
             final String prefix = name.contains(":")
                     ? name.substring(0, name.indexOf(':'))
                     : null;
             final List<String> params = new ArrayList<>();
-            for (final Element param : XmlDocs.children(function)) {
-                if (XmlDocs.is(param, XSL, "param")) {
-                    final String as = XmlDocs.attribute(param, "as");
+            for (final Element param : XmlTrees.children(function)) {
+                if (XmlTrees.is(param, XSL, "param")) {
+                    final String as = XmlTrees.attribute(param, "as");
                     params.add(nonEmpty(as)
-                            ? XmlDocs.attribute(param, "name") + " as " + as
-                            : XmlDocs.attribute(param, "name"));
+                            ? XmlTrees.attribute(param, "name") + " as " + as
+                            : XmlTrees.attribute(param, "name"));
                 }
             }
             final Map<String, Object> about = new LinkedHashMap<>();
@@ -174,7 +178,7 @@ final class SharedXslt {
                     ? function.lookupNamespaceURI(null)
                     : function.lookupNamespaceURI(prefix));
             about.put("params", params);
-            if (nonEmpty(XmlDocs.attribute(function, "as"))) {
+            if (nonEmpty(XmlTrees.attribute(function, "as"))) {
                 about.put("returns", function.getAttribute("as"));
             }
             functions.put(name, about);
@@ -187,7 +191,7 @@ final class SharedXslt {
     /// @return Each shared function it calls: how often, and one call as written (its select or test).
     static List<Map<String, Object>> functionCalls(final String xslt,
                                                    final Map<String, Map<String, Object>> functions) {
-        final Optional<Element> parsed = XmlDocs.parse(xslt);
+        final Optional<Element> parsed = XmlTrees.tryParse(xslt);
         if (parsed.isEmpty()) {
             return List.of();
         }
@@ -196,8 +200,8 @@ final class SharedXslt {
         functions.forEach((name, about) -> {
             final Pattern call = Pattern.compile(Pattern.quote(name) + "\\s*\\(");
             final List<String> where = new ArrayList<>();
-            for (final Element element : XmlDocs.descendantsAndSelf(parsed.get())) {
-                for (final String value : XmlDocs.attributeValues(element)) {
+            for (final Element element : XmlTrees.descendantsAndSelf(parsed.get())) {
+                for (final String value : XmlTrees.attributes(element).stream().map(Attr::getValue).toList()) {
                     if (call.matcher(value).find()) {
                         where.add(value);
                     }
@@ -222,9 +226,9 @@ final class SharedXslt {
     /// @return The named templates it defines, each with the elements (or JSON keys) it writes at its top level.
     static Map<String, List<String>> templatesOf(final String xslt) {
         final Map<String, List<String>> templates = new LinkedHashMap<>();
-        XmlDocs.parse(xslt).ifPresent(root -> {
-            for (final Element template : XmlDocs.elements(root, XSL, "template")) {
-                if (nonEmpty(XmlDocs.attribute(template, "name"))) {
+        XmlTrees.tryParse(xslt).ifPresent(root -> {
+            for (final Element template : XmlTrees.named(root, XSL, "template")) {
+                if (nonEmpty(XmlTrees.attribute(template, "name"))) {
                     templates.put(template.getAttribute("name"), written(template));
                 }
             }
@@ -240,18 +244,18 @@ final class SharedXslt {
     /// XSLT doesn't parse or has no such template.
     static Map<String, String> jsonValues(final String xslt, final String template) {
         final Map<String, String> out = new LinkedHashMap<>();
-        XmlDocs.parse(xslt).flatMap(root -> XmlDocs.descendantsAndSelf(root).stream()
-                        .filter(element -> XmlDocs.is(element, XSL, "template")
-                                           && Objects.equals(XmlDocs.attribute(element, "name"), template))
+        XmlTrees.tryParse(xslt).flatMap(root -> XmlTrees.descendantsAndSelf(root).stream()
+                        .filter(element -> XmlTrees.is(element, XSL, "template")
+                                           && Objects.equals(XmlTrees.attribute(element, "name"), template))
                         .findFirst())
                 .ifPresent(found -> jsonValues(found, List.of(), out));
         return out;
     }
 
     private static void jsonValues(final Element element, final List<String> prefix, final Map<String, String> out) {
-        for (final Element child : XmlDocs.children(element)) {
+        for (final Element child : XmlTrees.children(element)) {
             final String namespace = child.getNamespaceURI();
-            final String key = XmlDocs.attribute(child, "key");
+            final String key = XmlTrees.attribute(child, "key");
             if (XSL.equals(namespace) && FLOW.contains(child.getLocalName())) {
                 jsonValues(child, prefix, out);
             } else if (FN.equals(namespace) && ("map".equals(child.getLocalName())
@@ -273,25 +277,25 @@ final class SharedXslt {
     /// @param templates The shared named templates, each with what it writes.
     /// @return Each call in the XSLT to one of them: `{template, within, writes, at, with_params}`.
     static List<Map<String, Object>> callsOf(final String xslt, final Map<String, List<String>> templates) {
-        final Optional<Element> parsed = XmlDocs.parse(xslt);
+        final Optional<Element> parsed = XmlTrees.tryParse(xslt);
         if (parsed.isEmpty()) {
             return List.of();
         }
         final List<Map<String, Object>> calls = new ArrayList<>();
-        for (final Element call : XmlDocs.elements(parsed.get(), XSL, "call-template")) {
-            final String name = XmlDocs.attribute(call, "name");
+        for (final Element call : XmlTrees.named(parsed.get(), XSL, "call-template")) {
+            final String name = XmlTrees.attribute(call, "name");
             if (name == null || !templates.containsKey(name)) {
                 continue;
             }
             final List<String> within = within(call, Collections.newSetFromMap(new IdentityHashMap<>()));
             final List<String> writes = templates.get(name);
             final Map<String, Object> passed = new LinkedHashMap<>();
-            for (final Element withParam : XmlDocs.children(call)) {
-                if (XmlDocs.is(withParam, XSL, "with-param") && nonEmpty(XmlDocs.attribute(withParam, "name"))) {
-                    final String select = XmlDocs.attribute(withParam, "select");
+            for (final Element withParam : XmlTrees.children(call)) {
+                if (XmlTrees.is(withParam, XSL, "with-param") && nonEmpty(XmlTrees.attribute(withParam, "name"))) {
+                    final String select = XmlTrees.attribute(withParam, "select");
                     passed.put(withParam.getAttribute("name"), nonEmpty(select)
                             ? select
-                            : XmlDocs.leadingText(withParam).strip());
+                            : XmlTrees.text(withParam));
                 }
             }
             final Map<String, Object> entry = new LinkedHashMap<>();
@@ -345,7 +349,7 @@ final class SharedXslt {
             }
             final List<Map<String, Object>> functions = text == null
                     ? List.of()
-                    : functionCalls(xslt, functionsOf(XmlDocs.parse(text).orElse(null)));
+                    : functionCalls(xslt, functionsOf(XmlTrees.tryParse(text).orElse(null)));
             for (final Map<String, Object> function : functions) {
                 final Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("href", href);
@@ -371,7 +375,7 @@ final class SharedXslt {
     // (xpath-functions) values by key; looking through xsl:if, xsl:choose and the like, not into xsl:attribute.
     private static List<String> written(final Element element) {
         final Set<String> names = new LinkedHashSet<>();
-        for (final Element child : XmlDocs.children(element)) {
+        for (final Element child : XmlTrees.children(element)) {
             final String namespace = child.getNamespaceURI();
             if (XSL.equals(namespace)) {
                 if (FLOW.contains(child.getLocalName())) {
@@ -379,10 +383,10 @@ final class SharedXslt {
                 } else if ("element".equals(child.getLocalName())) {
                     names.add(localPart(child.getAttribute("name")));
                 }
-            } else if (FN.equals(namespace) && nonEmpty(XmlDocs.attribute(child, "key"))) {
+            } else if (FN.equals(namespace) && nonEmpty(XmlTrees.attribute(child, "key"))) {
                 names.add(child.getAttribute("key"));
             } else if (RECORDS.equals(namespace) && "data".equals(child.getLocalName())
-                       && nonEmpty(XmlDocs.attribute(child, "name"))) {
+                       && nonEmpty(XmlTrees.attribute(child, "name"))) {
                 names.add(child.getAttribute("name"));
             } else if (!FN.equals(namespace)) {
                 names.add(child.getLocalName());
@@ -395,7 +399,7 @@ final class SharedXslt {
     // Every element path (or JSON key path) an XSLT fragment writes, e.g. Device/HostName, Device/IPAddress.
     private static List<String> paths(final Element element, final List<String> prefix) {
         final Set<String> paths = new LinkedHashSet<>();
-        for (final Element child : XmlDocs.children(element)) {
+        for (final Element child : XmlTrees.children(element)) {
             final String namespace = child.getNamespaceURI();
             if (XSL.equals(namespace)) {
                 if (FLOW.contains(child.getLocalName())) {
@@ -407,7 +411,7 @@ final class SharedXslt {
                 continue;
             }
             if (FN.equals(namespace)) {
-                final String name = XmlDocs.attribute(child, "key");
+                final String name = XmlTrees.attribute(child, "key");
                 if ("map".equals(child.getLocalName()) || "array".equals(child.getLocalName())) {
                     final List<String> here = nonEmpty(name)
                             ? with(prefix, name)
@@ -424,7 +428,7 @@ final class SharedXslt {
                 continue;
             }
             if (RECORDS.equals(namespace) && "data".equals(child.getLocalName())
-                && nonEmpty(XmlDocs.attribute(child, "name"))) {
+                && nonEmpty(XmlTrees.attribute(child, "name"))) {
                 paths.add(child.getAttribute("name"));
                 continue;
             }
@@ -441,7 +445,7 @@ final class SharedXslt {
         final List<String> path = new ArrayList<>();
         Node node = call.getParentNode();
         while (node instanceof final Element element) {
-            if (XmlDocs.is(element, XSL, "template")) {
+            if (XmlTrees.is(element, XSL, "template")) {
                 final Element caller = caller(element, seen);
                 if (caller != null) {
                     final Set<Element> seenHere = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -458,7 +462,7 @@ final class SharedXslt {
                     break;
                 }
                 path.add(element.getLocalName());
-            } else if (FN.equals(element.getNamespaceURI()) && nonEmpty(XmlDocs.attribute(element, "key"))) {
+            } else if (FN.equals(element.getNamespaceURI()) && nonEmpty(XmlTrees.attribute(element, "key"))) {
                 path.add(element.getAttribute("key"));
             }
             node = element.getParentNode();
@@ -474,14 +478,14 @@ final class SharedXslt {
         }
         final Element root = template.getOwnerDocument().getDocumentElement();
         final List<Element> found;
-        final String name = XmlDocs.attribute(template, "name");
-        final String mode = XmlDocs.attribute(template, "mode");
+        final String name = XmlTrees.attribute(template, "name");
+        final String mode = XmlTrees.attribute(template, "mode");
         if (nonEmpty(name)) {
-            found = XmlDocs.elements(root, XSL, "call-template").stream()
+            found = XmlTrees.named(root, XSL, "call-template").stream()
                     .filter(candidate -> name.equals(candidate.getAttribute("name")))
                     .toList();
         } else if (nonEmpty(mode) && !"#default".equals(mode)) {
-            found = XmlDocs.elements(root, XSL, "apply-templates").stream()
+            found = XmlTrees.named(root, XSL, "apply-templates").stream()
                     .filter(candidate -> mode.equals(candidate.getAttribute("mode")))
                     .toList();
         } else {
@@ -489,7 +493,7 @@ final class SharedXslt {
         }
         for (final Element candidate : found) {
             Node node = candidate.getParentNode();
-            while (node instanceof final Element element && !XmlDocs.is(element, XSL, "template")) {
+            while (node instanceof final Element element && !XmlTrees.is(element, XSL, "template")) {
                 if (EVT.equals(element.getNamespaceURI()) || FN.equals(element.getNamespaceURI())) {
                     return candidate;
                 }
@@ -502,8 +506,8 @@ final class SharedXslt {
     // The stream meta a template reads, by its stroom:meta() calls.
     private static List<String> metaRead(final Element template) {
         final List<String> texts = new ArrayList<>();
-        for (final Element element : XmlDocs.descendantsAndSelf(template)) {
-            texts.addAll(XmlDocs.attributeValues(element));
+        for (final Element element : XmlTrees.descendantsAndSelf(template)) {
+            texts.addAll(XmlTrees.attributes(element).stream().map(Attr::getValue).toList());
         }
         texts.add(template.getTextContent());
         final Set<String> names = new TreeSet<>();

@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -124,7 +126,7 @@ class OutputFeeds {
         // own.
         final List<WriteGuard.BuildDoc> named = new ArrayList<>();
         BuildRecords.docs(records.load(build)).forEach((uuid, entry) -> {
-            if (entry instanceof final Map<?, ?> map && BuildPlan.truthy(map.get(BuildFeeds.OUTPUT_FOR))
+            if (entry instanceof final Map<?, ?> map && JsonValues.truthy(map.get(BuildFeeds.OUTPUT_FOR))
                 && feeds.containsKey(uuid)) {
                 named.add(feeds.get(uuid));
             }

@@ -16,7 +16,8 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.sample.PyText;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,11 +85,11 @@ public final class ActionRules {
     }
 
     private static Map<String, Object> dict(final Object... keysAndValues) {
-        return PyValues.dict(keysAndValues);
+        return JsonValues.dict(keysAndValues);
     }
 
     private static Pattern ignoringCase(final String regex) {
-        return PyValues.ignoringCase(regex);
+        return PyText.ignoringCase(regex);
     }
 
     private static Map<String, Pattern> severities() {
@@ -144,7 +145,7 @@ public final class ActionRules {
                                     final Object description,
                                     final Set<String> skip,
                                     final String split) {
-        final List<Map<String, Object>> held = PyValues.maps(records);
+        final List<Map<String, Object>> held = JsonValues.maps(records);
         if (held.isEmpty()) {
             return new Found(List.of(), List.of(), null);
         }
@@ -169,7 +170,7 @@ public final class ActionRules {
     public static List<Map<String, Object>> severityFields(final List<Map<String, Object>> records,
                                                            final List<String> names) {
         final String field = names.stream()
-                .filter(n -> PyText.match(SEVERITY, PyValues.lastPart(n, '.')))
+                .filter(n -> PyText.match(SEVERITY, PyText.lastPart(n, '.')))
                 .findFirst()
                 .orElse(null);
         if (field == null) {
@@ -258,7 +259,7 @@ public final class ActionRules {
         final List<String> out = new ArrayList<>();
         for (final Map<String, Object> rule : rules) {
             String element = "?";
-            for (final Map<String, Object> field : PyValues.maps(rule.get("fields"))) {
+            for (final Map<String, Object> field : JsonValues.maps(rule.get("fields"))) {
                 final String path = (String) field.get(PATH);
                 if (path.startsWith("EventDetail/")) {
                     final String[] parts = path.split("/", -1);
@@ -268,7 +269,7 @@ public final class ActionRules {
                     break;
                 }
             }
-            final List<Map<String, Object>> when = PyValues.maps(rule.get(WHEN));
+            final List<Map<String, Object>> when = JsonValues.maps(rule.get(WHEN));
             final Map<String, Object> condition = when.getLast();
             out.add(element + " for " + condition.get(FIELD) + " " + String.join(", ", conditionValues(condition)));
         }
@@ -279,7 +280,7 @@ public final class ActionRules {
     /// @return The values it takes.
     @SuppressWarnings("unchecked")
     static List<String> conditionValues(final Map<String, Object> condition) {
-        if (PyValues.truthy(condition.get(ONE_OF))) {
+        if (JsonValues.truthy(condition.get(ONE_OF))) {
             return (List<String>) condition.get(ONE_OF);
         }
         final List<String> one = new ArrayList<>();
@@ -290,7 +291,7 @@ public final class ActionRules {
     private static Map<String, String> networkRoles(final List<String> names) {
         final Map<String, String> out = new LinkedHashMap<>();
         FIELDS.forEach((role, pattern) -> names.stream()
-                .filter(n -> PyText.match(pattern, PyValues.lastPart(n, '.')))
+                .filter(n -> PyText.match(pattern, PyText.lastPart(n, '.')))
                 .findFirst()
                 .ifPresent(found -> out.put(role, found)));
         return out;
@@ -300,7 +301,7 @@ public final class ActionRules {
     private static List<String> values(final List<Map<String, Object>> records, final String field) {
         final List<String> seen = new ArrayList<>();
         for (final Map<String, Object> record : records) {
-            final String value = PyText.strip(PyValues.text(record.get(field)));
+            final String value = PyText.strip(JsonValues.text(record.get(field)));
             if (!value.isEmpty() && !seen.contains(value)) {
                 seen.add(value);
             }
@@ -314,7 +315,7 @@ public final class ActionRules {
                                    final List<String> names,
                                    final Set<String> skip) {
         for (final String name : names) {
-            if (skip.contains(name) || !PyText.match(SPLITTER, PyValues.lastPart(name, '.'))) {
+            if (skip.contains(name) || !PyText.match(SPLITTER, PyText.lastPart(name, '.'))) {
                 continue;
             }
             final List<String> values = values(records, name);
@@ -390,14 +391,14 @@ public final class ActionRules {
             final List<String> logoffs = unused(v -> PyText.search(LOGOFF, v));
             final List<Map<String, Object>> logoffFields = new ArrayList<>();
             logoffFields.add(dict(PATH, "EventDetail/Authenticate/Action", VALUE, "Logoff"));
-            if (PyValues.truthy(user)) {
+            if (JsonValues.truthy(user)) {
                 logoffFields.add(withRead("EventDetail/Authenticate/User/Id", user));
             }
             rule("logoff", logoffs, logoffFields);
             final List<String> changes = unused(v -> PyText.search(CONFIG, v));
             final List<Map<String, Object>> changeFields = new ArrayList<>();
             changeFields.add(dict(PATH, "EventDetail/Update/After/Configuration/Type", FIELD, split));
-            if (PyValues.truthy(description)) {
+            if (JsonValues.truthy(description)) {
                 changeFields.add(withRead("EventDetail/Update/After/Configuration/Description", description));
             }
             rule("config_change", changes, changeFields);
@@ -420,8 +421,8 @@ public final class ActionRules {
                     .filter(r -> value.equals(r.get(split)))
                     .toList();
             return !held.isEmpty() && held.stream().allMatch(r ->
-                    !PyText.strip(PyValues.text(r.get(net.get(SRC_IP)))).isEmpty()
-                    && !PyText.strip(PyValues.text(r.get(net.get(DST_IP)))).isEmpty());
+                    !PyText.strip(JsonValues.text(r.get(net.get(SRC_IP)))).isEmpty()
+                    && !PyText.strip(JsonValues.text(r.get(net.get(DST_IP)))).isEmpty());
         }
 
         private void logons(final Object user) {
@@ -436,7 +437,7 @@ public final class ActionRules {
             }
             final List<Map<String, Object>> fields = new ArrayList<>();
             fields.add(dict(PATH, "EventDetail/Authenticate/Action", VALUE, "Logon"));
-            if (PyValues.truthy(user)) {
+            if (JsonValues.truthy(user)) {
                 fields.add(withRead("EventDetail/Authenticate/User/Id", user));
             }
             if (!outcome.isEmpty() && outcome.size() == logons.size()) {
@@ -454,7 +455,7 @@ public final class ActionRules {
             final List<Map<String, Object>> fields = new ArrayList<>();
             fields.add(dict(PATH, "EventDetail/Process/Action", FIELD, split, MAP, actions));
             fields.add(dict(PATH, "EventDetail/Process/Type", VALUE, "Service"));
-            fields.add(withRead("EventDetail/Process/Command", PyValues.truthy(description)
+            fields.add(withRead("EventDetail/Process/Command", JsonValues.truthy(description)
                     ? description
                     : split));
             rule("service", processes, fields);

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
@@ -77,36 +78,11 @@ public final class CodeDiff {
             text = stripped;
         }
         final List<String> out = new ArrayList<>();
-        for (final String line : splitLines(text)) {
-            final String trimmed = PyStr.strip(line);
+        for (final String line : PyText.splitlines(text)) {
+            final String trimmed = PyText.strip(line);
             if (!trimmed.isEmpty()) {
                 out.add(trimmed);
             }
-        }
-        return out;
-    }
-
-    // Python's str.splitlines: at \n, \r, \r\n and the other line boundaries Python knows.
-    private static List<String> splitLines(final String text) {
-        final List<String> out = new ArrayList<>();
-        int start = 0;
-        int i = 0;
-        while (i < text.length()) {
-            final char ch = text.charAt(i);
-            if (ch == '\r' && i + 1 < text.length() && text.charAt(i + 1) == '\n') {
-                out.add(text.substring(start, i));
-                i += 2;
-                start = i;
-            } else if ("\n\r\u000b\f\u001c\u001d\u001e\u0085  ".indexOf(ch) >= 0) {
-                out.add(text.substring(start, i));
-                i++;
-                start = i;
-            } else {
-                i++;
-            }
-        }
-        if (start < text.length()) {
-            out.add(text.substring(start));
         }
         return out;
     }

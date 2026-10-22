@@ -36,6 +36,11 @@ class TestHandEdits {
         return ((Map<String, String>) CASES.getFirst().get("result")).get(name);
     }
 
+    // What the new code undoes of the edit, said (handedit.lost): `no longer writes number bytes`, `reads x again`.
+    private static List<String> lost(final String base, final String current, final String code) {
+        return HandEdits.undone(base, current, code).stream().map(HandEdits.Undone::toString).toList();
+    }
+
     @Test
     void howAnEditIsWrittenDoesNotCount() {
         // Brackets round a whole test, whitespace, xsl:if or not: the same fields from the same elements.
@@ -44,7 +49,7 @@ class TestHandEdits {
                 "test=\"( EventDetail/*/Action )\"");
         assertThat(HandEdits.outline(generated).reads()).isEqualTo(HandEdits.outline(restyled).reads());
         // A template's field, read relative to its element, reads the same path.
-        assertThat(HandEdits.lost("<x/>", "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
+        assertThat(lost("<x/>", "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
                                           + "<xsl:value-of select=\"EventDetail/View/Resource/URL\"/></xsl:stylesheet>",
                 "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"Resource\">"
                 + "<xsl:value-of select=\"URL\"/></xsl:template></xsl:stylesheet>")).isEmpty();
@@ -84,8 +89,8 @@ class TestHandEdits {
         assertThat(now).contains("<xsl:variable");
         final String edited = old.replaceFirst(java.util.regex.Pattern.quote("<string key=\"method\">"),
                 "<string key=\"verb\">");
-        assertThat(HandEdits.lost(now, old, now)).isEmpty();
-        assertThat(HandEdits.lost(now, edited, now)).containsExactly("no longer writes string verb",
+        assertThat(lost(now, old, now)).isEmpty();
+        assertThat(lost(now, edited, now)).containsExactly("no longer writes string verb",
                 "writes string method again");
     }
 
@@ -93,11 +98,11 @@ class TestHandEdits {
     void aTranslationEditedByHandIsNoLongerWrittenByTheRegeneratedCode() {
         // From test_a_translation_edited_by_hand_is_kept_through_build_translation_xslt: a Data added by hand to the
         // generated translation is what regenerating it would undo.
-        assertThat(HandEdits.lost(xslt("translation"), xslt("translation_dc"), xslt("translation")))
+        assertThat(lost(xslt("translation"), xslt("translation_dc"), xslt("translation")))
                 .contains("no longer writes Data device_class");
         // test_a_constant_changed_by_hand_and_in_the_mapping_is_asked_about: the constant changed by hand, and the
         // mapping's change to the same field, collide.
-        final List<String> lost = HandEdits.lost(xslt("translation"), xslt("translation_edited"),
+        final List<String> lost = lost(xslt("translation"), xslt("translation_edited"),
                 xslt("translation_prod"));
         assertThat(lost).contains("no longer writes Environment = Test");
     }
