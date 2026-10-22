@@ -102,4 +102,17 @@ class TestXmlSerialiser {
         final XmlElement root = XmlParser.parse("<a>\n  <b> </b>\n  <!-- c -->\n  <d>x <e/> </d>\n</a>", true, true);
         assertThat(XmlSerialiser.toPrettyXml(root)).isEqualTo("<a>\n  <b> </b>\n  <d>x <e/> </d>\n</a>\n");
     }
+
+    @Test
+    void anElementWrittenAloneDeclaresTheNamespacesOfItsNameAndAttributesFirst() {
+        // As lxml writes it (libxml2 copies the element, declaring what it uses, then adds its ancestors'
+        // declarations): seen reading back an xsl:for-each, whose text the reader compares.
+        final XmlElement root = XmlParser.parse("<a xmlns=\"d\" xmlns:x=\"X\" xmlns:y=\"Y\"><b><x:c y:at=\"1\" "
+                                                + "q=\"2\"><e/></x:c></b></a>");
+        final XmlElement c = root.childElements().getFirst().childElements().getFirst();
+        assertThat(XmlSerialiser.toXml(c))
+                .isEqualTo("<x:c xmlns:x=\"X\" xmlns:y=\"Y\" xmlns=\"d\" y:at=\"1\" q=\"2\"><e/></x:c>");
+        assertThat(XmlSerialiser.toXml(root.childElements().getFirst()))
+                .isEqualTo("<b xmlns=\"d\" xmlns:x=\"X\" xmlns:y=\"Y\"><x:c y:at=\"1\" q=\"2\"><e/></x:c></b>");
+    }
 }
