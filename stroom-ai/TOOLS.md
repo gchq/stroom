@@ -715,12 +715,19 @@ Where they differ from the Python server:
 * **Files** (`upload_sample files=`) are posted by the commands to `/mcp/upload/<id>?file=<name>`, signed in as any
   request to Stroom is (the user's API key or token, in the commands as `Authorization: Bearer $STROOM_API_KEY`, or
   `$env:STROOM_API_KEY` in PowerShell, which the user sets in their terminal), in place of the MCP server's signed
-  upload tickets. What a ticket bound is kept by this node (`SampleUploads`): the user the commands were given to,
-  the feed, its stream type and receipt headers, the build, each file once, for `stroom.ai.sampleUploads.commandsLast`
-  (15 minutes, as `upload_ticket_minutes`); a file larger than `stroom.ai.sampleUploads.maxUploadMb` (100, as
-  `max_upload_mb`) is refused with 413. A post that matches no waiting file is refused with 403 (the ticket's 401).
-  As at `/mcp`, the servlet needs Use MCP Tools and is off with the endpoint; `upload_sample files=` says so up front,
-  and tells the agent to have the user upload in Stroom instead. A file whose storing failed can be posted again.
+  upload tickets. What a ticket bound is held in the database (`SampleUploads`, `AiSampleUploadDao`, tables
+  `ai_sample_upload` and `ai_sample_upload_file`): the user the commands were given to, the feed, its stream type and
+  receipt headers, the build, each file once, for `stroom.ai.sampleUploads.commandsLast` (15 minutes, as
+  `upload_ticket_minutes`); a file larger than `stroom.ai.sampleUploads.maxUploadMb` (100, as `max_upload_mb`) is
+  refused with 413. So any node takes the post, not only the one that gave the commands (as a signed ticket could be
+  checked anywhere), and a restart forgets nothing. A post first claims its file (a conditional update, so of two
+  posts of one file, on one node or two, only one takes it), then marks it stored or releases it; a claim left by a
+  node that stopped part way through a post may be taken again after 10 minutes (`SampleUploads.CLAIM_GOES_STALE`).
+  `maxPendingPerUser` is counted in the database, across nodes. Sets that have run out, and those of deleted users,
+  are deleted by the _AI Chat Retention_ job. A post that matches no waiting file (or one being posted already) is
+  refused with 403 (the ticket's 401). As at `/mcp`, the servlet needs Use MCP Tools and is off with the endpoint;
+  `upload_sample files=` says so up front, and tells the agent to have the user upload in Stroom instead. A file
+  whose storing failed can be posted again.
   The `files` description and the hint describe the commands so (the user's key, never in the chat or the command),
   not a ticket. The upload is logged (who, feed, file, stream), where the MCP server audited it.
 * **Results' JSON** leaves nulls out, as every ported tool's does: `upload_sample`'s reply for a stream not visible

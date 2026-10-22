@@ -56,14 +56,16 @@ class TestUploadSampleTool {
     private final FeedUploads feedUploads = Mockito.mock(FeedUploads.class);
     private final AiConfig aiConfig = Mockito.mock(AiConfig.class);
     private final UriFactory uriFactory = Mockito.mock(UriFactory.class);
-    private final SampleUploads sampleUploads = new SampleUploads(() -> aiConfig, () -> 1_000_000L);
-    private final UploadSampleTool tool = new UploadSampleTool(feeds.buildFeeds, feeds.world.guard(),
-            feeds.world.records(), feeds.plan, feedUploads, sampleUploads, feeds.securityContext, () -> aiConfig,
-            () -> uriFactory);
     private final List<byte[]> sent = new ArrayList<>();
+    private SampleUploads sampleUploads;
+    private UploadSampleTool tool;
 
     @BeforeEach
     void setUp() throws IOException {
+        // Held in the database (MySQL, the test database).
+        sampleUploads = SampleUploadsDb.emptied().uploads(() -> aiConfig, "node1", () -> 1_000_000L);
+        tool = new UploadSampleTool(feeds.buildFeeds, feeds.world.guard(), feeds.world.records(), feeds.plan,
+                feedUploads, sampleUploads, feeds.securityContext, () -> aiConfig, () -> uriFactory);
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig());
         Mockito.when(feeds.securityContext.hasAppPermission(any(AppPermission.class))).thenReturn(true);
         Mockito.when(feeds.securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("alice").build());
@@ -267,7 +269,7 @@ class TestUploadSampleTool {
         final String bash = ((List<Map<String, String>>) result.get("commands")).getFirst().get("bash");
         final Matcher id = Pattern.compile("/mcp/upload/([^?]+)\\?").matcher(bash);
         assertThat(id.find()).isTrue();
-        return sampleUploads.claim(id.group(1), "alice", file).orElseThrow();
+        return sampleUploads.claim(id.group(1), "alice", file).orElseThrow().pending();
     }
 
     @SuppressWarnings("unchecked")
