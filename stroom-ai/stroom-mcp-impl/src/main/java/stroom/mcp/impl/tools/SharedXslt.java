@@ -232,6 +232,43 @@ final class SharedXslt {
         return templates;
     }
 
+    /// The JSON values a shared indexing template writes (the Stroom MCP server's `json_values`).
+    ///
+    /// @param xslt     A shared XSLT's text.
+    /// @param template A named template in it.
+    /// @return Each dotted key path it writes, with the element writing it (string, number, boolean); none if the
+    /// XSLT doesn't parse or has no such template.
+    static Map<String, String> jsonValues(final String xslt, final String template) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        XmlDocs.parse(xslt).flatMap(root -> XmlDocs.descendantsAndSelf(root).stream()
+                        .filter(element -> XmlDocs.is(element, XSL, "template")
+                                           && Objects.equals(XmlDocs.attribute(element, "name"), template))
+                        .findFirst())
+                .ifPresent(found -> jsonValues(found, List.of(), out));
+        return out;
+    }
+
+    private static void jsonValues(final Element element, final List<String> prefix, final Map<String, String> out) {
+        for (final Element child : XmlDocs.children(element)) {
+            final String namespace = child.getNamespaceURI();
+            final String key = XmlDocs.attribute(child, "key");
+            if (XSL.equals(namespace) && FLOW.contains(child.getLocalName())) {
+                jsonValues(child, prefix, out);
+            } else if (FN.equals(namespace) && ("map".equals(child.getLocalName())
+                                                || "array".equals(child.getLocalName()))) {
+                final List<String> deeper = new ArrayList<>(prefix);
+                if (nonEmpty(key)) {
+                    deeper.add(key);
+                }
+                jsonValues(child, deeper, out);
+            } else if (FN.equals(namespace) && nonEmpty(key)) {
+                final List<String> path = new ArrayList<>(prefix);
+                path.add(key);
+                out.put(String.join(".", path), child.getLocalName());
+            }
+        }
+    }
+
     /// @param xslt      A calling XSLT's text.
     /// @param templates The shared named templates, each with what it writes.
     /// @return Each call in the XSLT to one of them: `{template, within, writes, at, with_params}`.

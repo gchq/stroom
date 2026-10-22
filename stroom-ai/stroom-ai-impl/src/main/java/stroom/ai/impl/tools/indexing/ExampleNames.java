@@ -228,11 +228,18 @@ public final class ExampleNames {
         return String.join("_", words(part).stream().map(PyValues::lower).toList());
     }
 
-    // A name in the example's style for a path it has no field for, from the path's last elements:
-    // Client.IPAddress or ClientIPAddress (PascalCase), client.ipAddress or clientIpAddress (camelCase),
-    // client.ip_address or client_ip_address (ECS-style).
-    private static String derive(final String source, final String style, final boolean dotted,
-                                 final Set<String> taken) {
+    /// A name in the example's style for a path it has no field for, from the path's last elements:
+    /// Client.IPAddress or ClientIPAddress (PascalCase), client.ipAddress or clientIpAddress (camelCase),
+    /// client.ip_address or client_ip_address (ECS-style) (the Stroom MCP server's `_derive`, which
+    /// draft_index_mapping also names fields with).
+    ///
+    /// @param source An event-logging path.
+    /// @param style  The naming style, one of [#STYLE_NAMES].
+    /// @param dotted True to join the parts with dots.
+    /// @param taken  The names already taken.
+    /// @return The name, or null if every name it could take is taken (or the style is none of [#STYLE_NAMES]).
+    public static String derive(final String source, final String style, final boolean dotted,
+                                final Set<String> taken) {
         final List<String> parts = segments(source);
         if (parts.isEmpty() || !STYLE_NAMES.containsKey(style)) {
             return null;

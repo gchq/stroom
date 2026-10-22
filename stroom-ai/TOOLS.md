@@ -995,3 +995,100 @@ Where they differ from the MCP server:
 * **Tests** port `tests/test_cef.py`'s tool cases and `tests/test_coverage.py` (`TestDraftCefMappingTool`,
   `TestReviewCoverageTool`, `TestCoverageReads`, `TestXsltSaves`); `follow_on_pipelines` is tested on
   `ProcessorFilters.followOnPipelines`, and `cef.extend`'s case was already in `TestCefPlan`.
+
+## The indexing tools
+
+`get_field_conventions`, `draft_index_mapping`, `propose_index_template`, `check_index_template`,
+`create_index_doc`, `rename_index` and `verify_index` are ported as tools of their own (`stroom-mcp-impl`, category
+indexing) from the MCP server's `tools/indexing.py`, on the indexing core above and the build layer. What they share
+is ported as helpers, named for the ports still to come (`create_indexing_pipeline`, `create_pipeline`, `save_xslt`,
+`write_documentation`, `describe_document`):
+
+* **`IndexingMemory`**: the session stores, kept per user in this node's memory as the MCP server kept them in its
+  own: the naming the user chose in a form (`field_naming_chosen`), a discovery index's time field
+  (`discovery_time_chosen`), the component templates given (`component_templates_given`), the templates shown for
+  review (`templates_shown`), each for four hours; the plans drafted (`index_plans_drafted`); and the verification
+  checks that passed (`verify_checks_passed`, an hour).
+* **`IndexPlans`**: `plan_given` (`given`), `drafted_plans` (`drafted`, for save_xslt's port), `with_cardinality`,
+  `_with_convention`, `_plan_reply` (`reply`) and `utils/mappingchanges.py`'s `apply_plan_changes`
+  (`applyChanges`; to be replaced by the mapping-changes port when it lands).
+* **`IndexingInputs`**: `require_events` (for create_indexing_pipeline's port), `_require_input`, `_is_discovery`,
+  `_build_of_stream` and the Events' path population (`summarise_events`).
+* **`BuildIndexes`**: `_build_destinations`, `_build_index_docs`, `other_index` (for create_pipeline's and
+  create_indexing_pipeline's ports), `_same_index`, `_literal_names`, `_set_index_name` and `_the_cluster_in_use`.
+* **`IndexExamples`**: `_index_doc`, `_template_from_index`, `_example_from_index`, `_keep_example`, `_kept_example`,
+  `_given_components` and `_is_template`.
+* **`IndexFields`**: `_index_fields`, `_unsearchable`, `fields_not_in_index` (`notInIndex`), `missing_fields_said`,
+  `_fields_written_not_indexed`, `_columns_not_in_index`, `_unlisted` and `set_index_fields` (`addLuceneFields`, for
+  create_indexing_pipeline's port).
+* **`TemplatePipelines`** and **`TemplateReviews`**: `_destination`, `_documents`, `_component_choices`, `_agree`,
+  `_template_summary`, `_asking`, `_not_theirs` and `_commit_action`.
+* **`IndexChecks`** and **`IndexSurveys`**: verify_index's searches (`run_test_searches`, `_completeness`,
+  `_traced`, `_trace_checks`, `_same_value`, `dashboard_config`, `window_start`, `SearchCheck`, `_as_searched`,
+  `_searchable`), and `survey_index`, `index_profile` and `feeding_pipelines` (for describe_document's and
+  write_documentation's ports).
+* **`IndexingArgs`**: the arguments read as `utils/params.py`'s `ONE_OR_MORE` read them, and the plan, fields,
+  discovery and shared templates validated as pydantic validated them. `SharedXslt.jsonValues` is
+  `utils/sharedxslt.py`'s `json_values`; `ExampleNames.derive` (`_derive`) is now public.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `get_field_conventions` | yes | yes | no | no |
+| `draft_index_mapping` | no | no | yes | no |
+| `propose_index_template` | no | no | yes | yes |
+| `check_index_template` | no | no | yes | yes |
+| `create_index_doc` | no | no | yes | no |
+| `rename_index` | no | no | yes | no |
+| `verify_index` | no | no | yes | yes |
+
+Elasticsearch is only ever read: an Elastic Index doc's templates through Stroom's own template code (as
+`elastic_index_templates` reads them), its cluster's connection test through Stroom's. An agreed template is kept in
+the pipeline's description (`KeptMapping.withAgreedTemplate`), and the cluster admin applies it. Index docs,
+dashboards and pipelines are made and changed through Stroom's stores as the user, each change asked through
+`Consent` first, as the MCP server's were (draft_index_mapping asks before drafting without an example or after an
+existing index; keeping the user's example in the build is the tools' own bookkeeping, as in Python).
+
+Where they differ from the MCP server:
+
+* **No configured default convention**: the MCP server's `default_convention` setting has no Stroom counterpart, so
+  `get_field_conventions` without a name always puts the choice to the user; its description no longer says "(and
+  no configured default)".
+* **create_index_doc's test** is Stroom's connection test of the doc's cluster (`ElasticClusterTests`, as the
+  cluster's Test Connection button runs it), as `{"result": {"ok", "message"}}`: the MCP server ran Stroom's
+  `/elasticIndex/v1/testIndex`, which also looks for the index (not there yet for a new one); the index test is not
+  bound for injection in Stroom.
+* **A Lucene index's fields** are listed and added through Stroom's index service (`IndexResource.findFields` and
+  `addField`), as the index's Fields tab does, the user needing Edit on the doc.
+* **Reading an existing index's templates** (`like_index`): a doc the user can't read, or Stroom's `NOT_FOUND`, is
+  treated as no template (its fields then serve); a doc not configured, or a cluster that can't be reached, is said
+  as `Stroom couldn't read its index template: ...`.
+* **Keeping the example**: component templates given as JSON objects are kept as their JSON text; the MCP server
+  failed to keep such an example (it called `strip()` on a dict) and only logged it.
+* **Arguments** are read as `ONE_OR_MORE` read them; `plan`, `discovery`, `extra_fields` and `shared` may be given as
+  JSON text too, and one that doesn't validate is refused with the model's errors (`plan isn't a valid field plan:
+  ...`) in place of pydantic's. `backend` other than `lucene` or `elasticsearch` is refused in words.
+* **Paths** in the options and refusals are Stroom's explorer paths (`/Elastic Indices`), not the find index's.
+* **propose_index_template and check_index_template step within the session's time limit** for a long call (the MCP
+  server's had none): cut short, the result says `stopped_early: true` and `stepped` (what was stepped, and that the
+  check is of the documents those records gave only), and the check and any agreement go ahead on those documents.
+  An interrupted call is refused with `Stepping was stopped: the call was cancelled.`. They need the Stepping
+  permission, checked first, and the streams stepped are audited as viewed. `max_records` (check) is described
+  (`The most records stepped: 1 to 500 (default 50).`), and one outside it, a `priority` below 0 or not a whole
+  number, or no `pipeline_uuid`, is refused in words. "Already agreed" compares the bodies as JSON with sorted keys.
+  The kept-example note says "what was given as example_template is not an index template" only when one was given
+  (the MCP server said it whenever an example was kept). `pipeline_link` is `StroomLinks.documentTarget`'s.
+* **verify_index runs within the session's time limit** for a long call: where the MCP server stopped before the
+  caller's access token ran out, it stops before the time limit (`PipelineStepping.timeIsUp()`), and `next` says
+  `Stopped before this session's time limit for a call (N s) ran out, with N check(s) still to run: call
+  verify_index again ...; each call has its own time, so there is nothing for the user to do.` (the checks that
+  passed are kept, as before). An interrupted call is refused with `Verification was stopped: the call was
+  cancelled.`. Every hit of a stream is traced in one stepping walk (`SteppingWalks`), the default path included;
+  without the Stepping permission each traced check fails with its reason, as a failed step did. A stream's event
+  count is read through `StreamReader.fetch`. `retries` outside 0 to 20, a bad `expected_documents`, and a search
+  with no field or a condition dashboards don't take are refused in words. A time with no offset is read as UTC
+  for the dashboard's window (the MCP server used its local zone). The dashboard is made through
+  `WriteGuard.createFilled` (role Indexing) and written through Stroom's Dashboard store; the searches go through
+  `IndexSearches` (unsorted), which gained an overload with an explicit wait for survey_index's sample.
+* **survey_index** (`IndexSurveys`, no tool yet) reads its further groups of columns one after another (the MCP
+  server ran them at once); `feeding_pipelines` finds the pipelines with `PipelineIndex.containing` and a feed's
+  description with `FeedNames.exact`.
