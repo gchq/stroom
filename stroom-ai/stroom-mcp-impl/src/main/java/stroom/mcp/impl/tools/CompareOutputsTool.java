@@ -103,7 +103,8 @@ class CompareOutputsTool extends AbstractBuiltInTool {
                         .addProperty(EVENTS_ARG, ArraySchema.builder()
                                 .items(event)
                                 .description("Indexed events whose records to compare, each {stream_id, event_id} "
-                                             + "as find_events gives them (with stream_ids too, or instead).")
+                                             + "as search_events with an index gives them (with stream_ids too, or "
+                                             + "instead).")
                                 .build())
                         .required(PIPELINE_UUID_ARG)
                         .build())
@@ -175,7 +176,8 @@ class CompareOutputsTool extends AbstractBuiltInTool {
                 ? request.element()
                 : base.defaultOutputs().getFirst();
         if (request.streamIds().isEmpty() && request.events().isEmpty()) {
-            throw new ToolRefusal("Give stream_ids, or events (from find_events), whose records to compare");
+            throw new ToolRefusal("Give stream_ids, or events (from search_events with an index), whose records to "
+                                  + "compare");
         }
         final List<Map<String, Object>> locations = request.events().isEmpty()
                 ? List.of()
