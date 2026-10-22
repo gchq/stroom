@@ -106,6 +106,20 @@ class XsltHistory {
         return XsltVersionHistory.withPending(description, previous, author(), change, by(session), now(), code);
     }
 
+    /// Who made a documentation change, as a doc's version control row names them (the Stroom MCP server's
+    /// `tools/builds.py` `_with_change`): the user, and through what.
+    ///
+    /// @param session The session of the call.
+    /// @return E.g. `jbloggs (agent: Stroom 7.13, Ask Stroom AI)`.
+    String changedBy(final ToolSession session) {
+        return author() + " (agent: " + by(session) + ")";
+    }
+
+    /// @return The time now, as this history dates its rows.
+    Instant now() {
+        return clock.instant();
+    }
+
     /// @param description The XSLT's description.
     /// @param code        Its code.
     /// @return The description with the build's changes so far previewed in its version history, marked
@@ -121,9 +135,5 @@ class XsltHistory {
         } catch (final RuntimeException e) {
             return "-";
         }
-    }
-
-    private Instant now() {
-        return clock.instant();
     }
 }
