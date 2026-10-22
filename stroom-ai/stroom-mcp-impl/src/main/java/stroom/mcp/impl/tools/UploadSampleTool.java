@@ -224,6 +224,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
             throw new ToolRefusal(e.getMessage());
         }
         checkImportData(feed);
+        // Before anything waits for them: a path no command can carry safely is refused.
+        FeedUploads.checkPaths(files);
         final DocRef match = buildFeeds.buildFeed(context.session(), feed);
         if (buildFeeds.sampleFiles(match)) {
             // Seen: the terminal command failed, and the agent uploaded two records of each file as text instead.
@@ -262,6 +264,8 @@ class UploadSampleTool extends AbstractBuiltInTool {
                                          final String streamType,
                                          final Map<String, String> headers) {
         checkImportData(feed);
+        // Before anything waits for them: a path no command can carry safely is refused.
+        FeedUploads.checkPaths(files);
         final DocRef match = buildFeeds.buildFeed(context.session(), feed);
         checkUploadsReachable(context, match);
         final String build = guard.buildOf(match).orElse(null);

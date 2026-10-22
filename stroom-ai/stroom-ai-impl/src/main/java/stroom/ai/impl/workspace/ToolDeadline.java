@@ -23,9 +23,14 @@ import java.util.function.Supplier;
 /// A time limit on a tool call, for work that could otherwise run for a very long time (e.g. a search with a
 /// pattern that backtracks badly, or a large table step). The limit is held per thread; long-running code calls
 /// {@link #check()} as it goes, and pattern matching checks it through [DeadlineCharSequence].
+///
+/// Time spent waiting for the user (see [#paused(Supplier)]) doesn't count against a limit: the limits are kept in
+/// the thread's working time, the time since its first limit was set less the time it has spent paused.
 public final class ToolDeadline {
 
     private static final ThreadLocal<Long> DEADLINE_NANOS = new ThreadLocal<>();
+    // How long the thread has spent paused, in nanoseconds, while it has had a limit.
+    private static final ThreadLocal<Long> PAUSED_NANOS = new ThreadLocal<>();
 
     private ToolDeadline() {
         // Static only.
@@ -41,7 +46,10 @@ public final class ToolDeadline {
     /// @throws ToolTimeoutException if the work runs past the limit.
     public static <T> T run(final Duration limit, final Supplier<T> work) {
         final Long previous = DEADLINE_NANOS.get();
-        final long deadline = System.nanoTime() + limit.toNanos();
+        if (previous == null) {
+            PAUSED_NANOS.set(0L);
+        }
+        final long deadline = workingNanos() + limit.toNanos();
         DEADLINE_NANOS.set(previous != null && previous - deadline < 0
                 ? previous
                 : deadline);
@@ -50,8 +58,27 @@ public final class ToolDeadline {
         } finally {
             if (previous == null) {
                 DEADLINE_NANOS.remove();
+                PAUSED_NANOS.remove();
             } else {
                 DEADLINE_NANOS.set(previous);
+            }
+        }
+    }
+
+    /// Does some work that waits for the user (e.g. a form they fill in), so that the time it takes doesn't count
+    /// against the time limits in force: they are pushed back by as long as it took.
+    ///
+    /// @param work The work.
+    /// @param <T>  The type of the result.
+    /// @return The result.
+    public static <T> T paused(final Supplier<T> work) {
+        final long start = System.nanoTime();
+        try {
+            return work.get();
+        } finally {
+            final Long paused = PAUSED_NANOS.get();
+            if (paused != null) {
+                PAUSED_NANOS.set(paused + (System.nanoTime() - start));
             }
         }
     }
@@ -60,7 +87,7 @@ public final class ToolDeadline {
     /// interrupted (e.g. the run has been stopped).
     public static void check() {
         final Long deadline = DEADLINE_NANOS.get();
-        if (deadline != null && System.nanoTime() - deadline > 0) {
+        if (deadline != null && workingNanos() - deadline > 0) {
             throw new ToolTimeoutException();
         }
         if (Thread.currentThread().isInterrupted()) {
@@ -75,6 +102,14 @@ public final class ToolDeadline {
         if (deadline == null) {
             return Optional.empty();
         }
-        return Optional.of(Duration.ofNanos(Math.max(0L, deadline - System.nanoTime())));
+        return Optional.of(Duration.ofNanos(Math.max(0L, deadline - workingNanos())));
+    }
+
+    // The time now, less the time the thread has spent paused.
+    private static long workingNanos() {
+        final Long paused = PAUSED_NANOS.get();
+        return System.nanoTime() - (paused == null
+                ? 0L
+                : paused);
     }
 }

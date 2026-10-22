@@ -193,15 +193,49 @@ class TestFeedUploads {
         final Map<String, String> one = commands.getFirst();
         assertThat(one.get("file")).isEqualTo("sample-data/fortios/001_1.json");
         assertThat(one.get("bash")).isEqualTo("curl -sS --fail-with-body -H \"Authorization: Bearer "
-                                              + "$STROOM_API_KEY\" --data-binary "
-                                              + "\"@sample-data/fortios/001_1.json\" "
-                                              + "\"https://stroom.example/mcp/upload/Xk3f9QpL2mWa?file=sample-data"
-                                              + "%2Ffortios%2F001_1.json\"");
+                                              + "$STROOM_API_KEY\" -H 'Content-Type: application/octet-stream' "
+                                              + "--data-binary '@sample-data/fortios/001_1.json' "
+                                              + "'https://stroom.example/mcp/upload/Xk3f9QpL2mWa?file=sample-data"
+                                              + "%2Ffortios%2F001_1.json'");
         // curl alone is Invoke-WebRequest in Windows PowerShell.
         assertThat(one.get("powershell")).startsWith("curl.exe -sS --fail-with-body -H \"Authorization: Bearer "
-                                                     + "$env:STROOM_API_KEY\"");
+                                                     + "$env:STROOM_API_KEY\" -H 'Content-Type: "
+                                                     + "application/octet-stream' --data-binary "
+                                                     + "'@sample-data/fortios/001_1.json' ");
         assertThat(FeedUploads.commands("u", List.of("my file.json")).getFirst().get("bash"))
-                .endsWith("\"u?file=my%20file.json\"");
+                .endsWith("'u?file=my%20file.json'");
+    }
+
+    @Test
+    void aPathIsQuotedSoNeitherShellExpandsAnythingInIt() {
+        // Seen in review: the path went in double quotes with only " escaped, so $(...) and backticks in a path
+        // the agent gave would run in the user's terminal.
+        final Map<String, String> sub = FeedUploads.commands("u", List.of("$(id).json")).getFirst();
+        assertThat(sub.get("bash")).contains("--data-binary '@$(id).json' ");
+        assertThat(sub.get("powershell")).contains("--data-binary '@$(id).json' ");
+
+        final Map<String, String> ticks = FeedUploads.commands("u", List.of("`whoami`.json")).getFirst();
+        assertThat(ticks.get("bash")).contains("--data-binary '@`whoami`.json' ");
+        assertThat(ticks.get("powershell")).contains("--data-binary '@`whoami`.json' ");
+
+        final Map<String, String> quotes = FeedUploads.commands("u", List.of("it's \"here\".json")).getFirst();
+        assertThat(quotes.get("bash")).contains("--data-binary '@it'\\''s \"here\".json' ");
+        assertThat(quotes.get("powershell")).contains("--data-binary '@it''s \"here\".json' ");
+
+        final Map<String, String> backslash = FeedUploads.commands("u", List.of("C:\\data\\")).getFirst();
+        assertThat(backslash.get("bash")).contains("--data-binary '@C:\\data\\' ");
+        assertThat(backslash.get("powershell")).contains("--data-binary '@C:\\data\\' ");
+        // The URL has the name encoded, so nothing in it needs quoting either.
+        assertThat(sub.get("bash")).endsWith("'u?file=%24%28id%29.json'");
+    }
+
+    @Test
+    void aPathWithALineBreakOrControlCharacterIsRefused() {
+        assertThatThrownBy(() -> FeedUploads.commands("u", List.of("a.json\nrm -rf ~")))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("line break or another control character");
+        assertThatThrownBy(() -> FeedUploads.commands("u", List.of("a\u0007.json")))
+                .isInstanceOf(ToolRefusal.class);
     }
 
     private FeedUploads.Sent send(final String text) {

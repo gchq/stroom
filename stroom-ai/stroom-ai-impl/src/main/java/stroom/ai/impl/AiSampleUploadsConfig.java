@@ -35,20 +35,26 @@ public class AiSampleUploadsConfig extends AbstractConfig implements IsStroomCon
 
     static final int DEFAULT_MAX_UPLOAD_MB = 100;
     static final StroomDuration DEFAULT_COMMANDS_LAST = StroomDuration.ofMinutes(15);
+    static final int DEFAULT_MAX_PENDING_PER_USER = 20;
 
     private final int maxUploadMb;
     private final StroomDuration commandsLast;
+    private final int maxPendingPerUser;
 
     public AiSampleUploadsConfig() {
         maxUploadMb = DEFAULT_MAX_UPLOAD_MB;
         commandsLast = DEFAULT_COMMANDS_LAST;
+        maxPendingPerUser = DEFAULT_MAX_PENDING_PER_USER;
     }
 
     @JsonCreator
     public AiSampleUploadsConfig(@JsonProperty("maxUploadMb") final Integer maxUploadMb,
-                                 @JsonProperty("commandsLast") final StroomDuration commandsLast) {
+                                 @JsonProperty("commandsLast") final StroomDuration commandsLast,
+                                 @JsonProperty("maxPendingPerUser") final Integer maxPendingPerUser) {
         this.maxUploadMb = Math.max(1, Objects.requireNonNullElse(maxUploadMb, DEFAULT_MAX_UPLOAD_MB));
         this.commandsLast = Objects.requireNonNullElse(commandsLast, DEFAULT_COMMANDS_LAST);
+        this.maxPendingPerUser = Math.max(1, Objects.requireNonNullElse(maxPendingPerUser,
+                DEFAULT_MAX_PENDING_PER_USER));
     }
 
     /// @return The largest sample file, in MB, that may be posted to `/mcp/upload`.
@@ -69,11 +75,21 @@ public class AiSampleUploadsConfig extends AbstractConfig implements IsStroomCon
         return commandsLast;
     }
 
+    /// @return The most sets of upload commands one user may have waiting at once.
+    @JsonPropertyDescription("The most sets of upload commands (upload_sample with files=) one user may have "
+                             + "waiting to be run on a node at once. More are refused until some have been run or "
+                             + "have run out (commandsLast).")
+    @JsonProperty("maxPendingPerUser")
+    public int getMaxPendingPerUser() {
+        return maxPendingPerUser;
+    }
+
     @Override
     public String toString() {
         return "AiSampleUploadsConfig{" +
                "maxUploadMb=" + maxUploadMb +
                ", commandsLast=" + commandsLast +
+               ", maxPendingPerUser=" + maxPendingPerUser +
                '}';
     }
 }

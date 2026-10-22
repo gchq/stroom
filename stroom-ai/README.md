@@ -592,8 +592,20 @@ with an external identity provider, through MCP's OAuth sign-in, which the endpo
 * A call that changes something asks the user first: a form, where the client can show one (MCP elicitation), or
   else an approval id, which the client passes to `approve_call` once the user agrees. A tool that asks the user
   itself before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once.
-* Each session has a workspace, as a chat has (a hidden chat record), deleted when the session ends, or after
-  `mcpEndpoint.sessionRetention` without requests. Heavy calls take one of the user's run slots, as chat runs do.
+  What is shown leads with what the call acts on (a target's uuid or name, the build); arguments past 1,500
+  characters are cut, saying so, and such a call gets no approval id, as the user couldn't see what they approve.
+* Each session has a workspace, as a chat has (a hidden chat record), deleted when the session ends (once its
+  running calls have stopped), or after `mcpEndpoint.sessionRetention` without requests (the _MCP Session
+  Maintenance_ job, every minute on each node, ends idle sessions and those whose clients have gone). Heavy calls
+  take one of the user's run slots, as chat runs do, given back while a call waits for the user.
+* A call is worked on by the thread serving its request, within the longer of `workspace.toolTimeLimit` and
+  `workspace.queryTimeLimit` (time waiting for the user doesn't count). It is cancelled when the client sends
+  `notifications/cancelled`, when its HTTP request ends, or when its session ends.
+* A user may have `mcpEndpoint.maxSessionsPerUser` sessions on a node: one more ends their least recently used
+  session that has no call running (clients often go away without ending theirs), or, if every one has a call
+  running, is refused. One user may have at most half of `mcpEndpoint.maxFormsPerNode` forms waiting.
+* Any request (a call, an answer to a form, a listening stream, a DELETE) for a session that isn't the user's is
+  answered `404`, as for a session the node doesn't have.
 * The tools' instructions (as the Stroom MCP server gave its clients) are sent when a client connects, and the
   agent guides and field convention profiles are offered as MCP resources (`stroom://guide/<name>`,
   `stroom://conventions/<name>`). The chat is given the same instructions when it is offered the build tools.
@@ -602,7 +614,10 @@ with an external identity provider, through MCP's OAuth sign-in, which the endpo
   A request for a session a node doesn't have is answered `404`, and the client starts a new session.
 * `upload_sample` gives commands that post a sample file to `/mcp/upload` as the user (`Authorization: Bearer
   $STROOM_API_KEY`); the endpoint takes a file only for the user, feed, stream type and build `upload_sample` named,
-  once, within `sampleUploads.commandsLast`, up to `sampleUploads.maxUploadMb`.
+  once, within `sampleUploads.commandsLast`, up to `sampleUploads.maxUploadMb`. The commands single-quote the file's
+  path (nothing in it is expanded by bash or PowerShell; a path with a line break or control character is refused)
+  and send the body as `application/octet-stream`. A user may have `sampleUploads.maxPendingPerUser` sets of
+  commands waiting.
 * Every call, made, refused or not approved, is audited, with the client that made it.
 
 `/mcp` is a servlet, not part of the REST API, so it isn't in the Swagger documentation; the user guide (User
@@ -656,9 +671,11 @@ All under `appConfig.ai` unless stated.
 | `mcpEndpoint.approvalTimeout` | `PT10M` | How long an approval id given to an MCP client may be used |
 | `mcpEndpoint.keepAliveInterval` | `PT20S` | How often an MCP session's open stream is pinged |
 | `mcpEndpoint.sessionRetention` | `P1D` | How long an idle MCP session, and its workspace, is kept |
+| `mcpEndpoint.maxSessionsPerUser` | `20` | MCP sessions one user may have open on a node at once |
 | `builds.workspaceFolder` | `MCP Workspace` | The folder below System in which the build tools make each build's folder |
 | `sampleUploads.maxUploadMb` | `100` | The largest sample file that may be posted to `/mcp/upload` |
 | `sampleUploads.commandsLast` | `PT15M` | How long `upload_sample`'s upload commands may be used |
+| `sampleUploads.maxPendingPerUser` | `20` | Sets of upload commands one user may have waiting at once |
 | `errorTriage.rules` | `[]` | The environment's own rules for triaging pipeline errors, before Stroom's |
 | `pipelineStages.*` | (see `expected.yaml`) | What marks a pipeline as each stage, and where each stage's templates are |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |

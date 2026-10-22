@@ -17,6 +17,7 @@
 package stroom.mcp.impl;
 
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.workspace.ToolDeadline;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
@@ -26,19 +27,29 @@ import java.util.Objects;
 
 /// Asks an MCP client's user a tool's questions (e.g. ask_user's) as a form (MCP elicitation), and waits for the
 /// answer, holding the call: unlike a chat's run, an MCP call has nothing to stop and carry on later.
+///
+/// While the user is asked, the call gives back its run slot (if it holds one) and its time limit is paused, so a
+/// form waiting up to the form timeout neither keeps the user's other work from starting nor uses up the call's
+/// time.
 final class McpUserQuestions implements UserQuestions {
 
     private final McpSession session;
     private final McpAsyncServerExchange exchange;
     private final McpForms forms;
+    private final McpCallSlot slot;
 
     /// @param session  The session asking.
     /// @param exchange The request the questions are asked in.
     /// @param forms    Shows the form and waits for the answer.
-    McpUserQuestions(final McpSession session, final McpAsyncServerExchange exchange, final McpForms forms) {
+    /// @param slot     The call's run slot, given back while the user is asked.
+    McpUserQuestions(final McpSession session,
+                     final McpAsyncServerExchange exchange,
+                     final McpForms forms,
+                     final McpCallSlot slot) {
         this.session = Objects.requireNonNull(session, "session");
         this.exchange = Objects.requireNonNull(exchange, "exchange");
         this.forms = Objects.requireNonNull(forms, "forms");
+        this.slot = Objects.requireNonNull(slot, "slot");
     }
 
     /// @return True if the client can show forms.
@@ -59,6 +70,6 @@ final class McpUserQuestions implements UserQuestions {
                             final String callId,
                             final String intro,
                             final Map<String, Object> form) {
-        return forms.ask(session, exchange, intro, form);
+        return slot.releasedWhile(() -> ToolDeadline.paused(() -> forms.ask(session, exchange, intro, form)));
     }
 }
