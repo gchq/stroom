@@ -255,7 +255,8 @@ public class ToolConsent {
     }
 
     private static String builtInAwayReason() {
-        return "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory.";
+        return "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's "
+               + "files or memory.";
     }
 
     /// What to do about a tool call.
