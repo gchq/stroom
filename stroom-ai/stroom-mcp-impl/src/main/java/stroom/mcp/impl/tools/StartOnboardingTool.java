@@ -185,9 +185,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
         }
         final WriteGuard.Folder folder = guard.buildFolder(build);
         plan.rememberBuild(context, build);
-        final Map<String, Object> profiled = sampleProfiler.withFragmentSetup(named.size() > 1
-                ? sampleProfiler.profileMany(named)
-                : sampleProfiler.profile(named.values().iterator().next()));
+        final Map<String, Object> profiled = sampleProfiler.profileAll(named);
         final Optional<String> tooLong = samples != null
                 ? SampleArguments.longSamplesNote(named)
                 : Optional.empty();
