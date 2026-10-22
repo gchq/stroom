@@ -27,8 +27,9 @@ import com.google.inject.multibindings.OptionalBinder;
 /// [StroomTool] and a single `.addBinding(...)` line here.
 ///
 /// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]): sample
-/// profiling ([SampleProfiling]), and, with a default until the generators are ported, [MappingDrift] (whether
-/// an XSLT is still what its mapping generates). A port that provides one binds it with
+/// profiling ([SampleProfiling]), [MappingDrift] (whether an XSLT is still what its mapping generates, bound to the
+/// ported generators: [GeneratedDrift]), and, with a default until the indexing tools bind theirs,
+/// [DraftedIndexPlans]. A port that provides one binds it with
 /// `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding().to(...)`.
 public class PortedToolsModule extends AbstractModule {
 
@@ -74,12 +75,23 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(RenameIndexTool.class)
                 .addBinding(ProposeIndexTemplateTool.class)
                 .addBinding(CheckIndexTemplateTool.class)
-                .addBinding(VerifyIndexTool.class);
+                .addBinding(VerifyIndexTool.class)
+                .addBinding(SaveTextConverterTool.class)
+                .addBinding(SaveXsltTool.class)
+                .addBinding(SaveDictionaryTool.class)
+                .addBinding(DraftTranslationMappingTool.class)
+                .addBinding(BuildTranslationXsltTool.class)
+                .addBinding(BuildDataSplitterTool.class)
+                .addBinding(BuildReferenceXsltTool.class)
+                .addBinding(RebuildMappingTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
                 .setDefault().to(SampleProfiling.Profiled.class);
         OptionalBinder.newOptionalBinder(binder(), MappingDrift.class)
-                .setDefault().toInstance(MappingDrift.NONE);
+                .setDefault().to(GeneratedDrift.class);
+        // The plans draft_index_mapping keeps for a session: none until the indexing tools bind theirs.
+        OptionalBinder.newOptionalBinder(binder(), DraftedIndexPlans.class)
+                .setDefault().to(IndexingMemory.class);
     }
 }
