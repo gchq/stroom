@@ -40,7 +40,7 @@ public interface GitRepoSettingsUiHandlers extends ChangeUiHandlers {
     void onCheckForUpdates(TaskMonitorFactory taskMonitorFactory);
 
     /**
-     * 'Set Http Client Config' button event handler. Opens the shared HTTP client editor.
+     * 'Set HTTP Client Config' button event handler. Opens the shared HTTP client editor.
      */
     void onSetHttpClientConfiguration();
 }

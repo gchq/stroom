@@ -199,7 +199,7 @@ public final class OpenAiModelEditorStories {
                             RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
 
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Max Connections", "label")).toBeInTheDocument();
@@ -222,7 +222,7 @@ public final class OpenAiModelEditorStories {
                             .toBeNull());
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // The user agent is kept (it used to be lost on OK)
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     play.waitFor(() -> play.expect(screen.getByLabelText("User Agent")).toHaveValue(USER_AGENT));
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration"))
@@ -276,7 +276,7 @@ public final class OpenAiModelEditorStories {
         final Play screen = play.screen();
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
-        play.click(play.findByRole("button", StroomDom.button("Set Http Client Config")));
+        play.click(play.findByRole("button", StroomDom.button("Set HTTP Client Config")));
         play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration")).toBeInTheDocument());
         play.expect(screen.getByText("Max Connections", "label")).toBeInTheDocument();
     }

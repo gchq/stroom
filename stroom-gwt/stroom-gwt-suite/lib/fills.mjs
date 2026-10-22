@@ -233,16 +233,12 @@ export const FILLS = {
   },
 
   'Elastic Cluster': async (page) => {
-    // "Use authentication" gates the two key fields — tick it FIRST or they are disabled and the
-    // fill silently skips them.
-    await setCheck(page, 'Use authentication', true);
-    await page.waitForTimeout(400);
+    // The API key is an Access Token credential chosen by name (filled as the OpenAI Model's is).
+    // The timeouts, TLS and proxy are in the HTTP client configuration dialog (Set Http Client
+    // Config), which isn't filled.
     const n = await setFields(page, [
       ['Connection URLs', 'http://elastic.seed.invalid:9200'],
-      ['API key ID', 'seed-api-key-id'],
-      ['API key secret', 'seed-api-key-secret'],
-      ['Connection timeout (ms)', '5000'],
-      ['Response timeout (ms)', '30000'],
+      ['API Key (optional)', 'seed-elastic-api-key'],
     ]);
     await fillDocumentationTab(page, '# Seed Elastic Cluster\n\nPoints at a host that does not exist, on purpose.');
     return `${n} settings + documentation`;

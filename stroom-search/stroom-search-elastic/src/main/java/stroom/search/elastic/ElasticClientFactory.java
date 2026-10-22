@@ -16,50 +16,58 @@
 
 package stroom.search.elastic;
 
-import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.util.http.HttpAsyncClientUtil;
+import stroom.util.http.HttpClientConfiguration;
+import stroom.util.http.HttpProxyConfiguration;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.net.SsrfGuard;
+import stroom.util.shared.NullSafe;
+import stroom.util.time.StroomDuration;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.TransportUtils;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import jakarta.inject.Inject;
-import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.routing.HttpRoutePlanner;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientFactory.class);
     private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+)://(.+?)(?::([0-9]+)/?)?$");
 
     @Inject
     public ElasticClientFactory() {
     }
 
-    public ElasticsearchClient create(final ElasticConnectionConfig config,
+    /// Creates a new Elasticsearch client. The caller is responsible for closing it.
+    ///
+    /// @param connection          The connection to the cluster, with all credentials resolved.
+    /// @param elasticClientConfig Stroom's global Elasticsearch client settings, i.e. the connection pool sizes.
+    /// @return A new client.
+    public ElasticsearchClient create(final ResolvedElasticConnection connection,
                                       final ElasticClientConfig elasticClientConfig) {
-        final ArrayList<HttpHost> httpHosts = new ArrayList<>();
-        boolean useHttps = false;
+        final List<HttpHost> httpHosts = new ArrayList<>();
 
         // Parse list of connection URLs into their component parts (scheme, host and port)
-        for (final String url : config.getConnectionUrls()) {
+        for (final String url : connection.connectionUrls()) {
             final HttpHost host = hostFromUrl(url);
 
             if (host != null) {
@@ -67,44 +75,65 @@ public class ElasticClientFactory {
                 // allowed, as an Elasticsearch cluster legitimately lives on an internal or (in dev) a
                 // loopback address.
                 SsrfGuard.rejectMetadataAndWildcard(url);
-
-                // Extract the host, port and scheme
                 httpHosts.add(host);
-
-                if (host.getSchemeName().equalsIgnoreCase("https")) {
-                    useHttps = true;
-                }
             } else {
-                LOGGER.error("Invalid Elasticsearch URL format: '" + url + "'");
+                LOGGER.error("Invalid Elasticsearch URL format: '{}'", url);
             }
         }
 
+        final HttpClientConfiguration httpClientConfiguration = connection.httpClientConfiguration();
         final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
 
-        restClientBuilder.setRequestConfigCallback(requestConfig -> setTimeouts(requestConfig, config));
+        restClientBuilder.setRequestConfigCallback(requestConfig -> {
+            setTimeout(httpClientConfiguration.getConnectionRequestTimeout(),
+                    requestConfig::setConnectionRequestTimeout);
+            setTimeout(httpClientConfiguration.getTimeout(), requestConfig::setResponseTimeout);
+        });
 
-        // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
-        if (useHttps) {
-            final SSLContext sslContext = getSslContext(config);
-
-            if (sslContext != null) {
-                restClientBuilder.setSSLContext(sslContext);
-                restClientBuilder.setConnectionManagerCallback(httpClientBuilder -> {
-                    httpClientBuilder
-                            .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
-                            .setMaxConnTotal(elasticClientConfig.getMaxConnections());
-                });
+        restClientBuilder.setConnectionConfigCallback(connectionConfig -> {
+            setTimeout(httpClientConfiguration.getConnectionTimeout(), connectionConfig::setConnectTimeout);
+            if (isPositive(httpClientConfiguration.getTimeToLive())) {
+                connectionConfig.setTimeToLive(
+                        TimeValue.ofMilliseconds(httpClientConfiguration.getTimeToLive().toMillis()));
             }
-        }
+            if (isPositive(httpClientConfiguration.getValidateAfterInactivityPeriod())) {
+                connectionConfig.setValidateAfterInactivity(TimeValue.ofMilliseconds(
+                        httpClientConfiguration.getValidateAfterInactivityPeriod().toMillis()));
+            }
+        });
 
-        // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
-        final String apiKey = getEncodedApiKey(config);
-        if (config.getUseAuthentication() && apiKey != null) {
-            final Header[] defaultHeaders = new Header[]{
-                    new BasicHeader("Authorization", "ApiKey " + apiKey)
-            };
+        restClientBuilder.setConnectionManagerCallback(connectionManager -> {
+            connectionManager
+                    .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
+                    .setMaxConnTotal(elasticClientConfig.getMaxConnections());
+            // Always replace the client's default TLS strategy, as that does not verify hostnames
+            connectionManager.setTlsStrategy(httpClientConfiguration.getTlsConfiguration() != null
+                    ? HttpAsyncClientUtil.createTlsStrategy(httpClientConfiguration.getTlsConfiguration())
+                    : HttpAsyncClientUtil.createDefaultTlsStrategy());
+        });
 
-            restClientBuilder.setDefaultHeaders(defaultHeaders);
+        final HttpProxyConfiguration proxyConfiguration = httpClientConfiguration.getProxyConfiguration();
+        final HttpRoutePlanner routePlanner = HttpAsyncClientUtil.createRoutePlanner(proxyConfiguration);
+        final CredentialsProvider proxyCredentialsProvider =
+                HttpAsyncClientUtil.createProxyCredentialsProvider(proxyConfiguration);
+        restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
+            if (routePlanner != null) {
+                httpClientBuilder.setRoutePlanner(routePlanner);
+            }
+            if (proxyCredentialsProvider != null) {
+                httpClientBuilder.setDefaultCredentialsProvider(proxyCredentialsProvider);
+            }
+            if (NullSafe.isNonBlankString(httpClientConfiguration.getUserAgent())) {
+                httpClientBuilder.setUserAgent(httpClientConfiguration.getUserAgent());
+            }
+        });
+
+        // The API key is the base64 encoding of "<key id>:<secret>", as returned by Elasticsearch in the
+        // `encoded` property when the key is created.
+        if (NullSafe.isNonBlankString(connection.apiKey())) {
+            restClientBuilder.setDefaultHeaders(new Header[]{
+                    new BasicHeader(HttpHeaders.AUTHORIZATION, "ApiKey " + connection.apiKey())
+            });
         }
 
         // Use Jackson 3 not 2
@@ -114,50 +143,15 @@ public class ElasticClientFactory {
         return new ElasticsearchClient(transport);
     }
 
-    private SSLContext getSslContext(final ElasticConnectionConfig config) {
-        final String cert = config.getCaCertificate();
-
-        if (cert == null || cert.isEmpty()) {
-            return null;
+    private static void setTimeout(final StroomDuration duration,
+                                   final Consumer<Timeout> setter) {
+        if (duration != null) {
+            setter.accept(Timeout.ofMilliseconds(duration.toMillis()));
         }
-
-        try {
-            final InputStream certInputStream = new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8));
-            return TransportUtils.sslContextFromHttpCaCrt(certInputStream);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Failed to initialise SSL context", e);
-        } catch (final Exception e) {
-            LOGGER.error("Failed to load CA certificate", e);
-        }
-
-        return null;
     }
 
-    /**
-     * Encode the API key ID and secret in base64 for use in a HTTP request.
-     *
-     * @return Base-64 encoded string. If no API key or secret are defined, returns `null`.
-     */
-    private String getEncodedApiKey(final ElasticConnectionConfig config) {
-        final String apiKeyId = config.getApiKeyId();
-        final String apiKeySecret = config.getApiKeySecret();
-
-        if (apiKeyId == null || apiKeyId.isEmpty() || apiKeySecret == null || apiKeySecret.isEmpty()) {
-            return null;
-        }
-
-        final String combinedSecret = apiKeyId + ":" + apiKeySecret;
-        return Base64.getEncoder().encodeToString(combinedSecret.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /// Sets the timeouts of requests to the cluster from its connection config: how long to wait for
-    /// a connection, and how long to wait for a response once a request is sent.
-    ///
-    /// @param requestConfig The requests' config.
-    /// @param config        The cluster's connection config.
-    public static void setTimeouts(final RequestConfig.Builder requestConfig, final ElasticConnectionConfig config) {
-        requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
-        requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getResponseTimeoutMillis()));
+    private static boolean isPositive(final StroomDuration duration) {
+        return duration != null && duration.toMillis() > 0;
     }
 
     /**
@@ -189,9 +183,10 @@ public class ElasticClientFactory {
                 return new HttpHost(scheme, host, port);
             }
         } catch (final NumberFormatException e) {
-            LOGGER.error("Invalid port format in URL: '" + url + "'");
+            LOGGER.error("Invalid port format in URL: '{}'", url);
         } catch (final RuntimeException e) {
-            LOGGER.error("Elasticsearch connection URL could not be parsed: '" + url + "'. " + e.getMessage());
+            LOGGER.error(() -> LogUtil.message(
+                    "Elasticsearch connection URL could not be parsed: '{}'. {}", url, e.getMessage()));
         }
 
         return null;
