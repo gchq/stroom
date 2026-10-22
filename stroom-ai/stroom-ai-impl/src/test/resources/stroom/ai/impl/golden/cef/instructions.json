@@ -1,0 +1,29 @@
+{
+ "custom_keys": true,
+ "topic": "arcsight-secretserver",
+ "vendor": "Delinea",
+ "template": "CEF to ArcSight",
+ "overrides": [
+  {
+   "path": "EventDetail/Authorise/User/Name",
+   "key": "cs6",
+   "label": "Authorised user",
+   "event_type": null,
+   "drop": false
+  },
+  {
+   "path": "EventSource/System/Environment",
+   "key": "cs1",
+   "label": null,
+   "event_type": null,
+   "drop": false
+  },
+  {
+   "path": "EventDetail/View/Resource/Name",
+   "key": "myKey",
+   "label": "The name",
+   "event_type": null,
+   "drop": false
+  }
+ ]
+}

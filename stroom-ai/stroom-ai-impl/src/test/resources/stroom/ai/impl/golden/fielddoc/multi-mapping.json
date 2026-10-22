@@ -1,0 +1,143 @@
+{
+ "input": "json",
+ "xml_namespace": "",
+ "json_layout": "array",
+ "json_fields": [],
+ "xml_fields": [],
+ "pairs": [],
+ "extract": [],
+ "for_each": "events",
+ "nil_values": [],
+ "drop_when": [
+  {
+   "when": [
+    {
+     "field": "host",
+     "matches": "^qa-",
+     "scope": "record"
+    }
+   ],
+   "reason": "QA traffic"
+  },
+  {
+   "when": [
+    {
+     "field": "action",
+     "equals": "HEARTBEAT"
+    }
+   ],
+   "reason": "heartbeats are not events"
+  }
+ ],
+ "common": [
+  {
+   "path": "EventTime/TimeCreated",
+   "field": "ts",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/System/Name",
+   "value": "App",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/System/Environment",
+   "value": "Eval",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/Generator",
+   "value": "audit",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/Device/HostName",
+   "field": "host",
+   "repeat": false,
+   "scope": "record"
+  },
+  {
+   "path": "EventSource/User/Id",
+   "field": "user",
+   "repeat": false
+  },
+  {
+   "path": "EventSource/User/Groups/Group/Name",
+   "field": "roles",
+   "repeat": true
+  },
+  {
+   "path": "EventDetail/TypeId",
+   "field": "action",
+   "repeat": false
+  },
+  {
+   "path": "EventDetail/Authenticate/User/Id",
+   "field": "user",
+   "repeat": false
+  },
+  {
+   "path": "EventDetail/Authenticate/Data",
+   "field": "batch",
+   "repeat": false,
+   "scope": "record",
+   "data_name": "batch"
+  }
+ ],
+ "events": [
+  {
+   "name": "logon",
+   "when": [
+    {
+     "field": "action",
+     "equals": "LOGIN"
+    }
+   ],
+   "fields": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "value": "Logon",
+     "repeat": false
+    }
+   ],
+   "drop": false,
+   "keep_unknown": false,
+   "data": []
+  },
+  {
+   "name": "logoff",
+   "when": [
+    {
+     "field": "action",
+     "equals": "LOGOUT"
+    }
+   ],
+   "fields": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "value": "Logoff",
+     "repeat": false
+    }
+   ],
+   "drop": false,
+   "keep_unknown": false,
+   "data": []
+  }
+ ],
+ "unmatched": "skip",
+ "style": {
+  "naming": "snake_case",
+  "variable_min_reads": 3,
+  "inline_map_max_keys": 3,
+  "function_min_uses": 2,
+  "data_values": "interpolated",
+  "data_entries": "function",
+  "data_run_min": 4,
+  "variables": "just_in_time",
+  "data_names": "as_given",
+  "layout": "modes"
+ },
+ "imports": [],
+ "shared": [],
+ "functions": []
+}
