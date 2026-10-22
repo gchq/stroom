@@ -20,11 +20,13 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.vis.VisFrame;
 import stroom.dashboard.client.vis.VisSelectionModel;
+import stroom.dashboard.client.vis.VisToolbarButton;
 import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
@@ -42,6 +44,8 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisColourList;
+import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -59,8 +63,10 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public class QueryResultVisPresenter
         extends MyPresenterWidget<QueryResultVisView>
@@ -78,6 +84,9 @@ public class QueryResultVisPresenter
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
+    private final DateTimeFormatter dateTimeFormatter;
+    // The colours of the values the visualisation colours by
+    private final VisColourList visColourList = new VisColourList();
     private final VisFrame visFrame;
 
     private VisFunction currentFunction;
@@ -101,15 +110,25 @@ public class QueryResultVisPresenter
     public QueryResultVisPresenter(final EventBus eventBus,
                                    final QueryResultVisView view,
                                    final RestFactory restFactory,
-                                   final CurrentPreferences currentPreferences) {
+                                   final CurrentPreferences currentPreferences,
+                                   final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         visFrame = new VisFrame(eventBus);
+        // Named as the query editor's tab showing it is
+        visFrame.setTitle("Visualisation");
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
+        visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons, visFrame::toolbarButtonPressed));
+        visFrame.setColoursHandler((field, values) -> visColourList.colours(
+                field,
+                values,
+                VisPalette.fromDisplayValue(currentPreferences.getVisualisationPalette()),
+                Theme.getThemeType(currentPreferences.getTheme()).isDark()));
 
         view.setVisFrame(visFrame);
 
@@ -180,8 +199,13 @@ public class QueryResultVisPresenter
         scriptCache.bind();
         visFrame.bind();
 
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
+        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
+            visFrame.setClassName(getClassName(event.getTheme()));
+            // The visualisation asks for its values' colours again, in the new palette or theme
+            visFrame.coloursChanged(VisPalette.fromDisplayValue(event.getVisualisationPalette()).getDisplayValue());
+            // ...and shows times in the new time zone and date-time pattern
+            visFrame.timeChanged(dateTimeFormatter.getVisTimeSettings());
+        }));
 
         getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
@@ -471,7 +495,12 @@ public class QueryResultVisPresenter
                 try {
                     if (loadedFunction == null || !loadedFunction.equals(function)) {
                         loadedFunction = function;
+                        // The buttons were the previous visualisation's
+                        getView().setVisButtons(Collections.emptyList(), visFrame::toolbarButtonPressed);
                         visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                        visFrame.coloursChanged(VisPalette.fromDisplayValue(
+                                currentPreferences.getVisualisationPalette()).getDisplayValue());
+                        visFrame.timeChanged(dateTimeFormatter.getVisTimeSettings());
                     }
 
                     currentError = null;
@@ -671,5 +700,12 @@ public class QueryResultVisPresenter
         void hideMessage();
 
         void setVisFrame(VisFrame visFrame);
+
+        /// Shows the buttons the visualisation asks for in its toolbar, replacing any it showed.
+        ///
+        /// @param buttons The buttons, none for no visualisation buttons.
+        /// @param onPress Given a button's id when it is pressed, and a toggle's new state (null
+        ///                for a button that isn't a toggle).
+        void setVisButtons(List<VisToolbarButton> buttons, BiConsumer<String, Boolean> onPress);
     }
 }

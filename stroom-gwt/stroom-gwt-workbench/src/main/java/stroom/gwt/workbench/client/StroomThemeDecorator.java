@@ -35,6 +35,10 @@ import com.google.gwt.user.client.ui.Widget;
 /// theme with [#getStroomThemeName()], as `ScreenHarness` does for the user's preferences.
 public class StroomThemeDecorator implements StoryDecorator {
 
+    /// The space around each story, in pixels. A story that fills the page's height takes twice
+    /// this off it, so that the page doesn't scroll.
+    public static final int PADDING_PX = 24;
+
     private static final String PAGE_BACKGROUND = "var(--page__background-color, rgb(34, 37, 44))";
 
     // The theme applied to the page, one story being shown per page
@@ -45,6 +49,13 @@ public class StroomThemeDecorator implements StoryDecorator {
     public static boolean isDark() {
         return toStroomTheme(theme).getThemeType().isDark();
     }
+
+    /// @return True if the stories are shown with forced colours, as with a high contrast theme
+    /// such as Windows' (the test runner's `--forced-colours`), when the browser gives the page
+    /// the high contrast theme's colours.
+    public static native boolean isForcedColours() /*-{
+        return $wnd.matchMedia("(forced-colors: active)").matches;
+    }-*/;
 
     /// @return The name of the Stroom theme the stories are shown in, e.g. `Dark`, for Stroom's
     /// user preferences (`UserPreferences.theme`, `CurrentPreferences.setTheme`).
@@ -75,7 +86,7 @@ public class StroomThemeDecorator implements StoryDecorator {
     public Widget decorate(final Widget story) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
-        style.setProperty("padding", "24px");
+        style.setProperty("padding", PADDING_PX + "px");
         style.setProperty("minHeight", "100vh");
         // The theme's page colour, which Stroom's panels and dialogs are drawn on (not the app's
         // background behind them, which in the light theme is blue), on the page as well as the

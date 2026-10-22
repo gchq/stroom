@@ -22,6 +22,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Param;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
+import stroom.visualisation.shared.VisColourList;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -55,4 +56,8 @@ public interface DashboardContext extends ParamValues {
     void fireComponentChangeEvent(Component component);
 
     void fireContextChangeEvent();
+
+    /// @return The colours of the values the dashboard's visualisations colour by, which they
+    /// share so that a value has the same colour in each of them.
+    VisColourList getVisColourList();
 }

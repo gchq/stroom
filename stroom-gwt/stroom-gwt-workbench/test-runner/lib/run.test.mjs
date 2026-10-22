@@ -43,7 +43,7 @@ async function unavailableReason() {
 const skip = (await unavailableReason()) ?? false;
 
 const STORIES = ['pass', 'fail', 'busy-loop-during', 'busy-loop-after', 'reload-fast', 'nav-away-fast',
-  'nav-away-later', 'console', 'flaky', '../../../evil', 'kill-browser'];
+  'nav-away-later', 'console', 'flaky', '../../../evil', 'kill-browser', 'forced-colours'];
 
 // The preview page: the story's behaviour is chosen by its id
 const PREVIEW_SCRIPT = `
@@ -70,6 +70,9 @@ setTimeout(() => {
     case 'nav-away-later': done('COMPLETED'); setTimeout(() => { location.href = 'about:blank'; }, 10); break;
     case 'console': console.error('Oops'); done('COMPLETED'); break;
     case 'flaky': done(window.FLAKY_ATTEMPT > 1 ? 'COMPLETED' : 'ERRORED', { error: 'Not yet' }); break;
+    case 'forced-colours':
+      done(matchMedia('(forced-colors: active)').matches ? 'COMPLETED' : 'ERRORED', { error: 'Not forced' });
+      break;
     default: done('COMPLETED');
   }
 }, 20);
@@ -218,6 +221,15 @@ test('runner: --theme shows the stories in that theme, as the workbench\'s theme
   } finally {
     onPreview = () => {};
   }
+});
+
+test('runner: --forced-colours shows the stories with forced colours', { skip }, async () => {
+  const forced = await run('forced-colours', ['--forced-colours', 'forced-colours']);
+  assert.equal(forced.code, 0);
+  // Without it, the colours aren't forced
+  const standard = await run('forced-colours-off', ['forced-colours']);
+  assert.equal(standard.code, 1);
+  assert.match(standard.output, /Not forced/);
 });
 
 test('runner: a theme other than dark or light is refused', { skip }, async () => {
