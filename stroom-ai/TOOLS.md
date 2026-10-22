@@ -273,6 +273,63 @@ Where they differ from the Python server:
   `withFragmentSetup(profiled, chosenVersion)`, else the newest held: the build's chosen version is kept by the
   translation tools, not ported yet, so profile_sample and start_onboarding pass none.
 
+## The stepping tools: `step_pipeline`, `step_sample`, `step_records` and `compare_outputs`
+
+Ported as tools of their own (`stroom-mcp-impl`, category processing) from the MCP server's `tools/stepping.py`.
+What they share is `PipelineStepping` (reading the pipeline, the draft check through `CheckXsltTool.check`, the
+reference data check, triage with `AcceptedErrors`, the EventDetail/Unknown check through `WriteGuard` and
+`KeptMappings`, `remember_clean` through `BuildRecords.recordPassed`, `step_spread`, and the time limit),
+`SteppedPipeline` (the MCP server's `_Pipeline`, on `MergedPipeline`) and `SteppingVerdicts` (`sends_on`,
+`_empty_output`, `_no_events`, `_no_reference`, `_block`, `_nothing_stepped`, ...). Each stream is walked in one
+stepping session (`SteppingWalks`), through Stroom's stepping service in-process, as the user: the session lives on
+this node, so there is nothing for session affinity to do. `compare_outputs` finds an indexed event's record with
+`EventLocations.eventLocations` and diffs with `EventXml.fieldValues`.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `step_pipeline` | yes | yes | no | yes |
+| `step_sample` | yes | yes | no | yes |
+| `step_records` | yes | yes | no | yes |
+| `compare_outputs` | yes | yes | no | yes |
+
+Where they differ from the MCP server:
+
+* **step_sample and step_records are read-only** (`readOnlyHint` true), although a clean verdict is recorded in the
+  build record of the pipeline stepped (the MCP server said `readOnlyHint` false for that), for the reasons
+  check_events is (above): the record is the tools' own bookkeeping, kept only for pipelines in a build, and as
+  writes every step would need approving over `/mcp`, and none could be made while the user is away.
+* **Permissions**: each refuses a user without the Stepping permission up front (`You don't have permission to step
+  pipelines (Stepping), ...`), where the MCP server left it to Stroom's REST refusal. step_sample's check that a
+  stream is one JSON array read as one record reads the stream's head only for a user with View Data, and is
+  otherwise skipped. The streams stepped are audited as viewed (`AiAuditLog.streamsViewed`).
+* **Time limits**: they step within the session's time limit for a long call (its query time limit), less 10 s for
+  the work after stepping, where the MCP server stopped before the caller's access token ran out. step_sample
+  stops with `stopped_early` and the hint `Stopped after N records before this session's time limit for a call (X
+  s) ran out. Call again: each call has its own time, so there is nothing for the user to do. The verdict is of
+  those records only.`, and records nothing, as the MCP server did; step_records does the same (the MCP server's
+  had no time limit); compare_outputs compares only the records stepped through both sides by then, with
+  `stopped_early` and a hint. A step that is still unfinished at the limit stops too (`SteppingWalks` checks
+  `ToolDeadline` while it waits for a step). step_pipeline is refused if its one step outlasts the limit.
+* **Cancelling**: each stops at once when its thread is interrupted (the client gave up on the call, or the run was
+  stopped), saying `Stepping was stopped: the call was cancelled.`; the walk's stepping session is still ended.
+* **Progress**: step_sample says when each stream starts and now and then while stepping it (`CallProgress`), as
+  the MCP server did; step_pipeline, step_records and compare_outputs now say what they step too (the MCP
+  server's said nothing, except compare_outputs' `step_spread`).
+* **Records spread over streams** (`step_spread`, for compare_outputs) are stepped stream by stream, not four
+  streams at once: the share of each stream and the order of the steps are the MCP server's.
+* **step_sample stops at the record cap**: streams left once `max_records` is reached are not stepped at all (the
+  MCP server still made one step of each). Empty `stream_ids` (and empty `locations` for step_records) are refused,
+  where the MCP server stepped nothing and said none was found.
+* **Arguments** out of range are refused in words (`max_records must be a whole number of at least 1`, compare's
+  `from 1 to 500`), in place of pydantic's message; a location without `stream` and `record` is refused saying so.
+  `draft_code`, `locations` and `events` may be given as JSON text too. `max_records`' description says `at most
+  500` rather than naming the MCP server's `max_sample_records` setting. `record` is declared a string (`4`,
+  `'first'` or `'last'`); a number is read as well.
+* **Mistyped properties** are found against the types Stroom's element registry declares
+  (`ElementRegistryFactory`), as the MCP server read them from `/pipeline/v1/propertyTypes`; a property with no
+  value is not checked. A pipeline with neither an XSLT step nor a parser is refused (`... has no XSLT step and no
+  parser, so there is no output of it to look at`), where the MCP server failed with an index error.
+
 ## MCP server tools with no built-in counterpart
 
 What would move in with each. These all need the MCP server's workspace folder and write guard (tags
