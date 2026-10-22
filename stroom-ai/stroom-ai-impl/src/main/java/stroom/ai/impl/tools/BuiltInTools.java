@@ -107,6 +107,19 @@ public class BuiltInTools {
         return toolMap;
     }
 
+    /// @return Every built-in tool, by name.
+    public List<StroomTool> tools() {
+        return toolsByName.values().stream()
+                .sorted(Comparator.comparing(tool -> tool.definition().name()))
+                .toList();
+    }
+
+    /// @param toolName A tool name.
+    /// @return The built-in tool, if there is one by that name.
+    public Optional<StroomTool> tool(final String toolName) {
+        return Optional.ofNullable(toolsByName.get(toolName));
+    }
+
     /// @param toolName A tool name.
     /// @return True if it is a built-in tool some of whose calls (or all) cannot change anything.
     public boolean hasReadOnlyCalls(final String toolName) {
@@ -119,6 +132,7 @@ public class BuiltInTools {
                 .map(tool -> {
                     final ToolDefinition general = tool.definition().general();
                     return new AiToolSummary(general.name(), tool.category(), tool.isReadOnly(),
+                            !tool.isReadOnly() && tool.hasReadOnlyCalls(),
                             general.description());
                 })
                 .sorted(Comparator.comparing(AiToolSummary::getName))
