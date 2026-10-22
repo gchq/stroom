@@ -150,6 +150,25 @@ class TestQueryTools {
     }
 
     @Test
+    void describeDataSourceSaysWhichSearchesOfAnIndexWouldMislead() {
+        // As the Stroom MCP server's find_events refused them, merged into search_events.
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.createText("UserId"))));
+
+        assertThat(run(describeTool(), "{\"data_source\":\"linux-uuid\"}"))
+                .contains("Searching it through Stroom (Lucene): STARTS_WITH and ENDS_WITH find nothing")
+                .contains("IN takes values separated by commas.");
+        // Not an index: nothing said.
+        assertThat(run(describeTool(), "{\"data_source\":\"windows-uuid\"}"))
+                .doesNotContain("Searching it through Stroom");
+        assertThat(DescribeDataSourceTool.searchingNote(MisleadingSearches.ELASTICSEARCH, List.of(
+                QueryField.createIpV4Address("source.ip"), QueryField.createText("message"))))
+                .contains("Elasticsearch): STARTS_WITH and CONTAINS find nothing")
+                .contains("IS_NULL and IS_NOT_NULL match every document")
+                .contains("on an ip field (source.ip) a wildcard finds nothing: use a CIDR range");
+    }
+
+    @Test
     void dataSourcesInFoldersAnAgentsDocIgnoresAreNotListedUnlessAskedFor() {
         agents("## Ignore\n- folders: Archive\n");
         Mockito.when(documentAccess.path(LINUX)).thenReturn("/Archive/2020");

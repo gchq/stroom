@@ -133,6 +133,8 @@ Needs: View (document), Use (document)
     Fields (2):
     - EventTime (DATE), conditions: '=', '!=', 'between', '>', '>=', '<', '<='
     - UserId (TEXT), conditions: '=', '!=', 'in', 'in dictionary'
+    
+    Searching it through Stroom (Lucene): STARTS_WITH and ENDS_WITH find nothing (use EQUALS with a * wildcard, e.g. 'ca*' or '*ol'); CONTAINS finds nothing on a keyword field (use EQUALS '*aro*'), nor a range on a text field (use EQUALS with a wildcard, an address range as '10.1.*', or IN with the values); IN finds nothing when a value holds a space (search each such value with EQUALS); IN takes values separated …
 - without Use (document): REFUSED or limited: There is no data source with that name or uuid that you can use.
 - nothing: REFUSED or limited: There is no data source with that name or uuid that you can use.
 - admin: runs (the same as with everything)
@@ -142,6 +144,13 @@ Needs: Use (document)
 - everything: runs: OK. The query is valid and reads Index 'Test index' (uuid index-uuid).
 - without Use (document): REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
 - nothing: REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- admin: runs (the same as with everything)
+
+## search_events {"index":"index-uuid","where":[{"field":"UserId","value":"alice"}]}
+Needs: Use (document)
+- everything: runs: {"index":{"type":"Index","uuid":"index-uuid","name":"Test index","backend":"lucene"},"searched":["UserId EQUALS alice"],"total":0,"hits":[],"by_stream":[],"errors":["Stroom's dashboard search gave no …
+- without Use (document): REFUSED or limited: Error: No Elastic Index or Lucene Index doc with UUID or name 'index-uuid' that you can use
+- nothing: REFUSED or limited: Error: No Elastic Index or Lucene Index doc with UUID or name 'index-uuid' that you can use
 - admin: runs (the same as with everything)
 
 ## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
@@ -216,7 +225,6 @@ Needs: View (document)
 - read_file: same
 - read_turn: same
 - run_stroomql: same (its data source is checked by QueryService when the search runs, mocked here)
-- search_events: same
 - search_history: same
 - str_replace: same
 - summarise_column: same
