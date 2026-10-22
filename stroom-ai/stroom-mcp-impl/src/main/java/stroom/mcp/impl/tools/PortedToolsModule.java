@@ -55,6 +55,7 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(StepSampleTool.class)
                 .addBinding(StepRecordsTool.class)
                 .addBinding(CompareOutputsTool.class)
+                .addBinding(SummariseFixTool.class)
                 .addBinding(CreateFeedTool.class)
                 .addBinding(UploadSampleTool.class)
                 .addBinding(RecordSourceNotesTool.class);

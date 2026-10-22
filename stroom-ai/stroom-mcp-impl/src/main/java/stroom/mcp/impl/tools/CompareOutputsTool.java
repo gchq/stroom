@@ -164,6 +164,31 @@ class CompareOutputsTool extends AbstractBuiltInTool {
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> compareOutputs(final ToolCallContext context, final Request request) {
+        final Sides sides = sides(request, !request.events().isEmpty());
+        final List<Map<String, Object>> locations = request.events().isEmpty()
+                ? List.of()
+                : eventLocations.eventLocations(request.events());
+        return compare(context, request, sides, locations);
+    }
+
+    /// The comparison over the request's streams and records already located (the Stroom MCP server's `compare`
+    /// with `locations`, as summarise_fix calls it); the request's `events` are not read.
+    ///
+    /// @param context   The call's context.
+    /// @param request   What to compare.
+    /// @param locations Records to compare exactly, each `raw`, `part` and `record` (from
+    ///                  [EventLocations#eventLocations]).
+    /// @return The comparison, as [#compareOutputs] gives it.
+    /// @throws ToolRefusal if there is nothing to compare, or nothing to compare against.
+    /// @throws ToolTimeoutException if the call is cancelled.
+    Map<String, Object> compareLocated(final ToolCallContext context,
+                                       final Request request,
+                                       final List<Map<String, Object>> locations) {
+        return compare(context, request, sides(request, !locations.isEmpty()), locations);
+    }
+
+    // The pipelines and elements compared, once what is asked for is checked.
+    private Sides sides(final Request request, final boolean hasRecords) {
         if (request.draftCode() == null && request.otherPipelineUuid() == null) {
             throw new ToolRefusal("Give draft_code or other_pipeline_uuid to compare against");
         }
@@ -175,29 +200,34 @@ class CompareOutputsTool extends AbstractBuiltInTool {
         final String element = request.element() != null
                 ? request.element()
                 : base.defaultOutputs().getFirst();
-        if (request.streamIds().isEmpty() && request.events().isEmpty()) {
+        if (request.streamIds().isEmpty() && !hasRecords) {
             throw new ToolRefusal("Give stream_ids, or events (from search_events with an index), whose records to "
                                   + "compare");
         }
-        final List<Map<String, Object>> locations = request.events().isEmpty()
-                ? List.of()
-                : eventLocations.eventLocations(request.events());
         final String otherElement = other.types().containsKey(element)
                 ? element
                 : other.defaultOutputs().getFirst();
+        return new Sides(base, other, element, otherElement);
+    }
+
+    private Map<String, Object> compare(final ToolCallContext context,
+                                        final Request request,
+                                        final Sides sides,
+                                        final List<Map<String, Object>> locations) {
         final Map<String, String> candidate = request.otherPipelineUuid() == null
                 ? request.draftCode()
                 : null;
         final Compared compared;
         try {
-            compared = PipelineStepping.withinTimeLimit(context, () -> step(context, request, base, other, element,
-                    otherElement, candidate, locations));
+            compared = PipelineStepping.withinTimeLimit(context, () -> step(context, request, sides.base(),
+                    sides.other(), sides.element(), sides.otherElement(), candidate, locations));
         } finally {
             final List<Long> streams = new ArrayList<>(request.streamIds());
             locations.forEach(loc -> streams.add(((Number) loc.get("raw")).longValue()));
-            stepping.audit(context, streams, "Compared outputs of " + base.name() + " with the " + NAME + " tool");
+            stepping.audit(context, streams, "Compared outputs of " + sides.base().name() + " with the " + NAME
+                                             + " tool");
         }
-        final Map<String, Object> result = diff(compared.before(), compared.after(), element);
+        final Map<String, Object> result = diff(compared.before(), compared.after(), sides.element());
         if (compared.stopped()) {
             result.put("stopped_early", true);
             result.put("hint", PipelineStepping.outOfTime(context, "after " + compared.before().size()
@@ -400,6 +430,11 @@ class CompareOutputsTool extends AbstractBuiltInTool {
                    String element,
                    int maxRecords,
                    List<EventLocations.EventRef> events) {
+
+    }
+
+    // The pipelines compared, and the element of each whose output is compared.
+    private record Sides(SteppedPipeline base, SteppedPipeline other, String element, String otherElement) {
 
     }
 
