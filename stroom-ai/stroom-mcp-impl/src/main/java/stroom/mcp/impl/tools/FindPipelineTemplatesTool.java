@@ -66,7 +66,8 @@ class FindPipelineTemplatesTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Stroom pipeline templates (pipelines a new pipeline inherits from; not Elasticsearch "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Stroom pipeline templates (pipelines a new pipeline inherits from; not Elasticsearch "
                              + "index templates, which propose_index_template builds): candidates for this stage, "
                              + "best first: configured template folders, then pipelines that working pipelines "
                              + "already inherit from, then Stroom's standard templates. For each: its element "

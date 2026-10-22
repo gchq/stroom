@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolUserAction;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
@@ -671,8 +672,9 @@ class McpAgentChat {
             if (message.getMessageType() == AiMessageType.TOOL_RESULT) {
                 NullSafe.consume(read(message, ToolResultRecord.class), result -> answered.add(result.callId()));
             } else if (message.getMessageType() == AiMessageType.ELICITATION) {
+                // A call may ask several forms, each with an id of its own made from the call's.
                 NullSafe.consume(read(message, ElicitationRecord.class), record ->
-                        NullSafe.consume(record.callId(), askedTheUser::add));
+                        NullSafe.consume(record.callId(), id -> askedTheUser.add(UserQuestions.toolCallId(id))));
             } else if (message.getMessageType() == AiMessageType.APPROVAL_REQUEST) {
                 final ToolApprovalRequest request = read(message, ToolApprovalRequest.class);
                 if (request != null && ToolApprovalRequest.KIND.equals(request.kind())) {

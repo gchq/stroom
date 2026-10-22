@@ -81,6 +81,8 @@ class TestDescribeFeedTool {
                 .uuid("x").description(KEPT).build()));
         Mockito.when(processorFilters.canManageProcessors()).thenReturn(true);
         Mockito.when(processorFilters.feeds(any(), any())).thenReturn(Set.of("acme"));
+        // Which pipelines read the feed, worked out from the filters above.
+        Mockito.when(processorFilters.pipelinesReading(anyString())).thenCallRealMethod();
         Mockito.when(generatedDocs.generatedDoc(anyString(), any())).thenReturn(Optional.empty());
         final PipelineShapes shapes = PipelineLayers.shapes(pipelineService, new AiConfig());
         tool = new DescribeFeedTool(feedNames, processorFilters, shapes, new KeptMappings(shapes, documentAccess),

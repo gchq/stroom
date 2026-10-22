@@ -69,6 +69,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final McpEndpointConfig mcpEndpoint;
     private final ErrorTriageConfig errorTriage;
     private final AiPipelineStagesConfig pipelineStages;
+    private final AiBuildsConfig builds;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -97,6 +98,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         mcpEndpoint = new McpEndpointConfig();
         errorTriage = new ErrorTriageConfig();
         pipelineStages = new AiPipelineStagesConfig();
+        builds = new AiBuildsConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -122,7 +124,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -150,7 +152,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("maxTabSnapshotBytes") final Long maxTabSnapshotBytes,
                     @JsonProperty("mcpEndpoint") final McpEndpointConfig mcpEndpoint,
                     @JsonProperty("errorTriage") final ErrorTriageConfig errorTriage,
-                    @JsonProperty("pipelineStages") final AiPipelineStagesConfig pipelineStages) {
+                    @JsonProperty("pipelineStages") final AiPipelineStagesConfig pipelineStages,
+                    @JsonProperty("builds") final AiBuildsConfig builds) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -180,9 +183,10 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.mcpEndpoint = Objects.requireNonNullElseGet(mcpEndpoint, McpEndpointConfig::new);
         this.errorTriage = Objects.requireNonNullElseGet(errorTriage, ErrorTriageConfig::new);
         this.pipelineStages = Objects.requireNonNullElseGet(pipelineStages, AiPipelineStagesConfig::new);
+        this.builds = Objects.requireNonNullElseGet(builds, AiBuildsConfig::new);
     }
 
-    /// As the constructor that reads the config, with the default error triage and pipeline stages.
+    /// As the constructor that reads the config, with the default error triage, pipeline stages and builds.
     public AiConfig(final AiDbConfig dbConfig,
                     final CacheConfig chatResponseCache,
                     final StroomDuration maxRunDuration,
@@ -208,7 +212,13 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
-                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null);
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null);
+    }
+
+    /// @return Where the agent's tools build things: the workspace folder holding a folder for each build.
+    @JsonProperty("builds")
+    public AiBuildsConfig getBuilds() {
+        return builds;
     }
 
     /// @return What marks a pipeline as each stage (translation, indexing, reference and so on), and where the
@@ -415,6 +425,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", mcpEndpoint=" + mcpEndpoint +
                ", errorTriage=" + errorTriage +
                ", pipelineStages=" + pipelineStages +
+               ", builds=" + builds +
                '}';
     }
 }

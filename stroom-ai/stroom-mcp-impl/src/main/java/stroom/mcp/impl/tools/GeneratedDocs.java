@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiBuildsConfig;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
@@ -43,23 +45,24 @@ class GeneratedDocs {
 
     /// The tag generated documentation carries.
     static final String GENERATED = "mcp-generated";
-    /// The folder builds are drafted in, below System (the Stroom MCP server's default workspace folder).
-    static final String WORKSPACE_FOLDER = "MCP Workspace";
-
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
     private final PipelineIndex pipelineIndex;
+    private final Provider<AiConfig> aiConfigProvider;
 
     /// @param docFinderProvider Finds Documentation docs by name.
     /// @param documentAccess    Checks View on each, reads it and its tags.
     /// @param pipelineIndex     Lists every Documentation doc.
+    /// @param aiConfigProvider  Gives the workspace folder builds are drafted in.
     @Inject
     GeneratedDocs(final Provider<DocFinder> docFinderProvider,
                   final DocumentAccess documentAccess,
-                  final PipelineIndex pipelineIndex) {
+                  final PipelineIndex pipelineIndex,
+                  final Provider<AiConfig> aiConfigProvider) {
         this.docFinderProvider = docFinderProvider;
         this.documentAccess = documentAccess;
         this.pipelineIndex = pipelineIndex;
+        this.aiConfigProvider = aiConfigProvider;
     }
 
     /// The Documentation doc named after a pipeline or index doc: the generated one (tagged mcp-generated) in its
@@ -129,8 +132,12 @@ class GeneratedDocs {
         return new Found(docRef, generated, PipelineIndex.path(documentAccess, docRef));
     }
 
-    private static boolean isDraft(final String path) {
-        return NullSafe.string(path).startsWith(PipelineIndex.SYSTEM + "/" + WORKSPACE_FOLDER);
+    // Below the workspace folder builds are drafted in (stroom.ai.builds.workspaceFolder), below System.
+    private boolean isDraft(final String path) {
+        final String workspace = PipelineIndex.SYSTEM + "/" + NullSafe.getOrElse(aiConfigProvider.get(),
+                AiConfig::getBuilds, AiBuildsConfig::getWorkspaceFolder, AiBuildsConfig.DEFAULT_WORKSPACE_FOLDER);
+        final String value = NullSafe.string(path);
+        return value.equals(workspace) || value.startsWith(workspace + "/");
     }
 
 

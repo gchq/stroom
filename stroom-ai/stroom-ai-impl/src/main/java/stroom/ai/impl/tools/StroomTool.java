@@ -96,6 +96,16 @@ public interface StroomTool {
         return false;
     }
 
+    /// Whether the tool asks the user itself before every change it makes, with a form that says what it will do
+    /// and lets them change it (see the build layer's `Consent`), as the Stroom MCP server's write tools do. Over
+    /// MCP such a call isn't also approved as a whole first, so the user is asked once; in the chat, built-in tools
+    /// run without an approval card anyway.
+    ///
+    /// @return True if every change the tool makes is confirmed by the tool itself. Defaults to false.
+    default boolean confirmsItself() {
+        return false;
+    }
+
     /// @return True if the tool limits how much it returns itself (e.g. a page of a file), so its result is never
     /// saved to the workspace in place of being returned, which would only make another file to read.
     default boolean boundsItsOutput() {

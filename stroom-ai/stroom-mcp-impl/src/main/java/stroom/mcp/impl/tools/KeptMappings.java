@@ -43,17 +43,38 @@ class KeptMappings {
     /// @return The mapping or index plan kept with the pipeline's own XSLT, or empty.
     /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
     Optional<KeptMapping.Kept> keptMapping(final String pipelineUuid) {
+        return keptXslt(pipelineUuid).map(KeptXslt::kept);
+    }
+
+    /// @param pipelineUuid A pipeline.
+    /// @return The mapping or index plan kept with the pipeline's own XSLT, with the XSLT and the element it is set
+    /// on, or empty.
+    /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
+    Optional<KeptXslt> keptXslt(final String pipelineUuid) {
         for (final TranslationDoc entry : pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid)) {
             if (entry.inheritedFromTemplate() || !XsltDoc.TYPE.equals(entry.doc().getType())) {
                 continue;
             }
             // Deleted, or not this user's to read: no mapping kept with it.
-            final Optional<KeptMapping.Kept> found = documentAccess.read(entry.doc(), XsltDoc.class)
-                    .flatMap(xslt -> KeptMapping.readMapping(xslt.getDescription()));
+            final Optional<XsltDoc> xslt = documentAccess.read(entry.doc(), XsltDoc.class);
+            final Optional<KeptMapping.Kept> found = xslt.flatMap(doc -> KeptMapping.readMapping(doc.getDescription()));
             if (found.isPresent()) {
-                return found;
+                return Optional.of(new KeptXslt(found.get(), entry.element(), xslt.get()));
             }
         }
         return Optional.empty();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A mapping kept with a pipeline's own XSLT.
+    ///
+    /// @param kept    The mapping: its kind (translation, index or cef) and payload.
+    /// @param element The element the XSLT is set on.
+    /// @param xslt    The XSLT.
+    record KeptXslt(KeptMapping.Kept kept, String element, XsltDoc xslt) {
+
     }
 }
