@@ -34,10 +34,16 @@ import java.util.Optional;
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
 /// run:
 ///
-/// - built-in tools run (they run as the user, within the user's permissions and tool policies, and those that
-///   change documents, such as the build tools, ask the user themselves through forms before each change),
-///   except that while the user is away only calls that only read run, and the others wait for the user, as for
-///   MCP tools;
+/// - Stroom's own (built-in and ported) tools run as the user, within the user's permissions and tool policies.
+///   A call that only reads always runs. A call that changes something runs without asking until the chat has
+///   read untrusted content (anything that could hold instructions planted by someone other than the user: see
+///   [AiChatRunManager#isTainted(int)]); after that it asks on an approval card, which can allow the tool for the
+///   rest of the chat, unless the tool confirms each change itself through its own forms
+///   ([stroom.ai.impl.tools.StroomTool#confirmsItself()]), its changes stay in the chat or it asks about them
+///   itself (the workspace files and memory:
+///   [stroom.ai.impl.tools.StroomTool#changesNeedApprovalAfterUntrustedContent()]), the user has allowed the tool
+///   for the chat, or 'approve everything' is on for the chat (only if an administrator allows it). While the user
+///   is away only calls that only read run, and the others wait for the user, as for MCP tools;
 /// - an MCP tool with an ALLOW policy runs, ASK_ALWAYS always asks, DENY tools are never offered;
 /// - a trusted server's tool marked `_meta.confirms` runs, even while the user is away, as it asks the user
 ///   itself through a form (unless its policy is ASK_ALWAYS);
@@ -62,6 +68,14 @@ public class ToolConsent {
     static final String DATA_WAS_READ_REASON = "This tool only reads, but this chat has read data from tools or "
                                                + "attached tables, which could tell the model to put that data in "
                                                + "this call, and the tool's server would receive it.";
+    /// What the approvals that last for a chat ([AiToolApprovalDao]) give as the server of Stroom's own tools, and
+    /// the approval card shows beside them.
+    static final String BUILT_IN_SERVER_KEY = "Stroom (built-in)";
+    static final String BUILT_IN_AFTER_UNTRUSTED_REASON = "This chat has read tool output or data (e.g. Stroom's "
+                                                          + "events, streams or documents, attached tables or an "
+                                                          + "MCP server's output), which could hold instructions "
+                                                          + "planted to misuse this tool, and this call changes "
+                                                          + "something in Stroom.";
 
     private final AiToolApprovalDao approvalDao;
     private final AiDao aiDao;
@@ -110,12 +124,7 @@ public class ToolConsent {
                           final McpToolset toolset,
                           final boolean unattended) {
         if (builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName))) {
-            // They run as the user, within the user's permissions and tool policies, and those that confirm
-            // themselves ask through forms, but while the user is away only what reads runs (S3): a change waits
-            // for them, as an MCP tool's does.
-            return unattended && !builtInTools.isReadOnlyCall(toolName, arguments)
-                    ? Verdict.ask(builtInAwayReason(), false, false, List.of())
-                    : Verdict.RUN;
+            return decideBuiltIn(chatId, toolName, arguments, builtInTools, unattended);
         }
         final McpToolInfo info = toolset.toolInfo(toolName).orElse(null);
         if (info == null) {
@@ -172,6 +181,47 @@ public class ToolConsent {
         }
         return Verdict.ask(reason(info), cardReason(info), !askAlways, !askAlways && info.claimsReadOnly(),
                 risks);
+    }
+
+    // Stroom's own tools run as the user, within the user's permissions and tool policies.
+    private Verdict decideBuiltIn(final int chatId,
+                                  final String toolName,
+                                  final String arguments,
+                                  final BuiltInTools builtInTools,
+                                  final boolean unattended) {
+        // While the user is away only what reads runs (S3): a change waits for them, as an MCP tool's does.
+        if (unattended && !builtInTools.isReadOnlyCall(toolName, arguments)) {
+            return Verdict.ask(builtInAwayReason(), false, false, List.of());
+        }
+        // A change runs without asking until the chat has read something that could hold instructions planted to
+        // misuse the tool. A tool that confirms each change itself, through its own forms, isn't asked about twice.
+        if (!builtInTools.changeNeedsApprovalAfterUntrustedContent(toolName, arguments)
+            || !runManagerProvider.get().isTainted(chatId)) {
+            return Verdict.RUN;
+        }
+        final Optional<Approval> approval = current(chatId, BUILT_IN_SERVER_KEY, toolName,
+                builtInToolHash(builtInTools, toolName));
+        if (approval.isPresent()) {
+            return approval.get().decision() == AiToolApprovalDecision.ALLOW
+                    ? Verdict.RUN
+                    : Verdict.deny("You chose not to allow this tool in this chat.");
+        }
+        if (approveEverything(chatId)) {
+            return Verdict.RUN;
+        }
+        return Verdict.ask(BUILT_IN_AFTER_UNTRUSTED_REASON, true, false, List.of("can modify", "after reading data"));
+    }
+
+    /// @param builtInTools Stroom's own tools.
+    /// @param toolName     One of them.
+    /// @return A hash of the tool's definition (name, description and arguments), so an approval that lasts for
+    /// the chat is for the tool as it is now, or null if it isn't one of Stroom's own tools.
+    static String builtInToolHash(final BuiltInTools builtInTools, final String toolName) {
+        return builtInTools.toolMap().keySet().stream()
+                .filter(specification -> specification.name().equals(toolName))
+                .findFirst()
+                .map(specification -> McpToolInfo.hash(BUILT_IN_SERVER_KEY, specification.toString()))
+                .orElse(null);
     }
 
     // True if read-only tools are to ask because the run has read data that could hold planted instructions.

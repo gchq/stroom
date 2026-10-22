@@ -22,6 +22,7 @@ import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.ToolApprovalRequest.Status;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.StandInTools;
 import stroom.ai.shared.AiApprovalScope;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
@@ -55,9 +56,10 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Fixes, in a reference file, today's decisions about tool calls: what [ToolConsent] decides for each built-in
-/// tool and a representative set of MCP tools in each situation (normal, the user away, after reading untrusted
-/// content, after reading an untrusted server's output, allowed or denied earlier, allowed for a tool that has
-/// since changed, a server's read-only tools allowed, 'approve everything'), with the approval buttons each
+/// tool, stand-ins for the ported tools that change Stroom, and a representative set of MCP tools in each situation
+/// (normal, the user away, after reading untrusted content, after reading an untrusted server's output, allowed or
+/// denied earlier, allowed for a tool that has since changed, a server's read-only tools allowed, 'approve
+/// everything'), with the approval buttons each
 /// request offers; what [AiMemoryService] does with a change to memory in those situations; and what
 /// [ToolApprovalService] records for each answer the user can give.
 class TestConsentDecisions {
@@ -99,6 +101,46 @@ class TestConsentDecisions {
                                 ? verdicts.getFirst() + " in every situation"
                                 : String.join(" | ", verdicts))
                         .append('\n');
+            }
+
+            sb.append("\n## Stand-ins for Stroom's own tools that change Stroom (e.g. the build tools)\n");
+            sb.append("The built-in tools above only change the chat's own things (its workspace files, and memory, "
+                      + "which asks about a lasting change itself), so these stand in for the ported tools.\n");
+            final BuiltInTools standIns = StandInTools.builtInTools(
+                    StandInTools.writeTool("save_xslt"),
+                    StandInTools.selfConfirmingWriteTool("create_feed"),
+                    StandInTools.mixedTool("mixed_tool"),
+                    StandInTools.readOnlyTool("read_only_tool"));
+            final Map<String, String> standInDescriptions = new LinkedHashMap<>();
+            standInDescriptions.put("save_xslt", "changes things, doesn't confirm itself");
+            standInDescriptions.put("create_feed", "changes things, confirms each change itself");
+            standInDescriptions.put("mixed_tool", "some calls change things, doesn't confirm itself; a call "
+                                                  + "whose arguments aren't known");
+            standInDescriptions.put("read_only_tool", "read-only");
+            // Their approvals for the chat only count once the chat has read untrusted content, so those situations
+            // are shown after it too.
+            final Map<String, Consumer<Situation>> standInSituations = new LinkedHashMap<>(situations);
+            standInSituations.put("after reading untrusted content, allowed for the chat earlier", situation -> {
+                situation.tainted = true;
+                situation.approval = AiToolApprovalDecision.ALLOW;
+            });
+            standInSituations.put("after reading untrusted content, denied for the chat earlier", situation -> {
+                situation.tainted = true;
+                situation.approval = AiToolApprovalDecision.DENY;
+            });
+            standInSituations.put("after reading untrusted content, allowed for the chat earlier, tool since changed",
+                    situation -> {
+                        situation.tainted = true;
+                        situation.approval = AiToolApprovalDecision.ALLOW;
+                        situation.approvalForChangedTool = true;
+                    });
+            for (final Map.Entry<String, String> standIn : standInDescriptions.entrySet()) {
+                sb.append("\n### ").append(standIn.getKey()).append(" (").append(standIn.getValue()).append(")\n");
+                for (final Map.Entry<String, Consumer<Situation>> situation : standInSituations.entrySet()) {
+                    sb.append("- ").append(situation.getKey()).append(": ")
+                            .append(decide(standIns, McpToolset.EMPTY, standIn.getKey(), situation.getValue()))
+                            .append('\n');
+                }
             }
 
             sb.append("\n## MCP tools\n");
@@ -147,6 +189,10 @@ class TestConsentDecisions {
             situation.readUntrustedServer = true;
             situation.approveEverything = true;
         });
+        situations.put("'approve everything' on, after reading untrusted content", situation -> {
+            situation.tainted = true;
+            situation.approveEverything = true;
+        });
         situations.put("user away, allowed for the chat earlier", situation -> {
             situation.unattended = true;
             situation.approval = AiToolApprovalDecision.ALLOW;
@@ -173,6 +219,15 @@ class TestConsentDecisions {
         Mockito.when(runManager.isUnattended(CHAT_ID)).thenReturn(situation.unattended);
         Mockito.when(approvalDao.find(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Optional.empty());
+        // Stroom's own tools are approved for the chat under a server of their own.
+        final String builtInHash = ToolConsent.builtInToolHash(builtInTools, tool);
+        if (builtInHash != null && situation.approval != null) {
+            Mockito.when(approvalDao.find(CHAT_ID, ToolConsent.BUILT_IN_SERVER_KEY, tool))
+                    .thenReturn(Optional.of(new Approval(7, ToolConsent.BUILT_IN_SERVER_KEY, tool,
+                            situation.approvalForChangedTool
+                                    ? "an-older-hash"
+                                    : builtInHash, situation.approval)));
+        }
         toolset.toolInfo(tool).ifPresent(info -> {
             if (situation.approval != null) {
                 Mockito.when(approvalDao.find(CHAT_ID, info.serverKey(), info.toolName()))
