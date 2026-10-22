@@ -23,10 +23,7 @@ import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,9 +43,9 @@ import java.util.TreeSet;
 /// Elasticsearch: every record is copied with its own field names and Elasticsearch maps them dynamically, so
 /// nothing is surveyed up front. Only StreamId, EventId and @timestamp are mapped explicitly.
 ///
-/// Ported from the Stroom MCP server's `utils/fieldplan.py` `FieldPlan` model. Its JSON ([#toJson()], and Jackson's)
-/// is the server's, field for field, as plans are kept in documents' descriptions; read one with [#fromJson(Map)],
-/// which validates it as pydantic does, with pydantic's messages.
+/// Ported from the Stroom MCP server's `utils/fieldplan.py` `FieldPlan` model. Its JSON ([#toJson()], which Jackson
+/// writes too) is the server's, field for field, as plans are kept in documents' descriptions; read one with
+/// [#fromJson(Map)] (as Jackson does), which validates it as pydantic does, with pydantic's messages.
 ///
 /// @param backend          `lucene` or `elasticsearch`.
 /// @param indexName        `index_name`: Lucene index doc name, or Elasticsearch index / data stream name.
@@ -75,21 +72,18 @@ import java.util.TreeSet;
 /// @param style            How the indexing XSLT is written, as an Events translation's is (naming, variables,
 ///                         layout): from an XSLT style section in the standing instructions (AGENTS docs); otherwise
 ///                         the defaults.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"backend", "index_name", "time_field", "fields", "drop_when", "discovery", "imports", "shared",
-        "subobjects", "convention", "custom_namespaces", "style"})
-public record FieldPlan(@JsonProperty("backend") String backend,
-                        @JsonProperty("index_name") String indexName,
-                        @JsonProperty("time_field") String timeField,
-                        @JsonProperty("fields") List<PlannedField> fields,
-                        @JsonProperty("drop_when") List<String> dropWhen,
-                        @JsonProperty("discovery") Discovery discovery,
-                        @JsonProperty("imports") List<String> imports,
-                        @JsonProperty("shared") List<SharedTemplate> shared,
-                        @JsonProperty("subobjects") boolean subobjects,
-                        @JsonProperty("convention") String convention,
-                        @JsonProperty("custom_namespaces") List<String> customNamespaces,
-                        @JsonProperty("style") XsltStyle style) {
+public record FieldPlan(String backend,
+                        String indexName,
+                        String timeField,
+                        List<PlannedField> fields,
+                        List<String> dropWhen,
+                        Discovery discovery,
+                        List<String> imports,
+                        List<SharedTemplate> shared,
+                        boolean subobjects,
+                        String convention,
+                        List<String> customNamespaces,
+                        XsltStyle style) {
 
     /// The Elasticsearch backend.
     public static final String ELASTICSEARCH = "elasticsearch";
@@ -180,6 +174,7 @@ public record FieldPlan(@JsonProperty("backend") String backend,
     }
 
     /// @return It as JSON, as the Python model's `model_dump` writes it (every field).
+    @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
         json.put("backend", backend);
@@ -229,7 +224,6 @@ public record FieldPlan(@JsonProperty("backend") String backend,
     }
 
     /// @return True for an Elasticsearch plan.
-    @JsonIgnore
     public boolean isElasticsearch() {
         return ELASTICSEARCH.equals(backend);
     }

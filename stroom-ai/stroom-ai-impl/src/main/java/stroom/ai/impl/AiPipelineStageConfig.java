@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,7 +31,9 @@ import java.util.Objects;
 /// One pipeline stage (e.g. translation: Raw Events to Events) as the agent's tools find and read pipelines: where
 /// the templates for a new pipeline of the stage are looked for, and what marks a pipeline as the stage when its
 /// elements don't say (its schema group or the stream type it writes). Each stage's defaults are given by
-/// [AiPipelineStagesConfig]; a property left out keeps its stage's default.
+/// [AiPipelineStagesConfig]; a property left out keeps its stage's default. Each stage is read through
+/// [AiPipelineStagesConfig], so this class is not injectable on its own.
+@NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class AiPipelineStageConfig extends AbstractConfig implements IsStroomConfig {
 

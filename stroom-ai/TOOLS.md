@@ -400,8 +400,8 @@ The MCP server's translation XSLT generator (`utils/xsltgen.py`) and what it nee
 `rebuild_mapping`):
 
 * **The mapping** (`TranslationMapping`, `EventRule`, `FieldMapping`, `Condition`, `Lookup`, `Extraction`,
-  `KeyValuePairs`, `DropRule`, `XsltStyle`, `SharedTemplate`, `SharedFunctions`): records with Jackson annotations,
-  read with `fromJson`/`parse`, which validate as pydantic did (lax types, defaults, the models' own checks and their
+  `KeyValuePairs`, `DropRule`, `XsltStyle`, `SharedTemplate`, `SharedFunctions`): plain records (no Jackson
+  annotations: their JSON is written and read by hand), read with `fromJson`/`parse`, which validate as pydantic did (lax types, defaults, the models' own checks and their
   messages; every error as a `MappingError` with its `loc`, `type`, `msg` and `input`, in a
   `MappingValidationException`), and turn pairs into extract entries, a rule's data list into Data entries, meta into
   the xpath reading it and Data Names into the style's `data_names`. `toJson(DumpMode)` writes them as `model_dump`
@@ -453,7 +453,7 @@ Four more of the MCP server's generator modules, ported without their tools (`bu
 `rebuild_mapping`, the save tools and `build_translation_xslt`'s `changes=` come later), on the translation
 generator above:
 
-* **`utils/refgen.py`**: `ReferenceMapping`, `ReferenceMap` and `ReferenceValue` (records with Jackson, read and
+* **`utils/refgen.py`**: `ReferenceMapping`, `ReferenceMap` and `ReferenceValue` (plain records, read and
   validated as pydantic did, written with `toJson(DumpMode)`: the server's JSON) and `ReferenceGenerator.generate`
   (`generate_reference`), writing the same reference-data XSLT, to the byte (`Generated.toMap()` is the Python dict).
 * **`utils/xpathtree.py`**: `XPathTreeParser` (the server's `XPathParser`, which parsed with elementpath: a strict
@@ -870,9 +870,9 @@ made of, ported before the tools: `utils/ecs.py` (`EcsSchema`), `utils/fieldplan
 `Discovery`, `FieldPlans`; the XSLT in `IndexingXslt`, `ElasticDocument` and `DiscoveryXslt`, the template in
 `PlanTemplates`), `utils/templatecheck.py` (`IndexTemplates`, `TemplateMappings`, `ExampleNames`,
 `ExampleTemplates`, `TemplateCheck`) and the pure helpers of `tools/indexing.py` (`IndexingHelpers`). A plan's JSON
-(`FieldPlan.toJson()`, and Jackson's) is the server's `model_dump`, and `FieldPlan.fromJson` validates as pydantic
-does, with its messages, through the generator's `ModelReader`. Tests check the port against the server's own code:
-103 indexing XSLTs to the byte (`golden/indexing`), and some 2,900 calls recorded while the server's test suite ran
+(`FieldPlan.toJson()`, which Jackson writes too) is the server's `model_dump`, and `FieldPlan.fromJson` (which Jackson
+reads with) validates as pydantic does, with its messages, through the generator's `ModelReader`. Tests check the
+port against the server's own code: 103 indexing XSLTs to the byte (`golden/indexing`), and some 2,900 calls recorded while the server's test suite ran
 (`tools/indexing/recorded_calls.json`).
 
 Where it differs from the Python server:

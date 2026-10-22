@@ -41,10 +41,10 @@ import java.util.Set;
 ///
 /// The MCP Streamable HTTP transport serves the requests: POST for messages, GET for the server's stream, DELETE
 /// to end a session (see [StroomMcpServer]). A session lives on the node that started it, so a load balancer must
-/// send a session's requests to the same node (by its `Mcp-Session-Id` header); a request for a session this node
-/// doesn't have is answered 404, which tells the client to start a new one. So is any request (a call, an answer to
-/// a form, a listening stream, or a DELETE) for a session that isn't the user's: as far as they can tell, there is
-/// no such session.
+/// send a session's requests to the same node, by client IP (not by the `Mcp-Session-Id` header, which the request
+/// that starts a session doesn't have); a request for a session this node doesn't have is answered 404, which tells
+/// the client to start a new one. So is any request (a call, an answer to a form, a listening stream, or a DELETE)
+/// for a session that isn't the user's: as far as they can tell, there is no such session.
 public class McpServlet extends HttpServlet implements IsServlet {
 
     /// The endpoint's path.

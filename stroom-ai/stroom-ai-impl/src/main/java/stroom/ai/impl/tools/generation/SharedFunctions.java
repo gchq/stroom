@@ -18,10 +18,6 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.PyText;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,11 +29,9 @@ import java.util.regex.Pattern;
 /// @param href      The shared XSLT document, as the other pipelines import it, e.g. `IP Lookup`.
 /// @param prefix    The prefix its functions are called with, e.g. `gs` for `gs:isLocalIpAddress()`.
 /// @param namespace The namespace that prefix is bound to in the shared XSLT.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"href", "prefix", "namespace"})
-public record SharedFunctions(@JsonProperty("href") String href,
-                              @JsonProperty("prefix") String prefix,
-                              @JsonProperty("namespace") String namespace) {
+public record SharedFunctions(String href,
+                              String prefix,
+                              String namespace) {
 
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
