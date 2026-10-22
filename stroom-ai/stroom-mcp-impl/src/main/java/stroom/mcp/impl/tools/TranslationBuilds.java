@@ -38,6 +38,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -362,7 +363,7 @@ class TranslationBuilds {
                 }
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No source notes read from build " + build + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("No source notes read from build {}: {}", build, e.getMessage()));
             found.clear();
         }
         return SourceNotes.merged(found);

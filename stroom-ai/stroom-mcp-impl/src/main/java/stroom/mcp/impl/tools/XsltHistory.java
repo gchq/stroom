@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.NullSafe;
 
@@ -67,7 +68,7 @@ class XsltHistory {
         try {
             version = NullSafe.get(buildInfoProvider.get(), BuildInfo::getBuildVersion);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No build version: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("No build version: {}", e.getMessage()));
         }
         return "Stroom " + NullSafe.nonBlankStringElse(version, "unknown");
     }

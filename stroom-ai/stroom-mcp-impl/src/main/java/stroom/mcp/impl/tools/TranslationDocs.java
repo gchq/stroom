@@ -41,6 +41,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -378,7 +379,7 @@ public class TranslationDocs {
                     inputNamespace = NullSafe.string(NullSafe.get(sample.get().get("namespace"), String::valueOf));
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "No sample format for build " + build + ": " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("No sample format for build {}: {}", build, e.getMessage()));
             }
         }
         List<String> errors = errors(checkXslt.check(xslt, null, inputNamespace));
@@ -473,7 +474,7 @@ public class TranslationDocs {
                 }
             } catch (final RuntimeException e) {
                 // The schema may be unavailable here; the comparison is advice, not a gate.
-                LOGGER.debug(() -> "Not compared with what the mapping generates: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Not compared with what the mapping generates: {}", e.getMessage()));
             }
             return withMapping;
         }
@@ -496,7 +497,7 @@ public class TranslationDocs {
             final Optional<EcsSchema> ecs = EcsSchema.from(knowledgeProvider.get());
             return ecs.map(indexPlan::conventionProblems).orElse(List.of());
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "The plan's convention not checked: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("The plan's convention not checked: {}", e.getMessage()));
             return List.of();
         }
     }
@@ -511,7 +512,7 @@ public class TranslationDocs {
                     Set.of(WriteGuard.KEPT_MAPPING));
         } catch (final RuntimeException e) {
             // A tag is a safeguard: the save stands without it.
-            LOGGER.debug(() -> "Couldn't tag XSLT " + saved.getUuid() + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Couldn't tag XSLT {}: {}", saved.getUuid(), e.getMessage()));
         }
     }
 

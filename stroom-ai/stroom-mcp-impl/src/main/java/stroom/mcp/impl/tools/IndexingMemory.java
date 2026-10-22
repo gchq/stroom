@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -193,7 +194,10 @@ class IndexingMemory {
             try {
                 drafted.put(indexName, FieldPlan.fromJson(json));
             } catch (final IllegalArgumentException e) {
-                LOGGER.debug(() -> "A kept plan for " + indexName + " no longer reads: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message(
+                        "A kept plan for {} no longer reads: {}",
+                        indexName,
+                        e.getMessage()));
             }
         });
         return drafted;

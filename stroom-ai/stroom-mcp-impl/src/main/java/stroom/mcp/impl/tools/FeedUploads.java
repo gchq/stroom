@@ -132,7 +132,7 @@ public class FeedUploads {
             dataServiceProvider.get().upload(new UploadDataRequest(key, feed, streamType, effectiveMs,
                     metaData(receipt), fileName));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Upload to " + feed + " failed", e);
+            LOGGER.debug("Upload to {} failed", feed, e);
             throw new ToolRefusal("Stroom didn't store the data in feed " + feed + ": "
                                   + NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName()));
         }
@@ -280,7 +280,7 @@ public class FeedUploads {
                     .findFirst()
                     .orElse(null);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Couldn't find the stream uploaded to " + feed, e);
+            LOGGER.debug("Couldn't find the stream uploaded to {}", feed, e);
             return null;
         }
     }
@@ -296,7 +296,7 @@ public class FeedUploads {
                     ? NullSafe.get(headers.get(StandardHeaderArguments.RECEIPT_ID), String::valueOf)
                     : null;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Couldn't read the receipt id of stream " + streamId, e);
+            LOGGER.debug("Couldn't read the receipt id of stream {}", streamId, e);
             return null;
         }
     }

@@ -162,7 +162,11 @@ public class ToolCallGuard {
         return withNotes(noted, read.notes());
     }
 
-    // The call with its arguments read leniently, and what was changed.
+    /// Reads a call's arguments leniently.
+    ///
+    /// @param tool The tool called.
+    /// @param call The call, as the model made it.
+    /// @return The call with its arguments read leniently, and what was changed.
     static Read read(final StroomTool tool, final ToolCall call) {
         final Map<String, Object> arguments = arguments(call.arguments());
         if (arguments == null) {
@@ -251,8 +255,9 @@ public class ToolCallGuard {
         }
     }
 
-    // What a failure says: an error result's first line, or a result with ok false, or a mapping the tool couldn't
-    // read. Null if the call didn't fail.
+    /// @param result What a tool returned.
+    /// @return What a failure says: an error result's first line, or a result with ok false, or a mapping the tool
+    /// couldn't read. Null if the call didn't fail.
     static String failure(final ToolResult result) {
         if (result.isError()) {
             final String text = result.text().strip();

@@ -276,7 +276,7 @@ public class AiChatRunManager {
                 try {
                     startQueued();
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> "Unable to start a queued run once a tool call's run slot came free", e);
+                    LOGGER.error("Unable to start a queued run once a tool call's run slot came free", e);
                 }
             }
         });

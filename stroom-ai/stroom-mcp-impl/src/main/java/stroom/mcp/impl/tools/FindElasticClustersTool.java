@@ -34,6 +34,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -166,7 +167,7 @@ class FindElasticClustersTool extends AbstractBuiltInTool {
             outcome.put("ok", result.ok());
             outcome.put("message", result.message());
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to test cluster " + cluster.getUuid(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to test cluster {}", cluster.getUuid()), e);
             outcome.put("ok", false);
             outcome.put("message", PipelineShapes.reason(e));
         }

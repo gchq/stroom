@@ -119,7 +119,7 @@ class GeneratedDocs {
                     .map(this::found)
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the documentation named " + name, e);
+            LOGGER.debug("Unable to find the documentation named {}", name, e);
             return List.of();
         }
     }

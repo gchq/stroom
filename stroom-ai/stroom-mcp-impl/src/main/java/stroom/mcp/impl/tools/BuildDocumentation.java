@@ -39,6 +39,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -169,7 +170,7 @@ class BuildDocumentation {
             return ids;
         } catch (final RuntimeException e) {
             // A default: without it, the call says to give stream_ids.
-            LOGGER.debug(() -> "No stepped streams recorded for " + pipelineUuid + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("No stepped streams recorded for {}: {}", pipelineUuid, e.getMessage()));
             return List.of();
         }
     }

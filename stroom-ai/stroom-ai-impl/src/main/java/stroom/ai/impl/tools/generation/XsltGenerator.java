@@ -176,8 +176,6 @@ public final class XsltGenerator {
     private final Map<String, String> ruleNames = new LinkedHashMap<>();
     private final List<RuleTemplate> ruleTemplates = new ArrayList<>();
     private final List<Map<String, Object>> summary = new ArrayList<>();
-    private List<String> conditional = new ArrayList<>();
-    private EventNode root;
     private int repeatTokens;
 
     private XsltGenerator(final TranslationMapping mapping, final EventSchema schema, final boolean markRules) {

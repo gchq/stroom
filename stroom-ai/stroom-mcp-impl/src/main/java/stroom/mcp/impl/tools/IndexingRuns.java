@@ -34,6 +34,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -198,7 +199,7 @@ class IndexingRuns {
             try {
                 text = errorText.read(errors.getFirst().getId());
             } catch (final IOException | RuntimeException e) {
-                LOGGER.debug(() -> "Unable to read Error stream " + errors.getFirst().getId(), e);
+                LOGGER.debug(() -> LogUtil.message("Unable to read Error stream {}", errors.getFirst().getId()), e);
                 return Optional.empty();
             }
             final Optional<Matcher> hit = NullSafe.string(text).lines()

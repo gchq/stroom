@@ -228,7 +228,7 @@ public class AgentInstructions {
         try {
             return InstructionRules.fieldMappingLayout(applyingWhere(session, docRef, "the documentation layout"));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the documentation layout rule for " + docRef, e);
+            LOGGER.debug("Unable to read the documentation layout rule for {}", docRef, e);
             return Optional.empty();
         }
     }
@@ -242,7 +242,7 @@ public class AgentInstructions {
             return InstructionRules.componentRules(applyingWhere(session, pipeline,
                     "the component template rules"));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the component template rules for " + pipeline, e);
+            LOGGER.debug("Unable to read the component template rules for {}", pipeline, e);
             return new ComponentRules(List.of(), List.of());
         }
     }
@@ -263,7 +263,7 @@ public class AgentInstructions {
                     .filter(documentAccess::canView)
                     .findFirst();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find " + type + " '" + name + "'", e);
+            LOGGER.debug("Unable to find {} '{}'", type, name, e);
             return Optional.empty();
         }
     }

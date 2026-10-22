@@ -21,6 +21,7 @@ import stroom.ai.impl.AiRetention;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -125,7 +126,9 @@ class McpWorkspaces {
                     : state.takeChatId();
         }
         if (callsRunning) {
-            LOGGER.debug(() -> "The workspace of MCP session " + session.id() + " is deleted once its calls end");
+            LOGGER.debug(() -> LogUtil.message(
+                    "The workspace of MCP session {} is deleted once its calls end",
+                    session.id()));
         }
         deleteChat(session, chatId);
     }
@@ -134,11 +137,13 @@ class McpWorkspaces {
         if (chatId != null) {
             try {
                 securityContext.asProcessingUser(() -> aiRetentionProvider.get().deleteChatAndFiles(chatId));
-                LOGGER.debug(() -> "Deleted the workspace of MCP session " + session.id());
+                LOGGER.debug(() -> LogUtil.message("Deleted the workspace of MCP session {}", session.id()));
             } catch (final RuntimeException e) {
                 // The retention job deletes it later.
-                LOGGER.warn(() -> "Unable to delete the workspace of an MCP session of "
-                                  + session.owner().toDisplayString(), e);
+                LOGGER.warn(() -> LogUtil.message(
+                        "Unable to delete the workspace of an MCP session of {}",
+                        session.owner().toDisplayString()),
+                        e);
             }
         }
     }

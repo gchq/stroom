@@ -41,6 +41,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -179,7 +180,7 @@ class CoverageReads {
                 markers = streamSummaries.errorMarkers(meta.id(), MAX_MARKERS);
             } catch (final Exception e) {
                 // An Error stream Stroom can't read (its volume gone): the batch's others still counted.
-                LOGGER.debug(() -> "Unable to read Error stream " + meta.id(), e);
+                LOGGER.debug(() -> LogUtil.message("Unable to read Error stream {}", meta.id()), e);
                 continue;
             }
             for (final ErrorTriage.Marker marker : markers) {
@@ -270,7 +271,7 @@ class CoverageReads {
                 }
             } catch (final RuntimeException e) {
                 // An Events stream Stroom can't read: the others still sampled.
-                LOGGER.debug(() -> "Unable to read Events stream " + meta.getId(), e);
+                LOGGER.debug(() -> LogUtil.message("Unable to read Events stream {}", meta.getId()), e);
                 continue;
             }
             for (final String data : bodies) {

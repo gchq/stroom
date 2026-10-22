@@ -28,6 +28,7 @@ import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -129,7 +130,7 @@ public class HeldSchemas {
         try {
             refs = NullSafe.list(xmlSchemaStoreProvider.get().list());
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the XML schemas: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to list the XML schemas: {}", e.getMessage()), e);
             return index;
         }
         for (final DocRef ref : refs) {

@@ -32,6 +32,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -149,7 +150,7 @@ public class WriteGuard {
                     .findFirst()
                     .map(node -> new Folder(node.getDocRef(), parent.path() + "/" + name, false));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to look for folder " + name + " in " + parent.path(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to look for folder {} in {}", name, parent.path()), e);
             return Optional.empty();
         }
     }
@@ -418,8 +419,12 @@ public class WriteGuard {
             try {
                 explorerServiceProvider.get().delete(List.of(node(ref)));
             } catch (final RuntimeException deleteFailed) {
-                LOGGER.warn(() -> "Couldn't delete the empty " + type + " '" + name + "' (" + ref.getUuid()
-                                  + ") after filling it failed", deleteFailed);
+                LOGGER.warn(() -> LogUtil.message(
+                        "Couldn't delete the empty {} '{}' ({}) after filling it failed",
+                        type,
+                        name,
+                        ref.getUuid()),
+                        deleteFailed);
             }
             throw e;
         }

@@ -51,7 +51,7 @@ class TestToolCategories {
     @Test
     void testEachToolIsInItsCategory(@TempDir final Path tempDir) {
         final List<AiToolSummary> summaries;
-        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+        try (final BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             summaries = world.builtInTools().summaries();
         }
 
@@ -84,7 +84,7 @@ class TestToolCategories {
     @Test
     void testOnlyMemoryHasSomeCallsThatReadAndSomeThatChange(@TempDir final Path tempDir) {
         final BuiltInTools tools;
-        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+        try (final BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             tools = world.builtInTools();
         }
         assertThat(tools.summaries().stream()

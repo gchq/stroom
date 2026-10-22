@@ -56,6 +56,7 @@ public class SteppingWalks {
 
     private final Provider<SteppingService> steppingServiceProvider;
 
+    /// @param steppingServiceProvider Steps the pipelines, as the user.
     @Inject
     public SteppingWalks(final Provider<SteppingService> steppingServiceProvider) {
         this.steppingServiceProvider = steppingServiceProvider;
@@ -217,7 +218,7 @@ public class SteppingWalks {
             try {
                 steppingService.terminateStepping(request(StepType.REFRESH, null));
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Unable to end stepping session " + sessionUuid, e);
+                LOGGER.debug("Unable to end stepping session {}", sessionUuid, e);
             }
         }
     }

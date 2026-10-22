@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -106,7 +107,7 @@ public class XsltCompileCheck {
             compiler.setURIResolver(uriResolver.get());
             compiler.compile(new SAXSource(LockedSaxon.reader(), new InputSource(new StringReader(xslt))));
         } catch (final SaxonApiException | RuntimeException e) {
-            LOGGER.debug(() -> "XSLT did not compile: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("XSLT did not compile: {}", e.getMessage()), e);
             if (collected.errors.isEmpty()) {
                 collected.errors.add(e.getMessage() == null
                         ? "it does not compile"

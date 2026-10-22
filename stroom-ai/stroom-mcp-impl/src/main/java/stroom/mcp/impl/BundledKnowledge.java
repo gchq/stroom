@@ -110,7 +110,7 @@ public class BundledKnowledge implements AgentKnowledge {
         try {
             return Optional.of(read("conventions/" + fileName));
         } catch (final UncheckedIOException e) {
-            LOGGER.debug(() -> "No conventions file " + fileName, e);
+            LOGGER.debug("No conventions file {}", fileName, e);
             return Optional.empty();
         }
     }
@@ -121,7 +121,7 @@ public class BundledKnowledge implements AgentKnowledge {
     }
 
     private static String readResource(final String path) {
-        try (InputStream in = BundledKnowledge.class.getResourceAsStream(ROOT + path)) {
+        try (final InputStream in = BundledKnowledge.class.getResourceAsStream(ROOT + path)) {
             if (in == null) {
                 throw new UncheckedIOException(new IOException("No bundled file " + ROOT + path));
             }

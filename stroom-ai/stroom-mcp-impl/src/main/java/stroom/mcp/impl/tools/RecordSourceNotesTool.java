@@ -38,6 +38,7 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -251,7 +252,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             final EventSchema schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
             return detail -> SourceNotes.detailProblem(schema, detail);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No event-logging schema to check the catalogue against: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "No event-logging schema to check the catalogue against: {}",
+                    e.getMessage()),
+                    e);
             return null;
         }
     }
@@ -293,6 +297,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return NullSafe.map(notes);
     }
 
+    /// The text of a source notes document: a markdown field dictionary, event catalogue and sources, then the
+    /// notes as a block the tools read back.
+    ///
+    /// @param source     The log source the notes are of.
+    /// @param summary    What the source is.
+    /// @param fields     The field dictionary's rows.
+    /// @param events     The event catalogue's rows.
+    /// @param references Where the notes came from, e.g. vendor documentation.
+    /// @param keptNames  The names of the source documents kept in the build.
+    /// @return The document's text.
     static String notesText(final String source,
                             final String summary,
                             final List<Map<String, Object>> fields,
