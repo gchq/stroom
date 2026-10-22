@@ -178,7 +178,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     }
 
     private void getContent(final TabData tab, final ContentCallback callback) {
-        callback.onReady(tabContentProvider.getPresenter(tab, this));
+        callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
     public void selectCommonTab(final CommonDocLinkTab commonDocLinkTab) {

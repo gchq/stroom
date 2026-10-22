@@ -134,6 +134,10 @@ public class TextPresenter
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
+            // Closed (e.g. the component was removed) before it ran
+            if (isDisposed()) {
+                return;
+            }
             // The play button applies to text (not HTML) when stepping is shown and allowed. It
             // needs a source location, which the text has only once a row is selected
             // (beginStepping needs the stream id), so until then it is shown disabled
@@ -175,6 +179,10 @@ public class TextPresenter
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
+            // Closed (e.g. the component was removed) before it ran
+            if (isDisposed()) {
+                return;
+            }
             // Determine if we should show tha play button.
             // Show the play button if we have fetched input data.
             getView().setClassification(fetchDataResult.getClassification());

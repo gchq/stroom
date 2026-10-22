@@ -20,8 +20,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.task.client.HasTaskMonitorFactory;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.tab.client.presenter.TabData;
@@ -110,11 +108,16 @@ public class TabContentProvider<E>
         }
     }
 
-    public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
-        return createPresenter(tab, taskMonitorFactory);
+    /// The presenter of a tab, made (and owned) when first asked for. It shows its tasks on the task
+    /// monitor its context provides (e.g. its document's tab), as its owner's are.
+    ///
+    /// @param tab The tab.
+    /// @return Its presenter.
+    public PresenterWidget<?> getPresenter(final TabData tab) {
+        return createPresenter(tab);
     }
 
-    private PresenterWidget<?> createPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
+    private PresenterWidget<?> createPresenter(final TabData tab) {
         currentTabProvider = presenterCache.get(tab);
         if (currentTabProvider == null) {
             final TabProvider<E> provider = tabProviders.get(tab);
@@ -126,15 +129,6 @@ public class TabContentProvider<E>
                 // Handle dirty events.
                 if (dirtyHandlerProviders.add(currentTabProvider)) {
                     registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
-                }
-
-                if (currentTabProvider instanceof HasTaskMonitorFactory) {
-                    ((HasTaskMonitorFactory) currentTabProvider)
-                            .setTaskMonitorFactory(taskMonitorFactory);
-                }
-                if (currentTabProvider.getPresenter() instanceof HasTaskMonitorFactory) {
-                    ((HasTaskMonitorFactory) currentTabProvider.getPresenter())
-                            .setTaskMonitorFactory(taskMonitorFactory);
                 }
             }
         }

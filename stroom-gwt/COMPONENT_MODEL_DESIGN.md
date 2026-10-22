@@ -865,12 +865,22 @@ Give every presenter an owner without changing how screens are written.
 
 Fix read-only and task-monitor threading once, centrally.
 
-1. Add `Contexts.READ_ONLY`, `TASK_MONITOR` and `DOCUMENT`.
-2. `DocPresenter.read` sets `READ_ONLY` on the document's node; `ContentTabPanePresenter` and `PopupSupportImpl` provide `TASK_MONITOR`.
-3. `MyPresenterWidget.createTaskMonitor()` falls back to context.
-4. Start with the folder presenters and one `DocTabPresenter` type: views `watch(READ_ONLY)` instead of implementing `onReadOnly`, and `setTaskMonitorFactory` calls are deleted.
+Decided (22 October 2026): a presenter in a tab or dialog that isn't given a task monitor shows its tasks on its tab's or dialog's, from context, rather than as an app-wide task (the main screen's spinner); Plan B is the first document type converted.
+
+1. Done (the pilot): `Contexts.READ_ONLY`, `TASK_MONITOR` and `DOCUMENT`.
+2. Done: `DocPresenter` provides `READ_ONLY` and `DOCUMENT` to everything it owns, set by `read` (and by `setDocumentReadOnly`, for a document presenter embedded in another screen rather than read, e.g. Plan B's settings in a traces document); `ContentTabPanePresenter` provides the tab's `TASK_MONITOR` on the tab's content (and still sets it on the content, replacing the one it was given while it opened), and `PopupSupportImpl` the dialog's on the dialog's presenter (`ComponentNode.setProvided`, as a dialog may be shown again). `MyPresenterWidget` has `context`, `watch` and `provide` (`TestDocPresenter`).
+3. Done: `MyPresenterWidget.createTaskMonitor()` uses the task monitor set on it, else its context's, else an app-wide one (`TestMyPresenterWidget`).
+4. Done for Plan B: its settings presenters and `PlanBSettingsPresenter` `watch(READ_ONLY)` (their views' `onReadOnly`), so `read(settings, readOnly)` lost its `readOnly` and no presenter passes read-only on; story `PlanBEditor` `LockChangeWhileOpen` reads the document again locked and unlocked, and every settings field follows. Done for every tabbed document and folder: `TabContentProvider.getPresenter(tab)` no longer sets each tab presenter's task monitor, as its context gives it its tab's. Not yet: the folders' tab presenters (`MetaPresenter`, `ProcessorPresenter`, `ProcessorTaskPresenter`) still take `readOnly` in `read(docRef, doc, readOnly)`, part of `HasDocumentRead`, which Phase 5 removes with the other `onRead` overrides.
 
 **Exit:** read-only and lock-change stories pass for those screens; the pattern is documented for Phase 5.
+
+#### Converting a screen to context (for Phase 5)
+
+As Plan B was converted:
+
+- **Read-only.** A presenter that shows something the user may change calls `watch(Contexts.READ_ONLY, getView()::onReadOnly)` (or its own method) in its constructor, and stops taking `readOnly` as an argument: `read(settings, readOnly)` becomes `read(settings)`, and the presenters between the document and it stop passing it on. The document provides it (`DocPresenter.read`); a document presenter used without being read (embedded in another screen) is told with `setDocumentReadOnly`. A presenter is told once it is owned, and again whenever the document is read with a different value, e.g. when its lock changes.
+- **Task monitor.** Delete `setTaskMonitorFactory(...)` calls that pass on an owner's task monitor; the presenter uses its context's (its tab's or dialog's). Keep those that give a presenter its own (e.g. a list's pager spinner).
+- **Check** with the screen's read-only story, and a lock change story: read the shown document again read only and then not (`ScreenHarness.shownContent()`), and expect its fields to follow.
 
 ### Phase 3: Components and callbacks
 

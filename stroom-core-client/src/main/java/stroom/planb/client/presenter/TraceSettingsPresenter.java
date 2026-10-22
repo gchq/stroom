@@ -58,16 +58,15 @@ public class TraceSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final TraceSettings traceSettings) {
-            read(traceSettings, readOnly);
+            read(traceSettings);
         } else {
-            read(new TraceSettings.Builder().build(), readOnly);
+            read(new TraceSettings.Builder().build());
         }
     }
 
-    private void read(final TraceSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final TraceSettings settings) {
         maxQueryTimeRange = settings.getMaxQueryTimeRange();
         compactionFrequency = settings.getHoldingArea().getCompactionFrequency();
         getView().setMaxStoreSize(settings.getMaxStoreSize());

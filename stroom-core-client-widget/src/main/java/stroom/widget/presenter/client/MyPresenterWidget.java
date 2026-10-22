@@ -21,6 +21,9 @@ import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.ContextKey;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
@@ -48,7 +51,8 @@ public class MyPresenterWidget<V extends View>
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
-    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
+    // Set explicitly (e.g. a list's own spinner), or null to use the context's (see createTaskMonitor)
+    private TaskMonitorFactory taskMonitorFactory;
     private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
@@ -195,8 +199,48 @@ public class MyPresenterWidget<V extends View>
         this.taskMonitorFactory = taskMonitorFactory;
     }
 
+    /// Shows a task's progress: on the task monitor set on this presenter, if one was, otherwise on
+    /// the one its context provides ([Contexts#TASK_MONITOR], e.g. its tab's or dialog's),
+    /// otherwise as an app-wide task (the main screen's spinner).
+    ///
+    /// @return A task monitor.
     @Override
     public TaskMonitor createTaskMonitor() {
-        return taskMonitorFactory.createTaskMonitor();
+        if (taskMonitorFactory != null) {
+            return taskMonitorFactory.createTaskMonitor();
+        }
+        final TaskMonitorFactory provided = node.lookup(Contexts.TASK_MONITOR);
+        if (provided != Contexts.TASK_MONITOR.getDefaultValue()) {
+            return provided.createTaskMonitor();
+        }
+        return new DefaultTaskMonitorFactory(this).createTaskMonitor();
+    }
+
+    /// Looks up a context value now. To follow changes, use [#watch(ContextKey, Consumer)].
+    ///
+    /// @param key The key, e.g. [Contexts#READ_ONLY].
+    /// @param <T> The type of the value.
+    /// @return The value, or the key's default if nothing provides it.
+    protected final <T> T context(final ContextKey<T> key) {
+        return node.lookup(key);
+    }
+
+    /// Watches a context value: runs `onChange` with it once this presenter is owned (by a tab's
+    /// root, or a presenter that is), and again whenever it changes, until it is disposed.
+    ///
+    /// @param key      The key, e.g. [Contexts#READ_ONLY].
+    /// @param onChange What to run with the value, e.g. `getView()::onReadOnly`.
+    /// @param <T>      The type of the value.
+    protected final <T> void watch(final ContextKey<T> key, final Consumer<T> onChange) {
+        node.watch(key, onChange);
+    }
+
+    /// Provides a context value to this presenter and everything it owns, however deep.
+    ///
+    /// @param key   The key.
+    /// @param value The value, which may change.
+    /// @param <T>   The type of the value.
+    protected final <T> void provide(final ContextKey<T> key, final ContextValue<T> value) {
+        node.provide(key, value);
     }
 }

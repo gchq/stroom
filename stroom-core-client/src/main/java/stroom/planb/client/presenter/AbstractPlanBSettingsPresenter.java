@@ -20,7 +20,9 @@ import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.HasChangeHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,15 +39,20 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
             final EventBus eventBus,
             final V view) {
         super(eventBus, view);
+        // Read only as its document (or what embeds it) is, now and as that changes
+        watch(Contexts.READ_ONLY, this::setReadOnly);
     }
 
-    public abstract void read(AbstractPlanBSettings settings, boolean readOnly);
+    /// Shows settings.
+    ///
+    /// @param settings The settings.
+    public abstract void read(AbstractPlanBSettings settings);
 
     public abstract AbstractPlanBSettings write();
 
-    public void setReadOnly(final boolean readOnly) {
+    private void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        if (getView() instanceof final stroom.entity.client.presenter.ReadOnlyChangeHandler changeHandler) {
+        if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
             changeHandler.onReadOnly(readOnly);
         }
     }

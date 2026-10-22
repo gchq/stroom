@@ -100,6 +100,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
+            // Closed (e.g. the component was removed) before it ran
+            if (isDisposed()) {
+                return;
+            }
 //            // Determine if we should show tha play button.
 //            playButtonVisible = !isHtml
 //                    && getTextSettings().isShowStepping()
@@ -138,6 +142,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
+            // Closed (e.g. the component was removed) before it ran
+            if (isDisposed()) {
+                return;
+            }
             // Determine if we should show tha play button.
             // Show the play button if we have fetched input data.
             getView().setClassification(fetchDataResult.getClassification());

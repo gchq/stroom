@@ -36,6 +36,8 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -173,10 +175,16 @@ public class ContentTabPanePresenter
         final Object content = event.getLayer();
         Scheduler.get().scheduleDeferred(() -> ContentFocus.focus(content));
 
+        final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
+        final TabTaskMonitorFactory tabTaskMonitorFactory = new TabTaskMonitorFactory(tab);
+        // The content shows its tasks on the tab (replacing any it was given while it opened), and
+        // so does everything it owns, through its context
         if (event.getLayer() instanceof HasTaskMonitorFactory) {
-            final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());
-            ((HasTaskMonitorFactory) event.getLayer())
-                    .setTaskMonitorFactory(new TabTaskMonitorFactory(tab));
+            ((HasTaskMonitorFactory) event.getLayer()).setTaskMonitorFactory(tabTaskMonitorFactory);
+        }
+        if (event.getLayer() instanceof final HasComponentNode hasComponentNode
+            && hasComponentNode.getComponentNode() != null) {
+            hasComponentNode.getComponentNode().setProvided(Contexts.TASK_MONITOR, tabTaskMonitorFactory);
         }
     }
 

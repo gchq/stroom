@@ -44,16 +44,15 @@ public class TemporalStateSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final TemporalStateSettings temporalStateSettings) {
-            read(temporalStateSettings, readOnly);
+            read(temporalStateSettings);
         } else {
-            read(new TemporalStateSettings.Builder().build(), readOnly);
+            read(new TemporalStateSettings.Builder().build());
         }
     }
 
-    private void read(final TemporalStateSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final TemporalStateSettings settings) {
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());

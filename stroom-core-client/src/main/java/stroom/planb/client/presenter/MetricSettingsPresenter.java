@@ -43,16 +43,15 @@ public class MetricSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final MetricSettings metricSettings) {
-            read(new MetricSettings.Builder(metricSettings).build(), readOnly);
+            read(new MetricSettings.Builder(metricSettings).build());
         } else {
-            read(new MetricSettings.Builder().build(), readOnly);
+            read(new MetricSettings.Builder().build());
         }
     }
 
-    private void read(final MetricSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final MetricSettings settings) {
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());

@@ -228,6 +228,29 @@ public final class ComponentNode {
         }
     }
 
+    /// @param key The key.
+    /// @param <T> The type of the value.
+    /// @return The value this node itself provides, e.g. to change it, or null if it provides none.
+    @SuppressWarnings("unchecked")
+    public <T> ContextValue<T> provided(final ContextKey<T> key) {
+        return (ContextValue<T>) provided.get(key);
+    }
+
+    /// Provides a value, or changes the one this node provides, e.g. a dialog's task monitor each
+    /// time the dialog is shown.
+    ///
+    /// @param key   The key.
+    /// @param value The value.
+    /// @param <T>   The type of the value.
+    public <T> void setProvided(final ContextKey<T> key, final T value) {
+        final ContextValue<T> current = provided(key);
+        if (current == null) {
+            provide(key, ContextValue.of(value));
+        } else {
+            current.set(value);
+        }
+    }
+
     /// Looks up a value from the nearest node, this one or above, that provides it. For a
     /// narrowing key (see [ContextKey#narrowing]) every provider on the way up counts.
     ///

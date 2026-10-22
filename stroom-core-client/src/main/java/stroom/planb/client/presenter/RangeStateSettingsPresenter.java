@@ -43,16 +43,15 @@ public class RangeStateSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final RangeStateSettings rangeStateSettings) {
-            read(rangeStateSettings, readOnly);
+            read(rangeStateSettings);
         } else {
-            read(new RangeStateSettings.Builder().build(), readOnly);
+            read(new RangeStateSettings.Builder().build());
         }
     }
 
-    private void read(final RangeStateSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final RangeStateSettings settings) {
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());

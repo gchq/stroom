@@ -16,7 +16,12 @@
 
 package stroom.widget.presenter.client;
 
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskStartEvent;
 import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.web.bindery.event.shared.Event;
@@ -105,6 +110,44 @@ class TestMyPresenterWidget {
 
         assertThat(dialog.isDisposed()).isTrue();
         assertThat(events).containsExactly("dialog disposed", "opener disposed");
+    }
+
+    @Test
+    void aTaskMonitorSetOnThePresenterIsUsed() {
+        final TestPresenter presenter = new TestPresenter("presenter");
+        final TaskMonitor own = Mockito.mock(TaskMonitor.class);
+        final ComponentNode root = ComponentNode.root("tab");
+        root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> Mockito.mock(TaskMonitor.class)));
+        root.adopt(presenter.getComponentNode());
+
+        presenter.setTaskMonitorFactory(() -> own);
+
+        assertThat(presenter.createTaskMonitor()).isSameAs(own);
+    }
+
+    @Test
+    void otherwiseTheContextsTaskMonitorIsUsed() {
+        // e.g. its tab's, which its tab provides
+        final TestPresenter presenter = new TestPresenter("presenter");
+        final TaskMonitor tabs = Mockito.mock(TaskMonitor.class);
+        final ComponentNode root = ComponentNode.root("tab");
+        root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> tabs));
+        root.adopt(presenter.getComponentNode());
+
+        assertThat(presenter.createTaskMonitor()).isSameAs(tabs);
+    }
+
+    @Test
+    void otherwiseItsTasksAreAppWide() {
+        // Shown by the main screen's spinner, which hears task events on the bus
+        final TestPresenter presenter = new TestPresenter("presenter");
+        final List<Task> started = new ArrayList<>();
+        eventBus.addHandler(TaskStartEvent.getType(), event -> started.add(event.getTask()));
+        final Task task = Mockito.mock(Task.class);
+
+        presenter.createTaskMonitor().onStart(task);
+
+        assertThat(started).containsExactly(task);
     }
 
     @Test

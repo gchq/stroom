@@ -43,16 +43,15 @@ public class HistogramSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final HistogramSettings histogramSettings) {
-            read(histogramSettings, readOnly);
+            read(histogramSettings);
         } else {
-            read(new HistogramSettings.Builder().build(), readOnly);
+            read(new HistogramSettings.Builder().build());
         }
     }
 
-    private void read(final HistogramSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final HistogramSettings settings) {
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());

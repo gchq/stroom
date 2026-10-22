@@ -43,16 +43,15 @@ public class StateSettingsPresenter
         view.setUiHandlers(this);
     }
 
-    public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
+    public void read(final AbstractPlanBSettings settings) {
         if (settings instanceof final StateSettings stateSettings) {
-            read(stateSettings, readOnly);
+            read(stateSettings);
         } else {
-            read(new StateSettings.Builder().build(), readOnly);
+            read(new StateSettings.Builder().build());
         }
     }
 
-    private void read(final StateSettings settings, final boolean readOnly) {
-        setReadOnly(readOnly);
+    private void read(final StateSettings settings) {
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());

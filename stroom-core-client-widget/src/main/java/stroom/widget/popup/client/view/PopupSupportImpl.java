@@ -18,7 +18,10 @@ package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -187,7 +190,7 @@ public class PopupSupportImpl implements PopupSupport {
                 }
                 case DIALOG: {
                     final ResizableDialog resizableDialog = new ResizableDialog(dialogActionHandler, popupSize);
-                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    setTaskMonitor(resizableDialog);
                     resizableDialog.setContent(view.asWidget());
                     popup = resizableDialog;
 
@@ -200,7 +203,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogActionHandler = closeContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(closeContent, popupSize);
-                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    setTaskMonitor(resizableDialog);
                     resizableDialog.setContent(closeContent);
                     popup = resizableDialog;
 
@@ -213,7 +216,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = okCancelContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(okCancelContent, popupSize);
-                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    setTaskMonitor(resizableDialog);
                     resizableDialog.setContent(okCancelContent);
                     popup = resizableDialog;
 
@@ -226,7 +229,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = content;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(content, popupSize);
-                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    setTaskMonitor(resizableDialog);
                     resizableDialog.setContent(content);
                     popup = resizableDialog;
 
@@ -240,7 +243,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = acceptRejectContent;
 
                     final ResizableDialog resizableDialog = new ResizableDialog(acceptRejectContent, popupSize);
-                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    setTaskMonitor(resizableDialog);
                     resizableDialog.setContent(acceptRejectContent);
                     popup = resizableDialog;
 
@@ -266,7 +269,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = closeContent;
 
                     final Dialog dialog = new Dialog(closeContent);
-                    hasTaskListener.setTaskMonitorFactory(dialog);
+                    setTaskMonitor(dialog);
                     dialog.setContent(closeContent);
                     popup = dialog;
 
@@ -279,7 +282,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = okCancelContent;
 
                     final Dialog dialog = new Dialog(okCancelContent);
-                    hasTaskListener.setTaskMonitorFactory(dialog);
+                    setTaskMonitor(dialog);
                     dialog.setContent(okCancelContent);
                     popup = dialog;
 
@@ -292,7 +295,7 @@ public class PopupSupportImpl implements PopupSupport {
                     dialogButtons = acceptRejectContent;
 
                     final Dialog dialog = new Dialog(acceptRejectContent);
-                    hasTaskListener.setTaskMonitorFactory(dialog);
+                    setTaskMonitor(dialog);
                     dialog.setContent(acceptRejectContent);
                     popup = dialog;
 
@@ -313,6 +316,16 @@ public class PopupSupportImpl implements PopupSupport {
 
     private void setView(final View view) {
         this.view = view;
+    }
+
+    // The dialog's presenter, and everything it owns (through its context), show their tasks on the
+    // dialog
+    private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
+        hasTaskListener.setTaskMonitorFactory(taskMonitorFactory);
+        if (hasTaskListener instanceof final HasComponentNode hasComponentNode
+            && hasComponentNode.getComponentNode() != null) {
+            hasComponentNode.getComponentNode().setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
+        }
     }
 
     private void setHasTaskListener(final HasTaskMonitorFactory hasTaskListener) {

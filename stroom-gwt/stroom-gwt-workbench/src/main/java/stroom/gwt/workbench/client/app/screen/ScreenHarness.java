@@ -167,6 +167,7 @@ public final class ScreenHarness {
     // Owns the components the story shows (see addComponent), made when first needed
     private ComponentNode componentRoot;
     private Component shownComponent;
+    private PresenterWidget<?> shownContent;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
     private int probeCleanUpMark;
@@ -438,6 +439,20 @@ public final class ScreenHarness {
         return (C) shown.shownComponent;
     }
 
+    /// For a play: the presenter the story shows (the last given to [#addContent] or
+    /// [#addPage]), e.g. to act on it as Stroom does (reading a document again when it is locked).
+    ///
+    /// @param <P> The presenter's type.
+    /// @return The presenter.
+    /// @throws IllegalStateException If the story shows none.
+    @SuppressWarnings("unchecked")
+    public static <P extends PresenterWidget<?>> P shownContent() {
+        if (shown == null || shown.shownContent == null) {
+            throw new IllegalStateException("The story shows no presenter");
+        }
+        return (P) shown.shownContent;
+    }
+
     /// For a play: closes the story's components as closing a document's tab does, disposing the
     /// story's root and so everything it owns. Their widgets stay on the page.
     ///
@@ -467,6 +482,8 @@ public final class ScreenHarness {
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
     private <P extends PresenterWidget<?>> P fill(final P presenter, final boolean tab) {
         fillWidget(presenter.getWidget(), presenter, tab);
+        shownContent = presenter;
+        shown = this;
         // The story's root owns it, as an open tab's root does in Stroom, so it is disposed with
         // the story's clean ups (and when the leak probe closes it)
         if (presenter instanceof final HasComponentNode hasComponentNode

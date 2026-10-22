@@ -33,6 +33,7 @@ import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
+import stroom.widget.component.client.Contexts;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -85,6 +86,8 @@ public class PlanBSettingsPresenter
         this.metricSettingsPresenterProvider = metricSettingsPresenterProvider;
         this.traceSettingsPresenterProvider = traceSettingsPresenterProvider;
         view.setUiHandlers(this);
+        // Read only as its document (or what embeds it) is, now and as that changes
+        watch(Contexts.READ_ONLY, view::onReadOnly);
     }
 
     @Override
@@ -95,7 +98,6 @@ public class PlanBSettingsPresenter
     @Override
     protected void onRead(final DocRef docRef, final PlanBDoc doc, final boolean readOnly) {
         currentStateType = null;
-        getView().onReadOnly(readOnly);
         getView().setStateType(doc.getStateType());
         changeStateType();
     }
@@ -210,7 +212,7 @@ public class PlanBSettingsPresenter
 
         if (settingsPresenter != null) {
             if (currentStateType == null && getEntity() != null) {
-                settingsPresenter.read(getEntity().getSettings(), isReadOnly());
+                settingsPresenter.read(getEntity().getSettings());
             }
             getView().setSettingsView(settingsPresenter.getView());
             settingsPresenter.addChangeHandler(() -> {
@@ -232,13 +234,14 @@ public class PlanBSettingsPresenter
     public void readSettings(final AbstractPlanBSettings settings,
                              final StateType stateType,
                              final boolean readOnly) {
+        // Embedded rather than read as a document, so told whether it may be changed here
+        setDocumentReadOnly(readOnly);
         getView().setStateType(stateType);
         currentStateType = null;
         changeStateType();
         if (settingsPresenter != null) {
-            settingsPresenter.read(settings, readOnly);
+            settingsPresenter.read(settings);
         }
-        getView().onReadOnly(readOnly);
     }
 
     public AbstractPlanBSettings writeSettings() {

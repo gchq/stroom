@@ -30,6 +30,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.planb.client.presenter.PlanBPresenter;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
 import stroom.security.shared.DocumentPermission;
@@ -207,6 +208,20 @@ public final class PlanBEditorStories {
                             .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // The document is locked and unlocked while it is open, as reading it again does
+                // when its lock changes: every settings field follows, as they watch READ_ONLY
+                // (from the document) rather than being told by the presenters between
+                .story("LockChangeWhileOpen", context -> render(context, "planb-STATE", false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).not().toHaveAttribute("readonly"));
+                    play.run("lock the document", () -> readAgain(true));
+                    play.expect(maxStoreSize(play)).toHaveAttribute("readonly");
+                    play.expect(play.getByRole("button", "Save (read only)")).toBeInTheDocument();
+                    play.run("unlock the document", () -> readAgain(false));
+                    play.expect(maxStoreSize(play)).not().toHaveAttribute("readonly");
+                    play.expect(play.getByRole("button", "Save")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // METRIC read only: the same settings as Metric, when the user may only view the store
                 .story("MetricReadOnly", context -> render(context, "planb-METRIC", true))
                 .withPlay(play -> {
@@ -261,6 +276,12 @@ public final class PlanBEditorStories {
 
     // The Max Store Size text box.
     // Its FormGroup has no identity, so it has no id
+    // Reads the shown document again, as DocumentPlugin does, read only or not
+    private static void readAgain(final boolean readOnly) {
+        final PlanBPresenter presenter = ScreenHarness.shownContent();
+        presenter.read(presenter.getDocRef(), presenter.getEntity(), readOnly);
+    }
+
     private static Query maxStoreSize(final Play play) {
         return play.within(play.getByText("Max Store Size", "label").closest(FORM_GROUP)).querySelector("input");
     }

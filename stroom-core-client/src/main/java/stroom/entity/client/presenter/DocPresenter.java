@@ -21,6 +21,8 @@ import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,9 +40,15 @@ public abstract class DocPresenter<V extends View, D>
     private D entity;
     private boolean readOnly = true;
     private boolean dirty;
+    // Provided to everything this presenter owns, however deep, and set as the document is read:
+    // whether it may be changed (only narrowing what an owner provides) and which document it is
+    private final ContextValue<Boolean> readOnlyContext = ContextValue.of(true);
+    private final ContextValue<DocRef> documentContext = ContextValue.of(null);
 
     public DocPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
+        provide(Contexts.READ_ONLY, readOnlyContext);
+        provide(Contexts.DOCUMENT, documentContext);
     }
 
     @Override
@@ -81,6 +89,8 @@ public abstract class DocPresenter<V extends View, D>
         this.entity = document;
         this.readOnly = readOnly;
         setDirty(false);
+        documentContext.set(docRef);
+        readOnlyContext.set(readOnly);
 
         if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
             changeHandler.onReadOnly(readOnly);
@@ -97,6 +107,16 @@ public abstract class DocPresenter<V extends View, D>
 
     public boolean isReadOnly() {
         return readOnly;
+    }
+
+    /// Says whether the document may be changed without reading it, e.g. for a presenter embedded
+    /// in another screen, given its settings rather than a document. Everything this presenter
+    /// owns follows it ([Contexts#READ_ONLY]).
+    ///
+    /// @param readOnly Whether it may not be changed.
+    protected final void setDocumentReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        readOnlyContext.set(readOnly);
     }
 
     /**
