@@ -52,7 +52,7 @@ class PipelinePropertyTypes {
         try {
             registry = elementRegistryFactoryProvider.get().get();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the pipeline element types", e);
+            LOGGER.debug("Unable to read the pipeline element types", e);
             return Map.of();
         }
         final Map<String, Map<String, String>> declared = new LinkedHashMap<>();

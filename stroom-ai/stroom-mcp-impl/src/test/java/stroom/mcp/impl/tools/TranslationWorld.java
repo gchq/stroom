@@ -274,7 +274,7 @@ final class TranslationWorld {
     }
 
     private static EventSchema schema() {
-        try (InputStream in = TranslationWorld.class.getResourceAsStream("event-logging-v4.1.0.xsd")) {
+        try (final InputStream in = TranslationWorld.class.getResourceAsStream("event-logging-v4.1.0.xsd")) {
             return EventSchema.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (final IOException e) {
             throw new IllegalStateException(e);

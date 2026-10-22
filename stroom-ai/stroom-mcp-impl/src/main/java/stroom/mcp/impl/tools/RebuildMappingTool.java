@@ -43,6 +43,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -414,7 +415,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                     names.add(PyText.repr(entry.name()));
                 }
             } catch (final PipelineUnreadableException e) {
-                LOGGER.debug(() -> "Pipeline " + entry.uuid() + " can't be read: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Pipeline {} can't be read: {}", entry.uuid(), e.getMessage()));
             }
         }
         if (found.size() != 1) {

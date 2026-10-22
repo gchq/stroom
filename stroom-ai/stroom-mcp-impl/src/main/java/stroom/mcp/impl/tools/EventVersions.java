@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -171,8 +172,11 @@ public class EventVersions {
             }
         } catch (final RuntimeException e) {
             // A convenience: the session still remembers it.
-            LOGGER.debug(() -> "Couldn't keep the event-logging version in build " + key + "'s record: "
-                               + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Couldn't keep the event-logging version in build {}'s record: {}",
+                    key,
+                    e.getMessage()),
+                    e);
         }
     }
 
@@ -260,8 +264,11 @@ public class EventVersions {
                     .filter(kept -> NullSafe.isNonBlankString(text(kept.get("version"))))
                     .map(kept -> new Chosen(text(kept.get("version")), text(kept.get("how"))));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Couldn't read build " + key + "'s record for its event-logging version: "
-                               + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Couldn't read build {}'s record for its event-logging version: {}",
+                    key,
+                    e.getMessage()),
+                    e);
             return Optional.empty();
         }
     }

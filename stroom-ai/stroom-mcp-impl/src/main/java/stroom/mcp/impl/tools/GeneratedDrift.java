@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -146,7 +147,7 @@ class GeneratedDrift {
             docs = pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid);
         } catch (final RuntimeException e) {
             // A safeguard: nothing to say rather than a failed call.
-            LOGGER.debug(() -> "Pipeline " + pipelineUuid + " can't be read: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Pipeline {} can't be read: {}", pipelineUuid, e.getMessage()));
             return List.of();
         }
         final List<String> out = new ArrayList<>();

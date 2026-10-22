@@ -36,6 +36,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -163,7 +164,7 @@ class IndexExamples {
                                                                + shorten(e.getMessage())));
         } catch (final RuntimeException e) {
             // The read is a convenience: the doc's fields still serve.
-            LOGGER.debug(() -> "Templates of " + doc.getName() + " not read: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Templates of {} not read: {}", doc.getName(), e.getMessage()));
             return Optional.empty();
         }
         final IndexTemplate template = found == null
@@ -328,7 +329,7 @@ class IndexExamples {
                             ? null
                             : String.valueOf(kept.get("how")), PASTED)));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No example read for " + pipelineUuid + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("No example read for {}: {}", pipelineUuid, e.getMessage()));
             return Optional.empty();
         }
     }
@@ -464,6 +465,9 @@ class IndexExamples {
                      Map<String, String> unread,
                      String why) {
 
+        /// @param doc The doc's name.
+        /// @param why Why its template wasn't read.
+        /// @return An index whose template wasn't read.
         static FromIndex unread(final String doc, final String why) {
             return new FromIndex(doc, null, null, null, List.of(), List.of(), List.of(), Map.of(), why);
         }

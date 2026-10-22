@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -90,7 +91,7 @@ class IndexPlans {
             return kept.filter(mapping -> "index".equals(mapping.kind()))
                     .map(mapping -> FieldPlan.fromJson(mapping.payload()));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No plan read from pipeline " + pipelineUuid + ": " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("No plan read from pipeline {}: {}", pipelineUuid, e.getMessage()));
             return Optional.empty();
         }
     }
@@ -103,7 +104,7 @@ class IndexPlans {
             try {
                 out.put(index, FieldPlan.fromJson(json));
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Drafted plan for " + index + " not read: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Drafted plan for {} not read: {}", index, e.getMessage()));
             }
         });
         return out;
@@ -127,7 +128,7 @@ class IndexPlans {
             schema = heldSchemas.eventSchema(heldSchemas.chosenOrLatest(null));
         } catch (final RuntimeException e) {
             // A Stroom without the schema: nothing marked.
-            LOGGER.info(() -> "Fields not checked for several values: " + e.getMessage());
+            LOGGER.info(() -> LogUtil.message("Fields not checked for several values: {}", e.getMessage()));
             return plan;
         }
         return IndexingHelpers.withCardinality(plan, schema);
@@ -167,7 +168,7 @@ class IndexPlans {
             memory.keepPlan(plan);
         } catch (final RuntimeException e) {
             // Kept for convenience; the plan is in the reply all the same.
-            LOGGER.debug(() -> "Plan not kept: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Plan not kept: {}", e.getMessage()));
         }
         final EcsSchema ecs = ecs();
         final Map<String, Object> reply = new LinkedHashMap<>();

@@ -31,6 +31,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -152,7 +153,7 @@ class SampleStreams {
                     .map(WriteGuard.BuildDoc::name)
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Build " + build.get() + " can't be listed: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Build {} can't be listed: {}", build.get(), e.getMessage()));
             return List.of();
         }
     }

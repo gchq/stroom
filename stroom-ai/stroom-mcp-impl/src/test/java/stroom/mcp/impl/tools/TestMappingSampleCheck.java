@@ -255,7 +255,7 @@ class TestMappingSampleCheck {
 
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> cases() {
-        try (InputStream in = TestMappingSampleCheck.class.getResourceAsStream("offline_cases.json")) {
+        try (final InputStream in = TestMappingSampleCheck.class.getResourceAsStream("offline_cases.json")) {
             return JsonUtil.readValue(new String(in.readAllBytes(), StandardCharsets.UTF_8), List.class);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
