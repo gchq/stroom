@@ -446,7 +446,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final String where = request.build() != null
                 ? request.build()
                 : plan.buildOf(new DocRef(XsltDoc.TYPE, target)).orElse(null);
-        final List<String> required = saves.requiredFor(context.session(), InstructionRules.CEF, where).stream()
+        final List<String> required = saves.requiredFor(context.session(), InstructionRules.CEF, where, List.of())
+                .stream()
                 .map(RequiredImport::href)
                 .filter(href -> !drafted.imports().contains(href))
                 .distinct()
@@ -464,11 +465,11 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                         : target != null
                                 ? "Saved again from its CEF plan"
                                 : "Created from its CEF plan";
-        final KeptMapping.Kept kept = new KeptMapping.Kept(XsltSaves.CEF, toSave.toJson(DumpMode.COMPACT));
+        final TranslationDocs.Source source = TranslationDocs.Source.of(toSave);
         final Map<String, Object> saved = target != null
-                ? saves.update(call, context, target, toSave.xslt(), kept, change, request.discardHandEdit(),
+                ? saves.update(call, context, target, toSave.xslt(), null, source, change, request.discardHandEdit(),
                 request.handEditChoices())
-                : saves.create(context, request.build(), request.name(), toSave.xslt(), kept, change);
+                : saves.create(context, request.build(), request.name(), toSave.xslt(), source, change);
         if (!(saved.get("uuid") instanceof final String uuid)) {
             // Asked about fields edited by hand.
             final Map<String, Object> out = new LinkedHashMap<>(result);

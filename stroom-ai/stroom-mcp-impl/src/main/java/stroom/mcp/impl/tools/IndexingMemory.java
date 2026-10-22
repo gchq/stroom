@@ -16,8 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -41,7 +44,9 @@ import java.util.function.LongSupplier;
 /// drafted (`index_plans_drafted`) and the verification checks that passed (`verify_checks_passed`). Each is a
 /// convenience: without it, the user is asked again, or the agent gives the template or plan again.
 @Singleton
-class IndexingMemory {
+class IndexingMemory implements DraftedIndexPlans {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexingMemory.class);
 
     /// How long a choice, a component template or a template shown is remembered.
     static final Duration CHOICE_TTL = Duration.ofHours(4);
@@ -175,6 +180,24 @@ class IndexingMemory {
             });
         }
         return out;
+    }
+
+    /// The plans this user drafted or amended, as save_xslt reads them (the plans are kept per user, as the Stroom
+    /// MCP server kept them, so the session doesn't narrow them). A kept plan that no longer reads is left out.
+    ///
+    /// @param session The session asking.
+    /// @return The plans, by index name.
+    @Override
+    public Map<String, FieldPlan> drafted(final ToolSession session) {
+        final Map<String, FieldPlan> drafted = new LinkedHashMap<>();
+        plans().forEach((indexName, json) -> {
+            try {
+                drafted.put(indexName, FieldPlan.fromJson(json));
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(() -> "A kept plan for " + indexName + " no longer reads: " + e.getMessage());
+            }
+        });
+        return drafted;
     }
 
     /// The checks that passed earlier, for these streams in this index as the indexing pipeline's current code

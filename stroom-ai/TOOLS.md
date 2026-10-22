@@ -548,9 +548,10 @@ Where the port differs from the MCP server:
   user's access token ran out during a form (`needs_retry`) is not ported.
 * **The remembered build** (`remember_build`) is kept per session (a chat, or an MCP session) in this node's memory,
   rather than per user: a call it can't help is told to name the build.
-* **Parts ported later** are bound with defaults until they are: `MappingDrift` (whether an XSLT is still what its
-  mapping generates: until then the checks before promotion find no drift). Sample profiling (`SampleProfiling`) is
-  bound to the ported profiler (`SampleProfiling.Profiled`). A port binds its own with
+* **Parts ported later** are bound with defaults until they are: `DraftedIndexPlans` (the index plans
+  draft_index_mapping keeps for a session: none until the indexing tools bind theirs). `MappingDrift` (whether an
+  XSLT is still what its mapping generates) is bound to `GeneratedDrift`, on the ported generators, and sample
+  profiling (`SampleProfiling`) to the ported profiler (`SampleProfiling.Profiled`). A port binds its own with
   `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding()`.
 * **Over `/mcp`, a write call is approved** by the endpoint before the tool runs (`McpApprovals`), and a tool's own
   confirmation is then asked as well.
@@ -1130,3 +1131,77 @@ Where it differs from the MCP server:
   and `tests/test_authoring_guards.py`'s `test_an_indexing_pipeline_needs_events_first`, with
   `dev/e2e_lucene_indexing.py`'s pipeline (confirmed, then made on create_pipeline's path with the XSLT, the index
   and the plan's fields) as a test on the pipeline world.
+
+## The translation tools: `save_text_converter`, `save_xslt`, `save_dictionary`, `draft_translation_mapping`, `build_translation_xslt`, `build_data_splitter`, `build_reference_xslt` and `rebuild_mapping`
+
+Ported as tools of their own (`stroom-mcp-impl`, category content) from the MCP server's `tools/translation.py`,
+`tools/generation.py` and `tools/rebuild.py`, on the generators, the draft mapping, the validation core and the build
+layer above. What they share is injectable, for the other tools that save translation code to reuse:
+
+* **`XsltSaves`** (public): the one save path for an XSLT: `create(context, build, name, code, source, change)`,
+  `update(call, context, uuid, code, version, source, change, discardHandEdit, choices)`, `lostMapping(ref,
+  description)`, `requiredFor(session, stage, build, feeds)`, `xsltRole(code)` and `handEditGate(...)`. `source` is a
+  `TranslationDocs.Source`: `Source.of(mapping)`, `Source.of(indexPlan)`, `Source.of(cefPlan)` or `Source.NONE`.
+* **`TranslationDocs`** (`create_text_converter`, `update_text_converter`, `create_xslt`, `update_xslt`,
+  `create_dictionary`, `update_dictionary`, `lost_mapping`, `_check_converter`, `_checked`, `_described`,
+  `_tag_kept`, `_summary`): every document is made through the write guard (`WriteGuard.createFilled`: deleted again
+  if writing it fails) and saved through Stroom's own stores as the user; an update checks the document is the tools'
+  own, and with `version` that it hasn't changed since it was read.
+* **`HandEditGate`** (`hand_edit_gate`, `_remembered`, `_CARRY`), **`KeptCode`** (`_kept_code`), **`XsltHistory`**
+  (`_pending`, `_previewed`), **`RequiredImports`** (`_required_for`, `_import_notes`,
+  `_refuse_without_required_imports`, `xslt_role`), **`EventVersions`** (`event_schema`, `event_versions`,
+  `_remember_version`, `version_settled`, `_version_chosen`, `chosen_or_latest`, `translation_version`,
+  `_ask_version`, `target_version`), **`TranslationBuilds`** (`_mapping_to_change`, `_kept_mapping`, `_generated`,
+  `_meta_not_sent`, `zone_not_kept`, `_unknown_markdown`, `_unknown_key`, `_unknown_agreed`,
+  `_remember_unknown_agreed`, `_fix_hint`, `notes_in_build`), **`MappingSampleCheck`** (`_sample_check`, with
+  `xpathcheck.py`'s `check_xpaths`, `check_extractions`, `record_documents` and `xpath_inputs` on `XPathChecks`),
+  **`MappingProblems`** (`mapping_problems`, `_described`, `MAPPING_EXAMPLE`, `ESCAPING`), **`SentMappings`**
+  (`_remember_mapping`, `_sent`), **`SampleStreams`** (`rebuild.py`'s `sample_streams`) and **`GeneratedDrift`**
+  (`builds.py`'s `_drift`, `_plan_drift` and `lost_mappings`: the `MappingDrift` binding).
+* `utils/sourcenotes.py`'s `merged` and `check_mapping` are added to `SourceNotes` (stroom-ai-impl);
+  `SampleProfiler.inventory` and `XmlTree.toText` are now public.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `save_text_converter` | no | no | no | no |
+| `save_xslt` | no | no | no | no |
+| `save_dictionary` | no | no | no | no |
+| `draft_translation_mapping` | yes | yes | no | no |
+| `build_translation_xslt` | no | yes (no build, no uuid) | no | yes |
+| `build_data_splitter` | no | yes (no save_as) | no | no |
+| `build_reference_xslt` | yes | yes | no | no |
+| `rebuild_mapping` | no | no | yes | yes |
+
+`rebuild_mapping` asks the user to confirm before its one save, as the MCP server's did. The others ask only in
+some cases (rules kept as Unknown, a hand edit both the user and the change touched), so over `/mcp` each write is
+approved as a whole.
+
+Where they differ from the MCP server:
+
+* **The event-logging version chosen for a build** is kept in the build's record (`event_logging_version`: `version`
+  and `how`) once the build has a folder, and in this node's memory for the session, so a later session doesn't ask
+  again; the MCP server kept it per user in its memory only. draft_translation_mapping stays read-only (as check_events
+  does, the record is the tools' own bookkeeping). record_source_notes still checks its catalogue against the newest
+  version held.
+* **The mapping last sent and the session's draft** are kept in the session's workspace (`/outputs/mappings/`: the
+  draft as `draft-<build>.json`, an XSLT's as `<uuid>.json`, a build and name by its digest), where the agent can read
+  them too, falling back to the mapping saved with the XSLT; the MCP server kept them in the replica's memory. A
+  session without a workspace remembers none.
+* **Compiling a generated XSLT** is Stroom's own (`XsltCompileCheck`), with no compile notes to add as warnings.
+* **The version history's `by`** is `Stroom <version>, <the session's caller>` (the chat, or the MCP client), where
+  the MCP server wrote `stroom-mcp <version>, <client>, model <model>`; an XSLT saved by the MCP server reads as
+  saved by an earlier version. The author is the user as Stroom records a document's updater.
+* **`_pipeline_of`** finds the pipelines whose own layer names the XSLT by reading the pipelines the user can view
+  (`PipelineIndex`), not Stroom's content search, so it needs no waits for an index that lags.
+* **`_import_notes`' `template_rules`** counts the import's template rules; the MCP server read a key `describe`
+  doesn't give, so it was always 0.
+* **`mapping`, `changes`, `splitter`, `spec`, `index_plan` and `hand_edit_choices`** are declared as objects with
+  their descriptions, not the models' whole JSON schemas; text that is JSON is read as the MCP server read it, with
+  Python's `json` messages (`PyJson`). A missing key's description comes from the MCP server's models
+  (`mapping-descriptions.json`, made from them).
+* **Results' JSON leaves nulls out**, as every ported tool's does: `field_mapping` (null until it is previewed), a
+  refused mapping's `saved` and a version question's `saved` are left out.
+* **Refusals** for an argument that isn't what it should be (`max_records` outside 1 to 1000, a `hand_edit_choices`
+  answer that isn't `keep`, `overwrite` or `per_field`, a `converter_type` that isn't one) say so in pydantic's place.
+* **The drafted index plans** (`drafted_plans`) come from `DraftedIndexPlans`, which knows of none until the indexing
+  tools bind theirs: save_xslt then saves from `index_plan` or the plan kept with the XSLT.

@@ -499,8 +499,12 @@ public final class SampleProfiler {
                 : prefix, value);
     }
 
-    // Each field of the records: how often it is there, its commonest type, and up to three examples.
-    private static List<Map<String, Object>> inventory(final List<? extends Map<String, ?>> records) {
+    /// Each field of the records: how often it is there, its commonest type, and up to three examples (the Stroom
+    /// MCP server's `_inventory`).
+    ///
+    /// @param records Records, as field name to value.
+    /// @return Each field's inventory.
+    public static List<Map<String, Object>> inventory(final List<? extends Map<String, ?>> records) {
         final Map<String, Map<String, Integer>> types = new LinkedHashMap<>();
         final Map<String, Integer> present = new LinkedHashMap<>();
         final Map<String, List<String>> examples = new LinkedHashMap<>();
