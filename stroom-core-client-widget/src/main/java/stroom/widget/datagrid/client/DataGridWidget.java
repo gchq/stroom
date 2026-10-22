@@ -16,12 +16,10 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
@@ -29,14 +27,13 @@ import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
-import stroom.widget.datagrid.client.model.VirtualWindow;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -45,7 +42,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -62,7 +58,6 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focusable;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
@@ -73,7 +68,6 @@ import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,11 +107,6 @@ public class DataGridWidget<R> extends Widget
     private static final String DATA_ROW = GridHtml.DATA_ROW;
     private static final String DATA_COL = GridHtml.DATA_COL;
     private static final String DATA_HCOL = GridHtml.DATA_HCOL;
-    private static final String KEYBOARD_CELL_CLASS_NAME = "data-grid__cell--keyboard";
-    private static final double FALLBACK_ROW_HEIGHT = 24;
-    // Natural pages with more rows than this let the browser skip laying out the rows out of view
-    // (data-grid--contain, see DataGridWidget.css)
-    private static final int CONTAIN_ROW_THRESHOLD = 200;
 
     private final HasHandlers globalEventBus;
 
@@ -144,9 +133,10 @@ public class DataGridWidget<R> extends Widget
     private final ColumnInteractions columnInteractions;
     private final DataGridContextMenu<R> contextMenu;
 
-    // Rendered rows by key, and the same rows by page-relative index.
-    private final Map<RowKey, RenderedRow> renderedRows = new HashMap<>();
-    private final Map<Integer, RenderedRow> renderedRowsByIndex = new HashMap<>();
+    // The rows drawn, and the tree they make if the grid has an expander column
+    private final GridRows<R> gridRows;
+    private final GridHeader<R> gridHeader;
+    private final TreeRows<R> tree;
 
     private SelectionModel<? super R> selectionModel;
     private HandlerRegistration selectionModelRegistration;
@@ -164,16 +154,17 @@ public class DataGridWidget<R> extends Widget
     private RowSpans<R> rowSpans;
     private HeadingListener headingListener;
     private LoadingState loadingState;
-    // The column of expanders (an ExpanderCell's), which makes the grid a treegrid, or -1
-    private int treeColumn = -1;
     // Whether data or the row count changed since the loading state was last fired
     private boolean loadingStateUpdated;
     private final DataGridKeyboard<R> keyboard;
 
+    private DataGridProfile profile = DataGridProfile.GRID;
+    // Whether the selection manager lets several rows be chosen (a list says so)
+    private boolean multiSelectable;
+    private final TypeAhead typeAhead = new TypeAhead();
     private boolean multiLine;
     private boolean virtual;
     private int rowHeight;
-    private double measuredRowHeight;
     private boolean hideHeader;
     private boolean allowMove = true;
     private boolean allowResize = true;
@@ -189,8 +180,6 @@ public class DataGridWidget<R> extends Widget
     private int renderedWidthVersion = -1;
     private Boolean renderedVirtual;
     private boolean frameScheduled;
-    // Set while the grid writes rows, so the events that writing causes are ignored (see render)
-    private boolean writingRows;
     private int savedScrollTop;
     private int savedScrollLeft;
 
@@ -248,6 +237,9 @@ public class DataGridWidget<R> extends Widget
         contextMenu = new DataGridContextMenu<>(this);
 
         keyboard = new DataGridKeyboard<>(this);
+        tree = new TreeRows<>(this);
+        gridHeader = new GridHeader<>(this, columnModel, html, keyboard, head, headerRow);
+        gridRows = new GridRows<>(this, pageState, columnModel, html, tree, keyboard, scroller, content, body);
 
         setElement(root);
         sinkEvents(Event.ONCLICK
@@ -578,7 +570,7 @@ public class DataGridWidget<R> extends Widget
             return rows;
         }
         final int first = topVisibleRow(renderedVirtual);
-        final int count = (int) Math.ceil(scroller.getClientHeight() / getOneLineRowHeight()) + 1;
+        final int count = (int) Math.ceil(scroller.getClientHeight() / gridRows.getOneLineRowHeight()) + 1;
         for (int i = first; i < Math.min(first + count, pageState.getRowDataSize()); i++) {
             rows.add(i);
         }
@@ -720,6 +712,70 @@ public class DataGridWidget<R> extends Widget
     public void setRowHeight(final int rowHeight) {
         this.rowHeight = Math.max(0, rowHeight);
         scheduleRender();
+    }
+
+    /// Makes the grid a list rather than a grid (see [DataGridProfile]): its roles, whether it has a
+    /// header, and its keys. Set it before the grid is shown.
+    ///
+    /// @param profile The profile.
+    public void setProfile(final DataGridProfile profile) {
+        this.profile = Objects.requireNonNull(profile);
+        html.setCellRole(profile.getCellRole());
+        final boolean cells = profile.hasCells();
+        if (cells) {
+            body.setAttribute("role", "rowgroup");
+        } else {
+            body.removeAttribute("role");
+            setHideHeader(true);
+        }
+        setStyleName("data-grid--list", !cells);
+        // The column widths are laid out as the profile's (a list's last column fills it)
+        renderedWidthVersion = -1;
+        redraw();
+    }
+
+    /// Makes the grid as high as its rows, up to the height its container allows (the container's
+    /// `max-height`, which the grid takes), then scrolling, as a list in a popup grows with its
+    /// values. By default a grid fills its container.
+    ///
+    /// @param fitContent Whether the grid is as high as its rows.
+    public void setFitContent(final boolean fitContent) {
+        setStyleName("data-grid--fit", fitContent);
+    }
+
+    /// @return The grid's profile (see [DataGridProfile]).
+    public DataGridProfile getProfile() {
+        return profile;
+    }
+
+    /// Goes to the next row whose text starts with what has been typed, as typing in a list does
+    /// (see [TypeAhead]), choosing it as Up and Down do.
+    ///
+    /// @param typed The character typed.
+    /// @return Whether a row matched (and has the focus).
+    public boolean typeAhead(final String typed) {
+        final int count = pageState.getRowDataSize();
+        final int row = typeAhead.next(typed, keyboardSelectedRow, count, this::getRowText);
+        if (row < 0) {
+            return false;
+        }
+        keyboard.moveTo(row);
+        return true;
+    }
+
+    // A row's text, its cells' joined, for type-ahead
+    private String getRowText(final int indexOnPage) {
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < columnModel.size(); i++) {
+            final String cellText = getCellText(indexOnPage, i);
+            if (!cellText.isEmpty()) {
+                if (text.length() > 0) {
+                    text.append(' ');
+                }
+                text.append(cellText);
+            }
+        }
+        return text.toString();
     }
 
     /// @param hideHeader Whether to hide the header row.
@@ -879,6 +935,8 @@ public class DataGridWidget<R> extends Widget
         keyboard.setSelector(handler instanceof DataGridKeyboard.Selector
                 ? asSelector(handler)
                 : null);
+        multiSelectable = handler instanceof final DataGridWidgetSelectionEventManager<?> manager
+                          && manager.isAllowMultiSelect();
         setSelectionModel(selectionModel);
     }
 
@@ -1181,115 +1239,21 @@ public class DataGridWidget<R> extends Widget
         return element != null && body.isOrHasChild(element);
     }
 
-    // --------------------------------------------------------------------------------
-    // Tree rows: a grid with a column of expanders (ExpanderCell) is a treegrid. Its rows say their
-    // level and whether they are expanded (aria-level, aria-expanded), and the keys expand and
-    // collapse them (DataGridKeyboard) through the expander column's own field updater, as a click
-    // on an expander does, so a screen needs nothing more than its expander column.
-    // --------------------------------------------------------------------------------
-
-    private int findTreeColumn() {
-        for (int i = 0; i < getColumnCount(); i++) {
-            if (getColumn(i).getCell() instanceof ExpanderCell) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private Expander expanderOf(final R row) {
-        if (treeColumn < 0 || treeColumn >= getColumnCount() || row == null) {
-            return null;
-        }
-        final Object value = getColumn(treeColumn).getValue(row);
-        return value instanceof final Expander expander
-                ? expander
-                : null;
-    }
-
-    private void setTreeAttributes(final Element rowElement, final R row) {
-        final Expander expander = expanderOf(row);
-        if (expander == null) {
-            rowElement.removeAttribute("aria-level");
-            rowElement.removeAttribute("aria-expanded");
-        } else {
-            rowElement.setAttribute("aria-level", String.valueOf(expander.getDepth() + 1));
-            if (expander.isLeaf()) {
-                rowElement.removeAttribute("aria-expanded");
-            } else {
-                rowElement.setAttribute("aria-expanded", String.valueOf(expander.isExpanded()));
-            }
-        }
-    }
-
-    /// @param indexOnPage The page-relative row index.
-    /// @return The row's expander, or `null` if the grid isn't a tree or there is no such row.
-    Expander getTreeExpander(final int indexOnPage) {
-        if (indexOnPage < 0 || indexOnPage >= getVisibleItemCount()) {
-            return null;
-        }
-        return expanderOf(getVisibleItem(indexOnPage));
-    }
-
-    /// Expand or collapse a row, as a click on its expander does.
-    ///
-    /// @param indexOnPage The page-relative row index.
-    /// @param expanded    Whether to expand it.
-    /// @return `true` if the row was changed; `false` if it has no children, is already as asked,
-    /// or the grid isn't a tree.
-    boolean setTreeRowExpanded(final int indexOnPage, final boolean expanded) {
-        final Expander expander = getTreeExpander(indexOnPage);
-        if (expander == null || expander.isLeaf() || expander.isExpanded() == expanded) {
-            return false;
-        }
-        @SuppressWarnings("unchecked") final Column<R, Expander> column =
-                (Column<R, Expander>) getColumn(treeColumn);
-        final FieldUpdater<R, Expander> updater = column.getFieldUpdater();
-        if (updater == null) {
-            return false;
-        }
-        // The expander column's updater toggles the row, as a click on the expander does
-        updater.update(getPageStart() + indexOnPage, getVisibleItem(indexOnPage), expander);
-        return true;
-    }
-
-    /// @param indexOnPage The page-relative row index.
-    /// @return The page-relative index of the row's parent (the nearest row above it at a lower
-    /// level), or -1 if it has none on the page or the grid isn't a tree.
-    int getTreeParentRow(final int indexOnPage) {
-        final Expander expander = getTreeExpander(indexOnPage);
-        if (expander == null) {
-            return -1;
-        }
-        for (int i = indexOnPage - 1; i >= 0; i--) {
-            final Expander above = getTreeExpander(i);
-            if (above != null && above.getDepth() < expander.getDepth()) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     /// @param indexOnPage The page-relative row index.
     /// @return The row's element, or `null` if the row is not currently rendered.
     public Element getRowElement(final int indexOnPage) {
-        final RenderedRow rendered = renderedRowsByIndex.get(indexOnPage);
-        return rendered != null
-                ? rendered.element
-                : null;
+        return gridRows.getElement(indexOnPage);
+    }
+
+    /// @return The grid's tree rows (see [TreeRows]).
+    TreeRows<R> getTreeRows() {
+        return tree;
     }
 
     /// @param column The column index.
     /// @return The header cell element, or `null` if the header has not been rendered.
     public Element getHeaderCellElement(final int column) {
-        for (Element child = headerRow.getFirstChildElement();
-                child != null;
-                child = child.getNextSiblingElement()) {
-            if (String.valueOf(column).equals(child.getAttribute(DATA_HCOL))) {
-                return child;
-            }
-        }
-        return null;
+        return gridHeader.getCellElement(column);
     }
 
     /// Does what a click on a column's header does, for Enter or Space on it: sorts a sortable
@@ -1357,17 +1321,17 @@ public class DataGridWidget<R> extends Widget
         final boolean structureChanged = renderedStructureVersion != columnModel.getStructureVersion();
         if (structureChanged) {
             // New columns may draw taller rows
-            measuredRowHeight = 0;
-        }
-        if (structureChanged) {
-            treeColumn = findTreeColumn();
-            scroller.setAttribute("role", treeColumn >= 0
-                    ? "treegrid"
-                    : "grid");
+            gridRows.forgetRowHeight();
+            final boolean treeRows = tree.update();
+            scroller.setAttribute("role", profile.getRole() != null
+                    ? profile.getRole()
+                    : treeRows
+                            ? "treegrid"
+                            : "grid");
         }
         final boolean headerChanged = structureChanged || headersDirty;
         if (headerChanged) {
-            renderHeader();
+            gridHeader.render(hideHeader);
         }
         final boolean widthsChanged = structureChanged || renderedWidthVersion != columnModel.getWidthVersion();
         if (widthsChanged) {
@@ -1376,7 +1340,7 @@ public class DataGridWidget<R> extends Widget
         if (headerChanged || widthsChanged) {
             // Only once the column widths apply, or the header is measured in the wrong layout. A
             // width change can change the header's height too, e.g. when its text wraps.
-            snapHeaderHeight();
+            gridHeader.snapHeight(hideHeader);
         }
 
         resolveKeyboardRow();
@@ -1384,7 +1348,7 @@ public class DataGridWidget<R> extends Widget
         final boolean modeChanged = renderedVirtual == null || renderedVirtual != effectiveVirtual;
         setStyleName("data-grid--virtual", effectiveVirtual);
         renderedVirtual = effectiveVirtual;
-        renderRows(structureChanged || modeChanged, dirty);
+        gridRows.render(structureChanged || modeChanged, dirty);
 
         renderedStructureVersion = columnModel.getStructureVersion();
         renderedWidthVersion = columnModel.getWidthVersion();
@@ -1394,8 +1358,19 @@ public class DataGridWidget<R> extends Widget
         empty.getStyle().setProperty("display", isEmpty && emptyMessage != null
                 ? ""
                 : "none");
-        scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
-        scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));
+        if (profile.hasCells()) {
+            scroller.setAttribute("aria-rowcount", String.valueOf(pageState.getRowCount() + 1));
+            scroller.setAttribute("aria-colcount", String.valueOf(columnModel.size()));
+        } else {
+            // A list says how many rows there are on each option (aria-setsize)
+            scroller.removeAttribute("aria-rowcount");
+            scroller.removeAttribute("aria-colcount");
+            if (multiSelectable) {
+                scroller.setAttribute("aria-multiselectable", "true");
+            } else {
+                scroller.removeAttribute("aria-multiselectable");
+            }
+        }
 
         if (anchorRow >= 0) {
             scrollRowToTop(anchorRow);
@@ -1451,307 +1426,26 @@ public class DataGridWidget<R> extends Widget
     }
 
     private void applyWidths() {
-        DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
-        DataGridDom.setCssVariable(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
-    }
-
-    // --------------------------------------------------------------------------------
-    // Header rendering
-    // --------------------------------------------------------------------------------
-
-    private void renderHeader() {
-        head.getStyle().setProperty("display", hideHeader
-                ? "none"
-                : "");
-        final Element active = DataGridDom.getActiveElement();
-        final boolean headerFocused = active != null && active.hasAttribute(DATA_HCOL)
-                                      && headerRow.isOrHasChild(active);
-        // A control in a column's header with the focus, e.g. the dashboard's filter box
-        final Element controlHeader = !headerFocused && active != null && headerRow.isOrHasChild(active)
-                ? findAncestorWithAttribute(active, DATA_HCOL)
-                : null;
-        final int controlIndex = controlHeader != null
-                ? DataGridDom.controlIndex(controlHeader, active)
-                : -1;
-        final int selectionStart = controlIndex >= 0
-                ? DataGridDom.getSelectionStart(active)
-                : -1;
-        final int selectionEnd = controlIndex >= 0
-                ? DataGridDom.getSelectionEnd(active)
-                : -1;
-        headerRow.setInnerSafeHtml(html.header());
-        // With no columns (e.g. a query's table before its first results) the header row holds no
-        // column headers, and a row must hold cells, so it is no row until it does
-        if (columnModel.size() > 0) {
-            headerRow.setAttribute("role", "row");
+        if (profile.hasCells()) {
+            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toGridTemplate());
+            DataGridDom.setCssVariable(getElement(), "--data-grid__total-width", columnModel.getTotalWidth() + "px");
         } else {
-            headerRow.removeAttribute("role");
-        }
-        // A column's header with the keyboard focus (e.g. sorted with Enter) keeps it when the
-        // header is drawn again
-        if (headerFocused) {
-            final Element target = keyboard.getFocusTarget();
-            if (target != null) {
-                refocus(target);
-            }
-        } else if (controlIndex >= 0) {
-            // As does a control in it, with its caret, e.g. a filter box after Enter set the filter
-            final Element cell = getHeaderCellElement(parseInt(controlHeader.getAttribute(DATA_HCOL)));
-            final Element control = cell != null
-                    ? DataGridDom.controlAt(cell, controlIndex)
-                    : null;
-            if (control != null) {
-                refocus(control);
-                DataGridDom.setSelectionRange(control, selectionStart, selectionEnd);
-            }
-        }
-    }
-
-    // GWT's DataGrid lays its body out below the header's offsetHeight, a whole number of pixels,
-    // so the rows start on a whole pixel. Do the same, so rows line up with MyDataGrid's exactly.
-    private void snapHeaderHeight() {
-        if (!isAttached() || hideHeader) {
-            return;
-        }
-        head.getStyle().clearHeight();
-        final int height = head.getOffsetHeight();
-        // A grid that is not displayed has no height to snap to.
-        if (height > 0) {
-            head.getStyle().setHeight(height, Unit.PX);
+            // A list is as wide as what it is in, its last column taking the rest of the width
+            DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toListTemplate());
+            DataGridDom.setCssVariable(getElement(),
+                    "--data-grid__total-width",
+                    "max(100%, " + columnModel.getTotalWidth() + "px)");
         }
     }
 
     // --------------------------------------------------------------------------------
-    // Row rendering
+    // Rows (drawn by GridRows)
     // --------------------------------------------------------------------------------
 
-    private void renderRows(final boolean forceAll, final int[] dirty) {
-        // Replacing, moving or removing a focused element makes the browser fire blur at it while
-        // it is still in the row. Ignore the events writing the rows causes, as GWT's
-        // AbstractHasData ignores events while it refreshes: a cell being edited (e.g.
-        // ValueSpinnerCell) would otherwise think editing had ended and not take the focus back.
-        if (writingRows) {
-            return;
-        }
-        final boolean hadRowFocus = hasFocus && body.isOrHasChild(DataGridDom.getActiveElement());
-        writingRows = true;
-        try {
-            writeRows(forceAll, dirty);
-        } finally {
-            writingRows = false;
-        }
-        // As GWT's AbstractHasData: if the rows had the focus and the focused row was removed (its
-        // row went, or changed key), the keyboard row takes the focus, so the keyboard still works.
-        if (hadRowFocus && !getElement().isOrHasChild(DataGridDom.getActiveElement())) {
-            final Element target = keyboard.getFocusTarget();
-            refocus(target != null
-                    ? target
-                    : scroller);
-        }
-    }
-
-    private void writeRows(final boolean forceAll, final int[] dirty) {
-        final List<R> rows = pageState.getRows();
-        final boolean effectiveVirtual = Boolean.TRUE.equals(renderedVirtual);
-        final int start;
-        final int end;
-        if (effectiveVirtual) {
-            final double rowH = getOneLineRowHeight();
-            DataGridDom.setCssVariable(getElement(), "--data-grid__row-height", rowH + "px");
-            final VirtualWindow window = VirtualWindow.compute(
-                    scroller.getScrollTop(),
-                    Math.max(0, scroller.getClientHeight() - getHeaderHeight()),
-                    rowH,
-                    rows.size(),
-                    VirtualWindow.DEFAULT_BUFFER_ROWS);
-            start = window.getStart();
-            end = window.getEnd();
-            content.getStyle().setHeight(window.getContentHeight(), Unit.PX);
-            body.getStyle().setProperty("transform", "translateY(" + window.getOffset() + "px)");
-        } else {
-            start = 0;
-            end = rows.size();
-            content.getStyle().clearHeight();
-            body.getStyle().clearProperty("transform");
-            final boolean contain = rows.size() > CONTAIN_ROW_THRESHOLD;
-            setStyleName("data-grid--contain", contain);
-            if (contain) {
-                // The height assumed for rows not yet laid out
-                DataGridDom.setCssVariable(getElement(), "--data-grid__row-height", getOneLineRowHeight() + "px");
-            }
-        }
-
-        final Map<RowKey, RenderedRow> previous = new HashMap<>(renderedRows);
-        renderedRows.clear();
-        renderedRowsByIndex.clear();
-        final Map<Object, Integer> occurrences = new HashMap<>();
-        final List<RenderedRow> ordered = new ArrayList<>(end - start);
-
-        // 1. Update (or create) the rows to show.
-        for (int i = start; i < end; i++) {
-            final R row = rows.get(i);
-            final Object key = getKey(row, i);
-            final int occurrence = occurrences.merge(key, 1, Integer::sum) - 1;
-            final RowKey rowKey = new RowKey(key, occurrence);
-
-            RenderedRow rendered = previous.remove(rowKey);
-            final boolean isDirty = forceAll
-                                    || dirty == null
-                                    || (i >= dirty[0] && i < dirty[1]);
-            if (rendered == null) {
-                rendered = new RenderedRow(Document.get().createDivElement());
-                rendered.element.setAttribute("role", "row");
-                rendered.element.setTabIndex(-1);
-            }
-            updateRow(rendered, row, i, isDirty || rendered.value != row);
-            renderedRows.put(rowKey, rendered);
-            renderedRowsByIndex.put(i, rendered);
-            ordered.add(rendered);
-        }
-
-        // 2. Remove the rows no longer shown, before placing the others. Left in place, they would
-        // make every row after them look out of place and be moved.
-        for (final RenderedRow stale : previous.values()) {
-            stale.element.removeFromParent();
-        }
-
-        // 3. Put the rows in order, moving as few as possible.
-        Element expected = body.getFirstChildElement();
-        for (final RenderedRow rendered : ordered) {
-            if (rendered.element != expected) {
-                body.insertBefore(rendered.element, expected);
-            } else {
-                expected = expected.getNextSiblingElement();
-            }
-        }
-    }
-
-    private void updateRow(final RenderedRow rendered, final R row, final int index, final boolean dataChanged) {
-        final int absIndex = pageState.getPageStart() + index;
-        final boolean selected = row != null && selectionModel != null && selectionModel.isSelected(row);
-        // As GWT, the keyboard row is only shown while the grid has the focus
-        final boolean keyboard = index == keyboardSelectedRow && hasFocus;
-        final boolean even = absIndex % 2 == 0;
-
-        if (dataChanged
-            || rendered.selected != selected
-            || rendered.even != even
-            || rendered.index != index) {
-            // The keyboard cell's class is set on the element below, not written in the HTML, so the
-            // focus coming and going never rewrites a row (which would lose a click's target, or a
-            // control's open list, e.g. a selection box's, whose focus has left the grid).
-            final Map<Integer, Integer> spans = rowSpans != null && row != null
-                    ? rowSpans.getSpans(row, absIndex)
-                    : Collections.emptyMap();
-            final String cellsHtml = html.cells(row, absIndex, spans).asString();
-            if (!cellsHtml.equals(rendered.html)) {
-                final int focusedColumn = getFocusedColumn(rendered.element);
-                rendered.element.setInnerHTML(cellsHtml);
-                rendered.html = cellsHtml;
-                if (focusedColumn >= 0) {
-                    resetFocus(rendered.element, row, absIndex, focusedColumn);
-                }
-            }
-        }
-        final Element firstCell = rendered.element.getFirstChildElement();
-        if (firstCell != null) {
-            UIObject.setStyleName(firstCell, KEYBOARD_CELL_CLASS_NAME, keyboard);
-        }
-
-        final StringBuilder classes = new StringBuilder("data-grid__row ");
-        classes.append(even
-                ? "data-grid__row--even"
-                : "data-grid__row--odd");
-        if (selected) {
-            classes.append(" data-grid__row--selected");
-        }
-        if (keyboard) {
-            classes.append(" data-grid__row--keyboard");
-        }
-        if (rowStyles != null && row != null) {
-            final String extra = rowStyles.getStyleNames(row, absIndex);
-            if (extra != null && !extra.isEmpty()) {
-                classes.append(' ').append(extra);
-            }
-        }
-        final String className = classes.toString();
-        if (!className.equals(rendered.className)) {
-            rendered.element.setClassName(className);
-            rendered.className = className;
-        }
-        if (rendered.index != index) {
-            rendered.element.setAttribute(DATA_ROW, String.valueOf(index));
-            rendered.element.setAttribute("aria-rowindex", String.valueOf(absIndex + 2));
-        }
-        if (selectionModel != null) {
-            rendered.element.setAttribute("aria-selected", String.valueOf(selected));
-        } else {
-            rendered.element.removeAttribute("aria-selected");
-        }
-        setTreeAttributes(rendered.element, row);
-
-        rendered.value = row;
-        rendered.index = index;
-        rendered.selected = selected;
-        rendered.keyboard = keyboard;
-        rendered.even = even;
-    }
-
-    // The column of the cell holding the focus within a row, or -1 if the focus is elsewhere.
-    private int getFocusedColumn(final Element rowElement) {
-        final Element active = DataGridDom.getActiveElement();
-        if (active == null || active == rowElement || !rowElement.isOrHasChild(active)) {
-            return -1;
-        }
-        final Element cellElement = findAncestorWithAttribute(active, DATA_COL);
-        return cellElement != null
-                ? parseInt(cellElement.getAttribute(DATA_COL))
-                : -1;
-    }
-
-    // After a row is rewritten, let the cell that had the focus take it back, as GWT's
-    // AbstractHasData does with Cell.resetFocus. If the cell doesn't, keep the focus on the row so
-    // the keyboard still works.
-    private void resetFocus(final Element rowElement, final R row, final int absIndex, final int columnIndex) {
-        boolean focused = false;
-        if (row != null && columnIndex < columnModel.size()) {
-            final Element cellContent = findCellContent(rowElement, columnIndex);
-            if (cellContent != null) {
-                final Context context = new Context(absIndex, columnIndex, getKey(row, absIndex));
-                focused = resetCellFocus(columnModel.getColumn(columnIndex), context, cellContent, row);
-            }
-        }
-        // Otherwise the keyboard's target takes it, which may be in another row by now (the key
-        // that moved the focus there is why this row was drawn again). A target in a row not yet
-        // drawn is given the focus once all the rows are (renderRows)
-        if (!focused) {
-            final Element target = keyboard.getFocusTarget();
-            if (target != null) {
-                refocus(target);
-            }
-        }
-    }
-
-    private <C> boolean resetCellFocus(final Column<R, C> column,
-                                       final Context context,
-                                       final Element parent,
-                                       final R row) {
-        return column.getCell().resetFocus(context, parent, column.getValue(row));
-    }
-
-    private static Element findCellContent(final Element rowElement, final int columnIndex) {
-        final String col = String.valueOf(columnIndex);
-        for (Element cell = rowElement.getFirstChildElement();
-                cell != null;
-                cell = cell.getNextSiblingElement()) {
-            if (col.equals(cell.getAttribute(DATA_COL))) {
-                return cell.getFirstChildElement();
-            }
-        }
-        return null;
-    }
-
-    private Object getKey(final R row, final int index) {
+    /// @param row   A row, or null for a row not yet loaded.
+    /// @param index The row's page-relative index.
+    /// @return The row's key: the key provider's, else the row itself (a placeholder's by index).
+    Object getKey(final R row, final int index) {
         if (row == null) {
             return "__placeholder__" + index;
         }
@@ -1764,54 +1458,42 @@ public class DataGridWidget<R> extends Widget
         return row;
     }
 
-    private double getOneLineRowHeight() {
-        if (rowHeight > 0) {
-            return rowHeight;
-        }
-        if (measuredRowHeight > 0) {
-            return measuredRowHeight;
-        }
-        if (!isAttached()) {
-            return FALLBACK_ROW_HEIGHT;
-        }
-        // Measured with the first row's own cells, whose content may be taller than plain text
-        // (e.g. a dashboard table's cells carry their own padding). Only that is kept: one taken
-        // before there are rows is taken again once they arrive.
-        final boolean hasRows = pageState.getRowDataSize() > 0;
-        final double height = measureRowHeight(hasRows
-                ? html.cells(pageState.getRow(0), getPageStart(), Collections.emptyMap())
-                .asString()
-                : "<div class=\"data-grid__cell\"><div>X</div></div>");
-        if (hasRows) {
-            measuredRowHeight = height;
-        }
-        return height > 0
-                ? height
-                : FALLBACK_ROW_HEIGHT;
-    }
-
-    // Measure a one-line row of the cells given, at the current density. Kept fractional, as
-    // natural rows are, so virtual rows line up with them exactly.
-    private double measureRowHeight(final String cellsHtml) {
-        final Element probe = Document.get().createDivElement();
-        probe.setClassName("data-grid__row data-grid__row--probe data-grid__row--even");
-        probe.setInnerHTML(cellsHtml);
-        body.appendChild(probe);
-        final double height = DataGridDom.getHeight(probe);
-        probe.removeFromParent();
-        return height;
-    }
-
     // The row height is measured again on the next render, e.g. after the columns or density
     // changed
     private void forgetRowHeight() {
-        if (measuredRowHeight > 0) {
-            measuredRowHeight = 0;
+        if (gridRows.forgetRowHeight()) {
             scheduleRender();
         }
     }
 
-    private int getHeaderHeight() {
+    /// @return Whether the rows are drawn in virtual mode (only those in view).
+    boolean isRenderedVirtual() {
+        return Boolean.TRUE.equals(renderedVirtual);
+    }
+
+    /// @return Whether the focus is in the grid's rows; the keyboard row is only shown while it is.
+    boolean hasRowFocus() {
+        return hasFocus;
+    }
+
+    /// @return The fixed row height set ([#setRowHeight(int)]), or 0 for rows as high as their
+    /// content.
+    int getFixedRowHeight() {
+        return rowHeight;
+    }
+
+    /// @return The row styles set ([#setRowStyles(RowStyles)]), or null.
+    RowStyles<R> getRowStyles() {
+        return rowStyles;
+    }
+
+    /// @return The row spans set ([#setRowSpans(RowSpans)]), or null.
+    RowSpans<R> getRowSpans() {
+        return rowSpans;
+    }
+
+    /// @return The header's height, or 0 if it is hidden.
+    int getHeaderHeight() {
         return hideHeader
                 ? 0
                 : head.getOffsetHeight();
@@ -1863,7 +1545,7 @@ public class DataGridWidget<R> extends Widget
         }
         final int headerHeight = getHeaderHeight();
         if (virtualMode) {
-            final double rowH = getOneLineRowHeight();
+            final double rowH = gridRows.getOneLineRowHeight();
             final double top = headerHeight + indexOnPage * rowH;
             return new double[]{top, top + rowH};
         }
@@ -1880,7 +1562,7 @@ public class DataGridWidget<R> extends Widget
         // than a pixel still showing counts as scrolled off.
         final double scrollTop = scroller.getScrollTop() + 1;
         if (virtualMode) {
-            final double rowH = getOneLineRowHeight();
+            final double rowH = gridRows.getOneLineRowHeight();
             return Math.max(0, (int) Math.floor(scrollTop / rowH));
         }
         // A linear scan, but only on the render that switches modes.
@@ -1913,7 +1595,7 @@ public class DataGridWidget<R> extends Widget
         scrollRowIntoView(keyboardSelectedRow);
         if (Boolean.TRUE.equals(renderedVirtual)) {
             // The row may only now be inside the rendered window.
-            renderRows(false, new int[]{0, 0});
+            gridRows.render(false, new int[]{0, 0});
         }
         final Element element = keyboard.getFocusTarget();
         if (element != null) {
@@ -1941,7 +1623,7 @@ public class DataGridWidget<R> extends Widget
             DataGridDom.requestAnimationFrame(() -> {
                 frameScheduled = false;
                 if (Boolean.TRUE.equals(renderedVirtual)) {
-                    renderRows(false, new int[]{0, 0});
+                    gridRows.render(false, new int[]{0, 0});
                     // The keyboard row may have been drawn, or no longer be
                     updateTabStops();
                 }
@@ -1990,7 +1672,7 @@ public class DataGridWidget<R> extends Widget
         // height follows its content, e.g. when the density or text size preference changes. That
         // changes the rows' height too, which virtual rendering measures.
         GlobalResizeObserver.addListener(headerRow, element -> {
-            snapHeaderHeight();
+            gridHeader.snapHeight(hideHeader);
             forgetRowHeight();
         });
 
@@ -2026,7 +1708,7 @@ public class DataGridWidget<R> extends Widget
             scheduleRender();
         }
         if (Boolean.TRUE.equals(renderedVirtual)) {
-            renderRows(false, new int[]{0, 0});
+            gridRows.render(false, new int[]{0, 0});
         }
         updateScrollbars();
     }
@@ -2042,7 +1724,7 @@ public class DataGridWidget<R> extends Widget
     }
 
     private void dispatchEvent(final NativeEvent event) {
-        if (writingRows) {
+        if (gridRows.isWriting()) {
             return;
         }
         final EventTarget eventTarget = event.getEventTarget();
@@ -2111,9 +1793,8 @@ public class DataGridWidget<R> extends Widget
                 // so the row is written again the next time it is rendered, as GWT would redraw it.
                 // Only if it did: a cell that just took the focus (a selection box) would otherwise
                 // be replaced by the redraw the focus brings, taking the focus with it.
-                final RenderedRow rendered = renderedRowsByIndex.get(rowIndex);
-                if (rendered != null && !before.equals(cellContent.getInnerHTML())) {
-                    rendered.html = null;
+                if (!before.equals(cellContent.getInnerHTML())) {
+                    gridRows.forgetHtml(rowIndex);
                 }
             }
         }
@@ -2245,7 +1926,7 @@ public class DataGridWidget<R> extends Widget
     // only if the last input on the page was a key (InputModality, as the menu asks): the browser
     // would otherwise show the focus put back after a press redraws the pressed cell (dropping the
     // focus) as keyboard focus
-    private void refocus(final Element element) {
+    void refocus(final Element element) {
         DataGridDom.focusWithoutScroll(element, InputModality.isKeyboard());
     }
 

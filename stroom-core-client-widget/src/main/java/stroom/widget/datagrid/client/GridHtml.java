@@ -57,6 +57,9 @@ final class GridHtml<R> {
     /// @param headers     The columns' headers.
     /// @param sortList    The grid's sort list.
     /// @param keys        Gives a row's key from the row and its absolute index.
+    // A cell's role attribute and a space after it, or nothing (see setCellRole)
+    private String cellRoleAttribute = "role=\"gridcell\" ";
+
     GridHtml(final ColumnModel<Column<R, ?>> columnModel,
              final Map<Column<R, ?>, Header<?>> headers,
              final ColumnSortList sortList,
@@ -118,6 +121,13 @@ final class GridHtml<R> {
         return sb.toSafeHtml();
     }
 
+    /// @param cellRole A cell's role (see [DataGridProfile#getCellRole()]), or null for none.
+    void setCellRole(final String cellRole) {
+        cellRoleAttribute = cellRole == null
+                ? ""
+                : "role=\"" + cellRole + "\" ";
+    }
+
     /// @param row      The row, or `null` for a placeholder.
     /// @param absIndex The row's absolute index.
     /// @param spans    Column index to the number of columns that cell spans (R-R9).
@@ -148,7 +158,7 @@ final class GridHtml<R> {
 
             sb.appendHtmlConstant("<div class=\"")
                     .appendEscaped(classes.toString())
-                    .appendHtmlConstant("\" role=\"gridcell\" " + DATA_COL + "=\"" + i + "\"");
+                    .appendHtmlConstant("\" " + cellRoleAttribute + DATA_COL + "=\"" + i + "\"");
             final Integer span = spans.get(i);
             if (span != null && span > 1) {
                 final int clamped = Math.min(span, count - i);

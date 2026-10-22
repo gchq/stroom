@@ -68,6 +68,8 @@ public class DataGridWidgetSelectionEventManager<T>
     private T multiSelectStart;
     private Runnable moveUpFromFirst;
     private Consumer<String> typedHandler;
+    // What chooses a row pressed, or Enter or Space on it, instead of selecting it; null to select
+    private Consumer<T> chooser;
 
     /// @param dataGrid         The grid.
     /// @param selectionModel   The selection model to update.
@@ -78,6 +80,21 @@ public class DataGridWidgetSelectionEventManager<T>
         this.dataGrid = dataGrid;
         this.selectionModel = selectionModel;
         this.allowMultiSelect = allowMultiSelect;
+    }
+
+    /// @return Whether Ctrl and Shift can select several rows.
+    public boolean isAllowMultiSelect() {
+        return allowMultiSelect;
+    }
+
+    /// Makes the rows choices that the host acts on, as a chooser's list's are (e.g. an annotation's
+    /// status): moving the focus chooses nothing, and a press on a row, or Enter or Space on it,
+    /// gives the row to the chooser instead of selecting it, even if it is already selected (the
+    /// chooser selects it, if it shows what was chosen).
+    ///
+    /// @param chooser Given each row chosen, or null for rows that are selected as the focus moves.
+    public void setChooser(final Consumer<T> chooser) {
+        this.chooser = chooser;
     }
 
     /// What Up on the first row does, as `DataGridSelectionEventManager`'s, e.g. move the focus to
@@ -111,12 +128,19 @@ public class DataGridWidgetSelectionEventManager<T>
     // press on it does
     private void onKeyDown(final CellPreviewEvent<T> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (typedHandler != null && !isInControl(nativeEvent)) {
+        // A character typed on a row goes to the typed handler (e.g. a picker's filter box), or, in a
+        // list, to the next row starting with what is typed
+        final boolean list = !dataGrid.getProfile().hasCells();
+        if ((typedHandler != null || list) && !isInControl(nativeEvent)) {
             final String key = TypedKey.keyOf(nativeEvent);
             if (TypedKey.isTypedCharacter(nativeEvent, key) && !" ".equals(key)) {
                 nativeEvent.preventDefault();
                 nativeEvent.stopPropagation();
-                typedHandler.accept(key);
+                if (typedHandler != null) {
+                    typedHandler.accept(key);
+                } else {
+                    dataGrid.typeAhead(key);
+                }
                 return;
             }
         }
@@ -135,7 +159,7 @@ public class DataGridWidgetSelectionEventManager<T>
     /// run from the last row chosen to it with Shift, or nothing with Ctrl.
     @Override
     public void onFocusRow(final T item, final boolean shift, final boolean ctrl) {
-        if (item == null || (ctrl && allowMultiSelect)) {
+        if (item == null || chooser != null || (ctrl && allowMultiSelect)) {
             return;
         }
         doSelect(item, new SelectionType(false, false, allowMultiSelect, false, shift));
@@ -145,7 +169,9 @@ public class DataGridWidgetSelectionEventManager<T>
     /// from the last row chosen to it with Shift).
     @Override
     public void onSpace(final T item, final boolean shift, final boolean ctrl) {
-        if (item != null) {
+        if (item != null && chooser != null) {
+            chooser.accept(item);
+        } else if (item != null) {
             doSelect(item, new SelectionType(false, false, allowMultiSelect, !shift, shift));
         }
     }
@@ -153,7 +179,9 @@ public class DataGridWidgetSelectionEventManager<T>
     /// Enter chooses only the row.
     @Override
     public void onEnter(final T item) {
-        if (item != null) {
+        if (item != null && chooser != null) {
+            chooser.accept(item);
+        } else if (item != null) {
             selectionModel.setSelected(item);
         }
     }
@@ -213,7 +241,9 @@ public class DataGridWidgetSelectionEventManager<T>
         }
 
         final T row = event.getValue();
-        if (row != null) {
+        if (row != null && chooser != null) {
+            chooser.accept(row);
+        } else if (row != null) {
             final boolean doubleClick = doubleClickTest.test(row);
             doSelect(row, new SelectionType(
                     doubleClick,

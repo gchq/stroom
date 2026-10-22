@@ -66,6 +66,18 @@
     outline: none;
 }
 
+/* A grid as high as its rows (setFitContent), up to the height its container allows, taken from the
+   container's max-height: e.g. a list in a popup that grows with its values, then scrolls itself */
+.data-grid--fit {
+    height: auto;
+    max-height: inherit;
+}
+
+.data-grid--fit > .data-grid__scroller {
+    position: relative;
+    max-height: inherit;
+}
+
 .data-grid input {
     margin: 0;
 }
@@ -209,6 +221,13 @@
 
 .data-grid__row--odd {
     background-color: var(--row__background-color--odd);
+}
+
+/* A list (DataGridProfile.LISTBOX) isn't striped, as the cell tables' lists weren't: its rows show
+   what they sit on. The row states (data-grid.css) are stronger than this */
+.data-grid--list .data-grid__row--even,
+.data-grid--list .data-grid__row--odd {
+    background-color: transparent;
 }
 
 .data-grid__row--selected {

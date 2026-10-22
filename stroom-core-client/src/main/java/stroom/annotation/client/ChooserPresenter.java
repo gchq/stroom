@@ -17,23 +17,20 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.data.table.client.MyCellTable;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.util.client.BasicSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -52,8 +49,8 @@ public class ChooserPresenter<T>
         extends MyPresenterWidget<ChooserView>
         implements ChooserUiHandlers {
 
-    private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
-    private final CellTable<T> cellTable;
+    private final MultiSelectionModelImpl<T> selectionModel = new MultiSelectionModelImpl<>();
+    private final DataGridWidget<T> list;
     private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
     private Function<T, String> tooltipFunction = null;
@@ -66,28 +63,25 @@ public class ChooserPresenter<T>
 
         view.setUiHandlers(this);
 
-        cellTable = new MyCellTable<>(Integer.MAX_VALUE);
-        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<T>(cellTable) {
-            @Override
-            protected boolean onClose(final CellPreviewEvent<T> e) {
-                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true)
-                        .action(DialogAction.CLOSE)
-                        .fire();
-                return true;
-            }
-
-            @Override
-            protected void onExecute(final CellPreviewEvent<T> e) {
-                final T item = e.getValue();
-                final boolean alreadySelected = Objects.equals(selectionModel.getSelectedObject(), item);
-                selectionModel.setSelected(item, true);
-                if (alreadySelected) {
-                    // setSelected won't fire if selection unchanged, so fire manually
-                    SelectionChangeEvent.fire(selectionModel);
-                }
+        // A list of values to choose from: moving through it chooses nothing; a click, Enter or Space
+        // chooses a value, which the caller acts on (and closes the chooser), even the one chosen
+        // already. Escape goes on to the popup, which closes
+        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        // As high as its values, up to the chooser's height (its max-height), then scrolling
+        list.setFitContent(true);
+        final DataGridWidgetSelectionEventManager<T> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false);
+        selectionEventManager.setChooser(item -> {
+            final boolean alreadySelected = Objects.equals(selectionModel.getSelected(), item);
+            selectionModel.setSelected(item);
+            if (alreadySelected) {
+                // setSelected won't fire if selection unchanged, so fire manually
+                SelectionChangeEvent.fire(selectionModel);
             }
         });
-        view.setBottomWidget(cellTable);
+        list.setSelectionModel(selectionModel, selectionEventManager);
+        view.setBottomWidget(list);
 
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
@@ -113,7 +107,7 @@ public class ChooserPresenter<T>
                 return builder.toSafeHtml();
             }
         };
-        cellTable.addColumn(textColumn);
+        list.addColumn(textColumn, "", 200);
 
         // Only deals in lists of strings so no field defs required.
         uiConfigCache.get(uiConfig -> {
@@ -126,8 +120,15 @@ public class ChooserPresenter<T>
         }, this);
     }
 
+    /// Names the list of values for assistive technology, e.g. "Statuses" (a list must have one).
+    ///
+    /// @param name The list's name.
+    public void setAccessibleName(final String name) {
+        list.setAccessibleName(name);
+    }
+
     void focus() {
-        cellTable.setFocus(true);
+        list.setFocus(true);
     }
 
     void clearFilter() {
@@ -150,7 +151,7 @@ public class ChooserPresenter<T>
     }
 
     public T getSelected() {
-        return selectionModel.getSelectedObject();
+        return selectionModel.getSelected();
     }
 
     public SafeHtml getSelectedDisplayValue() {
@@ -159,7 +160,8 @@ public class ChooserPresenter<T>
     }
 
     public void setSelected(final T value) {
-        selectionModel.setSelected(value, true);
+        // The only value chosen (or none, for null)
+        selectionModel.setSelected(value);
     }
 
     public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
@@ -171,8 +173,8 @@ public class ChooserPresenter<T>
         if (dataSupplier != null) {
             dataSupplier.onChange(filter, values -> {
                 if (values != null) {
-                    cellTable.setRowData(0, values);
-                    cellTable.setRowCount(values.size());
+                    list.setRowData(0, values);
+                    list.setRowCount(values.size());
                 }
             });
         }

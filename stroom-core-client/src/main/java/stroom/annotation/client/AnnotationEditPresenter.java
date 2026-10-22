@@ -216,6 +216,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        annotationStatusPresenter.setAccessibleName("Statuses");
 
         this.annotationLabelPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
@@ -245,6 +246,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        commentPresenter.setAccessibleName("Standard comments");
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
     }
 

@@ -399,6 +399,38 @@ public final class AnnotationEditorStories {
                                             + "\"tag\": {\"name\": \"Closed\"}}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // The status chooser's list is a listbox of options, the current status selected.
+                // Moving through it chooses nothing; typing goes to the status starting with what is
+                // typed, and Enter chooses it
+                .story("StatusChooserKeys", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    play.click(play.getByText("Status"));
+                    final Query list = screen.findByRole("listbox", "Statuses");
+                    final Play statuses = screen.within(list);
+                    // As high as its statuses (a list on the grid once had no height in a popup)
+                    play.expect(statuses.getByRole("option", "Closed")).toBeVisible();
+                    play.expect(statuses.getAllByRole("option")).toHaveLength(2);
+                    play.expect(statuses.getByRole("option", "Open")).toHaveAttribute("aria-selected", "true");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveAttribute("aria-selected", "false");
+                    play.waitFor(() -> play.expect(statuses.getByRole("option", "Open")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveFocus();
+                    play.expect(statuses.getByRole("option", "Open")).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{ArrowUp}");
+                    play.keyboard("c");
+                    play.expect(statuses.getByRole("option", "Closed")).toHaveFocus();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH)
+                                    .withJsonBodyContaining("{\"change\": {\"type\": \"setTag\", "
+                                            + "\"tag\": {\"name\": \"Closed\"}}}")
+                                    .toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 

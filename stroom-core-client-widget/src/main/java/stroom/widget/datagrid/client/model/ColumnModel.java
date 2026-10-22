@@ -370,6 +370,25 @@ public final class ColumnModel<C> {
         return sb.toString();
     }
 
+    /// @return A CSS `grid-template-columns` value for a list, which is as wide as what it is in:
+    /// the current widths, but the last column takes the rest of the width (at least its own),
+    /// e.g. `"22px minmax(200px, 1fr)"`.
+    public String toListTemplate() {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < entries.size(); i++) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            final int width = Math.max(1, entries.get(i).width);
+            if (i == entries.size() - 1) {
+                sb.append("minmax(").append(width).append("px, 1fr)");
+            } else {
+                sb.append(width).append("px");
+            }
+        }
+        return sb.toString();
+    }
+
     /// @return A number that changes whenever a column is added, removed or moved. A renderer
     /// compares it to decide whether to rebuild the header and rows.
     public int getStructureVersion() {

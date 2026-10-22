@@ -109,6 +109,28 @@ class TestColumnModel {
     }
 
     @Test
+    void testListTemplateLastColumnFills() {
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("icon", ColumnSizing.fixed(22));
+        model.add("name", ColumnSizing.fixed(200));
+
+        assertThat(model.toListTemplate()).isEqualTo("22px minmax(200px, 1fr)");
+    }
+
+    @Test
+    void testListTemplateOneColumn() {
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("name", ColumnSizing.fixed(0));
+
+        assertThat(model.toListTemplate()).isEqualTo("minmax(1px, 1fr)");
+    }
+
+    @Test
+    void testListTemplateNoColumns() {
+        assertThat(new ColumnModel<String>().toListTemplate()).isEmpty();
+    }
+
+    @Test
     void testMoveUsesMyDataGridIndexConvention() {
         final ColumnModel<String> model = modelOf("a", "b", "c", "d");
 

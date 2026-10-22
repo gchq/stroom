@@ -1000,3 +1000,87 @@ interactive header cells, the context menu, copy, export and AI.
 | 12 | Sort position badge | Keep as today: shown even when only one column is sorted (R-H3). |
 | 13 | Client sort ignore-case | Honour `isIgnoreCase` (D11). |
 | 14 | Hidden tie-breaker sorts | Not part of the grid's sort state; the presenter appends them to the request (R-H4c). |
+
+---
+
+## 11. Lists and trees on the grid (2026-10-22)
+
+**Decision.** Stroom's lists and row trees are built on `DataGridWidget`, not on a separate list
+widget: a cell table, a list or a tree is rows, as the grid's are, and the grid already has what
+they need, tested and measured (row rendering that writes only what changed, virtual rows, paging,
+row keys, the selection rules, the focus kept through redraws, the agreed row looks, tree rows). The
+`session5_trees` worktree, which had begun a separate core (`RowWidget`), was stopped (the user,
+2026-10-22).
+
+**A profile, not a one-column grid.** What a list or tree is told to assistive technology, and its
+keys, differ from a grid's, so the grid takes a profile (`DataGridProfile`):
+
+| | Grid (default) | Listbox | Tree |
+| --- | --- | --- | --- |
+| Roles | `grid` or `treegrid`, `row`, `columnheader`, `gridcell` | `listbox` (`aria-multiselectable` when several can be chosen), `option`, cells `none` | `tree` (`aria-multiselectable` likewise), `treeitem` with `aria-level`, `aria-expanded`, `aria-setsize`, `aria-posinset`, cells `none` |
+| Header | yes (can be hidden) | none | none |
+| Into the cells | Right, Left, Home, End, Up into the headers | no: the row is the only stop | no |
+| Right, Left | cells (on a treegrid's row: expand, collapse, parent) | nothing | expand or first child; collapse or parent |
+| Tree rows from | the `ExpanderCell` column | — | a function giving each row's `Expander` (depth, open, leaf) |
+| Type-ahead | yes (added to the engine, for all) | yes | yes; `*` expands the siblings |
+
+A row's controls are reached as in a grid only where they can be: an `option` or `treeitem` may not
+hold focusable controls, so a list's tick box is the row's own state (`aria-checked` on the
+`option`, `mixed` for a part-ticked one), changed with Space or a click, not a control of its own.
+
+**Focus.** The real focus moves, as it does in the grid and in today's lists: on a row, or in a
+popup's filter box above the list. No list needs `aria-activedescendant` (`SelectionList` and the
+document picker move the focus between their filter and their rows today). The hooks the lists use
+are the grid's selection manager's: Up from the first row to the filter (`onUpFromFirst`, as now),
+and a typed character to the filter where the host has one, else type-ahead.
+
+**What moves** (inventory, 2026-10-22):
+
+| Kind | Today | Profile |
+| --- | --- | --- |
+| Single-choice lists: annotation chooser, tab session chooser, the stepping filter's elements | `MyCellTable`, `BasicSelectionEventManager` | listbox (the stepping filter's three columns kept as cells) |
+| Query history and favourites | `CustomCellList` | listbox |
+| Tick lists: type filter (part-ticked), column values filter (paged), annotation labels | `MyCellTable`, `CheckListSelectionEventManager` (labels: no keys at all) | listbox, multi, `aria-checked` |
+| Find lists: documents, recent items, find in content, annotations, AI chat history | `MyCellTable` (`FindCellTable` class), the explorer's selection manager; Left and Right change page | listbox (Left and Right keep changing page) |
+| Combobox lists: `SelectionList` in `SelectionPopup`, query help, edit and remove tags | `MyCellTable` with `option` roles on its cells | listbox, last (its levels, path and paging) |
+| Explorer, folder picker, document picker, tick tree | `MyCellTable` of flattened open nodes, `ExplorerCell`, no tree roles | tree (tick tree: `aria-checked`) |
+| Asset tree and asset chooser | GWT `Tree` | tree |
+
+**What doesn't:** the menus (`MenuViewImpl`, a `MyCellTable` with menu roles, done in session 3),
+and the drawn trees (the pipeline tree and bar, the expression tree, pathways), which are layouts
+with their own agreed keys (`DraggableTreePanel`, `TreeKeyboard`). While the menus are on
+`MyCellTable`, the forked `cellview` classes stay; moving the menus onto the grid too is for later.
+
+**Order:**
+
+1. Split `DataGridWidget` (2,274 lines) into the grid and its parts (row rendering first), and add
+   the profile with the grid's as the only one: no change to any grid (every story passes, and the
+   screenshots are unchanged).
+2. The listbox profile and type-ahead, with the small lists: the choosers, query history and
+   favourites, the tick lists and the find lists.
+3. The tree profile, with the explorer trees (standard WAI-ARIA tree keys) and the asset trees.
+4. `SelectionList`.
+5. Delete what nothing uses: `FindCellTable`, `CustomCellList`, the selection event managers, and
+   `MyCellTable` if the menus have moved by then.
+
+Each list keeps its looks in the row states agreed for lists (`list-row-states`: the grid's rows,
+keyboard focus drawn inside the row) and has its stories switched with it, as the grid's were.
+
+**Progress.**
+
+* **Step 1** (2026-10-22): `DataGridWidget` (2,274 lines) is split into the grid, its rows
+  (`GridRows`: drawing the rows, keeping them by key, the focus kept through a redraw, the row
+  height), its tree rows (`TreeRows`) and its header (`GridHeader`), with no change to any grid:
+  every story passes and every screenshot is as it was.
+* **Step 2, begun** (2026-10-22): the listbox profile (`DataGridProfile.LISTBOX`, set with
+  `setProfile`): the grid is a `listbox` of `option`s (each saying its place, `aria-posinset` and
+  `aria-setsize`), with no header and no cells to move into; `aria-multiselectable` when its
+  selection manager chooses several; type-ahead (`typeAhead`, with the shared `TypeAhead`) for a
+  character typed on a row when no typed handler takes it; no stripes (`data-grid--list`), and the
+  last column filling its width (`ColumnModel.toListTemplate`). Two options any grid can use came
+  with it: a grid as high as its rows, up to its container's `max-height` (`setFitContent`, for a
+  list in a popup, which has no height to fill), and a selection manager whose rows are choices the
+  host acts on (`setChooser`: moving chooses nothing; a press, Enter or Space hands the row over,
+  even one already chosen). First list moved: the annotation status and standard comment chooser
+  (`ChooserPresenter`, named "Statuses" or "Standard comments"); `App/Main/AnnotationEditor`
+  `StatusChooserKeys`.

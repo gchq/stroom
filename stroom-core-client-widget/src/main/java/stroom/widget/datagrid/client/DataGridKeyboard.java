@@ -274,7 +274,11 @@ class DataGridKeyboard<R> {
             case KeyCodes.KEY_RIGHT:
                 handled(event);
                 // A treegrid's row: Right expands a collapsed row, and otherwise moves into its cells
-                if (column < 0 && grid.setTreeRowExpanded(rowIndex, true)) {
+                if (column < 0 && grid.getTreeRows().setExpanded(rowIndex, true)) {
+                    return true;
+                }
+                if (!grid.getProfile().hasCells()) {
+                    // A list's row is its only stop
                     return true;
                 }
                 final int right = nextColumn(row, column);
@@ -286,10 +290,10 @@ class DataGridKeyboard<R> {
                 handled(event);
                 if (column >= 0) {
                     focusCell(rowIndex, previousColumn(row, column));
-                } else if (!grid.setTreeRowExpanded(rowIndex, false)) {
+                } else if (!grid.getTreeRows().setExpanded(rowIndex, false)) {
                     // A treegrid's row: Left collapses an expanded row, and otherwise moves to its
                     // parent row (choosing it, as Up and Down do)
-                    final int parent = grid.getTreeParentRow(rowIndex);
+                    final int parent = grid.getTreeRows().getParentRow(rowIndex);
                     if (parent >= 0) {
                         move(parent, false, false);
                     }
@@ -334,6 +338,16 @@ class DataGridKeyboard<R> {
             default:
                 return false;
         }
+    }
+
+    /// Moves the focus to a row, choosing it as Up and Down do, e.g. the row typing went to.
+    ///
+    /// @param rowIndex The page-relative row index.
+    void moveTo(final int rowIndex) {
+        header = false;
+        column = -1;
+        editing = false;
+        move(rowIndex, false, false);
     }
 
     // Up on the first row: the selection manager may take the focus elsewhere, e.g. a picker's
