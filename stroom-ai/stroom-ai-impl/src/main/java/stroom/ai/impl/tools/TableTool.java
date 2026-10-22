@@ -172,7 +172,7 @@ class TableTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final List<String> help = strings(argsMap(request).get(HELP_ARG), HELP_ARG);
         if (!help.isEmpty()) {
             return ToolResult.text(ExpressionFunctions.help(help));

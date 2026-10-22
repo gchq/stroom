@@ -139,7 +139,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String uuid = stringArg(request, UUID_ARG);
         if (uuid == null) {
             throw new WorkspaceException("Give the document's uuid.");

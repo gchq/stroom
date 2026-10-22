@@ -143,7 +143,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final String given = rawArg(request, QUERY_ARG);
         if (given == null || given.isBlank()) {

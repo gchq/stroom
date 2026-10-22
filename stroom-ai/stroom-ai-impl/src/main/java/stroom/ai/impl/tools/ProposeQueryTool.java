@@ -110,7 +110,7 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String name = stringArg(request, NAME_ARG);
         // Laid out as people write queries, as it is what the new Query document will hold.
         final String query = StroomQlFormatter.format(rawArg(request, QUERY_ARG));

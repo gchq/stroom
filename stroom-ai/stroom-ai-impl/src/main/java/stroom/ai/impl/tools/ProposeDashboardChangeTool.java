@@ -244,7 +244,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String component = stringArg(request, COMPONENT_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (component == null) {
