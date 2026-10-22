@@ -2,30 +2,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs">
             <g:TextArea ui:field="connectionUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate (PEM format)">
-            <g:TextArea ui:field="caCertificate" width="400px"/>
+        <form:FormGroup identity="elasticClusterSettingsAPIKey"
+                        label="API Key (optional)"
+                        helpText="Select the Access Token credential holding the Elasticsearch API key, if the cluster requires authentication. The access token must be the base64 encoded API key, i.e. the 'encoded' value returned by Elasticsearch when the key is created.">
+            <l:SelectionBox ui:field="apiKey"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID">
-            <g:TextBox ui:field="apiKeyId" width="400px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret">
-            <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)">
-            <g:IntegerBox ui:field="connectionTimeoutMillis" width="50px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)">
-            <g:IntegerBox ui:field="responseTimeoutMillis" width="50px"/>
-        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
+                  addStyleNames="allow-focus"/>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>
