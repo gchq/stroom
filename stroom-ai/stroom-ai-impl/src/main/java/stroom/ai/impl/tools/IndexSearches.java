@@ -59,7 +59,7 @@ import java.util.UUID;
 public class IndexSearches {
 
     /// How long a search is polled; past that, what it has found so far is the answer, said to be partial.
-    static final Duration SEARCH_WAIT = Duration.ofSeconds(60);
+    public static final Duration SEARCH_WAIT = Duration.ofSeconds(60);
     /// The time kept back from the call's time limit, so a search that would run past it gives what it has.
     static final Duration MARGIN = Duration.ofSeconds(2);
     private static final Duration POLL_INTERVAL = Duration.ofMillis(500);
@@ -103,11 +103,28 @@ public class IndexSearches {
     ///                again at every poll Stroom hasn't finished; or null.
     /// @return The rows, by column name, with Stroom's errors.
     public Found search(final ToolCallContext context, final Probe probe, final int length, final String doing) {
+        return search(context, probe, length, doing, SEARCH_WAIT);
+    }
+
+    /// As [#search(ToolCallContext, Probe, int, String)], polling for up to `longest` (less if the call's time
+    /// limit is nearer), e.g. for a sample whose searches wait a few seconds in all.
+    ///
+    /// @param context The call, told what the search is doing as it runs.
+    /// @param probe   The search.
+    /// @param length  The most rows to read.
+    /// @param doing   What the search is doing, told to the client; or null.
+    /// @param longest The longest the search is polled.
+    /// @return The rows, by column name, with Stroom's errors.
+    public Found search(final ToolCallContext context,
+                        final Probe probe,
+                        final int length,
+                        final String doing,
+                        final Duration longest) {
         final CallProgress progress = CallProgress.of(context);
         if (doing != null) {
             progress.say(doing);
         }
-        final Duration wait = waitFor();
+        final Duration wait = waitFor(longest);
         final long started = System.nanoTime();
         DashboardSearchRequest request = request(probe, length);
         DashboardSearchResponse response = null;
@@ -170,16 +187,16 @@ public class IndexSearches {
 
     // How long a search may be polled: SEARCH_WAIT, or what the call has left (less a margin), what it has found by
     // then rather than the call stopped part way.
-    private static Duration waitFor() {
-        return ToolDeadline.remaining()
+    private static Duration waitFor(final Duration longest) {
+        final Duration wait = ToolDeadline.remaining()
                 .map(left -> left.minus(MARGIN))
-                .map(left -> left.compareTo(SEARCH_WAIT) < 0
+                .map(left -> left.compareTo(longest) < 0
                         ? left
-                        : SEARCH_WAIT)
-                .map(left -> left.compareTo(Duration.ofSeconds(1)) < 0
-                        ? Duration.ofSeconds(1)
-                        : left)
-                .orElse(SEARCH_WAIT);
+                        : longest)
+                .orElse(longest);
+        return wait.compareTo(Duration.ofSeconds(1)) < 0
+                ? Duration.ofSeconds(1)
+                : wait;
     }
 
     /// @param probe  The search.
