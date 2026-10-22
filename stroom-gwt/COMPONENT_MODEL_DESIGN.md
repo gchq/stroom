@@ -81,13 +81,18 @@ public final class ComponentNode {
     void adopt(ComponentNode child);        // child.parent = this; disposed with this
     void release(ComponentNode child);      // dispose one child early (e.g. a replaced tab)
     void add(HandlerRegistration registration);
-    void add(Runnable cleanUp);
+    void onDispose(Runnable cleanUp);       // not add(Runnable): a lambda would match both
     <T> T lookup(ContextKey<T> key);        // nearest ancestor that provides the key
     <T> void provide(ContextKey<T> key, ContextValue<T> value);
+    <T> HandlerRegistration watch(ContextKey<T> key, Consumer<T> onChange);
+    <T> Consumer<T> guard(Consumer<T> callback);
+    void markShared();                      // a singleton's node, which nothing may own
     void dispose();                         // children (newest first), then registrations, then clean-ups
     boolean isDisposed();
 }
 ```
+
+`ComponentNode.root(name)` makes a root. A node is *connected* when it is a root or its owner is connected; watches report only once their node is connected, and are resolved again when a provider is added above them, so a component can watch in its constructor and a document can provide after owning its children.
 
 ### The Component base class
 
@@ -787,7 +792,7 @@ Prove the framework in a separate package by duplicating the Dictionary editor, 
 
 The Dictionary editor is chosen because it is a real document tab with three of its own tabs (Words, Imports, Effective words) and two shared ones (Documentation, Permissions). Its dirty state flows from every tab, read-only must reach every tab, it makes REST calls with a task monitor, and it embeds old presenters we would not rewrite (the Ace `EditorPresenter`, the markdown editor, the permissions tab). It already has 7 stories in `DictionaryEditorStories`.
 
-1. Build the framework in a new package, `stroom.widget.component.client` in `stroom-core-client-widget`: `ComponentNode`, `Component`, `ContextKey`, `ContextValue`, `Contexts`, `Listeners` and `guard()`, with JUnit tests.
+1. Done: the framework, in `stroom.widget.component.client` (`stroom-core-client-widget`, GWT module `stroom.widget.component.Component`, inherited by the workbench): `ComponentNode`, `Component`, `ContextKey`, `ContextValue`, `Contexts` (`READ_ONLY`, `TASK_MONITOR`, `DOCUMENT`; `DIRTY` waits for Phase 4), `Listeners`, `guard()` and `ComponentChecks`, with JUnit tests (`TestComponentNode`, `TestComponent`, `TestListeners`, `TestContextValue`). `READ_ONLY` is a *narrowing* key (`ContextKey.narrowing`): every provider on the way up counts, combined with `||`. The development checks are the binding property `stroom.componentChecks` (`ENABLED` in the workbench, `DISABLED` by default), read with `System.getProperty`, so the application compiles them out; on the JVM they are on. With them off, misuse is ignored as safely as it can be (a node owned by another is moved; one given to a disposed owner is disposed).
 2. Add `PresenterAdapter`, which puts an existing `MyPresenterWidget` into the ownership tree through its public `dispose()` and passes it read-only and the task monitor the old way. No file in the protected `com/` directory is edited.
 3. Duplicate the editor in `stroom.dictionary.client.component`: Words, Imports and Effective words as components; Documentation, Permissions and the Ace editor embedded through the adapter.
 4. Wire it into the workbench only, with each story as the root. Mirror the 7 existing stories and add read-only, lock change while open, and close while loading.
@@ -809,7 +814,7 @@ The Dictionary editor is chosen because it is a real document tab with three of 
 
 Give every presenter an owner without changing how screens are written.
 
-1. Decide where `MyPresenterWidget` lives (edit in the protected `com/` directory, or move it to a `stroom` package).
+1. Move `MyPresenterWidget` out of the protected `com/` directory to a `stroom` package (decided 22 October 2026; the pilot does not touch it).
 2. Adopt the pilot's framework classes, revised by what the pilot found.
 3. Give `MyPresenterWidget` a node; route `dispose()`, `addHandlerToSource` registrations and `onDispose()` through it; add `own()` and `listen()`.
 4. Make roots explicit: a node per open tab in `ContentManager`, per dialog in `PopupManager`, per story in the workbench.
@@ -862,9 +867,9 @@ Convert the remaining presenters area by area, each a separate pull request with
 
 ### Phase 6: Remove GWTP
 
-1. Replace the 26 proxy presenters with a plain plugin and content registry; decide whether code splitting is still needed.
+1. Replace the proxy presenters with a plain plugin and content registry, and drop code splitting (measuring load time before and after).
 2. Rebase `MyPresenterWidget` on `Component` and drop `PresenterWidget`, `HandlerContainerImpl` and slots.
-3. Decide whether GIN stays or Dagger 2 replaces it.
+3. Keep GIN; whether Dagger 2 replaces it is decided after GWTP is gone.
 
 **Exit:** no GWTP dependency in the build.
 
@@ -885,10 +890,13 @@ The main risk is a long period with two styles side by side; each phase therefor
 
 ### Open questions
 
-- [ ] Package and module for `ComponentNode`, `Component` and `Contexts`: `stroom-core-client-widget` (`stroom.widget.component.client`) is the proposal.
-- [ ] Do we keep a view interface for components with complex UiBinder layouts, or let the component own its UiBinder template directly?
-- [ ] Should `RestFactory` take an owner so in-flight requests are cancelled on dispose, or is dropping late callbacks with `guard()` enough?
-- [ ] Where do proxy presenters (code-split plugins) go once GWTP is removed: a plain plugin registry, and do we still need code splitting?
-- [ ] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place?
+- [x] Package and module for `ComponentNode`, `Component` and `Contexts`: `stroom.widget.component.client` in `stroom-core-client-widget` (decided 22 October 2026).
+- [x] Does `Component` extend `Composite`? No: it implements `IsWidget`, holds its root widget and hears attach and detach through `addAttachHandler`, so ownership and context are tested on the JVM (decided 22 October 2026).
+- [x] Does the pilot open in the real app (Phase 0 step 6)? No: workbench only; the tab and popup roots are tested in Phase 1 (decided 22 October 2026).
+- [x] How strict are development checks? Misuse in `own()` (a disposed child, owning twice, a singleton) throws in development builds, and a registry counts unowned components, shown in the workbench and checked by `LeakProbe`; production builds leave both out (decided 22 October 2026).
+- [x] Do we keep a view interface for components with complex UiBinder layouts, or let the component own its UiBinder template directly? The component owns its template; a view interface is added only when a second implementation or a test needs one (decided 22 October 2026).
+- [x] Should `RestFactory` take an owner so in-flight requests are cancelled on dispose, or is dropping late callbacks with `guard()` enough? `RestFactory.owner(component)` drops the callback and ends the task monitor once the owner is disposed; requests are not cancelled (decided 22 October 2026).
+- [x] Where do proxy presenters (code-split plugins) go once GWTP is removed: a plain plugin registry, and do we still need code splitting? A plain plugin registry: each plugin, an eager singleton, makes its presenter through a GIN `Provider` when first needed. Code splitting is dropped: in the 7.13 build it defers about 330 KB of a 4.8 MB permutation (~7%); load time is measured before and after (decided 22 October 2026).
+- [x] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place? Left in place: GWTP is removed with GIN kept, and Dagger is a separate later decision, kept open by components using only constructor injection (decided 22 October 2026).
 - [x] Does UiBinder set a button's icon from an `svg="..."` attribute? Yes (`Widgets/Buttons/Toolbar` `Template`).
-- [ ] Do menus also use `SvgPresets`, and what replaces them there, before `SvgPresets` can be deleted?
+- [x] Do menus also use `SvgPresets`, and what replaces them there, before `SvgPresets` can be deleted? They did; menus now take an `SvgImage`, and `SvgPresets` is deleted (Toolbars, Migration step 5).

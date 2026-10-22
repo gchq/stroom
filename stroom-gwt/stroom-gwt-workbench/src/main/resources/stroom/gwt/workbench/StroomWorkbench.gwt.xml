@@ -32,6 +32,7 @@
     <inherits name='stroom.svg.SVG'/>
     <inherits name='stroom.task.Task'/>
     <inherits name="stroom.widget.util.Util"/>
+    <inherits name="stroom.widget.component.Component"/>
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.form.Form"/>
     <inherits name="stroom.widget.help.Help"/>
@@ -42,6 +43,9 @@
     <inherits name="stroom.widget.valuespinner.ValueSpinner"/>
     <inherits name="stroom.pipeline.Pipeline"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
+
+    <!-- Ownership misuse fails and unowned components are counted (see ComponentChecks) -->
+    <set-property name="stroom.componentChecks" value="ENABLED"/>
 
     <!--
       Screens (App/* stories): real presenters and views that call the server, shown with fake
