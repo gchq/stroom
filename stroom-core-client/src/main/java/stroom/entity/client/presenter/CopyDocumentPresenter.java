@@ -58,6 +58,7 @@ public class CopyDocumentPresenter
                                  final CopyDocumentProxy proxy,
                                  final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
+        own(entityTreePresenter);
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());
 

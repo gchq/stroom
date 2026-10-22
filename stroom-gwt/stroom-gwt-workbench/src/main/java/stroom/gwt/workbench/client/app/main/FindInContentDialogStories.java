@@ -155,7 +155,7 @@ public final class FindInContentDialogStories {
                 .build();
         harness.afterStartUp(() -> {
             // As the presenter's GWTP proxy would
-            final FindInContentPresenter presenter = injector.getFindInContentPresenter();
+            final FindInContentPresenter presenter = harness.unbindOnCleanUp(injector.getFindInContentPresenter());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
                     presenter::onShow));
             ShowFindInContentEvent.fire(harness.getHasHandlers());

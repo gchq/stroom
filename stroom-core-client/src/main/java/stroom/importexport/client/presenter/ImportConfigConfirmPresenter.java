@@ -100,6 +100,8 @@ public class ImportConfigConfirmPresenter extends
                                         final DocSelectionBoxPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        own(tooltipPresenter);
+        own(rootFolderPresenter);
         this.rootFolderPresenter = rootFolderPresenter;
 
         rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF, false);

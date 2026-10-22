@@ -24,7 +24,6 @@ import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -65,9 +64,9 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabP
     public void open(final Consumer<P> consumer) {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.
-            // Create a new presenter, in a scope that releases it, and every presenter made for it,
-            // when the tab is closed
-            presenter = new PresenterScope().capture(presenterProvider::get);
+            // Create a new presenter, which the content manager releases, with every presenter it
+            // owns, when the tab is closed
+            presenter = presenterProvider.get();
         }
 
         final CloseContentEvent.Handler closeHandler = (event) -> {
@@ -77,7 +76,6 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabP
                     // After we close the tab set the presenter back to null so
                     // that we can open it again.
                     if (ok) {
-                        PresenterScope.disposeScopeOf(presenter);
                         presenter = null;
                     }
                 };
@@ -89,7 +87,6 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabP
                 event.getCallback().closeTab(true);
                 // After we close the tab set the presenter back to null so
                 // that we can open it again.
-                PresenterScope.disposeScopeOf(presenter);
                 presenter = null;
             }
         };

@@ -33,6 +33,7 @@ import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -156,13 +157,14 @@ public class QuickFilterContextHandlerFactory {
                         .priority(items.size())
                         .text("Advanced Query...")
                         .tooltip("Build this filter as an expression tree")
-                        .command(() -> advancedQuickFilterPresenterProvider.get().show(
-                                context,
-                                quickFilter.getText(),
-                                // OK writes the text back through the same path as picking a
-                                // recent filter: set it, fire the change, record the use.
-                                onSelect,
-                                taskMonitorFactory))
+                        .command(() -> MyPresenterWidget
+                                .disposeWhenHidden(advancedQuickFilterPresenterProvider.get())
+                                .show(context,
+                                        quickFilter.getText(),
+                                        // OK writes the text back through the same path as picking
+                                        // a recent filter: set it, fire the change, record the use.
+                                        onSelect,
+                                        taskMonitorFactory))
                         .build());
             }
 

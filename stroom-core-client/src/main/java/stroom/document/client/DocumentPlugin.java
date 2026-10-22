@@ -45,7 +45,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -177,9 +176,9 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             } else if (forceOpen) {
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
-                // The editor, and every presenter made for it now or as its tabs are shown, belong to
-                // a scope that releases them all when the document is closed
-                final MyPresenterWidget<?> documentEditPresenter = new PresenterScope().capture(this::createEditor);
+                // The editor owns every presenter made for it; the content manager owns it while its
+                // tab is open, and releases it when the tab is closed
+                final MyPresenterWidget<?> documentEditPresenter = createEditor();
                 presenter = documentEditPresenter;
 
                 if (presenter instanceof final HasMultipleInstances hasMultipleInstances) {
@@ -779,7 +778,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     removeTabData(tabData);
                     // Tell the callback to close the tab.
                     event.getCallback().closeTab(true);
-                    PresenterScope.disposeScopeOf(tabData);
                 }
             }
         }
@@ -795,11 +793,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 removeTabData(tabData);
             }
             // Tell the callback to close the tab if ok.
+            // Closing the tab releases the editor and all its presenters
             callback.closeTab(ok);
-            if (ok) {
-                // Closed for good, so release the editor and all its presenters
-                PresenterScope.disposeScopeOf(presenter);
-            }
         }
     }
 }

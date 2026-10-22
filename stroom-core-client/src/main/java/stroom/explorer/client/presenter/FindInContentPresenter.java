@@ -104,6 +104,7 @@ public class FindInContentPresenter
                                   final EditorPresenter editorPresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        own(editorPresenter);
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
 

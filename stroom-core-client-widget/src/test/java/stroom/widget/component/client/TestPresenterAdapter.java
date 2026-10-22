@@ -19,7 +19,6 @@ package stroom.widget.component.client;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
@@ -65,7 +64,7 @@ class TestPresenterAdapter {
     }
 
     @Test
-    void presentersMadeByThePresenterAreDisposedToo() {
+    void presentersThePresenterOwnsAreDisposedToo() {
         // GWTP doesn't unbind these when their parent is unbound
         final ComponentNode root = ComponentNode.root("story");
         final PresenterAdapter<ParentPresenter> adapter = PresenterAdapter.of(ParentPresenter::new);
@@ -73,25 +72,7 @@ class TestPresenterAdapter {
 
         root.dispose();
 
-        assertThat(adapter.presenterCount()).isZero();
-        // The presenter the adapter owns first, then the presenters made with it, with the scope
-        assertThat(events).containsExactly("parent disposed", "child disposed");
-    }
-
-    @Test
-    void thePresenterDoesNotJoinTheScopeCurrentWhenItIsMade() {
-        // e.g. the workbench's leak probe opens a story in a scope, which mustn't dispose it again
-        final PresenterScope outer = new PresenterScope();
-        final PresenterAdapter<TestPresenter> adapter = outer.capture(() ->
-                PresenterAdapter.of(() -> new TestPresenter("editor")));
-        final ComponentNode root = ComponentNode.root("story");
-        root.adopt(adapter.getComponentNode());
-
-        root.dispose();
-        outer.dispose();
-
-        assertThat(outer.size()).isZero();
-        assertThat(events).containsExactly("editor disposed");
+        assertThat(events).containsExactly("child disposed", "parent disposed");
     }
 
     @Test
@@ -185,6 +166,10 @@ class TestPresenterAdapter {
             this.readOnly.add(readOnly);
         }
 
+        void ownChild(final TestPresenter child) {
+            own(child);
+        }
+
         void addTestHandler(final Runnable handler) {
             addHandlerToSource(TYPE, handler);
         }
@@ -203,8 +188,8 @@ class TestPresenterAdapter {
 
         private ParentPresenter() {
             super("parent");
-            // As a presenter makes its own presenters, e.g. from GIN providers, while it is made
-            new TestPresenter("child");
+            // As a presenter owns the presenters it is given, e.g. by GIN
+            ownChild(new TestPresenter("child"));
         }
     }
 

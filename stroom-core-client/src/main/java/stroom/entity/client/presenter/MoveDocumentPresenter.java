@@ -52,6 +52,7 @@ public class MoveDocumentPresenter
     public MoveDocumentPresenter(final EventBus eventBus, final MoveDocumentView view, final MoveDocumentProxy proxy,
                                  final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
+        own(entityTreePresenter);
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());
 

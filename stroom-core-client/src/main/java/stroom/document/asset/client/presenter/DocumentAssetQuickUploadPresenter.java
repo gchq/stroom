@@ -25,6 +25,7 @@ import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.document.asset.shared.DocumentAssetUpdateNewFile;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResourceKey;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -127,7 +128,7 @@ public class DocumentAssetQuickUploadPresenter implements DocumentAssetAddFileCa
     }
 
     private void showUploadDialog() {
-        uploadDialogProvider.get().fireShowPopup(
+        MyPresenterWidget.disposeWhenHidden(uploadDialogProvider.get()).fireShowPopup(
                 this,
                 // Always the root of the asset store — no tree to pick a folder from.
                 null,

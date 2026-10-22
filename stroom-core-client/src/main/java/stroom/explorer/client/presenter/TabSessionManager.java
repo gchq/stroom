@@ -41,6 +41,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.TextBoxPopup;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -97,7 +98,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
 
 
         registerHandler(getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
-            final TextBoxPopup textBoxPopup = textBoxPopupProvider.get();
+            final TextBoxPopup textBoxPopup = MyPresenterWidget.disposeWhenHidden(textBoxPopupProvider.get());
             textBoxPopup.show("Save New Tab Session", sessionName -> {
                 if (contains(userTabSessions, sessionName)) {
                     ConfirmEvent.fire(this,

@@ -159,6 +159,7 @@ public class DashboardPresenter
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
         this.components = components;
+        components.setOwner(this);
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
         this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;

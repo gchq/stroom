@@ -80,6 +80,7 @@ public class QueryDocEditPresenter
                                  final RestFactory restFactory,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, queryEditPresenter.getView());
+        own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;

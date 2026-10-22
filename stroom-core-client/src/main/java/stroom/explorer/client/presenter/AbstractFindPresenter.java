@@ -48,6 +48,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                                  final FindDocResultListPresenter findResultListPresenter,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
+        own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
         // The find dialog's text is parsed by NodeInclusionChecker against the explorer tree's
         // fields, so it shares the tree's history.

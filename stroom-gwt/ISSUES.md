@@ -330,7 +330,10 @@ dashboard's remaining 3,750 hidden nodes (not yet broken down). `MyDateBox` is g
 (October 2026): its boxes are `DateTimeBox`es, each of which builds its dialog only when first
 opened.
 
-**Fixed (October 2026): closing a document now releases it.** A `PresenterScope`
+**Fixed (October 2026): closing a document now releases it.** (Since 22 October 2026 by the
+component model's ownership tree rather than `PresenterScope`, which is gone: each presenter owns
+the presenters it makes and `ContentManager` disposes a closed tab's root; see
+`COMPONENT_MODEL_DESIGN.md`, Phase 1. The measurements below are `PresenterScope`'s.) A `PresenterScope`
 (`stroom.widget.util.client`) records every `MyPresenterWidget` made while a document opens, and
 those its tabs, dashboard components and on-demand editors make later; closing the document
 disposes them all: each is unbound, the handlers others added with it as their source are removed,
@@ -448,28 +451,27 @@ last closed dialog for a moment only.
 * `stroom-core-client/src/main/java/stroom/document/client/DocumentPlugin.java` (`actuallyClose`)
 * `stroom-core-client/src/main/java/stroom/iframe/client/view/IFrameViewImpl.java` (line 71)
 
-### The leak check fails 69 stories
+### The leak check fails 50 stories
 
-**Confirmed** (by `workbenchTest -PworkbenchLeakCheck` on 22 October 2026, at `97d2101ca6` and again
-with each presenter given an ownership node: the same stories, with the same DOM node and listener
-counts). Not fixed.
+**Confirmed** (by `workbenchTest -PworkbenchLeakCheck`, 22 October 2026, with the component model's
+Phase 1: every presenter owned, `PresenterScope` removed; 71 failed before). Not fixed.
 
-* **Still leaking:** every `App/Main/AnnotationEditor` story and both `App/Annotations/decorateComment`
-  stories keep 1,256-1,364 DOM nodes and 189 listeners per close (about 450 KB of heap);
-  `App/AI/AskStroomAiDialog` keeps 155-160 nodes and 58 listeners; `App/AI/AskAiChatPanel`
-  `StopWhileWorking` keeps 45 nodes. The annotation editor is opened by `AnnotationEditSupport` in a
-  `PresenterScope`, so something it makes outside the scope (or a handler on a shared bus or
-  singleton) holds it.
-* **Accessibility after reopening:** 34 stories (mainly `AnalyticRuleEditor`, `ReportEditor` and
-  `QueryEditor`, and `DataRetentionScreen` `ImpactAbort`) break `target-size` on an element they
-  don't break it on when first opened, so the reopened screen lays something out differently.
+* **Still leaking:** `App/AI/AskStroomAiDialog` keeps 155-160 DOM nodes and 58 listeners per close,
+  with no component left unowned, so something else holds it (e.g. a handler on a shared bus or a
+  singleton, or a JavaScript object). The annotation editor's leak (1,256-1,364 nodes and 189
+  listeners per close in every `App/Main/AnnotationEditor` and `App/Annotations/decorateComment`
+  story) is gone: its presenters are now owned and disposed with its tab.
+* **Accessibility after reopening:** about 34 stories (mainly `AnalyticRuleEditor`, `ReportEditor`
+  and `QueryEditor`, and `DataRetentionScreen` `ImpactAbort`) break `target-size` on an element
+  they don't break it on when first opened, so the reopened screen lays something out differently.
 * **Not reopened:** 6 stories' screens don't open again within 15 s (`AppShell` `Embedded`,
   `ContentTabPane` `NoDuplicateForSingleInstance`, `PipelineEditor` `FailedEmbeddedCreateKeepsDialogUsable`
   and `MultiDocumentSave`, `docPlugin` `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`),
   probably as each opens more than one screen or a dialog, which the probe's `open()` doesn't repeat.
+* `App/Dashboard/QueryResultVis` `PauseButtonReportsUp` breaks `target-size` after reopening too.
 
-Without the leak check these stories pass. The component model's Phase 1 (owning what a screen
-makes) is expected to fix the first group, which is to be checked again as each area is converted.
+Without the leak check these stories pass. A failing leak now names the components each close
+leaves unowned (`Left unowned per close: ...`), which is where to start.
 
 ## Accessibility
 

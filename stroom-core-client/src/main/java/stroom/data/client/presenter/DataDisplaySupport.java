@@ -83,7 +83,7 @@ public class DataDisplaySupport {
         final Focus focus;
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
                 DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
-            final DataPresenter dataPresenter = dataPresenterProvider.get();
+            final DataPresenter dataPresenter = MyPresenterWidget.disposeWhenHidden(dataPresenterProvider.get());
             dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
             dataPresenter.setInitDataViewType(showDataEvent.getDataViewType());
             dataPresenter.fetchData(sourceLocation);
@@ -92,7 +92,7 @@ public class DataDisplaySupport {
                     + sourceLocation.getIdentifierString();
             focus = dataPresenter;
         } else {
-            final SourcePresenter sourcePresenter = sourcePresenterProvider.get();
+            final SourcePresenter sourcePresenter = MyPresenterWidget.disposeWhenHidden(sourcePresenterProvider.get());
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
             presenter = sourcePresenter;
             // Convert to one based for UI;

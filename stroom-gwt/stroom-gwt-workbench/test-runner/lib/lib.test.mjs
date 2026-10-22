@@ -25,7 +25,7 @@ import { SharedBrowser } from './browsers.mjs';
 import { TIMED_OUT, withDeadline } from './deadline.mjs';
 import { selectStories } from './filter.mjs';
 import { escapeXml, toJUnitXml } from './junit.mjs';
-import { growthPerCycle, judgeLeak, withLeakProbe } from './leak-check.mjs';
+import { growthPerCycle, judgeLeak, unownedGrowth, withLeakProbe } from './leak-check.mjs';
 import { judgeA11y, updateBaseline } from './a11y-check.mjs';
 import { judgeContentFocus } from './focus-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
@@ -272,6 +272,17 @@ test('leak check: growth per close and judgement', () => {
     /^Leak: each close of the screen keeps 21 DOM nodes and 0 event listeners \(9 KB of heap\), over 8 closes/);
   assert.match(judgeLeak({ checked: true, cycles: 8, nodes: 0, listeners: 6, heapKB: 0 }), /keeps 0 DOM nodes and 6/);
   assert.equal(withLeakProbe('http://x/iframe.html?id=a&viewMode=story'), 'http://x/iframe.html?id=a&viewMode=story&probe=1');
+});
+
+test('leak check: components left unowned per close', () => {
+  // 'B' grows by 2 over 2 closes, 'C' by 4; 'A' stays
+  assert.equal(unownedGrowth(['A', 'B'], ['A', 'B', 'B', 'B', 'C', 'C', 'C', 'C'], 2), 'C x2, B x1');
+  assert.equal(unownedGrowth(['A'], ['A'], 4), null);
+  assert.equal(unownedGrowth(['A', 'A'], ['A'], 4), null);
+  assert.equal(unownedGrowth(null, ['A'], 4), null);
+  assert.equal(unownedGrowth([], ['A'], 0), null);
+  assert.match(judgeLeak({ checked: true, cycles: 8, nodes: 30, listeners: 0, heapKB: 9, unownedGrowth: 'X x1' }),
+    /Left unowned per close: X x1$/);
 });
 
 test('accessibility: a story fails only on rules missing from its baseline', () => {

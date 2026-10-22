@@ -33,6 +33,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
@@ -111,7 +112,7 @@ public class TabManager {
 
     public void showRename(final ComponentConfig componentConfig,
                            final Consumer<String> nameChangeConsumer) {
-        renameTabPresenterProvider.get().show(dashboardPresenter,
+        MyPresenterWidget.disposeWhenHidden(renameTabPresenterProvider.get()).show(dashboardPresenter,
                 tabLayout,
                 componentConfig.getName(),
                 nameChangeConsumer);

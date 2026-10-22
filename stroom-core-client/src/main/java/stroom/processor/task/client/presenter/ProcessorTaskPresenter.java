@@ -46,6 +46,8 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
                                   final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter,
                                   final ProcessorTaskListPresenter processorTaskListPresenter) {
         super(eventBus, view);
+        own(processorTaskSummaryPresenter);
+        own(processorTaskListPresenter);
         this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
         this.processorTaskListPresenter = processorTaskListPresenter;
 

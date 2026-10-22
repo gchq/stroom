@@ -25,7 +25,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,13 +58,9 @@ public class TabContentProvider<E>
     private E entity;
     private boolean readOnly = true;
     private int readCount;
-    // The scope of the document this belongs to: tab presenters, made later (when the document is
-    // read or a tab is first shown), belong to it too, so closing the document releases them.
-    // The owner must bind and unbind this along with itself, so its registrations and tab
-    // providers are released when the owner is
-    private final PresenterScope presenterScope;
     // What owns the tab presenters this makes (the document), so they are disposed with it and
-    // see its context
+    // see its context. The owner must bind and unbind this along with itself, so its
+    // registrations and tab providers are released when the owner is
     private final ComponentNode owner;
 
     /// @param eventBus The application's event bus.
@@ -73,7 +68,6 @@ public class TabContentProvider<E>
     public TabContentProvider(final EventBus eventBus, final HasComponentNode owner) {
         this.eventBus = eventBus;
         this.owner = owner.getComponentNode();
-        this.presenterScope = PresenterScope.current();
     }
 
     @Override
@@ -117,7 +111,7 @@ public class TabContentProvider<E>
     }
 
     public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
-        return PresenterScope.captureIn(presenterScope, () -> createPresenter(tab, taskMonitorFactory));
+        return createPresenter(tab, taskMonitorFactory);
     }
 
     private PresenterWidget<?> createPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
@@ -167,11 +161,8 @@ public class TabContentProvider<E>
 
     @Override
     public void read(final DocRef docRef, final E document, final boolean readOnly) {
-        // Tab providers make their presenters when first read
-        PresenterScope.captureIn(presenterScope, () -> {
-            readTabs(docRef, document, readOnly);
-            return null;
-        });
+        // Tab providers make their presenters when first read, and the owner owns them
+        readTabs(docRef, document, readOnly);
     }
 
     private void readTabs(final DocRef docRef, final E document, final boolean readOnly) {

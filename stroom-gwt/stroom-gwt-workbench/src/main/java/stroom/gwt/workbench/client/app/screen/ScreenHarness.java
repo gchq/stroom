@@ -47,6 +47,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
@@ -57,7 +58,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.ContentFocus;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -164,7 +164,6 @@ public final class ScreenHarness {
     // Whether the leak check's probe is wanted (see LeakProbe)
     private final boolean probe;
     // The scope of the presenters made while opening the screen, for the probe to dispose
-    private PresenterScope probeScope;
     // Owns the components the story shows (see addComponent), made when first needed
     private ComponentNode componentRoot;
     private Component shownComponent;
@@ -355,16 +354,16 @@ public final class ScreenHarness {
                     if (!disposed) {
                         applyUserPreferences(preferences);
                         if (probe) {
-                            // For the leak check: opens the screen in a scope, as DocumentPlugin
-                            // opens a document, and lets the page close and open it again
-                            final Runnable openInScope = () -> {
+                            // For the leak check: opens the screen, and lets the page close it, as
+                            // closing its tab does, and open it again. What it shows belongs to the
+                            // story's root, which its clean ups dispose
+                            final Runnable open = () -> {
                                 probeCleanUpMark = cleanUps.size();
                                 probeWidgetMark = host.getWidgetCount();
-                                probeScope = new PresenterScope();
-                                probeScope.run(action);
+                                action.run();
                             };
-                            openInScope.run();
-                            LeakProbe.install(this, openInScope);
+                            open.run();
+                            LeakProbe.install(this, open);
                         } else {
                             action.run();
                         }
@@ -468,8 +467,11 @@ public final class ScreenHarness {
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
     private <P extends PresenterWidget<?>> P fill(final P presenter, final boolean tab) {
         fillWidget(presenter.getWidget(), presenter, tab);
-        if (probe) {
-            // Disposed with the scope it was made in when the probe closes the screen
+        // The story's root owns it, as an open tab's root does in Stroom, so it is disposed with
+        // the story's clean ups (and when the leak probe closes it)
+        if (presenter instanceof final HasComponentNode hasComponentNode
+            && hasComponentNode.getComponentNode().parent() == null) {
+            getComponentRoot().adopt(hasComponentNode.getComponentNode());
             return presenter;
         }
         return unbindOnCleanUp(presenter);
@@ -527,15 +529,12 @@ public final class ScreenHarness {
             host.remove(i);
         }
         if (dispose) {
-            if (probeScope != null) {
-                probeScope.dispose();
-            }
-            // The clean ups the opening registered, as rendering the story again would run them
+            // The clean ups the opening registered, as rendering the story again would run them,
+            // among them disposing the story's root and what it owns
             for (int i = cleanUps.size() - 1; i >= probeCleanUpMark; i--) {
                 runSafely("running a clean up", cleanUps.remove(i));
             }
         }
-        probeScope = null;
     }
 
     /// @return For the leak check's probe, the number of widgets the screen's opening has shown,
@@ -583,14 +582,22 @@ public final class ScreenHarness {
         return registration;
     }
 
-    /// Unbinds a presenter when the story renders again, e.g. one shown in the story's widget
-    /// rather than as a popup (popups are unbound when the harness hides them).
+    /// Releases a presenter the story makes when the story renders again (and when the leak
+    /// probe closes the screen), e.g. a dialog it shows or one shown in the story's widget: the
+    /// story's root owns it, so it is disposed with everything it owns, or, if it has no place in
+    /// the ownership tree, it is unbound (popups are unbound when the harness hides them).
     ///
     /// @param presenter The presenter.
     /// @param <P>       The presenter type.
     /// @return The presenter.
     public <P extends PresenterWidget<?>> P unbindOnCleanUp(final P presenter) {
-        addCleanUp(presenter::unbind);
+        if (presenter instanceof final HasComponentNode hasComponentNode
+            && hasComponentNode.getComponentNode() != null
+            && hasComponentNode.getComponentNode().parent() == null) {
+            getComponentRoot().adopt(hasComponentNode.getComponentNode());
+        } else {
+            addCleanUp(presenter::unbind);
+        }
         return presenter;
     }
 

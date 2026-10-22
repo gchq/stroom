@@ -27,6 +27,8 @@ import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
@@ -61,7 +63,10 @@ import java.util.function.Predicate;
 /// menu (see [#detach]).
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
-        implements ExpressionTreeView {
+        implements ExpressionTreeView, HasComponentNode {
+
+    // Owns the presenters its tree panels' term editors make; its presenter owns it
+    private final ComponentNode node = new ComponentNode("ExpressionTreeView");
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
@@ -81,6 +86,8 @@ public class ExpressionTreeViewImpl
                 docRefProvider,
                 userRefProvider,
                 uiConfigCache);
+        node.adopt(treePanel.getComponentNode());
+        node.adopt(subTreePanel.getComponentNode());
         // The copy of what is dragged, which is only to be seen
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");
@@ -195,6 +202,11 @@ public class ExpressionTreeViewImpl
         treePanel.setFaded(keyboard::isDetached);
         // Before the fields' own handlers, which e.g. close a date's calendar on Escape
         addKeyDownCaptureHandler(layoutPanel.getElement(), this::onFieldKeyDown);
+    }
+
+    @Override
+    public ComponentNode getComponentNode() {
+        return node;
     }
 
     // Edits an item, and focuses its first field once its editor is shown

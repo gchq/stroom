@@ -33,7 +33,8 @@ import com.google.gwt.user.client.Window;
 /// * `shown()` is the number of widgets the opening has shown, and of popups shown.
 /// * `pending()` is the number of REST requests not yet answered.
 /// * `unowned()` is the number of live components that nothing owns (see [ComponentChecks]),
-///   which should be none once the screen is closed and disposed.
+///   which should be none once the screen is closed and disposed; `unownedNames()` their names,
+///   comma separated, each as often as it is unowned.
 final class LeakProbe {
 
     private final ScreenHarness harness;
@@ -77,6 +78,10 @@ final class LeakProbe {
         return ComponentChecks.unownedCount();
     }
 
+    private String unownedNames() {
+        return String.join(",", ComponentChecks.unownedNames());
+    }
+
     private static native void export(LeakProbe probe) /*-{
         $wnd.__leakProbe = {
             close: function (dispose) {
@@ -93,6 +98,9 @@ final class LeakProbe {
             },
             unowned: function () {
                 return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::unowned()();
+            },
+            unownedNames: function () {
+                return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::unownedNames()();
             }
         };
     }-*/;

@@ -23,7 +23,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -34,7 +33,6 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /// Stroom's presenter, built on GWTP's [PresenterWidget], with a place in the ownership tree (see
 /// [ComponentNode]): the presenters and components it owns ([#own(HasComponentNode)]), and the
@@ -52,12 +50,9 @@ public class MyPresenterWidget<V extends View>
 
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
     private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
-    // What this presenter belongs to (e.g. an open document), if it was made in a scope
-    private final PresenterScope presenterScope;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
-        presenterScope = PresenterScope.register(this);
         // Run after what it owns is disposed and its registrations are removed
         node.onDispose(this::release);
     }
@@ -128,16 +123,24 @@ public class MyPresenterWidget<V extends View>
     /// @param <P>    Its type.
     /// @return The presenter.
     protected final <P extends MyPresenterWidget<?>> P ownUntilHidden(final P dialog) {
-        own(dialog);
+        return disposeWhenHidden(own(dialog));
+    }
+
+    /// Disposes a presenter made for one use as a popup, e.g. a dialog, once it is hidden (after
+    /// the popup manager has hidden it), for code that makes dialogs but can't own them, such as
+    /// an app-wide helper. A presenter can use [#ownUntilHidden(MyPresenterWidget)] instead, which
+    /// also disposes the dialog if it is disposed first.
+    ///
+    /// @param dialog The presenter, just made, e.g. `disposeWhenHidden(dialogProvider.get())`.
+    /// @param <P>    Its type.
+    /// @return The presenter.
+    public static <P extends MyPresenterWidget<?>> P disposeWhenHidden(final P dialog) {
         final ComponentNode dialogNode = dialog.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
         if (dialogNode != null) {
             // A registration of the dialog's, so it goes when the dialog is disposed
-            dialogNode.add(getEventBus().addHandlerToSource(HidePopupEvent.getType(), dialog, event ->
-                    deferred.accept(() -> {
-                        if (!dialogNode.isDisposed() && dialogNode.parent() == node) {
-                            node.release(dialogNode);
-                        }
-                    })));
+            dialogNode.add(dialog.getEventBus().addHandlerToSource(HidePopupEvent.getType(), dialog, event ->
+                    deferred.accept(dialogNode::dispose)));
         }
         return dialog;
     }
@@ -169,27 +172,10 @@ public class MyPresenterWidget<V extends View>
         return node.isDisposed();
     }
 
-    /// Makes something (usually a presenter, from a provider) in this presenter's scope, so that a
-    /// presenter made on demand, after this was opened (e.g. when data arrives or a button is
-    /// pressed), is released along with it.
-    ///
-    /// @param supplier What makes it, e.g. `presenterProvider::get`.
-    /// @param <T>      What is made.
-    /// @return What was made.
-    protected final <T> T inScope(final Supplier<T> supplier) {
-        return PresenterScope.captureIn(presenterScope, supplier);
-    }
-
-    /// @return What this presenter belongs to (e.g. an open document), or null if it was made
-    /// outside a [PresenterScope].
-    public final PresenterScope getPresenterScope() {
-        return presenterScope;
-    }
-
     /// Releases this presenter for good, when what it belongs to is closed: disposes what it
     /// owns, removes the handlers it and others added through it, unbinds it (removing the
     /// handlers it registered) and lets a subclass release anything else in [#onDispose()]. Runs
-    /// once, however often it is called (e.g. by its owner and by a [PresenterScope]).
+    /// once, however often it is called.
     public final void dispose() {
         node.dispose();
     }

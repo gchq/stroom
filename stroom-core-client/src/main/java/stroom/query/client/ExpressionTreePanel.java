@@ -26,6 +26,8 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -49,7 +51,7 @@ import com.google.inject.Provider;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class ExpressionTreePanel extends TreePanel<Item> {
+public class ExpressionTreePanel extends TreePanel<Item> implements HasComponentNode {
 
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
@@ -105,6 +107,12 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         panel.add(boxPanel);
 
         initWidget(panel);
+    }
+
+    /// @return Its term editor's node, which owns the presenters the editor makes.
+    @Override
+    public ComponentNode getComponentNode() {
+        return termEditor.getComponentNode();
     }
 
     @Override

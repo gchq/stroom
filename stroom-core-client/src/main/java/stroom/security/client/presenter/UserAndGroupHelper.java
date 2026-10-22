@@ -47,6 +47,7 @@ import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
@@ -178,7 +179,8 @@ public class UserAndGroupHelper {
                                          final TaskMonitorFactory taskMonitorFactory) {
         final User user = userListPresenter.getSelectionModel().getSelected();
         if (user != null && user.isGroup()) {
-            final CreateNewGroupPresenter createNewGroupPresenter = createNewGroupPresenterProvider.get();
+            final CreateNewGroupPresenter createNewGroupPresenter =
+                    MyPresenterWidget.disposeWhenHidden(createNewGroupPresenterProvider.get());
             createNewGroupPresenter.getView().setName(user.getSubjectId());
             final PopupSize popupSize = PopupSize.resizable(600, 200);
             ShowPopupEvent.builder(createNewGroupPresenter)

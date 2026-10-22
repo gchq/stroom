@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -32,7 +33,7 @@ public class QueryInfo {
     }
 
     public void prompt(final Runnable runnable, final TaskMonitorFactory taskMonitorFactory) {
-        queryInfoPresenterProvider.get().show(message, state -> {
+        MyPresenterWidget.disposeWhenHidden(queryInfoPresenterProvider.get()).show(message, state -> {
             if (state.isOk()) {
                 message = state.getQueryInfo();
                 runnable.run();

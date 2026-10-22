@@ -18,7 +18,6 @@ package stroom.widget.component.client;
 
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -35,11 +34,8 @@ import java.util.function.Supplier;
 ///         .onReadOnly(EditorPresenter::setReadOnly));
 /// ```
 ///
-/// GWTP doesn't unbind the presenters a presenter holds when it is unbound, so the adapter makes
-/// the presenter in a [PresenterScope] of its own, which records every presenter made meanwhile
-/// (the presenter's own, made by GIN) and those made later with `inScope`. Disposing the adapter
-/// disposes that scope, and so all of them. A presenter made elsewhere would belong to whatever
-/// scope was current then, so the adapter only takes something that makes one.
+/// The adapter owns the presenter, which owns the presenters it makes, so disposing the adapter
+/// disposes them all.
 ///
 /// The presenter is given context the old way: the task monitor through
 /// [MyPresenterWidget#setTaskMonitorFactory(TaskMonitorFactory)], once one is provided, and
@@ -48,16 +44,12 @@ import java.util.function.Supplier;
 /// @param <P> The presenter's type.
 public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Component {
 
-    private final PresenterScope scope;
     private final P presenter;
 
-    private PresenterAdapter(final PresenterScope scope, final P presenter) {
+    private PresenterAdapter(final P presenter) {
         // Named after the presenter, so a leaked one can be told apart from the others
         super("PresenterAdapter(" + presenter.getClass().getSimpleName() + ")", null);
-        this.scope = scope;
         this.presenter = own(presenter);
-        // The presenters it made, which it doesn't own yet, are disposed with the scope
-        onDispose(scope::dispose);
         watch(Contexts.TASK_MONITOR, this::setTaskMonitorFactory);
     }
 
@@ -68,9 +60,7 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
     /// @return The adapter, for a component to own.
     public static <P extends MyPresenterWidget<?>> PresenterAdapter<P> of(final Supplier<P> maker) {
         Objects.requireNonNull(maker, "maker");
-        final PresenterScope scope = new PresenterScope();
-        final P presenter = Objects.requireNonNull(scope.collect(maker), "presenter");
-        return new PresenterAdapter<>(scope, presenter);
+        return new PresenterAdapter<>(Objects.requireNonNull(maker.get(), "presenter"));
     }
 
     /// Gives the presenter read-only now (once this adapter is owned) and whenever it changes.
@@ -86,11 +76,6 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
     /// @return The presenter.
     public P getPresenter() {
         return presenter;
-    }
-
-    /// @return The number of presenters this adapter releases when it is disposed.
-    public int presenterCount() {
-        return scope.size();
     }
 
     @Override

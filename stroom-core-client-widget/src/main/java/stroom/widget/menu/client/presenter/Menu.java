@@ -18,6 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;
@@ -53,7 +54,7 @@ public class Menu {
         } else {
             hide(false, false);
 
-            menuPresenter = menuPresenterProvider.get();
+            menuPresenter = MyPresenterWidget.disposeWhenHidden(menuPresenterProvider.get());
             menuPresenter.setData(event.getItems());
             menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
             setName(menuPresenter, event);

@@ -133,6 +133,7 @@ public class AskStroomAiPresenter
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, askStroomAiProxy);
+        own(docSelectionBoxPresenter);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;

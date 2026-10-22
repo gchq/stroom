@@ -238,21 +238,6 @@ class TestComponentNode {
         }
 
         @Test
-        void aChildOwnedUntilOwnedMovesToItsOwner() {
-            final ComponentNode scope = ComponentNode.root("scope");
-            final ComponentNode owner = ComponentNode.root("owner");
-            final ComponentNode child = new ComponentNode("child");
-            scope.adoptUntilOwned(child);
-
-            owner.adopt(child);
-
-            assertThat(child.parent()).isSameAs(owner);
-            assertThat(scope.childCount()).isZero();
-            // Owned for good now, so owning it again is misuse
-            assertThatThrownBy(() -> scope.adopt(child)).hasMessageContaining("already owned by owner");
-        }
-
-        @Test
         void owningAChildOwnedByAnotherFails() {
             final ComponentNode first = ComponentNode.root("first");
             final ComponentNode second = ComponentNode.root("second");

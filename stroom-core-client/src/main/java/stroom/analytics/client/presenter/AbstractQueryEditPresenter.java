@@ -40,6 +40,7 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
     public AbstractQueryEditPresenter(final EventBus eventBus,
                                       final QueryEditPresenter queryEditPresenter) {
         super(eventBus, queryEditPresenter.getView());
+        own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
     }
 

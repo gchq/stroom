@@ -52,6 +52,8 @@ public class TableFilterPresenter
                                 final ColumnFilterPresenter columnFilterPresenter,
                                 final IncludeExcludeFilterPresenter includeExcludeFilterPresenter) {
         super(eventBus, view);
+        own(columnFilterPresenter);
+        own(includeExcludeFilterPresenter);
         this.columnFilterPresenter = columnFilterPresenter;
         this.includeExcludeFilterPresenter = includeExcludeFilterPresenter;
         getWidget().getElement().addClassName("default-min-sizes");

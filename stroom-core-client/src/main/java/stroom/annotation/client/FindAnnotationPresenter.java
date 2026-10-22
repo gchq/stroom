@@ -53,6 +53,7 @@ public class FindAnnotationPresenter
                                    final FindAnnotationListPresenter findResultListPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
+        own(findResultListPresenter);
         getView().setDialogMode(false);
         this.findResultListPresenter = findResultListPresenter;
 

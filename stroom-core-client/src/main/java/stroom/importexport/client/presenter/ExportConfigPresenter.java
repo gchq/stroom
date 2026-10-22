@@ -85,6 +85,8 @@ public class ExportConfigPresenter
                                  final DocumentTypeCache documentTypeCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
+        own(treePresenter);
+        own(typeFilterPresenter);
         this.locationManager = locationManager;
         this.treePresenter = treePresenter;
         this.typeFilterPresenter = typeFilterPresenter;

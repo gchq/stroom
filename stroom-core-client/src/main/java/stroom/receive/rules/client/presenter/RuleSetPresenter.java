@@ -111,7 +111,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         ruleSetSettingsPresenter.setFieldListPresenter(fieldListPresenter);
         this.lazyMarkdownEditPresenter = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
-                (Supplier<MarkdownEditPresenter>) () -> inScope(markdownEditPresenterProvider::get),
+                (Supplier<MarkdownEditPresenter>) () -> own(markdownEditPresenterProvider.get()),
                 markdownEditPresenter -> {
                     setDescriptionOnPresenter(markdownEditPresenter);
                     registerHandler(markdownEditPresenter.addDirtyHandler(event -> {

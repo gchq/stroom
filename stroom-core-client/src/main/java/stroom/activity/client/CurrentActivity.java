@@ -20,8 +20,10 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -83,11 +85,18 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
-        manageActivityPresenterProvider.get().showInitial(consumer);
+        final ManageActivityPresenter chooser =
+                MyPresenterWidget.disposeWhenHidden(manageActivityPresenterProvider.get());
+        chooser.showInitial(activity -> {
+            // Told whether or not the chooser was shown (it isn't if activities aren't chosen on
+            // startup), so released here too, once whatever is handling this is done
+            Scheduler.get().scheduleDeferred(chooser::dispose);
+            consumer.accept(activity);
+        });
     }
 
     public void showActivityChooser() {
-        manageActivityPresenterProvider.get().show(a -> {
+        MyPresenterWidget.disposeWhenHidden(manageActivityPresenterProvider.get()).show(a -> {
         });
     }
 

@@ -19,7 +19,8 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
 import stroom.docref.HasDisplayValue;
-import stroom.widget.util.client.PresenterScope;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONObject;
@@ -44,9 +45,8 @@ public class Components implements Iterable<Component> {
     private final Provider<UnknownComponentPresenter> unknownComponentProvider;
 
     private final JavaScriptObject context;
-    // The dashboard's scope: its components are made as it is read, and belong to it too, so that
-    // closing the dashboard releases them
-    private final PresenterScope presenterScope;
+    // What owns the components made (the dashboard), so that closing it releases them
+    private ComponentNode owner;
 
     @Inject
     public Components(final ComponentRegistry componentRegistry,
@@ -54,12 +54,20 @@ public class Components implements Iterable<Component> {
         this.componentRegistry = componentRegistry;
         this.unknownComponentProvider = unknownComponentProvider;
         this.context = new JSONObject().getJavaScriptObject();
-        this.presenterScope = PresenterScope.current();
+    }
+
+    /// @param owner What owns the components made, e.g. the dashboard's presenter.
+    public void setOwner(final HasComponentNode owner) {
+        this.owner = owner.getComponentNode();
     }
 
     public Component add(final String type,
                          final String id) {
-        return PresenterScope.captureIn(presenterScope, () -> addComponent(type, id));
+        final Component component = addComponent(type, id);
+        if (owner != null && component instanceof final HasComponentNode hasComponentNode) {
+            owner.adopt(hasComponentNode.getComponentNode());
+        }
+        return component;
     }
 
     private Component addComponent(final String type,
@@ -96,6 +104,11 @@ public class Components implements Iterable<Component> {
             }
 
             component.onRemove();
+            // Removed for good
+            if (owner != null && component instanceof final HasComponentNode hasComponentNode
+                && hasComponentNode.getComponentNode().parent() == owner) {
+                owner.release(hasComponentNode.getComponentNode());
+            }
         }
         return component;
     }

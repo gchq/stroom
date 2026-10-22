@@ -66,6 +66,7 @@ public class CreateDocumentPresenter
                                    final CreateDocumentProxy proxy,
                                    final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
+        own(entityTreePresenter);
 
         this.entityTreePresenter = entityTreePresenter;
         view.setUiHandlers(this);

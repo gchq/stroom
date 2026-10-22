@@ -144,6 +144,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                                final UiConfigCache uiConfigCache,
                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
+        own(typeFilterPresenter);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;

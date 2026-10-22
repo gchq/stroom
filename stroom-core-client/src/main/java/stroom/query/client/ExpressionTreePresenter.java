@@ -25,6 +25,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -55,6 +56,10 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     @Inject
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view) {
         super(eventBus, view);
+        // The view owns the presenters its term editors make
+        if (view instanceof final HasComponentNode hasComponentNode) {
+            own(hasComponentNode);
+        }
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
         // The Delete key deletes the focused item, as the toolbar's Delete does the selected one

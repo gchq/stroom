@@ -38,6 +38,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
                          final RuleView view,
                          final EditExpressionPresenter editExpressionPresenter) {
         super(eventBus, view);
+        own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
     }

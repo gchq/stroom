@@ -194,7 +194,7 @@ public class TextPresenter
 
     private void initRawPresenter() {
         if (rawPresenter == null) {
-            rawPresenter = inScope(rawPresenterProvider::get);
+            rawPresenter = own(rawPresenterProvider.get());
             rawPresenter.setReadOnly(true);
             rawPresenter.getLineNumbersOption().setOn(false);
             rawPresenter.getLineWrapOption().setOn(true);
@@ -203,7 +203,7 @@ public class TextPresenter
 
     private void initHtmlPresenter() {
         if (htmlPresenter == null) {
-            htmlPresenter = inScope(htmlPresenterProvider::get);
+            htmlPresenter = own(htmlPresenterProvider.get());
             htmlPresenter.getWidget().addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");
@@ -590,6 +590,10 @@ public class TextPresenter
             delayedFetchDataTimer = new Timer() {
                 @Override
                 public void run() {
+                    // Closed (e.g. the component was removed) while it waited
+                    if (isDisposed()) {
+                        return;
+                    }
                     final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
@@ -623,6 +627,8 @@ public class TextPresenter
                                     }
                                 }
                             })
+                            // A reply that arrives once this is disposed is dropped
+                            .owner(TextPresenter.this)
                             .taskMonitorFactory(getView())
                             .exec();
                 }

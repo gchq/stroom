@@ -39,7 +39,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -112,10 +111,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
-            // As DocumentPlugin opens a document: its presenters belong to a scope that releases
-            // them when it is closed
-            final DashboardSuperPresenter presenter = new PresenterScope()
-                    .capture(dashboardSuperPresenterProvider::get);
+            // As DocumentPlugin opens a document: the content manager releases it, with every
+            // presenter it owns, when its tab is closed
+            final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
             presenter.setParentContext(context);
             presenter.setParamsFromLink(params);
             presenter.setCustomTitle(title);
@@ -129,10 +127,8 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             final CloseContentEvent.Handler closeHandler = event -> {
                 // Tell the presenter we are closing.
                 presenter.onClose();
-                // Actually close the tab.
+                // Actually close the tab, which releases the dashboard and all its presenters
                 event.getCallback().closeTab(true);
-                // Closed for good, so release the dashboard and all its presenters
-                PresenterScope.disposeScopeOf(presenter);
             };
             showDocument(docRef,
                     presenter,
@@ -179,18 +175,15 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             if (docRef != null) {
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
-                final DashboardSuperPresenter presenter = new PresenterScope()
-                        .capture(dashboardSuperPresenterProvider::get);
+                final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
                 presenter.setResultStoreInfo(resultStoreInfo);
 
                 // Load the document and show the tab.
                 final CloseContentEvent.Handler closeHandler = event -> {
                     // Tell the presenter we are closing.
                     presenter.onClose();
-                    // Actually close the tab.
+                    // Actually close the tab, which releases the dashboard and all its presenters
                     event.getCallback().closeTab(true);
-                    // Closed for good, so release the dashboard and all its presenters
-                    PresenterScope.disposeScopeOf(presenter);
                 };
                 showDocument(docRef,
                         presenter,

@@ -40,6 +40,7 @@ import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -273,7 +274,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        final IFramePresenter presenter = iFramePresenterProvider.get();
+        final IFramePresenter presenter = MyPresenterWidget.disposeWhenHidden(iFramePresenterProvider.get());
         final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(ignored ->
                 RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());

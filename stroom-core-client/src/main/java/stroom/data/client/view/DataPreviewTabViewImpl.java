@@ -16,7 +16,6 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -30,8 +29,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabView {
 
-    private final DataPresenter dataPresenter;
-
     private final Widget widget;
 
     @UiField
@@ -39,9 +36,7 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
 
     @Inject
     public DataPreviewTabViewImpl(final EventBus eventBus,
-                                  final DataPresenter dataPresenter,
                                   final Binder binder) {
-        this.dataPresenter = dataPresenter;
         widget = binder.createAndBindUi(this);
     }
 

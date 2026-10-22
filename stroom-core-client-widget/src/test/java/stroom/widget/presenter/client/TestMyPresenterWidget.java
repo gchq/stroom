@@ -18,7 +18,6 @@ package stroom.widget.presenter.client;
 
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
@@ -52,14 +51,13 @@ class TestMyPresenterWidget {
     }
 
     @Test
-    void disposingByItsOwnerAndItsScopeReleasesItOnce() {
-        final PresenterScope scope = new PresenterScope();
-        final TestPresenter presenter = scope.capture(() -> new TestPresenter("presenter"));
+    void disposingByItsOwnerAndDirectlyReleasesItOnce() {
+        final TestPresenter presenter = new TestPresenter("presenter");
         final ComponentNode root = ComponentNode.root("tab");
         root.adopt(presenter.getComponentNode());
 
         root.dispose();
-        scope.dispose();
+        presenter.dispose();
 
         assertThat(events).containsExactly("presenter disposed");
     }
