@@ -168,11 +168,15 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         try {
             DashboardSearchResponse response = queryService.search(searchRequest);
             queryKey = NullSafe.get(response, DashboardSearchResponse::getQueryKey);
+            // Whether the search started, so a failure says if it failed part way rather than before it began.
+            boolean started = false;
             while (response != null && NullSafe.isEmptyCollection(response.getErrors()) && !response.isComplete()) {
+                started = true;
                 pause();
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
-            return ToolResult.text(results(workspace, searchRequest, response, out, sourceDocUuid, limited, maxRows));
+            return ToolResult.text(results(workspace, searchRequest, response, started, out, sourceDocUuid, limited,
+                    maxRows));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -183,16 +187,21 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     private String results(final SessionWorkspace workspace,
                            final QuerySearchRequest searchRequest,
                            final DashboardSearchResponse response,
+                           final boolean started,
                            final WorkspacePath out,
                            final String sourceDocUuid,
                            final StroomQlLimit.Limited limited,
                            final int maxRows) {
         final QueryService queryService = queryServiceProvider.get();
         if (response == null) {
-            throw new WorkspaceException("The query did not run.");
+            throw new WorkspaceException(started
+                    ? "The query started, but Stroom's query service then gave no response."
+                    : "The query did not run: Stroom's query service gave no response.");
         }
         if (!NullSafe.isEmptyCollection(response.getErrors())) {
-            throw new WorkspaceException("The query failed: " + String.join("; ", response.getErrors()));
+            throw new WorkspaceException((started
+                    ? "The query started, but failed while it ran: "
+                    : "The query failed: ") + String.join("; ", response.getErrors()));
         }
 
         // The download takes the rows the request asks for, so it asks for all those the limit allows, not the few

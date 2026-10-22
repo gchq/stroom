@@ -56,6 +56,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
 
@@ -96,7 +97,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
                 () -> mcpElicitations, chatTitler, null,
-                backgroundTasks, null, null, tabSnapshots);
+                backgroundTasks, null, null, tabSnapshots, new HttpServletRequestHolder());
     }
 
     private final McpElicitations mcpElicitations = Mockito.mock(McpElicitations.class);
@@ -110,7 +111,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
                 contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
                 Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null,
-                backgroundTasks, null, null, tabSnapshots);
+                backgroundTasks, null, null, tabSnapshots, new HttpServletRequestHolder());
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -123,7 +124,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
                 securityContext, () -> null, chatTitler, null,
-                backgroundTasks, null, null, tabSnapshots);
+                backgroundTasks, null, null, tabSnapshots, new HttpServletRequestHolder());
     }
 
     @Test
