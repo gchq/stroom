@@ -865,3 +865,63 @@ Where it differs from the Python server:
   `other_index`'s build docs, `fields_not_in_index`'s looks at the index, `_replaced`'s documents) is left to the
   tools: the helpers take what the tools read. `writes_to`'s Elasticsearch part is `IndexingHelpers.writesToIndex`,
   which `IndexDocs.writesTo` now uses; `Globs` moved to `stroom.ai.impl.tools` for both modules.
+
+## The pipeline write tools: `create_pipeline`, `copy_pipeline` and `update_pipeline`
+
+Ported as tools of their own (`stroom-mcp-impl`, category content), on the build layer (`WriteGuard`, `BuildRecords`,
+`Consent`, `BuildPlan`), `PipelineShapes`, `PipelineTemplates.templateReason`, `ReferenceData.resolveLoader` and
+`PipelineDocs.withProperty`. Pipelines are read through Stroom's `PipelineService` (their layers, as the pipeline
+editor reads them) and created, filled and saved as the user through the explorer and the pipeline store, as the
+editor does. Templates are inherited (`parentPipeline`), never copied: `copy_pipeline` refuses one. The rest of
+`tools/pipeline_writes.py` is ported as helpers, named for the indexing tools (`create_indexing_pipeline`,
+`rename_index`) and the builds' port to reuse:
+
+* **`PipelineWrites`**: `element_id` (`elementId`), `swap_parser` (`swapParser`, giving a `Swap`), `merge_layers`'
+  view of a template as a child is written over it (`Layout`, with `chain()`: `Source` included where a layer adds
+  it), `open_slots` (`openSlots`, which `StroomBuildFacts.openSlots` now uses), `fill_open_slots`
+  (`fillOpenSlots`), `_own_documents` (`ownDocuments`), `_parser_reads_sample` (`parserReadsSample`),
+  `_json_array_parser` (`jsonArrayParser`), `_sample_is_array` (`sampleIsArray`), `typed_properties`
+  (`typedProperties`, giving `Typed`), `_value` (`value`), `_template_uuid` (`templateUuid`), `_doc_ref_by_name`
+  (`docRefByName`), `reference_entries` (`referenceEntries`), `_keep_validation` (`keepValidation`),
+  `set_pipeline_property` (`setPipelineProperty`) and `set_pipeline_references` (`setPipelineReferences`);
+  `PipelineReference` is `PipelineWrites.ReferenceRequest`.
+* **`PropertyValue`**: the `PropertyValue` model, with its reading of `translationFilter.xslt=<uuid>` and the other
+  shapes agents send (`of`, `listOf`), and `PROPERTY_EXAMPLE` (`EXAMPLE`).
+* **`PipelineArguments`**: `utils/params.py`'s `ONE_OR_MORE` (`oneOrMore`) for the list arguments.
+* **`PipelinePropertyTypes`**: the MCP server's `property_types` (`/pipeline/v1/propertyTypes`), read from Stroom's
+  element registry.
+* **`BuildIndexes`**: `tools/indexing.py`'s `_build_index_docs` (`indexDocs`), `_build_destinations`
+  (`destinations`) and `other_index`'s reads (`otherIndex`, on `IndexingHelpers.otherIndex`).
+* `_standalone_kafka` is `create_pipeline standalone='kafka'` (`CreatePipelineTool.KAFKA_CHAIN`).
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `create_pipeline` | no | no | yes | no |
+| `copy_pipeline` | no | no | yes | no |
+| `update_pipeline` | no | no | no | no |
+
+`create_pipeline` and `copy_pipeline` ask the user to confirm (the name editable in `create_pipeline`'s form), as the
+MCP server's did; `update_pipeline` asks nothing (it changes only the tools' own pipelines in a build), so over `/mcp`
+each call is approved as a whole.
+
+Where they differ from the Python server:
+
+* **A new pipeline is made and filled in one go** (`WriteGuard.createFilled`): if writing its content fails, the empty
+  pipeline is deleted again rather than left in the build.
+* **A document property's name** is read from the explorer (the document's node, as the user may view it), for any
+  type; the MCP server read the document through its REST resource and fell back to the explorer for a type it
+  didn't read (a KafkaConfig).
+* **A pipeline found by name** (`template`, `loader_pipeline`) is one the user may view of exactly that name, found
+  through Stroom's document finder; the MCP server searched the explorer. A feed is found by `FeedNames.exact`.
+* **`references` given as a feed's name** is read as `{feed: <name>}`; pydantic refused it. A reference without a
+  feed is refused as `references[0].feed is required: ...`, and a property that isn't one as
+  `set_properties[0]: a property is {element, name} ...` (pydantic's `Value error, ...` wording otherwise kept).
+* **A Python literal** given for a list (`"['Feed']"`) or `rename` (`"{'V1': 'V2'}"`) is read when it has no double
+  quotes in it (single quotes for double, `True`/`False`/`None`), where Python used `ast.literal_eval`.
+* **A whole number too large for an `int` property** is refused (`... is a whole number, not ...`); Python wrote it
+  and Stroom refused it later.
+* **Results' JSON** leaves nulls out, as every ported tool's does: `update_pipeline`'s `reference_data` and
+  `create_pipeline standalone`'s `template` are absent rather than null.
+* Not used by `tools/pipeline_writes.py`, so not ported here: `generation._required_for`, `sharedxslt.imports_of`,
+  `translation.with_fragment_setup`, and `tools/indexing.py`'s `drafted_plans`, `plan_given` and `with_cardinality`
+  (`IndexingHelpers` has the last three's pure parts for the indexing tools).
