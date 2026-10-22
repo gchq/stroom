@@ -29,6 +29,7 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -80,8 +81,9 @@ public class ScheduledProcessingPresenter
     /// Shows the execution schedules of a document.
     ///
     /// @param ownerDocRef The document that owns the execution schedules.
-    /// @param readOnly    Whether the document is read only, in which case its schedules can't be changed.
-    public void read(final DocRef ownerDocRef, final boolean readOnly) {
+    public void read(final DocRef ownerDocRef) {
+        // Read only as its document is
+        final boolean readOnly = context(Contexts.READ_ONLY);
         this.ownerDocRef = ownerDocRef;
         this.readOnly = readOnly;
         scheduledProcessListPresenter.setReadOnly(readOnly);

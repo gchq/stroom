@@ -52,10 +52,9 @@ public class ViewPresenter extends DocTabPresenter<LinkTabPanelView, ViewDoc> {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final ViewDoc document,
-                               final boolean readOnly) {
+                               final ViewDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

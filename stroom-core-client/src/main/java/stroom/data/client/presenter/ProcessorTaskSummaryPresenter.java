@@ -177,7 +177,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+    public void read(final DocRef docRef, final Object document) {
         if (document instanceof PipelineDoc) {
             setPipeline(docRef);
         } else if (document instanceof FeedDoc) {

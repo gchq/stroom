@@ -49,8 +49,8 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
-        notificationList.read(docRef, analyticRuleDoc, readOnly);
+    protected void onRead(final DocRef docRef, final D analyticRuleDoc) {
+        notificationList.read(docRef, analyticRuleDoc);
     }
 
     @Override

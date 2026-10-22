@@ -200,8 +200,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
     @Override
     protected void onRead(final DocRef docRef,
-                          final StatisticStoreDoc document,
-                          final boolean readOnly) {
+                          final StatisticStoreDoc document) {
         dataGrid.setTableName("Statistics '" + docRef.getName() + "' Fields");
         enableButtons();
         refresh();

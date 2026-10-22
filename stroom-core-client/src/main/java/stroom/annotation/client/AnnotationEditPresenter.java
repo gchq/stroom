@@ -300,7 +300,7 @@ public class AnnotationEditPresenter
             // persisted data.
             suppressHistoryUpdate = true;
             try {
-                read(getEntity().asDocRef(), getEntity().copy().name(selected).build(), isReadOnly());
+                read(getEntity().asDocRef(), getEntity().copy().name(selected).build());
             } finally {
                 suppressHistoryUpdate = false;
             }
@@ -1439,12 +1439,12 @@ public class AnnotationEditPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final Annotation annotation) {
         this.annotationRef = annotation.asDocRef();
         this.annotationIdentity = annotation.asAnnotationIdentity();
         // Read only: everything can be read, nothing changed (the presenter also refuses each
         // change, as some are made straight to the server)
-        getView().setReadOnly(readOnly);
+        getView().setReadOnly(isReadOnly());
         this.currentStatus = annotation.getStatus();
         this.currentAssignedTo = annotation.getAssignedTo();
 

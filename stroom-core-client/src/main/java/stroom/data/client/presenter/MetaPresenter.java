@@ -325,7 +325,7 @@ public class MetaPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+    public void read(final DocRef docRef, final Object document) {
         if (document instanceof FeedDoc) {
             setFeedCriteria(docRef);
         } else if (document instanceof PipelineDoc) {

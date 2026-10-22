@@ -51,10 +51,9 @@ public class GitRepoPresenter extends DocTabPresenter<LinkTabPanelView, GitRepoD
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final GitRepoDoc document,
-                               final boolean readOnly) {
+                               final GitRepoDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

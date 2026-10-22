@@ -301,7 +301,7 @@ public class ProcessorTaskListPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+    public void read(final DocRef docRef, final Object document) {
         if (docRef == null) {
             setExpression(null);
         } else if (PipelineDoc.TYPE.equals(docRef.getType())) {

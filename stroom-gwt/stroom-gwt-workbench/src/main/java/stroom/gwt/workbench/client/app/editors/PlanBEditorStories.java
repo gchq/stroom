@@ -279,7 +279,8 @@ public final class PlanBEditorStories {
     // Reads the shown document again, as DocumentPlugin does, read only or not
     private static void readAgain(final boolean readOnly) {
         final PlanBPresenter presenter = ScreenHarness.shownContent();
-        presenter.read(presenter.getDocRef(), presenter.getEntity(), readOnly);
+        presenter.setReadOnly(readOnly);
+        presenter.read(presenter.getDocRef(), presenter.getEntity());
     }
 
     private static Query maxStoreSize(final Play play) {

@@ -55,10 +55,9 @@ public class SqlTemporalStorePresenter extends DocTabPresenter<LinkTabPanelView,
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final SqlTemporalStoreDoc document,
-                               final boolean readOnly) {
+                               final SqlTemporalStoreDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

@@ -71,12 +71,11 @@ public class DocumentationPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final DocumentationDoc document,
-                               final boolean readOnly) {
+                               final DocumentationDoc document) {
                 presenter.setText(document.getData());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
                 // Select the tab here to ensure the markdown editor toolbar display state (based
-                // on the readOnly value) is updated.
+                // on the isReadOnly() value) is updated.
                 selectTab(DOCUMENTATION);
             }
 
@@ -104,8 +103,8 @@ public class DocumentationPresenter
     }
 
     @Override
-    public void onRead(final DocRef docRef, final DocumentationDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
+    public void onRead(final DocRef docRef, final DocumentationDoc doc) {
+        super.onRead(docRef, doc);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
     }

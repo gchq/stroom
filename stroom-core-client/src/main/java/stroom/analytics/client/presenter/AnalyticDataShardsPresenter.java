@@ -123,7 +123,7 @@ public class AnalyticDataShardsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document) {
         this.analyticRuleUuid = docRef.getUuid();
         analyticDataShardListPresenter.read(docRef);
     }

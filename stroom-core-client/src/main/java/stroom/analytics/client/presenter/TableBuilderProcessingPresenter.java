@@ -27,6 +27,7 @@ import stroom.docref.DocRef;
 import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -74,11 +75,10 @@ public class TableBuilderProcessingPresenter
     ///
     /// @param ruleDocRef                        The rule the settings belong to.
     /// @param tableBuilderAnalyticProcessConfig The settings to show.
-    /// @param readOnly                          Whether the rule is read only, in which case the settings
-    ///                                          can't be changed.
     public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig,
-                     final boolean readOnly) {
+                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+        // Read only as its document is
+        final boolean readOnly = context(Contexts.READ_ONLY);
         getView().setReadOnly(readOnly);
         nodeClient.listAllNodes(
                 list -> {

@@ -169,8 +169,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             @Override
             public void onRead(final FloorMapQueryPresenter presenter,
                                final DocRef docRef,
-                               final FloorMapDoc document,
-                               final boolean readOnly) {
+                               final FloorMapDoc document) {
                 presenter.read(docRef, document.getEventsQuery(), document.getEventsQueryTimeRange(),
                         document.getEventsQueryTablePreferences(), document.getEventColumns(), true,
                         FloorMapQueryPresenter.buildQueryVariables(document));
@@ -207,10 +206,9 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final FloorMapDoc document,
-                               final boolean readOnly) {
+                               final FloorMapDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -226,8 +224,8 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
     /// {@inheritDoc}
     @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
+    protected void onRead(final DocRef docRef, final FloorMapDoc document) {
+        super.onRead(docRef, document);
     }
 
     /// Reacts to this *document's* content tab being fronted or backgrounded.

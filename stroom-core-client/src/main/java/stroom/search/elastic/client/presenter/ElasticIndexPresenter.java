@@ -55,10 +55,9 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final ElasticIndexDoc document,
-                               final boolean readOnly) {
+                               final ElasticIndexDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

@@ -151,7 +151,8 @@ public final class AnnotationFixtures {
                             final boolean readOnly) {
         injector.getAnnotationResourceClient().getAnnotationById(annotationId, annotation -> {
             final AnnotationPresenter presenter = injector.getAnnotationPresenter();
-            presenter.read(annotation, readOnly);
+            presenter.setReadOnly(readOnly);
+            presenter.read(annotation);
             harness.addContent(presenter);
         }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
     }

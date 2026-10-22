@@ -161,8 +161,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->
-                        presenter.read(DocRefUtil.create(doc), doc,
-                                presenter.isReadOnly()),
+                        presenter.read(DocRefUtil.create(doc), doc),
                 throwable -> {
                 },
                 taskMonitorFactory);

@@ -107,7 +107,7 @@ public class SolrIndexSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final SolrIndexDoc index, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final SolrIndexDoc index) {
         final SolrConnectionConfig connectionConfig = index.getSolrConnectionConfig();
         if (connectionConfig != null) {
             getView().setInstanceType(connectionConfig.getInstanceType());
@@ -128,9 +128,9 @@ public class SolrIndexSettingsPresenter
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(retentionExpression);
-        editExpressionPresenter.setReadOnly(readOnly);
+        editExpressionPresenter.setReadOnly(isReadOnly());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
-        pipelinePresenter.setReadOnly(readOnly);
+        pipelinePresenter.setReadOnly(isReadOnly());
     }
 
     @Override

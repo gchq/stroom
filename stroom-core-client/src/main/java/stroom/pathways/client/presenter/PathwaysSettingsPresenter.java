@@ -67,7 +67,7 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final PathwaysDoc doc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final PathwaysDoc doc) {
         getView().setTemporalOrderingTolerance(doc.getTemporalOrderingTolerance());
         getView().setAllowPathwayCreation(doc.isAllowPathwayCreation());
         getView().setAllowPathwayMutation(doc.isAllowPathwayMutation());

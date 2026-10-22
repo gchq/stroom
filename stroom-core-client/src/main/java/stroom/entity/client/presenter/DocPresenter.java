@@ -37,18 +37,16 @@ public abstract class DocPresenter<V extends View, D>
         implements HasDocumentRead<D>, HasDocumentWrite<D>, HasClose, ChangeUiHandlers {
 
     private D entity;
-    private boolean readOnly = true;
     private boolean dirty;
     // Provided to everything this presenter owns, however deep, and set as the document is read:
-    // whether it may be changed (only narrowing what an owner provides) and which document it is
-    private final ContextValue<Boolean> readOnlyContext = ContextValue.of(true);
+    // which document it is. Whether it may be changed is provided once its opener says (setReadOnly);
+    // until then it follows its owner's, e.g. as one of another document's tabs
     private final ContextValue<DocRef> documentContext = ContextValue.of(null);
     // Told when the document becomes dirty or clean, e.g. to show it in a window's title
     private final Listeners<Boolean> dirtyListeners = new Listeners<>();
 
     public DocPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
-        provide(Contexts.READ_ONLY, readOnlyContext);
         provide(Contexts.DOCUMENT, documentContext);
         // What this owns tells it of changes, however deep (markChanged)
         provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
@@ -89,19 +87,22 @@ public abstract class DocPresenter<V extends View, D>
 
     }
 
+    /// Reads the document, read only or not as its opener said ([#setReadOnly(boolean)]), or as its
+    /// owner's is for one that is part of another document.
+    ///
+    /// @param docRef   The document's reference.
+    /// @param document The document.
     @Override
-    public final void read(final DocRef docRef, final D document, final boolean readOnly) {
+    public final void read(final DocRef docRef, final D document) {
         this.entity = document;
-        this.readOnly = readOnly;
         setDirty(false);
         documentContext.set(docRef);
-        readOnlyContext.set(readOnly);
 
         if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
-            changeHandler.onReadOnly(readOnly);
+            changeHandler.onReadOnly(isReadOnly());
         }
         if (docRef != null && document != null) {
-            onRead(docRef, document, readOnly);
+            onRead(docRef, document);
         }
     }
 
@@ -110,18 +111,19 @@ public abstract class DocPresenter<V extends View, D>
         return onWrite(document);
     }
 
-    public boolean isReadOnly() {
-        return readOnly;
+    /// @return Whether the document may not be changed: as its opener said, or as its owner's is
+    ///         (only ever narrowing it), and read only until either says otherwise.
+    public final boolean isReadOnly() {
+        return context(Contexts.READ_ONLY);
     }
 
-    /// Says whether the document may be changed without reading it, e.g. for a presenter embedded
-    /// in another screen, given its settings rather than a document. Everything this presenter
-    /// owns follows it ([Contexts#READ_ONLY]).
+    /// Says whether the document may be changed, e.g. from the user's permissions and its lock, before
+    /// it is read (again), or for a presenter embedded in another screen and given its settings
+    /// rather than a document. Everything this presenter owns follows it ([Contexts#READ_ONLY]).
     ///
     /// @param readOnly Whether it may not be changed.
-    protected final void setDocumentReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        readOnlyContext.set(readOnly);
+    public final void setReadOnly(final boolean readOnly) {
+        getComponentNode().setProvided(Contexts.READ_ONLY, readOnly);
     }
 
     /**
@@ -135,7 +137,12 @@ public abstract class DocPresenter<V extends View, D>
         return entity;
     }
 
-    protected abstract void onRead(DocRef docRef, D document, boolean readOnly);
+    /// Shows the document. Whether it may be changed is [#isReadOnly()], which the parts this owns
+    /// watch for themselves ([Contexts#READ_ONLY]).
+    ///
+    /// @param docRef   The document's reference.
+    /// @param document The document.
+    protected abstract void onRead(DocRef docRef, D document);
 
     protected abstract D onWrite(D document);
 

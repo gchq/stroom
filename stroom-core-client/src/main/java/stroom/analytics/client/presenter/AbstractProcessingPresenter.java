@@ -89,7 +89,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D analyticRuleDoc) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
@@ -100,15 +100,15 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
                     scheduledProcessingPresenter
-                            .read(docRef, readOnly);
+                            .read(docRef);
                 } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
                     streamingProcessingPresenter
-                            .update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
+                            .update(getEntity(), analyticRuleDoc.getQuery());
                 } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
                     //noinspection PatternVariableCanBeUsed // Not in GWT
                     final TableBuilderAnalyticProcessConfig ac =
                             (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                    tableBuilderProcessingPresenter.read(docRef, ac, readOnly);
+                    tableBuilderProcessingPresenter.read(docRef, ac);
 
                 }
             }
@@ -118,12 +118,12 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     private void setProcessType(final AnalyticProcessType analyticProcessType) {
         switch (analyticProcessType) {
             case STREAMING: {
-                streamingProcessingPresenter.update(getEntity(), isReadOnly(), getEntity().getQuery());
+                streamingProcessingPresenter.update(getEntity(), getEntity().getQuery());
                 getView().setProcessSettings(streamingProcessingPresenter.getView());
                 break;
             }
             case SCHEDULED_QUERY: {
-                scheduledProcessingPresenter.read(getEntity().asDocRef(), isReadOnly());
+                scheduledProcessingPresenter.read(getEntity().asDocRef());
                 getView().setProcessSettings(scheduledProcessingPresenter.getView());
                 break;
             }

@@ -147,7 +147,7 @@ public class AnnotationLinkPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Annotation document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final Annotation document) {
         annotationRef = docRef;
         if (from) {
             listPresenter.setDestinationId(document.getId());

@@ -267,6 +267,20 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   credential is meant to carry it too (then `CredentialEditPresenter` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
   full run, with 8 workers, and passes when run alone.
+* **Open** (found 22 October 2026, evening): 48 more stories fail with the leak check, and fail the
+  same way when run at commit `0ca65724f4`, whose full run passed that afternoon, so something in
+  the environment changed rather than the code (the browser and test runner are unchanged; a
+  system font or layout change is a guess). They fail every time:
+  * `target-size` (an element under 24px, not in the a11y baseline): 33 stories in
+    `AnalyticRuleEditor`, `ReportEditor` and `QueryEditor`, plus `DataRetentionScreen`
+    `ImpactAbort` and `QueryResultVis` `PauseButtonReportsUp`.
+  * "the screen didn't open again within 15000 ms" (the leak check reopening the screen):
+    `AppShell` `Embedded`, `ContentTabPane` `NoDuplicateForSingleInstance`, `docPlugin`
+    `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`, and `PipelineEditor`
+    `FailedEmbeddedCreateKeepsDialogUsable` and `MultiDocumentSave`.
+  * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
+    and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
+  * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 

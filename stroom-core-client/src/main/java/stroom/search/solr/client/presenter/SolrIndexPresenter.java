@@ -55,10 +55,9 @@ public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIn
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final SolrIndexDoc document,
-                               final boolean readOnly) {
+                               final SolrIndexDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

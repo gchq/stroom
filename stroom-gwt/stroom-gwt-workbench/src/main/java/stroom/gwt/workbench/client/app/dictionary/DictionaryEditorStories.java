@@ -330,7 +330,8 @@ public final class DictionaryEditorStories {
     // Reads the shown document again, as DocumentPlugin does, read only or not
     private static void readAgain(final boolean readOnly) {
         final DocumentEditorHost<DictionaryDoc> host = host();
-        host.read(host.getDocRef(), host.getEntity(), readOnly);
+        host.setReadOnly(readOnly);
+        host.read(host.getDocRef(), host.getEntity());
     }
 
     private static void addComponentStories(final ComponentStories stories) {
@@ -496,7 +497,8 @@ public final class DictionaryEditorStories {
                         DOC_REF,
                         DocumentPermission.EDIT,
                         allowUpdate -> {
-                            presenter.read(DOC_REF, doc, !allowUpdate);
+                            presenter.setReadOnly(!allowUpdate);
+                            presenter.read(DOC_REF, doc);
                             harness.addContent(presenter);
                         },
                         error -> harness.spy(ScreenHarness.ALERT_SPY, "ERROR: " + error.getMessage()),

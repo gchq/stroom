@@ -99,10 +99,9 @@ public class AnnotationPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final Annotation document,
-                               final boolean readOnly) {
+                               final Annotation document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -163,8 +162,11 @@ public class AnnotationPresenter
         return DOCUMENTATION;
     }
 
-    public void read(final Annotation annotation, final boolean readOnly) {
-        read(annotation.asDocRef(), annotation, readOnly);
+    /// Shows an annotation, read only or not as [#setReadOnly(boolean)] said.
+    ///
+    /// @param annotation The annotation.
+    public void read(final Annotation annotation) {
+        read(annotation.asDocRef(), annotation);
     }
 
     public void updateHistory() {

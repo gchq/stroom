@@ -80,10 +80,10 @@ public final class DocumentEditorHost<D>
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document) {
         this.docRef = docRef;
         if (editor instanceof final DocumentEditor<D> documentEditor) {
-            documentEditor.setReadOnly(readOnly);
+            documentEditor.setReadOnly(isReadOnly());
         }
         editor.read(docRef, document);
         // The name may have changed (e.g. after a rename or Save As)

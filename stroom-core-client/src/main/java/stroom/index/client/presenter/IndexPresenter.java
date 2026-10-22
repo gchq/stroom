@@ -69,10 +69,9 @@ public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneInde
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final LuceneIndexDoc document,
-                               final boolean readOnly) {
+                               final LuceneIndexDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

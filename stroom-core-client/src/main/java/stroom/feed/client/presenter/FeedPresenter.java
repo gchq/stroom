@@ -68,9 +68,8 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
                 @Override
                 public void onRead(final MetaPresenter presenter,
                                    final DocRef docRef,
-                                   final FeedDoc document,
-                                   final boolean readOnly) {
-                    presenter.read(docRef, document, readOnly);
+                                   final FeedDoc document) {
+                    presenter.read(docRef, document);
                     // Refresh any displayed data so it reflects the (now-saved) feed settings, e.g. a
                     // changed encoding. onRead runs on initial load and after each save (with the saved
                     // doc, so the server has the new encoding); refreshData() is a no-op unless a stream
@@ -93,9 +92,8 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
                 @Override
                 public void onRead(final ProcessorTaskPresenter presenter,
                                    final DocRef docRef,
-                                   final FeedDoc document,
-                                   final boolean readOnly) {
-                    presenter.read(docRef, document, readOnly);
+                                   final FeedDoc document) {
+                    presenter.read(docRef, document);
                 }
             });
         }
@@ -105,10 +103,9 @@ public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final FeedDoc document,
-                               final boolean readOnly) {
+                               final FeedDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

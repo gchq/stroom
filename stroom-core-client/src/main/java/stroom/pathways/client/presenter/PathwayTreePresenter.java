@@ -26,6 +26,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.htree.client.treelayout.Point;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ElementUtil;
@@ -167,8 +168,9 @@ public class PathwayTreePresenter
     }
 
     public void read(final PathwaysDoc pathwaysDoc,
-                     final Pathway pathway,
-                     final boolean readOnly) {
+                     final Pathway pathway) {
+        // Read only as its document is
+        final boolean readOnly = context(Contexts.READ_ONLY);
         this.pathwaysDoc = pathwaysDoc;
         this.pathway = pathway;
         this.readOnly = readOnly;

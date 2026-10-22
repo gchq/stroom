@@ -75,10 +75,10 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
-        scriptPresenter.setReadOnly(readOnly);
-        editorPresenter.setReadOnly(readOnly);
-        editorPresenter.getFormatAction().setAvailable(!readOnly);
+    protected void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
+        scriptPresenter.setReadOnly(isReadOnly());
+        editorPresenter.setReadOnly(isReadOnly());
+        editorPresenter.getFormatAction().setAvailable(!isReadOnly());
 
         getView().getFunctionName().setText(visualisation.getFunctionName());
         scriptPresenter.setSelectedEntityReference(visualisation.getScriptRef(), true);

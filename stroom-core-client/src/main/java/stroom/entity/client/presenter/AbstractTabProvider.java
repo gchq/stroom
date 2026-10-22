@@ -43,8 +43,8 @@ public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
     }
 
     @Override
-    public final void read(final DocRef docRef, final E document, final boolean readOnly) {
-        onRead(getPresenter(), docRef, document, readOnly);
+    public final void read(final DocRef docRef, final E document) {
+        onRead(getPresenter(), docRef, document);
     }
 
     @Override
@@ -52,7 +52,7 @@ public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
         return onWrite(getPresenter(), document);
     }
 
-    public void onRead(final P presenter, final DocRef docRef, final E document, final boolean readOnly) {
+    public void onRead(final P presenter, final DocRef docRef, final E document) {
     }
 
     public E onWrite(final P presenter, final E document) {

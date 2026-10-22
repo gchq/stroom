@@ -153,7 +153,7 @@ public class LinkedEventPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final Annotation annotation) {
         dataGrid.setTableName("Annotation '" + docRef.getName() + "' Events");
         this.annotationRef = docRef;
         refreshData();

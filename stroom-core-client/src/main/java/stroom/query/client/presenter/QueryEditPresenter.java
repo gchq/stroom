@@ -41,6 +41,7 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -483,7 +484,9 @@ public class QueryEditPresenter
         this.queryVariables = queryVariables;
     }
 
-    public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
+    public void setQuery(final DocRef docRef, final String query) {
+        // Read only as its document is
+        final boolean readOnly = context(Contexts.READ_ONLY);
         queryModel.init(docRef);
         if (query != null) {
             if (NullSafe.isBlankString(editorPresenter.getText())

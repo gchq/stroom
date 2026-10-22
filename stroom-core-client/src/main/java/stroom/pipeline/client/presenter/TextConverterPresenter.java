@@ -78,11 +78,10 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
             @Override
             public void onRead(final EditorPresenter presenter,
                                final DocRef docRef,
-                               final TextConverterDoc document,
-                               final boolean readOnly) {
+                               final TextConverterDoc document) {
                 presenter.setText(document.getData());
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
+                presenter.setReadOnly(isReadOnly());
+                presenter.getFormatAction().setAvailable(!isReadOnly());
                 setEditorMode(presenter, document);
             }
 
@@ -97,10 +96,9 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final TextConverterDoc document,
-                               final boolean readOnly) {
+                               final TextConverterDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

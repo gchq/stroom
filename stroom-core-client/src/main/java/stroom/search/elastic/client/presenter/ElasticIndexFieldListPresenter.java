@@ -118,7 +118,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc document) {
         dataGrid.setTableName("Elastic Index '" + docRef.getName() + "' Fields");
         if (document != null) {
             fields = document.getFields().stream()

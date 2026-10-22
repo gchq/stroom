@@ -110,7 +110,8 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     // A folder's document is its reference, as it has nothing to load
     @SuppressWarnings("unchecked")
     static void readFolder(final DocumentEditorHost<?> host, final DocRef folder) {
-        ((DocumentEditorHost<DocRef>) host).read(folder, folder, true);
+        host.setReadOnly(true);
+        ((DocumentEditorHost<DocRef>) host).read(folder, folder);
     }
 
     @Override

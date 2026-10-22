@@ -113,9 +113,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 @Override
                 public void onRead(final MetaPresenter presenter,
                                    final DocRef docRef,
-                                   final PipelineDoc document,
-                                   final boolean readOnly) {
-                    presenter.read(docRef, document, readOnly);
+                                   final PipelineDoc document) {
+                    presenter.read(docRef, document);
                 }
             });
             defaultTab = DATA;
@@ -133,8 +132,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             @Override
             public void onRead(final SteppingPresenter presenter,
                                final DocRef docRef,
-                               final PipelineDoc document,
-                               final boolean readOnly) {
+                               final PipelineDoc document) {
                 loadPipelineModel(docRef, model -> {
                     steppingPresenter.setPipelineModel(model);
                     steppingPresenter.setPipelineDoc(document);
@@ -153,8 +151,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         // structure presenter never does, so its edits used to go unnoticed.
         structureTabProvider = new DocTabProvider<PipelineDoc>(() -> pipelineStructurePresenter) {
             @Override
-            public void read(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-                super.read(docRef, document, readOnly);
+            public void read(final DocRef docRef, final PipelineDoc document) {
+                super.read(docRef, document);
                 loadPipelineModel(docRef, pipelineStructurePresenter::setPipelineModel);
             }
         };
@@ -173,9 +171,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 @Override
                 public void onRead(final ProcessorPresenter presenter,
                                    final DocRef docRef,
-                                   final PipelineDoc document,
-                                   final boolean readOnly) {
-                    presenter.read(docRef, document, readOnly);
+                                   final PipelineDoc document) {
+                    presenter.read(docRef, document);
                     presenter.setIsAdmin(securityContext.hasAppPermission(AppPermission.ADMINISTRATOR));
                     presenter.setAllowUpdate(!isReadOnly());
                 }
@@ -190,9 +187,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 @Override
                 public void onRead(final ProcessorTaskPresenter presenter,
                                    final DocRef docRef,
-                                   final PipelineDoc document,
-                                   final boolean readOnly) {
-                    presenter.read(docRef, document, readOnly);
+                                   final PipelineDoc document) {
+                    presenter.read(docRef, document);
                 }
             });
 
@@ -209,10 +205,9 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final PipelineDoc document,
-                               final boolean readOnly) {
+                               final PipelineDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -289,8 +284,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
+    protected void onRead(final DocRef docRef, final PipelineDoc document) {
+        super.onRead(docRef, document);
     }
 
     public void loadPipelineModel(final DocRef docRef, final Consumer<PipelineModel> consumer) {

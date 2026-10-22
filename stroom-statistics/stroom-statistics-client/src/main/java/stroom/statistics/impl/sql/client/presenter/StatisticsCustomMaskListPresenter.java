@@ -172,8 +172,7 @@ public class StatisticsCustomMaskListPresenter
 
     @Override
     protected void onRead(final DocRef docRef,
-                          final StatisticStoreDoc document,
-                          final boolean readOnly) {
+                          final StatisticStoreDoc document) {
         dataGrid.setTableName("Statistics '" + docRef.getName() + "' Custom Masks");
         update();
     }

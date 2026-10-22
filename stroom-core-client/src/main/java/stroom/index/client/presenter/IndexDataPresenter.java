@@ -66,7 +66,7 @@ public class IndexDataPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final LuceneIndexDoc doc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc doc) {
         this.lastDocRef = docRef;
         final FindFieldCriteria criteria = new FindFieldCriteria(
                 PageRequest.unlimited(),
@@ -81,7 +81,7 @@ public class IndexDataPresenter
                 .onSuccess(result -> {
                     if (Objects.equals(this.lastDocRef, docRef)) {
                         this.fields = result.getValues();
-                        super.onRead(docRef, doc, readOnly);
+                        super.onRead(docRef, doc);
                     }
                 })
                 .exec();

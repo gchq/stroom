@@ -56,10 +56,9 @@ public class PathwaysPresenter extends DocTabPresenter<LinkTabPanelView, Pathway
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final PathwaysDoc document,
-                               final boolean readOnly) {
+                               final PathwaysDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

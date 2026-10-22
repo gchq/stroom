@@ -61,16 +61,15 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
             @Override
             public void onRead(final EditorPresenter presenter,
                                final DocRef docRef,
-                               final XsltDoc document,
-                               final boolean readOnly) {
+                               final XsltDoc document) {
 //                presenter.getBasicAutoCompletionOption().setOn();
 //                presenter.getSnippetsOption().setOn();
 //                presenter.deRegisterCompletionProviders();
 
 
                 presenter.setText(document.getData());
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
+                presenter.setReadOnly(isReadOnly());
+                presenter.getFormatAction().setAvailable(!isReadOnly());
             }
 
             @Override
@@ -82,10 +81,9 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final XsltDoc document,
-                               final boolean readOnly) {
+                               final XsltDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

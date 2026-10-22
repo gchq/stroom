@@ -177,7 +177,7 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 * **Dirty state.** When the user changes something a document holds, call `markChanged()`: the document (its `Contexts.DIRTY` tracker) works out again whether it is dirty.
 
 * **Context, not arguments.** Read-only, the task monitor and the document come from whatever owns the component: `watch(Contexts.READ_ONLY, readOnly -> ...)`, `context(Contexts.TASK_MONITOR)`.
-  Don't take or pass on a `readOnly` argument.
+  Don't take or pass on a `readOnly` argument: a document's opener calls `setReadOnly(...)` before `read(docRef, doc)`, and its parts follow it.
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the component is disposed before the reply.
 

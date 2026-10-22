@@ -26,6 +26,7 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
@@ -72,6 +73,11 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         removeButton.setEnabled(false);
 
         enableButtons();
+        // Read only as the script document is
+        watch(Contexts.READ_ONLY, readOnly -> {
+            this.readOnly = readOnly;
+            enableButtons();
+        });
     }
 
     @Override
@@ -115,9 +121,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public void read(final DocRef docRef, final ScriptDoc document, final boolean readOnly) {
-        this.readOnly = readOnly;
-        enableButtons();
+    public void read(final DocRef docRef, final ScriptDoc document) {
         if (docRef != null && docRef.getName() != null) {
             scriptListPresenter.setTableName("Script '" + docRef.getName() + "' Dependencies");
         }

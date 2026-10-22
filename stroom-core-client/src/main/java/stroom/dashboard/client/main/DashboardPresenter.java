@@ -387,7 +387,7 @@ public class DashboardPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final DashboardDoc dashboard, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final DashboardDoc dashboard) {
         this.docRef = docRef;
         if (!loaded) {
             loaded = true;
@@ -559,9 +559,9 @@ public class DashboardPresenter
         final boolean enterDesignMode = config != null && Boolean.TRUE.equals(config.getDesignMode());
         setDesignMode(enterDesignMode);
 
-        addComponentButton.setEnabled(!readOnly && !embedded);
-        setConstraintsButton.setEnabled(!readOnly && !embedded);
-        selectionInfoButton.setEnabled(!readOnly && !embedded);
+        addComponentButton.setEnabled(!isReadOnly() && !embedded);
+        setConstraintsButton.setEnabled(!isReadOnly() && !embedded);
+        selectionInfoButton.setEnabled(!isReadOnly() && !embedded);
     }
 
     private Component addComponent(final String type, final ComponentConfig componentConfig) {

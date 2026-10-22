@@ -45,7 +45,6 @@ public class TabContentProvider<E>
     private TabProvider<E> currentTabProvider;
     private DocRef docRef;
     private E entity;
-    private boolean readOnly = true;
     private int readCount;
     // What owns the tab presenters this makes (the document), so they are disposed with it, see
     // its context and tell it of changes (Contexts.DIRTY). The owner must bind and unbind this
@@ -114,7 +113,7 @@ public class TabContentProvider<E>
 
         // Read entity if not read since entity set.
         if (readCount > 0 && !usedProviders.contains(currentTabProvider)) {
-            read(currentTabProvider, docRef, entity, readOnly);
+            read(currentTabProvider, docRef, entity);
         }
 
         return ownPresenter(currentTabProvider);
@@ -133,21 +132,16 @@ public class TabContentProvider<E>
     }
 
     @Override
-    public void read(final DocRef docRef, final E document, final boolean readOnly) {
+    public void read(final DocRef docRef, final E document) {
         // Tab providers make their presenters when first read, and the owner owns them
-        readTabs(docRef, document, readOnly);
-    }
-
-    private void readTabs(final DocRef docRef, final E document, final boolean readOnly) {
         this.docRef = docRef;
         this.entity = document;
-        this.readOnly = readOnly;
 
         for (final TabProvider<E> tabProvider : usedProviders) {
-            read(tabProvider, docRef, document, readOnly);
+            read(tabProvider, docRef, document);
         }
         if (currentTabProvider != null && !usedProviders.contains(currentTabProvider)) {
-            read(currentTabProvider, docRef, document, readOnly);
+            read(currentTabProvider, docRef, document);
         }
 
         readCount++;
@@ -162,11 +156,11 @@ public class TabContentProvider<E>
 
     private void read(final TabProvider<E> tabProvider,
                       final DocRef docRef,
-                      final E entity,
-                      final boolean readOnly) {
-        tabProvider.read(docRef, entity, readOnly);
-        usedProviders.add(tabProvider);
+                      final E entity) {
+        // Owned first, so that it reads the document as read only or not as its owner is
         ownPresenter(tabProvider);
+        tabProvider.read(docRef, entity);
+        usedProviders.add(tabProvider);
     }
 
     private E write(final TabProvider<E> tabProvider, final E entity) {

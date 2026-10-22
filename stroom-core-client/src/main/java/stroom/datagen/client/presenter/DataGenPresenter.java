@@ -62,10 +62,9 @@ public class DataGenPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final DataGenDoc document,
-                               final boolean readOnly) {
+                               final DataGenDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

@@ -18,7 +18,15 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 
+/// Something that shows a document, or a part of one. Whether it may be changed isn't an argument:
+/// a part watches [stroom.widget.component.client.Contexts#READ_ONLY], which its document provides.
+///
+/// @param <E> The type of the document.
 public interface HasDocumentRead<E> {
 
-    void read(DocRef docRef, E document, boolean readOnly);
+    /// Shows the document.
+    ///
+    /// @param docRef   The document's reference.
+    /// @param document The document.
+    void read(DocRef docRef, E document);
 }

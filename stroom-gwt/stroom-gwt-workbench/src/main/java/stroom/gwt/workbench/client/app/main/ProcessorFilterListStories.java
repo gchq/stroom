@@ -185,7 +185,7 @@ public final class ProcessorFilterListStories {
         harness.afterStartUp(() -> {
             final ProcessorPresenter presenter = injector.getProcessorPresenter();
             // As PipelinePresenter's 'Processors' tab reads it
-            presenter.read(pipelineRef, pipelineDoc, false);
+            presenter.read(pipelineRef, pipelineDoc);
             presenter.setIsAdmin(true);
             presenter.setAllowUpdate(true);
             harness.addContent(presenter);

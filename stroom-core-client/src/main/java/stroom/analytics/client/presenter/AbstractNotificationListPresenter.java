@@ -334,7 +334,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document) {
         this.docRef = docRef;
         // Deliberately not taking the processing type from the document. This tab is read lazily on first
         // open, which can be after the type has been changed on the execution tab, so the document would be

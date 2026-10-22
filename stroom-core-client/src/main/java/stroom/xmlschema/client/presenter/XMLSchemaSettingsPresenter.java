@@ -54,7 +54,7 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
     }
 
     @Override
-    public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema, final boolean readOnly) {
+    public void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema) {
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());
         getView().getSchemaGroup().setText(xmlSchema.getSchemaGroup());

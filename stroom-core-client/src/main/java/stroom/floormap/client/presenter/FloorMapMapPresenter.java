@@ -613,7 +613,7 @@ public class FloorMapMapPresenter
     /// the first read; save-triggered re-reads preserve it. This tab no longer holds an
     /// object-edit presenter; that form belongs to the Editor tab.
     @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final FloorMapDoc document) {
         this.docUuid = docRef != null ? docRef.getUuid() : null;
         // Initialise and reset every query model BEFORE starting any searches, so that the histogram query
         // started inside updateTimelineRange() is not immediately cancelled by the reset() calls below.

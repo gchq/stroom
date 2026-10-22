@@ -68,11 +68,10 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             @Override
             public void onRead(final EditorPresenter presenter,
                                final DocRef docRef,
-                               final ScriptDoc document,
-                               final boolean readOnly) {
+                               final ScriptDoc document) {
                 presenter.setText(document.getData());
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
+                presenter.setReadOnly(isReadOnly());
+                presenter.getFormatAction().setAvailable(!isReadOnly());
 
                 loadCount++;
                 if (loadCount > 1) {
@@ -96,10 +95,9 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final ScriptDoc document,
-                               final boolean readOnly) {
+                               final ScriptDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

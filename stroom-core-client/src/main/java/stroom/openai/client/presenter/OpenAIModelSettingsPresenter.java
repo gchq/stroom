@@ -92,7 +92,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final OpenAIModelDoc model, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final OpenAIModelDoc model) {
         getView().setBaseUrl(model.getBaseUrl());
         if (model.getApiKeyName() != null) {
             credentialClient.getCredentialByName(model.getApiKeyName(), credential ->

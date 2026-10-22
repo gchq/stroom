@@ -272,7 +272,8 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D document) {
+        final boolean readOnly = isReadOnly();
         this.docRef = docRef;
         setSaveEnabled(isDirty());
         setSaveAsEnabled(true);
@@ -283,7 +284,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                     : "Save");
         }
         setReadOnlyStatus(readOnly);
-        tabContentProvider.read(docRef, document, readOnly);
+        tabContentProvider.read(docRef, document);
         // The name may have changed (e.g. after a rename or Save As), and a clean document doesn't
         // become dirty to refresh the tab's label
         refreshTabIfLabelChanged();

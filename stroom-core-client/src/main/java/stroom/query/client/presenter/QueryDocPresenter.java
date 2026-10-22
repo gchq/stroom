@@ -66,10 +66,9 @@ public class QueryDocPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final QueryDoc document,
-                               final boolean readOnly) {
+                               final QueryDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

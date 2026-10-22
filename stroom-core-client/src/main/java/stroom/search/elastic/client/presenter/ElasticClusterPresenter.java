@@ -52,10 +52,9 @@ public class ElasticClusterPresenter extends DocTabPresenter<LinkTabPanelView, E
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final ElasticClusterDoc document,
-                               final boolean readOnly) {
+                               final ElasticClusterDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

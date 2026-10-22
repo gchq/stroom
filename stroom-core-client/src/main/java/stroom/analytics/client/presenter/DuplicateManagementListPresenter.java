@@ -32,6 +32,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -147,9 +148,9 @@ public class DuplicateManagementListPresenter
     /// Shows the duplicate check rows for a rule.
     ///
     /// @param docRef   The rule to show the duplicate check rows for.
-    /// @param readOnly Whether the rule is read only, in which case rows can't be deleted.
-    protected void read(final DocRef docRef, final boolean readOnly) {
-        this.readOnly = readOnly;
+    protected void read(final DocRef docRef) {
+        // Read only as its document is
+        this.readOnly = context(Contexts.READ_ONLY);
         enableButtons();
         criteria.setAnalyticDocUuid(docRef.getUuid());
         refresh();

@@ -263,7 +263,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private void read(final ReceiveDataRules rules) {
         this.receiveDataRules = rules;
         ruleSetSettings.read(receiveDataRules);
-        fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
+        fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules);
         lazyMarkdownEditPresenter.consumeIfInitialised(this::setDescriptionOnPresenter);
     }
 

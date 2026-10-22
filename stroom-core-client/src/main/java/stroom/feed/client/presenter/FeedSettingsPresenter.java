@@ -181,7 +181,7 @@ public class FeedSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final FeedDoc feed, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final FeedDoc feed) {
         getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
         getView().getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));

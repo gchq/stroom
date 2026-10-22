@@ -185,7 +185,6 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * True if the UI is readonly, false if read-write
      */
-    private boolean readOnly = false;
 
     @Inject
     public DocumentAssetPresenter(final EventBus eventBus,
@@ -336,14 +335,11 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      *
      * @param docRef   Document reference
      * @param document Document
-     * @param readOnly Whether this doc is readonly
      */
     @Override
     protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
-                          final D document,
-                          final boolean readOnly) {
+                          final D document) {
         this.document = document;
-        this.readOnly = readOnly;
 
         // Update UI state
         updateState();
@@ -437,7 +433,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * Inserts a new folder with the currently selected folder.
      */
     private void onCreateNewItem(final boolean addFile) {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final DocumentAssetTreeItem parentItem =
                     DocumentAssetPresenterUtils.findFolderForSelectedItem(
                             (DocumentAssetTreeItem) tree.getSelectedItem());
@@ -484,7 +480,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * Deletes the currently selected item.
      */
     private void onDeleteButtonClick() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final DocumentAssetTreeItem assetTreeItem = (DocumentAssetTreeItem) tree.getSelectedItem();
             if (assetTreeItem != null) {
                 final String message;
@@ -519,7 +515,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * a TreeItem.
      */
     private void onEditFilename() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final DocumentAssetTreeItem selectedItem = (DocumentAssetTreeItem) tree.getSelectedItem();
             if (selectedItem != null) {
                 final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(editAssetDialog);
@@ -613,7 +609,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * Called when the selection changes.
      */
     private void onSelectionChange() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
                 doUpdateContent(assetDirtyState.getPathToEditItem(),
                         editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
@@ -679,7 +675,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * DocumentAssetAddFileCallback interface.
      */
     private void onUploadFile() {
-        if (!readOnly) {
+        if (!isReadOnly()) {
             final DocumentAssetTreeItem folderItem =
                     DocumentAssetPresenterUtils.findFolderForSelectedItem(
                             (DocumentAssetTreeItem) tree.getSelectedItem());
@@ -1042,7 +1038,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      */
     private void updateState() {
 
-        if (readOnly) {
+        if (isReadOnly()) {
             revertButton.setEnabled(false);
             addButton.setEnabled(false);
             deleteButton.setEnabled(false);

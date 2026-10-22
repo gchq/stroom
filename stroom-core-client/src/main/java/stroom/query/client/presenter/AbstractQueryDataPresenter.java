@@ -95,7 +95,7 @@ public abstract class AbstractQueryDataPresenter<V extends QueryDataView, D>
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final D doc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final D doc) {
         this.currentDocRef = docRef;
         this.currentDoc = doc;
         tablePresenter.setPreferredColumns(getPreferredColumns(doc));

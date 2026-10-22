@@ -127,10 +127,10 @@ public class ProcessorPresenter
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+    public void read(final DocRef docRef, final Object document) {
         processorType = ProcessorType.PIPELINE;
         this.docRef = docRef;
-        processorListPresenter.read(docRef, document, readOnly);
+        processorListPresenter.read(docRef, document);
         if (document instanceof PipelineDoc) {
             allowCreate = true;
         } else if (document instanceof AnalyticRuleDoc) {

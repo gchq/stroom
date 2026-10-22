@@ -52,10 +52,9 @@ public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, Open
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final OpenAIModelDoc document,
-                               final boolean readOnly) {
+                               final OpenAIModelDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

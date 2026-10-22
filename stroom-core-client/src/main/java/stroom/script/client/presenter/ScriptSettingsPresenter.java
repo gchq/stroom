@@ -45,8 +45,8 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ScriptDoc script, final boolean readOnly) {
-        scriptDependencyListPresenter.read(docRef, script, readOnly);
+    protected void onRead(final DocRef docRef, final ScriptDoc script) {
+        scriptDependencyListPresenter.read(docRef, script);
     }
 
     @Override

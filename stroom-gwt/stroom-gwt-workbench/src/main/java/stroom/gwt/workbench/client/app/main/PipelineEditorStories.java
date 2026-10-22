@@ -1172,7 +1172,8 @@ public final class PipelineEditorStories {
                     .method(res -> res.fetch(UUID))
                     .onSuccess(doc -> {
                         harness.addRegistration(presenter.addDirtyListener(onDirty::call));
-                        presenter.read(DOC_REF, doc, readOnly);
+                        presenter.setReadOnly(readOnly);
+                        presenter.read(DOC_REF, doc);
                         harness.addContent(presenter);
                     })
                     .taskMonitorFactory(presenter)

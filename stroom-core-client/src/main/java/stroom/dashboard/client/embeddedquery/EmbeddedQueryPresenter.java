@@ -368,10 +368,12 @@ public class EmbeddedQueryPresenter
                         .build();
                 setSettings(updatedSettings);
                 updateQueryDoc(embeddedQueryDoc, updatedSettings);
-                queryDocPresenter.read(embeddedQueryDoc.asDocRef(), embeddedQueryDoc, false);
+                queryDocPresenter.read(embeddedQueryDoc.asDocRef(), embeddedQueryDoc);
                 onChange();
             });
-            queryDocPresenter.read(doc.asDocRef(), doc, false);
+            // Editable unless the dashboard is read only (its context narrows it)
+            queryDocPresenter.setReadOnly(false);
+            queryDocPresenter.read(doc.asDocRef(), doc);
             contentManager.open(e -> {
                 e.getCallback().closeTab(true);
                 // Its tab is closed for good

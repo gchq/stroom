@@ -42,8 +42,7 @@ public class DocumentUserPermissionsTabProvider<E> extends AbstractTabProvider<E
     @Override
     public void onRead(final DocumentUserPermissionsPresenter presenter,
                        final DocRef docRef,
-                       final E document,
-                       final boolean readOnly) {
+                       final E document) {
         presenter.setDocRef(docRef);
     }
 }

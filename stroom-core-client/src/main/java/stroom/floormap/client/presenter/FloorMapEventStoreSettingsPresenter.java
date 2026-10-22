@@ -53,9 +53,8 @@ public class FloorMapEventStoreSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef,
-                          final FloorMapEventStoreDoc doc,
-                          final boolean readOnly) {
-        getView().onReadOnly(readOnly);
+                          final FloorMapEventStoreDoc doc) {
+        getView().onReadOnly(isReadOnly());
         getView().setSettings(doc.getSettings());
         // The resolved value, not the raw one: an unset document shows 24 hours rather than an empty
         // box, and saving then writes that 24 hours down explicitly. Adopting the default on first

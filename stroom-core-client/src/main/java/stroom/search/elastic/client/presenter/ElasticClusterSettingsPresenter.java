@@ -81,7 +81,7 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster) {
         final ElasticConnectionConfig connectionConfig = cluster.getConnection();
 
         if (connectionConfig != null) {

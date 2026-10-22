@@ -35,7 +35,6 @@ import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.HasCommonTabs;
-import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -275,17 +274,15 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     }
                 }
                 // Read the newly loaded document.
-                if (myPresenterWidget instanceof HasDocumentRead) {
+                if (myPresenterWidget instanceof final DocPresenter<?, ?> docPresenter) {
                     // Check document permissions and read.
                     securityContext
                             .hasDocumentPermission(
                                     docRef,
                                     DocumentPermission.EDIT,
                                     allowUpdate -> {
-                                        ((HasDocumentRead<D>) myPresenterWidget).read(
-                                                getDocRef(doc),
-                                                doc,
-                                                !allowUpdate);
+                                        docPresenter.setReadOnly(!allowUpdate);
+                                        ((DocPresenter<?, D>) docPresenter).read(getDocRef(doc), doc);
                                         // Open the tab.
                                         if (fullScreen) {
                                             showFullScreen(myPresenterWidget);
@@ -342,7 +339,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     save(getDocRef(document), document,
                             presenter.getPostSaveCallback(),
                             doc -> {
-                                presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                                presenter.read(getDocRef(doc), doc);
                                 onComplete.run();
                             },
                             throwable -> {
@@ -384,7 +381,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 final DocRef newDocRef = newNode.getDocRef();
                 final Consumer<D> saveConsumer = saved -> {
                     // Read the new document into this presenter.
-                    presenter.read(newDocRef, saved, false);
+                    presenter.setReadOnly(false);
+                    presenter.read(newDocRef, saved);
                     // Record that the open document has been switched.
                     documentTabManager.remove(docRef, tabData);
                     documentTabManager.put(newDocRef, tabData);
@@ -643,7 +641,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 load(docRef,
                         doc -> {
                             // Read the reloaded document.
-                            presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                            presenter.read(getDocRef(doc), doc);
                         },
                         throwable -> {
                         },

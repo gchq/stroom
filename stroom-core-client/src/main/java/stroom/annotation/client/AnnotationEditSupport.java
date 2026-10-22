@@ -83,7 +83,8 @@ public class AnnotationEditSupport implements HasHandlers {
                     annotation.asDocRef(),
                     DocumentPermission.EDIT,
                     allowUpdate -> {
-                        presenter.read(annotation, !allowUpdate);
+                        presenter.setReadOnly(!allowUpdate);
+                        presenter.read(annotation);
                         // Closing the tab releases the annotation's presenters
                         contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
                     },

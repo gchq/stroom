@@ -49,8 +49,8 @@ public class SqlTemporalStoreSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final SqlTemporalStoreDoc doc, final boolean readOnly) {
-        getView().onReadOnly(readOnly);
+    protected void onRead(final DocRef docRef, final SqlTemporalStoreDoc doc) {
+        getView().onReadOnly(isReadOnly());
         updateCount(docRef);
     }
 

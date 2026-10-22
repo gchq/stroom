@@ -316,13 +316,13 @@ public class IndexFieldListPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc document) {
         dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
         // Field names are particular to one index, so its recent filters are too.
         getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 IndexResource.QUICK_FILTER_CONTEXT.withDataSource(docRef), this, this));
-        this.readOnly = readOnly;
+        this.readOnly = isReadOnly();
         enableButtons();
         refresh();
     }

@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
@@ -47,11 +48,11 @@ class TestDocPresenter {
         final List<Boolean> readOnly = new ArrayList<>();
         field.watch(Contexts.READ_ONLY, readOnly::add);
 
-        document.read(DOC_REF, "contents", false);
-        document.read(DOC_REF, "contents", true);
-        document.read(DOC_REF, "contents", false);
+        document.open(DOC_REF, "contents", false);
+        document.open(DOC_REF, "contents", true);
+        document.open(DOC_REF, "contents", false);
 
-        // Read only until it is read, as nothing may be changed before then
+        // Read only until its opener says, as nothing may be changed before then
         assertThat(readOnly).containsExactly(true, false, true, false);
         assertThat(field.lookup(Contexts.DOCUMENT)).isEqualTo(DOC_REF);
     }
@@ -62,11 +63,11 @@ class TestDocPresenter {
         final ComponentNode root = ComponentNode.root("tab");
         root.adopt(document.getComponentNode());
 
-        document.setReadOnlyWithoutReading(false);
+        document.setReadOnly(false);
         assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isFalse();
         assertThat(document.isReadOnly()).isFalse();
 
-        document.setReadOnlyWithoutReading(true);
+        document.setReadOnly(true);
         assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isTrue();
     }
 
@@ -77,9 +78,65 @@ class TestDocPresenter {
         root.provide(Contexts.READ_ONLY, ContextValue.of(true));
         root.adopt(document.getComponentNode());
 
-        document.read(DOC_REF, "contents", false);
+        document.open(DOC_REF, "contents", false);
 
         assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isTrue();
+    }
+
+    @Test
+    void aDocumentNobodySaysMayBeChangedIsReadOnly() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+
+        document.read(DOC_REF, "contents");
+
+        assertThat(document.isReadOnly()).isTrue();
+    }
+
+    @Test
+    void aDocumentThatIsPartOfAnotherIsReadOnlyAsThatIs() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+        // e.g. a settings tab, which is itself a document, read without being told
+        final Doc part = new Doc();
+        document.getComponentNode().adopt(part.getComponentNode());
+
+        document.open(DOC_REF, "contents", false);
+        part.read(DOC_REF, "contents");
+        assertThat(part.isReadOnly()).isFalse();
+
+        document.open(DOC_REF, "contents", true);
+        part.read(DOC_REF, "contents");
+        assertThat(part.isReadOnly()).isTrue();
+        assertThat(part.readOnlyWhenRead).isTrue();
+    }
+
+    @Test
+    void aTabIsOwnedBeforeItIsReadSoItReadsAsItsDocumentIs() {
+        final Doc document = new Doc();
+        ComponentNode.root("tab").adopt(document.getComponentNode());
+        document.setReadOnly(false);
+        final Doc tab = new Doc();
+        final TabContentProvider<String> tabs = new TabContentProvider<>(new SimpleEventBus(), document);
+        final TabData tabData = Mockito.mock(TabData.class);
+        tabs.add(tabData, new AbstractTabProvider<String, Doc>() {
+            @Override
+            protected Doc createPresenter() {
+                return tab;
+            }
+
+            @Override
+            public void onRead(final Doc presenter, final DocRef docRef, final String document) {
+                presenter.read(docRef, document);
+            }
+        });
+        tabs.read(DOC_REF, "contents");
+
+        // The user selects the tab once the document is read
+        tabs.getPresenter(tabData);
+
+        assertThat(tab.readOnlyWhenRead).isFalse();
+        assertThat(tab.getComponentNode().parent()).isSameAs(document.getComponentNode());
     }
 
     @Test
@@ -88,8 +145,8 @@ class TestDocPresenter {
         ComponentNode.root("tab").adopt(document.getComponentNode());
         final Doc part = new Doc();
         document.getComponentNode().adopt(part.getComponentNode());
-        document.read(DOC_REF, "part", false);
-        part.read(DOC_REF, "part", false);
+        document.open(DOC_REF, "part", false);
+        part.open(DOC_REF, "part", false);
         // Each writes what the part shows
         part.writer = doc -> part.text;
         document.writer = doc -> part.text;
@@ -114,7 +171,7 @@ class TestDocPresenter {
     void anythingBelowADocumentCanTellItOfAChange() {
         final Doc document = new Doc();
         ComponentNode.root("tab").adopt(document.getComponentNode());
-        document.read(DOC_REF, "contents", false);
+        document.open(DOC_REF, "contents", false);
         document.writer = doc -> "changed";
         // e.g. a field's node, two levels down
         final ComponentNode panel = new ComponentNode("panel");
@@ -131,7 +188,7 @@ class TestDocPresenter {
     void aReadOnlyDocumentIsNeverDirty() {
         final Doc document = new Doc();
         ComponentNode.root("tab").adopt(document.getComponentNode());
-        document.read(DOC_REF, "contents", true);
+        document.open(DOC_REF, "contents", true);
         document.writer = doc -> "changed";
 
         document.onChange();
@@ -146,18 +203,22 @@ class TestDocPresenter {
 
         private String text = "part";
         private UnaryOperator<String> writer = UnaryOperator.identity();
+        private Boolean readOnlyWhenRead;
 
         private Doc() {
             super(new SimpleEventBus(), Mockito.mock(View.class));
         }
 
-        void setReadOnlyWithoutReading(final boolean readOnly) {
-            setDocumentReadOnly(readOnly);
+        // As its plugin opens it
+        void open(final DocRef docRef, final String document, final boolean readOnly) {
+            setReadOnly(readOnly);
+            read(docRef, document);
         }
 
         @Override
-        protected void onRead(final DocRef docRef, final String document, final boolean readOnly) {
+        protected void onRead(final DocRef docRef, final String document) {
             text = document;
+            readOnlyWhenRead = isReadOnly();
         }
 
         @Override

@@ -44,8 +44,8 @@ public class DocTabProvider<D>
     }
 
     @Override
-    public void read(final DocRef docRef, final D document, final boolean readOnly) {
-        getPresenter().read(docRef, document, readOnly);
+    public void read(final DocRef docRef, final D document) {
+        getPresenter().read(docRef, document);
     }
 
     @Override

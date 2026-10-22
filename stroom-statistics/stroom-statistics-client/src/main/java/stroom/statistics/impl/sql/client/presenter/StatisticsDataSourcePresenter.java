@@ -78,10 +78,9 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final StatisticStoreDoc document,
-                               final boolean readOnly) {
+                               final StatisticStoreDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -96,7 +95,7 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
 
 
     @Override
-    public void onRead(final DocRef docRef, final StatisticStoreDoc doc, final boolean readOnly) {
+    public void onRead(final DocRef docRef, final StatisticStoreDoc doc) {
         state.clear();
         final StatisticsDataSourceData config = doc.getConfig();
         if (config != null) {
@@ -119,9 +118,9 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
                 state.addMask(rollup);
             });
 
-            super.onRead(docRef, doc.copy().config(StatisticsDataSourceData.builder().build()).build(), readOnly);
+            super.onRead(docRef, doc.copy().config(StatisticsDataSourceData.builder().build()).build());
         } else {
-            super.onRead(docRef, doc, readOnly);
+            super.onRead(docRef, doc);
         }
     }
 

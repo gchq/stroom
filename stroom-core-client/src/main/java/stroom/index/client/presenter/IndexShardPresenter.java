@@ -430,9 +430,9 @@ public class IndexShardPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc document) {
         dataGrid.setTableName("Index '" + docRef.getName() + "' Shards");
-        this.readOnly = readOnly;
+        this.readOnly = isReadOnly();
         enableButtons();
 
         if (document != null) {

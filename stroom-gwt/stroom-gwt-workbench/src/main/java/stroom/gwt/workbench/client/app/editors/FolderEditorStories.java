@@ -191,7 +191,8 @@ public final class FolderEditorStories {
             final DocumentEditorHost<DocRef> host = new DocumentEditorHost<>(harness.getEventBus(),
                     injector.getFolderTabs(),
                     folder.getType());
-            host.read(folder, folder, true);
+            host.setReadOnly(true);
+            host.read(folder, folder);
             harness.addContent(host);
         });
     }

@@ -43,8 +43,8 @@ public class AnalyticSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document) {
+        super.onRead(docRef, document);
         getView().setLevel(document.getLevel());
         getView().setStatus(document.getStatus());
         getView().setIncludeRuleDocumentation(document.isIncludeRuleDocumentation());

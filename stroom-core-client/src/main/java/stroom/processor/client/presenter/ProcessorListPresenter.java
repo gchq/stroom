@@ -590,7 +590,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
+    public void read(final DocRef docRef, final Object document) {
         if (docRef == null) {
             expression = ProcessorFilterExpressionUtil.createBasicExpression();
         } else if (PipelineDoc.TYPE.equals(docRef.getType())) {

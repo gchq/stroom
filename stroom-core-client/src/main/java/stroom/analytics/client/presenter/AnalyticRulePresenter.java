@@ -86,10 +86,9 @@ public class AnalyticRulePresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final AnalyticRuleDoc document,
-                               final boolean readOnly) {
+                               final AnalyticRuleDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -118,8 +117,8 @@ public class AnalyticRulePresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc document) {
+        super.onRead(docRef, document);
         setRuleType(document.getAnalyticProcessType());
     }
 

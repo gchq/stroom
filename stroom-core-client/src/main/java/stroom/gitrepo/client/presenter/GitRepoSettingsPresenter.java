@@ -116,7 +116,7 @@ public class GitRepoSettingsPresenter
      * the GitRepoDoc.
      */
     @Override
-    protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final GitRepoDoc doc) {
         // Local copy of the initial value of the doc
         gitRepoDoc = doc;
 

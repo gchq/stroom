@@ -334,7 +334,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final ReceiveDataRules document) {
         enableButtons();
         if (document != null) {
             fields.clear();

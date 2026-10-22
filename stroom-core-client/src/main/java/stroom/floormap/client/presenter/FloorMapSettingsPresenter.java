@@ -487,18 +487,17 @@ public class FloorMapSettingsPresenter
     /// 3. Copies the document's value schema list into the data provider and
     ///    refreshes the grid.
     /// 4. Enables or disables the *Add* and *Remove* toolbar
-    ///    buttons based on the `readOnly` flag.
+    ///    buttons based on whether the document is read only ([#isReadOnly()]).
     ///
     /// @param docRef      the [DocRef] identifying the document being read
     /// @param floorMapDoc the persisted document whose settings are displayed
-    /// @param readOnly    `true` if the UI should be non-editable
     @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc floorMapDoc, final boolean readOnly) {
-        this.readOnly = readOnly;
+    protected void onRead(final DocRef docRef, final FloorMapDoc floorMapDoc) {
+        this.readOnly = isReadOnly();
         eventsStoreRefPresenter.setSelectedEntityReference(floorMapDoc.getEventsStoreRef(), true);
-        eventsStoreRefPresenter.setEnabled(!readOnly);
+        eventsStoreRefPresenter.setEnabled(!isReadOnly());
         factsStoreRefPresenter.setSelectedEntityReference(floorMapDoc.getFactsStoreRef(), true);
-        factsStoreRefPresenter.setEnabled(!readOnly);
+        factsStoreRefPresenter.setEnabled(!isReadOnly());
 
         // Shown with their defaults rather than blank, so the shape a user is editing is visible.
         getView().setHistogramQuery(NullSafe.isBlankString(floorMapDoc.getHistogramQuery())
@@ -510,17 +509,17 @@ public class FloorMapSettingsPresenter
 
         // Value Format
         valueFormatListBox.setValue(floorMapDoc.getValueFormat());
-        valueFormatListBox.setEnabled(!readOnly);
+        valueFormatListBox.setEnabled(!isReadOnly());
 
         // Value Schema
         final List<FloorMapFieldMapping> schema =
                 new ArrayList<>(floorMapDoc.getValueSchema());
         schemaDataProvider.setList(schema);
-        setSchemaCellsReadOnly(readOnly);
+        setSchemaCellsReadOnly(isReadOnly());
         refreshGrid();
 
-        addButton.setEnabled(!readOnly);
-        removeButton.setEnabled(!readOnly && schemaSelectionModel.getSelectedObject() != null);
+        addButton.setEnabled(!isReadOnly());
+        removeButton.setEnabled(!isReadOnly() && schemaSelectionModel.getSelectedObject() != null);
 
         // Keep an Editor-tab area-support upgrade visible in the schema grid: the
         // document just read may predate the upgrade (it is only persisted on

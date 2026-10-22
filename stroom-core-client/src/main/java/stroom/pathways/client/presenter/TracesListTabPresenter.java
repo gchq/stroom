@@ -169,7 +169,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final TracesDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final TracesDoc document) {
         if (docRef != null) {
             setDataSourceRef(docRef);
             // Default the time range selector to Today on first open.

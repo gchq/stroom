@@ -83,10 +83,9 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
             @Override
             public void onRead(final EditorPresenter presenter,
                                final DocRef docRef,
-                               final KafkaConfigDoc document,
-                               final boolean readOnly) {
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
+                               final KafkaConfigDoc document) {
+                presenter.setReadOnly(isReadOnly());
+                presenter.getFormatAction().setAvailable(!isReadOnly());
 
                 if (document.getData() != null) {
                     presenter.setText(document.getData());
@@ -102,10 +101,9 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final KafkaConfigDoc document,
-                               final boolean readOnly) {
+                               final KafkaConfigDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -132,8 +130,8 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
     }
 
     @Override
-    public void onRead(final DocRef docRef, final KafkaConfigDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
+    public void onRead(final DocRef docRef, final KafkaConfigDoc doc) {
+        super.onRead(docRef, doc);
         this.docRef = docRef;
         downloadButton.setEnabled(true);
     }

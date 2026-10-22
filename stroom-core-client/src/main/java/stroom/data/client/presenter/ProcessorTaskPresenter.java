@@ -78,8 +78,8 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
     }
 
     @Override
-    public void read(final DocRef docRef, final Object document, final boolean readOnly) {
-        processorTaskSummaryPresenter.read(docRef, document, readOnly);
+    public void read(final DocRef docRef, final Object document) {
+        processorTaskSummaryPresenter.read(docRef, document);
 //        processorTaskListPresenter.read(docRef, entity);
     }
 

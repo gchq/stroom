@@ -95,7 +95,7 @@ public class PlanBSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final PlanBDoc doc, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final PlanBDoc doc) {
         currentStateType = null;
         getView().setStateType(doc.getStateType());
         changeStateType();
@@ -230,11 +230,13 @@ public class PlanBSettingsPresenter
         getView().setStateTypeVisible(!locked);
     }
 
+    /// Shows the settings of a document this is embedded in, rather than reading a document; they
+    /// are read only as that document is.
+    ///
+    /// @param settings  The settings.
+    /// @param stateType The type of state they are for.
     public void readSettings(final AbstractPlanBSettings settings,
-                             final StateType stateType,
-                             final boolean readOnly) {
-        // Embedded rather than read as a document, so told whether it may be changed here
-        setDocumentReadOnly(readOnly);
+                             final StateType stateType) {
         getView().setStateType(stateType);
         currentStateType = null;
         changeStateType();

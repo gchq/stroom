@@ -90,7 +90,7 @@ public class FolderTabs extends TabbedComponent<DocRef> {
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA,
                     metaPresenterProvider::get,
-                    (meta, docRef, folder) -> meta.read(docRef, null, true));
+                    (meta, docRef, folder) -> meta.read(docRef, null));
             selectedTab = DATA;
         }
 
@@ -105,10 +105,10 @@ public class FolderTabs extends TabbedComponent<DocRef> {
                         processors.setAllowUpdate(isAdmin);
                         return processors;
                     },
-                    (processors, docRef, folder) -> processors.read(docRef, null, true));
+                    (processors, docRef, folder) -> processors.read(docRef, null));
             addTab(TASKS,
                     processorTaskPresenterProvider::get,
-                    (tasks, docRef, folder) -> tasks.read(docRef, null, true));
+                    (tasks, docRef, folder) -> tasks.read(docRef, null));
             if (selectedTab == null) {
                 selectedTab = PROCESSORS;
             }

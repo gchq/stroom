@@ -464,10 +464,10 @@ public class QueryDocEditPresenter
 
 
     @Override
-    public void onRead(final DocRef docRef, final QueryDoc entity, final boolean readOnly) {
+    public void onRead(final DocRef docRef, final QueryDoc entity) {
         this.docRef = docRef;
         queryEditPresenter.setTimeRange(entity.getTimeRange());
-        queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
+        queryEditPresenter.setQuery(docRef, entity.getQuery());
         queryEditPresenter.read(entity.getQueryTablePreferences());
     }
 

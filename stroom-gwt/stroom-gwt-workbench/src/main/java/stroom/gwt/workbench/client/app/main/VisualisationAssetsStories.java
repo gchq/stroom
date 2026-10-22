@@ -166,7 +166,8 @@ public final class VisualisationAssetsStories {
             content.getElement().getStyle().setProperty("position", "relative");
             frame.add(content);
             // As VisualisationPresenter reads its tabs
-            presenter.read(docRef, doc, false);
+            presenter.setReadOnly(false);
+            presenter.read(docRef, doc);
         });
         return harness.asWidget();
     }

@@ -67,10 +67,9 @@ public class DashboardSuperPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final DashboardDoc document,
-                               final boolean readOnly) {
+                               final DashboardDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -98,10 +97,9 @@ public class DashboardSuperPresenter
 
     @Override
     protected void onRead(final DocRef docRef,
-                          final DashboardDoc document,
-                          final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
-        dashboardPresenter.onRead(docRef, document, readOnly);
+                          final DashboardDoc document) {
+        super.onRead(docRef, document);
+        dashboardPresenter.onRead(docRef, document);
     }
 
     @Override

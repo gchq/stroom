@@ -56,9 +56,9 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
     }
 
     @Override
-    public void onRead(final DocRef docRef, final D entity, final boolean readOnly) {
+    public void onRead(final DocRef docRef, final D entity) {
         queryEditPresenter.setTimeRange(entity.getTimeRange());
-        queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
+        queryEditPresenter.setQuery(docRef, entity.getQuery());
         queryEditPresenter.read(entity.getQueryTablePreferences());
     }
 

@@ -192,7 +192,8 @@ public final class DocEditors {
                             docRef,
                             DocumentPermission.EDIT,
                             allowUpdate -> {
-                                presenter.read(docRef, doc, !allowUpdate);
+                                presenter.setReadOnly(!allowUpdate);
+                                presenter.read(docRef, doc);
                                 harness.addContent(presenter);
                             },
                             error -> AlertEvent.fireErrorFromException(harness.getHasHandlers(), error, null),
@@ -214,7 +215,7 @@ public final class DocEditors {
         if (presenter.isDirty()) {
             final D document = presenter.write(presenter.getEntity());
             if (document != null) {
-                final Consumer<D> afterSave = saved -> presenter.read(docRef, saved, presenter.isReadOnly());
+                final Consumer<D> afterSave = saved -> presenter.read(docRef, saved);
                 final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
                 resource.update(harness.getRestFactory(), document)
                         .onSuccess(saved -> {

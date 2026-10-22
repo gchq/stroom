@@ -58,10 +58,9 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final PlanBDoc document,
-                               final boolean readOnly) {
+                               final PlanBDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

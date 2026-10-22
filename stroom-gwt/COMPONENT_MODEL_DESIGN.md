@@ -927,6 +927,15 @@ Convert the remaining presenters area by area, each a separate pull request with
 
 **Exit:** every presenter is owned; `HasTaskMonitorFactory`, `ReadOnlyChangeHandler` and the `readOnly` argument are gone.
 
+Progress:
+
+- Done (22 October 2026), documents: the `readOnly` argument is gone from `HasDocumentRead.read`, `DocPresenter.onRead`, the tab providers' `onRead` and the parts that were passed it (processing, duplicate management, query editing, pathways, Plan B settings in a traces document, script dependencies, processors and data).
+  A document's opener says whether it may be changed with `DocPresenter.setReadOnly` before it reads it (`DocumentPlugin`, from the user's permission; Save As makes it editable), and that goes into its context; a document that is part of another (e.g. a settings tab) is never told, so it follows the one above it, and one nobody tells is read only.
+  `isReadOnly()` is now the context's value, and parts read `context(Contexts.READ_ONLY)` when they are read, as a lock change reads the document again.
+  `TabContentProvider` owns a tab's presenter before it reads into it, so that it reads as its document is (`TestDocPresenter`).
+  Two parts that were told "editable" whatever their document was now follow it: the query editor in a floor map, and the query document a dashboard's embedded query opens.
+  A document's settings presenter still sets its own fields and reusable editors (`editor.setReadOnly(isReadOnly())`), as an owner gives a widget its input.
+
 ### Phase 6: Remove GWTP
 
 1. Replace the proxy presenters with a plain plugin and content registry, and drop code splitting (measuring load time before and after).

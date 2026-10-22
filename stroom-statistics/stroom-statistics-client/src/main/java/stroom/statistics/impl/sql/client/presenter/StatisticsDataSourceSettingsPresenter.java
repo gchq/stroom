@@ -42,8 +42,8 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
-        getView().onReadOnly(readOnly);
+    protected void onRead(final DocRef docRef, final StatisticStoreDoc document) {
+        getView().onReadOnly(isReadOnly());
         getView().setStatisticType(document.getStatisticType());
         getView().getEnabled().setValue(document.isEnabled());
         getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));

@@ -122,7 +122,7 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticIndexDoc index, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final ElasticIndexDoc index) {
         clusterPresenter.setSelectedEntityReference(index.getClusterRef(), true);
         vectorGenerationModelPresenter.setSelectedEntityReference(index.getVectorGenerationModelRef(), true);
         rerankModelPresenter.setSelectedEntityReference(index.getRerankModelRef(), true);
@@ -136,10 +136,10 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
 
-        clusterPresenter.setReadOnly(readOnly);
-        vectorGenerationModelPresenter.setReadOnly(readOnly);
-        rerankModelPresenter.setReadOnly(readOnly);
-        pipelinePresenter.setReadOnly(readOnly);
+        clusterPresenter.setReadOnly(isReadOnly());
+        vectorGenerationModelPresenter.setReadOnly(isReadOnly());
+        rerankModelPresenter.setReadOnly(isReadOnly());
+        pipelinePresenter.setReadOnly(isReadOnly());
     }
 
     @Override

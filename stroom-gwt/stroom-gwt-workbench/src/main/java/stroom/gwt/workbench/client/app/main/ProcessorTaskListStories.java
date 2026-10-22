@@ -166,7 +166,7 @@ public final class ProcessorTaskListStories {
         harness.afterStartUp(() -> {
             final ProcessorTaskListPresenter presenter = injector.getProcessorTaskListPresenter();
             // As a folder's 'Active Tasks' tab reads it
-            presenter.read(FOLDER, null, false);
+            presenter.read(FOLDER, null);
             harness.addContent(presenter);
         });
         return harness.asWidget();

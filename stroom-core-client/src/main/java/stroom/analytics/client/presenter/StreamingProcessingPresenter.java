@@ -23,6 +23,7 @@ import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -64,14 +65,15 @@ public class StreamingProcessingPresenter
     }
 
     public void update(final AbstractAnalyticRuleDoc analyticRuleDoc,
-                       final boolean readOnly,
                        final String query) {
+        // Read only as its document is
+        final boolean readOnly = context(Contexts.READ_ONLY);
         restFactory
                 .create(ANALYTIC_PROCESS_RESOURCE)
                 .method(res -> res.getDefaultProcessingFilterExpression(query))
                 .onSuccess(expressionOperator -> {
                     processorPresenter.setDefaultExpression(expressionOperator);
-                    processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc, readOnly);
+                    processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc);
                     processorPresenter.setAllowUpdate(!readOnly);
                 })
                 .taskMonitorFactory(this)

@@ -245,7 +245,8 @@ public final class DashboardSupport {
                             docRef,
                             DocumentPermission.EDIT,
                             allowUpdate -> {
-                                presenter.read(docRef, doc, !allowUpdate);
+                                presenter.setReadOnly(!allowUpdate);
+                                presenter.read(docRef, doc);
                                 harness.addContent(presenter);
                                 // As Stroom's content pane does when it selects the tab
                                 ContentTabSelectionChangeEvent.fire(harness.getHasHandlers(), presenter);
@@ -273,7 +274,7 @@ public final class DashboardSupport {
                 harness.getRestFactory()
                         .create(resource)
                         .method(res -> res.update(document.getUuid(), document))
-                        .onSuccess(saved -> presenter.read(docRef, saved, presenter.isReadOnly()))
+                        .onSuccess(saved -> presenter.read(docRef, saved))
                         .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
                                 "Unable to save document " + docRef,
                                 error.getMessage(),

@@ -403,7 +403,7 @@ public class FloorMapEditorPresenter
     /// Loads the time range from the server and initialises the timeline,
     /// then fetches facts at the initial time and populates all panels.
     @Override
-    protected void onRead(final DocRef docRef, final FloorMapDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final FloorMapDoc document) {
         this.docUuid = docRef != null ? docRef.getUuid() : null;
         // Drop any staged doc-level edits (area upgrade / Layers type-styles)
         // that this just-read document already carries (post-save re-read).

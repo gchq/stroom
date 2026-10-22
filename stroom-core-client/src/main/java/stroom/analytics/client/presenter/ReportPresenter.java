@@ -76,10 +76,9 @@ public class ReportPresenter
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final ReportDoc document,
-                               final boolean readOnly) {
+                               final ReportDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -113,8 +112,8 @@ public class ReportPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ReportDoc document, final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
+    protected void onRead(final DocRef docRef, final ReportDoc document) {
+        super.onRead(docRef, document);
         // A report is always a scheduled query, but tell the notifications tab explicitly rather than leaving
         // it to infer anything.
         reportNotificationPresenter.setAnalyticProcessType(document.getAnalyticProcessType());

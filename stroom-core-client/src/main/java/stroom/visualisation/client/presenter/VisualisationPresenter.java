@@ -63,10 +63,9 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final VisualisationDoc document,
-                               final boolean readOnly) {
+                               final VisualisationDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

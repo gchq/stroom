@@ -60,10 +60,9 @@ public class FloorMapEventStorePresenter
                     @Override
                     public void onRead(final MarkdownEditPresenter presenter,
                                        final DocRef docRef,
-                                       final FloorMapEventStoreDoc document,
-                                       final boolean readOnly) {
+                                       final FloorMapEventStoreDoc document) {
                         presenter.setText(document.getDescription());
-                        presenter.setReadOnly(readOnly);
+                        presenter.setReadOnly(isReadOnly());
                     }
 
                     @Override

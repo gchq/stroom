@@ -124,14 +124,13 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
             @Override
             public void onRead(final EditorPresenter presenter,
                                final DocRef docRef,
-                               final XmlSchemaDoc document,
-                               final boolean readOnly) {
+                               final XmlSchemaDoc document) {
                 presenter.setText(document.getData(), true);
                 // Applied on every read, not just when the editor is created, so a later read
                 // with a different read-only state takes effect
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
-                if (!readOnly) {
+                presenter.setReadOnly(isReadOnly());
+                presenter.getFormatAction().setAvailable(!isReadOnly());
+                if (!isReadOnly()) {
                     // Enable controls based on user permission
                     registerHandler(presenter.addValueChangeHandler(event -> {
                         onChange();
@@ -154,10 +153,9 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final XmlSchemaDoc document,
-                               final boolean readOnly) {
+                               final XmlSchemaDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override
@@ -227,8 +225,8 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final XmlSchemaDoc doc, final boolean readOnly) {
-        super.onRead(docRef, doc, readOnly);
+    protected void onRead(final DocRef docRef, final XmlSchemaDoc doc) {
+        super.onRead(docRef, doc);
         data.setContents(doc.getData());
 
         // Even for read-only, validate once so the indicator is correct.

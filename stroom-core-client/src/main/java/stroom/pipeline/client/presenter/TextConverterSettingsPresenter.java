@@ -47,7 +47,7 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final TextConverterDoc textConverter) {
         getView().getConverterType().setValue(textConverter.getConverterType());
     }
 

@@ -61,10 +61,9 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
-                               final TracesDoc document,
-                               final boolean readOnly) {
+                               final TracesDoc document) {
                 presenter.setText(document.getDescription());
-                presenter.setReadOnly(readOnly);
+                presenter.setReadOnly(isReadOnly());
             }
 
             @Override

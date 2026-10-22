@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -107,7 +107,7 @@ public final class DocumentEditors {
     /// @param <T>       The type of the resource.
     /// @param <D>       The type of the document.
     /// @param <P>       The type of the editor.
-    public static <T extends DirectRestService, D, P extends MyPresenterWidget<?> & HasDocumentRead<D>> void open(
+    public static <T extends DirectRestService, D, P extends DocPresenter<?, D>> void open(
             final ScreenHarness harness,
             final P presenter,
             final DocRef docRef,
@@ -120,7 +120,8 @@ public final class DocumentEditors {
                         docRef,
                         DocumentPermission.EDIT,
                         allowUpdate -> {
-                            presenter.read(docRef, doc, !allowUpdate);
+                            presenter.setReadOnly(!allowUpdate);
+                            presenter.read(docRef, doc);
                             harness.addContent(presenter);
                             // As Stroom's content pane does when it selects the editor's tab
                             if (presenter instanceof TabData) {

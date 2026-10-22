@@ -64,10 +64,9 @@ public class ReportSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef,
-                          final ReportDoc document,
-                          final boolean readOnly) {
-        super.onRead(docRef, document, readOnly);
-        aiSummaryModelPresenter.setReadOnly(readOnly);
+                          final ReportDoc document) {
+        super.onRead(docRef, document);
+        aiSummaryModelPresenter.setReadOnly(isReadOnly());
         getView().setFileType(NullSafe.getOrElse(
                 document,
                 ReportDoc::getReportSettings,

@@ -315,7 +315,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final SolrIndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final SolrIndexDoc document) {
         dataGrid.setTableName("Solr Index '" + docRef.getName() + "' Fields");
         this.index = document;
         if (document != null) {

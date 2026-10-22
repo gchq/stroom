@@ -555,7 +555,7 @@ public class FloorMapQueryPresenter
 
         // Populate the inner query editor.
         queryEditPresenter.setQueryVariables(queryVariables);
-        queryEditPresenter.setQuery(docRef, query, false);
+        queryEditPresenter.setQuery(docRef, query);
         queryEditPresenter.setTimeRange(timeRange);
         queryEditPresenter.read(queryTablePreferences);
 

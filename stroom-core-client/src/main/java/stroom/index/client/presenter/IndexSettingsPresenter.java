@@ -95,7 +95,7 @@ public class IndexSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final LuceneIndexDoc index, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc index) {
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
@@ -104,7 +104,7 @@ public class IndexSettingsPresenter
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
-        pipelinePresenter.setReadOnly(readOnly);
+        pipelinePresenter.setReadOnly(isReadOnly());
     }
 
     @Override
