@@ -104,7 +104,7 @@ class PipelineIndex {
                             .thenComparing(DocRef::getUuid))
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the documents of type " + type, e);
+            LOGGER.debug("Unable to list the documents of type {}", type, e);
             return List.of();
         }
     }
@@ -130,7 +130,7 @@ class PipelineIndex {
                         .toList();
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to search the content index for '" + text + "'", e);
+            LOGGER.debug("Unable to search the content index for '{}'", text, e);
         }
         return list(type);
     }
@@ -149,7 +149,7 @@ class PipelineIndex {
                     .limit(limit)
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the documents of type " + type + " named " + pattern, e);
+            LOGGER.debug("Unable to find the documents of type {} named {}", type, pattern, e);
             return List.of();
         }
     }
@@ -172,7 +172,7 @@ class PipelineIndex {
                     .distinct()
                     .toList();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to search the content index for '" + text + "'", e);
+            LOGGER.debug("Unable to search the content index for '{}'", text, e);
             return List.of();
         }
     }

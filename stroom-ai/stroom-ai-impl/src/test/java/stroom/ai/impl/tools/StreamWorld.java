@@ -81,7 +81,7 @@ final class StreamWorld {
     /// The encoding of each feed, by name; UTF-8 if not given.
     final Map<String, String> encodings = new HashMap<>();
     /// The longest a raw stream's text is given by the data viewer, as its page of characters.
-    int viewerPage = 1_000;
+    final int viewerPage = 1_000;
 
     StreamWorld() {
         // The user may view data, as reading a stream's text needs; a test takes it away to see the refusal.

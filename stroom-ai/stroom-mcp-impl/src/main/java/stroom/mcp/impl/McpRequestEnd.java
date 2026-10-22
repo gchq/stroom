@@ -128,12 +128,12 @@ final class McpRequestEnd implements AsyncListener {
             toTell = List.copyOf(listeners);
             listeners.clear();
         }
-        LOGGER.debug(() -> "MCP request " + how);
+        LOGGER.debug("MCP request {}", how);
         for (final Runnable listener : toTell) {
             try {
                 listener.run();
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "A listener for the end of an MCP request failed", e);
+                LOGGER.debug("A listener for the end of an MCP request failed", e);
             }
         }
     }

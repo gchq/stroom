@@ -752,7 +752,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                 result.put("attributes", streamReader.streamAttributes(streamId).get("attributes"));
             } catch (final RuntimeException e) {
                 // An Events or Error stream has no receipt headers of its own.
-                LOGGER.debug(() -> "Unable to read the attributes of stream " + streamId, e);
+                LOGGER.debug("Unable to read the attributes of stream {}", streamId, e);
                 result.put("attributes_note", StreamSummaries.reason(e));
             }
         }

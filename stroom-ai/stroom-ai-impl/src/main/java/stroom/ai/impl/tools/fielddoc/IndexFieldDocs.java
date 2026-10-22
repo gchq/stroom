@@ -174,8 +174,8 @@ public final class IndexFieldDocs {
     // The ECS reference bundled with Stroom for agents (stroom-mcp-impl's resources), read once; null where it
     // isn't on the class path.
     private static EcsSchema readEcs() {
-        try (InputStream fields = IndexFieldDocs.class.getResourceAsStream(CONVENTIONS + EcsSchema.FIELDS_FILE);
-                InputStream component = IndexFieldDocs.class.getResourceAsStream(
+        try (final InputStream fields = IndexFieldDocs.class.getResourceAsStream(CONVENTIONS + EcsSchema.FIELDS_FILE);
+                final InputStream component = IndexFieldDocs.class.getResourceAsStream(
                         CONVENTIONS + EcsSchema.COMPONENT_FILE)) {
             if (fields == null || component == null) {
                 return null;

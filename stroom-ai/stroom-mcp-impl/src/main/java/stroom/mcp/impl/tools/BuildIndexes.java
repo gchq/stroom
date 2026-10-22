@@ -28,6 +28,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -213,7 +214,7 @@ class BuildIndexes {
                 }
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the clusters in use: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Unable to list the clusters in use: {}", e.getMessage()));
             return Optional.empty();
         }
         return used.size() == 1

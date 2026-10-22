@@ -889,6 +889,12 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    boolean discardHandEdit,
                    Map<String, String> handEditChoices) {
 
+        /// Reads a call's arguments.
+        ///
+        /// @param call The call.
+        /// @param tool The tool, to read its arguments with.
+        /// @return The call's request.
+        /// @throws ToolRefusal if max_records is out of range, or the splitter isn't a spec.
         static Request of(final ToolCall call, final BuildTranslationXsltTool tool) {
             final Integer max = tool.intArg(call, MAX_RECORDS_ARG);
             if (max != null && (max < 1 || max > MAX_RECORDS)) {
@@ -940,7 +946,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             return List.of(String.valueOf(given));
         }
 
-        // As build_data_splitter gave it (its spec).
+        /// @param given The splitter argument as build_data_splitter gave it (its spec), as JSON text or a map.
+        /// @return The spec, or null if none was given.
+        /// @throws ToolRefusal if it isn't a Data Splitter spec.
         @SuppressWarnings("unchecked")
         static SplitterSpec splitter(final Object given) {
             if (given == null) {

@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -67,7 +68,7 @@ public final class CallProgress {
         try {
             progress.report(message);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Progress not sent (" + message + "): " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Progress not sent ({}): {}", message, e.getMessage()), e);
         }
     }
 

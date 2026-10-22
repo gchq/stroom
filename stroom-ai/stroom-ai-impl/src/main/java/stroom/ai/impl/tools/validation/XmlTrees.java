@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.validation;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -92,7 +93,7 @@ public final class XmlTrees {
         try {
             return Optional.ofNullable(parse(text));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to parse XML: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Unable to parse XML: {}", e.getMessage()));
             return Optional.empty();
         }
     }

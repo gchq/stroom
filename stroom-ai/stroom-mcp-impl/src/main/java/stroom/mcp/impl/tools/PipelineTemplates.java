@@ -437,7 +437,7 @@ class PipelineTemplates {
                     .toList());
         } catch (final RuntimeException e) {
             // The shared XSLTs are an extra: the template's children and contract still stand.
-            LOGGER.debug(() -> "Unable to read the shared XSLTs of " + templateUuid, e);
+            LOGGER.debug("Unable to read the shared XSLTs of {}", templateUuid, e);
             shared = List.of();
             result.put("shared_xslt_error", shorten(PipelineShapes.reason(e), 300));
         }
@@ -590,7 +590,7 @@ class PipelineTemplates {
                         .limit(20)
                         .toList();
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Unable to find the XSLT " + href, e);
+                LOGGER.debug("Unable to find the XSLT {}", href, e);
                 return List.of();
             }
         }

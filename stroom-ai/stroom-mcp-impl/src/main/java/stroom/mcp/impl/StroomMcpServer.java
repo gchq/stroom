@@ -27,6 +27,7 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -229,8 +230,8 @@ class StroomMcpServer {
     // (see closed) and cancels its calls.
     private void end(final OpenSession open, final String why) {
         final McpSession session = open.session();
-        LOGGER.info(() -> "Ending an MCP session of " + session.owner().toDisplayString() + ", " + why);
-        LOGGER.debug(() -> "Ending MCP session " + session.id() + ", " + why);
+        LOGGER.info(() -> LogUtil.message("Ending an MCP session of {}, {}", session.owner().toDisplayString(), why));
+        LOGGER.debug(() -> LogUtil.message("Ending MCP session {}, {}", session.id(), why));
         transportSessions.remove(session.id());
         try {
             open.sdkSession().close();
@@ -258,9 +259,14 @@ class StroomMcpServer {
             sessions.put(id, new OpenSession(new McpSession(id, owner, initializeRequest.clientInfo(),
                     initializeRequest.capabilities()), session));
         }
-        LOGGER.info(() -> "MCP session started for " + owner.toDisplayString() + " by "
-                          + NullSafe.get(initializeRequest.clientInfo(), Implementation::name));
-        LOGGER.debug(() -> "MCP session " + init.session().getId() + " started for " + owner.toDisplayString());
+        LOGGER.info(() -> LogUtil.message(
+                "MCP session started for {} by {}",
+                owner.toDisplayString(),
+                NullSafe.get(initializeRequest.clientInfo(), Implementation::name)));
+        LOGGER.debug(() -> LogUtil.message(
+                "MCP session {} started for {}",
+                init.session().getId(),
+                owner.toDisplayString()));
         return init;
     }
 
@@ -346,10 +352,13 @@ class StroomMcpServer {
                 : null;
         if (open != null && requestId != null) {
             final boolean running = open.session().runningCalls().cancel(requestId);
-            LOGGER.debug(() -> "The client cancelled request " + requestId + " of MCP session " + sessionId
-                               + (running
-                    ? ""
-                    : ", which had already ended"));
+            LOGGER.debug(
+                    "The client cancelled request {} of MCP session {}{}",
+                    requestId,
+                    sessionId,
+                    running
+                            ? ""
+                            : ", which had already ended");
         }
     }
 
@@ -413,8 +422,8 @@ class StroomMcpServer {
         transportSessions.remove(sessionId);
         final OpenSession open = sessions.remove(sessionId);
         if (open != null) {
-            LOGGER.info(() -> "An MCP session of " + open.session().owner().toDisplayString() + " ended");
-            LOGGER.debug(() -> "MCP session " + sessionId + " ended");
+            LOGGER.info(() -> LogUtil.message("An MCP session of {} ended", open.session().owner().toDisplayString()));
+            LOGGER.debug("MCP session {} ended", sessionId);
             open.session().runningCalls().cancelAll();
             workspaces.delete(open.session());
         }
@@ -430,8 +439,10 @@ class StroomMcpServer {
                     .subscribeOn(notifyScheduler)
                     .timeout(NOTIFY_TIMEOUT)
                     .subscribe(ignored -> {
-                    }, e -> LOGGER.debug(() -> "Unable to tell an MCP session its tools have changed: "
-                                               + e.getMessage(), e));
+                    }, e -> LOGGER.debug(() -> LogUtil.message(
+                            "Unable to tell an MCP session its tools have changed: {}",
+                            e.getMessage()),
+                            e));
         }
     }
 

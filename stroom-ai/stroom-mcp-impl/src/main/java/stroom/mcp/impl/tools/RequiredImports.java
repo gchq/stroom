@@ -29,6 +29,7 @@ import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -100,13 +101,13 @@ class RequiredImports {
             try {
                 guardProvider.get().buildFolder(build, false).ifPresent(folder -> folders.add(folder.path()));
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "No folder for build " + build + ": " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("No folder for build {}: {}", build, e.getMessage()));
             }
         }
         try {
             return agentInstructions.importsRequired(session, stage, folders, NullSafe.list(feeds));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the required imports: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to read the required imports: {}", e.getMessage()), e);
             return List.of();
         }
     }
@@ -134,7 +135,11 @@ class RequiredImports {
                     describe(note, NullSafe.string(found.get().getData()), functions);
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Unable to read the required import " + r.href() + ": " + e.getMessage(), e);
+                LOGGER.debug(() -> LogUtil.message(
+                        "Unable to read the required import {}: {}",
+                        r.href(),
+                        e.getMessage()),
+                        e);
             }
             out.add(note);
         }

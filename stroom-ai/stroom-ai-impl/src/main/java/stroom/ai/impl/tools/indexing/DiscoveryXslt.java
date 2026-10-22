@@ -186,7 +186,7 @@ final class DiscoveryXslt {
     }
 
     private static String resource(final String name) {
-        try (InputStream in = DiscoveryXslt.class.getResourceAsStream(name)) {
+        try (final InputStream in = DiscoveryXslt.class.getResourceAsStream(name)) {
             if (in == null) {
                 throw new UncheckedIOException(new IOException("No resource " + name));
             }

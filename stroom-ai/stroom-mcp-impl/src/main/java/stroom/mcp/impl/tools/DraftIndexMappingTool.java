@@ -54,6 +54,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -811,8 +812,10 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                              + "isn't given again");
         } catch (final RuntimeException e) {
             // Keeping it is a convenience; the plan stands without it.
-            LOGGER.warn(() -> "Couldn't keep the example index template in build " + build.get() + ": "
-                              + e.getMessage());
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't keep the example index template in build {}: {}",
+                    build.get(),
+                    e.getMessage()));
         }
     }
 
@@ -840,7 +843,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         .append('\n');
             } catch (final RuntimeException e) {
                 // A stream that can't be read: the others serve.
-                LOGGER.debug(() -> "Stream " + streamId + " not read: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Stream {} not read: {}", streamId, e.getMessage()));
             }
         }
         String text = read.toString();

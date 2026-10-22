@@ -56,7 +56,7 @@ class PipelineOutputs {
         try {
             merged = pipelineShapes.merged(pipelineUuid);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the output stream type of " + pipelineUuid, e);
+            LOGGER.debug("Unable to read the output stream type of {}", pipelineUuid, e);
             return EVENTS;
         }
         final Map<String, String> types = merged.elements();
@@ -83,7 +83,7 @@ class PipelineOutputs {
         try {
             types = pipelineShapes.merged(pipelineUuid).elements().values();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read whether " + pipelineUuid + " writes an output stream", e);
+            LOGGER.debug("Unable to read whether {} writes an output stream", pipelineUuid, e);
             return true;
         }
         return types.contains("StreamAppender") && types.stream().noneMatch(INDEXING_ELEMENTS::contains);
@@ -95,7 +95,7 @@ class PipelineOutputs {
         try {
             return pipelineShapes.merged(pipelineUuid).elements().containsValue("StandardKafkaProducer");
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read whether " + pipelineUuid + " sends to Kafka", e);
+            LOGGER.debug("Unable to read whether {} sends to Kafka", pipelineUuid, e);
             return false;
         }
     }

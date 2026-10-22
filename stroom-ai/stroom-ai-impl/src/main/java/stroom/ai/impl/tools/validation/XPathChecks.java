@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import net.sf.saxon.regex.RegularExpression;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -462,7 +463,7 @@ public final class XPathChecks {
                 found = regex.containsMatch(text);
             } catch (final UncheckedXPathException e) {
                 // Saxon's backtracking limit.
-                LOGGER.debug(() -> "Regex " + ex.regex() + " stopped: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Regex {} stopped: {}", ex.regex(), e.getMessage()));
                 throw new PatternTimeoutException(ex.regex());
             }
             if (found) {
@@ -507,7 +508,7 @@ public final class XPathChecks {
                     texts.add(text);
                 }
             } catch (final SaxonApiException | RuntimeException e) {
-                LOGGER.debug(() -> "Unable to evaluate " + source + ": " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Unable to evaluate {}: {}", source, e.getMessage()));
             }
         }
         return texts;
@@ -591,7 +592,7 @@ public final class XPathChecks {
             try {
                 parsed.add(LockedSaxon.parse(document));
             } catch (final SaxonApiException e) {
-                LOGGER.debug(() -> "Unable to parse a record: " + e.getMessage());
+                LOGGER.debug(() -> LogUtil.message("Unable to parse a record: {}", e.getMessage()));
             }
         }
         return parsed;
@@ -618,7 +619,7 @@ public final class XPathChecks {
             }
             return values;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Not JSON: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("Not JSON: {}", e.getMessage()));
             return List.of();
         }
     }

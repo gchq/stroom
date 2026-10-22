@@ -46,6 +46,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -442,7 +443,9 @@ class FieldMappingSections {
             schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
             // Descriptions then come from the plan and the sample alone.
-            LOGGER.debug(() -> "No event-logging schema for the index's descriptions: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message(
+                    "No event-logging schema for the index's descriptions: {}",
+                    e.getMessage()));
             schema = null;
         }
         String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, documents, schema, layout,

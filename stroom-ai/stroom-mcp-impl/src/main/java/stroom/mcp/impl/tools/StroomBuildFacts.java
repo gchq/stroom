@@ -271,7 +271,7 @@ class StroomBuildFacts implements BuildFacts {
             found.addAll(JsonValues.strings(buildRecords.load(build).get(BuildRecords.SOURCE_FEEDS)));
         } catch (final RuntimeException e) {
             // Advice and promotion's filters: an unreadable record leaves the rest to go on.
-            LOGGER.debug(() -> "Unable to read the record of build " + build, e);
+            LOGGER.debug("Unable to read the record of build {}", build, e);
         }
         for (final Map<String, Object> doc : docs) {
             final String name = String.valueOf(doc.get("name"));
@@ -454,7 +454,7 @@ class StroomBuildFacts implements BuildFacts {
                 }
             } catch (final RuntimeException e) {
                 // Advice: a Stroom that can't list its filters leaves the rest of the plan to go on.
-                LOGGER.debug(() -> "Unable to find the pipelines reading " + feed, e);
+                LOGGER.debug("Unable to find the pipelines reading {}", feed, e);
             }
         }
         return found;

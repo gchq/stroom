@@ -43,6 +43,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Count;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -114,6 +115,11 @@ public class StreamReader {
     private final Map<List<Object>, CachedText> texts = new LinkedHashMap<>();
     private final Map<Long, Map<String, Object>> reports = new LinkedHashMap<>();
 
+    /// @param metaServiceProvider     Finds the streams, as the user.
+    /// @param dataServiceProvider     Fetches their records and reads their attributes.
+    /// @param storeProvider           Reads their raw data.
+    /// @param feedPropertiesProvider  Gives each feed's encoding.
+    /// @param securityContextProvider Checks the user may view data.
     @Inject
     public StreamReader(final Provider<MetaService> metaServiceProvider,
                         final Provider<DataService> dataServiceProvider,
@@ -348,7 +354,7 @@ public class StreamReader {
                         : read;
             }
         } catch (final IOException | RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read stream " + streamId + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
             throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
         }
         final StreamCharsets.Decoded decoded = StreamCharsets.decode(bytes, encoding, !moreBytes);
@@ -431,7 +437,7 @@ public class StreamReader {
             return feedPropertiesProvider.get().getEncoding(meta.getFeedName(), meta.getTypeName(), null);
         } catch (final IOException | RuntimeException e) {
             // The feed unreadable: Stroom's default.
-            LOGGER.debug(() -> "Unable to read the encoding of feed " + meta.getFeedName(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to read the encoding of feed {}", meta.getFeedName()), e);
             return null;
         }
     }
@@ -448,7 +454,7 @@ public class StreamReader {
         try {
             return securityContextProvider.get().hasAppPermission(AppPermission.VIEW_DATA_PERMISSION);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to check the View Data permission", e);
+            LOGGER.debug("Unable to check the View Data permission", e);
             return false;
         }
     }

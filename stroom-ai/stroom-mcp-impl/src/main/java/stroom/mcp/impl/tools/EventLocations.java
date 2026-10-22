@@ -229,6 +229,7 @@ class EventLocations {
     /// What a reported stream or event can't be traced, saying why.
     static class LocateException extends RuntimeException {
 
+        /// @param message Why it can't be traced.
         LocateException(final String message) {
             super(message);
         }

@@ -20,6 +20,7 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.McpEndpointConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -76,9 +77,11 @@ class McpForms {
         final McpEndpointConfig config = config();
         final String user = session.owner().getUuid();
         if (!take(user, config.getMaxFormsPerNode())) {
-            LOGGER.warn(() -> "Not showing a form to " + session.owner().toDisplayString() + " as "
-                              + config.getMaxFormsPerNode() + " are already waiting on this node, or half of them "
-                              + "for this user (see stroom.ai.mcpEndpoint.maxFormsPerNode)");
+            LOGGER.warn(() -> LogUtil.message(
+                    "Not showing a form to {} as {} are already waiting on this node, or half of them for this "
+                    + "user (see stroom.ai.mcpEndpoint.maxFormsPerNode)",
+                    session.owner().toDisplayString(),
+                    config.getMaxFormsPerNode()));
             return new ElicitResult(Action.CANCEL, null, null);
         }
         try {
@@ -96,8 +99,11 @@ class McpForms {
                 throw new CancellationException("The call was cancelled while it waited for the user's answer.");
             }
             // E.g. the user didn't answer in time, or the client went away.
-            LOGGER.debug(() -> "A form for " + session.owner().toDisplayString() + " wasn't answered: "
-                               + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "A form for {} wasn't answered: {}",
+                    session.owner().toDisplayString(),
+                    e.getMessage()),
+                    e);
             return new ElicitResult(Action.CANCEL, null, null);
         } finally {
             release(user);

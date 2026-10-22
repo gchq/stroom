@@ -24,6 +24,7 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -71,7 +72,11 @@ class AgentSearches {
                             SearchRequestSource::getOwnerDocRef, DocRef::getUuid)))
                     .forEach(info -> manager.destroy(info.getQueryKey(), DestroyReason.NO_LONGER_NEEDED));
         } catch (final RuntimeException e) {
-            LOGGER.warn(() -> "Unable to stop the agent's searches for " + ownerUuid + ": " + e.getMessage(), e);
+            LOGGER.warn(() -> LogUtil.message(
+                    "Unable to stop the agent's searches for {}: {}",
+                    ownerUuid,
+                    e.getMessage()),
+                    e);
         }
     }
 

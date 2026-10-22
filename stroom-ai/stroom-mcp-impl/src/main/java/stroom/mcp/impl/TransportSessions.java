@@ -80,8 +80,10 @@ final class TransportSessions {
             field.setAccessible(true);
             return (Map<String, ?>) field.get(transport);
         } catch (final ReflectiveOperationException | RuntimeException e) {
-            LOGGER.error(() -> "Unable to reach the MCP transport's sessions: sessions ended by Stroom stay in the "
-                               + "transport until their clients end them", e);
+            LOGGER.error(
+                    "Unable to reach the MCP transport's sessions: sessions ended by Stroom stay in the transport "
+                    + "until their clients end them",
+                    e);
             return null;
         }
     }

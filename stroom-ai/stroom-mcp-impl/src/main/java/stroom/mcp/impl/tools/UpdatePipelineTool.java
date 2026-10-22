@@ -32,6 +32,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
@@ -171,7 +172,10 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
                     (String) result.get("name"))).orElse(null);
             return writes.jsonArrayParser(merged.elements(), have, writes.sampleIsArray(build));
         } catch (final RuntimeException e) {
-            LOGGER.warn(() -> "Couldn't check pipeline " + pipelineUuid + "'s JSON parser: " + e.getMessage());
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't check pipeline {}'s JSON parser: {}",
+                    pipelineUuid,
+                    e.getMessage()));
             return Optional.empty();
         }
     }

@@ -36,6 +36,7 @@ import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
@@ -159,7 +160,7 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
                         : version;
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "The XML schemas couldn't be listed: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("The XML schemas couldn't be listed: {}", e.getMessage()));
         }
         return ReferenceGenerator.DEFAULT_VERSION;
     }

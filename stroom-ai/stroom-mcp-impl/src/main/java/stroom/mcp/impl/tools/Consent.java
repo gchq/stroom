@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.sample.PyJson;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -268,8 +269,11 @@ public class Consent {
             final String line = lines.get(i);
             if (message.length() + line.length() + 30 > FORM_MESSAGE_LIMIT) {
                 final int shown = i;
-                LOGGER.warn(() -> "Form for '" + heading(text, 80) + "' cut: " + shown + " of its " + lines.size()
-                                  + " details shown");
+                LOGGER.warn(() -> LogUtil.message(
+                        "Form for '{}' cut: {} of its {} details shown",
+                        heading(text, 80),
+                        shown,
+                        lines.size()));
                 return message + "\n- … (the rest is in the chat)";
             }
             message += (i == 0

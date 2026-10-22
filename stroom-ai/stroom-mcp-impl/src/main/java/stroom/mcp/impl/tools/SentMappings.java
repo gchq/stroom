@@ -22,6 +22,7 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import java.util.Map;
@@ -68,7 +69,7 @@ final class SentMappings {
             workspace.get().write(path(target), JsonUtil.writeValueAsString(mapping, false), null);
         } catch (final RuntimeException e) {
             // A convenience: changes= then falls back to the mapping saved with the XSLT.
-            LOGGER.debug(() -> "Couldn't keep the mapping sent for " + target + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Couldn't keep the mapping sent for {}: {}", target, e.getMessage()), e);
         }
     }
 
@@ -95,7 +96,7 @@ final class SentMappings {
                     ? Optional.of((Map<String, Object>) mapping)
                     : Optional.empty();
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "No mapping sent for " + target + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("No mapping sent for {}: {}", target, e.getMessage()), e);
             return Optional.empty();
         }
     }

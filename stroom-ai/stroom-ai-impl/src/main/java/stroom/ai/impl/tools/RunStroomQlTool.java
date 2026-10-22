@@ -44,6 +44,7 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
@@ -240,7 +241,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                     null, null)), ResultPage::getValues));
         } catch (final RuntimeException e) {
             // A check on the query, not a reason for it not to run: its own errors are Stroom's to give.
-            LOGGER.debug(() -> "Unable to check the query's searches: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to check the query's searches: {}", e.getMessage()), e);
             return Optional.empty();
         }
         return MisleadingSearches.refusal(backend.get(), searches, MisleadingSearches.ipFields(fields), List.of(),

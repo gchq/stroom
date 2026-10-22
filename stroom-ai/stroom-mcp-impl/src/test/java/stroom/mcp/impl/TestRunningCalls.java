@@ -34,7 +34,7 @@ class TestRunningCalls {
 
     @Test
     void aRequestIsCancelledByItsIdWhateverNumberTypeItWasReadAs() {
-        try (RunningCall call = calls.start(7)) {
+        try (final RunningCall call = calls.start(7)) {
             assertThat(calls.count()).isOne();
 
             assertThat(calls.cancel(7L)).isTrue();
@@ -60,7 +60,7 @@ class TestRunningCalls {
 
     @Test
     void everyRequestIsCancelledWhenTheSessionEnds() {
-        try (RunningCall call = calls.start(null)) {
+        try (final RunningCall call = calls.start(null)) {
             // A request with no id can't be cancelled by the client, but is when the session ends.
             assertThat(calls.cancel(null)).isFalse();
 

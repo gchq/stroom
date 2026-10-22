@@ -37,6 +37,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -303,7 +304,9 @@ class IndexDocumentation {
             return eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
             // Descriptions then come from the plan and the sample alone.
-            LOGGER.debug(() -> "No event-logging schema for the index's descriptions: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message(
+                    "No event-logging schema for the index's descriptions: {}",
+                    e.getMessage()));
             return null;
         }
     }
