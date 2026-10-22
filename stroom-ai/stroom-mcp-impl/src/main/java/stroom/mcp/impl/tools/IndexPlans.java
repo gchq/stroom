@@ -207,13 +207,6 @@ class IndexPlans {
                 : plan.conventionProblems(ecs);
     }
 
-    private static String stringOf(final Object value) {
-        return value == null
-                ? null
-                : String.valueOf(value);
-    }
-
-
     // --------------------------------------------------------------------------------
 
 
