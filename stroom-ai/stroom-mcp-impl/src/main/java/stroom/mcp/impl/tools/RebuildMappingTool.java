@@ -75,7 +75,6 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
     static final String CHANGE_ARG = "change";
     static final String ACCEPT_DIFFERENCES_ARG = "accept_differences";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     /// The most records stepped each way.
     static final int PROVE_RECORDS = 200;
@@ -182,7 +181,6 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                                                                     + "differences): only when the user, shown "
                                                                     + "them, accepts what the mapping writes "
                                                                     + "instead.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(UUID_ARG)
                         .build())
                 .build();
@@ -325,18 +323,12 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                     .map(d -> d.get("path"))
                     .toList());
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
+        consent.require(call, context, Consent.Request.confirmation(NAME,
                 "Save the mapping rebuilt from XSLT '" + rebuild.ref().getName() + "' (" + mode + "), and the XSLT "
                 + "regenerated from it: " + (differences.isEmpty()
                         ? "it wrote the same output as the XSLT for all " + rebuild.proof().records()
                           + " records stepped"
-                        : differences.size() + " output paths differ, as shown"), details,
-                stringArg(call, CONFIRMATION_ID_ARG)));
-        if (gate.isPresent()) {
-            final Map<String, Object> asked = new LinkedHashMap<>(result);
-            asked.putAll(gate.get());
-            return asked;
-        }
+                        : differences.size() + " output paths differ, as shown"), details));
         final Map<String, Object> saved = translationDocs.updateXslt(call, context, rebuild.ref().getUuid(),
                 rebuild.regenerated(), null, TranslationDocs.Source.of(rebuilt.mapping()), said, true, null);
         final Map<String, Object> summary = new LinkedHashMap<>();

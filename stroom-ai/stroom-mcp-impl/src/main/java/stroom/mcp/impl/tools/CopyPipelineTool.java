@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -63,7 +62,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     static final String RENAME_ARG = "rename";
     static final String SET_PROPERTIES_ARG = "set_properties";
     static final String WORKING_COPY_ARG = "working_copy";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     private final PipelineWrites writes;
     private final PipelineDocs pipelineDocs;
@@ -150,7 +148,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                                               + "original on promotion (an in-place change); "
                                                               + "False for a new version that is promoted "
                                                               + "alongside it.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(BUILD_ARG, SOURCE_UUID_ARG, NEW_NAME_ARG)
                         .build())
                 .build();
@@ -204,12 +201,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         details.put("copied documents", List.copyOf(new TreeSet<>(names.values())));
         details.put("working copy", workingCopy);
         details.put("changes", changes.stream().map(PropertyValue::dotted).toList());
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                "Copy pipeline '" + source.getName() + "' as '" + newName + "'", details,
-                stringArg(call, CONFIRMATION_ID_ARG)));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                "Copy pipeline '" + source.getName() + "' as '" + newName + "'", details));
 
         final String role = pipelineShapes.role(sourceUuid);
         final Map<String, DocRef> copies = new LinkedHashMap<>();

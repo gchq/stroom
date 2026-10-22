@@ -16,45 +16,35 @@
 
 package stroom.mcp.impl;
 
-import stroom.ai.impl.AiConfig;
-import stroom.ai.impl.McpEndpointConfig;
+import stroom.mcp.impl.tools.FormsRequired;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 /// The user's approval of a tool call, made over MCP, that changes something in Stroom. Every such call asks: a
 /// client's model is not Stroom's, and Stroom can't tell what it was asked to do.
 ///
-/// A client that can show forms (MCP elicitation) shows its user a yes or no form. Any other client is given an
-/// approval id for the call: it shows its user what the call will do, and, if they agree, calls [#APPROVE_TOOL]
-/// with the id, which makes the call as it was first made. An id can be used once, only in its own session, and
-/// only for a while.
+/// The user is asked in a yes or no form their client shows (MCP elicitation). A client that can't show forms
+/// can't make such a call at all (see [FormsRequired]): it is never given an id to pass back instead, as its model
+/// could approve its own call with one.
 ///
 /// What is shown leads with the arguments that say what the call acts on (a target's uuid or name, the build, the
-/// tool), then the arguments, cut at [#MAX_SHOWN_ARGUMENTS] characters, saying so when they are. A call whose
-/// arguments are cut gets no approval id: the user couldn't see all of what they would approve.
+/// tool), then the arguments, cut at [#MAX_SHOWN_ARGUMENTS] characters, saying so when they are.
 @Singleton
 class McpApprovals {
 
-    /// The tool a client without forms calls, with an approval id, to make a call its user has approved.
-    static final String APPROVE_TOOL = "approve_call";
-    /// Its argument.
-    static final String APPROVAL_ID_ARG = "approval_id";
-    /// The most characters of a call's arguments a form or approval request shows.
+    /// The most characters of a call's arguments a form shows.
     static final int MAX_SHOWN_ARGUMENTS = 1_500;
     /// The most characters of one argument shown among the arguments that say what the call acts on.
     static final int MAX_SHOWN_KEY_VALUE = 200;
@@ -63,12 +53,10 @@ class McpApprovals {
     private static final List<String> KEY_ENDINGS = List.of("uuid", "name");
 
     private final McpForms forms;
-    private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
-    McpApprovals(final McpForms forms, final Provider<AiConfig> aiConfigProvider) {
+    McpApprovals(final McpForms forms) {
         this.forms = forms;
-        this.aiConfigProvider = aiConfigProvider;
     }
 
     /// Asks the user to approve a call that changes something.
@@ -82,44 +70,18 @@ class McpApprovals {
                              final McpAsyncServerExchange exchange,
                              final String toolName,
                              final String arguments) {
-        if (session.canShowForms()) {
-            final ElicitResult result = forms.ask(session, exchange, formMessage(session, toolName, arguments),
-                    McpForms.NO_FIELDS);
-            return result.action() == ElicitResult.Action.ACCEPT
-                    ? Optional.empty()
-                    : Optional.of(result.action() == ElicitResult.Action.DECLINE
-                            ? "Not run: the user did not allow this call. Don't try it again the same way: ask them "
-                              + "what they want instead."
-                            : "Not run: the user was asked to allow this call, as it changes something in Stroom, "
-                              + "but did not answer.");
+        if (!session.canShowForms()) {
+            return Optional.of(FormsRequired.noForms(toolName));
         }
-        if (isCut(arguments)) {
-            return Optional.of("Not run: this call's arguments are " + NullSafe.trim(arguments).length()
-                               + " characters long, more than the " + MAX_SHOWN_ARGUMENTS + " an approval request "
-                               + "shows, so the user couldn't see all of what they would approve. Make the change "
-                               + "in smaller calls, or use an MCP client that can show forms.");
-        }
-        final String approvalId = UUID.randomUUID().toString();
-        final Duration timeout = config().getApprovalTimeout().getDuration();
-        session.pendingCalls().values().removeIf(pending -> pending.expiresMs() < System.currentTimeMillis());
-        session.pendingCalls().put(approvalId, new PendingCall(approvalId, toolName, arguments,
-                System.currentTimeMillis() + timeout.toMillis()));
-        return Optional.of("Not run yet: this call changes something in Stroom, so the user must approve it first. "
-                           + "Show the user what it will do: " + toolName + " with " + shown(arguments) + ". "
-                           + "Only if they agree, call " + APPROVE_TOOL + " with " + APPROVAL_ID_ARG + "='"
-                           + approvalId + "', which makes this call as it was made. Never approve it yourself. "
-                           + "The approval id can be used once, within " + minutes(timeout) + ".");
-    }
-
-    /// @param session    The session.
-    /// @param approvalId An approval id given in the session.
-    /// @return The call it is for, if it is still waiting: it is then no longer waiting.
-    Optional<PendingCall> take(final McpSession session, final String approvalId) {
-        if (approvalId == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(session.pendingCalls().remove(approvalId.strip()))
-                .filter(pending -> pending.expiresMs() >= System.currentTimeMillis());
+        final ElicitResult result = forms.ask(session, exchange, formMessage(session, toolName, arguments),
+                McpForms.NO_FIELDS);
+        return result.action() == ElicitResult.Action.ACCEPT
+                ? Optional.empty()
+                : Optional.of(result.action() == ElicitResult.Action.DECLINE
+                        ? "Not run: the user did not allow this call. Don't try it again the same way: ask them "
+                          + "what they want instead."
+                        : "Not run: the user was asked to allow this call, as it changes something in Stroom, "
+                          + "but did not answer.");
     }
 
     private static String formMessage(final McpSession session, final String toolName, final String arguments) {
@@ -173,30 +135,5 @@ class McpApprovals {
 
     private static boolean isScalar(final Object value) {
         return value instanceof String || value instanceof Number || value instanceof Boolean;
-    }
-
-    private static String minutes(final Duration duration) {
-        final long minutes = Math.max(1, duration.toMinutes());
-        return minutes + (minutes == 1
-                ? " minute"
-                : " minutes");
-    }
-
-    private McpEndpointConfig config() {
-        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getMcpEndpoint, new McpEndpointConfig());
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /// A call waiting for the user's approval.
-    ///
-    /// @param approvalId The id the client passes back once the user agrees.
-    /// @param toolName   The tool.
-    /// @param arguments  The call's arguments, as JSON.
-    /// @param expiresMs  When the id can no longer be used.
-    record PendingCall(String approvalId, String toolName, String arguments, long expiresMs) {
-
     }
 }

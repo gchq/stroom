@@ -60,7 +60,6 @@ appConfig:
     maxTabSnapshotBytes: 2097152
     maxToolIterations: 100
     mcpEndpoint:
-      approvalTimeout: "PT10M"
       enabled: true
       formTimeout: "PT10M"
       keepAliveInterval: "PT20S"

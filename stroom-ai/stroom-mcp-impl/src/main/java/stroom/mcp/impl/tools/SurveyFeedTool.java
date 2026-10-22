@@ -91,7 +91,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
     static final String EXAMPLES_ARG = "examples_per_shape";
     static final String BUILD_ARG = "build";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
@@ -216,8 +215,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                       + "'<feed> - Survey' with the kinds of event, examples and "
                                                       + "survey state. An existing record is continued: its "
                                                       + "streams are skipped and its shapes are known.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply (fewer "
-                                                                + "streams than the default).")
                         .build())
                 .build();
     }
@@ -232,10 +229,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             }
             final List<Meta> chosen = metas(request.streamIds());
             final String feed = feed(call, context, request, chosen);
-            final Optional<Map<String, Object>> gate = fewerStreamsGate(call, context, feed, request, chosen);
-            if (gate.isPresent()) {
-                return JsonResults.of(gate.get());
-            }
+            confirmFewerStreams(call, context, feed, request, chosen);
             return JsonResults.of(withinTimeLimit(context, () -> survey(context, request, feed, chosen)));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
@@ -262,8 +256,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 orDefault(bounded(call, MAX_PARTS_ARG, 1, 20), 3),
                 maxRecords,
                 orDefault(bounded(call, EXAMPLES_ARG, 1, 10), 2),
-                stringArg(call, BUILD_ARG),
-                stringArg(call, CONFIRMATION_ID_ARG));
+                stringArg(call, BUILD_ARG));
     }
 
     // The streams named, by id.
@@ -295,31 +288,28 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     // A survey call reading fewer than SURVEY_STREAMS streams is the user's to ask for, confirmed in a form (seen in
     // VS Code: an agent surveyed a live feed 3 streams at a time, and the user had to ask for a larger sample). The
-    // answer holds for that feed and count, so later calls go on unasked. Empty when it may go ahead.
-    private Optional<Map<String, Object>> fewerStreamsGate(final ToolCall call,
-                                                           final ToolCallContext context,
-                                                           final String feed,
-                                                           final Request request,
-                                                           final List<Meta> chosen) {
+    // answer holds for that feed and count, so later calls go on unasked. Returns when it may go ahead.
+    private void confirmFewerStreams(final ToolCall call,
+                                     final ToolCallContext context,
+                                     final String feed,
+                                     final Request request,
+                                     final List<Meta> chosen) {
         if (chosen.isEmpty() && request.maxStreams() < FeedSampling.SURVEY_STREAMS) {
-            return fewerStreams(call, context, feed, request.maxStreams(), request.confirmationId());
-        }
-        if (!chosen.isEmpty() && chosen.size() < FeedSampling.SURVEY_STREAMS && !inABuild(feed)) {
+            askFewerStreams(call, context, feed, request.maxStreams());
+        } else if (!chosen.isEmpty() && chosen.size() < FeedSampling.SURVEY_STREAMS && !inABuild(feed)) {
             // A few of an existing feed's streams, by id: as few as a smaller max_streams, so the user's to confirm
             // too (seen in testing on 0.18.13: an existing feed onboarded from 5 streams). A sample uploaded to a
             // build's feed is read as it is.
-            return fewerStreams(call, context, feed, chosen.size(), request.confirmationId());
+            askFewerStreams(call, context, feed, chosen.size());
         }
-        return Optional.empty();
     }
 
-    private Optional<Map<String, Object>> fewerStreams(final ToolCall call,
-                                                       final ToolCallContext context,
-                                                       final String feed,
-                                                       final int count,
-                                                       final String confirmationId) {
+    private void askFewerStreams(final ToolCall call,
+                                 final ToolCallContext context,
+                                 final String feed,
+                                 final int count) {
         if (fewerStreams.agreed(feed, count)) {
-            return Optional.empty();
+            return;
         }
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("feed", feed);
@@ -327,13 +317,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         details.put("default", FeedSampling.SURVEY_STREAMS);
         details.put("fewer streams", "rarer kinds of event are less likely to be found in a call; the survey still "
                                      + "goes on until it is covered");
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
+        consent.require(call, context, Consent.Request.confirmation(NAME,
                 "Survey feed '" + feed + "' only " + count + " stream(s) a call (the default is "
-                + FeedSampling.SURVEY_STREAMS + ")", details, confirmationId));
-        if (gate.isEmpty()) {
-            fewerStreams.agree(feed, count);
-        }
-        return gate;
+                + FeedSampling.SURVEY_STREAMS + ")", details));
+        fewerStreams.agree(feed, count);
     }
 
     // Whether a feed is one a build made (its uploaded samples, a test feed); not for an existing feed. True when
@@ -801,7 +788,6 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param maxRecords      The most records of a stream, or null for the default.
     /// @param examples        The most examples a shape.
     /// @param build           The build to keep the survey in, or null.
-    /// @param confirmationId  From an earlier needs_confirmation reply, or null.
     private record Request(String feed,
                            String streamType,
                            List<Long> streamIds,
@@ -812,8 +798,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            int maxParts,
                            Integer maxRecords,
                            int examples,
-                           String build,
-                           String confirmationId) {
+                           String build) {
 
     }
 

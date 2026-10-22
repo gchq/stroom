@@ -63,7 +63,6 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
     static final String WITHOUT_COMPONENTS_ARG = "without_components";
     static final String MAX_RECORDS_ARG = "max_records";
     static final String REVIEWED_ARG = "reviewed";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     // The records stepped by default, and at most.
     private static final int RECORDS = 50;
@@ -162,7 +161,6 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
                         .addIntegerProperty(MAX_RECORDS_ARG, "The most records stepped: 1 to " + MAX_RECORDS
                                                              + " (default " + RECORDS + ").")
                         .addStringProperty(REVIEWED_ARG, ProposeIndexTemplateTool.REVIEWED_DESCRIPTION)
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(PIPELINE_UUID_ARG)
                         .build())
                 .build();
@@ -194,7 +192,6 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
         final int maxRecords = maxRecords(call);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
         final List<String> without = ToolArgs.strings(call, WITHOUT_COMPONENTS_ARG);
-        final String confirmationId = stringArg(call, CONFIRMATION_ID_ARG);
         final String given = rawArg(call, TEMPLATE_ARG);
         final String template = NullSafe.isBlankString(given)
                 ? memory.shownTemplate(reviewed).orElse(null)
@@ -290,7 +287,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
             return result;
         }
         final Optional<Map<String, Object>> gate = reviews.agree(call, context, NAME, pipelineUuid, destination,
-                templateName, own, components, confirmationId, reviewed);
+                templateName, own, components, reviewed);
         if (gate.isPresent()) {
             return TemplateReviews.asking(gate.get(), result);
         }

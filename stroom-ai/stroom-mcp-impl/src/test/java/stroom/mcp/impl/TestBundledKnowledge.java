@@ -114,6 +114,26 @@ class TestBundledKnowledge {
                         "search_events", "get_instructions", "write_documentation", "start_build");
     }
 
+    @Test
+    void noToolTakesOrMentionsAnIdThatApprovesACall() {
+        // The model must never be handed an id it could pass back to approve its own call: the user agrees in a
+        // form, and a client without forms is refused.
+        final Set<String> idArguments = Set.of("confirmation_id", "approval_id", "source_confirmation_id",
+                "template_confirmation_id");
+        for (final StroomTool tool : tools) {
+            final ToolDefinition definition = tool.definition();
+            if (definition.parameters() != null) {
+                assertThat(definition.parameters().properties().keySet()).as(definition.name())
+                        .doesNotContainAnyElementsOf(idArguments);
+            }
+            assertThat(definition.description()).as(definition.name())
+                    .doesNotContain("confirmation_id", "approval_id", "approve_call");
+        }
+        assertThat(toolNames()).doesNotContain("approve_call");
+        assertThat(StroomMcpServer.INSTRUCTIONS).doesNotContain("approve_call", "needs_confirmation",
+                "needs_approval", "pass the id back");
+    }
+
     private Set<String> toolNames() {
         return tools.stream()
                 .map(tool -> tool.definition().name())

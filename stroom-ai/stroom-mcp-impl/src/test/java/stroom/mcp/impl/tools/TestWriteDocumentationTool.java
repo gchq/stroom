@@ -131,17 +131,18 @@ class TestWriteDocumentationTool {
                                  + "\\nx\\n\\n## Field mapping\\n\\nHand written.\\n\", \"accept_errors\": "
                                  + "[{\"element\": \"decorationFilter\", \"example\": \"No HR record for user "
                                  + "svc-backup\", \"reason\": \"service accounts have none\", \"matches\": \"No HR "
-                                 + "record for user svc-*\"}]";
+                                 + "record for user svc-*\"}]}";
 
-        final Map<String, Object> asked = world.call(tool, context, arguments + "}");
-
-        assertThat(asked).containsEntry("status", "needs_confirmation");
-        assertThat(String.valueOf(asked.get("details"))).contains("decorationFilter: No HR record for user svc-* -- "
-                                                                 + "service accounts have none");
+        // Without a form the user can't confirm it: nothing is written.
+        assertThat(world.refusal(tool, context, arguments)).startsWith("Not done: Record 1 kind(s) of error as "
+                                                                      + "benign for pipeline 'Acme'");
         assertThat(world.world.created).noneMatch(made -> made.startsWith(DocumentationDoc.TYPE));
 
-        final Map<String, Object> made = world.call(tool, context, arguments + ", \"confirmation_id\": \""
-                                                                   + asked.get("confirmation_id") + "\"}");
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final Map<String, Object> made = world.call(tool, user.context(), arguments);
+
+        assertThat(user.shown()).singleElement().asString().contains("decorationFilter: No HR record for user "
+                                                                     + "svc-* -- service accounts have none");
 
         final String text = world.world.body(String.valueOf(made.get("uuid")));
         assertThat(text).contains("Accepted as benign by the user, so not raised again:")
@@ -268,12 +269,13 @@ class TestWriteDocumentationTool {
                 .contains("pipeline_uuid='p' ('TWITTER-Indexing-V1.0')");
 
         // Asked for by the user: the index doc itself as well. It goes on, to the user's confirmation.
-        final Map<String, Object> asked = world.call(tool, context, "{\"build\": \"bb\", \"index_uuid\": \"i\", "
-                                                                    + "\"markdown\": \"x\", \"index_itself\": true}");
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        assertThat(world.refusal(tool, user.context(), "{\"build\": \"bb\", \"index_uuid\": \"i\", "
+                                                      + "\"markdown\": \"x\", \"index_itself\": true}"))
+                .startsWith("The user did not agree to:");
 
-        assertThat(asked).containsEntry("status", "needs_confirmation");
-        assertThat(String.valueOf(asked.get("summary"))).isEqualTo("Document the existing Elastic Index doc "
-                                                                   + "'TWITTER-EVENTS' (System/MCP Workspace/bb)");
+        assertThat(user.forms()).singleElement().satisfies(asked -> assertThat(asked.get("summary"))
+                .isEqualTo("Document the existing Elastic Index doc 'TWITTER-EVENTS' (System/MCP Workspace/bb)"));
     }
 
     @Test

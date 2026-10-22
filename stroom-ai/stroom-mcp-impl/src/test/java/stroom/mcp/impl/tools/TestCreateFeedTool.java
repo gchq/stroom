@@ -48,21 +48,24 @@ class TestCreateFeedTool {
 
     @Test
     void theUserConfirmsTheFeedBeforeItIsMadeInTheBuild() {
-        final ToolCallContext context = PortedToolCalls.context();
         final String arguments = "{\"build\": \"onboard-acme\", \"name\": \"ACME-VPN-V1.0\", \"encoding\": "
-                                 + "\"UTF-16LE\", \"description\": \"The VPN's audit log\"";
+                                 + "\"UTF-16LE\", \"description\": \"The VPN's audit log\"}";
 
-        final Map<String, Object> asked = json(call(arguments + "}", context));
+        // A client that can't show forms can't ask the user: nothing is made, and no id is given to pass back.
+        final ToolResult refused = call(arguments, PortedToolCalls.context());
 
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Create feed 'ACME-VPN-V1.0'");
-        assertThat(asked.get("details")).isEqualTo(Map.of("build", "onboard-acme", "feed name", "ACME-VPN-V1.0",
-                "encoding", "UTF-16LE", "stream type", "Raw Events"));
-        // Nothing made until the user agrees.
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).startsWith("Not done: Create feed 'ACME-VPN-V1.0'. This needs the user's "
+                                              + "agreement in a form")
+                .doesNotContain("confirmation_id");
         assertThat(feeds.feedNamed("ACME-VPN-V1.0")).isNull();
 
-        final Map<String, Object> made = json(call(arguments + ", \"confirmation_id\": \""
-                                                   + asked.get("confirmation_id") + "\"}", context));
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final Map<String, Object> made = json(call(arguments, user.context()));
+
+        assertThat(user.shown()).singleElement().asString().startsWith("Create feed 'ACME-VPN-V1.0'")
+                .contains("- build: onboard-acme", "- feed name: ACME-VPN-V1.0", "- encoding: UTF-16LE",
+                        "- stream type: Raw Events");
 
         final DocRef feed = feeds.feedNamed("ACME-VPN-V1.0");
         assertThat(feeds.world.guard().buildOf(feed)).contains("onboard-acme");
@@ -96,8 +99,13 @@ class TestCreateFeedTool {
                                               + "onboard-delinea) already exists, differing from "
                                               + "'DELINEA-SECRETSERVER-V1.0' only in case.");
         // Refused before the user is asked.
-        assertThat(json(call("{\"build\": \"bb\", \"name\": \"DELINEA-SECRETSERVER-V2.0\"}",
-                PortedToolCalls.context())).get("status")).isEqualTo("needs_confirmation");
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        assertThat(call("{\"build\": \"bb\", \"name\": \"DELINEA-SECRETSERVER-V1.0\"}", user.context()).text())
+                .contains("only in case");
+        assertThat(user.shown()).isEmpty();
+        assertThat(call("{\"build\": \"bb\", \"name\": \"DELINEA-SECRETSERVER-V2.0\"}", user.context()).text())
+                .startsWith("The user did not agree to: Create feed 'DELINEA-SECRETSERVER-V2.0'");
+        assertThat(user.shown()).hasSize(1);
     }
 
     @Test
@@ -135,16 +143,17 @@ class TestCreateFeedTool {
 
         assertThat(refused.text()).startsWith("Build 'bb' works from the existing feed(s) VPN-GATEWAY:")
                 .contains("user_samples=");
-        final ToolCallContext context = PortedToolCalls.context();
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
         final String arguments = "{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-SAMPLES\", \"user_samples\": "
-                                 + "[\"samples/vpn_1.csv\"]";
-        final Map<String, Object> asked = json(call(arguments + "}", context));
-        // The confirmation shows the user the choice: their files instead of the feed's data.
-        assertThat(asked.get("summary")).isEqualTo("Create test feed 'VPN-GATEWAY-SAMPLES' for your sample files "
-                                                   + "(samples/vpn_1.csv) instead of the data in VPN-GATEWAY");
-        assertThat(((Map<?, ?>) asked.get("details")).get("works from")).isEqualTo(List.of("VPN-GATEWAY"));
+                                 + "[\"samples/vpn_1.csv\"]}";
 
-        json(call(arguments + ", \"confirmation_id\": \"" + asked.get("confirmation_id") + "\"}", context));
+        json(call(arguments, user.context()));
+
+        // The confirmation shows the user the choice: their files instead of the feed's data.
+        assertThat(user.shown()).singleElement().asString()
+                .startsWith("Create test feed 'VPN-GATEWAY-SAMPLES' for your sample files (samples/vpn_1.csv) "
+                            + "instead of the data in VPN-GATEWAY")
+                .contains("- works from: VPN-GATEWAY");
 
         // The user's choice, kept: upload_sample takes samples for this feed only.
         final DocRef made = feeds.feedNamed("VPN-GATEWAY-SAMPLES");
@@ -178,9 +187,10 @@ class TestCreateFeedTool {
             assertThat(feeds.world.records().entry("bb", feed.getUuid()).get(BuildFeeds.OUTPUT_FOR))
                     .isEqualTo(List.of("VPN-GATEWAY"));
         }
-        assertThat(json(call("{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-TEST-V9\", \"test_feed\": true}",
-                PortedToolCalls.context())).get("summary"))
-                .isEqualTo("Create test feed 'VPN-GATEWAY-TEST-V9' for the Events made from VPN-GATEWAY");
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        call("{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-TEST-V9\", \"test_feed\": true}", user.context());
+        assertThat(user.shown()).singleElement().asString()
+                .startsWith("Create test feed 'VPN-GATEWAY-TEST-V9' for the Events made from VPN-GATEWAY");
 
         feeds.facts.sources = List.of();
         assertThat(call("{\"build\": \"bb\", \"name\": \"ACME-TEST\", \"test_feed\": true}",

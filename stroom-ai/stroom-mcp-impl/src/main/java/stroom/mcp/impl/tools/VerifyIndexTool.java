@@ -81,7 +81,6 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     static final String RETRIES_ARG = "retries";
     static final String SEARCHES_ARG = "searches";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String CHECKS_ARG = "checks";
     /// What a verification stopped by its client says.
     static final String CANCELLED = "Verification was stopped: the call was cancelled.";
@@ -233,7 +232,6 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                                                               + "hit's StreamId and EventId (record index EventId - "
                                                               + "1); a trace that fails says what it compared "
                                                               + "(trace.why).")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .addBooleanProperty(CHECKS_ARG, "False only when the user asks to skip verification: the "
                                                         + "build's -VERIFY dashboard is made (or its columns "
                                                         + "changed) as the user confirms, and its link returned, "
@@ -339,23 +337,16 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             searchedWith = IndexChecks.Dashboard.of(probe.uuid(), name,
                     IndexChecks.dashboardConfig(source, fields, timeField, window));
         } else if (existing.isPresent()) {
-            final Optional<Map<String, Object>> gate = changed(call, context, existing.get(), source, fields,
-                    timeField, window, design, name);
-            if (gate.isPresent()) {
-                return gate.get();
-            }
+            change(call, context, existing.get(), source, fields, timeField, window, design, name);
             final DashboardDoc doc = dashboardDoc(existing.get().docRef());
             dashboard.put("uuid", doc.getUuid());
             dashboard.put("name", name);
             dashboard.put("saved", true);
             searchedWith = IndexChecks.Dashboard.of(doc.getUuid(), name, doc.getDashboardConfig());
         } else {
-            final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
+            consent.require(call, context, Consent.Request.confirmation(
                     NAME, "Create the verification dashboard '" + name + "' on index '" + index.name() + "'",
-                    design, stringArg(call, CONFIRMATION_ID_ARG)));
-            if (gate.isPresent()) {
-                return gate.get();
-            }
+                    design));
             final DashboardConfig config = IndexChecks.dashboardConfig(source, fields, timeField, window);
             final DashboardDoc made = guard.createFilled(DashboardDoc.TYPE, name, build, ref -> write(
                     dashboardDoc(ref).copy().dashboardConfig(config).build()), false, ROLE);
@@ -437,16 +428,16 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     }
 
     // An existing dashboard: laid out again if made before dashboards were laid out as Stroom's UI needs, and its
-    // columns changed once the user confirms. The round to return, if one is needed.
-    private Optional<Map<String, Object>> changed(final ToolCall call,
-                                                  final ToolCallContext context,
-                                                  final WriteGuard.BuildDoc existing,
-                                                  final DocRef source,
-                                                  final List<String> fields,
-                                                  final String timeField,
-                                                  final String window,
-                                                  final Map<String, Object> design,
-                                                  final String name) {
+    // columns changed once the user confirms.
+    private void change(final ToolCall call,
+                        final ToolCallContext context,
+                        final WriteGuard.BuildDoc existing,
+                        final DocRef source,
+                        final List<String> fields,
+                        final String timeField,
+                        final String window,
+                        final Map<String, Object> design,
+                        final String name) {
         DashboardDoc doc = dashboardDoc(existing.docRef());
         final List<String> shown = shownColumns(doc.getDashboardConfig());
         if (doc.getDashboardConfig() == null || doc.getDashboardConfig().getLayoutConstraints() == null) {
@@ -456,15 +447,10 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                     .build());
         }
         if (!shown.equals(fields)) {
-            final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
-                    NAME, "Change the columns of dashboard '" + name + "'", design,
-                    stringArg(call, CONFIRMATION_ID_ARG)));
-            if (gate.isPresent()) {
-                return gate;
-            }
+            consent.require(call, context, Consent.Request.confirmation(
+                    NAME, "Change the columns of dashboard '" + name + "'", design));
             write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, fields, timeField, window)).build());
         }
-        return Optional.empty();
     }
 
     // Every field the pipeline writes for these Events must be in the index (asked for by the user: an index that

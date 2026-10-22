@@ -326,15 +326,13 @@ class BuildDocumentation {
     /// themselves).
     ///
     /// @param described The descriptions, with those wanted.
-    /// @param ids       Ids to give back with the descriptions (a confirmation_id), or none.
     /// @return The round.
-    static Map<String, Object> needsDescriptions(final Descriptions described, final Map<String, Object> ids) {
+    static Map<String, Object> needsDescriptions(final Descriptions described) {
         final List<Map<String, Object>> fields = new ArrayList<>(described.wanted().values());
         final boolean shared = fields.stream().anyMatch(field -> JsonValues.truthy(field.get("under")));
         final Map<String, Object> round = new LinkedHashMap<>();
         round.put("status", "needs_descriptions");
         round.put("fields", fields);
-        round.putAll(ids);
         round.put("hint", "Nothing is written yet. For each field, say in one short sentence what it means for this "
                           + "source, for someone searching or reading the data: infer it from the field's name, "
                           + "where it comes from (from) and its sample values, and the user's source notes where "
@@ -353,9 +351,7 @@ class BuildDocumentation {
                   + "under one, describe that one by its full path too)."
                 : "")
                           + " Then call write_documentation again with the same arguments plus "
-                          + "field_descriptions={field: description}" + (ids.isEmpty()
-                ? ""
-                : ", and the ids given here") + ".");
+                          + "field_descriptions={field: description}.");
         return round;
     }
 

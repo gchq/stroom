@@ -62,7 +62,6 @@ class CreateFeedTool extends AbstractBuiltInTool {
     static final String DESCRIPTION_ARG = "description";
     static final String USER_SAMPLES_ARG = "user_samples";
     static final String TEST_FEED_ARG = "test_feed";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     /// The build's argument, as every build tool describes it.
     static final String BUILD_DESCRIPTION = "Build name; its workspace folder is created if needed.";
 
@@ -150,7 +149,6 @@ class CreateFeedTool extends AbstractBuiltInTool {
                                                            + "the user chose (else the server makes "
                                                            + "'<FEED>-MCP-TEST'). Processing writes to the newest "
                                                            + "one from then on.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(BUILD_ARG, NAME_ARG)
                         .build())
                 .build();
@@ -218,12 +216,8 @@ class CreateFeedTool extends AbstractBuiltInTool {
                     : "Create test feed '" + proposed + "' for your sample files (" + String.join(", ", chosen)
                       + ") instead of the data in " + String.join(", ", sources);
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                        summary, details, stringArg(call, CONFIRMATION_ID_ARG))
+        consent.require(call, context, Consent.Request.confirmation(NAME, summary, details)
                 .withEditable(NAME_ARG, "Feed name", proposed));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
         // The user may have corrected it in the form.
         final String name = consent.edited(context, NAME_ARG, proposed);
         if (!name.equals(proposed)) {

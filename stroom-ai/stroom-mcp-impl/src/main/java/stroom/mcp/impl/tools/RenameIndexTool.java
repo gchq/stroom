@@ -44,7 +44,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -57,7 +56,6 @@ class RenameIndexTool extends AbstractBuiltInTool {
     static final String NAME = "rename_index";
     static final String INDEX_UUID_ARG = "index_uuid";
     static final String INDEX_NAME_ARG = "index_name";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     private static final Pattern INDEX_NAME = Pattern.compile("^[a-z0-9][a-z0-9._-]*$");
 
@@ -128,7 +126,6 @@ class RenameIndexTool extends AbstractBuiltInTool {
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(INDEX_UUID_ARG, "The build's Elastic Index doc.")
                         .addStringProperty(INDEX_NAME_ARG, "The index or data stream name the user wants instead.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(INDEX_UUID_ARG, INDEX_NAME_ARG)
                         .build())
                 .build();
@@ -185,12 +182,8 @@ class RenameIndexTool extends AbstractBuiltInTool {
         if (!removals.isEmpty()) {
             details.put("for the cluster admin, once they no longer want them", removals);
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                "Use index name '" + newName + "' instead of '" + old + "'", details,
-                stringArg(call, CONFIRMATION_ID_ARG)));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                "Use index name '" + newName + "' instead of '" + old + "'", details));
         final ElasticIndexDoc saved = write(doc.copy().indexName(newName).build());
         for (final Destination pipeline : pipelines) {
             buildIndexes.setIndexName(context.session(), pipeline, newName);

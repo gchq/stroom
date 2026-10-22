@@ -98,10 +98,9 @@ class TestCreateIndexDocTool {
         world.elasticIndex("k", "Keycloak", "ecs-keycloak-v1", cluster, false);
         final Map<String, Object> arguments = elastic("acme-v1");
         arguments.remove("cluster_uuid");
-        final Map<String, Object> asked = call(arguments, IndexingWorld.noForms());
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(String.valueOf(((Map<?, ?>) asked.get("details")).get("cluster")))
-                .isEqualTo("ES_DEV (the cluster the existing Elastic Index docs use)");
+        call(arguments, world.forms(question -> null));
+        assertThat(world.asked).singleElement().asString()
+                .contains("\n- cluster: ES_DEV (the cluster the existing Elastic Index docs use)");
     }
 
     @Test

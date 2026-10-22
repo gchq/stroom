@@ -111,16 +111,14 @@ class ProcessingSources {
     /// @param sourceUuid     The source events pipeline the call named, or null.
     /// @param streamIds      The streams to process, or none for a feed's.
     /// @param streamType     The stream type a feed's filter selects.
-    /// @param confirmationId The id of the user's confirmation of a source the tools didn't build, or null.
-    /// @return The source, none, or the confirmation round to return.
+    /// @return The source, or none.
     /// @throws ToolRefusal if the streams can't be tied to the source.
     EventsSource eventsSource(final ToolCall call,
                               final ToolCallContext context,
                               final PipelineDoc pipeline,
                               final String sourceUuid,
                               final List<Long> streamIds,
-                              final String streamType,
-                              final String confirmationId) {
+                              final String streamType) {
         if (!pipelineOutputs.isIndexing(pipeline.getUuid())) {
             if (NullSafe.isNonBlankString(sourceUuid)) {
                 throw new ToolRefusal("source_pipeline_uuid is only for indexing pipelines");
@@ -166,13 +164,10 @@ class ProcessingSources {
             details.put("source pipeline", source.getName());
             details.put("uuid", sourceUuid);
             details.put("indexing pipeline", pipeline.getName());
-            final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
+            consent.require(call, context, Consent.Request.confirmation(
                     OTHER_SOURCE_ACTION, "Index Events from pipeline '" + source.getName() + "', which this server "
                                          + "did not build? Only its Events are selected (Pipeline condition).",
-                    details, confirmationId).keepingId());
-            if (gate.isPresent()) {
-                return new EventsSource(null, gate.get());
-            }
+                    details));
         }
         if (pipelineOutputs.isIndexing(sourceUuid)) {
             throw new ToolRefusal("'" + source.getName() + "' is an indexing pipeline, not the events pipeline that "
@@ -190,7 +185,7 @@ class ProcessingSources {
         if (!foreign.isEmpty() || !missing.isEmpty()) {
             throw new ToolRefusal(notProduced(source, foreign, missing));
         }
-        return new EventsSource(sourceRef, null);
+        return new EventsSource(sourceRef);
     }
 
     /// Events streams Stroom marked deleted when their raw stream was processed again (an events pipeline updated
@@ -345,11 +340,10 @@ class ProcessingSources {
 
     /// The events pipeline an indexing pipeline's Events must come from.
     ///
-    /// @param pipeline The source pipeline, or null for none (not indexing Events) or while the user is asked.
-    /// @param round    The confirmation round to return as the tool's result, or null.
-    record EventsSource(DocRef pipeline, Map<String, Object> round) {
+    /// @param pipeline The source pipeline, or null for none (not indexing Events).
+    record EventsSource(DocRef pipeline) {
 
         /// No source: the pipeline doesn't index Events.
-        static final EventsSource NONE = new EventsSource(null, null);
+        static final EventsSource NONE = new EventsSource(null);
     }
 }
