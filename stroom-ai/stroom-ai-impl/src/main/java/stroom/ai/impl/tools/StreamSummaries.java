@@ -177,10 +177,21 @@ public class StreamSummaries {
     }
 
     private List<ErrorTriage.Marker> markers(final long errorStreamId) throws IOException {
+        return errorMarkers(errorStreamId, MAX_MARKERS_PER_STREAM);
+    }
+
+    /// The markers an Error stream holds, read as the user (as the data viewer's marker mode gives them).
+    ///
+    /// @param errorStreamId An Error stream.
+    /// @param max           The most markers to give.
+    /// @return Its first markers, up to `max`.
+    /// @throws IOException      if it can't be read.
+    /// @throws RuntimeException if it can't be opened, e.g. it has been deleted or the user may not view its feed.
+    public List<ErrorTriage.Marker> errorMarkers(final long errorStreamId, final int max) throws IOException {
         final RawText text = StreamReader.errorStreamText(storeProvider.get(), errorStreamId,
                 MAX_ERROR_STREAM_BYTES);
         final List<StoredError> stored = ErrorStreamMarkers.parse(text.text(), text.truncated()).markers();
-        return stored.subList(0, Math.min(stored.size(), MAX_MARKERS_PER_STREAM)).stream()
+        return stored.subList(0, Math.min(stored.size(), max)).stream()
                 .map(ErrorTriage::fromStoredError)
                 .toList();
     }

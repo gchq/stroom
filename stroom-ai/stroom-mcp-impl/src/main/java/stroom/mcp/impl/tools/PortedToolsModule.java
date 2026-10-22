@@ -64,7 +64,9 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(ReprocessStreamsTool.class)
                 .addBinding(CreatePipelineTool.class)
                 .addBinding(CopyPipelineTool.class)
-                .addBinding(UpdatePipelineTool.class);
+                .addBinding(UpdatePipelineTool.class)
+                .addBinding(DraftCefMappingTool.class)
+                .addBinding(ReviewCoverageTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)

@@ -135,6 +135,48 @@ class PipelineIndex {
         return list(type);
     }
 
+    /// @param type    A document type.
+    /// @param pattern A name, with `*` for any characters, e.g. `*CEF*`.
+    /// @param limit   The most to give.
+    /// @return The documents of the type so named that the user can view, in name order (as the Stroom MCP
+    /// server's `find_documents` found them by name); none if they can't be listed.
+    List<DocRef> named(final String type, final String pattern, final int limit) {
+        try {
+            return NullSafe.list(docFinderProvider.get().findByName(type, pattern, true)).stream()
+                    .filter(documentAccess::canView)
+                    .sorted(Comparator.comparing((DocRef docRef) -> NullSafe.string(docRef.getName()))
+                            .thenComparing(DocRef::getUuid))
+                    .limit(limit)
+                    .toList();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the documents of type " + type + " named " + pattern, e);
+            return List.of();
+        }
+    }
+
+    /// @param text  Text the documents' content must contain, e.g. `CEF:0`.
+    /// @param limit The most matches asked of the content index.
+    /// @return The documents of any type the user can view whose content contains it (any case), in the content
+    /// index's order; none while the index isn't ready, or if it can't be searched.
+    List<DocRef> withContent(final String text, final int limit) {
+        final ContentIndex contentIndex = contentIndexProvider.get();
+        try {
+            if (contentIndex == null || !contentIndex.isReady()) {
+                return List.of();
+            }
+            final ResultPage<DocContentMatch> page = contentIndex.findInContent(new FindInContentRequest(
+                    new PageRequest(0, limit), null, StringMatch.contains(text, false)));
+            return NullSafe.list(NullSafe.get(page, ResultPage::getValues)).stream()
+                    .map(DocContentMatch::getDocRef)
+                    .filter(docRef -> docRef != null && documentAccess.canView(docRef))
+                    .distinct()
+                    .toList();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to search the content index for '" + text + "'", e);
+            return List.of();
+        }
+    }
+
     /// @param documentAccess Finds the folder.
     /// @param docRef         A document the user can view.
     /// @return The Explorer path of its folder from System, e.g. `System/Template Pipelines`, as the template
