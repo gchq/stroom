@@ -419,12 +419,6 @@ public class DataRetentionImpactPresenter
         return getView().getToolbar();
     }
 
-    @Override
-    protected void onReveal() {
-        super.onReveal();
-        refresh();
-    }
-
     public void refresh() {
         dataProvider.refresh(true);
     }

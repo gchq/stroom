@@ -416,12 +416,6 @@ public class ManageGlobalPropertyListPresenter
         return getView().getToolbar();
     }
 
-    @Override
-    protected void onReveal() {
-        super.onReveal();
-        refresh();
-    }
-
     public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
         this.filterErrorConsumer = filterErrorConsumer;
     }

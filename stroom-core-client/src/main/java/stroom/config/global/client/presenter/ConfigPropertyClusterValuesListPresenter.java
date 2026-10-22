@@ -153,12 +153,6 @@ public class ConfigPropertyClusterValuesListPresenter
         return row.getExpander();
     }
 
-    @Override
-    protected void onReveal() {
-        super.onReveal();
-        refresh();
-    }
-
     public void refresh() {
         final List<ClusterValuesRow> rows = ClusterValuesRow.buildTree(effectiveValueToNodeSourcesMap, treeAction);
         dataProvider.setCompleteList(rows);

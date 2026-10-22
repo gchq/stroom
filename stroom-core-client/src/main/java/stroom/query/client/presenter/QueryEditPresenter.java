@@ -355,12 +355,6 @@ public class QueryEditPresenter
         requestTimer.schedule(DEBOUNCE_DELAY_MS);
     }
 
-    @Override
-    protected void onHide() {
-        // Clear the completions from memory
-        editorPresenter.deRegisterCompletionProviders();
-    }
-
     private void selectTab(final TabData tabData) {
         if (TABLE.equals(tabData)) {
             linkTabsLayoutView.getTabBar().selectTab(tabData);

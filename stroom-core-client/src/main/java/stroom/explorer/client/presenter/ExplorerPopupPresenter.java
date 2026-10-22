@@ -112,10 +112,6 @@ public class ExplorerPopupPresenter
         return explorerTree.getSelectionModel().getSelected();
     }
 
-    @Override
-    protected void onHide() {
-    }
-
     public void show(final BiConsumer<DocRef, HidePopupRequestEvent> consumer) {
         show(consumer, PopupType.OK_CANCEL_DIALOG);
     }
