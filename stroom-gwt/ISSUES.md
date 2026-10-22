@@ -281,9 +281,12 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
-* `App/Editors/DashboardEditor` `TableFilterDrivesQuery` and `App/Main/JobsScreen`
-  `CrossNavigation` (flaky): each failed once in a full run with the leak check (no "matched red"
-  row; the node link opened nothing) and passed when run alone.
+* `App/Editors/DashboardEditor` `TableFilterDrivesQuery` (flaky): failed in two of four full runs
+  with the leak check, and once in eight runs of its group, never alone (no "matched red" row). A
+  guess: under load its second Run Query click lands while the first query still runs, when the
+  button stops it instead.
+* `App/Main/JobsScreen` `CrossNavigation` (flaky): failed once in a full run (the node link opened
+  nothing) and passed alone.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 
@@ -303,6 +306,21 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
 ## Memory
+
+### Presenters nothing owned (found and fixed 22 October 2026)
+
+**Fixed** (the Phase 5 ownership audit of `COMPONENT_MODEL_DESIGN.md`):
+
+* The Task Manager (`UserTaskManagerPresenter`) took a finished task's row out of its view but kept
+  its presenter in `taskPresenterMap` for good, one per finished task while the app ran. It now owns
+  each row's presenter and releases it, and drops it from the map, when its task ends. Not unit
+  tested: the class can't be loaded in a JVM (`GWT.create` in a static field).
+* A dashboard component's settings dialog, the annotation status and assignee dialogs (kept per
+  table), the secret editors of the credential dialogs, Ask Stroom AI's config, history, download
+  and attachment dialogs, and the login screen's password dialogs were never released. Each is now
+  owned by what shows it, or made for one use and disposed once hidden.
+* An annotation's presenter was made before it was loaded, so a failed load or a user without the
+  permission left it unowned; it is now made once there is an annotation to show.
 
 ### Closed screens are never released
 

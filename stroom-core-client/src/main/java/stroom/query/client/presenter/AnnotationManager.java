@@ -45,6 +45,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
@@ -71,8 +72,6 @@ public class AnnotationManager implements HasHandlers {
     private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
-    private ChangeStatusPresenter changeStatusPresenter;
-    private ChangeAssignedToPresenter changeAssignedToPresenter;
 
     private List<TableRow> selectedItems;
 
@@ -98,20 +97,6 @@ public class AnnotationManager implements HasHandlers {
 
     public boolean isEnabled() {
         return enabled;
-    }
-
-    private ChangeStatusPresenter getChangeStatusPresenter() {
-        if (changeStatusPresenter == null) {
-            changeStatusPresenter = changeStatusPresenterProvider.get();
-        }
-        return changeStatusPresenter;
-    }
-
-    private ChangeAssignedToPresenter getChangeAssignedToPresenter() {
-        if (changeAssignedToPresenter == null) {
-            changeAssignedToPresenter = changeAssignedToPresenterProvider.get();
-        }
-        return changeAssignedToPresenter;
     }
 
     public void setColumnSupplier(final Supplier<List<Column>> columnSupplier) {
@@ -436,13 +421,14 @@ public class AnnotationManager implements HasHandlers {
 
     private void changeStatus(final List<Long> annotationIdList) {
         if (enabled) {
-            getChangeStatusPresenter().show(annotationIdList);
+            // One per use, released once it is hidden
+            MyPresenterWidget.disposeWhenHidden(changeStatusPresenterProvider.get()).show(annotationIdList);
         }
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
         if (enabled) {
-            getChangeAssignedToPresenter().show(annotationIdList);
+            MyPresenterWidget.disposeWhenHidden(changeAssignedToPresenterProvider.get()).show(annotationIdList);
         }
     }
 

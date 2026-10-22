@@ -53,6 +53,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -311,7 +312,8 @@ public class AskStroomAiPresenter
     public void onChangeConfig() {
         askStroomAiClient.getConfig(config -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
-                final AskStroomAiConfigPresenter askStroomAiConfigPresenter = askStroomAiConfigPresenterProvider.get();
+                final AskStroomAiConfigPresenter askStroomAiConfigPresenter =
+                        MyPresenterWidget.disposeWhenHidden(askStroomAiConfigPresenterProvider.get());
                 askStroomAiConfigPresenter.show(
                         config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
             });
@@ -918,7 +920,7 @@ public class AskStroomAiPresenter
 
     @Override
     public void onShowHistory() {
-        aiChatHistoryPresenterProvider.get().show(this::loadChat);
+        MyPresenterWidget.disposeWhenHidden(aiChatHistoryPresenterProvider.get()).show(this::loadChat);
     }
 
     @Override
@@ -926,7 +928,8 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final DownloadChatPresenter dlPresenter = downloadChatPresenterProvider.get();
+        final DownloadChatPresenter dlPresenter = MyPresenterWidget.disposeWhenHidden(
+                downloadChatPresenterProvider.get());
         ShowPopupEvent.builder(dlPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Download Options")
@@ -950,7 +953,8 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final AiAttachmentDataPresenter presenter = aiAttachmentDataPresenterProvider.get();
+        final AiAttachmentDataPresenter presenter = MyPresenterWidget.disposeWhenHidden(
+                aiAttachmentDataPresenterProvider.get());
         presenter.show(currentChat.getId(), attachmentId, description);
     }
 

@@ -61,6 +61,7 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
         view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
         this.credentialClient = credentialClient;
         this.secretPresenters = secretPresenters;
+        secretPresenters.setOwner(this);
     }
 
     /// Shows the dialog to replace the secret of the given credential.

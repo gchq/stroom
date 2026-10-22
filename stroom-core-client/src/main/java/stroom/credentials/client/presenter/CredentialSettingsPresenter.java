@@ -62,6 +62,7 @@ public class CredentialSettingsPresenter
         view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
 
         this.secretPresenters = secretPresenters;
+        secretPresenters.setOwner(this);
     }
 
     @Override

@@ -68,6 +68,17 @@ public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>>
         return child;
     }
 
+    /// Disposes a presenter or component this presenter owns early, e.g. one no longer shown.
+    ///
+    /// @param child The child.
+    protected final void release(final HasComponentNode child) {
+        final ComponentNode childNode = child.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
+        if (childNode != null) {
+            node.release(childNode);
+        }
+    }
+
     /// Releases this presenter and what it owns for good. Runs once, however often it is called.
     public final void dispose() {
         node.dispose();

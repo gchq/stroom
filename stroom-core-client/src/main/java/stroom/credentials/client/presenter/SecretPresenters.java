@@ -18,6 +18,8 @@ package stroom.credentials.client.presenter;
 
 import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.shared.CredentialType;
+import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.HasComponentNode;
 
 import com.google.inject.Provider;
 
@@ -39,6 +41,8 @@ public class SecretPresenters {
     private final Provider<UsernamePasswordSecretPresenter> usernamePasswordSecretPresenterProvider;
 
     private final Map<CredentialType, SecretPresenter<?>> presenters = new HashMap<>();
+    // What owns the presenters made (the dialog that shows them), so that they go with it
+    private ComponentNode owner;
 
     @Inject
     public SecretPresenters(
@@ -54,6 +58,11 @@ public class SecretPresenters {
         this.usernamePasswordSecretPresenterProvider = usernamePasswordSecretPresenterProvider;
     }
 
+    /// @param owner What owns the presenters made, e.g. the dialog that shows them.
+    public void setOwner(final HasComponentNode owner) {
+        this.owner = owner.getComponentNode();
+    }
+
     /// Returns the presenter for the secret of the given credential type, creating it if needed.
     ///
     /// @param credentialType The type of credential.
@@ -62,6 +71,9 @@ public class SecretPresenters {
         SecretPresenter<?> presenter = presenters.get(credentialType);
         if (presenter == null) {
             presenter = create(credentialType);
+            if (owner != null && presenter instanceof final HasComponentNode hasComponentNode) {
+                owner.adopt(hasComponentNode.getComponentNode());
+            }
             presenters.put(credentialType, presenter);
         }
         return presenter;

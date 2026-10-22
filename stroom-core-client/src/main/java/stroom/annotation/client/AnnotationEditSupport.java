@@ -49,9 +49,6 @@ public class AnnotationEditSupport implements HasHandlers {
         this.securityContext = securityContext;
 
         eventBus.addHandler(CreateAnnotationEvent.getType(), e -> {
-            // Released, with all its presenters, when its tab is closed
-            final AnnotationPresenter presenter = presenterProvider.get();
-            presenter.setInitialComment(e.getComment());
             final CreateAnnotationRequest request = new CreateAnnotationRequest(
                     e.getTitle(),
                     e.getSubject(),
@@ -62,16 +59,20 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getLinkedEvents(),
                     e.getLinkedAnnotations());
             annotationResourceClient.createAnnotation(request, annotation -> {
+                // Made once there is something to show, and released, with all its presenters, when
+                // its tab is closed
+                final AnnotationPresenter presenter = presenterProvider.get();
+                presenter.setInitialComment(e.getComment());
                 show(presenter, annotation);
                 AnnotationChangeEvent.fireDeferred(this, annotation.asDocRef());
             }, new DefaultTaskMonitorFactory(this));
         });
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
-            // Released, with all its presenters, when its tab is closed
-            final AnnotationPresenter presenter = presenterProvider.get();
             annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
-                    show(presenter, annotation), new DefaultTaskMonitorFactory(this));
+                    // Made once there is something to show, and released, with all its presenters,
+                    // when its tab is closed
+                    show(presenterProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
         });
     }
 

@@ -22,6 +22,7 @@ import stroom.task.client.TaskStartEvent;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.HasComponentNode;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -76,6 +77,22 @@ class TestMyPresenter {
         assertThat(started).containsExactly(task);
     }
 
+    @Test
+    void releasingAChildDisposesItAndLeavesTheOthers() {
+        // e.g. a task's row, once the task has finished
+        final TestPresenter presenter = new TestPresenter(eventBus);
+        final ComponentNode finished = new ComponentNode("finished");
+        final ComponentNode running = new ComponentNode("running");
+        presenter.ownChild(() -> finished);
+        presenter.ownChild(() -> running);
+
+        presenter.releaseChild(() -> finished);
+
+        assertThat(finished.isDisposed()).isTrue();
+        assertThat(running.isDisposed()).isFalse();
+        assertThat(presenter.getComponentNode().childCount()).isEqualTo(1);
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -88,6 +105,14 @@ class TestMyPresenter {
         @Override
         protected void revealInParent() {
             // Never revealed
+        }
+
+        void ownChild(final HasComponentNode child) {
+            own(child);
+        }
+
+        void releaseChild(final HasComponentNode child) {
+            release(child);
         }
     }
 }

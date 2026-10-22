@@ -184,7 +184,7 @@ public class UserTaskManagerPresenter
                     // If there isn't one then create a new one and add it to
                     // the display.
                     if (taskPresenter == null) {
-                        taskPresenter = taskPresenterProvider.get();
+                        taskPresenter = own(taskPresenterProvider.get());
                         taskPresenter.setUiHandlers(this);
                         taskPresenter.setTaskProgress(taskProgress);
                         taskPresenter.setTerminateVisible(true);
@@ -200,9 +200,11 @@ public class UserTaskManagerPresenter
                 }
             }
 
-            // Remove old tasks.
+            // Remove old tasks, and release their presenters (they were once kept for good)
             for (final UserTaskPresenter actionPresenter : tasksToRemove) {
                 getView().removeTask(actionPresenter.getView());
+                taskPresenterMap.values().remove(actionPresenter);
+                release(actionPresenter);
             }
         }
     }

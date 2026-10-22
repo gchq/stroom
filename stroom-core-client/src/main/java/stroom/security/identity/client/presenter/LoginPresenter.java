@@ -28,6 +28,7 @@ import stroom.security.identity.shared.LoginRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.client.RedirectUrlUtil;
 import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -106,13 +107,14 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
 
     @Override
     public void emailResetPassword() {
-        final EmailResetPasswordPresenter emailResetPasswordPresenter = emailResetPasswordPresenterProvider.get();
+        final EmailResetPasswordPresenter emailResetPasswordPresenter =
+                MyPresenterWidget.disposeWhenHidden(emailResetPasswordPresenterProvider.get());
         emailResetPasswordPresenter.show();
     }
 
     private void changePassword() {
         final ChangePasswordPresenter changePasswordPresenter =
-                changePasswordPresenterProvider.get();
+                MyPresenterWidget.disposeWhenHidden(changePasswordPresenterProvider.get());
         changePasswordPresenter.show("Change Password", e -> {
             if (e.isOk()) {
                 // Validate the change-password dialog (new password strength + confirmation), not the
