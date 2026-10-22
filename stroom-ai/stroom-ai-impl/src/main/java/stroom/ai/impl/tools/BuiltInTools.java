@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolSummary;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -24,10 +26,14 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -41,10 +47,12 @@ public class BuiltInTools {
 
     private final Map<ToolSpecification, ToolExecutor> toolMap;
     private final Set<String> readOnlyToolNames;
+    private final Set<String> readOnlyCallToolNames;
     private final Set<String> trustedToolNames;
     private final Set<String> boundedToolNames;
     private final Map<String, ToolPermissions> permissions;
     private final Map<String, StroomTool> toolsByName;
+    private final Map<String, AiToolCategory> categories;
 
     /// @param tools    The tools, as bound in [BuiltInToolsModule].
     /// @param contexts Makes the context of a call in a chat.
@@ -52,14 +60,19 @@ public class BuiltInTools {
     BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
         final Set<String> readOnly = new HashSet<>();
+        final Set<String> readOnlyCalls = new HashSet<>();
         final Set<String> trusted = new HashSet<>();
         final Set<String> bounded = new HashSet<>();
         final Map<String, ToolPermissions> permissionsByName = new HashMap<>();
         final Map<String, StroomTool> byName = new HashMap<>();
+        final Map<String, AiToolCategory> categoriesByName = new HashMap<>();
         for (final StroomTool tool : tools) {
             final ToolSpecification specification = LangChain4jTools.specification(tool.definition());
             if (tool.isReadOnly()) {
                 readOnly.add(specification.name());
+            }
+            if (tool.hasReadOnlyCalls()) {
+                readOnlyCalls.add(specification.name());
             }
             if (!tool.readsUntrustedContent()) {
                 trusted.add(specification.name());
@@ -69,15 +82,19 @@ public class BuiltInTools {
             }
             permissionsByName.put(specification.name(), tool.permissions());
             byName.put(specification.name(), tool);
+            categoriesByName.put(specification.name(), Objects.requireNonNull(tool.category(),
+                    () -> "Tool '" + specification.name() + "' has no category"));
             // langchain4j gives the executor the chat's id as its memory id.
             map.put(specification, LangChain4jTools.executor(tool, contexts::forMemoryId));
         }
         toolMap = Map.copyOf(map);
         readOnlyToolNames = Set.copyOf(readOnly);
+        readOnlyCallToolNames = Set.copyOf(readOnlyCalls);
         trustedToolNames = Set.copyOf(trusted);
         boundedToolNames = Set.copyOf(bounded);
         permissions = Map.copyOf(permissionsByName);
         toolsByName = Map.copyOf(byName);
+        categories = Map.copyOf(categoriesByName);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -88,6 +105,30 @@ public class BuiltInTools {
      */
     public Map<ToolSpecification, ToolExecutor> toolMap() {
         return toolMap;
+    }
+
+    /// @param toolName A tool name.
+    /// @return True if it is a built-in tool some of whose calls (or all) cannot change anything.
+    public boolean hasReadOnlyCalls(final String toolName) {
+        return readOnlyCallToolNames.contains(toolName);
+    }
+
+    /// @return Every built-in tool, as an administrator choosing what a tool policy grants sees it, by name.
+    public List<AiToolSummary> summaries() {
+        return toolsByName.values().stream()
+                .map(tool -> {
+                    final ToolDefinition general = tool.definition().general();
+                    return new AiToolSummary(general.name(), tool.category(), tool.isReadOnly(),
+                            general.description());
+                })
+                .sorted(Comparator.comparing(AiToolSummary::getName))
+                .toList();
+    }
+
+    /// @param toolName A tool name.
+    /// @return The built-in tool's category, or empty if it isn't a built-in tool.
+    public Optional<AiToolCategory> category(final String toolName) {
+        return Optional.ofNullable(categories.get(toolName));
     }
 
     /**

@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryPath;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -44,6 +45,11 @@ class MemoryTool extends AbstractBuiltInTool {
     @Inject
     MemoryTool(final AiMemoryService memoryService) {
         this.memoryService = memoryService;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override
@@ -108,6 +114,12 @@ class MemoryTool extends AbstractBuiltInTool {
     @Override
     public boolean isReadOnly() {
         return false;
+    }
+
+    /// @return True: `list` and `read` change nothing, so a read-only tool policy still offers it.
+    @Override
+    public boolean hasReadOnlyCalls() {
+        return true;
     }
 
     /// @return True for `list` and `read`, which change nothing; false for the other commands, and for a call

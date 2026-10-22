@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.shared.AiToolCategory;
+
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.ToolExecutor;
@@ -84,6 +86,11 @@ class TestBuiltInTools {
     void registryReportsAToolFailureAsTextRatherThanPropagating() {
         final ToolSpecification spec = ToolSpecification.builder().name("boom").build();
         final BuiltInTools registry = new BuiltInTools(Set.of(new StroomTool() {
+            @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CORE;
+            }
+
             @Override
             public ToolDefinition definition() {
                 return ToolDefinition.builder().name("boom").build();

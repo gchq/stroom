@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiToolCategory;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.logging.LambdaLogger;
@@ -49,6 +50,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -101,6 +103,8 @@ public final class McpToolset implements AutoCloseable {
     private final Map<String, Consumer<String>> progressListeners = new ConcurrentHashMap<>();
     // The group each tool is declared to be in, by an admin's rule or by its server.
     private final Map<String, String> declaredGroups = new ConcurrentHashMap<>();
+    // The category of tool policy that grants each tool.
+    private final Map<String, AiToolCategory> categories = new ConcurrentHashMap<>();
 
     McpToolset(final List<McpServerConnection> connections,
                final List<String> warnings,
@@ -261,6 +265,8 @@ public final class McpToolset implements AutoCloseable {
                     }
                     toolInfos.put(name, toolInfo(connection, tool, name, filter.policyFor(tool.name())));
                     NullSafe.consume(declaredGroup(tool), group -> declaredGroups.put(name, group));
+                    categories.put(name, categoryOf(declaredGroup(tool),
+                            NullSafe.get(connection.config(), McpToolServerConfig::getToolCategory)));
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -301,6 +307,28 @@ public final class McpToolset implements AutoCloseable {
      */
     public Optional<String> declaredGroup(final String toolName) {
         return Optional.ofNullable(declaredGroups.get(toolName));
+    }
+
+    /// @param toolName The name of a tool offered by [#tools()].
+    /// @return The category of tool policy that grants it: the category its server names (see
+    /// [#categoryOf(String, AiToolCategory)]), and Core for the resource tools.
+    public AiToolCategory category(final String toolName) {
+        return categories.getOrDefault(toolName, AiToolCategory.CORE);
+    }
+
+    /// @param declaredGroup  The group a tool's server puts it in (as `_meta.group`), or null.
+    /// @param serverCategory The category an administrator set for the server's tools, or null.
+    /// @return The group if it names a category (e.g. `search`), else the server's category, else Core.
+    static AiToolCategory categoryOf(final String declaredGroup, final AiToolCategory serverCategory) {
+        if (declaredGroup != null) {
+            for (final AiToolCategory category : AiToolCategory.values()) {
+                if (category.name().equalsIgnoreCase(declaredGroup)
+                    || category.getDisplayValue().equalsIgnoreCase(declaredGroup)) {
+                    return category;
+                }
+            }
+        }
+        return Objects.requireNonNullElse(serverCategory, AiToolCategory.CORE);
     }
 
     /// @param tool A tool, as its server gives it.

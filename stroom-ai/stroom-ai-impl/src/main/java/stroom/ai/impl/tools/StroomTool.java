@@ -16,7 +16,9 @@
 
 package stroom.ai.impl.tools;
 
-/// One of Stroom's own tools, as any agent may call it: the "Ask Stroom AI" chat now, and (later) clients over MCP.
+import stroom.ai.shared.AiToolCategory;
+
+/// One of Stroom's own tools, as any agent may call it: the "Ask Stroom AI" chat, and clients over MCP.
 /// It is Stroom's own contract, with nothing of langchain4j or of the chat in it: [LangChain4jTools] adapts it for
 /// the chat's model, and each call is given a [ToolCallContext] with the session it is made in.
 ///
@@ -26,6 +28,9 @@ public interface StroomTool {
 
     /// @return The tool's name, description and input schema, as advertised to the model.
     ToolDefinition definition();
+
+    /// @return What the tool is for, as tool policies grant it (see [AiToolCategory]).
+    AiToolCategory category();
 
     /// Runs the tool.
     ///
@@ -51,6 +56,15 @@ public interface StroomTool {
     /// @param call The call, with its arguments.
     /// @return True if this call cannot change anything. Defaults to [#isReadOnly()].
     default boolean isReadOnly(final ToolCall call) {
+        return isReadOnly();
+    }
+
+    /// Whether some calls of the tool only read, so a read-only tool policy still offers it, and refuses only the
+    /// calls that change something.
+    ///
+    /// @return True if the tool, or some of its calls, cannot change anything. Defaults to [#isReadOnly()];
+    /// override with true for a tool that overrides [#isReadOnly(ToolCall)].
+    default boolean hasReadOnlyCalls() {
         return isReadOnly();
     }
 

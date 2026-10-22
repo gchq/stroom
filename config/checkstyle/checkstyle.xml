@@ -251,6 +251,9 @@
       stroom.ai.impl.db.jooq.tables.AiChatRun.*,
       stroom.ai.impl.db.jooq.tables.AiMemory.*,
       stroom.ai.impl.db.jooq.tables.AiToolApproval.*,
+      stroom.ai.impl.db.jooq.tables.AiToolPolicy.*,
+      stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory.*,
+      stroom.ai.impl.db.jooq.tables.AiToolPolicyMember.*,
 "/>
             <!--      <property name="excludes" value="org.mockito.*"/>-->
             <!--      <property name="excludes" value="java.lang.annotation.ElementType.*"/>-->

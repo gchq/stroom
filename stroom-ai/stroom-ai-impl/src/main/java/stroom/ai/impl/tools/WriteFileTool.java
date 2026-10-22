@@ -21,6 +21,7 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -36,6 +37,11 @@ class WriteFileTool extends AbstractWorkspaceTool {
     @Inject
     WriteFileTool(final ChatWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

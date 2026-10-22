@@ -32,6 +32,7 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolCategory;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
@@ -201,6 +202,7 @@ class McpAgentChat {
     private final Provider<AiConfig> aiConfigProvider;
     private final UserActions userActions;
     private final WorkspaceArguments workspaceArguments;
+    private final CurrentToolGrants currentToolGrants;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -215,9 +217,11 @@ class McpAgentChat {
                  final Provider<AiConfig> aiConfigProvider,
                  final AiDao aiDao,
                  final UserActions userActions,
-                 final WorkspaceArguments workspaceArguments) {
+                 final WorkspaceArguments workspaceArguments,
+                 final CurrentToolGrants currentToolGrants) {
         this.userActions = userActions;
         this.workspaceArguments = workspaceArguments;
+        this.currentToolGrants = currentToolGrants;
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.toolGroupActivations = toolGroupActivations;
@@ -289,7 +293,14 @@ class McpAgentChat {
         if (readOnlyMode) {
             builtIns.keySet().removeIf(specification -> !builtInTools.isReadOnly(specification.name()));
         }
-        Map<ToolSpecification, ToolExecutor> mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode);
+        // What the user's tool policies grant: none of a category's tools unless it is granted, and with a
+        // read-only grant only the tools (and calls) that cannot change anything.
+        final ToolGrants grants = currentToolGrants.forCurrentUser();
+        builtIns.keySet().removeIf(specification -> !builtInTools.category(specification.name())
+                .map(category -> grants.offers(category, builtInTools.isReadOnly(specification.name()),
+                        builtInTools.hasReadOnlyCalls(specification.name())))
+                .orElse(true));
+        Map<ToolSpecification, ToolExecutor> mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode, grants);
         // A large set of MCP tools is offered as groups the model turns on when it needs them.
         ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
         Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
@@ -335,7 +346,7 @@ class McpAgentChat {
                 final List<String> changed = toolset.serversWithChangedTools();
                 if (!changed.isEmpty()) {
                     LOGGER.debug(() -> "chat: chatId=" + chatId + " the tools of " + changed + " have changed");
-                    mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode);
+                    mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode, grants);
                     toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
                     noteToolsChanged(conversation, changed);
                 }
@@ -422,6 +433,15 @@ class McpAgentChat {
                     conversation.add(ToolExecutionResultMessage.from(toolRequest,
                             recordNotRun(chatId, toolRequest, notOfferedReason(toolRequest.name(), toolGroups),
                                     unattended, "No such tool")));
+                    continue;
+                }
+                // A call that changes something, of a tool the user's policies grant only for reading (e.g.
+                // memory's write).
+                final String policyRefusal = policyRefusal(grants, builtInTools, toolset, toolRequest);
+                if (policyRefusal != null) {
+                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                            recordNotRun(chatId, toolRequest, policyRefusal, unattended,
+                                    "Not allowed by tool policy")));
                     continue;
                 }
                 // Turning on a group of tools changes nothing, so needs no approval.
@@ -641,6 +661,8 @@ class McpAgentChat {
             return;
         }
         final List<AiChatMessage> turn = history.subList(question + 1, history.size());
+        // The user's tool policies may have changed since the calls were made.
+        final ToolGrants grants = currentToolGrants.forCurrentUser();
         final Set<String> answered = new HashSet<>();
         // Calls that asked the user questions and stopped the run to wait for the answers (ask_user).
         final Set<String> askedTheUser = new HashSet<>();
@@ -681,9 +703,12 @@ class McpAgentChat {
                             .orElse(null);
             final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
             final String result;
+            final String policyRefusal = policyRefusal(grants, builtInTools, toolset, request);
             // A call that asked the user questions is made again, and given their answer (or stops the run again if
             // they still haven't answered).
-            if (askedTheUser.contains(call.callId())
+            if (policyRefusal != null) {
+                result = recordNotRun(chatId, request, policyRefusal, unattended, "Not allowed by tool policy");
+            } else if (askedTheUser.contains(call.callId())
                 || (decided != null && decided.decision() == Decision.ALLOWED)) {
                 LOGGER.debug(() -> "Running tool '" + call.tool() + "' as the user has answered, in chatId="
                                    + chatId);
@@ -1085,7 +1110,8 @@ class McpAgentChat {
     /// and only those that cannot change anything in a read-only mode.
     private Map<ToolSpecification, ToolExecutor> mcpTools(final McpToolset toolset,
                                                           final boolean toolsEnabled,
-                                                          final boolean readOnlyMode) {
+                                                          final boolean readOnlyMode,
+                                                          final ToolGrants grants) {
         final Map<ToolSpecification, ToolExecutor> mcpTools = new LinkedHashMap<>();
         if (toolsEnabled) {
             // Named so as not to clash with any of the built-in tools, whether or not they are offered.
@@ -1094,7 +1120,40 @@ class McpAgentChat {
         if (readOnlyMode) {
             mcpTools.keySet().removeIf(specification -> !toolset.isReadOnly(specification.name()));
         }
+        mcpTools.keySet().removeIf(specification -> {
+            final String name = specification.name();
+            return !grants.offers(toolset.category(name), toolset.isReadOnly(name), toolset.isReadOnly(name));
+        });
         return mcpTools;
+    }
+
+    /// @return Why the user's tool policies don't allow the call, or null if they do (or it isn't one of Stroom's
+    /// tools or a server's, e.g. a tool that turns on a group).
+    static String policyRefusal(final ToolGrants grants,
+                                final BuiltInTools builtInTools,
+                                final McpToolset toolset,
+                                final ToolExecutionRequest toolRequest) {
+        final String name = toolRequest.name();
+        final AiToolCategory category;
+        final boolean readOnlyCall;
+        final Optional<AiToolCategory> builtInCategory = builtInTools.category(name);
+        if (builtInCategory.isPresent()) {
+            category = builtInCategory.get();
+            readOnlyCall = builtInTools.isReadOnlyCall(name, toolRequest.arguments());
+        } else if (toolset != null && toolset.toolInfo(name).isPresent()) {
+            category = toolset.category(name);
+            readOnlyCall = toolset.isReadOnly(name);
+        } else {
+            return null;
+        }
+        if (grants.allowsCall(category, readOnlyCall)) {
+            return null;
+        }
+        return grants.access(category).isPresent()
+                ? "Not run: the user's tool policies allow only the " + category.getDisplayValue() + " tools and "
+                  + "calls that cannot change anything, and this call would change something. Tell the user, who "
+                  + "can ask an administrator for a policy that grants read and write."
+                : "Not run: the user's tool policies don't allow " + category.getDisplayValue() + " tools.";
     }
 
     /// Tells the model, with the last tool result, that servers' tools have changed, so it calls them as they are

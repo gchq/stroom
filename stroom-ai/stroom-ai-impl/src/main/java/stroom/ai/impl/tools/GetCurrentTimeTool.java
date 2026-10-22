@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.shared.AiToolCategory;
+
 import jakarta.inject.Inject;
 
 import java.time.OffsetTime;
@@ -30,6 +32,11 @@ class GetCurrentTimeTool implements StroomTool {
 
     @Inject
     GetCurrentTimeTool() {
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiToolCategory;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -183,6 +184,11 @@ class TestLangChain4jTools {
     private static StroomTool tool(final BiFunction<ToolCall, ToolCallContext, ToolResult> run) {
         return new StroomTool() {
             @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CORE;
+            }
+
+            @Override
             public ToolDefinition definition() {
                 return ToolDefinition.builder().name("t").build();
             }
@@ -196,6 +202,11 @@ class TestLangChain4jTools {
 
     private static ToolExecutor executor(final BiFunction<ToolCall, ToolCallContext, String> run) {
         final StroomTool tool = new StroomTool() {
+            @Override
+            public AiToolCategory category() {
+                return AiToolCategory.CORE;
+            }
+
             @Override
             public ToolDefinition definition() {
                 return ToolDefinition.builder().name("t").build();

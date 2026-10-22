@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiTabSnapshotPart;
+import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
@@ -80,6 +81,11 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
     }
 
     @Override

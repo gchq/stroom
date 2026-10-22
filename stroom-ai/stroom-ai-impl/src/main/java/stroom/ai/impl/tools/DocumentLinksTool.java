@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.feed.shared.FeedDoc;
@@ -113,6 +114,11 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                 .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

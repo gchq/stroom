@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -35,6 +36,11 @@ class GetUtcTimeOffsetTool extends AbstractBuiltInTool {
 
     @Inject
     GetUtcTimeOffsetTool() {
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

@@ -24,6 +24,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -224,6 +225,11 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                 .requires(AppPermission.MANAGE_PROCESSORS_PERMISSION)
                 .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.PROCESSING;
     }
 
     @Override

@@ -11,6 +11,9 @@ import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
 import stroom.ai.impl.db.jooq.tables.AiMemory;
 import stroom.ai.impl.db.jooq.tables.AiToolApproval;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyMember;
 
 
 /**
@@ -53,4 +56,19 @@ public class Tables {
      * The table <code>stroom.ai_tool_approval</code>.
      */
     public static final AiToolApproval AI_TOOL_APPROVAL = AiToolApproval.AI_TOOL_APPROVAL;
+
+    /**
+     * The table <code>stroom.ai_tool_policy</code>.
+     */
+    public static final AiToolPolicy AI_TOOL_POLICY = AiToolPolicy.AI_TOOL_POLICY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_category</code>.
+     */
+    public static final AiToolPolicyCategory AI_TOOL_POLICY_CATEGORY = AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_member</code>.
+     */
+    public static final AiToolPolicyMember AI_TOOL_POLICY_MEMBER = AiToolPolicyMember.AI_TOOL_POLICY_MEMBER;
 }

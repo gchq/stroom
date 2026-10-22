@@ -419,7 +419,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
                 new UserActions(Mockito.mock(UserActionLookup.class)),
-                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)));
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
     }
 
     /// Runs one question through the agent loop, with a model that follows a script.
