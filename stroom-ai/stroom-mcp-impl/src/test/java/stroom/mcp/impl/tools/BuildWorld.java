@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.shared.AbstractDoc;
@@ -30,10 +31,12 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.mockito.Mockito;
 
@@ -132,6 +135,12 @@ final class BuildWorld {
             docs.put(id, XsltDoc.builder().uuid(id).name(name).version("v0").build());
         } else if (TextConverterDoc.TYPE.equals(type)) {
             docs.put(id, TextConverterDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (LuceneIndexDoc.TYPE.equals(type)) {
+            docs.put(id, LuceneIndexDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (ElasticIndexDoc.TYPE.equals(type)) {
+            docs.put(id, ElasticIndexDoc.builder().uuid(id).name(name).version("v0").build());
+        } else if (DashboardDoc.TYPE.equals(type)) {
+            docs.put(id, DashboardDoc.builder().uuid(id).name(name).version("v0").build());
         }
         return node;
     }
