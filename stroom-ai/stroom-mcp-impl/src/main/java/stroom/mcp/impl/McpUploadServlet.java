@@ -54,7 +54,8 @@ import java.util.regex.Pattern;
 ///
 /// The request is signed in as any other is (the security filter: the user's API key or token, as the command's
 /// `Authorization` header gives it), so it needs no upload ticket: the post must match a file upload_sample gave
-/// this user a command for, which hasn't run out or been posted already ([SampleUploads]). As at `/mcp`, the user
+/// this user a command for, which hasn't run out or been posted already ([SampleUploads]). The waiting files are held
+/// in the database, so any node takes the post, not only the one that gave the commands. As at `/mcp`, the user
 /// needs the Use MCP Tools permission, and nothing is served while the MCP endpoint is turned off.
 ///
 /// The file's name is read from the query string itself, never as a request parameter: curl's `--data-binary`
@@ -117,7 +118,7 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
         final String file = queryParameter(request, FILE_PARAMETER);
         final String user = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
         final SampleUploads uploads = sampleUploadsProvider.get();
-        final Optional<SampleUploads.Pending> claimed = user == null
+        final Optional<SampleUploads.Claim> claimed = user == null
                 ? Optional.empty()
                 : uploads.claim(id, user, file);
         if (claimed.isEmpty()) {
@@ -125,13 +126,17 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
                     forLog(file), securityContext.getUserIdentityForAudit()));
             error(response, HttpServletResponse.SC_FORBIDDEN, "No upload waits for this file: the command was not "
                                                               + "copied exactly as the agent was given it, it ran "
-                                                              + "out (the commands last minutes), the file was sent "
-                                                              + "already, or a server restart forgot it. Ask the "
-                                                              + "agent for fresh commands (upload_sample with "
-                                                              + "files=) and run them as given.");
+                                                              + "out (the commands last minutes), or the file was "
+                                                              + "sent already (or is being sent: one cut off part "
+                                                              + "way can be sent again "
+                                                              + SampleUploads.CLAIM_GOES_STALE.toMinutes()
+                                                              + " minutes after it began). Ask the agent for fresh "
+                                                              + "commands (upload_sample with files=) and run them "
+                                                              + "as given.");
             return;
         }
-        final SampleUploads.Pending pending = claimed.get();
+        final SampleUploads.Claim claim = claimed.get();
+        final SampleUploads.Pending pending = claim.pending();
         final long limit = uploads.maxBytes();
         final Map<String, String> receipt = new LinkedHashMap<>();
         receipt.put(StandardHeaderArguments.TYPE, pending.streamType());
@@ -142,6 +147,7 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
             final FeedUploads.Sent sent = feedUploadsProvider.get().send(pending.feed(), pending.streamType(),
                     receipt, file, data, limit);
             stored = true;
+            markStored(uploads, claim, sent.streamId());
             LOGGER.info(() -> LogUtil.message("{} uploaded '{}' to feed {}: stream {}, {} bytes",
                     securityContext.getUserIdentityForAudit(), forLog(file), pending.feed(), sent.streamId(),
                     sent.bytes()));
@@ -167,8 +173,19 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
                                                                           + ". Run the command again.");
         } finally {
             if (!stored) {
-                uploads.release(pending, file);
+                uploads.release(claim);
             }
+        }
+    }
+
+    // The file is stored whatever happens here: a failure to record it is logged, not answered as a failed upload
+    // (which would have the user send it again). Its claim then goes stale and the file could be sent again.
+    private static void markStored(final SampleUploads uploads, final SampleUploads.Claim claim, final Long streamId) {
+        try {
+            uploads.stored(claim, streamId);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Couldn't record that '{}' of sample upload {} was stored",
+                    forLog(claim.file()), claim.pending().id()), e);
         }
     }
 

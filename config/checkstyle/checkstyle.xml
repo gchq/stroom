@@ -254,6 +254,8 @@
       stroom.ai.impl.db.jooq.tables.AiToolPolicy.*,
       stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory.*,
       stroom.ai.impl.db.jooq.tables.AiToolPolicyMember.*,
+      stroom.ai.impl.db.jooq.tables.AiSampleUpload.*,
+      stroom.ai.impl.db.jooq.tables.AiSampleUploadFile.*,
 "/>
             <!--      <property name="excludes" value="org.mockito.*"/>-->
             <!--      <property name="excludes" value="java.lang.annotation.ElementType.*"/>-->
