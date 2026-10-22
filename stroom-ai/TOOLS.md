@@ -198,8 +198,8 @@ before the tools themselves. Where it differs:
   expressions, as the MCP server read it with Python's.
 * **Wording**: "the server doesn't run or save it" is "the tools don't run or save it", and the deadline warning no
   longer names the server's `sample_check_seconds` setting.
-* **Not ported**: `agent_line` and `client_model` (the save's "by" text comes from the caller's session),
-  `check_xslt`'s import lookup and `_record_validated` (the tools' own wiring, with the plan layer).
+* **Not ported**: `agent_line` and `client_model` (the save's "by" text comes from the caller's session).
+  `check_xslt`'s import lookup and `_record_validated` are ported with the tools themselves (below).
 
 ## Sample analysis (ported, tools not yet wired)
 
@@ -313,3 +313,39 @@ Where the port differs from the MCP server:
   `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding()`.
 * **Over `/mcp`, a write call is approved** by the endpoint before the tool runs (`McpApprovals`), and a tool's own
   confirmation is then asked as well.
+
+## check_xslt, check_events and wait_for_processing
+
+`check_xslt` and `check_events` (category content) and `wait_for_processing` (category processing) are ported in
+`stroom-mcp-impl`, on the validation core and the build layer. The helpers of the MCP server's
+`tools/processing_writes.py` that `wait_for_processing` needs are ported for its write tools to reuse:
+`StreamProcessing` (`_outputs`, `_tasks_ended`, `_selects`, `_will_process`, `_waiting_on`, `_unselected`, `_iso`),
+`PipelineOutputs` (`output_stream_type`, `_writes_output`, `_sends_to_kafka`, `_is_indexing`) and
+`UserActionEntries` (`utils/useractions.py`'s `enable_filter`, `open_document` and `actions`; a result gives
+`user_actions` as the MCP server's did, and the chat is given them as `ToolUserAction`s to show as buttons).
+`wait_for_processing` reads each filter's status with `processing_status` (`ProcessingStatusTool.status`) and its
+tasks with `ProcessorTaskFinder`. Where they differ from the MCP server:
+
+* **check_xslt compiles the XSLT** as Stroom compiles it (`XsltCompileCheck`: Stroom's functions and its imports)
+  once its other checks pass, where the MCP server's said "Full compilation happens when the pipeline is stepped";
+  an undeclared variable or a wrong call is then found before stepping. An import is looked for as an XSLT
+  document of exactly its name that the user may view (the MCP server searched the explorer by name, then matched
+  the name exactly).
+* **check_events is read-only** (`readOnlyHint` true), although Events that pass are recorded as validated in the
+  build record of the pipeline that wrote them, as the MCP server's did (it said `readOnlyHint` false for that). The
+  record is the tools' own bookkeeping, kept only for pipelines in a build, never for a document a person wrote or
+  anything that runs, and promotion, which reads it, asks for its own approval. As a write, every check would need
+  approving over `/mcp`, and none could be made while the user is away. It reads up to 500 records of the streams
+  in all (the MCP server's `max_sample_records` default), and its `stream_ids` description says so rather than
+  naming the setting.
+* **wait_for_processing is read-only too**, and takes a run slot. The MCP server's restored the build's
+  Elasticsearch indexing pipeline's batch size once indexing passed (`development_batch(..., small=False)`, which
+  made it `readOnlyHint` false); nothing sets that batch size until `create_processor_filter` and
+  `reprocess_streams` are ported, so it isn't ported here: the write tools' port adds it (and then reconsiders the
+  read-only flag).
+* **wait_for_processing stops before the session's time limit for a long call** (its query time limit, less 10 s
+  for its last reads), where the MCP server stopped before the caller's access token ran out: the hint says to call
+  again, as the MCP server's `out_of_time` did, naming the limit instead of the sign-in. It stops at once when its
+  thread is interrupted (the client gave up on the call) or the chat's run is stopped, and says where processing
+  is (`CallProgress`) now and then while it waits. `timeout_seconds` outside 5 to 900 is brought within them, where
+  the MCP server refused it; empty `stream_ids` are refused.
