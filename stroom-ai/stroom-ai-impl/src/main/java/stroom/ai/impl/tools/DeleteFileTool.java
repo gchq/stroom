@@ -66,6 +66,12 @@ class DeleteFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean changesNeedApprovalAfterUntrustedContent() {
+        // It only changes the chat's own workspace files.
+        return false;
+    }
+
+    @Override
     public boolean readsUntrustedContent() {
         return false;
     }
