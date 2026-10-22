@@ -90,7 +90,8 @@ public class TranslationDocs {
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
-    private final BuildPlan plan;
+    // A provider, as the plan depends on these saves itself (through the build checks' drift).
+    private final Provider<BuildPlan> planProvider;
     private final CheckXsltTool checkXslt;
     private final RequiredImports requiredImports;
     private final EventVersions eventVersions;
@@ -101,7 +102,7 @@ public class TranslationDocs {
 
     /// @param guard             Creates the documents in the build, and checks one is the tools' own.
     /// @param documentAccess    Reads and writes them as the user.
-    /// @param plan              The build's next step, for each result.
+    /// @param planProvider      The build's next step, for each result.
     /// @param checkXslt         Checks an XSLT before it is saved.
     /// @param requiredImports   The shared XSLTs standing instructions require.
     /// @param eventVersions     The event-logging schemas a translation is generated against.
@@ -112,7 +113,7 @@ public class TranslationDocs {
     @Inject
     TranslationDocs(final WriteGuard guard,
                     final DocumentAccess documentAccess,
-                    final BuildPlan plan,
+                    final Provider<BuildPlan> planProvider,
                     final CheckXsltTool checkXslt,
                     final RequiredImports requiredImports,
                     final EventVersions eventVersions,
@@ -122,7 +123,7 @@ public class TranslationDocs {
                     final Provider<AgentKnowledge> knowledgeProvider) {
         this.guard = guard;
         this.documentAccess = documentAccess;
-        this.plan = plan;
+        this.planProvider = planProvider;
         this.checkXslt = checkXslt;
         this.requiredImports = requiredImports;
         this.eventVersions = eventVersions;
@@ -159,7 +160,7 @@ public class TranslationDocs {
                         .converterType(type)
                         .data(code)
                         .build()), false, "Events");
-        return plan.withNext(context, build, summary(saved));
+        return planProvider.get().withNext(context, build, summary(saved));
     }
 
     /// Replaces a text converter's code. Only converters the tools created can be changed.
@@ -182,7 +183,7 @@ public class TranslationDocs {
         guard.checkManaged(context.session(), ref);
         checkVersion(doc, version);
         final Map<String, Object> saved = summary(write(TextConverterDoc.TYPE, doc.copy().data(code).build()));
-        return plan.nextFor(context, ref, saved);
+        return planProvider.get().nextFor(context, ref, saved);
     }
 
     /// A Data Splitter is a `<dataSplitter>` document. JSON needs no text converter at all: the JSONParser element
@@ -274,7 +275,7 @@ public class TranslationDocs {
         tagKept(saved, source.keeps());
         final Map<String, Object> result = summary(saved);
         result.putAll(extra);
-        return plan.withNext(context, build, result);
+        return planProvider.get().withNext(context, build, result);
     }
 
     /// Replaces an XSLT's code, after check_xslt passes. Only XSLTs the tools created (including working copies of
@@ -340,7 +341,7 @@ public class TranslationDocs {
         tagKept(saved, source.keeps());
         final Map<String, Object> result = summary(saved);
         result.putAll(extra);
-        return plan.nextFor(context, ref, result);
+        return planProvider.get().nextFor(context, ref, result);
     }
 
     /// @param uuid An XSLT's UUID.
@@ -388,7 +389,7 @@ public class TranslationDocs {
         String inputNamespace = null;
         if (NullSafe.isNonBlankString(build)) {
             try {
-                final Optional<Map<String, Object>> sample = plan.sampleFormat(build);
+                final Optional<Map<String, Object>> sample = planProvider.get().sampleFormat(build);
                 if (sample.isPresent() && "xml".equals(sample.get().get("format"))) {
                     inputNamespace = NullSafe.string(NullSafe.get(sample.get().get("namespace"), String::valueOf));
                 }
