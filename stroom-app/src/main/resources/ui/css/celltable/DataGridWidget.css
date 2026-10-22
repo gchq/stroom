@@ -249,6 +249,16 @@
     background-color: transparent;
 }
 
+/* A list's or tree's row, a target to press, is at least 24px high (WCAG 2.5.8). Its ends are padded
+   by the width of the keyboard focus ring drawn inside it (2px band, 1px border; data-grid.css), so
+   whatever its cells draw (an icon column, a tick box, a cell with no padding of its own) is clear of
+   the ring by the gap a control leaves between its border and its content */
+.data-grid--list .data-grid__row {
+    min-height: 24px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
 .data-grid__row--selected {
     background-color: var(--row__background-color--selected);
     color: var(--row__text-color--selected);

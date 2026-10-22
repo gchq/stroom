@@ -17,12 +17,15 @@
     width: 100%;
  }
 
-.explorerTree .cellTableCell > div {
-    padding: 0;
+/* The explorer's type filter: its rows' cells draw their own height, but have room at their sides
+   for the focus ring drawn inside the row */
+.data-grid.type-filter .data-grid__cell > div {
+    padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
 }
 
-/* The explorer's type filter: a line under its All / None row, and the space below it the line it
-   had (an <hr>) left */
+/* The type filter's line under its All / None row, and the space below it the line it had (an <hr>)
+   left */
 .data-grid__row.type-filter__all {
     border-bottom: 1px solid var(--text-color);
     margin-bottom: 0.5em;
@@ -88,7 +91,3 @@
     opacity: 50%;
 }
 
- .explorerTree .cellTableCell {
-    display: flex;
-    align-items: center;
- }

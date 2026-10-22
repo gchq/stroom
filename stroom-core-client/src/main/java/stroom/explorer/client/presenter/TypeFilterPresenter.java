@@ -88,6 +88,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         // As compact as the explorer's rows, whose cell draws its own padding, with a line under
         // All / None
         list.setCellPadding(false);
+        list.addStyleName("type-filter");
         list.setRowStyles((type, index) -> SELECT_ALL_OR_NONE_DOCUMENT_TYPE.equals(type)
                 ? "type-filter__all"
                 : null);

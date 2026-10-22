@@ -26,9 +26,17 @@ public enum DataGridProfile {
     GRID(null, "row", "gridcell", true),
 
     /// A list (`listbox`) of rows (`option`s), with no header. The row is the only stop: there are no
-    /// cells to move into (a cell is drawing, with no role), and Right and Left do nothing. Typing
-    /// goes to the next row starting with what is typed.
-    LISTBOX("listbox", "option", null, false);
+    /// cells to move into (a cell is drawing, with no role), and Right and Left do nothing (unless
+    /// the selection manager changes page with them). Typing goes to the next row starting with what
+    /// is typed.
+    LISTBOX("listbox", "option", null, false),
+
+    /// A tree (`tree`) of rows (`treeitem`s, each saying its level, whether it is expanded, and its
+    /// place among its siblings), with no header and no cells to move into. Its rows come from a
+    /// function (see [DataGridWidget#setTreeRows]); Right and Left expand and collapse, or move to
+    /// the first child and the parent, and `*` expands every sibling. Typing goes to the next row
+    /// starting with what is typed.
+    TREE("tree", "treeitem", null, false);
 
     private final String role;
     private final String rowRole;

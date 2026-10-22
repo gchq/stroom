@@ -375,7 +375,7 @@ public final class DataGridRowStateStories {
     // theme's colours)
     private static native String focusRing(Element context) /*-{
         var probe = $doc.createElement('div');
-        probe.style.boxShadow = 'inset 0 0 0 1px var(--focus-border), inset 0 0 0 3px var(--focus-ring__color)';
+        probe.style.boxShadow = 'inset 0 0 0 2px var(--focus-ring__color)';
         context.appendChild(probe);
         var shadow = $wnd.getComputedStyle(probe).boxShadow;
         probe.remove();

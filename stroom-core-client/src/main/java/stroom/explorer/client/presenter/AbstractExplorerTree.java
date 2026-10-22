@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
@@ -24,14 +23,18 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.NodeFlag;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
@@ -41,15 +44,11 @@ import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
@@ -57,12 +56,20 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
+/// The explorer's tree of documents, on the data grid with its tree profile ([DataGridProfile#TREE]):
+/// a `tree` of `treeitem`s, each saying its level, whether it is expanded and its place among its
+/// siblings, with WAI-ARIA's tree keys: Up and Down through the items shown, Right and Left to
+/// expand and collapse, or to the first child and the parent, Home and End, `*` to expand the
+/// siblings, and typing to go to the next item starting with what is typed (or into a picker's
+/// filter). Moving doesn't choose an item (choosing one opens its document), unless the tree is a
+/// picker's ([#setSelectionFollowsFocus]): Space chooses (Ctrl+Space adds to the choice, Shift and
+/// the arrows extend it, where several can be chosen), Enter opens, as a double click does, and the
+/// context menu key or Shift+F10 shows the item's menu, as a right click does.
 public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
-    private final MaxScrollPanel scrollPanel;
-    private final CellTable<ExplorerNode> cellTable;
+    private final DataGridWidget<ExplorerNode> tree;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private final String expanderClassName;
@@ -86,17 +93,20 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
 
-        cellTable = new MyCellTable<>(Integer.MAX_VALUE);
-        cellTable.getElement().setClassName("explorerTree");
-        cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
+        tree = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        tree.setProfile(DataGridProfile.TREE);
+        // The explorer's cells draw their own padding; a long name scrolls the tree sideways
+        tree.setCellPadding(false);
+        tree.setFitWidth(true);
+        tree.hasContextMenu(false);
+        tree.addStyleName("explorerTree");
+        tree.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
             public ExplorerNode getValue(final ExplorerNode object) {
                 return object;
             }
-        });
+        }, "", 100);
         selectionModel = getSelectionModel();
-        selectionEventManager = new ExplorerTreeSelectionEventManager(cellTable);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         treeModel = new ExplorerTreeModel(this, restFactory, taskMonitorFactory) {
             @Override
@@ -120,31 +130,38 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         };
         treeModel.setShowAlerts(showAlerts);
 
-        scrollPanel = new MaxScrollPanel();
-        scrollPanel.setWidget(cellTable);
+        // The items' levels and open state, which Right, Left and * change as the expander does
+        tree.setTreeRows(AbstractExplorerTree::expanderOf, treeModel::setItemOpen);
+        final TickBoxSelectionModel tickBoxSelectionModel = getTickBoxSelectionModel();
+        if (tickBoxSelectionModel != null) {
+            // A tick tree's items say whether they are ticked
+            tree.setRowChecked(tickBoxSelectionModel::getState);
+        }
+        selectionEventManager = new ExplorerTreeSelectionEventManager(tree,
+                selectionModel != null
+                        ? selectionModel
+                        : new MultiSelectionModelImpl<>());
+        tree.setSelectionModel(selectionModel, selectionEventManager);
 
         final FlowPanel flowPanel = new FlowPanel();
         flowPanel.getElement().getStyle().setPosition(Style.Position.RELATIVE);
         flowPanel.setWidth("100%");
         flowPanel.setHeight("100%");
-        flowPanel.add(scrollPanel);
+        flowPanel.add(tree);
 
         initWidget(flowPanel);
     }
 
+    // An item's level, and whether it is a leaf or open
+    private static Expander expanderOf(final ExplorerNode node) {
+        return new Expander(node.getDepth(),
+                node.hasNodeFlag(NodeFlag.OPEN),
+                !node.hasNodeFlag(NodeFlag.OPEN) && !node.hasNodeFlag(NodeFlag.CLOSED));
+    }
+
     @Override
     public void focus() {
-//        GWT.log("focus");
-//
-//        int row = 0;
-//        if (selectionModel.getSelected() != null) {
-//            int index = cellTable.getVisibleItems().indexOf(selectionModel.getSelected());
-//            if (index >= 0) {
-//                row = index;
-//            }
-//        }
-//        cellTable.setKeyboardSelectedRow(row, true);
-        cellTable.setFocus(true);
+        tree.setFocus(true);
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
@@ -159,30 +176,30 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
     /// Sets whether moving to an item with the keyboard also chooses it, as in a picker that
-    /// chooses one item, rather than only moving a highlight that Space chooses.
+    /// chooses one item, rather than only moving the focus, which Space chooses.
     ///
     /// @param selectionFollowsFocus Whether the selection follows the focus.
     public void setSelectionFollowsFocus(final boolean selectionFollowsFocus) {
-        selectionEventManager.setSelectionFollowsFocus(selectionFollowsFocus);
+        selectionEventManager.selectionFollowsFocus = selectionFollowsFocus;
     }
 
     /// Names the tree for screen readers, e.g. `Documents`.
     ///
     /// @param name The name.
     public void setAccessibleName(final String name) {
-        cellTable.getElement().setAttribute("aria-label", name);
+        tree.setAccessibleName(name);
     }
 
     /// Moves the focus to the chosen item (or the first, if none is), e.g. from a filter above.
     public void focusSelected() {
-        cellTable.setKeyboardSelectedRow(Math.max(0, getItemIndex(getSelected())), true);
+        tree.setKeyboardSelectedRow(Math.max(0, getItemIndex(getSelected())), true);
     }
 
     /// Makes the chosen item the tree's tab stop, so tabbing into the tree lands on it.
     public void showSelectedAsTabStop() {
         final int index = getItemIndex(getSelected());
         if (index >= 0) {
-            cellTable.setKeyboardSelectedRow(index, false);
+            tree.setKeyboardSelectedRow(index, false);
         }
     }
 
@@ -201,8 +218,8 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     void setData(final List<ExplorerNode> rows) {
         this.rows = rows;
-        cellTable.setRowData(0, rows);
-        cellTable.setRowCount(rows.size(), true);
+        tree.setRowData(0, rows);
+        tree.setRowCount(rows.size(), true);
     }
 
     public void setIncludedTypeSet(final Set<String> types) {
@@ -241,7 +258,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
     private int getItemIndex(final ExplorerNode item) {
-        final List<ExplorerNode> items = cellTable.getVisibleItems();
+        final List<ExplorerNode> items = tree.getVisibleItems();
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
                 if (Objects.equals(items.get(i), item)) {
@@ -261,14 +278,12 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         scrollSelectedIntoView();
     }
 
-    /**
-     * Point the cell table's keyboard-selected row at the given row and take focus. This is applied
-     * with the (deferred) row render, so it overrides the table's own tendency to re-focus a reset
-     * keyboard row (which would scroll the view to the top) after the data changes.
-     */
+    /// Points the tree's keyboard at an item and gives it the focus, e.g. after the rows changed.
+    ///
+    /// @param row The item's index among those shown, or -1 for none (nothing changes).
     void setKeyboardSelectedRow(final int row) {
         if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row, true);
+            tree.setKeyboardSelectedRow(row, true);
         }
     }
 
@@ -278,10 +293,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             if (selected != null) {
                 final int index = getItemIndex(selected);
                 if (index > 0) {
-                    final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                    ElementUtil.scrollIntoViewNearest(tableRowElement);
-//                    tableRowElement.scrollIntoView();
-//                    scrollPanel.scrollToLeft();
+                    tree.scrollRowIntoView(index);
                 }
             }
         }
@@ -354,32 +366,27 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
     public void setFocus(final boolean focused) {
-        cellTable.setFocus(focused);
+        tree.setFocus(focused);
     }
 
     TickBoxSelectionModel getTickBoxSelectionModel() {
         return null;
     }
 
-    void showMenu(final CellPreviewEvent<ExplorerNode> e) {
-        final NativeEvent nativeEvent = e.getNativeEvent();
-        final ExplorerNode item = e.getValue();
-
-        final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-        if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row);
-        }
-
+    /// Shows an item's menu: by the pointer for a right click, else by the item.
+    ///
+    /// @param item        The item.
+    /// @param nativeEvent The right click's mouse down, or null for a key.
+    void showMenu(final ExplorerNode item, final NativeEvent nativeEvent) {
+        final int row = tree.getVisibleItems().indexOf(item);
         final PopupPosition popupPosition;
-        if (BrowserEvents.MOUSEDOWN.equals(e.getNativeEvent().getType())) {
+        if (nativeEvent != null) {
             popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
         } else {
-            final Element element = cellTable.getRowElement(row);
-            if (element != null) {
-                popupPosition = new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop());
-            } else {
-                popupPosition = null;
-            }
+            final Element element = tree.getRowElement(row);
+            popupPosition = element != null
+                    ? new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop())
+                    : null;
         }
 
         if (selectionModel != null && popupPosition != null) {
@@ -390,11 +397,13 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                         new SelectionType(false,
                                 true,
                                 false,
-                                nativeEvent.getCtrlKey(),
-                                nativeEvent.getShiftKey()));
+                                nativeEvent != null && nativeEvent.getCtrlKey(),
+                                nativeEvent != null && nativeEvent.getShiftKey()));
             }
 
-            cellTable.setKeyboardSelectedRow(row, true);
+            if (row >= 0) {
+                tree.setKeyboardSelectedRow(row, true);
+            }
             Scheduler.get().scheduleDeferred(() -> {
                 ShowExplorerMenuEvent.fire(
                         AbstractExplorerTree.this,
@@ -411,88 +420,86 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     // --------------------------------------------------------------------------------
 
 
-    private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
+    /// The explorer's choosing, for the tree's keyboard and the mouse.
+    private class ExplorerTreeSelectionEventManager extends DataGridWidgetSelectionEventManager<ExplorerNode> {
 
-        public ExplorerTreeSelectionEventManager(final AbstractHasData<ExplorerNode> cellTable) {
-            super(cellTable);
+        private boolean selectionFollowsFocus;
+
+        ExplorerTreeSelectionEventManager(final DataGridWidget<ExplorerNode> tree,
+                                          final MultiSelectionModel<ExplorerNode> model) {
+            super(tree, model, allowMultiSelect);
         }
 
+        // Moving chooses nothing (choosing opens the document), but Shift extends the choice, and a
+        // picker's moving chooses
         @Override
-        protected void onMoveRight(final CellPreviewEvent<ExplorerNode> e) {
-            if (e.getValue().hasNodeFlags(NodeFlag.LEAF)) {
-                showMenu(e);
-            } else {
-                treeModel.setItemOpen(e.getValue(), true);
+        public void onFocusRow(final ExplorerNode item, final boolean shift, final boolean ctrl) {
+            if (item == null) {
+                return;
+            }
+            if (shift && allowMultiSelect) {
+                doSelect(item, new SelectionType(false, false, true, false, true));
+            } else if (selectionFollowsFocus && !ctrl) {
+                doSelect(item, new SelectionType());
             }
         }
 
         @Override
-        protected void onMoveLeft(final CellPreviewEvent<ExplorerNode> e) {
-            treeModel.setItemOpen(e.getValue(), false);
+        public void onSpace(final ExplorerNode item, final boolean shift, final boolean ctrl) {
+            if (item != null) {
+                doSelect(item, new SelectionType(false, false, true, ctrl, shift));
+            }
+        }
+
+        // Enter opens the item, as a double click does
+        @Override
+        public void onEnter(final ExplorerNode item) {
+            if (item != null) {
+                doSelect(item, new SelectionType(true, false, allowMultiSelect, false, false));
+            }
         }
 
         @Override
-        protected void onExecute(final CellPreviewEvent<ExplorerNode> e) {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final ExplorerNode item = e.getValue();
-            doSelect(item,
-                    new SelectionType(true,
-                            false,
-                            allowMultiSelect,
-                            nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()));
-        }
-
-        @Override
-        protected void onSelect(final CellPreviewEvent<ExplorerNode> e) {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            // Change the selection.
-            doSelect(e.getValue(),
-                    new SelectionType(false,
-                            false,
-                            true,
-                            nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()));
-        }
-
-        @Override
-        protected void onMenu(final CellPreviewEvent<ExplorerNode> e) {
-            showMenu(e);
-        }
-
-        @Override
-        protected void onSelectionFollowsFocus(final ExplorerNode item) {
-            doSelect(item, new SelectionType());
-        }
-
-        @Override
-        protected void onSelectAll(final CellPreviewEvent<ExplorerNode> e) {
+        public void onSelectAll() {
             selectAll();
         }
 
         @Override
-        protected void onMouseDown(final CellPreviewEvent<ExplorerNode> e) {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-            if (row >= 0) {
-                cellTable.setKeyboardSelectedRow(row, true);
+        public boolean onContextMenu(final ExplorerNode item) {
+            showMenu(item, null);
+            return true;
+        }
+
+        @Override
+        public void onCellPreview(final CellPreviewEvent<ExplorerNode> event) {
+            if (BrowserEvents.MOUSEDOWN.equals(event.getNativeEvent().getType())) {
+                onMouseDown(event);
             } else {
-                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
-            }
-
-            if (MouseUtil.isSecondary(nativeEvent)) {
-                showMenu(e);
-
-            } else if (MouseUtil.isPrimary(nativeEvent)) {
-                select(e);
+                super.onCellPreview(event);
             }
         }
 
-        private void select(final CellPreviewEvent<ExplorerNode> e) {
+        private void onMouseDown(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final ExplorerNode selectedItem = e.getValue();
-            if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
-                if (selectedItem.hasNodeFlag(NodeFlag.LEAF)) {
+            final int row = tree.getVisibleItems().indexOf(selectedItem);
+            if (row >= 0) {
+                tree.setKeyboardSelectedRow(row, true);
+            }
+
+            if (selectedItem == null) {
+                return;
+            }
+            if (MouseUtil.isSecondary(nativeEvent)) {
+                showMenu(selectedItem, nativeEvent);
+
+            } else if (MouseUtil.isPrimary(nativeEvent)) {
+                final Element element = nativeEvent.getEventTarget().cast();
+                if (!selectedItem.hasNodeFlag(NodeFlag.LEAF)
+                    && ElementUtil.hasClassName(element, expanderClassName, 5)) {
+                    // The expander
+                    treeModel.toggleOpenState(selectedItem);
+                } else {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
                     doSelect(selectedItem,
                             new SelectionType(doubleClick,
@@ -500,21 +507,6 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                                     allowMultiSelect,
                                     nativeEvent.getCtrlKey(),
                                     nativeEvent.getShiftKey()));
-                } else {
-                    final Element element = nativeEvent.getEventTarget().cast();
-
-                    // Expander
-                    if ((ElementUtil.hasClassName(element, expanderClassName, 5))) {
-                        treeModel.toggleOpenState(selectedItem);
-                    } else {
-                        final boolean doubleClick = doubleClickTest.test(selectedItem);
-                        doSelect(selectedItem,
-                                new SelectionType(doubleClick,
-                                        false,
-                                        allowMultiSelect,
-                                        nativeEvent.getCtrlKey(),
-                                        nativeEvent.getShiftKey()));
-                    }
                 }
             }
         }

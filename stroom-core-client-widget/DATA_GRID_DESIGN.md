@@ -1108,3 +1108,29 @@ keyboard focus drawn inside the row) and has its stories switched with it, as th
     first back to the filter, Left and Right changing page as they did (`setLeftRightPage`, through
     the keyboard's `Selector.onLeft` and `onRight` for a list).
   * `DataGridWidget.java` stays under 2,000 lines: type-ahead is `GridRows`'.
+* **Step 3, the explorer trees** (2026-10-22): the tree profile (`DataGridProfile.TREE`): a `tree`
+  of `treeitem`s, each with `aria-level`, `aria-expanded` and its place among its siblings
+  (`aria-posinset`, `aria-setsize`, worked out by `model.TreePositions`, unit tested), its rows'
+  expanders from a function and what opens or closes one (`setTreeRows`), and WAI-ARIA's tree keys:
+  Right expands or goes to the first child, Left collapses or goes to the parent, `*` expands the
+  siblings, typing goes to the next item starting with it, and the context menu key or Shift+F10
+  gives the selection manager the row's menu (`Selector.onContextMenu`). The explorer, folder
+  picker, document picker and tick tree (`AbstractExplorerTree`) are on it, keeping their choosing:
+  moving doesn't choose an item, as choosing one opens its document (`DocumentPluginEventManager`),
+  except in the picker; Space chooses, Enter opens as a double click does, Shift and the arrows
+  extend the choice, a click on the expander opens or closes, and a right click or the menu key
+  shows the item's menu (Right on a document no longer does: it is a tree key). The tick tree's
+  items say whether they are ticked (`aria-checked`, its tick box a picture). A list's or tree's
+  row is at least 24px high (WCAG 2.5.8; the explorer's were 23px). `Widgets/Tree/ExplorerTree`
+  `Keys`. The asset trees (GWT `Tree`, in the visualisation and document asset editors) are not
+  moved: their presenters build and change `TreeItem`s directly, so moving them means a model of
+  their own; GWT's `Tree` already gives them tree roles and keys. Left for a decision.
+* **Step 4, `SelectionList`** (2026-10-22): its options are the grid's, as a list's, keeping every
+  key agreed in session 1 (moving only moves; Enter, Alt+Up or a click chooses; Right and Left
+  through its levels; Space, Shift+Up and Shift+Down, Shift+Space and Ctrl+A in a list of several
+  choices; Escape closes; typing to the quick filter or the next option), now through the grid's
+  `Selector` hooks rather than reaching into a cell table. In a selection box's popup it is as big
+  as its options within the popup's limits (`setFitContent`); a blank option is named None
+  (`setRowName`); its id is the grid's (`getAccessibleElementId`, for the box's `aria-controls`).
+  Query help's list is named "Help contents". `Widgets/Selectors/SelectionListStates` shows the
+  grid's row looks.

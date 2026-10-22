@@ -131,7 +131,7 @@ public class SteppingFilterPresenter extends
                             PipelineElement::getDisplayName)
                     .withStyleName(BASE_CLASS + "-textCell")
                     .build();
-            elementChooser.addAutoResizableColumn(textColumn, "", 200);
+            elementChooser.addAutoResizableColumn(textColumn, "", 100);
 
             // Pipe element has active filter icon column (only visible if active filter)
             final Column<PipelineElement, CellIcon> filterIconColumn = DataGridUtil.cellIconColumnBuilder(

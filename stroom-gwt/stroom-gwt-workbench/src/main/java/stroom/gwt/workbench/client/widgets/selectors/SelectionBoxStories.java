@@ -313,12 +313,12 @@ public final class SelectionBoxStories {
         // PagerViewImpl: the pager container above the list container
         play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
         play.expect(popup.querySelector(".listContainer")).not().toBeNull();
-        // The rows are a real cell table
-        play.expect(popup.querySelector("table.cellTableWidget")).not().toBeNull();
-        final Query row = popup.querySelector("tr.cellTableEvenRow");
+        // The rows are the data grid's, as a list's: a listbox of options, each holding its cell
+        play.expect(popup.querySelector(".data-grid.data-grid--list [role='listbox']")).not().toBeNull();
+        final Query row = popup.querySelector("[role='option'].data-grid__row");
         play.expect(row).not().toBeNull();
         final Play inRow = play.screen().within(row);
-        play.expect(inRow.querySelector("td.cellTableCell.cellTableFirstColumn.cellTableLastColumn")).not().toBeNull();
+        play.expect(inRow.querySelector(".data-grid__cell")).not().toBeNull();
         play.expect(inRow.querySelector(".explorerCell .selectionItemCell-text")).toHaveTextContent("One");
     }
 

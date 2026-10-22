@@ -371,30 +371,52 @@ public final class ColumnModel<C> {
     }
 
     /// @return A CSS `grid-template-columns` value for a list, which is as wide as what it is in:
-    /// the current widths, but the fill columns (see [ColumnSizing#isFill()]), or the last column if
-    /// there are none, share the rest of the width (each at least its own), e.g.
-    /// `"22px minmax(200px, 1fr) 22px"`.
+    /// the current widths, but the fill columns (see [ColumnSizing#isFill()]) share the rest of the
+    /// width, each at least its floor (its declared width, not the width it grew to), or, if there
+    /// are none, the last column does, at least its own width; e.g. `"22px minmax(100px, 1fr) 22px"`.
     public String toListTemplate() {
-        boolean anyFill = false;
-        for (final Entry<C> entry : entries) {
-            anyFill = anyFill || entry.sizing.isFill();
-        }
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < entries.size(); i++) {
             if (i > 0) {
                 sb.append(' ');
             }
-            final int width = Math.max(1, entries.get(i).width);
-            final boolean fills = anyFill
-                    ? entries.get(i).sizing.isFill()
-                    : i == entries.size() - 1;
-            if (fills) {
+            final int width = listMinimum(i);
+            if (fillsList(i)) {
                 sb.append("minmax(").append(width).append("px, 1fr)");
             } else {
                 sb.append(width).append("px");
             }
         }
         return sb.toString();
+    }
+
+    /// @return The narrowest a list's columns can be together (see [#toListTemplate()]): the sum of
+    /// their widths, the filling columns' floors.
+    public int getListMinWidth() {
+        int total = 0;
+        for (int i = 0; i < entries.size(); i++) {
+            total += listMinimum(i);
+        }
+        return total;
+    }
+
+    // Whether a column takes a share of a list's spare width
+    private boolean fillsList(final int index) {
+        boolean anyFill = false;
+        for (final Entry<C> entry : entries) {
+            anyFill = anyFill || entry.sizing.isFill();
+        }
+        return anyFill
+                ? entries.get(index).sizing.isFill()
+                : index == entries.size() - 1;
+    }
+
+    // A column's width in a list, or, for a fill column, its floor
+    private int listMinimum(final int index) {
+        final Entry<C> entry = entries.get(index);
+        return Math.max(1, entry.sizing.isFill()
+                ? entry.sizing.getWidth()
+                : entry.width);
     }
 
     /// @return A number that changes whenever a column is added, removed or moved. A renderer

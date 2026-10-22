@@ -24,7 +24,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.List;
 import java.util.Set;
@@ -60,7 +60,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     }
 
     @Override
-    void showMenu(final CellPreviewEvent<ExplorerNode> e) {
+    void showMenu(final ExplorerNode item, final NativeEvent nativeEvent) {
         // Ignore.
     }
 

@@ -21,6 +21,7 @@ import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /// A data grid built from plain DOM and CSS grid layout, replacing `MyDataGrid`.
@@ -162,6 +164,8 @@ public class DataGridWidget<R> extends Widget
     private DataGridProfile profile = DataGridProfile.GRID;
     // Gives a row's tick state, for a list of tick boxes, or null
     private Function<R, TickBoxState> rowChecked;
+    // Gives a row's name where its content doesn't, or null
+    private Function<R, String> rowName;
     // Whether the selection manager lets several rows be chosen (a list says so)
     private boolean multiSelectable;
     private boolean multiLine;
@@ -571,7 +575,7 @@ public class DataGridWidget<R> extends Widget
         if (!isAttached() || renderedVirtual == null) {
             return rows;
         }
-        final int first = topVisibleRow(renderedVirtual);
+        final int first = gridRows.topVisibleRow(renderedVirtual);
         final int count = (int) Math.ceil(scroller.getClientHeight() / gridRows.getOneLineRowHeight()) + 1;
         for (int i = first; i < Math.min(first + count, pageState.getRowDataSize()); i++) {
             rows.add(i);
@@ -791,6 +795,17 @@ public class DataGridWidget<R> extends Widget
         return rowChecked;
     }
 
+    /// Takes a tree's rows from a function (see [DataGridProfile#TREE]): each row's expander, saying
+    /// its depth and whether it is a leaf or expanded, and what expands or collapses one, as clicking
+    /// its expander does.
+    ///
+    /// @param expanderOf   Gives a row's expander.
+    /// @param expandAction Expands (true) or collapses (false) a row.
+    public void setTreeRows(final Function<R, Expander> expanderOf, final BiConsumer<R, Boolean> expandAction) {
+        tree.setSource(expanderOf, expandAction);
+        redraw();
+    }
+
     /// @return The grid's profile (see [DataGridProfile]).
     public DataGridProfile getProfile() {
         return profile;
@@ -872,7 +887,43 @@ public class DataGridWidget<R> extends Widget
     ///
     /// @param name The name.
     public void setAccessibleName(final String name) {
-        scroller.setAttribute("aria-label", name);
+        if (NullSafe.isBlankString(name)) {
+            scroller.removeAttribute("aria-label");
+        } else {
+            scroller.setAttribute("aria-label", name);
+        }
+    }
+
+    /// @return The id of the element that is the grid (or list or tree) to assistive technology,
+    /// given one if it had none, e.g. for a box that controls a list (`aria-controls`).
+    public String getAccessibleElementId() {
+        if (scroller.getId().isEmpty()) {
+            scroller.setId(Document.get().createUniqueId());
+        }
+        return scroller.getId();
+    }
+
+    /// Says whether several rows of a list or tree can be chosen (`aria-multiselectable`), where
+    /// the selection manager doesn't (it is set from a [DataGridWidgetSelectionEventManager]'s).
+    ///
+    /// @param multiSelectable Whether several rows can be chosen.
+    public void setMultiSelectable(final boolean multiSelectable) {
+        this.multiSelectable = multiSelectable;
+        scheduleRender();
+    }
+
+    /// Names each row for assistive technology where its content doesn't, e.g. "None" for a list's
+    /// blank option.
+    ///
+    /// @param rowName Gives a row's name (`aria-label`), or null for the name its content gives.
+    public void setRowName(final Function<R, String> rowName) {
+        this.rowName = rowName;
+        redraw();
+    }
+
+    /// @return Gives a row's name (see [#setRowName(Function)]), or null.
+    Function<R, String> getRowName() {
+        return rowName;
     }
 
     /// @param tableName The table's name, used when copying, exporting or asking AI about it.
@@ -1347,7 +1398,7 @@ public class DataGridWidget<R> extends Widget
         int anchorRow = -1;
         if (renderedVirtual != null && renderedVirtual != effectiveVirtual && isAttached()) {
             // Keep the top visible row, not the pixel offset, across a mode switch.
-            anchorRow = topVisibleRow(renderedVirtual);
+            anchorRow = gridRows.topVisibleRow(renderedVirtual);
         }
 
         final boolean structureChanged = renderedStructureVersion != columnModel.getStructureVersion();
@@ -1405,7 +1456,7 @@ public class DataGridWidget<R> extends Widget
         }
 
         if (anchorRow >= 0) {
-            scrollRowToTop(anchorRow);
+            gridRows.scrollToTop(anchorRow);
         }
         if (keyboardStealFocus) {
             keyboardStealFocus = false;
@@ -1466,7 +1517,7 @@ public class DataGridWidget<R> extends Widget
             DataGridDom.setCssVariable(getElement(), "--data-grid__columns", columnModel.toListTemplate());
             DataGridDom.setCssVariable(getElement(),
                     "--data-grid__total-width",
-                    "max(100%, " + columnModel.getTotalWidth() + "px)");
+                    "max(100%, " + columnModel.getListMinWidth() + "px)");
         }
     }
 
@@ -1539,18 +1590,7 @@ public class DataGridWidget<R> extends Widget
     ///
     /// @param indexOnPage The page-relative row index.
     public void scrollRowIntoView(final int indexOnPage) {
-        final double[] bounds = getRowBounds(indexOnPage, Boolean.TRUE.equals(renderedVirtual));
-        if (bounds == null) {
-            return;
-        }
-        final int headerHeight = getHeaderHeight();
-        final double viewTop = scroller.getScrollTop() + headerHeight;
-        final double viewBottom = scroller.getScrollTop() + scroller.getClientHeight();
-        if (bounds[0] < viewTop) {
-            scroller.setScrollTop((int) Math.floor(bounds[0] - headerHeight));
-        } else if (bounds[1] > viewBottom) {
-            scroller.setScrollTop((int) Math.ceil(bounds[1] - scroller.getClientHeight()));
-        }
+        gridRows.scrollIntoView(indexOnPage);
     }
 
     /// Scroll sideways so that an element in the grid (a cell, a column's header or a control in
@@ -1562,50 +1602,6 @@ public class DataGridWidget<R> extends Widget
         DataGridDom.scrollHorizontallyWithin(scroller, element);
     }
 
-    private void scrollRowToTop(final int indexOnPage) {
-        // Render first so the row exists and has its new position.
-        final double[] bounds = getRowBounds(indexOnPage, Boolean.TRUE.equals(renderedVirtual));
-        if (bounds != null) {
-            scroller.setScrollTop((int) Math.floor(bounds[0] - getHeaderHeight()));
-        }
-    }
-
-    // Returns the row's top and bottom in scroller content coordinates, or null if unknown.
-    private double[] getRowBounds(final int indexOnPage, final boolean virtualMode) {
-        if (indexOnPage < 0 || indexOnPage >= pageState.getRowDataSize()) {
-            return null;
-        }
-        final int headerHeight = getHeaderHeight();
-        if (virtualMode) {
-            final double rowH = gridRows.getOneLineRowHeight();
-            final double top = headerHeight + indexOnPage * rowH;
-            return new double[]{top, top + rowH};
-        }
-        final Element element = getRowElement(indexOnPage);
-        if (element == null) {
-            return null;
-        }
-        final double top = headerHeight + DataGridDom.getOffsetTop(element);
-        return new double[]{top, top + DataGridDom.getHeight(element)};
-    }
-
-    private int topVisibleRow(final boolean virtualMode) {
-        // Scroll positions are whole pixels but rows can be a fractional height, so a row with less
-        // than a pixel still showing counts as scrolled off.
-        final double scrollTop = scroller.getScrollTop() + 1;
-        if (virtualMode) {
-            final double rowH = gridRows.getOneLineRowHeight();
-            return Math.max(0, (int) Math.floor(scrollTop / rowH));
-        }
-        // A linear scan, but only on the render that switches modes.
-        for (int i = 0; i < pageState.getRowDataSize(); i++) {
-            final double[] bounds = getRowBounds(i, false);
-            if (bounds != null && bounds[1] - getHeaderHeight() > scrollTop) {
-                return i;
-            }
-        }
-        return 0;
-    }
 
     // Whether the focus is in the grid, but not in its header (as GWT's allowFocus, gh-4684). A
     // focus that leaves is checked once it has settled, as it passes through the body on the way.

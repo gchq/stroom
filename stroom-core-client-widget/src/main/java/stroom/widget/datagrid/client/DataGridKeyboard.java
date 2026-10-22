@@ -16,6 +16,8 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.widget.util.client.TypedKey;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -234,6 +236,21 @@ class DataGridKeyboard<R> {
         final Element cell = column >= 0
                 ? grid.findAncestorWithAttribute(target, GridHtml.DATA_COL)
                 : null;
+        final boolean tree = grid.getProfile() == DataGridProfile.TREE;
+        if (tree && "*".equals(TypedKey.keyOf(event))) {
+            // A tree's * expands the row's collapsed siblings, and the row
+            handled(event);
+            grid.getTreeRows().expandSiblings(rowIndex);
+            return true;
+        }
+        if (!grid.getProfile().hasCells()
+            && (keyCode == KEY_CONTEXT_MENU || (keyCode == KEY_F10 && shift))
+            && selector != null
+            && selector.onContextMenu(item(rowIndex))) {
+            // A list's or tree's row's menu, from the keyboard
+            handled(event);
+            return true;
+        }
         switch (keyCode) {
             case KeyCodes.KEY_UP:
                 handled(event);
@@ -277,6 +294,14 @@ class DataGridKeyboard<R> {
                 if (column < 0 && grid.getTreeRows().setExpanded(rowIndex, true)) {
                     return true;
                 }
+                if (tree) {
+                    // A tree's expanded row: Right moves to its first child
+                    final int child = grid.getTreeRows().getFirstChildRow(rowIndex);
+                    if (child >= 0) {
+                        move(child, false, false);
+                    }
+                    return true;
+                }
                 if (!grid.getProfile().hasCells()) {
                     // A list's row is its only stop; Right may change page (a find dialog's)
                     if (selector != null) {
@@ -299,7 +324,7 @@ class DataGridKeyboard<R> {
                     final int parent = grid.getTreeRows().getParentRow(rowIndex);
                     if (parent >= 0) {
                         move(parent, false, false);
-                    } else if (!grid.getProfile().hasCells() && selector != null) {
+                    } else if (grid.getProfile() == DataGridProfile.LISTBOX && selector != null) {
                         // A list's Left may change page (a find dialog's)
                         selector.onLeft();
                     }
@@ -830,6 +855,14 @@ class DataGridKeyboard<R> {
         /// @return True if the selection manager moved the focus elsewhere, false to leave it on
         /// the row.
         default boolean onUpFromFirst() {
+            return false;
+        }
+
+        /// The context menu key, or Shift+F10, was pressed on a list's or tree's row.
+        ///
+        /// @param item The row's item.
+        /// @return Whether the selection manager showed a menu (the key goes no further).
+        default boolean onContextMenu(final R item) {
             return false;
         }
 

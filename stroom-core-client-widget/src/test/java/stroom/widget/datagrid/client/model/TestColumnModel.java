@@ -129,6 +129,20 @@ class TestColumnModel {
     }
 
     @Test
+    void testListTemplateFillColumnShrinksToItsFloorNotItsGrownWidth() {
+        final ColumnModel<String> model = new ColumnModel<>();
+        model.add("icon", ColumnSizing.fixed(22));
+        model.add("name", ColumnSizing.fill(100));
+        model.add("filter", ColumnSizing.fixed(22));
+        // The fill column grew on a wider layout
+        model.setWidth(1, 210);
+
+        // It can shrink back to its floor, e.g. to make room for the row's padding
+        assertThat(model.toListTemplate()).isEqualTo("22px minmax(100px, 1fr) 22px");
+        assertThat(model.getListMinWidth()).isEqualTo(144);
+    }
+
+    @Test
     void testListTemplateOneColumn() {
         final ColumnModel<String> model = new ColumnModel<>();
         model.add("name", ColumnSizing.fixed(0));

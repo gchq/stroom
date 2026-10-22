@@ -177,6 +177,9 @@ final class GridRows<R> {
             }
         }
 
+        if (grid.getProfile() == DataGridProfile.TREE) {
+            tree.placeRows(rows);
+        }
         final Map<RowKey, RenderedRow> previous = new HashMap<>(renderedRows);
         renderedRows.clear();
         renderedRowsByIndex.clear();
@@ -287,7 +290,7 @@ final class GridRows<R> {
         }
         if (grid.getProfile().hasCells()) {
             rendered.element.setAttribute("aria-rowindex", String.valueOf(absIndex + 2));
-        } else {
+        } else if (grid.getProfile() == DataGridProfile.LISTBOX) {
             // A list's option says where it is among them all, as some may not be drawn (another
             // page, or out of view)
             rendered.element.setAttribute("aria-posinset", String.valueOf(absIndex + 1));
@@ -300,7 +303,16 @@ final class GridRows<R> {
         } else {
             rendered.element.removeAttribute("aria-selected");
         }
-        tree.setAttributes(rendered.element, row);
+        tree.setAttributes(rendered.element, row, index);
+        final Function<R, String> rowName = grid.getRowName();
+        final String name = rowName != null && row != null
+                ? rowName.apply(row)
+                : null;
+        if (name == null) {
+            rendered.element.removeAttribute("aria-label");
+        } else {
+            rendered.element.setAttribute("aria-label", name);
+        }
         final Function<R, TickBoxState> rowChecked = grid.getRowChecked();
         final TickBoxState checked = rowChecked != null && row != null
                 ? rowChecked.apply(row)
@@ -441,6 +453,73 @@ final class GridRows<R> {
             }
         }
         return text.toString();
+    }
+
+    /// Scrolls so that a row is fully visible, moving as little as possible.
+    ///
+    /// @param indexOnPage The page-relative row index.
+    void scrollIntoView(final int indexOnPage) {
+        final double[] bounds = getBounds(indexOnPage, grid.isRenderedVirtual());
+        if (bounds == null) {
+            return;
+        }
+        final int headerHeight = grid.getHeaderHeight();
+        final double viewTop = scroller.getScrollTop() + headerHeight;
+        final double viewBottom = scroller.getScrollTop() + scroller.getClientHeight();
+        if (bounds[0] < viewTop) {
+            scroller.setScrollTop((int) Math.floor(bounds[0] - headerHeight));
+        } else if (bounds[1] > viewBottom) {
+            scroller.setScrollTop((int) Math.ceil(bounds[1] - scroller.getClientHeight()));
+        }
+    }
+
+    /// Scrolls so that a row is at the top (once it is drawn, with its new position).
+    ///
+    /// @param indexOnPage The page-relative row index.
+    void scrollToTop(final int indexOnPage) {
+        final double[] bounds = getBounds(indexOnPage, grid.isRenderedVirtual());
+        if (bounds != null) {
+            scroller.setScrollTop((int) Math.floor(bounds[0] - grid.getHeaderHeight()));
+        }
+    }
+
+    // The row's top and bottom in the scroller's content, or null if unknown
+    private double[] getBounds(final int indexOnPage, final boolean virtualMode) {
+        if (indexOnPage < 0 || indexOnPage >= pageState.getRowDataSize()) {
+            return null;
+        }
+        final int headerHeight = grid.getHeaderHeight();
+        if (virtualMode) {
+            final double rowH = getOneLineRowHeight();
+            final double top = headerHeight + indexOnPage * rowH;
+            return new double[]{top, top + rowH};
+        }
+        final Element element = getElement(indexOnPage);
+        if (element == null) {
+            return null;
+        }
+        final double top = headerHeight + DataGridDom.getOffsetTop(element);
+        return new double[]{top, top + DataGridDom.getHeight(element)};
+    }
+
+    /// @param virtualMode Whether the rows are drawn in virtual mode.
+    /// @return The page-relative index of the first row in view.
+    int topVisibleRow(final boolean virtualMode) {
+        // Scroll positions are whole pixels but rows can be a fractional height, so a row with less
+        // than a pixel still showing counts as scrolled off.
+        final double scrollTop = scroller.getScrollTop() + 1;
+        if (virtualMode) {
+            final double rowH = getOneLineRowHeight();
+            return Math.max(0, (int) Math.floor(scrollTop / rowH));
+        }
+        // A linear scan, but only on the render that switches modes.
+        for (int i = 0; i < pageState.getRowDataSize(); i++) {
+            final double[] bounds = getBounds(i, false);
+            if (bounds != null && bounds[1] - grid.getHeaderHeight() > scrollTop) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     /// Forgets the measured row height, so it is measured again, e.g. after the columns or the
