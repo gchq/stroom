@@ -18,10 +18,6 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.PyText;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +34,10 @@ import java.util.TreeSet;
 /// @param keys  The keys, as the text writes them (at least one): each value is a field named after its key in
 ///              snake case (`Source IP` -> `source_ip`).
 /// @param names Field names for keys named otherwise: key -> name.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"field", "style", "keys", "names"})
-public record KeyValuePairs(@JsonProperty("field") String field,
-                            @JsonProperty("style") String style,
-                            @JsonProperty("keys") List<String> keys,
-                            @JsonProperty("names") Map<String, String> names) {
+public record KeyValuePairs(String field,
+                            String style,
+                            List<String> keys,
+                            Map<String, String> names) {
 
     /// Fills in empty collections for null ones.
     public KeyValuePairs {

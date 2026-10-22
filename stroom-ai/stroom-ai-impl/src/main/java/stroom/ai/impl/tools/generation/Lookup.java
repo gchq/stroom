@@ -16,10 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 
@@ -32,12 +28,10 @@ import java.util.Map;
 /// @param field Input field holding the key (or a name from extract).
 /// @param xpath Or an XPath giving the key.
 /// @param path  Path below the map's value when it holds elements, e.g. `department`; null for a text value.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"map", "field", "xpath", "path"})
-public record Lookup(@JsonProperty("map") String map,
-                     @JsonProperty("field") String field,
-                     @JsonProperty("xpath") String xpath,
-                     @JsonProperty("path") String path) {
+public record Lookup(String map,
+                     String field,
+                     String xpath,
+                     String path) {
 
     /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
     ///

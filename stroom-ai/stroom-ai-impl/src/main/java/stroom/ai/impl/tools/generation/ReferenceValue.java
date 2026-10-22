@@ -16,11 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,12 +29,10 @@ import java.util.stream.Stream;
 /// @param field   Input field (Data Splitter name or JSON key).
 /// @param value   Or a constant.
 /// @param xpath   Or an XPath relative to the record.
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"element", "field", "value", "xpath"})
-public record ReferenceValue(@JsonProperty("element") String element,
-                             @JsonProperty("field") String field,
-                             @JsonProperty("value") String value,
-                             @JsonProperty("xpath") String xpath) {
+public record ReferenceValue(String element,
+                             String field,
+                             String value,
+                             String xpath) {
 
     /// Fills in the default element (none: a text value).
     public ReferenceValue {
@@ -49,7 +42,6 @@ public record ReferenceValue(@JsonProperty("element") String element,
     /// @param json A value part as JSON-like values.
     /// @return It validated, as the Python model validates it.
     /// @throws MappingValidationException if it doesn't validate.
-    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static ReferenceValue fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("ReferenceValue", read(reader, json, List.of()));

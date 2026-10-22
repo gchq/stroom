@@ -16,10 +16,6 @@
 
 package stroom.ai.impl.tools.generation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,12 +29,10 @@ import java.util.Objects;
 /// @param at         The element it writes, as a path below Event, e.g. `EventSource/Device` or `Meta`. Nothing
 ///                   below it is mapped.
 /// @param withParams `with_params`: parameters to pass, name -> XPath read from the record (or item).
-@JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonPropertyOrder({"href", "template", "at", "with_params"})
-public record SharedTemplate(@JsonProperty("href") String href,
-                             @JsonProperty("template") String template,
-                             @JsonProperty("at") String at,
-                             @JsonProperty("with_params") Map<String, String> withParams) {
+public record SharedTemplate(String href,
+                             String template,
+                             String at,
+                             Map<String, String> withParams) {
 
     /// Fills in an empty map for a null one.
     public SharedTemplate {
