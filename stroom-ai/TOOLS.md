@@ -419,9 +419,56 @@ Where it differs from the Python server:
 * **Style numbers** (`variable_min_reads` and the others) are Java longs: a number past that is refused as pydantic
   refuses a float past it (`int_parsing_size`).
 * **Not ported here**: the tools (`build_translation_xslt`, `draft_translation_mapping`, the save tools), the rest of
-  `utils/draftmap.py`, `utils/fielddoc.py` (the documentation's Field mapping tables), `utils/mappingchanges.py`,
-  the indexing and CEF plans (`utils/fieldplan.py`, `utils/cef.py`, which use `StyledXslt`) and the reader of an
-  XSLT back into a mapping (`utils/xsltread.py`, which uses `XPathText`).
+  `utils/draftmap.py`, `utils/fielddoc.py` (the documentation's Field mapping tables) and the indexing and CEF plans
+  (`utils/fieldplan.py`, `utils/cef.py`, which use `StyledXslt`). The reader, the reference generator and the
+  mapping changes are ported since (below).
+
+## The reader, the reference generator and mapping changes (`stroom.ai.impl.tools.generation`)
+
+Four more of the MCP server's generator modules, ported without their tools (`build_reference_xslt`,
+`rebuild_mapping`, the save tools and `build_translation_xslt`'s `changes=` come later), on the translation
+generator above:
+
+* **`utils/refgen.py`**: `ReferenceMapping`, `ReferenceMap` and `ReferenceValue` (records with Jackson, read and
+  validated as pydantic did, written with `toJson(DumpMode)`: the server's JSON) and `ReferenceGenerator.generate`
+  (`generate_reference`), writing the same reference-data XSLT, to the byte (`Generated.toMap()` is the Python dict).
+* **`utils/xpathtree.py`**: `XPathTreeParser` (the server's `XPathParser`, which parsed with elementpath: a strict
+  XPath 3.1 parser) gives the trees elementpath gives, as `XPathNode`s (symbol, value, children, and each node's text
+  from the token positions elementpath gives, with its quirks: `a/text()`'s text is `a/text`); `XPathTrees` has the
+  rest (`exprSlot`, `stringSlot`, `normal`, `items`, `unbracketed`, `terms`, `strings`, `firstOf`, `isNilCheck`,
+  `unify` with `XPathMatch`, `splice`). `XPathFunctions` holds the functions elementpath knows, with their arities.
+* **`utils/xsltread.py`**: `XsltReader.read` (an `XsltReading` of `RuleReading`s and `LeafReading`s, `SharedCall`s
+  for an imported XSLT's templates), `XsltReader.rebuild` (a `RebuiltMapping`; `added()` is the Python `new`),
+  `resolve` and `canonical`; the shapes the reader reads against are `ReadShapes` (`SHAPES`, `LOOKUP_BELOW`,
+  `TRANSFORMS`, `FIELDS`), made from `XPathText` as the server made them; `ReadIdioms` and `MappingRebuild` hold the
+  idioms and the rebuild.
+* **`utils/mappingchanges.py`**: `MappingChanges.applyChanges` and `applyPlanChanges` (an `Applied` merged mapping
+  and what each change did; a change that can't apply is a `MappingChangeException` with the server's message).
+
+Parity is tested against the server's own code, run under a scratchpad Python with elementpath, lxml and pydantic:
+every expression the server's tests parsed (and more forms a hand edit may write) with elementpath's tree or its
+refusal, and per golden XSLT a digest of the trees of every expression in it and its parts (`xpath_cases.json`);
+every read and rebuild the server's tests made, and per golden XSLT digests of its reading and of its rebuild with
+the mapping lost and kept (`reader_cases.json`); the tests', evaluation cases' and end-to-end suites' reference
+mappings, and more, with pydantic's errors or the XSLT (`reference_cases.json`); and every merge of changes the
+tests made, and more (`changes_cases.json`). The server's reader tests are ported too, running both XSLTs with Saxon
+over the tests' records (`TestXsltReader`, its cases in `rebuild_test_cases.json`).
+
+Where it differs from the Python server:
+
+* **Constant parts of an expression are not evaluated** as it is parsed: elementpath refuses `xs:integer('abc')`,
+  `1 div 0` or `'a' + 1` as it parses them (so the reader kept such an expression as written); here they parse.
+  Inline functions (`function($x) {...}`) and URI-qualified names (`Q{uri}name`), which elementpath reads, are
+  refused here (the expression is kept as written); and the parser doesn't remember functions it was asked about
+  before (elementpath's parsers, cached by namespaces, did).
+* **An XSLT with no template matching its input** is refused with "The XSLT has no template matching its input:
+  there is nothing to read" (an `IllegalArgumentException`), where the Python reader failed with a bare
+  `StopIteration`.
+* **A rebuilt mapping that doesn't validate** says so with the port's message for the errors
+  (`MappingValidationException`'s, which starts as pydantic's does but leaves out its `input_value` and its link).
+* **A for-each read back** is compared by its text, which `XmlSerialiser` now writes as lxml does for an element on
+  its own: the namespace of its name and of its attributes declared first, then its ancestors' (before, the
+  ancestors' came first).
 
 ## MCP server tools with no built-in counterpart
 
