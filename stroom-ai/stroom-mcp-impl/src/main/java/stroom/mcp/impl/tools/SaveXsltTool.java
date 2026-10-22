@@ -39,6 +39,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -267,7 +268,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
             return IndexingHelpers.withCardinality(indexPlan, schema);
         } catch (final RuntimeException e) {
             // A Stroom without the schema: nothing marked.
-            LOGGER.info(() -> "Fields not checked for several values: " + e.getMessage());
+            LOGGER.info(() -> LogUtil.message("Fields not checked for several values: {}", e.getMessage()));
             return indexPlan;
         }
     }

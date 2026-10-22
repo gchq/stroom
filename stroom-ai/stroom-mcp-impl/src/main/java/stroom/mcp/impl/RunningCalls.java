@@ -113,7 +113,7 @@ final class RunningCalls {
         synchronized void cancel() {
             if (!done && !cancelled) {
                 cancelled = true;
-                LOGGER.debug(() -> "Cancelling MCP request " + key);
+                LOGGER.debug("Cancelling MCP request {}", key);
                 thread.interrupt();
             }
         }

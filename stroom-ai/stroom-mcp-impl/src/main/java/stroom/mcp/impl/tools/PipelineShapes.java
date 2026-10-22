@@ -26,6 +26,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -83,7 +84,7 @@ class PipelineShapes {
             return NullSafe.list(pipelineServiceProvider.get().fetchPipelineLayers(
                     new DocRef(PipelineDoc.TYPE, uuid)));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to load pipeline " + uuid + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to load pipeline {}: {}", uuid, e.getMessage()), e);
             throw new PipelineUnreadableException(reason(e));
         }
     }
@@ -96,7 +97,7 @@ class PipelineShapes {
         try {
             return MergedPipeline.of(layers);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to merge pipeline " + uuid + ": " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to merge pipeline {}: {}", uuid, e.getMessage()), e);
             throw new PipelineUnreadableException(reason(e));
         }
     }

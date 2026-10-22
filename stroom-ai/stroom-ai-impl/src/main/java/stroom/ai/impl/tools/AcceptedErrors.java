@@ -87,7 +87,7 @@ public class AcceptedErrors {
             }
             return entries;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the accepted errors of pipeline " + pipelineUuid, e);
+            LOGGER.debug("Unable to read the accepted errors of pipeline {}", pipelineUuid, e);
             return List.of();
         }
     }

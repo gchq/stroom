@@ -37,6 +37,7 @@ import stroom.config.common.UriFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
@@ -224,7 +225,10 @@ class McpTools {
             }
             return builder.build();
         } catch (final RuntimeException e) {
-            LOGGER.warn(() -> "Tool '" + name + "' failed in an MCP session of " + session.owner().toDisplayString(),
+            LOGGER.warn(() -> LogUtil.message(
+                    "Tool '{}' failed in an MCP session of {}",
+                    name,
+                    session.owner().toDisplayString()),
                     e);
             audit(session, name, arguments, "Failed", false);
             return error("Error running tool '" + name + "': "
@@ -269,7 +273,7 @@ class McpTools {
         return message -> exchange.progressNotification(new ProgressNotification(progressToken,
                         (double) step.incrementAndGet(), null, message, null))
                 .subscribe(ignored -> {
-                }, e -> LOGGER.debug(() -> "Unable to send progress: " + e.getMessage(), e));
+                }, e -> LOGGER.debug(() -> LogUtil.message("Unable to send progress: {}", e.getMessage()), e));
     }
 
     private static boolean isOffered(final StroomTool tool, final ToolGrants grants) {

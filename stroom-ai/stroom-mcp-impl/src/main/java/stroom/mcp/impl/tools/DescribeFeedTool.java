@@ -38,6 +38,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -314,7 +315,7 @@ class DescribeFeedTool extends AbstractBuiltInTool {
                         }
                     }
                 } catch (final PipelineUnreadableException e) {
-                    LOGGER.debug(() -> "Unable to find the indexes of " + uuid + ": " + e.getMessage());
+                    LOGGER.debug(() -> LogUtil.message("Unable to find the indexes of {}: {}", uuid, e.getMessage()));
                 }
             }
             described.pipelines.add(entry);
@@ -360,7 +361,7 @@ class DescribeFeedTool extends AbstractBuiltInTool {
         try {
             fields = indexDocs.fields(index);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the fields of " + ref, e);
+            LOGGER.debug("Unable to list the fields of {}", ref, e);
             entry.put("fields_error", "Stroom could not list the index's fields: " + PipelineShapes.reason(e));
             fields = List.of();
         }

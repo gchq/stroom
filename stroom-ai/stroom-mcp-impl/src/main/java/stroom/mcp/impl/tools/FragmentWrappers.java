@@ -26,6 +26,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -83,7 +84,7 @@ class FragmentWrappers {
             }
             return found;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to list the fragment wrappers: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Unable to list the fragment wrappers: {}", e.getMessage()), e);
             return List.of();
         }
     }

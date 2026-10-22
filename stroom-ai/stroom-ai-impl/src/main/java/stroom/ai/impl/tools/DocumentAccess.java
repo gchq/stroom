@@ -169,7 +169,7 @@ public class DocumentAccess {
             }
             return Optional.ofNullable(current);
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find the document " + path, e);
+            LOGGER.debug("Unable to find the document {}", path, e);
             return Optional.empty();
         }
     }

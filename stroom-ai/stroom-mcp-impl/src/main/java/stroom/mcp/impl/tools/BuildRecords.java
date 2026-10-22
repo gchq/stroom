@@ -27,6 +27,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasData;
 import stroom.util.shared.NullSafe;
 
@@ -300,8 +301,11 @@ public class BuildRecords {
             return Optional.of("recorded");
         } catch (final RuntimeException e) {
             // The record is a convenience; never fail the step over it, but say so.
-            LOGGER.warn(() -> "Couldn't record " + kind + " on pipeline " + pipeline.getUuid() + ": "
-                              + e.getMessage());
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't record {} on pipeline {}: {}",
+                    kind,
+                    pipeline.getUuid(),
+                    e.getMessage()));
             return Optional.of("Passed, but the record of it couldn't be saved in the build's record ("
                                + shorten(e.getMessage(), 160) + "): promotion will report it as not done.");
         }
@@ -358,7 +362,7 @@ public class BuildRecords {
                 return asMap(map);
             }
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "A build record that doesn't parse: " + e.getMessage());
+            LOGGER.debug(() -> LogUtil.message("A build record that doesn't parse: {}", e.getMessage()));
         }
         return empty();
     }
@@ -497,8 +501,10 @@ public class BuildRecords {
                                                  || message.contains("already in build"))) {
                     throw e;
                 }
-                LOGGER.info(() -> "Build record of " + build + " changed while writing it (" + shorten(message, 120)
-                                  + "); again");
+                LOGGER.info(() -> LogUtil.message(
+                        "Build record of {} changed while writing it ({}); again",
+                        build,
+                        shorten(message, 120)));
                 current = recordDoc(guardProvider.get().folderContents(build, true)).orElse(null);
             }
         }
@@ -515,6 +521,8 @@ public class BuildRecords {
                 .findFirst();
     }
 
+    /// @param state A build record's state, which gains an empty map of documents if it has none.
+    /// @return The record's documents, by UUID, as a map that changes the state when it is changed.
     @SuppressWarnings("unchecked")
     static Map<String, Object> docs(final Map<String, Object> state) {
         final Object docs = state.get(DOCS);
@@ -541,7 +549,8 @@ public class BuildRecords {
         return entry;
     }
 
-    // A map read from JSON (or made here), as one that can be changed, its nested maps too.
+    /// @param map A map read from JSON (or made here).
+    /// @return A copy of it that can be changed, its nested maps and lists too.
     @SuppressWarnings("unchecked")
     static Map<String, Object> asMap(final Map<?, ?> map) {
         final Map<String, Object> copy = new LinkedHashMap<>();

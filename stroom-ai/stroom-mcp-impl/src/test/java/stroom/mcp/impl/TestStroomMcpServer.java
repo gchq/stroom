@@ -203,14 +203,14 @@ class TestStroomMcpServer {
 
     @Test
     void theToolsListedAreThoseTheUsersPoliciesGrant() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             // Core is read and write, Search read-only, Administration not granted, and the chat's own tool is
             // never offered. A client without forms is offered approve_call, as it is offered a tool that writes.
             assertThat(client.listTools().tools()).extracting(Tool::name)
                     .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing",
                             "slow_thing", "asking_search", "approve_call");
         }
-        try (McpSyncClient client = client(true, request -> new ElicitResult(Action.ACCEPT, Map.of()))) {
+        try (final McpSyncClient client = client(true, request -> new ElicitResult(Action.ACCEPT, Map.of()))) {
             assertThat(client.listTools().tools()).extracting(Tool::name)
                     .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing",
                             "slow_thing", "asking_search");
@@ -225,7 +225,7 @@ class TestStroomMcpServer {
 
     @Test
     void aCallThatReadsIsMadeAsTheUserInTheSessionsWorkspace() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             final CallToolResult result = client.callTool(new CallToolRequest("read_thing", Map.of("q", "x")));
 
             assertThat(text(result)).isEqualTo("ran read_thing {\"q\":\"x\"}");
@@ -243,7 +243,7 @@ class TestStroomMcpServer {
 
     @Test
     void aCallThatChangesSomethingWaitsForTheUsersApprovalId() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             final String reply = text(client.callTool(new CallToolRequest("write_thing", Map.of("q", "1"))));
 
             assertThat(reply).startsWith("Not run yet: this call changes something in Stroom");
@@ -263,7 +263,7 @@ class TestStroomMcpServer {
 
     @Test
     void aToolThatConfirmsEachChangeItselfIsNotApprovedAsAWholeFirst() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             // It asks the user in its own form (or gives its own confirmation id), so the user is asked once.
             assertThat(text(client.callTool(new CallToolRequest("confirmed_write", Map.of()))))
                     .isEqualTo("ran confirmed_write {}");
@@ -274,7 +274,7 @@ class TestStroomMcpServer {
     @Test
     void aClientThatShowsFormsAsksTheUserThere() {
         final List<String> asked = Collections.synchronizedList(new ArrayList<>());
-        try (McpSyncClient client = client(true, request -> {
+        try (final McpSyncClient client = client(true, request -> {
             asked.add(request.message());
             return new ElicitResult(asked.size() == 1
                     ? Action.ACCEPT
@@ -291,7 +291,7 @@ class TestStroomMcpServer {
 
     @Test
     void callsTheUsersPoliciesDontAllowAreRefused() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             // Not granted at all, or only for the chat.
             assertThat(client.callTool(new CallToolRequest("admin_thing", Map.of())).isError()).isTrue();
             assertThat(client.callTool(new CallToolRequest("chat_thing", Map.of())).isError()).isTrue();
@@ -306,7 +306,7 @@ class TestStroomMcpServer {
     void aHeavyCallTakesARunSlot() {
         final RunSlot slot = Mockito.mock(RunSlot.class);
         Mockito.when(runManager.takeToolCallSlot("alice")).thenReturn(Optional.of(slot), Optional.empty());
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             assertThat(text(client.callTool(new CallToolRequest("search_thing", Map.of()))))
                     .startsWith("ran search_thing");
             Mockito.verify(slot).close();
@@ -318,7 +318,7 @@ class TestStroomMcpServer {
 
     @Test
     void aSessionCanOnlyBeUsedByTheUserWhoStartedIt() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             currentUser = BOB;
 
             // As far as Bob can tell, there is no such session.
@@ -358,7 +358,7 @@ class TestStroomMcpServer {
 
     @Test
     void anIdleSessionIsEndedAndItsWorkspaceDeleted() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             assertThat(server.sessionCount()).isEqualTo(1);
             // Not yet idle for the session retention time (a day).
             server.endIdleSessions(System.currentTimeMillis() + Duration.ofHours(23).toMillis());
@@ -379,7 +379,7 @@ class TestStroomMcpServer {
 
     @Test
     void aSessionTheTransportDroppedIsEnded() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             final TransportSessions transportSessions = new TransportSessions(server.transport());
             final String sessionId = transportSessions.ids().iterator().next();
             // As the transport does when a send to the client fails.
@@ -402,11 +402,11 @@ class TestStroomMcpServer {
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null, null,
                 null, 2));
         final TransportSessions transportSessions = new TransportSessions(server.transport());
-        try (McpSyncClient first = client(false, null)) {
+        try (final McpSyncClient first = client(false, null)) {
             final String firstId = transportSessions.ids().iterator().next();
-            try (McpSyncClient second = client(false, null)) {
+            try (final McpSyncClient second = client(false, null)) {
                 second.listTools();
-                try (McpSyncClient third = client(false, null)) {
+                try (final McpSyncClient third = client(false, null)) {
                     // The first, least recently used, was ended; the others go on. (The first isn't used again
                     // here: the SDK's client starts a new session when its own is not found.)
                     assertThat(server.sessionCount()).isEqualTo(2);
@@ -433,7 +433,7 @@ class TestStroomMcpServer {
             await(finish);
             return ToolResult.text("done");
         });
-        try (McpSyncClient busy = client(false, null)) {
+        try (final McpSyncClient busy = client(false, null)) {
             final CompletableFuture<CallToolResult> call = CompletableFuture.supplyAsync(() ->
                     busy.callTool(new CallToolRequest("slow_thing", Map.of())));
             assertThat(started.await(10, TimeUnit.SECONDS)).isTrue();
@@ -489,7 +489,7 @@ class TestStroomMcpServer {
             }
             return ToolResult.text("stopped");
         });
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             CompletableFuture.runAsync(() -> client.callTool(new CallToolRequest("slow_thing", Map.of())));
             assertThat(started.await(10, TimeUnit.SECONDS)).isTrue();
 
@@ -509,7 +509,7 @@ class TestStroomMcpServer {
             limits.add(ToolDeadline.remaining());
             return ToolResult.text("done");
         });
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             assertThat(text(client.callTool(new CallToolRequest("slow_thing", Map.of())))).isEqualTo("done");
         }
 
@@ -532,7 +532,7 @@ class TestStroomMcpServer {
                     McpForms.NO_FIELDS);
             return ToolResult.text("answered " + answer.action());
         });
-        try (McpSyncClient client = client(true, request -> {
+        try (final McpSyncClient client = client(true, request -> {
             events.add("asked");
             return new ElicitResult(Action.ACCEPT, Map.of());
         })) {
@@ -550,7 +550,7 @@ class TestStroomMcpServer {
         Mockito.verify(policies).addChangeListener(listener.capture());
         final List<List<Tool>> told = Collections.synchronizedList(new ArrayList<>());
         holdNotifications.set(true);
-        try (McpSyncClient client = McpClient.sync(transport())
+        try (final McpSyncClient client = McpClient.sync(transport())
                 .requestTimeout(Duration.ofSeconds(10))
                 .toolsChangeConsumer(told::add)
                 .build()) {
@@ -577,7 +577,7 @@ class TestStroomMcpServer {
         final ArgumentCaptor<Runnable> listener = ArgumentCaptor.forClass(Runnable.class);
         Mockito.verify(policies).addChangeListener(listener.capture());
         final List<List<Tool>> told = Collections.synchronizedList(new ArrayList<>());
-        try (McpSyncClient client = McpClient.sync(transport())
+        try (final McpSyncClient client = McpClient.sync(transport())
                 .requestTimeout(Duration.ofSeconds(10))
                 .toolsChangeConsumer(told::add)
                 .build()) {
@@ -598,7 +598,7 @@ class TestStroomMcpServer {
 
     @Test
     void theGuidesAndConventionsAreServedAsResources() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             assertThat(client.getServerCapabilities().resources()).isNotNull();
             assertThat(client.listResources().resources()).extracting(Resource::uri)
                     .contains("stroom://guides", "stroom://guide/xslt", "stroom://guide/agent-instructions",
@@ -620,7 +620,7 @@ class TestStroomMcpServer {
 
     @Test
     void anUnknownResourceSaysWhatThereIs() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://guide/nope")))
                     .hasMessageContaining("No guide 'nope'. Guides: agent-instructions, cef, data-splitter");
             assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://conventions/nope")))
@@ -630,7 +630,7 @@ class TestStroomMcpServer {
 
     @Test
     void theResourcesOfASessionAreOnlyForItsUser() {
-        try (McpSyncClient client = client(false, null)) {
+        try (final McpSyncClient client = client(false, null)) {
             currentUser = BOB;
 
             // As far as Bob can tell, there is no such session.
@@ -657,7 +657,7 @@ class TestStroomMcpServer {
         assertThat(text)
                 .contains("With a task-list tool (Stroom AI: task_list), write the plan's steps into it")
                 .contains("A stage's end is no place to stop: don't end your turn to report it, go on to `next`");
-        try (McpSyncClient client = McpClient.sync(transport()).requestTimeout(Duration.ofSeconds(10)).build()) {
+        try (final McpSyncClient client = McpClient.sync(transport()).requestTimeout(Duration.ofSeconds(10)).build()) {
             final InitializeResult initialized = client.initialize();
             assertThat(initialized.instructions()).isEqualTo(StroomMcpServer.INSTRUCTIONS);
         }

@@ -102,7 +102,7 @@ final class IndexingFixtures {
     /// @param path A test resource's path.
     /// @return Its text.
     static String resource(final String path) {
-        try (InputStream in = IndexingFixtures.class.getResourceAsStream(path)) {
+        try (final InputStream in = IndexingFixtures.class.getResourceAsStream(path)) {
             if (in == null) {
                 throw new IllegalStateException("No resource " + path);
             }

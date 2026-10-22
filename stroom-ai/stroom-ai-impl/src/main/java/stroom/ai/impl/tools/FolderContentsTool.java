@@ -320,7 +320,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
             found = NullSafe.list(NullSafe.get(explorerServiceProvider.get().find(findRequest),
                     ResultPage::getValues));
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to find documents named '" + name + "'", e);
+            LOGGER.debug("Unable to find documents named '{}'", name, e);
             return ToolResult.text("Error: the documents couldn't be searched: "
                                    + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
