@@ -201,6 +201,33 @@ before the tools themselves. Where it differs:
 * **Not ported**: `agent_line` and `client_model` (the save's "by" text comes from the caller's session),
   `check_xslt`'s import lookup and `_record_validated` (the tools' own wiring, with the plan layer).
 
+## Sample analysis (ported, tools not yet wired)
+
+The MCP server's sample analysis is ported as plain Java in `stroom-ai-impl`, package `stroom.ai.impl.tools.sample`,
+for `profile_sample`, `survey_feed` and `set_shape_handling` (and `fetch_events`, already) to use: `SampleProfiler`
+(`utils/profile.py`), `RecordSplitter` (`survey.split_records`, replacing the partial splitter that was in
+`stroom.ai.impl.tools`), `Shapes` (`survey.Shapes`), `SurveyDoc` (`utils/surveydoc.py`, its document format kept
+exactly), `SampleTexts` (`utils/samples.py`), `FeedSampling` (`tools/sampling.py`'s helpers), `TimePatterns`
+(`utils/timefmt.py`), and `SplitterSpec` and `SplitterDryRun` (`utils/dsgen.py`'s spec, inference and dry run, not
+its generation of the Data Splitter XML). They read a sample as the Python server did (its regexes, `csv` sniffer,
+`json` messages, float printing and `ipaddress`); a test runs them over every format sample and evaluation sample
+of the MCP server, and the heads of each, against what the server's own code made of them.
+
+Where they differ from the Python server:
+
+* A raw stream's part is read through the stream store (`StreamReader.readHead`), not the data viewer's pages, so
+  there is no paging, no UTF-16 counting and no HEX-view fallback: undecodable bytes are replaced as a pipeline
+  replaces them, and `StreamReader.charsetReport` gives what was replaced.
+* XML is read with the JDK's StAX reader (no DTDs, no external entities) rather than lxml; an element is written
+  back as lxml writes it.
+* The dry run runs a spec's regexes as Java regexes, as Data Splitter does; the Python server ran them as Python's.
+* A directive log's or a quoted-newline CSV's profile no longer carries the internal `_records` list (the Python
+  server's dict unpacking left it in).
+* A delimited head whose last row was cut inside quotes no longer fails the survey with an index error: the row
+  without columns is signed `row:all`.
+* `quoted_csv`'s header sniff can still fail on odd text, as it did in Python (`csv.Error`); `SampleRefusal` is
+  thrown where the server raised a `ToolError`.
+
 ## MCP server tools with no built-in counterpart
 
 What would move in with each. These all need the MCP server's workspace folder and write guard (tags
