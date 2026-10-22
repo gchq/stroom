@@ -207,26 +207,9 @@ class StroomBuildFacts implements BuildFacts {
     /// @param merged A pipeline as Stroom runs it.
     /// @return Each as `element.property`.
     static List<String> openSlots(final MergedPipeline merged) {
-        final Map<String, String> types = merged.elements();
-        final Map<ElementProperty, Object> values = merged.properties();
-        final List<String> slots = new ArrayList<>();
-        boolean seenXslt = false;
-        for (final String element : merged.chain()) {
-            for (final String key : PipelineShapes.KEY_PROPERTIES.getOrDefault(types.get(element), List.of())) {
-                if ("xslt".equals(key)) {
-                    if (seenXslt) {
-                        // A second XSLT step (decoration) is optional.
-                        continue;
-                    }
-                    seenXslt = true;
-                }
-                final Object value = values.get(new ElementProperty(element, key));
-                if (("xslt".equals(key) || "textConverter".equals(key)) && (value == null || "".equals(value))) {
-                    slots.add(element + "." + key);
-                }
-            }
-        }
-        return slots;
+        return PipelineWrites.openSlots(merged.elements(), merged.chain(), merged.properties(), null).stream()
+                .map(PipelineWrites.Slot::dotted)
+                .toList();
     }
 
     @Override

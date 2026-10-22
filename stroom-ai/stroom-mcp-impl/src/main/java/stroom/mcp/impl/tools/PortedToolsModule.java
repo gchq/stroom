@@ -61,7 +61,10 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(RecordSourceNotesTool.class)
                 .addBinding(CreateProcessorFilterTool.class)
                 .addBinding(SetProcessorFilterEnabledTool.class)
-                .addBinding(ReprocessStreamsTool.class);
+                .addBinding(ReprocessStreamsTool.class)
+                .addBinding(CreatePipelineTool.class)
+                .addBinding(CopyPipelineTool.class)
+                .addBinding(UpdatePipelineTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
