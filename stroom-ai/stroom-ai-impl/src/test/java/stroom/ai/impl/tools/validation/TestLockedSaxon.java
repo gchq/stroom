@@ -16,9 +16,19 @@
 
 package stroom.ai.impl.tools.validation;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.lib.ExtensionFunctionCall;
+import net.sf.saxon.lib.ExtensionFunctionDefinition;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmDestination;
 import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.Xslt30Transformer;
+import net.sf.saxon.value.SequenceType;
+import net.sf.saxon.value.StringValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -56,6 +66,25 @@ class TestLockedSaxon {
     }
 
     @Test
+    void testNoSystemPropertyIsSeen() throws SaxonApiException {
+        // With Saxon's external functions allowed, XSLT's system-property() of a name in no namespace is read with
+        // System.getProperty, so an XSLT could put the JVM's settings in its output or an error.
+        assertThat(System.getProperty("java.home")).isNotEmpty();
+        assertThat(transform("system-property('java.home')")).isEmpty();
+        // The XSLT ones are still there.
+        assertThat(transform("system-property('xsl:version')")).isEqualTo("3.0");
+    }
+
+    @Test
+    void testIntegratedFunctionsStillWorkWithExternalFunctionsOff() throws SaxonApiException {
+        // Stroom's functions are integrated ones, which Saxon trusts with external functions off.
+        final Processor processor = LockedSaxon.newLocked();
+        processor.registerExtensionFunction(new Greeting());
+        final XPathSelector selector = processor.newXPathCompiler().compile("Q{stroom}greeting()").load();
+        assertThat(selector.evaluateSingle().getStringValue()).isEqualTo("hello");
+    }
+
+    @Test
     void testASamplesExternalEntitiesAreNotLoaded() throws IOException, SaxonApiException {
         // A sample is log content: whoever the logs record wrote it.
         final String secret = secretFile();
@@ -87,6 +116,18 @@ class TestLockedSaxon {
         return path.toUri().toString();
     }
 
+    // What an XSLT compiled and run by the locked-down processor writes for an expression.
+    private static String transform(final String expression) throws SaxonApiException {
+        final String xslt = "<xsl:stylesheet version=\"3.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">"
+                            + "<xsl:template match=\"/\"><r><xsl:value-of select=\"" + expression + "\"/></r>"
+                            + "</xsl:template></xsl:stylesheet>";
+        final Xslt30Transformer transformer = LockedSaxon.processor().newXsltCompiler()
+                .compile(new StreamSource(new StringReader(xslt))).load30();
+        final XdmDestination destination = new XdmDestination();
+        transformer.transform(new StreamSource(new StringReader("<a/>")), destination);
+        return destination.getXdmNode().getStringValue();
+    }
+
     private static String evaluate(final String expression) throws SaxonApiException {
         final XPathSelector selector = LockedSaxon.xpath(null).compile(expression).load();
         selector.setContextItem(LockedSaxon.parse("<a/>"));
@@ -94,5 +135,38 @@ class TestLockedSaxon {
         return item == null
                 ? null
                 : item.getStringValue();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // An integrated function in the stroom namespace, as Stroom's are.
+    private static final class Greeting extends ExtensionFunctionDefinition {
+
+        @Override
+        public StructuredQName getFunctionQName() {
+            return new StructuredQName("", "stroom", "greeting");
+        }
+
+        @Override
+        public SequenceType[] getArgumentTypes() {
+            return new SequenceType[0];
+        }
+
+        @Override
+        public SequenceType getResultType(final SequenceType[] suppliedArgumentTypes) {
+            return SequenceType.SINGLE_STRING;
+        }
+
+        @Override
+        public ExtensionFunctionCall makeCallExpression() {
+            return new ExtensionFunctionCall() {
+                @Override
+                public Sequence call(final XPathContext context, final Sequence[] arguments) {
+                    return new StringValue("hello");
+                }
+            };
+        }
     }
 }

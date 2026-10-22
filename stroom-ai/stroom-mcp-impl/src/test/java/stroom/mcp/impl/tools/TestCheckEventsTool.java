@@ -71,6 +71,12 @@ class TestCheckEventsTool {
             world.documentAccess, world.records(), plan);
 
     @Test
+    void itTakesARunSlotAsTheOtherToolsThatReadStreamsDo() {
+        // Before, it read and validated Events streams over /mcp without one, unlike summarise_streams.
+        assertThat(tool.usesRunSlot()).isTrue();
+    }
+
+    @Test
     void eventsArePassedOnlyWhenTheyPassTheSchemaAndTheQualityRules() {
         valid(true, SYSTEM_ID);
         assertThat(call(Map.of("events_xml", EVENT)).get("ok")).isEqualTo(true);

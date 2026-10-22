@@ -47,15 +47,19 @@ import javax.xml.transform.sax.SAXSource;
 /// environment-variable() reads the process's settings.
 ///
 /// So the processor refuses every URI (no file, no network, no collection, no unparsed text), sees no environment
-/// variable, and its documents load no external entity or DTD. [XsltSafety#refused(String, java.util.Map)] stops
+/// variable or system property (Saxon's external functions are off: system-property() of a name in no namespace
+/// would otherwise read the JVM's; integrated functions, as Stroom's are, still work), and its documents load no
+/// external entity or DTD. [XsltSafety#refused(String, java.util.Map)] stops
 /// such expressions before they reach it too. Unlike the Stroom MCP server's Saxon (saxonche, which crashed when
 /// started on a worker thread), it may be made and used on any thread.
 public final class LockedSaxon {
 
     /// What a refused URI is said to be.
     public static final String PROHIBITED = "Reading a resource is prohibited here";
+    /// How many times a regex may backtrack in one sequence before Saxon stops it (Saxon's default is ten million).
+    public static final int REGEX_BACKTRACKING_LIMIT = 1_000_000;
 
-    private static final Processor PROCESSOR = locked();
+    private static final Processor PROCESSOR = newLocked();
 
     private LockedSaxon() {
         // Static only.
@@ -94,9 +98,17 @@ public final class LockedSaxon {
         return PROCESSOR.getUnderlyingConfiguration().compileRegularExpression(regex, flags, "XP30", warnings);
     }
 
-    private static Processor locked() {
+    /// A new processor, locked down as the shared one is, for a caller that registers functions of its own on it
+    /// (e.g. [XsltCompileCheck], with Stroom's).
+    ///
+    /// @return A new locked-down processor.
+    static Processor newLocked() {
         final Processor processor = new Processor(false);
         final Configuration config = processor.getUnderlyingConfiguration();
+        config.setConfigurationProperty(Feature.ALLOW_EXTERNAL_FUNCTIONS, false);
+        // Saxon's regex engine checks no time limit (it copies the text before matching it); its backtracking
+        // limit is what stops a model's regex (in matches(), or an extraction's) that backtracks badly.
+        config.setConfigurationProperty(Feature.REGEX_BACKTRACKING_LIMIT, REGEX_BACKTRACKING_LIMIT);
         config.setURIResolver((href, base) -> {
             throw new TransformerException(PROHIBITED + ": " + href);
         });
@@ -115,7 +127,8 @@ public final class LockedSaxon {
         return processor;
     }
 
-    private static XMLReader reader() {
+    /// @return An XML reader that loads no external entity or DTD (one still asked for resolves to nothing).
+    static XMLReader reader() {
         try {
             final SAXParserFactory factory = SAXParserFactory.newInstance();
             factory.setNamespaceAware(true);

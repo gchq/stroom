@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.StreamReader;
-import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;
@@ -106,16 +105,18 @@ class IndexingRuns {
     /// @param guard                 Says what is in a build.
     /// @param streamProcessing      Reads what a pipeline produced from a stream.
     /// @param indexResourceProvider Finds and deletes a Lucene index's shards as the user.
-    /// @param storeProvider         Reads Error streams as the user.
+    /// @param streamReader          Reads Error streams as the user (with the View Data permission: without it,
+    ///                              Elasticsearch's refusal of earlier writes is not read, and the index is
+    ///                              taken to hold what the pipeline indexed before).
     @Inject
     IndexingRuns(final PipelineShapes pipelineShapes,
                  final PipelineDocs pipelineDocs,
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
-                 final Provider<Store> storeProvider) {
+                 final StreamReader streamReader) {
         this(pipelineShapes, pipelineDocs, guard, streamProcessing, indexResourceProvider,
-                streamId -> StreamReader.errorStreamText(storeProvider.get(), streamId, ERROR_BYTES).text());
+                streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text());
     }
 
     /// As the injected constructor, with how an Error stream's text is read given, for tests.

@@ -452,28 +452,6 @@ class ProcessorFilterWrites {
     }
 
     /// @param expression A filter's expression, or null.
-    /// @return The feeds it names (Feed IS_DOC_REF, or Feed EQUALS as earlier filters had it), at any depth
-    /// (`filter_feeds`).
-    static List<String> filterFeeds(final ExpressionItem expression) {
-        final List<String> out = new ArrayList<>();
-        if (expression instanceof final ExpressionOperator operator) {
-            for (final ExpressionItem child : NullSafe.list(operator.getChildren())) {
-                if (child instanceof ExpressionOperator) {
-                    out.addAll(filterFeeds(child));
-                } else if (child instanceof final ExpressionTerm term
-                           && ProcessorFilters.FEED.equals(term.getField())) {
-                    final String name = NullSafe.nonBlankStringElse(NullSafe.get(term.getDocRef(), DocRef::getName),
-                            term.getValue());
-                    if (NullSafe.isNonEmptyString(name)) {
-                        out.add(name);
-                    }
-                }
-            }
-        }
-        return out;
-    }
-
-    /// @param expression A filter's expression, or null.
     /// @return Its Pipeline conditions, at any depth (`_pipeline_terms`).
     static List<ExpressionTerm> pipelineTerms(final ExpressionItem expression) {
         return PipelineFeeds.filterTerms(expression).stream()

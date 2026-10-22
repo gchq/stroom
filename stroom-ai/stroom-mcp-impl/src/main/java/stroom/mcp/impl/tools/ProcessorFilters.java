@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.FetchProcessorRequest;
@@ -25,11 +26,8 @@ import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -61,21 +59,21 @@ class ProcessorFilters {
     static final String ID = "Id";
     static final String EVENTS = "Events";
 
-    private final SecurityContext securityContext;
+    private final ProcessorFilterAccess processorFilterAccess;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final DocumentAccess documentAccess;
     private final PipelineFeeds pipelineFeeds;
 
-    /// @param securityContext                Checks the Manage Processors permission.
+    /// @param processorFilterAccess          Checks the Manage Processors permission.
     /// @param processorFilterServiceProvider Finds the filters.
     /// @param documentAccess                 Checks View on each filter's pipeline.
     /// @param pipelineFeeds                  Reads the feeds a filter selects.
     @Inject
-    ProcessorFilters(final SecurityContext securityContext,
+    ProcessorFilters(final ProcessorFilterAccess processorFilterAccess,
                      final Provider<ProcessorFilterService> processorFilterServiceProvider,
                      final DocumentAccess documentAccess,
                      final PipelineFeeds pipelineFeeds) {
-        this.securityContext = securityContext;
+        this.processorFilterAccess = processorFilterAccess;
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.documentAccess = documentAccess;
         this.pipelineFeeds = pipelineFeeds;
@@ -84,12 +82,7 @@ class ProcessorFilters {
     /// @return True if the user may manage processors, as reading processor filters needs. False if they may not,
     /// or if checking fails (failing closed).
     boolean canManageProcessors() {
-        try {
-            return securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to check the Manage Processors permission", e);
-            return false;
-        }
+        return processorFilterAccess.canManageProcessors();
     }
 
     /// @return Every processor filter that isn't deleted, of a pipeline the user can view. Empty if the user may
@@ -118,24 +111,19 @@ class ProcessorFilters {
         }
     }
 
+    /// The feeds each pipeline's filters read, as [PipelineFeeds#filterFeeds] reads them (Feed EQUALS, one or
+    /// several between commas, IS_DOC_REF and IN_DICTIONARY, or the feed of the stream an Id term picks), as
+    /// written. Before, only a top-level Feed term's value (or feed document's name) was read, which missed the
+    /// feeds a dictionary names (seen on a production Stroom: 6 of 40 filters).
+    ///
     /// @param filters Processor filters.
-    /// @return The feeds each pipeline's filters name in their top-level Feed terms (by value, or the feed
-    /// document's name), by the pipeline's UUID.
-    static Map<String, Set<String>> feedsByPipeline(final List<ProcessorFilter> filters) {
+    /// @return The feeds each pipeline's filters read, by the pipeline's UUID.
+    Map<String, Set<String>> feedsByPipeline(final List<ProcessorFilter> filters) {
         final Map<String, Set<String>> feeds = new LinkedHashMap<>();
+        final Map<Object, Object> known = new LinkedHashMap<>();
         for (final ProcessorFilter filter : filters) {
-            final Set<String> names = feeds.computeIfAbsent(filter.getPipelineUuid(), k -> new LinkedHashSet<>());
-            final ExpressionOperator expression = NullSafe.get(filter.getQueryData(), QueryData::getExpression);
-            for (final ExpressionItem item : NullSafe.list(NullSafe.get(expression, ExpressionOperator::getChildren))) {
-                if (item instanceof final ExpressionTerm term && FEED.equals(term.getField())) {
-                    final String name = NullSafe.isNonEmptyString(term.getValue())
-                            ? term.getValue()
-                            : NullSafe.get(term.getDocRef(), DocRef::getName);
-                    if (NullSafe.isNonEmptyString(name)) {
-                        names.add(name);
-                    }
-                }
-            }
+            feeds.computeIfAbsent(filter.getPipelineUuid(), k -> new LinkedHashSet<>())
+                    .addAll(pipelineFeeds.filterFeeds(terms(filter), known, false));
         }
         return feeds;
     }
