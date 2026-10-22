@@ -17,9 +17,10 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.mcp.impl.tools.MergedPipeline.ElementProperty;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.api.datasource.QueryField;

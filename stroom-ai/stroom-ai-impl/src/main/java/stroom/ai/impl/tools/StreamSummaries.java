@@ -163,7 +163,7 @@ public class StreamSummaries {
             final String pipelineUuid = errorStream.getPipelineUuid();
             if (pipelineUuid != null && pipelinesRead.add(pipelineUuid)) {
                 // Its elements unknown: none of its errors is told apart as the pipeline's own.
-                PipelineLayers.load(documentAccess, pipelineUuid)
+                MergedPipeline.load(documentAccess, pipelineUuid)
                         .ifPresent(layers -> own.addAll(layers.ownElements()));
                 accepted.addAll(acceptedErrors.acceptedFor(pipelineUuid));
             }
