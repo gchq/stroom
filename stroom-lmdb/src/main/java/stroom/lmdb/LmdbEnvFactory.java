@@ -16,6 +16,7 @@
 
 package stroom.lmdb;
 
+import stroom.lmdb.LmdbEnv.TransactionMode;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -86,6 +87,7 @@ public class LmdbEnvFactory {
         protected int maxDbs = 1;
         protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
         protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
+        protected boolean singleThreaded = false;
         protected String subDir = null;
         protected String name = null;
 
@@ -130,6 +132,11 @@ public class LmdbEnvFactory {
 
         public AbstractEnvBuilder withName(final String name) {
             this.name = name;
+            return this;
+        }
+
+        public AbstractEnvBuilder singleThreaded() {
+            this.singleThreaded = true;
             return this;
         }
 
@@ -189,6 +196,17 @@ public class LmdbEnvFactory {
                 isDedicatedDir = false;
             }
 
+            final TransactionMode transactionMode = getTransactionMode();
+            return new LmdbEnv(
+                    envDir,
+                    name,
+                    this::createEnv,
+                    envFlags,
+                    transactionMode,
+                    isDedicatedDir);
+        }
+
+        private Env<ByteBuffer> createEnv(final Path envDir) {
             final Env<ByteBuffer> env;
             try {
                 final Builder<ByteBuffer> builder = Env.create()
@@ -198,7 +216,7 @@ public class LmdbEnvFactory {
 
                 if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
                     throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
-                            + EnvFlags.MDB_NORDAHEAD);
+                                               + EnvFlags.MDB_NORDAHEAD);
                 }
 
                 if (!isReadAheadEnabled) {
@@ -206,7 +224,7 @@ public class LmdbEnvFactory {
                 }
 
                 LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
-                                + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
+                             + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
                         envDir.toAbsolutePath().normalize(),
                         maxStoreSize,
                         maxDbs,
@@ -222,7 +240,20 @@ public class LmdbEnvFactory {
                         "Error creating LMDB env at {}: {}",
                         envDir.toAbsolutePath().normalize(), e.getMessage()), e);
             }
-            return new LmdbEnv(envDir, name, env, envFlags, isReaderBlockedByWriter, isDedicatedDir);
+            return env;
+        }
+
+        private TransactionMode getTransactionMode() {
+            final TransactionMode transactionMode;
+            if (singleThreaded) {
+                // This overrides the value of isReadAheadEnabled
+                transactionMode = TransactionMode.SINGLE_THREAD;
+            } else {
+                transactionMode = isReaderBlockedByWriter
+                        ? TransactionMode.WRITE_BLOCKS_READ
+                        : TransactionMode.WRITE_BLOCKS_WRITE;
+            }
+            return transactionMode;
         }
     }
 
@@ -285,13 +316,40 @@ public class LmdbEnvFactory {
             return this;
         }
 
+        /**
+         * <p>
+         * Call this if you want write transactions to block all other read and write transactions.
+         * </p>
+         * This value is ignored if {@link CustomEnvBuilder#singleThreaded()} is called.
+         */
         public CustomEnvBuilder makeWritersBlockReaders() {
             super.isReaderBlockedByWriter = true;
             return this;
         }
 
+        /**
+         * <p>
+         * Set to true if you want write transactions to block all other read and write transactions.
+         * Set to false if you want write transactions to only block other write transactions.
+         * </p>
+         * This value is ignored if {@link CustomEnvBuilder#singleThreaded()} is called.
+         */
         public CustomEnvBuilder setIsReaderBlockedByWriter(final boolean isReaderBlockedByWriter) {
             super.isReaderBlockedByWriter = isReaderBlockedByWriter;
+            return this;
+        }
+
+        /**
+         * <p>
+         * Call this if you are sure that the {@link LmdbEnv} will only be used by a single
+         * thread. This avoids the overhead of locking/semaphores.
+         * </p>
+         * Overrides any value passed to {@link CustomEnvBuilder#setIsReaderBlockedByWriter(boolean)} and
+         * any call to {@link CustomEnvBuilder#makeWritersBlockReaders()}.
+         */
+        @Override
+        public CustomEnvBuilder singleThreaded() {
+            super.singleThreaded = true;
             return this;
         }
     }
@@ -343,6 +401,19 @@ public class LmdbEnvFactory {
         @Override
         public SimpleEnvBuilder withName(final String name) {
             super.withName(name);
+            return this;
+        }
+
+        /**
+         * <p>
+         * Call this if you are sure that the {@link LmdbEnv} will only be used by a single
+         * thread. This avoids the overhead of locking/semaphores.
+         * </p>
+         * Overrides the value of isReaderBlockedByWriter.
+         */
+        @Override
+        public SimpleEnvBuilder singleThreaded() {
+            super.singleThreaded();
             return this;
         }
     }

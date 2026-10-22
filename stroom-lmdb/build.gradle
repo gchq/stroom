@@ -32,6 +32,8 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.caffeine
+
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 

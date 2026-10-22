@@ -65,6 +65,7 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -194,19 +195,22 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             refStreamDefPooledBuf.getByteBuffer(),
                             refStreamDefinition);
 
-                    purgeCountsRef.set(purgeCountsRef.get().increment(refStreamPurgeCounts));
+                    purgeCountsRef.updateAndGet(purgeCounts -> purgeCounts.increment(refStreamPurgeCounts));
                 }
                 if (Thread.currentThread().isInterrupted()) {
                     LOGGER.debug("Thread interrupted during ");
                 }
             }
 
+            final PurgeCounts purgeCounts = purgeCountsRef.get();
             LOGGER.info(() -> LogUtil.message(
                     "Purge of partial loads/purges {} in store {} - {}",
                     (Thread.currentThread().isInterrupted()
                             ? "interrupted"
                             : "completed successfully"),
-                    buildPurgeInfoString(startTime, purgeCountsRef.get()), storeName));
+                    buildPurgeInfoString(startTime, purgeCounts), storeName));
+            // Now compact if possible
+            postPurgeCompact(purgeCounts);
         } else {
             LOGGER.info("Completed check for invalid ref loads/purges in store {} in '{}'",
                     storeName,
@@ -253,6 +257,26 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     RefDataLmdbEnv getLmdbEnvironment() {
         return lmdbEnvironment;
+    }
+
+    KeyValueStoreDb getKeyValueStoreDb() {
+        return keyValueStoreDb;
+    }
+
+    RangeStoreDb getRangeStoreDb() {
+        return rangeStoreDb;
+    }
+
+    ProcessingInfoDb getProcessingInfoDb() {
+        return processingInfoDb;
+    }
+
+    MapDefinitionUIDStore getMapDefinitionUIDStore() {
+        return mapDefinitionUIDStore;
+    }
+
+    ValueStore getValueStore() {
+        return valueStore;
     }
 
     /**
@@ -466,6 +490,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
+    private void postPurgeCompact(final PurgeCounts purgeCounts) {
+        // No point compacting if we didn't purge anything
+        if (purgeCounts.refStreamDefsDeletedCount > 0
+            && referenceDataConfigProvider.get().isCompactAfterPurgeEnabled()) {
+
+            lmdbEnvironment.compact();
+        } else {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Not compacting, purgeCounts: {}, isCompactAfterPurgeEnabled: {}",
+                    purgeCounts, referenceDataConfigProvider.get().isCompactAfterPurgeEnabled()));
+        }
+    }
+
+
     @Override
     public void purgeOldData() {
         purgeOldData(Instant.now(), referenceDataConfigProvider.get().getPurgeAge());
@@ -543,7 +581,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             LOGGER.debug("purgeCounts: {}", purgeCounts);
 
             if (purgeCounts.refStreamDefsFailedCount > 0) {
-                // One or more ref stream defs failed
+                // One or more ref stream defs failed, probably safer not to compact if something
+                // went wrong
                 throw new RuntimeException(LogUtil.message(
                         "Unable to purge {} ref stream definitions in store {}",
                         purgeCounts.refStreamDefsFailedCount,
@@ -553,10 +592,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         "Purge of store {} completed successfully - {}",
                         getName(),
                         buildPurgeInfoString(startTime, purgeCounts)));
+
             } else {
                 LOGGER.info(() -> LogUtil.message(
                         "Purge of store {} completed with no data to purge.", getName()));
             }
+            // Now compact the store if possible
+            postPurgeCompact(purgeCounts);
+
         } catch (final TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
@@ -735,13 +778,18 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 } else {
                     LOGGER.info(() -> LogUtil.message("Purge completed successfully on store '{}' - {}",
                             storeName, buildPurgeInfoString(startTime, purgeCounts)));
+
                 }
             } else {
-                // One or more ref stream defs failed
+                // One or more ref stream defs failed, probably safer not to compact if something
+                // went wrong
                 throw new RuntimeException(LogUtil.message(
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
             }
+            // Now compact the store if possible
+            postPurgeCompact(purgeCounts);
+
         } catch (final TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
@@ -1524,6 +1572,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbEnvironment.getSizeOnDisk();
     }
 
+    public long getSizeInUse() {
+        return lmdbEnvironment.getSizeInUse();
+    }
+
+    public Path getLocalDir() {
+        return lmdbEnvironment.getLocalDir();
+    }
+
     @Override
     public String getName() {
         return storeName;
@@ -1581,6 +1637,15 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         refStreamDefsFailedCount + 1,
                         this.refStreamPurgeCounts.add(refStreamPurgeCounts));
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PurgeCounts{" +
+                   "refStreamDefsDeletedCount=" + refStreamDefsDeletedCount +
+                   ", refStreamDefsFailedCount=" + refStreamDefsFailedCount +
+                   ", refStreamPurgeCounts=" + refStreamPurgeCounts +
+                   '}';
         }
     }
 
@@ -1648,6 +1713,16 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             return mapsDeletedCount == 0
                    && valuesDeletedCount == 0
                    && valuesDeReferencedCount == 0;
+        }
+
+        @Override
+        public String toString() {
+            return "RefStreamPurgeCounts{" +
+                   "mapsDeletedCount=" + mapsDeletedCount +
+                   ", valuesDeletedCount=" + valuesDeletedCount +
+                   ", valuesDeReferencedCount=" + valuesDeReferencedCount +
+                   ", isSuccess=" + isSuccess +
+                   '}';
         }
     }
 
