@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
@@ -404,6 +405,39 @@ public class WriteGuard {
             }
             throw e;
         }
+    }
+
+    /// Moves a document into a folder, as the user (Stroom checks they may), its permissions the folder's: how
+    /// promotion puts a build's document in place. Its UUID stays, so filters and references keep working.
+    ///
+    /// @param ref    The document.
+    /// @param folder The folder.
+    public void moveTo(final DocRef ref, final Folder folder) {
+        explorerServiceProvider.get().move(List.of(node(ref)), node(folder.docRef()),
+                PermissionInheritance.DESTINATION);
+    }
+
+    /// Copies a document into a folder under another name, as the user: promotion's backup of a production
+    /// document before its working copy is written over it.
+    ///
+    /// @param ref    The document.
+    /// @param folder The folder.
+    /// @param name   The copy's name.
+    /// @return The copies made.
+    public List<DocRef> copyTo(final DocRef ref, final Folder folder, final String name) {
+        final BulkActionResult copied = explorerServiceProvider.get().copy(List.of(node(ref)), node(folder.docRef()),
+                true, name, PermissionInheritance.DESTINATION);
+        return NullSafe.list(NullSafe.get(copied, BulkActionResult::getExplorerNodes)).stream()
+                .map(ExplorerNode::getDocRef)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /// Deletes a document, as the user (Stroom checks they may).
+    ///
+    /// @param ref The document.
+    public void delete(final DocRef ref) {
+        explorerServiceProvider.get().delete(List.of(node(ref)));
     }
 
     /// @param ref A document.

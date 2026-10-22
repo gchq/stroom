@@ -30,7 +30,6 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
-import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -79,17 +78,17 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
-    private final HeldSchemas heldSchemas;
+    private final EventVersions eventVersions;
     private final BuildPlan plan;
 
     @Inject
     RecordSourceNotesTool(final WriteGuard guard,
                           final DocumentAccess documentAccess,
-                          final HeldSchemas heldSchemas,
+                          final EventVersions eventVersions,
                           final BuildPlan plan) {
         this.guard = guard;
         this.documentAccess = documentAccess;
-        this.heldSchemas = heldSchemas;
+        this.eventVersions = eventVersions;
         this.plan = plan;
     }
 
@@ -166,7 +165,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> givenFields = notes(call, FIELDS_ARG, FIELD_KEYS, FIELD_REQUIRED);
         final List<Map<String, Object>> givenEvents = notes(call, EVENTS_ARG, EVENT_KEYS, EVENT_REQUIRED);
         if (!givenEvents.isEmpty()) {
-            final List<String> problems = SourceNotes.catalogueProblems(givenEvents, detailCheck());
+            final List<String> problems = SourceNotes.catalogueProblems(givenEvents, detailCheck(context, build));
             if (!problems.isEmpty()) {
                 throw new ToolRefusal("Nothing recorded; the event catalogue can't be drafted from as it is: "
                                       + String.join("; ", problems) + ". Correct the events and call again.");
@@ -241,12 +240,11 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return keptDocs;
     }
 
-    // Why an event_detail can't be an action element, from the event-logging schema; null when the schema is
-    // unreadable (the events are still checked for twins).
-    private Function<String, String> detailCheck() {
+    // Why an event_detail can't be an action element, from the event-logging schema of the version chosen for the
+    // build (else the newest held); null when the schema is unreadable (the events are still checked for twins).
+    private Function<String, String> detailCheck(final ToolCallContext context, final String build) {
         try {
-            // The build's chosen version is kept by the translation tools, not ported yet: the newest held.
-            final EventSchema schema = heldSchemas.eventSchema(heldSchemas.chosenOrLatest(null));
+            final EventSchema schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
             return detail -> SourceNotes.detailProblem(schema, detail);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "No event-logging schema to check the catalogue against: " + e.getMessage(), e);

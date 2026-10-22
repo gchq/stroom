@@ -212,6 +212,21 @@ final class BuildWorld {
             deleted.forEach(node -> delete(node.getUuid()));
             return new BulkActionResult(deleted, "");
         });
+        Mockito.when(explorerService.copy(any(), any(), Mockito.anyBoolean(), any(), any(PermissionInheritance.class)))
+                .thenAnswer(inv -> {
+                    final List<ExplorerNode> copied = inv.getArgument(0);
+                    final ExplorerNode destination = inv.getArgument(1);
+                    final String name = inv.getArgument(3);
+                    final List<ExplorerNode> made = new ArrayList<>();
+                    for (final ExplorerNode node : copied) {
+                        final Node copy = add(node.getType(), name, destination.getUuid(), null);
+                        if (docs.get(node.getUuid()) instanceof final AbstractDoc original) {
+                            docs.put(copy.uuid, renamed(original, copy.uuid, name));
+                        }
+                        made.add(copy.explorerNode());
+                    }
+                    return new BulkActionResult(made, "");
+                });
         Mockito.when(explorerService.move(any(), any(), any(PermissionInheritance.class))).thenAnswer(inv -> {
             final List<ExplorerNode> moved = inv.getArgument(0);
             final ExplorerNode destination = inv.getArgument(1);
@@ -233,6 +248,10 @@ final class BuildWorld {
                         .filter(node -> !hidden.contains(node.getUuid()))
                         .toList());
         Mockito.when(documentAccess.path(any())).thenAnswer(inv -> path(((DocRef) inv.getArgument(0)).getUuid()));
+        Mockito.when(documentAccess.parent(any())).thenAnswer(inv ->
+                Optional.ofNullable(nodes.get(((DocRef) inv.getArgument(0)).getUuid()))
+                        .map(node -> nodes.get(node.parent))
+                        .map(Node::docRef));
         Mockito.when(documentAccess.findDocRef(anyString())).thenAnswer(inv ->
                 Optional.ofNullable(nodes.get((String) inv.getArgument(0)))
                         .filter(node -> !hidden.contains(node.uuid))
@@ -281,6 +300,17 @@ final class BuildWorld {
             case final XsltDoc doc -> doc.copy().version(version).build();
             case final TextConverterDoc doc -> doc.copy().version(version).build();
             case final DictionaryDoc doc -> doc.copy().version(version).build();
+            default -> document;
+        };
+    }
+
+    // A copy of a document, under another UUID and name, as Stroom's explorer copies it.
+    private static AbstractDoc renamed(final AbstractDoc document, final String uuid, final String name) {
+        return switch (document) {
+            case final DocumentationDoc doc -> doc.copy().uuid(uuid).name(name).build();
+            case final XsltDoc doc -> doc.copy().uuid(uuid).name(name).build();
+            case final TextConverterDoc doc -> doc.copy().uuid(uuid).name(name).build();
+            case final DictionaryDoc doc -> doc.copy().uuid(uuid).name(name).build();
             default -> document;
         };
     }
