@@ -102,6 +102,12 @@ services directly as the user, and those listed here only read.
   output element comes from, an index survey, Documentation passages matching `find`, and what an event-logging
   schema element takes. The built-ins take `uuid` alone (`read_document` also `part`), split content, metadata and
   documentation into three tools, combine a dictionary with its imports, and save large content to the workspace.
+  `read_document` has taken in two parts of `describe_document`: an XSLT is given with what its translation does
+  (`describe_translation`, as a `## Translation` section, saved to the workspace when large; not with `part`), and
+  for the event-logging XMLSchema `element` says what an element takes (`describe_event_element`), as JSON, with
+  `uuid` optional when `type` is `XMLSchema`. Unlike `describe_document`, an event-logging XMLSchema read without
+  `element` is still its XSD (as before, saved to the workspace when large) rather than EventDetail's description,
+  and with no `uuid` the version is always the newest held (no build's chosen version yet).
 * **`stream_meta` and `find_streams`, `describe_stream`**: MCP finds streams by `feed`, `stream_type`, `parent_id`
   or `pipeline_uuid` (`limit` up to 200, newest first) and describes one stream's family, attributes and processing.
   The built-in takes `feeds`, `pipeline`, `folder`, `type`, `from`/`to`, `status`, `attributes`, `parts`, `groupBy`
@@ -168,6 +174,32 @@ Proposals only: nothing has been renamed.
   (`document_info`, `stream_meta`, `processor_tasks`).
 * Consent: map MCP's `confirmation_id`/`approval_id`/`reviewed` onto one consent model with the chat's approval
   forms (the roadmap's "one consent model").
+
+## The validation core (`stroom.ai.impl.tools.validation`)
+
+What `check_xslt` and `check_events` are made of, ported from the MCP server's `utils/saxon.py`, `utils/schemas.py`,
+`utils/eventschema.py`, `utils/xpathcheck.py`, `utils/xsltversion.py` and the helpers of `tools/validation.py`,
+before the tools themselves. Where it differs:
+
+* **Compiling an XSLT** (`XsltCompileCheck`): with Stroom's own Saxon set-up, as its XSLT pool compiles for an XSLT
+  filter: Stroom's XSLT function library registered and imports read by name through Stroom's resolver. The MCP
+  server compiled with stubs for Stroom's functions and for whatever an import declares, and said an undeclared
+  variable was "fine only if an import declares it"; here an import is read, so one that can't be read is the
+  error (Saxon stops there), and there are no notes.
+* **Validating Events** (`HeldSchemas`, `EventChecks`): against the XMLSchema documents the user can view, by
+  system id, compiled and cached by Stroom's schema pool. lxml's one message for a bad value is two from the JDK's
+  validator (the value, then the element); they are given as one error, so counts agree. An error's `path` is
+  `/Events/Event[2]/EventTime/TimeCreated`, a position given where the parent holds more than one of that name.
+* **Evaluating XPath on samples** (`LockedSaxon`, `XPathChecks`): Saxon in-process, locked down (no URI, unparsed
+  text, collection or environment variable; no external entity). Every sample text is matched with Saxon's own
+  regex engine, so there is no Python "twin" of a regex to agree with Saxon first, and nothing has to be started on
+  the main thread. `XPathChecks` takes xpaths, extractions and record documents rather than the translation
+  mapping, which the translation build ports. Where a regex stops matching is read with Java's regular
+  expressions, as the MCP server read it with Python's.
+* **Wording**: "the server doesn't run or save it" is "the tools don't run or save it", and the deadline warning no
+  longer names the server's `sample_check_seconds` setting.
+* **Not ported**: `agent_line` and `client_model` (the save's "by" text comes from the caller's session),
+  `check_xslt`'s import lookup and `_record_validated` (the tools' own wiring, with the plan layer).
 
 ## MCP server tools with no built-in counterpart
 

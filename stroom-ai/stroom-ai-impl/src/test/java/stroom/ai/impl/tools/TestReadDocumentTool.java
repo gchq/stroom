@@ -19,6 +19,8 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.TabSnapshots;
+import stroom.ai.impl.tools.validation.HeldSchemas;
+import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -47,6 +49,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -460,6 +463,81 @@ class TestReadDocumentTool {
     }
 
     @Test
+    void anEventLoggingSchemasElementIsDescribedRatherThanTheWholeXsd() {
+        // Seen with the Stroom MCP server: the whole XSD (over 100 KB) was put in a file by the agent's client, and
+        // the agent spent twelve minutes reading it with PowerShell.
+        final DocRef schema = new DocRef(XmlSchemaDoc.TYPE, "schema-uuid", "event-logging v4.1.0");
+        node(schema);
+        viewable.add(schema.getUuid());
+        indexable(schema, Map.of("xsd", HeldSchemasWorld.XSD_4_1_0), XmlSchemaDoc.builder().uuid(schema.getUuid())
+                .name(schema.getName()).systemId("file://event-logging-v4.1.0.xsd").namespaceURI("event-logging:3")
+                .data(HeldSchemasWorld.XSD_4_1_0).build());
+        final ReadDocumentTool withSchemas = toolWithSchemas();
+
+        final ToolResult result = withSchemas.execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"uuid\":\"schema-uuid\",\"element\":\"EventDetail/Authenticate\"}"),
+                ToolCalls.inChat(1, workspace));
+
+        final Map<String, Object> json = result.structuredContent();
+        assertThat(json)
+                .containsEntry("type", XmlSchemaDoc.TYPE)
+                .containsEntry("uuid", "schema-uuid")
+                .containsEntry("systemId", "file://event-logging-v4.1.0.xsd")
+                .containsEntry("path", "Event/EventDetail/Authenticate")
+                .containsEntry("schema_version", "4.1.0")
+                .containsKey("children")
+                .containsKey("hint");
+        // Without element, the XSD is read as before.
+        assertThat(run("{\"uuid\":\"schema-uuid\"}")).contains("Part 'xsd'");
+    }
+
+    @Test
+    void anElementWithoutAUuidIsDescribedFromTheNewestVersion() {
+        final ToolResult result = toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XMLSchema\",\"element\":\"EventDetail\"}"),
+                ToolCalls.inChat(1, workspace));
+
+        assertThat(result.structuredContent())
+                .containsEntry("path", "Event/EventDetail")
+                .containsEntry("schema_version", "4.1.0")
+                .doesNotContainKey("hint");
+        assertThat(toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XMLSchema\",\"element\":\"EventDetail/Acess\"}"),
+                ToolCalls.inChat(1, workspace)).text())
+                .startsWith("Error: 'Event/EventDetail' has no child 'Acess'.");
+    }
+
+    @Test
+    void anElementOfAnotherDocumentIsRefused() {
+        viewable.add(XSLT.getUuid());
+        xsltContent("<xsl:stylesheet/>");
+
+        assertThat(run("{\"uuid\":\"xslt-uuid\",\"element\":\"EventDetail\"}"))
+                .isEqualTo("Error: element is for the event-logging XMLSchema only; XSLT 'Event translation' is a "
+                           + "XSLT.");
+    }
+
+    @Test
+    void anXsltIsGivenWithWhatItsTranslationDoes() {
+        viewable.add(XSLT.getUuid());
+        final String code = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                            + "xmlns=\"event-logging:3\" xpath-default-namespace=\"records:2\" version=\"3.0\">"
+                            + "<xsl:template match=\"record\"><Event><EventSource><User><Id>"
+                            + "<xsl:value-of select=\"data[@name='user']/@value\"/></Id></User></EventSource>"
+                            + "</Event></xsl:template></xsl:stylesheet>";
+        indexable(XSLT, Map.of("xsl", code), XsltDoc.builder().uuid(XSLT.getUuid()).name(XSLT.getName())
+                .data(code).build());
+
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}"))
+                .contains("## Part 'xsl'")
+                .contains("## Translation\nWhat it does")
+                .contains("\"output\" : \"[record] Event/EventSource/User/Id\"")
+                .contains("\"input_fields\" : [ \"user\" ]");
+        // A part asked for is that part alone.
+        assertThat(run("{\"uuid\":\"xslt-uuid\",\"part\":\"xsl\"}")).doesNotContain("## Translation");
+    }
+
+    @Test
     void aDocumentationDocIsReadAPassageAtATime() {
         final DocRef manual = new DocRef(DocumentationDoc.TYPE, "manual-uuid", "Acme reference - events");
         node(manual);
@@ -534,6 +612,17 @@ class TestReadDocumentTool {
                 .contains("## Processing\n- Filter 7 (uuid filter-uuid): selects streams where Feed")
                 .contains("FIREWALL-EVENTS")
                 .contains("; enabled, priority 10");
+    }
+
+    private ReadDocumentTool toolWithSchemas() {
+        final HeldSchemas heldSchemas = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0)
+                .heldSchemas();
+        final DocumentAccess documentAccess = new DocumentAccess(() -> explorerNodeService, securityContext,
+                () -> handlers, auditLog);
+        return new ReadDocumentTool(workspace, documentAccess, new ProcessorFilterAccess(securityContext,
+                () -> processorFilterService, documentAccess), () -> wordListProvider, tabSnapshots,
+                () -> heldSchemas);
     }
 
     private void node(final DocRef docRef) {

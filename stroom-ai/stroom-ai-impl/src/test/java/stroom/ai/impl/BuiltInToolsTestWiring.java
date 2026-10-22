@@ -46,6 +46,8 @@ import stroom.feed.api.FeedProperties;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.pipeline.cache.SchemaPool;
+import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -116,6 +118,8 @@ final class BuiltInToolsTestWiring {
                 bind(DataService.class).toInstance(Mockito.mock(DataService.class));
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
                 bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
+                bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
+                bind(SchemaPool.class).toInstance(Mockito.mock(SchemaPool.class));
                 bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
                 bind(StroomEventLoggingService.class).toInstance(Mockito.mock(StroomEventLoggingService.class));
                 bind(GlobalConfigReader.class).toInstance(Mockito.mock(GlobalConfigReader.class));
