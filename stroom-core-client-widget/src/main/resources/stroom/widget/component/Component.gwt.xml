@@ -8,6 +8,9 @@
     <inherits name="com.google.gwt.user.User"/>
     <inherits name="stroom.Stroom"/>
     <inherits name="stroom.task.Task"/>
+    <!-- PresenterAdapter embeds MyPresenterWidget, until GWTP is removed -->
+    <inherits name="com.gwtplatform.mvp.Mvp"/>
+    <inherits name="stroom.widget.util.Util"/>
 
     <!--
       Development checks (ComponentChecks): misuse of ownership fails loudly and components left
