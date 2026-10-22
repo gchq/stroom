@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
+import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
@@ -27,6 +28,7 @@ import stroom.gwt.workbench.client.app.rest.UploadReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -34,6 +36,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [DocumentAssetPresenter]
@@ -52,16 +55,30 @@ import com.google.gwt.user.client.ui.Widget;
 /// The presenter (from the editors batch's ginjector) is read as `VisualisationPresenter` reads
 /// its tabs, and shown with its toolbar above it, as the document's tab shows them, filling the
 /// page.
+///
+/// The tree stories have folders (`GET /visualisationAssets/getContent/{uuid}` is a file's
+/// content): the tab's tree with its keys, and the 'Choose Asset' dialog that a floor map's asset
+/// picker opens, chosen from by the keys.
 public final class VisualisationAssetsStories {
 
     private static final String OWNER_UUID = "vis-1";
     private static final String CREATE_PATH = "/visualisationAssets/updateNewUploadedFile/" + OWNER_UUID;
     private static final String UPLOAD_URL = "importfile.rpc";
+    private static final String CONTENT_PATH = "/visualisationAssets/getContent/" + OWNER_UUID;
 
     // The seed, then the assets with the uploaded file
     private static final String ASSETS = """
             {"ownerId": "vis-1", "dirty": false, "assets": [
                 {"id": "a1", "path": "chart.js", "folder": false}MORE],
+              "uploadedFiles": {}}""";
+
+    // Folders and files, out of order: the tree shows folders first, each sorted by name
+    private static final String TREE_ASSETS = """
+            {"ownerId": "vis-1", "dirty": false, "assets": [
+                {"id": "a1", "path": "js/chart.js", "folder": false},
+                {"id": "a2", "path": "index.html", "folder": false},
+                {"id": "a3", "path": "js/lib/d3.js", "folder": false},
+                {"id": "a4", "path": "css/style.css", "folder": false}],
               "uploadedFiles": {}}""";
 
     private VisualisationAssetsStories() {
@@ -112,7 +129,75 @@ public final class VisualisationAssetsStories {
                     play.expect(play.spy(ScreenHarness.UPLOAD_SPY)).toHaveBeenCalledWith(UPLOAD_URL, "chart.js", "x");
                     play.waitFor(() -> play.expect(play.getByText("chart-1.js")).toBeVisible());
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // The tree's keys: the choice follows the focus, so moving to a file shows it in the
+                // editor; Right and Left open and close a folder, or go to its first child and its
+                // parent; Enter opens or closes a folder; typing goes to an item by its name
+                .story("TreeKeys", VisualisationAssetsStories::renderTree)
+                .withPlay(play -> {
+                    play.expect(play.findByRole("tree", "Assets")).toBeInTheDocument();
+                    play.click(play.findByText("css"));
+                    play.expect(item(play, "css")).toHaveAttribute("aria-selected", "true");
+                    play.expect(item(play, "css")).toHaveAttribute("aria-level", "1");
+                    play.expect(item(play, "css")).toHaveAttribute("aria-posinset", "1");
+                    play.expect(item(play, "css")).toHaveAttribute("aria-setsize", "3");
+                    play.expect(item(play, "css")).toHaveAttribute("aria-expanded", "false");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(play, "js")).toHaveFocus();
+                    play.expect(item(play, "js")).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(item(play, "js")).toHaveAttribute("aria-expanded", "true"));
+                    // The folder's first child is its folder
+                    play.keyboard("{ArrowRight}");
+                    play.expect(item(play, "lib")).toHaveFocus();
+                    play.expect(item(play, "lib")).toHaveAttribute("aria-level", "2");
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(item(play, "lib")).toHaveAttribute("aria-expanded", "true"));
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(play, "d3.js")).toHaveAttribute("aria-level", "3");
+                    play.keyboard("{ArrowDown}");
+                    // The file is shown in the editor
+                    play.expect(item(play, "chart.js")).toHaveAttribute("aria-selected", "true");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.get(CONTENT_PATH).withQuery("path=%2Fjs%2Fchart.js").toSpyMatcher()));
+                    play.keyboard("{ArrowLeft}");
+                    play.expect(item(play, "js")).toHaveFocus();
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "js")).toHaveAttribute("aria-expanded", "false"));
+                    play.expect(play.queryByText("chart.js")).toBeNull();
+                    play.keyboard("i");
+                    play.expect(item(play, "index.html")).toHaveFocus();
+                    play.expect(item(play, "index.html")).toHaveAttribute("aria-selected", "true");
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // A floor map's asset picker opens 'Choose Asset': only a file can be chosen, and Enter
+                // on one chooses it, as OK does
+                .story("ChooseAssetByKeyboard", VisualisationAssetsStories::renderChooser)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("None"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Choose Asset", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.click(dialog.findByText("js"));
+                    play.expect(dialog.getByRole("button", StroomDom.button("OK"))).toBeDisabled();
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(item(dialog, "js")).toHaveAttribute("aria-expanded", "true"));
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(dialog, "lib")).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(dialog, "chart.js")).toHaveAttribute("aria-selected", "true");
+                    play.expect(dialog.getByRole("button", StroomDom.button("OK"))).toBeEnabled();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Choose Asset", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.getByText("/assets/vis-1/js/chart.js")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
                 });
+    }
+
+    // An item of the tree, by its name
+    private static Query item(final Play play, final String name) {
+        return play.getByText(name).closest("[role='treeitem']");
     }
 
     /// 'Add File or Folder' then 'Upload File' opens the upload dialog.
@@ -127,6 +212,37 @@ public final class VisualisationAssetsStories {
         return screen.within(screen.findByText("Add File", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
+    // The tab's tree with folders, and the content of each file chosen
+    private static Widget renderTree(final StoryContext context) {
+        final RestFixtures fixtures = RestFixtures.builder()
+                .get("/visualisationAssets/fetchDraftAssets/" + OWNER_UUID, RestReply.json(TREE_ASSETS))
+                .get(CONTENT_PATH, RestReply.json("{\"content\": \"// A file\", \"editorMode\": \"JAVASCRIPT\"}"))
+                .build();
+        return render(context, fixtures);
+    }
+
+    // A floor map's asset picker, for the document with folders
+    private static Widget renderChooser(final StoryContext context) {
+        final RestFixtures fixtures = RestFixtures.builder()
+                .get("/visualisationAssets/fetchDraftAssets/" + OWNER_UUID, RestReply.json(TREE_ASSETS))
+                .build();
+        final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+                .injector(injector)
+                .realAlerts()
+                .build();
+        final SimplePanel frame = new SimplePanel();
+        frame.getElement().getStyle().setProperty("width", "300px");
+        harness.add(frame);
+        harness.afterStartUp(() -> {
+            final DocumentAssetDropDownPresenter picker = harness.unbindOnCleanUp(
+                    injector.getDocumentAssetDropDownPresenter());
+            picker.setDocument(VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build());
+            frame.setWidget(picker.getWidget());
+        });
+        return harness.asWidget();
+    }
+
     private static Widget render(final StoryContext context, final String createdPath) {
         final RestFixtures fixtures = RestFixtures.builder()
                 .get("/visualisationAssets/fetchDraftAssets/" + OWNER_UUID,
@@ -139,6 +255,11 @@ public final class VisualisationAssetsStories {
                 // Creating the uploaded file
                 .put(CREATE_PATH, RestReply.json("true"))
                 .build();
+        return render(context, fixtures);
+    }
+
+    // The tab, with its toolbar above it, reading the fake document
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)

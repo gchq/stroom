@@ -1261,8 +1261,10 @@
     overflow: hidden;
 }
 
+/* A box holding a control in a form (a list, tree, grid or editor), or a read-only field's text:
+   filled as an input is, in either theme, so it stands apart from the dialog around it */
 .form-control-background {
-  background-color: var(--content-box__background-color);
+  background-color: var(--control__background-color);
 }
 
 .form-control {

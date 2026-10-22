@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
@@ -138,6 +139,10 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
     DocumentAssetPresenter<VisualisationDoc> getVisualisationAssetsPresenter();
+
+    /// @return A document's asset picker, as a floor map's settings have it, which opens the
+    /// 'Choose Asset' dialog.
+    DocumentAssetDropDownPresenter getDocumentAssetDropDownPresenter();
 
     // Code documents
 

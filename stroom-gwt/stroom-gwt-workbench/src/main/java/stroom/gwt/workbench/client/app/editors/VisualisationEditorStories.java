@@ -121,11 +121,11 @@ public final class VisualisationEditorStories {
                     play.click(DocEditors.tab(play, "Assets"));
                     play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
                     play.expect(play.getByText("src")).toBeInTheDocument();
-                    // The tree holds the collapsed folder's items, hidden
-                    play.expect(play.getByText("main.js")).not().toBeVisible();
-                    // Expand the folder, then open the file in the editor.
-                    // GWT's Tree expands an item from its open/close image
-                    play.click(play.within(play.getByText("src").closest("tr")).querySelector("img"));
+                    // A collapsed folder's items aren't shown
+                    play.expect(play.queryByText("main.js")).toBeNull();
+                    // Expand the folder from its expander, then open the file in the editor
+                    play.click(play.within(play.getByText("src").closest("[role='treeitem']"))
+                            .querySelector(".explorerCell-expander"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
                     // Until a file is selected, the editor's area asks for one (it was blank)
                     final Query placeholder = play.getByText("Select a file to view or edit it");

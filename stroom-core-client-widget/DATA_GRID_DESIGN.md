@@ -1122,9 +1122,19 @@ keyboard focus drawn inside the row) and has its stories switched with it, as th
   shows the item's menu (Right on a document no longer does: it is a tree key). The tick tree's
   items say whether they are ticked (`aria-checked`, its tick box a picture). A list's or tree's
   row is at least 24px high (WCAG 2.5.8; the explorer's were 23px). `Widgets/Tree/ExplorerTree`
-  `Keys`. The asset trees (GWT `Tree`, in the visualisation and document asset editors) are not
-  moved: their presenters build and change `TreeItem`s directly, so moving them means a model of
-  their own; GWT's `Tree` already gives them tree roles and keys. Left for a decision.
+  `Keys`.
+* **Step 3, the asset trees** (2026-10-22): a visualisation's Assets tab and the 'Choose Asset'
+  dialog (a floor map's asset picker) were GWT `Tree`s, their items `TreeItem`s that were both the
+  data and the widget. The items (`DocumentAssetTreeItem`) are now a plain model (children, parent,
+  open state; unit tested), drawn by `DocumentAssetTree`, the tree profile with the explorer's row
+  looks (`explorerCell` classes): one item chosen at a time, the choice following the focus (moving
+  to a file shows it in the tab's editor, or enables the dialog's OK); Enter or a double click on a
+  folder opens or closes it, and on a file, in the dialog, chooses it as OK does. The trees are
+  named "Assets". Their presenters keep their code, the tree mirroring the calls they made on GWT's
+  (`addItem`, `getItem`, `getSelectedItem`, `setSelectedItem`, `addSelectionHandler`).
+  `App/Main/VisualisationAssets` `TreeKeys` and `ChooseAssetByKeyboard`. Waiting for step 5:
+  `DocumentAssetImageResource` and `components.css`'s `.visualisation-asset-tree` rules, which
+  nothing uses now.
 * **Step 4, `SelectionList`** (2026-10-22): its options are the grid's, as a list's, keeping every
   key agreed in session 1 (moving only moves; Enter, Alt+Up or a click chooses; Right and Left
   through its levels; Space, Shift+Up and Shift+Down, Shift+Space and Ctrl+A in a list of several

@@ -54,18 +54,6 @@
   "app-editors-queryeditor--visualisation-data-latch": [
     "frame-title"
   ],
-  "app-editors-visualisationeditor--assets": [
-    "aria-required-parent",
-    "image-alt"
-  ],
-  "app-editors-visualisationeditor--assets-editable": [
-    "aria-required-parent",
-    "image-alt"
-  ],
-  "app-editors-visualisationeditor--assets-read-only": [
-    "aria-required-parent",
-    "image-alt"
-  ],
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"
   ],
@@ -273,14 +261,6 @@
   ],
   "app-main-tracesscreen--traces": [
     "scrollable-region-focusable"
-  ],
-  "app-main-visualisationassets--upload-deduplicates-name": [
-    "aria-required-parent",
-    "image-alt"
-  ],
-  "app-main-visualisationassets--upload-file": [
-    "aria-required-parent",
-    "image-alt"
   ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"

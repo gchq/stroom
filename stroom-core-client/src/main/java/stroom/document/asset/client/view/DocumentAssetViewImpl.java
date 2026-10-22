@@ -17,6 +17,7 @@
 package stroom.document.asset.client.view;
 
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
+import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.widget.layout.client.SplitPane;
@@ -25,7 +26,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -60,7 +60,7 @@ public class DocumentAssetViewImpl extends ViewImpl
     }
 
     @Override
-    public void setTreeAndEditor(final Tree tree, final EditorPresenter editorPresenter) {
+    public void setTreeAndEditor(final DocumentAssetTree tree, final EditorPresenter editorPresenter) {
         editor = editorPresenter.getWidget();
         editorPlaceholder.setStyleName("visualisationAssets-placeholder");
         final FlowPanel editorArea = new FlowPanel();
