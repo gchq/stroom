@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.shared.AbstractDoc;
@@ -69,6 +70,11 @@ class DocumentInfoTool extends AbstractBuiltInTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

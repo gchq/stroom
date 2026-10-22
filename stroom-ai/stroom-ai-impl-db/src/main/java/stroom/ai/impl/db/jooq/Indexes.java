@@ -13,6 +13,7 @@ import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
 import stroom.ai.impl.db.jooq.tables.AiChatRun;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyMember;
 
 
 /**
@@ -33,4 +34,5 @@ public class Indexes {
     public static final Index AI_CHAT_RUN_IDX_AI_CHAT_RUN_STATUS_HEARTBEAT = Internal.createIndex(DSL.name("idx_ai_chat_run_status_heartbeat"), AiChatRun.AI_CHAT_RUN, new OrderField[] { AiChatRun.AI_CHAT_RUN.STATUS, AiChatRun.AI_CHAT_RUN.HEARTBEAT_MS }, false);
     public static final Index AI_CHAT_RUN_IDX_AI_CHAT_RUN_USER_STATUS = Internal.createIndex(DSL.name("idx_ai_chat_run_user_status"), AiChatRun.AI_CHAT_RUN, new OrderField[] { AiChatRun.AI_CHAT_RUN.USER_UUID, AiChatRun.AI_CHAT_RUN.STATUS }, false);
     public static final Index AI_CHAT_IDX_AI_CHAT_USER_UUID_UPDATE_TIME = Internal.createIndex(DSL.name("idx_ai_chat_user_uuid_update_time"), AiChat.AI_CHAT, new OrderField[] { AiChat.AI_CHAT.USER_UUID, AiChat.AI_CHAT.UPDATE_TIME_MS }, false);
+    public static final Index AI_TOOL_POLICY_MEMBER_IDX_AI_TOOL_POLICY_MEMBER_USER = Internal.createIndex(DSL.name("idx_ai_tool_policy_member_user"), AiToolPolicyMember.AI_TOOL_POLICY_MEMBER, new OrderField[] { AiToolPolicyMember.AI_TOOL_POLICY_MEMBER.USER_UUID }, false);
 }

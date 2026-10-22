@@ -47,6 +47,7 @@ public class AiModule extends AbstractModule {
         bind(UserActionLookup.class).to(UserActionLookupImpl.class);
         // How a chat asks whether a tool call or change may go ahead, and asks the user to approve it.
         bind(ToolConsentGate.class).to(ChatConsentGate.class);
+        bind(CurrentToolGrants.class).to(AiToolPolicyService.class);
 
         // Built-in chat tools (get_current_date, ...).
         install(new BuiltInToolsModule());
@@ -57,7 +58,8 @@ public class AiModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class)
-                .bind(AskStroomAiResourceImpl.class);
+                .bind(AskStroomAiResourceImpl.class)
+                .bind(AiToolPolicyResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(AiRetentionJob.class, builder -> builder

@@ -26,6 +26,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
@@ -90,6 +91,11 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 .note("Use on the query's data source is checked by Stroom's query service when the search runs, "
                       + "as for any search.")
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.SEARCH;
     }
 
     @Override

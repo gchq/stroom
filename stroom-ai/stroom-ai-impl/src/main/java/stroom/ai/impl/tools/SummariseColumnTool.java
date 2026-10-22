@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.shared.AiToolCategory;
 
 import jakarta.inject.Inject;
 
@@ -37,6 +38,11 @@ class SummariseColumnTool extends AbstractWorkspaceTool {
     SummariseColumnTool(final ChatWorkspace workspace, final ColumnSummariser columnSummariser) {
         super(workspace);
         this.columnSummariser = columnSummariser;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

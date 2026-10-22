@@ -20,6 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AgentInstructions.Ignored;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
@@ -138,6 +139,11 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
                 .checksDocuments(DocumentPermission.VIEW)
                 .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override

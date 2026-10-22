@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolCategory;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -45,6 +46,11 @@ class ReadTurnTool extends AbstractBuiltInTool {
     @Inject
     ReadTurnTool(final AiService aiService) {
         this.aiService = aiService;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CORE;
     }
 
     @Override
