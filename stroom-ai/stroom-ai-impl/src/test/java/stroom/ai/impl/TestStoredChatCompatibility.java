@@ -157,6 +157,22 @@ class TestStoredChatCompatibility {
         GoldenFiles.assertMatches(REFERENCE_DIR + "records-read-back.txt", sb.toString());
     }
 
+    @Test
+    void whetherAnOldChatHasReadUntrustedContentIsStillTold() {
+        // The chat starts with an attached table, which counts whatever its tools are.
+        assertThat(UntrustedChatContent.isIn(history, tool -> false)).isTrue();
+
+        // Without it, only the tools' results count: each row still names its tool.
+        final List<AiChatMessage> withoutAttachment = history.stream()
+                .filter(message -> message.getMessageType() != AiMessageType.ATTACHMENT)
+                .toList();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, tool -> false)).isFalse();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "stroom__find_feeds"::equals)).isTrue();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "run_stroomql"::equals)).isTrue();
+        // create_filter's call, answered on its approval card, has no result, so gave the model nothing.
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "create_filter"::equals)).isFalse();
+    }
+
     // What the code that reads a message back makes of it, as text: the record it reads (its fields, by name), and
     // what the chat's export writes of it.
     private List<String> readings(final AiChatMessage message) {
