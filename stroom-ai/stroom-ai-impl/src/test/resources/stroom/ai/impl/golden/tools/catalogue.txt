@@ -350,7 +350,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Gives a data source's fields: each field's type, the conditions it supports and whether it can be queried, and the data source's time field. Use it to check the field names in a StroomQL query (from "<data source name>" ...). Also gives its documentation, which says what its fields hold when their names don't (e.g. the field mapping of the pipeline that feeds it): use it to choose a data source and its fields. The AGENTS docs that apply where the data source is are given too: follow what they say about its fields, e.g. which field holds the acting user.
+Gives a data source's fields: each field's type, the conditions it supports and whether it can be queried, and the data source's time field. Use it to check the field names in a StroomQL query (from "<data source name>" ...) or a search of an index. Also gives its documentation, which says what its fields hold when their names don't (e.g. the field mapping of the pipeline that feeds it): use it to choose a data source and its fields. The AGENTS docs that apply where the data source is are given too: follow what they say about its fields, e.g. which field holds the acting user. For a Lucene or Elastic index, it says which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch finds nothing), and what to search instead. To find an event the user describes in an index, use search_events with index.
 
 ### Parameters
 
@@ -1676,7 +1676,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Runs a StroomQL query as the user (e.g. 'from "My View" where EventTime > day() - 1d select Host, count() as N group by Host') and writes the results to a table in the workspace. You get the table's path and a profile of it (row count, columns, common values); query it further with the table tool. Use eval (e.g. 'eval Rate = Bytes / Duration') to work values out in the query, in Stroom's expression language, as the table tool's expressions are. Add a limit to the query for large results. If more than one data source could hold what the user asked for, ask them which to use with ask_user first; never choose one for them. If the user may instead want a Query document to run themselves (propose_query), ask them which.
+Runs a StroomQL query as the user (e.g. 'from "My View" where EventTime > day() - 1d select Host, count() as N group by Host') and writes the results to a table in the workspace. You get the table's path and a profile of it (row count, columns, common values); query it further with the table tool. Use eval (e.g. 'eval Rate = Bytes / Duration') to work values out in the query, in Stroom's expression language, as the table tool's expressions are. Add a limit to the query for large results. If more than one data source could hold what the user asked for, ask them which to use with ask_user first; never choose one for them. If the user may instead want a Query document to run themselves (propose_query), ask them which. A query on a Lucene or Elastic index whose answer through Stroom would mislead (e.g. is null on Elasticsearch, which matches every document) is refused, saying what to query instead. To find an event the user describes in an index, with each hit's StreamId and EventId and the streams holding every match, use search_events with index.
 
 ### Parameters
 
@@ -1707,19 +1707,34 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Searches each event in a file from fetch_events, writing a table with one row per event: StreamId, EventId and the result. Give xpath to get a value from each event (evaluated against that event alone, e.g. '//d:EventDetail/d:Authenticate/d:Outcome/d:Reason'; the events' namespace is bound to 'd'; several values are joined with ' | '). Give text to keep only the events containing it (in the xpath's value if given, else anywhere in the event), with a snippet around the match. Give join (the table the events came from) to add the result as a column to that table instead. Give jq with xpath to parse each XPath value as JSON and apply a jq filter to it, with a row per result (e.g. xpath /d:map/d:string[@key='message'] with jq '.. | .username? // empty' for every username at any depth); values that aren't JSON are counted, not failed. Then use the table tool on the output to count, group or filter.
+Searches each event in a file from fetch_events, writing a table with one row per event: StreamId, EventId and the result. Give xpath to get a value from each event (evaluated against that event alone, e.g. '//d:EventDetail/d:Authenticate/d:Outcome/d:Reason'; the events' namespace is bound to 'd'; several values are joined with ' | '). Give text to keep only the events containing it (in the xpath's value if given, else anywhere in the event), with a snippet around the match. Give join (the table the events came from) to add the result as a column to that table instead. Give jq with xpath to parse each XPath value as JSON and apply a jq filter to it, with a row per result (e.g. xpath /d:map/d:string[@key='message'] with jq '.. | .username? // empty' for every username at any depth); values that aren't JSON are counted, not failed. Then use the table tool on the output to count, group or filter. Or give index instead to find events in an index through Stroom, as the user would on a dashboard (with their permissions; nothing is saved): for an event the user describes but can't point at. Each hit has its Events stream's StreamId and its EventId, for locate_event, which traces it to its raw record; with how many events match in all, and in which streams. Searches only fields the index has, and refuses a search whose answer through Stroom would mislead, saying what to search instead.
 
 ### Parameters
 
 {
   "properties" : {
+    "allStreams" : {
+      "description" : "With index: every Events stream holding a match (not only the 20 with the most), with the raw stream each was made from: the streams to reprocess once a translation change is promoted, and for Elasticsearch the request that deletes their old documents first.",
+      "type" : "boolean"
+    },
     "column" : {
       "description" : "A name for the result column (default 'value' with xpath, else 'match').",
       "type" : "string"
     },
+    "fields" : {
+      "description" : "With index: index fields to show for each hit beside StreamId, EventId and the time (the searched ones are shown too).",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
     "ignoreCase" : {
       "description" : "False to match the case of text (default true).",
       "type" : "boolean"
+    },
+    "index" : {
+      "description" : "The index to search, in place of a file: its Elastic Index or Lucene Index doc's uuid or name, as list_data_sources gives it.",
+      "type" : "string"
     },
     "join" : {
       "description" : "A table with StreamId and EventId columns to add the result column to, e.g. /attachments/12.md.",
@@ -1728,6 +1743,10 @@ Searches each event in a file from fetch_events, writing a table with one row pe
     "jq" : {
       "description" : "A jq filter to apply to each XPath value, parsed as JSON (needs xpath).",
       "type" : "string"
+    },
+    "limit" : {
+      "description" : "With index: hits to return, newest first (default 10, at most 20).",
+      "type" : "integer"
     },
     "namespaces" : {
       "description" : "Namespace prefixes to use, e.g. {\"e\": \"event-logging:3\"}.",
@@ -1751,12 +1770,44 @@ Searches each event in a file from fetch_events, writing a table with one row pe
       "description" : "Text to find in each event.",
       "type" : "string"
     },
+    "timeFrom" : {
+      "description" : "With index: from this time (ISO 8601, or Stroom's day()-7d).",
+      "type" : "string"
+    },
+    "timeTo" : {
+      "description" : "With index: up to this time (ISO 8601, or Stroom's now()).",
+      "type" : "string"
+    },
+    "where" : {
+      "description" : "With index: conditions the event meets, all of them, on the index's fields as the user describes it, e.g. [{\"field\": \"TypeId\", \"value\": \"RoleChange\"}, {\"field\": \"UserId\", \"value\": \"admin*\"}].",
+      "items" : {
+        "description" : "One condition, as a person would set it on a dashboard.",
+        "properties" : {
+          "condition" : {
+            "description" : "The condition (default EQUALS).",
+            "enum" : [ "EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "MATCHES_REGEX", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IS_NULL", "IS_NOT_NULL" ],
+            "type" : "string"
+          },
+          "field" : {
+            "description" : "The index's field.",
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "BETWEEN: 'from,to'; IN: values separated by commas; EQUALS takes * wildcards.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "field" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
     "xpath" : {
       "description" : "An XPath expression to evaluate against each event.",
       "type" : "string"
     }
   },
-  "required" : [ "path" ],
+  "required" : [ ],
   "type" : "object"
 }
 

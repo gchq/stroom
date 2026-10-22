@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.IndexEvents.Find;
+import stroom.ai.impl.tools.IndexEvents.Term;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
@@ -32,6 +35,8 @@ import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,15 +48,21 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmNodeKind;
 import net.thisptr.jackson.jq.JsonQuery;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /// Searches each event of a file written by fetch_events (see [EventsFile]): gets values from each by XPath, and/or
 /// finds text in each, and writes a table of the results keyed by StreamId and EventId, optionally added as a
 /// column to the table the events came from, so they can be analysed with the table tool.
+///
+/// Or, given an index, finds events in it through Stroom as the user would on a dashboard ([IndexEvents], the
+/// Stroom MCP server's find_events, merged into this tool): for an event the user describes but can't point at.
 class SearchEventsTool extends AbstractWorkspaceTool {
 
     static final String NAME = "search_events";
@@ -63,6 +74,13 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     static final String COLUMN_ARG = "column";
     static final String JOIN_ARG = "join";
     static final String JQ_ARG = "jq";
+    static final String INDEX_ARG = "index";
+    static final String WHERE_ARG = "where";
+    static final String TIME_FROM_ARG = "timeFrom";
+    static final String TIME_TO_ARG = "timeTo";
+    static final String FIELDS_ARG = "fields";
+    static final String LIMIT_ARG = "limit";
+    static final String ALL_STREAMS_ARG = "allStreams";
     static final String DEFAULT_OUT = "/outputs/search_events.csv";
     static final String DEFAULT_PREFIX = "d";
     static final int PREVIEW_ROWS = 10;
@@ -72,10 +90,24 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     static final int SNIPPET_CHARS = 200;
     static final String VALUE_SEPARATOR = " | ";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String WHERE_SHAPE = "where is a list of {\"field\": ..., \"condition\": ..., "
+                                              + "\"value\": ...}";
+
+    private final IndexEvents indexEvents;
 
     @Inject
-    SearchEventsTool(final ChatWorkspace workspace) {
+    SearchEventsTool(final ChatWorkspace workspace, final IndexEvents indexEvents) {
         super(workspace);
+        this.indexEvents = indexEvents;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.USE)
+                .note("With index: Use on the index is checked, as for any search; the raw streams allStreams "
+                      + "gives are only those of feeds the user may view.")
+                .build();
     }
 
     @Override
@@ -109,6 +141,13 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                                  + "empty' for every username at any depth); values that aren't JSON are counted, "
                                  + "not failed.")
                         .chatOnly(" Then use the table tool on the output to count, group or filter.")
+                        .general(" Or give index instead to find events in an index through Stroom, as the user "
+                                 + "would on a dashboard (with their permissions; nothing is saved): for an event "
+                                 + "the user describes but can't point at. Each hit has its Events stream's "
+                                 + "StreamId and its EventId, for locate_event, which traces it to its raw record; "
+                                 + "with how many events match in all, and in which streams. Searches only fields "
+                                 + "the index has, and refuses a search whose answer through Stroom would mislead, "
+                                 + "saying what to search instead.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, ToolDescription.builder()
@@ -116,6 +155,43 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                                 .chatOnly(", e.g. /outputs/events.xml")
                                 .general(".")
                                 .build())
+                        .addStringProperty(INDEX_ARG, ToolDescription.builder()
+                                .general("The index to search, in place of a file: its Elastic Index or Lucene "
+                                         + "Index doc's uuid or name")
+                                .chatOnly(", as list_data_sources gives it")
+                                .general(".")
+                                .build())
+                        .addProperty(WHERE_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
+                                        .description("One condition, as a person would set it on a dashboard.")
+                                        .addStringProperty("field", "The index's field.")
+                                        .addEnumProperty("condition", IndexEvents.CONDITIONS.stream()
+                                                .map(Condition::name)
+                                                .toList(), "The condition (default EQUALS).")
+                                        .addStringProperty("value", "BETWEEN: 'from,to'; IN: values separated by "
+                                                                    + "commas; EQUALS takes * wildcards.")
+                                        .required("field")
+                                        .build())
+                                .description("With index: conditions the event meets, all of them, on the index's "
+                                             + "fields as the user describes it, e.g. [{\"field\": \"TypeId\", "
+                                             + "\"value\": \"RoleChange\"}, {\"field\": \"UserId\", "
+                                             + "\"value\": \"admin*\"}].")
+                                .build())
+                        .addStringProperty(TIME_FROM_ARG, "With index: from this time (ISO 8601, or Stroom's "
+                                                          + "day()-7d).")
+                        .addStringProperty(TIME_TO_ARG, "With index: up to this time (ISO 8601, or Stroom's now()).")
+                        .addProperty(FIELDS_ARG, stringArraySchema("With index: index fields to show for each hit "
+                                                                   + "beside StreamId, EventId and the time (the "
+                                                                   + "searched ones are shown too)."))
+                        .addIntegerProperty(LIMIT_ARG, "With index: hits to return, newest first (default "
+                                                       + IndexEvents.DEFAULT_HITS + ", at most "
+                                                       + IndexEvents.MAX_HITS + ").")
+                        .addBooleanProperty(ALL_STREAMS_ARG, "With index: every Events stream holding a match (not "
+                                                             + "only the " + IndexEvents.STREAMS + " with the most), "
+                                                             + "with the raw stream each was made from: the streams "
+                                                             + "to reprocess once a translation change is promoted, "
+                                                             + "and for Elasticsearch the request that deletes their "
+                                                             + "old documents first.")
                         .addStringProperty(XPATH_ARG, "An XPath expression to evaluate against each event.")
                         .addProperty(NAMESPACES_ARG, ObjectSchema.builder()
                                 .description("Namespace prefixes to use, e.g. {\"e\": \"event-logging:3\"}.")
@@ -136,13 +212,26 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                                 .chatOnly("A .csv file in /outputs/ to write the table to (default " + DEFAULT_OUT
                                           + ").")
                                 .build())
-                        .required(PATH_ARG)
                         .build())
                 .build();
     }
 
     @Override
+    protected Duration timeLimit(final ToolCall request, final ToolCallContext context) {
+        // A search of an index takes as long as a query may.
+        return stringArg(request, INDEX_ARG) != null
+                ? limits(context).getQueryTimeLimit().getDuration()
+                : timeLimit(context);
+    }
+
+    @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        if (stringArg(request, INDEX_ARG) != null) {
+            return findInIndex(request, context);
+        }
+        if (stringArg(request, PATH_ARG) == null) {
+            throw new WorkspaceException("Give path (an events file), or index to find events in an index.");
+        }
         final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath requestedOut = outArg(request);
@@ -233,6 +322,76 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         return ToolResult.text(found + jqErrors.summary() + ". Wrote " + table.rows().size() + " row(s) to " + out
                                + "; use the table tool on it to "
                                + "count, group or filter. The first rows:\n\n" + markdown(table));
+    }
+
+    // Finds events in an index, as the Stroom MCP server's find_events did.
+    private ToolResult findInIndex(final ToolCall request, final ToolCallContext context) {
+        final Integer limit = intArg(request, LIMIT_ARG);
+        final Find find = new Find(stringArg(request, INDEX_ARG), terms(request), stringArg(request, TIME_FROM_ARG),
+                stringArg(request, TIME_TO_ARG), stringListArg(request, FIELDS_ARG),
+                Objects.requireNonNullElse(limit, IndexEvents.DEFAULT_HITS), booleanArg(request, ALL_STREAMS_ARG,
+                false));
+        final Map<String, Object> result = indexEvents.find(context, find);
+        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+    }
+
+    /// @param request The model's call.
+    /// @return Its where conditions: a list of `{field, condition, value}`, or one.
+    static List<Term> terms(final ToolCall request) {
+        final Object given = argsMap(request).get(WHERE_ARG);
+        final List<?> items;
+        if (given == null) {
+            items = List.of();
+        } else if (given instanceof final List<?> list) {
+            items = list;
+        } else if (given instanceof final Map<?, ?> one) {
+            items = List.of(one);
+        } else {
+            items = parsedList(String.valueOf(given));
+        }
+        final List<Term> terms = new ArrayList<>();
+        for (final Object item : items) {
+            if (!(item instanceof final Map<?, ?> term) || term.get("field") == null
+                || String.valueOf(term.get("field")).isBlank()) {
+                throw new WorkspaceException(WHERE_SHAPE + ", each with a field.");
+            }
+            terms.add(new Term(String.valueOf(term.get("field")).strip(), condition(term.get("condition")),
+                    term.get("value") == null
+                            ? ""
+                            : String.valueOf(term.get("value"))));
+        }
+        return terms;
+    }
+
+    private static List<?> parsedList(final String text) {
+        if (text.isBlank()) {
+            return List.of();
+        }
+        try {
+            final Object parsed = JsonUtil.readValue(text, Object.class);
+            if (parsed instanceof final List<?> list) {
+                return list;
+            } else if (parsed instanceof final Map<?, ?> one) {
+                return List.of(one);
+            }
+        } catch (final RuntimeException e) {
+            // Not JSON: refused below.
+        }
+        throw new WorkspaceException(WHERE_SHAPE + ".");
+    }
+
+    private static Condition condition(final Object given) {
+        if (given == null || String.valueOf(given).isBlank()) {
+            return Condition.EQUALS;
+        }
+        final String name = String.valueOf(given).strip().toUpperCase(Locale.ROOT);
+        for (final Condition condition : IndexEvents.CONDITIONS) {
+            if (condition.name().equals(name)) {
+                return condition;
+            }
+        }
+        throw new WorkspaceException("Condition '" + given + "' isn't one of " + String.join(", ",
+                IndexEvents.CONDITIONS.stream().map(Condition::name).toList()) + ".");
     }
 
     /// @return The events in the file, in order.

@@ -261,7 +261,7 @@ class TestEventTools {
                 .contains("eventId=\"2\" format=\"text\">")
                 .doesNotContain("root:");
         // The file as a whole is still XML the tools can read.
-        assertThat(run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.xml\",\"text\":\"ENTITY\"}"))
+        assertThat(run(searchEventsTool(), "{\"path\":\"/outputs/events.xml\",\"text\":\"ENTITY\"}"))
                 .contains("1 of 4 event(s) matched");
     }
 
@@ -269,7 +269,7 @@ class TestEventTools {
     void searchEventsGetsAValueFromEachEventAlone() {
         run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
 
-        final String result = run(new SearchEventsTool(workspace), """
+        final String result = run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"//d:Outcome/d:Reason","column":"reason"}""");
 
         assertThat(result).contains("Searched 4 event(s)").contains("Wrote 4 row(s)");
@@ -287,7 +287,7 @@ class TestEventTools {
     void searchEventsFindsText() {
         run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
 
-        assertThat(run(new SearchEventsTool(workspace), """
+        assertThat(run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","text":"failure"}"""))
                 .contains("2 of 4 event(s) matched");
         assertThat(read("/outputs/search_events.csv"))
@@ -296,7 +296,7 @@ class TestEventTools {
                 .contains("12,1,")
                 .doesNotContain("11,1,");
         // Text in the xpath's value, with the value as the result.
-        run(new SearchEventsTool(workspace), """
+        run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"//d:HostName","text":"^fw1$","regex":true,
                  "out":"/outputs/fw1.csv"}""");
         assertThat(read("/outputs/fw1.csv")).isEqualTo("StreamId,EventId,value\r\n11,1,fw1\r\n11,3,fw1\r\n");
@@ -306,7 +306,7 @@ class TestEventTools {
     void searchEventsJoinsTheResultToTheTable() {
         run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
 
-        run(new SearchEventsTool(workspace), """
+        run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"//d:Outcome/d:Success","column":"success",
                  "join":"/attachments/5.md"}""");
 
@@ -329,12 +329,12 @@ class TestEventTools {
     void searchEventsNeedsSomethingToLookFor() {
         run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
 
-        assertThat(run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.xml\"}"))
+        assertThat(run(searchEventsTool(), "{\"path\":\"/outputs/events.xml\"}"))
                 .startsWith("Error").contains("Give xpath, text, or both");
-        assertThat(run(new SearchEventsTool(workspace), "{\"path\":\"/attachments/5.md\",\"text\":\"x\"}"))
+        assertThat(run(searchEventsTool(), "{\"path\":\"/attachments/5.md\",\"text\":\"x\"}"))
                 .startsWith("Error");
         // Functions that read outside the event are refused.
-        assertThat(run(new SearchEventsTool(workspace), """
+        assertThat(run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"doc('file:///etc/passwd')"}"""))
                 .startsWith("Error");
     }
@@ -369,7 +369,7 @@ class TestEventTools {
                 """);
         run(fetchTool(), "{\"path\":\"/attachments/9.md\"}");
 
-        final String result = run(new SearchEventsTool(workspace), """
+        final String result = run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"//d:Data[@Name='message']/@Value",
                  "jq":".. | .username? // empty","column":"username"}""");
 
@@ -383,11 +383,11 @@ class TestEventTools {
                 13,3,carol\r
                 """);
         // jq needs an XPath value to work on.
-        assertThat(run(new SearchEventsTool(workspace), """
+        assertThat(run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","jq":".","text":"alice"}"""))
                 .startsWith("Error")
                 .contains("Give xpath with jq");
-        assertThat(run(new SearchEventsTool(workspace), """
+        assertThat(run(searchEventsTool(), """
                 {"path":"/outputs/events.xml","xpath":"//d:Data/@Value","jq":"env"}"""))
                 .contains("the jq filter failed on 2 value(s)");
     }
@@ -396,7 +396,7 @@ class TestEventTools {
     void aPipelineFetchesAndSearchesEventsInOneCall() {
         final PipelineTool pipeline = new PipelineTool(workspace, new GrepTool(workspace), new JqTool(workspace),
                 new XPathTool(workspace), new TableTool(workspace, Mockito.mock(ColumnSummariser.class)), fetchTool(),
-                new SearchEventsTool(workspace), Mockito.mock(CurrentResultsTool.class));
+                searchEventsTool(), Mockito.mock(CurrentResultsTool.class));
 
         final String result = run(pipeline, """
                 {"steps":[
@@ -454,6 +454,11 @@ class TestEventTools {
 
     private String run(final StroomTool tool, final String json) {
         return tool.execute(new ToolCall("x", "t", json), ToolCalls.inChat(chatId, workspace)).text();
+    }
+
+    // search_events over files: its search of an index isn't used here.
+    private SearchEventsTool searchEventsTool() {
+        return new SearchEventsTool(workspace, Mockito.mock(IndexEvents.class));
     }
 
     /// A segmented stream held in memory: reads the included segments, or all of them if none are.
