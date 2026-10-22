@@ -66,16 +66,16 @@ class TestCopyPipelineTool {
         // refused.
         source();
 
-        final Map<String, Object> asked = PipelineWorld.json(call("{\"build\": \"acme-v2\", \"source_uuid\": "
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        call("{\"build\": \"acme-v2\", \"source_uuid\": "
                                                                   + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\", "
                                                                   + "\"rename\": {\"V1\": \"V2\"}, "
                                                                   + "\"set_properties\": [{\"element\": "
                                                                   + "\"xsltFilter\", \"name\": \"xslt\", "
                                                                   + "\"doc_uuid\": \"x2\", \"doc_type\": "
-                                                                  + "\"XSLT\"}]}", PortedToolCalls.context()));
+                                                                  + "\"XSLT\"}]}", user.context());
 
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(((Map<?, ?>) asked.get("details")).get("copied documents")).isEqualTo(List.of("ACME-V2"));
+        assertThat(user.shown()).singleElement().asString().containsPattern("- copied documents: ACME-V2(\n|$)");
     }
 
     @Test

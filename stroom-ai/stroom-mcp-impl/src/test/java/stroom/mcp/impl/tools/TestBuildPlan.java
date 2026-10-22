@@ -49,7 +49,7 @@ class TestBuildPlan {
 
     private final FakeBuildFacts facts = new FakeBuildFacts();
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
-    private final Consent consent = new Consent(securityContext, () -> Mockito.mock(AiAuditLog.class));
+    private final Consent consent = new Consent(() -> Mockito.mock(AiAuditLog.class));
     private final BuildWorld world = new BuildWorld();
     private final BuildPlan plan = new BuildPlan(facts, world.guard(), consent, new BuildMemory());
 
@@ -100,7 +100,7 @@ class TestBuildPlan {
 
     @Test
     void theResultTellsTheAgentTheUserChangedTheName() {
-        final Consent.Request request = Consent.Request.confirmation("create_feed", "Create feed", Map.of(), null)
+        final Consent.Request request = Consent.Request.confirmation("create_feed", "Create feed", Map.of())
                 .withEditable("name", "Feed name", "FIREWALL-EDGE-V1.0");
         final ToolCallContext renamed = asking(new ElicitResult(ElicitResult.Action.ACCEPT,
                 Map.of("name", "ACME-FW-V1.0")));

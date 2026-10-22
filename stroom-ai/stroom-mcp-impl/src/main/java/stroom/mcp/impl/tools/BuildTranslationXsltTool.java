@@ -97,7 +97,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String NAME_ARG = "name";
     static final String UUID_ARG = "uuid";
     static final String INCLUDE_XSLT_ARG = "include_xslt";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String REVIEWED_ARG = "reviewed";
     static final String CHANGE_ARG = "change";
     static final String CHANGES_ARG = "changes";
@@ -271,8 +270,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                      + "saved) with the code generated now; build is then not "
                                                      + "needed.")
                         .addBooleanProperty(INCLUDE_XSLT_ARG, "When saving, also return the code (to read it).")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply (rules "
-                                                                + "kept as Unknown).")
                         .addStringProperty(REVIEWED_ARG, "The review_id of a needs_review reply, once its show_user "
                                                          + "(the records to translate as Unknown) is shown to the "
                                                          + "user in the chat: the short form to agree to it then "
@@ -780,11 +777,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                        + " of " + check.get("records")
                                                                        + " sample records"));
         details.put("as shown in the chat", Consent.reviewId(shown));
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                "Translate the records shown in the chat as Unknown events", details, request.confirmationId()));
-        if (gate.isPresent()) {
-            return gate;
-        }
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                "Translate the records shown in the chat as Unknown events", details));
         kept.forEach(rule -> agreedNow.put(rule.name(), TranslationBuilds.unknownKey(rule)));
         return Optional.empty();
     }
@@ -864,7 +858,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     /// @param name            The new XSLT's name, or null.
     /// @param uuid            The XSLT to replace, or null.
     /// @param includeXslt     True to return the code when saving.
-    /// @param confirmationId  From a needs_confirmation reply, or null.
     /// @param reviewed        What was given as reviewed, or null.
     /// @param change          What this change is, or null.
     /// @param discardHandEdit True when the user said to drop their hand edit.
@@ -883,7 +876,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                    String name,
                    String uuid,
                    boolean includeXslt,
-                   String confirmationId,
                    Object reviewed,
                    String change,
                    boolean discardHandEdit,
@@ -916,7 +908,6 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     tool.stringArg(call, NAME_ARG),
                     tool.stringArg(call, UUID_ARG),
                     ToolArgs.flag(call, INCLUDE_XSLT_ARG),
-                    tool.stringArg(call, CONFIRMATION_ID_ARG),
                     ToolArgs.raw(call, REVIEWED_ARG),
                     tool.stringArg(call, CHANGE_ARG),
                     ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),

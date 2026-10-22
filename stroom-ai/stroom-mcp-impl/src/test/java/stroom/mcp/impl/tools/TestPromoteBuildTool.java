@@ -181,7 +181,7 @@ class TestPromoteBuildTool {
         exists("System/Feeds/Acme");
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(FeedDoc.TYPE, "f", "ACME-TEST", null));
 
-        final Map<String, Object> shown = call(Map.of("Pipeline", "System/Feeds/Acme", "f", "keep"), null, null);
+        final Map<String, Object> shown = call(Map.of("Pipeline", "System/Feeds/Acme", "f", "keep"), null);
 
         // First the layout, a tree for the chat (asked for by the user: a list in a form was hard to read).
         assertThat(shown).containsEntry("status", "needs_review").containsEntry("layout", "System/Feeds/Acme/\n└── "
@@ -190,12 +190,12 @@ class TestPromoteBuildTool {
                                                                                           + "workspace: ACME-TEST "
                                                                                           + "(Feed)");
         // The same folder, written as Stroom's own folder tools write it.
-        final Map<String, Object> gate = call(Map.of("Pipeline", "/Feeds/Acme", "f", "keep"), shown.get("review_id"),
-                null);
+        final Map<String, Object> gate = approvalForm(Map.of("Pipeline", "/Feeds/Acme", "f", "keep"),
+                shown.get("review_id"));
 
         assertThat(gate).containsEntry("status", "needs_approval");
         final Map<?, ?> asked = (Map<?, ?>) gate.get("details");
-        assertThat(asked.get("folders")).isEqualTo(List.of("System/Feeds/Acme"));
+        assertThat(asked.get("folders")).isEqualTo("System/Feeds/Acme");
         assertThat(String.valueOf(asked.get("layout"))).startsWith("1 document(s), as shown in the chat")
                 .contains("(" + shown.get("review_id") + ")");
     }
@@ -206,16 +206,16 @@ class TestPromoteBuildTool {
         // whose layout was never shown in the chat.
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
 
-        final Map<String, Object> upFront = call(Map.of("Pipeline", "/Feeds/Acme"), true, null);
+        final Map<String, Object> upFront = call(Map.of("Pipeline", "/Feeds/Acme"), true);
 
         assertThat(upFront).containsEntry("status", "needs_review");
         assertThat(String.valueOf(upFront.get("hint"))).contains("true is not one");
         // Another layout since (the user moved it): reviewed again, not approved on the first one's id.
-        final Map<String, Object> moved = call(Map.of("Pipeline", "/Feeds/Elsewhere"), upFront.get("review_id"), null);
+        final Map<String, Object> moved = call(Map.of("Pipeline", "/Feeds/Elsewhere"), upFront.get("review_id"));
         assertThat(moved).containsEntry("status", "needs_review");
         assertThat(moved.get("review_id")).isNotEqualTo(upFront.get("review_id"));
         assertThat(String.valueOf(moved.get("hint"))).contains("changed since");
-        assertThat(call(Map.of("Pipeline", "/Feeds/Elsewhere"), moved.get("review_id"), null))
+        assertThat(approvalForm(Map.of("Pipeline", "/Feeds/Elsewhere"), moved.get("review_id")))
                 .containsEntry("status", "needs_approval");
     }
 
@@ -252,10 +252,12 @@ class TestPromoteBuildTool {
                 .contains("once promoted, the pipeline's documentation can only change through a working copy");
 
         docs.facts.checks = List.of(stale);
-        final Map<String, Object> shown = call(Map.of("Pipeline", "/Feeds/Acme"), null, null);
+        final Map<String, Object> shown = call(Map.of("Pipeline", "/Feeds/Acme"), null);
         assertThat(shown.get("warnings")).isEqualTo(List.of(stale));
-        final Map<String, Object> gate = call(Map.of("Pipeline", "/Feeds/Acme"), shown.get("review_id"), null);
-        assertThat(((Map<?, ?>) gate.get("details")).get("warnings")).isEqualTo(List.of(stale));
+        final Map<String, Object> gate = approvalForm(Map.of("Pipeline", "/Feeds/Acme"), shown.get("review_id"));
+        // As the form shows it: cut short.
+        assertThat(String.valueOf(((Map<?, ?>) gate.get("details")).get("warnings")))
+                .startsWith(stale.substring(0, 100));
     }
 
     @Test
@@ -278,18 +280,20 @@ class TestPromoteBuildTool {
         docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
         final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
 
-        final Map<String, Object> shown = call(destinations, null, null);
+        final Map<String, Object> shown = call(destinations, null);
         assertThat(shown.get("layout")).isEqualTo("System/Feeds/Acme/\n"
                                                   + "├── ACME-Events  (Documentation)\n"
                                                   + "├── ACME-Events  (Pipeline)\n"
                                                   + "└── ACME-XSLT  (XSLT: updated from its working copy, backed up "
                                                   + "first)");
-        final Map<String, Object> gate = call(destinations, shown.get("review_id"), null);
-        assertThat(gate).containsEntry("status", "needs_approval");
-        // Nothing changed until the user approves.
+        assertThat(approvalForm(destinations, shown.get("review_id"))).containsEntry("status", "needs_approval");
+        // Nothing changed until the user approves, which they can't without a form.
+        assertThat(docs.refusal(tool, PortedToolCalls.context(), DocumentationWorld.args(args(destinations,
+                shown.get("review_id"))))).startsWith("Not done: Promote build '" + BUILD + "' as shown in the chat.");
         assertThat(world.guard().buildOf(pipeline)).contains(BUILD);
 
-        final Map<String, Object> promoted = call(destinations, shown.get("review_id"), gate.get("approval_id"));
+        final Map<String, Object> promoted = docs.call(tool, PortedToolCalls.answering(Map.of("value", true)),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
         assertThat(promoted).containsEntry("layout", shown.get("layout"));
         assertThat(promoted.get("promoted")).asList().contains(
@@ -340,19 +344,29 @@ class TestPromoteBuildTool {
         return shown;
     }
 
-    private Map<String, Object> call(final Map<String, Object> destinations,
-                                     final Object reviewed,
-                                     final Object approvalId) {
+    // A call from a client without forms: the layout to review, or the refusal to promote without a form.
+    private Map<String, Object> call(final Map<String, Object> destinations, final Object reviewed) {
+        return docs.call(tool, PortedToolCalls.context(), DocumentationWorld.args(args(destinations, reviewed)));
+    }
+
+    // The approval form a reviewed call shows, as the round it once was; the user declines it, so nothing is
+    // promoted.
+    private Map<String, Object> approvalForm(final Map<String, Object> destinations, final Object reviewed) {
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations, reviewed))))
+                .startsWith("The user did not agree to: Promote build");
+        assertThat(user.forms()).hasSize(1);
+        return user.forms().getFirst();
+    }
+
+    private static Map<String, Object> args(final Map<String, Object> destinations, final Object reviewed) {
         final Map<String, Object> args = new LinkedHashMap<>();
         args.put("build", BUILD);
         args.put("destinations", destinations);
         if (reviewed != null) {
             args.put("reviewed", reviewed);
         }
-        if (approvalId != null) {
-            args.put("approval_id", approvalId);
-        }
-        return docs.call(tool, PortedToolCalls.context(), DocumentationWorld.args(args));
+        return args;
     }
 
     // The folders, made.

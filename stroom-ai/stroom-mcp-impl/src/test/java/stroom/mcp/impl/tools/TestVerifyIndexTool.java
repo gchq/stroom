@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.IndexSearches;
 import stroom.ai.impl.tools.IndexSearches.Found;
 import stroom.ai.impl.tools.IndexSearches.Probe;
 import stroom.ai.impl.tools.StreamReader.Fetched;
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.TableComponentSettings;
@@ -83,26 +84,35 @@ class TestVerifyIndexTool {
     }
 
     private Map<String, Object> call(final String arguments) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, arguments),
-                IndexingWorld.noForms());
+        return call(arguments, IndexingWorld.noForms());
+    }
+
+    private Map<String, Object> call(final String arguments, final ToolCallContext context) {
+        final ToolResult result = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, arguments), context);
         assertThat(result.isError()).as(result.text()).isFalse();
         return PortedToolCalls.json(result.text());
+    }
+
+    // A user who agrees in every form.
+    private ToolCallContext agreeing() {
+        return world.forms(question -> Map.of("value", true));
     }
 
     @Test
     void theBuildsDashboardIsMadeOnceTheUserConfirmsItsColumns() {
         index(true);
 
-        final Map<String, Object> asked = call(args(""));
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Create the verification dashboard 'ACME-ES-VERIFY' on index "
-                                                   + "'ACME-ES'");
-        assertThat(((Map<?, ?>) asked.get("details")).get("initial query"))
-                .isEqualTo("@timestamp from 2026-10-04T00:00:00.000Z through today");
+        // Without a form the user can't confirm it: nothing is made.
+        final ToolResult refused = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, args("")),
+                IndexingWorld.noForms());
+        assertThat(refused.text()).startsWith("Not done: Create the verification dashboard 'ACME-ES-VERIFY' on "
+                                              + "index 'ACME-ES'.");
         assertThat(world.world.created).isEmpty();
 
-        final Map<String, Object> verified = call(args(", \"confirmation_id\": \"" + asked.get("confirmation_id")
-                                                       + "\""));
+        final Map<String, Object> verified = call(args(""), agreeing());
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Create the verification dashboard 'ACME-ES-VERIFY' on index 'ACME-ES'")
+                .contains("- initial query: @timestamp from 2026-10-04T00:00:00.000Z through today");
         assertThat(world.world.created).containsExactly("Folder:Indexing", "Dashboard:ACME-ES-VERIFY");
         final Map<?, ?> dashboard = (Map<?, ?>) verified.get("dashboard");
         assertThat(dashboard.get("saved")).isEqualTo(true);
@@ -134,10 +144,7 @@ class TestVerifyIndexTool {
     @Test
     void checksFalseMakesTheDashboardAndGivesItsLinkWithNoSearches() {
         index(true);
-        final Map<String, Object> asked = call(args(", \"checks\": false"));
-
-        final Map<String, Object> skipped = call(args(", \"checks\": false, \"confirmation_id\": \""
-                                                      + asked.get("confirmation_id") + "\""));
+        final Map<String, Object> skipped = call(args(", \"checks\": false"), agreeing());
 
         assertThat(skipped.get("checks_skipped")).isEqualTo("as the user asked");
         assertThat(skipped).doesNotContainKey("checks");
