@@ -68,7 +68,7 @@ class LsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final String raw = stringArg(request, PATH_ARG);
         final WorkspacePath dir = raw == null

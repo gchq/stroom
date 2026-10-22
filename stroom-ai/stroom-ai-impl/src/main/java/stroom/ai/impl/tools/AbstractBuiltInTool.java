@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Convenience base for {@link StroomTool}s that need to read their call arguments.
  */
-abstract class AbstractBuiltInTool implements StroomTool {
+public abstract class AbstractBuiltInTool implements StroomTool {
 
     /**
      * @return the value of the named string argument, trimmed, or null if it was absent or blank.
@@ -103,7 +103,7 @@ abstract class AbstractBuiltInTool implements StroomTool {
     /// @param name    The argument's name.
     /// @return The items, trimmed, without empty or repeated ones. Empty if the argument is absent.
     /// @throws WorkspaceException if the arguments are not valid JSON.
-    static List<String> stringListArg(final ToolCall request, final String name) {
+    public static List<String> stringListArg(final ToolCall request, final String name) {
         final Object value = argsMap(request).get(name);
         final List<String> items = new ArrayList<>();
         if (value instanceof final List<?> list) {
@@ -125,7 +125,7 @@ abstract class AbstractBuiltInTool implements StroomTool {
     /// @param request The model's call.
     /// @return Its arguments, or an empty map if it has none.
     /// @throws WorkspaceException if they are not valid JSON.
-    static Map<?, ?> argsMap(final ToolCall request) {
+    public static Map<?, ?> argsMap(final ToolCall request) {
         final String json = request.arguments();
         if (json == null || json.isBlank()) {
             return Collections.emptyMap();
@@ -142,13 +142,13 @@ abstract class AbstractBuiltInTool implements StroomTool {
 
     /// @param toolName A tool that works on the chat itself, e.g. its history.
     /// @return What the caller is told when the tool is called in a session that isn't a chat.
-    static String onlyInAChat(final String toolName) {
+    public static String onlyInAChat(final String toolName) {
         return "Error: " + toolName + " can only be used in a chat.";
     }
 
     /// @param description What the list holds.
     /// @return The schema of a list of strings argument.
-    static ArraySchema stringArraySchema(final String description) {
+    public static ArraySchema stringArraySchema(final String description) {
         return ArraySchema.builder()
                 .items(StringSchema.builder().build())
                 .description(description)

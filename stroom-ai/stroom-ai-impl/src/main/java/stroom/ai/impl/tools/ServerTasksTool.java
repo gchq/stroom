@@ -250,7 +250,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         if (!canManageTasks()) {
             return ToolResult.text(NEEDS_MANAGE_TASKS);
         }

@@ -95,7 +95,7 @@ class XPathTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath out = outArg(request);

@@ -84,7 +84,7 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String query = rawArg(request, QUERY_ARG);
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give a StroomQL query.");

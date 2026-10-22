@@ -298,7 +298,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         if (!processorFilterAccess.canManageProcessors()) {
             return ToolResult.text(NEEDS_MANAGE_PROCESSORS);
         }

@@ -69,7 +69,7 @@ class SummariseColumnTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         return ToolResult.text(columnSummariser.summarise(sessionWorkspace(context), context,
                 pathArg(request, PATH_ARG),
                 stringArg(request, COLUMN_ARG),
