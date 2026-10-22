@@ -172,7 +172,7 @@ public final class XmlTree {
     ///
     /// @param element An element.
     /// @return Its text.
-    static String toText(final Element element) {
+    public static String toText(final Element element) {
         final StringBuilder out = new StringBuilder();
         write(out, element, true);
         return out.toString();

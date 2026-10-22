@@ -925,3 +925,73 @@ Where they differ from the Python server:
 * Not used by `tools/pipeline_writes.py`, so not ported here: `generation._required_for`, `sharedxslt.imports_of`,
   `translation.with_fragment_setup`, and `tools/indexing.py`'s `drafted_plans`, `plan_given` and `with_cardinality`
   (`IndexingHelpers` has the last three's pure parts for the indexing tools).
+
+## The CEF and coverage tools: `draft_cef_mapping` and `review_coverage`
+
+Ported as tools of their own (`stroom-mcp-impl`, category content) from the MCP server's `tools/cef.py` and
+`tools/coverage.py`, on the CEF core (`stroom.ai.impl.tools.cef`), the stepping helpers (`PipelineStepping`,
+`SteppingWalks`), `KeptMappings`, `EventStreams`, `ProcessorFilters.followOnPipelines`, `PipelineShapes`,
+`IndexTemplateAgreements.elasticDestination`, the indexing core's `FieldPlan` and `FieldPlans.sourceMatches`, and the
+draft core's `LocalCheck.sampleRecords`. What they read of Stroom is in helpers of their own: `CefSources`
+(`_templates`, and the KafkaConfig documents) and `CoverageReads` (`_error_batch`, `_logged`, `parse_logged`,
+`_example`, `_shown`, `_sampled_unknown`, `_old_events`, `_newest_raw`). `CefSample` (stroom-ai-impl) runs a plan's
+XSLT over sample Events with the locked-down Saxon processor, `StreamSummaries.errorMarkers` reads an Error stream's
+markers, `PipelineIndex.named` and `withContent` find documents by name and by content, and `XmlTree.toText` is now
+public.
+
+`XsltSaves` is the save path both CEF saves and the save tools (`save_xslt`, `build_translation_xslt`) take: the MCP
+server's `tools/translation.py` `create_xslt` (`create`) and `update_xslt` (`update`), with `_checked`,
+`xslt_role`, `_refuse_without_required_imports`, `_required_for` (`requiredFor`), `lost_mapping` (`lostMapping`),
+`_described`, `_pending`, `_previewed`, `_tag_kept` and `hand_edit_gate` (with `_remembered`, `_kept_code` and
+`_CARRY`). It is public, for the save tools' port to reuse.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `draft_cef_mapping` | no | yes | no | yes |
+| `review_coverage` | yes | yes | no | yes |
+
+`draft_cef_mapping` is read-only for a call that saves nothing (no build and name, no uuid). It asks the user whether
+keys outside ArcSight's dictionary may be sent (`consent.choose`, unless the standing instructions say or
+`custom_keys` is given), and about a field a hand edit changed that its save would change too, but not before the
+save itself, as the MCP server's `create_xslt` and `update_xslt` didn't: so over `/mcp` the call is approved as a
+whole.
+
+Where they differ from the MCP server:
+
+* **Wording**: "the server" is "the tools" where it names what saved an XSLT (`pipeline_uuid`'s, `uuid`'s and
+  `discard_hand_edit`'s descriptions, the hand-edit refusal and guidance, and the lost-mapping text, which still
+  says the mapping was saved "by stroom-mcp", as the descriptions name it). `follow_on`'s description says
+  `(default true)` and `max_streams`' says `(1 to 5000; default 500)`, where the Python's pydantic schema said so.
+* **Arguments**: `overrides`, `header`, `style` and `hand_edit_choices` may be given as JSON text; one override may
+  be given as an object. An `output` other than kafka or text, `max_streams` outside 1 to 5000 and a `continue_from`
+  that isn't a number are refused in words, in place of pydantic's message.
+* **Finding where a CEF pipeline comes from** (`CefSources`): pipelines are found by name with Stroom's document
+  finder (`*CEF*`, `*ArcSight*`, `*Arcsight*`, as the user may view them), and a template the standing instructions
+  name by its exact name, else `*<name>*` (the MCP server used the explorer's quick filter). XSLTs that write
+  `CEF:0` are found with Stroom's content index; while it isn't ready, none are listed. Parents are read from each
+  pipeline document.
+* **The sample check** runs the plan's XSLT with Stroom's locked-down Saxon processor (no resource is read, so a plan
+  with imports gives `sample_check_error`), where the MCP server used saxonche.
+* **A review steps** the pipeline as the user, who needs the Stepping permission, within the session's time limit
+  for a long call: stopped early, the result says `stopped_early` and reviews the lines stepped by then.
+* **The save path** (`XsltSaves`): the XSLT is made with `WriteGuard.createFilled`, so one whose filling fails is
+  deleted again rather than left empty. The version history's "by" is `Stroom AI tools, <client>` (the session's
+  caller), where the MCP server wrote `stroom-mcp <version>, <client> <version>, model <model>`; the author is the
+  user's display name. A version to check against (`update_xslt`'s `version`) is not taken. Left for the
+  translation tools' port: a translation mapping's payload is kept as given, without regenerating it to say whether
+  the code matches it (`matches_mapping`, `warning`), and what it generates now isn't regenerated for the hand-edit
+  gate (a hand edit of a translation XSLT counts in whole); an index plan's `ecs_check` isn't given.
+* **Error streams' markers** are read from each Error stream's text (`StreamSummaries.errorMarkers`, up to 5,000 a
+  stream), as the data viewer's marker mode gave them to the MCP server. A count Stroom gives that isn't a number
+  has the stream read, where the Python failed.
+* **review_coverage stops reading Error streams** before the session's time limit for a long call, where the MCP
+  server had no limit: `progress.continue_from` is then the last Error stream read and `progress.stopped_early` says
+  why, so the next call carries on. It stops at once when its thread is interrupted (`Reading was stopped: the call
+  was cancelled.`), and says where it is now and then. Stepping the changed copy (or the pipeline's own Events for
+  affected records) needs the Stepping permission, and is refused without it, as Stroom's REST refusal failed the
+  MCP server's call.
+* **Unknown events sampled** from the newest Events streams are read as well-formed XML; a record that isn't is
+  skipped (the MCP server read it with lxml's `recover=True`).
+* **Tests** port `tests/test_cef.py`'s tool cases and `tests/test_coverage.py` (`TestDraftCefMappingTool`,
+  `TestReviewCoverageTool`, `TestCoverageReads`, `TestXsltSaves`); `follow_on_pipelines` is tested on
+  `ProcessorFilters.followOnPipelines`, and `cef.extend`'s case was already in `TestCefPlan`.
