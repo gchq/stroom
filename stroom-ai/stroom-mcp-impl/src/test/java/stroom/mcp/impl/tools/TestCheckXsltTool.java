@@ -94,6 +94,27 @@ class TestCheckXsltTool {
     }
 
     @Test
+    void aDnsLookupIsWarnedOfNotRefused() {
+        // Asked for by the user: stroom:host-name() is saved or stepped once the user agrees, so the check passes
+        // it and says so.
+        Mockito.when(docFinder.findByName(eq(XsltDoc.TYPE), eq("IP Lookup"), eq(false))).thenReturn(List.of(
+                new DocRef(XsltDoc.TYPE, "x1", "IP Lookup")));
+
+        final Map<String, Object> result = call(XSLT.replace(
+                "<Data Name=\"host\" Value=\"{data[@name='host']/@value}\"",
+                "<Data Name=\"host\" Value=\"{stroom:host-name(data[@name='ip']/@value)}\""));
+
+        assertThat(result.get("ok")).isEqualTo(true);
+        assertThat(result.get("warnings")).asList().contains("template match='record' (line 9) calls "
+                                                             + "stroom:host-name(), which looks up host names in DNS "
+                                                             + "when the pipeline runs; a lookup can carry the "
+                                                             + "looked-up value to the DNS server: saving the XSLT, "
+                                                             + "or stepping it as draft code, asks the user to agree "
+                                                             + "to it first (unless the XSLT it replaces already "
+                                                             + "calls it)");
+    }
+
+    @Test
     void anXsltWithOtherErrorsIsNotCompiled() {
         // Its missing import would only be reported again.
         call(XSLT);

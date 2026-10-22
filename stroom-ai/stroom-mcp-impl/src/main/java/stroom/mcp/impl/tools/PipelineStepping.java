@@ -122,6 +122,7 @@ class PipelineStepping {
     private final BuildRecords buildRecords;
     private final BuildPlan plan;
     private final AiAuditLog auditLog;
+    private final LookupAgreements lookups;
 
     @Inject
     PipelineStepping(final SteppingWalks steppingWalks,
@@ -137,7 +138,8 @@ class PipelineStepping {
                      final KeptMappings keptMappings,
                      final BuildRecords buildRecords,
                      final BuildPlan plan,
-                     final AiAuditLog auditLog) {
+                     final AiAuditLog auditLog,
+                     final LookupAgreements lookups) {
         this.steppingWalks = steppingWalks;
         this.documentAccess = documentAccess;
         this.securityContextProvider = securityContextProvider;
@@ -152,6 +154,7 @@ class PipelineStepping {
         this.buildRecords = buildRecords;
         this.plan = plan;
         this.auditLog = auditLog;
+        this.lookups = lookups;
     }
 
     // --------------------------------------------------------------------------------
@@ -177,20 +180,27 @@ class PipelineStepping {
     /// only: an unknown stroom: function as a compile error, or a missing namespace as empty output.
     ///
     /// A function the element's saved XSLT already calls (e.g. stroom:http-call()) stays allowed, as when the code
-    /// is saved: a person put it there.
+    /// is saved: a person put it there. A DNS lookup it doesn't call is stepped once the user agrees, as when the
+    /// code is saved ([LookupAgreements]): stepping runs it on Stroom, so the lookup is made then too.
     ///
+    /// @param call         The call, whose id tells its forms apart.
+    /// @param context      The call's context.
     /// @param pipelineUuid The pipeline stepped.
     /// @param draftCode    Draft code by element, or null.
-    /// @throws ToolRefusal if a draft XSLT is rejected.
-    void checkDrafts(final String pipelineUuid, final Map<String, String> draftCode) {
+    /// @throws ToolRefusal if a draft XSLT is rejected, or the user didn't agree to its DNS lookups.
+    void checkDrafts(final ToolCall call,
+                     final ToolCallContext context,
+                     final String pipelineUuid,
+                     final Map<String, String> draftCode) {
         NullSafe.map(draftCode).forEach((element, code) -> {
             if (code == null || !code.contains(XmlTrees.XSL)) {
                 return;
             }
+            final Optional<XsltDoc> saved = savedXslt(pipelineUuid, element);
             final Map<String, Object> result = checkXslt.check(code, null, null);
             if (!Boolean.TRUE.equals(result.get("ok"))) {
                 final Set<String> allowed = XsltSafety.keptBy(XsltChecks.unescaped(code).text(),
-                        savedXslt(pipelineUuid, element));
+                        saved.map(XsltDoc::getData).orElse(null));
                 final List<String> errors = NullSafe.list((List<?>) result.get("errors")).stream()
                         .map(String::valueOf)
                         .filter(error -> !allowed.contains(error))
@@ -200,50 +210,71 @@ class PipelineStepping {
                                           + "] is not stepped: " + String.join("; ", errors));
                 }
             }
+            agreeLookups(call, context, pipelineUuid, element, XsltChecks.unescaped(code).text(), saved);
         });
     }
 
     /// Refuses draft XSLT that calls what the tools won't save ([XsltSafety#unsafeInXslt(String)]), unless the
-    /// element's saved XSLT calls it too: stepping runs it with Stroom's access, as processing would.
+    /// element's saved XSLT calls it too: stepping runs it with Stroom's access, as processing would. A DNS lookup
+    /// is stepped once the user agrees, as [#checkDrafts] steps one.
     ///
+    /// @param call         The call, whose id tells its forms apart.
+    /// @param context      The call's context.
     /// @param pipelineUuid The pipeline stepped.
     /// @param draftCode    Draft code by element, or null.
-    /// @throws ToolRefusal if a draft XSLT is refused.
-    void refuseUnsafeDrafts(final String pipelineUuid, final Map<String, String> draftCode) {
+    /// @throws ToolRefusal if a draft XSLT is refused, or the user didn't agree to its DNS lookups.
+    void refuseUnsafeDrafts(final ToolCall call,
+                            final ToolCallContext context,
+                            final String pipelineUuid,
+                            final Map<String, String> draftCode) {
         NullSafe.map(draftCode).forEach((element, code) -> {
             if (code == null || !code.contains(XmlTrees.XSL)) {
                 return;
             }
             final String xslt = XsltChecks.unescaped(code).text();
+            final Optional<XsltDoc> saved = savedXslt(pipelineUuid, element);
             final List<XsltSafety.Unsafe> unsafe = XsltSafety.unsafeInXslt(xslt);
-            if (unsafe.isEmpty()) {
-                return;
+            if (!unsafe.isEmpty()) {
+                final Set<String> allowed = XsltSafety.keptBy(xslt, saved.map(XsltDoc::getData).orElse(null));
+                final List<String> refused = unsafe.stream()
+                        .map(XsltSafety.Unsafe::why)
+                        .filter(why -> !allowed.contains(why))
+                        .toList();
+                if (!refused.isEmpty()) {
+                    throw new ToolRefusal("draft_code[" + PyText.repr(element) + "] is not stepped: "
+                                          + String.join("; ", refused));
+                }
             }
-            final Set<String> allowed = XsltSafety.keptBy(xslt, savedXslt(pipelineUuid, element));
-            final List<String> refused = unsafe.stream()
-                    .map(XsltSafety.Unsafe::why)
-                    .filter(why -> !allowed.contains(why))
-                    .toList();
-            if (!refused.isEmpty()) {
-                throw new ToolRefusal("draft_code[" + PyText.repr(element) + "] is not stepped: "
-                                      + String.join("; ", refused));
-            }
+            agreeLookups(call, context, pipelineUuid, element, xslt, saved);
         });
     }
 
-    // The text of the XSLT the pipeline's element runs now, or null if it has none or it can't be read.
-    private String savedXslt(final String pipelineUuid, final String element) {
+    // Asks the user to agree to the DNS lookups the draft calls that the element's saved XSLT doesn't: remembered
+    // for the saved XSLT (so an agreement covers saving the draft over it), or for the pipeline's element if it has
+    // none.
+    private void agreeLookups(final ToolCall call,
+                              final ToolCallContext context,
+                              final String pipelineUuid,
+                              final String element,
+                              final String xslt,
+                              final Optional<XsltDoc> saved) {
+        final String document = saved.map(XsltDoc::getUuid).orElse(pipelineUuid + "/" + element);
+        lookups.require(call, context, document, "Step draft XSLT for element '" + element + "'",
+                "draft_code[" + PyText.repr(element) + "] is not stepped", xslt, saved.map(XsltDoc::getData)
+                        .orElse(null));
+    }
+
+    // The XSLT the pipeline's element runs now; empty if it has none or it can't be read.
+    private Optional<XsltDoc> savedXslt(final String pipelineUuid, final String element) {
         try {
             return MergedPipeline.load(documentAccess, pipelineUuid).stream()
                     .flatMap(merged -> merged.translationDocs(pipelineUuid).stream())
                     .filter(doc -> element.equals(doc.element()) && XsltDoc.TYPE.equals(doc.doc().getType()))
                     .findFirst()
-                    .flatMap(doc -> documentAccess.read(doc.doc(), XsltDoc.class))
-                    .map(XsltDoc::getData)
-                    .orElse(null);
+                    .flatMap(doc -> documentAccess.read(doc.doc(), XsltDoc.class));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to read the saved XSLT of {}: {}", element, e.getMessage()));
-            return null;
+            return Optional.empty();
         }
     }
 

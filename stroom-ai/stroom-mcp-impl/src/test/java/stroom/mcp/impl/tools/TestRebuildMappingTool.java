@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
@@ -56,7 +57,8 @@ class TestRebuildMappingTool {
 
     @BeforeEach
     void setUp() {
-        final Map<String, Object> saved = world.docs.createXslt(world.context(), BUILD, "ACME-Events",
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Events",
                 generated(TranslationWorld.parsed()), TranslationDocs.Source.of(TranslationWorld.parsed()), null);
         uuid = String.valueOf(saved.get("uuid"));
         PipelineLayers.given(world.world.pipelineService, "p", PipelineLayers.of(
