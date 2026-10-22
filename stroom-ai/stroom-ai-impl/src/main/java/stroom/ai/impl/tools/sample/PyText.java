@@ -29,10 +29,10 @@ import java.util.regex.Pattern;
 /// Text handling as the Stroom MCP server's Python did it, so the sample analysis ported from it reads a sample the
 /// same way: its regexes (Unicode `\w`, `\d`, `\s`; only `\n` ends a line), `str.strip()`, `str.splitlines()`,
 /// lengths and slices in code points, `repr()` of values in messages, and the rounding and printing of floats.
-final class PyText {
+public final class PyText {
 
     /// The flags a Python `str` regex behaves with: Unicode character classes, and only `\n` as a line end.
-    static final int FLAGS = Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES;
+    public static final int FLAGS = Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES;
 
     private PyText() {
         // Static methods only.
@@ -40,24 +40,24 @@ final class PyText {
 
     /// @param regex A regex written for Python's `re`.
     /// @return It compiled to behave as Python's does.
-    static Pattern re(final String regex) {
+    public static Pattern re(final String regex) {
         return Pattern.compile(regex, FLAGS);
     }
 
     /// @param regex A regex written for Python's `re`.
     /// @param flags Further flags, e.g. [Pattern#DOTALL] for `re.S`.
     /// @return It compiled to behave as Python's does.
-    static Pattern re(final String regex, final int flags) {
+    public static Pattern re(final String regex, final int flags) {
         return Pattern.compile(regex, FLAGS | flags);
     }
 
     /// @return True if the pattern matches at the start of the text, as `re.match` does.
-    static boolean match(final Pattern pattern, final CharSequence text) {
+    public static boolean match(final Pattern pattern, final CharSequence text) {
         return pattern.matcher(text).lookingAt();
     }
 
     /// @return The matcher after matching at the start of the text, as `re.match` does, or null if it didn't.
-    static Matcher matchAt(final Pattern pattern, final CharSequence text) {
+    public static Matcher matchAt(final Pattern pattern, final CharSequence text) {
         final Matcher matcher = pattern.matcher(text);
         return matcher.lookingAt()
                 ? matcher
@@ -66,7 +66,7 @@ final class PyText {
 
     /// @return The matcher after matching from `at`, as Python's `pattern.match(text, at)` does (lookbehind sees
     /// the text before it, `^` doesn't match there), or null if it didn't.
-    static Matcher matchFrom(final Pattern pattern, final CharSequence text, final int at) {
+    public static Matcher matchFrom(final Pattern pattern, final CharSequence text, final int at) {
         final Matcher matcher = pattern.matcher(text);
         matcher.useTransparentBounds(true);
         matcher.useAnchoringBounds(false);
@@ -77,28 +77,28 @@ final class PyText {
     }
 
     /// @return True if the pattern matches the whole text, as `re.fullmatch` does.
-    static boolean fullmatch(final Pattern pattern, final CharSequence text) {
+    public static boolean fullmatch(final Pattern pattern, final CharSequence text) {
         return pattern.matcher(text).matches();
     }
 
     /// @return True if the pattern matches anywhere in the text, as `re.search` does.
-    static boolean search(final Pattern pattern, final CharSequence text) {
+    public static boolean search(final Pattern pattern, final CharSequence text) {
         return pattern.matcher(text).find();
     }
 
     /// @return The text with the first match of the pattern replaced by `replacement`, taken literally.
-    static String subFirst(final Pattern pattern, final String replacement, final String text) {
+    public static String subFirst(final Pattern pattern, final String replacement, final String text) {
         return pattern.matcher(text).replaceFirst(Matcher.quoteReplacement(replacement));
     }
 
     /// @return The text with every match of the pattern replaced by `replacement`, taken literally.
-    static String sub(final Pattern pattern, final String replacement, final String text) {
+    public static String sub(final Pattern pattern, final String replacement, final String text) {
         return pattern.matcher(text).replaceAll(Matcher.quoteReplacement(replacement));
     }
 
     /// @return Each match's groups, as `re.findall` gives them for a pattern of two or more groups (a group that
     /// took no part is "").
-    static List<String[]> findallGroups(final Pattern pattern, final CharSequence text) {
+    public static List<String[]> findallGroups(final Pattern pattern, final CharSequence text) {
         final List<String[]> out = new ArrayList<>();
         final Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
@@ -115,7 +115,7 @@ final class PyText {
     }
 
     /// @return Each whole match, as `re.findall` gives them for a pattern of no groups.
-    static List<String> findall(final Pattern pattern, final CharSequence text) {
+    public static List<String> findall(final Pattern pattern, final CharSequence text) {
         final List<String> out = new ArrayList<>();
         final Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
@@ -125,7 +125,7 @@ final class PyText {
     }
 
     /// @return True if the character is whitespace as Python's `str.isspace()` has it.
-    static boolean isSpace(final int codePoint) {
+    public static boolean isSpace(final int codePoint) {
         return Character.isWhitespace(codePoint)
                || Character.isSpaceChar(codePoint)
                || (codePoint >= 0x1C && codePoint <= 0x1F)
@@ -133,7 +133,7 @@ final class PyText {
     }
 
     /// @return The text without leading and trailing whitespace, as `str.strip()`.
-    static String strip(final String text) {
+    public static String strip(final String text) {
         int start = 0;
         int end = text.length();
         while (start < end && isSpace(text.codePointAt(start))) {
@@ -146,12 +146,12 @@ final class PyText {
     }
 
     /// @return The text without leading and trailing characters that are in `chars`, as `str.strip(chars)`.
-    static String strip(final String text, final String chars) {
+    public static String strip(final String text, final String chars) {
         return rstrip(lstrip(text, chars), chars);
     }
 
     /// @return The text without leading characters that are in `chars`, as `str.lstrip(chars)`.
-    static String lstrip(final String text, final String chars) {
+    public static String lstrip(final String text, final String chars) {
         int start = 0;
         while (start < text.length() && chars.indexOf(text.charAt(start)) >= 0) {
             start++;
@@ -160,7 +160,7 @@ final class PyText {
     }
 
     /// @return The text without trailing characters that are in `chars`, as `str.rstrip(chars)`.
-    static String rstrip(final String text, final String chars) {
+    public static String rstrip(final String text, final String chars) {
         int end = text.length();
         while (end > 0 && chars.indexOf(text.charAt(end - 1)) >= 0) {
             end--;
@@ -169,7 +169,7 @@ final class PyText {
     }
 
     /// @return The text without trailing whitespace, as `str.rstrip()`.
-    static String rstrip(final String text) {
+    public static String rstrip(final String text) {
         int end = text.length();
         while (end > 0 && isSpace(text.codePointBefore(end))) {
             end -= Character.charCount(text.codePointBefore(end));
@@ -178,13 +178,13 @@ final class PyText {
     }
 
     /// @return True if the text is empty or only whitespace (falsy once stripped, in Python).
-    static boolean isBlank(final String text) {
+    public static boolean isBlank(final String text) {
         return strip(text).isEmpty();
     }
 
     /// @return The text's lines without their line ends, as `str.splitlines()`: split at `\n`, `\r`, `\r\n` and
     /// the other line boundaries Python knows.
-    static List<String> splitlines(final String text) {
+    public static List<String> splitlines(final String text) {
         final List<String> lines = new ArrayList<>();
         int start = 0;
         int i = 0;
@@ -212,7 +212,7 @@ final class PyText {
     }
 
     /// @return The text's lines that aren't blank: `[line for line in text.splitlines() if line.strip()]`.
-    static List<String> nonBlankLines(final String text) {
+    public static List<String> nonBlankLines(final String text) {
         final List<String> lines = new ArrayList<>();
         for (final String line : splitlines(text)) {
             if (!isBlank(line)) {
@@ -223,7 +223,7 @@ final class PyText {
     }
 
     /// @return The text's words, split at runs of whitespace, as `str.split()`.
-    static List<String> split(final String text) {
+    public static List<String> split(final String text) {
         final List<String> words = new ArrayList<>();
         int i = 0;
         final int length = text.length();
@@ -243,12 +243,12 @@ final class PyText {
     }
 
     /// @return The text split at each `separator`, as `str.split(separator)`: empty parts kept.
-    static List<String> split(final String text, final String separator) {
+    public static List<String> split(final String text, final String separator) {
         return List.of(text.split(Pattern.quote(separator), -1));
     }
 
     /// @return How many times `part` is in the text, not overlapping, as `str.count(part)`.
-    static int count(final String text, final String part) {
+    public static int count(final String text, final String part) {
         if (part.isEmpty()) {
             return len(text) + 1;
         }
@@ -262,12 +262,12 @@ final class PyText {
     }
 
     /// @return The text's length in code points, as `len(text)`.
-    static int len(final String text) {
+    public static int len(final String text) {
         return text.codePointCount(0, text.length());
     }
 
     /// @return The first `n` code points of the text, as `text[:n]`.
-    static String head(final String text, final int n) {
+    public static String head(final String text, final int n) {
         if (n <= 0) {
             return "";
         }
@@ -279,7 +279,7 @@ final class PyText {
     }
 
     /// @return The code points from `from` to `to` of the text, as `text[from:to]` with both in range.
-    static String slice(final String text, final int from, final int to) {
+    public static String slice(final String text, final int from, final int to) {
         final int length = len(text);
         final int start = Math.max(0, Math.min(from, length));
         final int end = Math.max(start, Math.min(to, length));
@@ -288,7 +288,7 @@ final class PyText {
 
     /// @return True if the text has a cased character and every cased character is lower case, as
     /// `str.islower()`.
-    static boolean isLower(final String text) {
+    public static boolean isLower(final String text) {
         boolean cased = false;
         for (int i = 0; i < text.length(); ) {
             final int c = text.codePointAt(i);
@@ -303,8 +303,26 @@ final class PyText {
         return cased;
     }
 
+    /// @param text A text.
+    /// @return True if the text has a cased character and every cased character is upper case, as
+    /// `str.isupper()`.
+    public static boolean isUpper(final String text) {
+        boolean cased = false;
+        for (int i = 0; i < text.length(); ) {
+            final int c = text.codePointAt(i);
+            if (Character.isLowerCase(c) || Character.isTitleCase(c)) {
+                return false;
+            }
+            if (Character.isUpperCase(c)) {
+                cased = true;
+            }
+            i += Character.charCount(c);
+        }
+        return cased;
+    }
+
     /// @return The order Python sorts strings in: by code point.
-    static int compare(final String a, final String b) {
+    public static int compare(final String a, final String b) {
         int i = 0;
         int j = 0;
         while (i < a.length() && j < b.length()) {
@@ -320,13 +338,13 @@ final class PyText {
     }
 
     /// @return The number with thousands separated by commas, as `f'{n:,}'`.
-    static String thousands(final long number) {
+    public static String thousands(final long number) {
         return String.format(Locale.ROOT, "%,d", number);
     }
 
     /// @return The value as Python's `str()` writes it: True and False, None, a float as `repr()`, a list or dict
     /// as its `repr()`.
-    static String str(final Object value) {
+    public static String str(final Object value) {
         if (value instanceof final String text) {
             return text;
         }
@@ -334,7 +352,7 @@ final class PyText {
     }
 
     /// @return The value as Python's `repr()` writes it, e.g. `'a'`, `['x', 'y']`, `{'k': 1}`, `None`, `True`.
-    static String repr(final Object value) {
+    public static String repr(final Object value) {
         if (value == null) {
             return "None";
         }
@@ -407,7 +425,7 @@ final class PyText {
 
     /// @return The float as Python's `repr()` writes it: the shortest digits that read back as it, e.g. `1.0`,
     /// `0.1`, `1e+16`, `1.5e-07`.
-    static String floatRepr(final double value) {
+    public static String floatRepr(final double value) {
         if (Double.isNaN(value)) {
             return "nan";
         }
@@ -443,7 +461,7 @@ final class PyText {
 
     /// @return The value rounded to `digits` decimal places as Python's `round(value, digits)` does: half to even,
     /// on the value the double holds.
-    static double round(final double value, final int digits) {
+    public static double round(final double value, final int digits) {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
             return value;
         }
@@ -451,13 +469,13 @@ final class PyText {
     }
 
     /// @return The value rounded to a whole number as Python's `round(value)` does: half to even.
-    static long round(final double value) {
+    public static long round(final double value) {
         return (long) Math.rint(value);
     }
 
     /// @return A regex that matches the text literally, as Python's `re.escape` writes it (which Java's regexes
     /// read the same way).
-    static String escape(final String text) {
+    public static String escape(final String text) {
         final StringBuilder out = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {
             final char c = text.charAt(i);

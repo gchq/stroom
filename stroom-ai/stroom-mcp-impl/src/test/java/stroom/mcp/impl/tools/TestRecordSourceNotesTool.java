@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.ValidationException;

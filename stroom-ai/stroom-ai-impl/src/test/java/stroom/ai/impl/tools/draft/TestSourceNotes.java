@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.mcp.impl.tools;
+package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -283,10 +281,6 @@ class TestSourceNotes {
     }
 
     private static EventSchema schema() {
-        try (InputStream in = TestSourceNotes.class.getResourceAsStream("event-logging-v4.1.0.xsd")) {
-            return EventSchema.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
     }
 }
