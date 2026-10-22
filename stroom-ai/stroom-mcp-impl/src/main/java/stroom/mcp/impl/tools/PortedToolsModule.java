@@ -83,7 +83,10 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(BuildTranslationXsltTool.class)
                 .addBinding(BuildDataSplitterTool.class)
                 .addBinding(BuildReferenceXsltTool.class)
-                .addBinding(RebuildMappingTool.class);
+                .addBinding(RebuildMappingTool.class)
+                .addBinding(StartBuildTool.class)
+                .addBinding(WriteDocumentationTool.class)
+                .addBinding(PromoteBuildTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
