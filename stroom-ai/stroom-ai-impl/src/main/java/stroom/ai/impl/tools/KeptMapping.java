@@ -52,6 +52,10 @@ public final class KeptMapping {
     public static final List<String> KINDS = List.of("translation", "index", "cef");
     /// The kind of mapping an events pipeline's translation XSLT keeps.
     public static final String TRANSLATION = "translation";
+    /// Where the stroom-mcp part of a description begins: its note, a hidden block, or a shown one written before.
+    public static final Pattern SERVER_PART = Pattern.compile("(?:^|\\n)(?:" + Pattern.quote(NOTE.substring(0, 20))
+                                                              + "|<!-- stroom-mcp [a-z ]+: kept by the server"
+                                                              + "|--- stroom-mcp )");
 
     // Shown blocks, as written before: read, and replaced by hidden ones when next written.
     private static final Pattern SHOWN = Pattern.compile(
@@ -116,6 +120,38 @@ public final class KeptMapping {
             text = NOTE_PATTERN.matcher(text).replaceAll("\n\n");
         }
         return text.strip();
+    }
+
+    /// The description with a block (hidden, as compact JSON) replacing any earlier one of its name, after the
+    /// note. A comment can't hold '--': written '-\\u002d', which JSON reads back as '--' (it only occurs inside a
+    /// string).
+    ///
+    /// @param description A document's description, or null.
+    /// @param name        The block's name, e.g. [#PENDING].
+    /// @param payload     What the block holds.
+    /// @return The description with the block.
+    public static String withBlock(final String description, final String name, final Object payload) {
+        final String body = JsonUtil.writeValueAsString(payload, false).replace("--", "-\\u002d");
+        final String block = "<!-- stroom-mcp " + name + ": kept by the server, do not edit or delete\n" + body
+                             + "\n-->";
+        final String text = NOTE_PATTERN.matcher(withoutBlock(description, name)).replaceAll("\n\n").strip();
+        final Matcher at = SERVER_PART.matcher(text);
+        final String head;
+        final String tail;
+        if (at.find()) {
+            head = text.substring(0, at.start());
+            tail = text.substring(at.start());
+        } else {
+            head = text;
+            tail = "";
+        }
+        final List<String> parts = new ArrayList<>();
+        for (final String part : List.of(head, NOTE, tail, block)) {
+            if (!part.strip().isEmpty()) {
+                parts.add(part.strip());
+            }
+        }
+        return String.join("\n\n", parts);
     }
 
     /// What `read_document` gives of an XSLT's kept mapping: by default a summary, as the whole mapping (1,400
