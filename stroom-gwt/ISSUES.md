@@ -1215,6 +1215,9 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Required fields (#5410, batch 6 of `A11Y.md`): a required field's label ends with an asterisk
+    that screen readers skip (they hear `aria-required`); every field a form refuses to save empty is
+    marked (21 more than before).
   * Size and contrast (batch 5 of `A11Y.md`): the data retention tabs are clear of the toolbar
     below them; the expression tree's rows and term fields are 24px; the floor map form's unused
     rows' labels are in the disabled text colour; Ace's search counter is #555. The a11y baseline

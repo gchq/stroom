@@ -128,6 +128,10 @@ public final class FormGroupStories {
                     // by its feedback
                     final Query username = play.getByLabelText("Username");
                     play.expect(username).toHaveAttribute("aria-required", "true");
+                    // Its label shows that it is required, with an asterisk that screen readers skip
+                    // (they hear "required"), so the field's name is still just its label (#5410)
+                    play.expect(play.getByText("Username", "label")).toHaveClass("form-label--required");
+                    play.expect(play.getByRole("textbox", "Username")).toBeInTheDocument();
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
                     play.expect(username).toHaveAccessibleDescription("This field is required.");
                     play.expect(play.getByText("This field is required.")).toBeInTheDocument();

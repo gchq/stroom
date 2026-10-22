@@ -269,6 +269,8 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     private void updateRequired() {
+        // Shown on screen too, by an asterisk after the label
+        formLabel.setRequired(required);
         if (requiredControl != null) {
             requiredControl.removeAttribute(ARIA_REQUIRED);
             requiredControl = null;
@@ -545,8 +547,8 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     /// Marks the control the label is for as one that must have a value, so that assistive
-    /// technology says it is required (`aria-required`). It doesn't change how the field looks or
-    /// validate it. Bound to the `required` attribute in ui.xml.
+    /// technology says it is required (`aria-required`), and its label ends with an asterisk. It
+    /// doesn't validate it. Bound to the `required` attribute in ui.xml.
     ///
     /// @param required Whether the control must have a value.
     public void setRequired(final boolean required) {

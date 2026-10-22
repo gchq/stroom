@@ -30,6 +30,14 @@
     color: var(--text-color--disabled);
 }
 
+/* A required field's label ends with an asterisk (FormGroup's required, #5410). Screen readers skip
+   it (its alternative text, after the slash, is empty), as they hear "required" from the field */
+.form-label--required::after {
+    content: "*";
+    content: "*" / "";
+    margin-left: 0.15em;
+}
+
 /* A form: its groups in a column (with form-padding, inset from the edges of its panel) */
 .form {
     display: flex;
