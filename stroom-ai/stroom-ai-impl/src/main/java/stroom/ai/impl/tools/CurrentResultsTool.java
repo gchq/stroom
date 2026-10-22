@@ -156,6 +156,12 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It reads the results the tab the user attached shows.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.SEARCH;
     }

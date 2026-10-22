@@ -1240,6 +1240,120 @@ paths:
         \ a processor filter, after checking it can still be done"
       tags:
       - AI
+  /aiToolPolicy/v1:
+    get:
+      operationId: listAiToolPolicies
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: "Lists the tool policies, by name"
+      tags:
+      - AI Tool Policies
+    post:
+      operationId: createAiToolPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiToolPolicy"
+        description: policy
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Creates a tool policy
+      tags:
+      - AI Tool Policies
+  /aiToolPolicy/v1/tools:
+    get:
+      operationId: listAiTools
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiToolSummary"
+          description: default response
+      summary: "Lists Stroom's own tools, with their categories"
+      tags:
+      - AI Tool Policies
+  /aiToolPolicy/v1/{id}:
+    delete:
+      operationId: deleteAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes a tool policy
+      tags:
+      - AI Tool Policies
+    get:
+      operationId: fetchAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Fetches a tool policy by its id
+      tags:
+      - AI Tool Policies
+    put:
+      operationId: updateAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiToolPolicy"
+        description: policy
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Updates a tool policy
+      tags:
+      - AI Tool Policies
   /analyticDataShard/v1/find:
     post:
       operationId: findAnalyticDataShards
@@ -10929,6 +11043,8 @@ components:
           - MANAGE_CONTENT_TEMPLATES_PERMISSION
           - MANAGE_DATA_RECEIPT_RULES_PERMISSION
           - MANAGE_JOBS_PERMISSION
+          - USE_MCP_TOOLS
+          - MANAGE_MCP_TOOL_POLICIES
           - MANAGE_PROPERTIES_PERMISSION
           - MANAGE_POLICIES_PERMISSION
           - MANAGE_NODES_PERMISSION
@@ -11826,6 +11942,73 @@ components:
           type: boolean
         approveEverythingAllowed:
           type: boolean
+    AiToolPolicy:
+      type: object
+      properties:
+        access:
+          type: string
+          enum:
+          - READ_ONLY
+          - READ_WRITE
+        allUsers:
+          type: boolean
+        categories:
+          type: array
+          items:
+            type: string
+            enum:
+            - CORE
+            - SEARCH
+            - CONTENT
+            - INDEXING
+            - PROCESSING
+            - ADMINISTRATION
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: integer
+          format: int32
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRef"
+        name:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
+    AiToolSummary:
+      type: object
+      properties:
+        category:
+          type: string
+          enum:
+          - CORE
+          - SEARCH
+          - CONTENT
+          - INDEXING
+          - PROCESSING
+          - ADMINISTRATION
+        description:
+          type: string
+        name:
+          type: string
+        readOnly:
+          type: boolean
+        readOnlyCalls:
+          type: boolean
     AiUserActionResult:
       type: object
       properties:
@@ -12243,6 +12426,8 @@ components:
               - MANAGE_CONTENT_TEMPLATES_PERMISSION
               - MANAGE_DATA_RECEIPT_RULES_PERMISSION
               - MANAGE_JOBS_PERMISSION
+              - USE_MCP_TOOLS
+              - MANAGE_MCP_TOOL_POLICIES
               - MANAGE_PROPERTIES_PERMISSION
               - MANAGE_POLICIES_PERMISSION
               - MANAGE_NODES_PERMISSION
@@ -12291,6 +12476,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -12329,6 +12516,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -12372,6 +12561,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -18420,6 +18611,15 @@ components:
           $ref: "#/components/schemas/HttpClientConfig"
         name:
           type: string
+        toolCategory:
+          type: string
+          enum:
+          - CORE
+          - SEARCH
+          - CONTENT
+          - INDEXING
+          - PROCESSING
+          - ADMINISTRATION
         toolPolicies:
           type: array
           items:
@@ -22243,6 +22443,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION

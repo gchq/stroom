@@ -23,9 +23,9 @@ import stroom.util.shared.NullSafe;
 /// return. A call's links come from its context ([ToolCallContext#links()]), so the form can depend on who the
 /// call is for.
 ///
-/// There is one form today, [#CHAT]: the "Ask Stroom AI" chat's `?action=…` links, which the chat's UI opens in
-/// Stroom when clicked, e.g. `[stream 12](?action=open-stream&id=12)`. Another form (e.g. absolute Stroom URLs
-/// for external clients) would be another instance, chosen by the context from its caller.
+/// There are two forms: [#CHAT], the "Ask Stroom AI" chat's `?action=…` links, which the chat's UI opens in Stroom
+/// when clicked, e.g. `[stream 12](?action=open-stream&id=12)`; and [#absolute(String)], the same links on Stroom's
+/// own URL, for clients outside Stroom (e.g. over MCP), which open Stroom's UI in a browser.
 public final class StroomLinks {
 
     /// The chat's links, which the chat's UI opens in Stroom.
@@ -38,6 +38,16 @@ public final class StroomLinks {
 
     private StroomLinks(final String base) {
         this.base = base;
+    }
+
+    /// @param stroomUiUrl The URL of Stroom's UI, e.g. `https://stroom.example.com`.
+    /// @return Links that open Stroom's UI at the object, e.g.
+    /// `[stream 12](https://stroom.example.com/?action=open-stream&id=12)`.
+    public static StroomLinks absolute(final String stroomUiUrl) {
+        final String url = NullSafe.trim(stroomUiUrl);
+        return new StroomLinks((url.endsWith("/")
+                ? url
+                : url + "/") + "?");
     }
 
     /// @param docRef A document.

@@ -41,6 +41,26 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public AiChat createSessionChat(final UserRef userRef, final String mcpSessionId) {
+        return null;
+    }
+
+    @Override
+    public Optional<Integer> findSessionChat(final String mcpSessionId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Integer> findSessionChatsNotUpdatedSince(final long timeMs) {
+        return List.of();
+    }
+
+    @Override
+    public void touchChat(final int chatId, final long minIntervalMs) {
+
+    }
+
+    @Override
     public ResultPage<AiChat> listChats(final UserRef userRef, final FindAiChatHistoryCriteria criteria) {
         return null;
     }

@@ -16,6 +16,7 @@
 
 package stroom.openai.client.view;
 
+import stroom.ai.shared.AiToolCategory;
 import stroom.credentials.shared.Credential;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
@@ -101,6 +102,8 @@ public class McpToolServerEditViewImpl
     @UiField
     FlowPanel toolPolicies;
     @UiField
+    SelectionBox<AiToolCategory> toolCategory;
+    @UiField
     Button setHttpClientConfig;
     @UiField
     Button test;
@@ -159,6 +162,7 @@ public class McpToolServerEditViewImpl
         apiKeyValuePrefix.setEnabled(!readOnly);
         audience.setEnabled(!readOnly);
         trusted.setEnabled(!readOnly);
+        toolCategory.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
         addPolicy.setEnabled(!readOnly);
         for (int i = 0; i < policyRows.getWidgetCount(); i++) {
@@ -267,6 +271,11 @@ public class McpToolServerEditViewImpl
                 addPolicyRow(rule.getToolPattern(), rule.getPolicy());
             }
         }
+    }
+
+    @Override
+    public SelectionBox<AiToolCategory> getToolCategorySelectionBox() {
+        return toolCategory;
     }
 
     private PolicyRow addPolicyRow(final String pattern, final McpToolPolicy policy) {

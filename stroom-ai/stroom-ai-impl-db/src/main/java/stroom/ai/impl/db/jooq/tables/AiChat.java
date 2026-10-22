@@ -150,6 +150,11 @@ public class AiChat extends TableImpl<AiChatRecord> {
      */
     public final TableField<AiChatRecord, Byte> TITLE_SET_BY_USER = createField(DSL.name("title_set_by_user"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
+    /**
+     * The column <code>stroom.ai_chat.mcp_session_id</code>.
+     */
+    public final TableField<AiChatRecord, String> MCP_SESSION_ID = createField(DSL.name("mcp_session_id"), SQLDataType.VARCHAR(255), this, "");
+
     private AiChat(Name alias, Table<AiChatRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -186,7 +191,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.AI_CHAT_IDX_AI_CHAT_USER_UUID_UPDATE_TIME);
+        return Arrays.asList(Indexes.AI_CHAT_IDX_AI_CHAT_MCP_SESSION_ID, Indexes.AI_CHAT_IDX_AI_CHAT_USER_UUID_UPDATE_TIME);
     }
 
     @Override

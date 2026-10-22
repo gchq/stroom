@@ -49,6 +49,12 @@ class ReadTurnTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It reads the chat's earlier turns.
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CORE;
     }

@@ -79,6 +79,23 @@ public interface StroomTool {
         return true;
     }
 
+    /// Whether a call of the tool is heavy enough (e.g. a search) to take one of the user's run slots when it is
+    /// made over MCP, as a chat run does, so outside clients can't run more at once than the chat may.
+    ///
+    /// @return True if a call takes a run slot. Defaults to false.
+    default boolean usesRunSlot() {
+        return false;
+    }
+
+    /// Whether the tool only makes sense in the "Ask Stroom AI" chat, e.g. as it works on the tab the user
+    /// attached, the chat's history or its task list. Stroom's MCP endpoint never offers such a tool, whatever the
+    /// user's tool policies say.
+    ///
+    /// @return True if the tool is only for the chat. Defaults to false.
+    default boolean isChatOnly() {
+        return false;
+    }
+
     /// @return True if the tool limits how much it returns itself (e.g. a page of a file), so its result is never
     /// saved to the workspace in place of being returned, which would only make another file to read.
     default boolean boundsItsOutput() {

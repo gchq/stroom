@@ -118,6 +118,46 @@ public class AiDaoImpl implements AiDao {
 
     @Override
     public AiChat createChat(final UserRef userRef) {
+        return createChat(userRef, null);
+    }
+
+    @Override
+    public AiChat createSessionChat(final UserRef userRef, final String mcpSessionId) {
+        return createChat(userRef, Objects.requireNonNull(mcpSessionId, "mcpSessionId"));
+    }
+
+    @Override
+    public Optional<Integer> findSessionChat(final String mcpSessionId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.ID)
+                .from(AI_CHAT)
+                .where(AI_CHAT.MCP_SESSION_ID.eq(mcpSessionId))
+                .fetchOptional(AI_CHAT.ID));
+    }
+
+    @Override
+    public List<Integer> findSessionChatsNotUpdatedSince(final long timeMs) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.ID)
+                .from(AI_CHAT)
+                .where(AI_CHAT.MCP_SESSION_ID.isNotNull())
+                .and(AI_CHAT.UPDATE_TIME_MS.lt(timeMs))
+                .fetch(AI_CHAT.ID));
+    }
+
+    @Override
+    public void touchChat(final int chatId, final long minIntervalMs) {
+        final long now = System.currentTimeMillis();
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.UPDATE_TIME_MS, now)
+                .where(AI_CHAT.ID.eq(chatId))
+                .and(AI_CHAT.UPDATE_TIME_MS.lt(now - minIntervalMs))
+                .execute());
+    }
+
+    // A chat, or (with an MCP session's id) the hidden chat that holds an MCP session's workspace.
+    private AiChat createChat(final UserRef userRef, final String mcpSessionId) {
         final long now = System.currentTimeMillis();
         final String userName = userRef.toDisplayString();
         final String userUuid = userRef.getUuid();
@@ -132,8 +172,11 @@ public class AiDaoImpl implements AiDao {
                 .set(AI_CHAT.UPDATE_USER, userName)
                 .set(AI_CHAT.USER_UUID, userUuid)
                 .set(AI_CHAT.TITLE, title)
+                .set(AI_CHAT.MCP_SESSION_ID, mcpSessionId)
                 // A new chat is open, so is the one to show again after a page refresh.
-                .set(AI_CHAT.LAST_OPENED_MS, now)
+                .set(AI_CHAT.LAST_OPENED_MS, mcpSessionId == null
+                        ? now
+                        : null)
                 .returning(AI_CHAT.ID)
                 .fetchOne(AI_CHAT.ID));
 
@@ -144,6 +187,7 @@ public class AiDaoImpl implements AiDao {
     public ResultPage<AiChat> listChats(final UserRef userRef, final FindAiChatHistoryCriteria criteria) {
         final List<Condition> conditions = new ArrayList<>();
         conditions.add(AI_CHAT.USER_UUID.eq(userRef.getUuid()));
+        conditions.add(AI_CHAT.MCP_SESSION_ID.isNull());
 
         final FieldProvider fieldProvider = new FieldProviderImpl(
                 List.of(AiChatHistoryFields.NAME),
@@ -662,6 +706,7 @@ public class AiDaoImpl implements AiDao {
                 .select(DSL.max(AI_CHAT.LAST_POLL_MS))
                 .from(AI_CHAT)
                 .where(AI_CHAT.USER_UUID.eq(userUuid))
+                .and(AI_CHAT.MCP_SESSION_ID.isNull())
                 .fetchOne(0, Long.class));
     }
 
@@ -841,6 +886,7 @@ public class AiDaoImpl implements AiDao {
                     .update(AI_CHAT)
                     .set(AI_CHAT.LAST_READ_MESSAGE_ID, lastMessage)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(AI_CHAT.MCP_SESSION_ID.isNull())
                     .and(lastMessage.gt(DSL.coalesce(AI_CHAT.LAST_READ_MESSAGE_ID, 0)))
                     .execute();
         });
@@ -858,6 +904,7 @@ public class AiDaoImpl implements AiDao {
                     .select(AI_CHAT.ID, AI_CHAT.TITLE, AI_CHAT.UPDATE_TIME_MS)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(AI_CHAT.MCP_SESSION_ID.isNull())
                     .and(AI_CHAT.TITLE.like(pattern, LIKE_ESCAPE)
                             .or(DSL.exists(DSL.selectOne().from(AI_CHAT_MESSAGE).where(questionMatches))))
                     .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
@@ -898,6 +945,7 @@ public class AiDaoImpl implements AiDao {
                             AI_CHAT.AUTO_APPROVE, AI_CHAT.LAST_OPENED_MS, AI_CHAT.AGENT_MODE)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(AI_CHAT.MCP_SESSION_ID.isNull())
                     .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
                     .limit(limit)
                     .fetch()
@@ -963,6 +1011,7 @@ public class AiDaoImpl implements AiDao {
                             titles)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(AI_CHAT.MCP_SESSION_ID.isNull())
                     .fetchOne();
             final Long runs = context
                     .select(DSL.max(AI_CHAT_RUN.UPDATE_TIME_MS))
