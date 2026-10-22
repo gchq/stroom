@@ -818,7 +818,7 @@ public class BuildPlan {
                 : String.join(", ", done));
     }
 
-    /// @param profiled Sample text's profile ([SampleProfiler#profile]).
+    /// @param profiled Sample text's profile ([SampleProfiling#profile]).
     /// @return Its format, and whether it needs a text converter: `format`, `namespace`, `root`,
     /// `suggested_parser` and `needs_text_converter`.
     public static Map<String, Object> textFormat(final Map<String, Object> profiled) {

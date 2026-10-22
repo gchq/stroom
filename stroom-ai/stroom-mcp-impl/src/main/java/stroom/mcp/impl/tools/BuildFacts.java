@@ -47,7 +47,7 @@ interface BuildFacts {
     String streamHead(long streamId);
 
     /// @param text Sample text.
-    /// @return Its profile ([SampleProfiler#profile]).
+    /// @return Its profile ([SampleProfiling#profile]).
     /// @throws ToolRefusal if it can't be profiled.
     Map<String, Object> profile(String text);
 

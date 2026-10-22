@@ -92,7 +92,7 @@ class StroomBuildFacts implements BuildFacts {
     private final ProcessorFilters processorFilters;
     private final PipelineFeeds pipelineFeeds;
     private final ProcessingStatusTool processingStatus;
-    private final SampleProfiler sampleProfiler;
+    private final SampleProfiling sampleProfiler;
 
     @Inject
     StroomBuildFacts(final WriteGuard guard,
@@ -107,7 +107,7 @@ class StroomBuildFacts implements BuildFacts {
                      final ProcessorFilters processorFilters,
                      final PipelineFeeds pipelineFeeds,
                      final ProcessingStatusTool processingStatus,
-                     final SampleProfiler sampleProfiler) {
+                     final SampleProfiling sampleProfiler) {
         this.guard = guard;
         this.buildRecords = buildRecords;
         this.documentAccess = documentAccess;

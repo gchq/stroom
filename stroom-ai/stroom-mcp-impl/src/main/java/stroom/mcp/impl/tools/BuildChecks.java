@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -156,7 +157,7 @@ class BuildChecks {
     /// @param kept A mapping kept with its XSLT.
     /// @return The digest of the mapping and the XSLT the documentation's Field mapping is generated from.
     static String mappingDigest(final KeptMappings.KeptXslt kept) {
-        return XsltCode.digest(PythonJson.dumps(kept.kept().payload()),
+        return XsltCode.digest(PyJson.dumpsSortedKeys(kept.kept().payload()),
                 XsltCode.normalise(kept.xslt().getData()));
     }
 

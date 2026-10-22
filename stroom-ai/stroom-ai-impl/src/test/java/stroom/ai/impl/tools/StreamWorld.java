@@ -71,6 +71,8 @@ final class StreamWorld {
     final Map<Long, List<String>> records = new HashMap<>();
     /// The bytes of each raw stream's first part, by stream id.
     final Map<Long, byte[]> bytes = new HashMap<>();
+    /// The bytes of each part of a raw stream of several parts, by stream id (else it has one part).
+    final Map<Long, List<byte[]>> parts = new HashMap<>();
     /// The errors the data viewer gives for a stream, by id.
     final Map<Long, List<String>> errors = new HashMap<>();
     /// The receipt headers of each stream, by id.
@@ -200,11 +202,15 @@ final class StreamWorld {
         }
         final Source source = Mockito.mock(Source.class);
         Mockito.when(source.getMeta()).thenReturn(row.getMeta());
-        Mockito.when(source.count()).thenReturn(1L);
+        Mockito.when(source.count()).thenReturn(parts.containsKey(id)
+                ? (long) parts.get(id).size()
+                : 1L);
         Mockito.when(source.get(Mockito.anyLong())).thenAnswer(invocation -> {
+            final long part = invocation.getArgument(0);
             final InputStreamProvider provider = Mockito.mock(InputStreamProvider.class);
-            Mockito.when(provider.get()).thenAnswer(get -> new FakeSegmentInputStream(
-                    bytes.getOrDefault(id, String.join("\n", records.getOrDefault(id, new ArrayList<>()))
+            Mockito.when(provider.get()).thenAnswer(get -> new FakeSegmentInputStream(parts.containsKey(id)
+                    ? parts.get(id).get((int) part)
+                    : bytes.getOrDefault(id, String.join("\n", records.getOrDefault(id, new ArrayList<>()))
                             .getBytes(StandardCharsets.UTF_8))));
             return provider;
         });
