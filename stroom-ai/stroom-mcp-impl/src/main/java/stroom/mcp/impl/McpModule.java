@@ -22,8 +22,8 @@ import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 
-/// Stroom's MCP endpoint, `/mcp`, the metadata that tells MCP clients where to sign in to it, and the knowledge
-/// bundled for agents.
+/// Stroom's MCP endpoint, `/mcp`, where sample files are posted (`/mcp/upload`), the metadata that tells MCP
+/// clients where to sign in to it, and the knowledge bundled for agents.
 public class McpModule extends AbstractModule {
 
     @Override
@@ -35,6 +35,7 @@ public class McpModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 .bind(McpServlet.class)
+                .bind(McpUploadServlet.class)
                 .bind(McpProtectedResourceServlet.class);
     }
 }
