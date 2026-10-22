@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestPipelineLayers {
+class TestMergedPipeline {
 
     @TempDir
     Path tempDir;
@@ -64,9 +64,9 @@ class TestPipelineLayers {
 
     @Test
     void translationDocsMarkCodeInheritedFromTheTemplate() {
-        final PipelineLayers layers = PipelineLayers.load(fixture.documentAccess(), "p").orElseThrow();
+        final MergedPipeline layers = MergedPipeline.load(fixture.documentAccess(), "p").orElseThrow();
 
-        final Map<Object, Map<String, Object>> docs = layers.translationDocs().stream()
+        final Map<Object, Map<String, Object>> docs = layers.translationDocMaps().stream()
                 .collect(Collectors.toMap(doc -> doc.get("element"), doc -> doc));
 
         assertThat(docs.get("decorationFilter").get("inherited_from_template")).isEqualTo(true);
@@ -77,14 +77,14 @@ class TestPipelineLayers {
 
     @Test
     void thePipelinesOwnElementsAreThoseItConfigures() {
-        final PipelineLayers layers = PipelineLayers.load(fixture.documentAccess(), "p").orElseThrow();
+        final MergedPipeline layers = MergedPipeline.load(fixture.documentAccess(), "p").orElseThrow();
 
         assertThat(layers.ownElements()).containsExactlyInAnyOrder("dsParser", "translationFilter");
         // Its own XSLT is where its translation happens.
         assertThat(layers.defaultOutputs()).containsExactly("translationFilter");
         assertThat(layers.parser()).isEqualTo("dsParser");
         // The template adds both its XSLTs itself.
-        assertThat(PipelineLayers.load(fixture.documentAccess(), "t").orElseThrow().defaultOutputs())
+        assertThat(MergedPipeline.load(fixture.documentAccess(), "t").orElseThrow().defaultOutputs())
                 .isEqualTo(List.of("decorationFilter", "translationFilter"));
     }
 
@@ -93,8 +93,8 @@ class TestPipelineLayers {
         fixture.visible.remove("t");
 
         // Failing closed: what it inherits can't be known.
-        assertThat(PipelineLayers.load(fixture.documentAccess(), "p")).isEmpty();
-        assertThat(PipelineLayers.load(fixture.documentAccess(), "no-such-pipeline")).isEmpty();
+        assertThat(MergedPipeline.load(fixture.documentAccess(), "p")).isEmpty();
+        assertThat(MergedPipeline.load(fixture.documentAccess(), "no-such-pipeline")).isEmpty();
     }
 
     private static PipelineProperty code(final String element, final String name, final DocRef doc) {

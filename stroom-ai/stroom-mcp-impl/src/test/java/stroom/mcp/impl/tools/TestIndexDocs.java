@@ -16,8 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.mcp.impl.tools.MergedPipeline.ElementProperty;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.Test;

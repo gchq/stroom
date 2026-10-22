@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.PipelineLayers;
+import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamReader;
@@ -140,7 +140,7 @@ class EventLocations {
                 throw new LocateException("Stream " + streamId + " is not an Events stream: give each event's "
                                           + "Events stream (StreamId)");
             }
-            final PipelineLayers pipeline = pipeline(found.pipeline());
+            final MergedPipeline pipeline = pipeline(found.pipeline());
             final String outputElement = pipeline.defaultOutputs().getLast();
             final List<Long> targets = new ArrayList<>(new TreeSet<>(entry.getValue()));
             final int cap = MAX_RECORDS * 4;
@@ -180,8 +180,8 @@ class EventLocations {
     /// @param uuid A pipeline's UUID.
     /// @return It, merged with the templates it inherits from.
     /// @throws LocateException if it, or a template it inherits from, can't be read.
-    PipelineLayers pipeline(final String uuid) {
-        return PipelineLayers.load(documentAccess, uuid)
+    MergedPipeline pipeline(final String uuid) {
+        return MergedPipeline.load(documentAccess, uuid)
                 .orElseThrow(() -> new LocateException("Pipeline " + uuid + " can't be read: it doesn't exist, or "
                                                        + "you don't have permission to view it or a template it "
                                                        + "inherits from"));

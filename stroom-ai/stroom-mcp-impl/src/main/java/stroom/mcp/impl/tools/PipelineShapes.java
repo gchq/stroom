@@ -18,8 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiPipelineStageConfig;
+import stroom.ai.impl.tools.MergedPipeline;
+import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
 import stroom.docref.DocRef;
-import stroom.mcp.impl.tools.MergedPipeline.ElementProperty;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineLayer;

@@ -20,7 +20,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PipelineLayers;
+import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamReader;
@@ -159,7 +159,7 @@ class LocateEventTool extends AbstractBuiltInTool {
         final Meta rawMeta = eventLocations.meta(found.raw());
         viewed.add(found.raw());
         final StreamReader.Fetched first = streamReader.fetch(found.raw(), 0, null);
-        final PipelineLayers pipeline = eventLocations.pipeline(found.pipeline());
+        final MergedPipeline pipeline = eventLocations.pipeline(found.pipeline());
         final Map<String, Object> pipelineMap = new LinkedHashMap<>();
         pipelineMap.put("uuid", found.pipeline());
         pipelineMap.put("name", pipeline.doc().getName());
@@ -170,7 +170,7 @@ class LocateEventTool extends AbstractBuiltInTool {
         result.put("raw_parts", first.totalItems());
         result.put("pipeline", pipelineMap);
         result.put("events_stream", found.events());
-        result.put("translation_docs", pipeline.translationDocs());
+        result.put("translation_docs", pipeline.translationDocMaps());
         if (eventId == null) {
             result.put("hint", "Give event_id to pin down the record, or find the event type in the Events stream "
                                + "(summarise_streams (kind=events)) and step_pipeline the raw stream's records.");
@@ -218,7 +218,7 @@ class LocateEventTool extends AbstractBuiltInTool {
 
     private static void located(final Map<String, Object> result,
                                 final SteppingResult step,
-                                final PipelineLayers pipeline,
+                                final MergedPipeline pipeline,
                                 final String outputElement,
                                 final String output,
                                 final String storedXml,
