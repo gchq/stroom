@@ -1092,3 +1092,41 @@ Where they differ from the MCP server:
 * **survey_index** (`IndexSurveys`, no tool yet) reads its further groups of columns one after another (the MCP
   server ran them at once); `feeding_pipelines` finds the pipelines with `PipelineIndex.containing` and a feed's
   description with `FeedNames.exact`.
+
+### `create_indexing_pipeline`
+
+Ported as a tool of its own (`CreateIndexingPipelineTool`, `stroom-mcp-impl`, category indexing) from
+`tools/indexing.py` `create_indexing_pipeline`, with `_events_available` (`eventsAvailable`) and
+`_missing_index_fields` (`missingIndexFields`). It stands on `PipelineShapes`, `IndexingInputs.requireEvents`,
+`IndexFields` (`indexFields`, and `addLuceneFields` for `set_index_fields`), `KeptMapping.readMapping`,
+`IndexingHelpers.writesToIndex` (`_writes`) and create_pipeline's own path: `CreatePipelineTool.fromTemplate`, which
+`create_pipeline` now calls too, takes the arguments as a `CreatePipelineTool.FromTemplate` (the Python's
+`create_pipeline(ctx, name, template_uuid, props, build=, confirmation_id=, accept_parser_mismatch=True)`).
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `create_indexing_pipeline` | no | no | no | no |
+
+The pipeline is confirmed in create_pipeline's form (its name editable), but the Lucene index fields added after it
+from the XSLT's plan are not asked about, as the MCP server's tool didn't (its `confirms` was false): so over `/mcp`
+the call is approved as a whole. The tool saves no XSLT: `xslt_uuid` is one saved before (save_xslt
+`index_plan=...`).
+
+Where it differs from the MCP server:
+
+* **Its description** starts with its onboarding step (`Onboarding step N of M (indexing_pipeline): `), as the MCP
+  server's `annotate_tools` labelled it; the other indexing tools' ports don't carry their labels yet.
+* **A doc that can't be read** (the XSLT, a Lucene Index) is refused as `XSLT <uuid> can't be read: it doesn't
+  exist, or you don't have permission to view it` (the MCP server failed with the REST error); a field plan kept
+  with the XSLT that doesn't validate is refused as `The field plan kept with the indexing XSLT isn't valid: ...`
+  (pydantic's error otherwise).
+* **A Lucene template with no open index property** is refused (`This template sets its own Lucene index: ...`);
+  the Python failed on it with a StopIteration.
+* **The Lucene index's fields** are read through Stroom's index service (`IndexFields.indexFields`, up to 2,000), the
+  MCP server's `/dataSource/v1/findFields` read 500.
+* **The build** is required, as the Python signature had it, and remembered for the session.
+* **Tests** (`TestCreateIndexingPipelineTool`) port `tests/test_indexing.py`'s create_indexing_pipeline and
+  `_missing_index_fields` cases, `tests/test_index_rename.py`'s `test_an_indexing_pipeline_takes_the_index_its_doc_names`
+  and `tests/test_authoring_guards.py`'s `test_an_indexing_pipeline_needs_events_first`, with
+  `dev/e2e_lucene_indexing.py`'s pipeline (confirmed, then made on create_pipeline's path with the XSLT, the index
+  and the plan's fields) as a test on the pipeline world.
