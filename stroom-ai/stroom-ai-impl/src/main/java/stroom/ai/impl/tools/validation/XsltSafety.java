@@ -24,10 +24,12 @@ import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,21 +45,33 @@ import java.util.stream.Collectors;
 /// refused before it reaches Saxon ([LockedSaxon] refuses every URI as well).
 ///
 /// The XSLT the tools save runs in Stroom, on its nodes, with Stroom's access: the same functions are refused
-/// there, with the instructions that read or write a resource or evaluate an XPath made at run time, and imports by
-/// URL.
+/// there, with the instructions that read or write a resource or evaluate an XPath made at run time, imports by
+/// URL, and Stroom's own functions that reach outside Stroom with a record's data ([#STROOM_REFUSED]), unless the
+/// XSLT being replaced already calls them ([#keptBy(String, String)]): the user put them there.
 public final class XsltSafety {
 
     /// The XPath functions' namespace.
     public static final String FN = "http://www.w3.org/2005/xpath-functions";
     /// Saxon's own namespace.
     public static final String SAXON = "http://saxon.sf.net/";
+    /// The namespace of Stroom's XSLT functions.
+    public static final String STROOM = "stroom";
     /// The functions refused, by local name, in the namespaces of [#REFUSED_NAMESPACES]. A user-defined function
     /// of the same name is the XSLT's business: defined in the XSLT, or in one it imports by name (a shared XSLT,
     /// as an AGENTS doc's Required imports may name), e.g. geo:document() from 'GeoIP-V1'.
+    /// system-property() is one: with Saxon's external functions allowed (as Stroom runs XSLT), a name in no
+    /// namespace reads the JVM's system properties, and available-system-properties() lists them all.
     public static final List<String> REFUSED = List.of(
-            "environment-variable", "available-environment-variables", "function-lookup", "transform",
-            "load-xquery-module", "doc", "doc-available", "document", "collection", "uri-collection",
-            "unparsed-text", "unparsed-text-lines", "unparsed-text-available", "json-doc");
+            "environment-variable", "available-environment-variables", "system-property",
+            "available-system-properties", "function-lookup", "transform", "load-xquery-module", "doc",
+            "doc-available", "document", "collection", "uri-collection", "unparsed-text", "unparsed-text-lines",
+            "unparsed-text-available", "json-doc");
+    /// Stroom's XSLT functions that reach outside Stroom with what they are given, refused in an XSLT the tools
+    /// save (not in a mapping's xpaths, which are only ever saved as XSLT): http-call() and fetch-json() request a
+    /// URL, ask-ai() sends its text to a chat model, and host-name() and host-address() look a name up in DNS
+    /// (which carries the name, and so a record's data, to whichever server answers for it).
+    public static final List<String> STROOM_REFUSED = List.of(
+            "http-call", "fetch-json", "ask-ai", "host-name", "host-address");
     /// The namespaces whose functions of those names are refused: the XPath functions' and Saxon's own.
     public static final List<String> REFUSED_NAMESPACES = List.of(FN, SAXON);
     /// XSLT instructions that write a file, read a document by URI, evaluate an XPath made at run time, or bring
@@ -67,19 +81,14 @@ public final class XsltSafety {
 
     // Prefixes Saxon's XPath binds unless they are bound otherwise.
     private static final Map<String, String> PREDECLARED = Map.of("fn", FN, "saxon", SAXON);
-    // A call, name(...), or a function reference, name#1, with its prefix or Q{uri}. Not $name(...), a variable's
-    // function.
-    private static final Pattern CALL = Pattern.compile(
-            "(?<![\\w.\\-$])(?:(?<prefix>[\\w.\\-]+):|Q\\{(?<uri>[^}]*)\\})?(?<name>"
-            + REFUSED.stream()
-                    .sorted(Comparator.comparingInt(String::length).reversed())
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining("|"))
-            + ")\\s*[(#]",
-            Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern CALL = callOf(REFUSED);
+    private static final Pattern STROOM_CALL = callOf(STROOM_REFUSED);
     private static final Pattern SCHEME = Pattern.compile("^\\s*[A-Za-z][A-Za-z0-9+.\\-]*:");
     private static final String READS = "which reads the environment, files or network, or looks a function up by "
                                         + "name";
+    private static final String REACHES = "which reaches outside Stroom (a URL, a chat model or a DNS lookup) with "
+                                          + "what it is given: Stroom would run it on its nodes for every record, so "
+                                          + "the tools don't save it unless the XSLT it replaces already calls it";
 
     private XsltSafety() {
         // Static only.
@@ -96,10 +105,27 @@ public final class XsltSafety {
     ///                   bind), or null for none.
     /// @return The local name of the refused function it calls, or null.
     public static String called(final String expression, final Map<String, String> namespaces) {
+        return calledIn(expression, namespaces, CALL, REFUSED_NAMESPACES);
+    }
+
+    /// The Stroom function that reaches outside Stroom ([#STROOM_REFUSED]) an XPath expression calls, if any, read
+    /// as [#called(String, Map)] reads one.
+    ///
+    /// @param expression An XPath expression, or null.
+    /// @param namespaces The prefixes in scope where it runs, or null for none.
+    /// @return The local name of the function, or null.
+    public static String calledOutside(final String expression, final Map<String, String> namespaces) {
+        return calledIn(expression, namespaces, STROOM_CALL, List.of(STROOM));
+    }
+
+    private static String calledIn(final String expression,
+                                   final Map<String, String> namespaces,
+                                   final Pattern call,
+                                   final List<String> refusedNamespaces) {
         final String text = Objects.requireNonNullElse(expression, "");
         final Map<String, String> bound = Objects.requireNonNullElse(namespaces, Map.of());
         final String code = code(text);
-        final Matcher matcher = CALL.matcher(code != null
+        final Matcher matcher = call.matcher(code != null
                 ? code
                 : text);
         while (matcher.find()) {
@@ -114,7 +140,7 @@ public final class XsltSafety {
             } else {
                 uri = FN;
             }
-            if (uri != null && REFUSED_NAMESPACES.contains(uri)) {
+            if (uri != null && refusedNamespaces.contains(uri)) {
                 return matcher.group("name");
             }
         }
@@ -181,9 +207,9 @@ public final class XsltSafety {
         return out;
     }
 
-    /// Each thing in an XSLT the tools won't save: a refused function in an XSL attribute (an expression, or a
-    /// template whose braces are), in another element's attribute value template or a text value template; a
-    /// refused instruction; an import or include by URL.
+    /// Each thing in an XSLT the tools won't save: a refused function (or a Stroom function that reaches outside
+    /// Stroom) in an XSL attribute (an expression, or a template whose braces are), in another element's attribute
+    /// value template or a text value template; a refused instruction; an import or include by URL.
     ///
     /// @param code An XSLT's text.
     /// @return What is refused, with why, in document order; empty if nothing is, or if it is not well-formed
@@ -198,10 +224,27 @@ public final class XsltSafety {
         final Map<String, String> found = new LinkedHashMap<>();
         scanNode(root, found);
         final List<Unsafe> unsafe = new ArrayList<>();
-        found.forEach((what, why) -> unsafe.add(new Unsafe(what, what.endsWith("()")
-                ? why + ", " + READS + ": Stroom would run it with its own access, so the tools don't save it"
-                : why)));
+        found.forEach((what, why) -> unsafe.add(new Unsafe(what, why)));
         return unsafe;
+    }
+
+    /// The refusals of an XSLT that the XSLT it replaces has too (the same function, instruction or import): those
+    /// were put there by a person, so a working copy may keep doing what its production XSLT already did.
+    ///
+    /// @param code     The new XSLT's text.
+    /// @param previous The text of the XSLT it replaces, or null.
+    /// @return The `why` of each of the new XSLT's refusals that the previous XSLT has too; empty if none.
+    public static Set<String> keptBy(final String code, final String previous) {
+        if (previous == null || previous.isEmpty()) {
+            return Set.of();
+        }
+        final Set<String> kept = new HashSet<>();
+        unsafeInXslt(previous).forEach(unsafe -> kept.add(unsafe.what()));
+        final Set<String> allowed = new HashSet<>();
+        unsafeInXslt(code).stream()
+                .filter(unsafe -> kept.contains(unsafe.what()))
+                .forEach(unsafe -> allowed.add(unsafe.why()));
+        return allowed;
     }
 
     // Scans an element (its instruction, attributes and text), then its children, in document order as lxml's
@@ -259,9 +302,27 @@ public final class XsltSafety {
         for (final String expression : expressions) {
             final String name = called(expression, namespaces);
             if (name != null && !found.containsKey(name + "()")) {
-                found.put(name + "()", where + " calls " + name + "()");
+                found.put(name + "()", where + " calls " + name + "(), " + READS + ": Stroom would run it with its "
+                                       + "own access, so the tools don't save it");
+            }
+            final String outside = calledOutside(expression, namespaces);
+            if (outside != null && !found.containsKey("stroom:" + outside + "()")) {
+                found.put("stroom:" + outside + "()", where + " calls stroom:" + outside + "(), " + REACHES);
             }
         }
+    }
+
+    // A call, name(...), or a function reference, name#1, of one of the names, with its prefix or Q{uri}. Not
+    // $name(...), a variable's function.
+    private static Pattern callOf(final List<String> names) {
+        return Pattern.compile(
+                "(?<![\\w.\\-$])(?:(?<prefix>[\\w.\\-]+):|Q\\{(?<uri>[^}]*)\\})?(?<name>"
+                + names.stream()
+                        .sorted(Comparator.comparingInt(String::length).reversed())
+                        .map(Pattern::quote)
+                        .collect(Collectors.joining("|"))
+                + ")\\s*[(#]",
+                Pattern.UNICODE_CHARACTER_CLASS);
     }
 
     // The index after the XPath comment starting at `at` (comments nest; a quote in one is just text), or -1.

@@ -52,9 +52,11 @@ class BuildStatusTool extends AbstractBuiltInTool {
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
-                .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION, AppPermission.VIEW_DATA_PERMISSION)
                 .note("The build's documents are those the user can view; whether its processor filters are made "
-                      + "and running needs the Manage Processors permission.")
+                      + "and running needs the Manage Processors permission. The sample's format (from its text) "
+                      + "needs the View Data permission: without it, the plan is made as before a sample is "
+                      + "uploaded.")
                 .build();
     }
 

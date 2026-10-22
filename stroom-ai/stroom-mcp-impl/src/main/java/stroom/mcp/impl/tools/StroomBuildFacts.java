@@ -175,7 +175,13 @@ class StroomBuildFacts implements BuildFacts {
         // Cut at its last line end when cut short: profiled with a record cut part-way through, 50 XML fragments
         // (35 KB) read as key=value, their messages' "User: x" taken for pairs, and create_pipeline refused the
         // XMLFragmentParser (Qwen, VS Code).
-        return streamReader.cachedRawText(streamId, HEAD_CHARS).text();
+        try {
+            return streamReader.cachedRawText(streamId, HEAD_CHARS).text();
+        } catch (final StreamReader.StreamReadException e) {
+            // Without the View Data permission no stream's text is read: the plan goes on without the sample's
+            // format, as before a sample is uploaded.
+            throw new ToolRefusal(e.getMessage());
+        }
     }
 
     @Override

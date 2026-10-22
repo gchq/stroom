@@ -120,7 +120,7 @@ class FindReferenceDataTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
         final Map<String, Entry> index = pipelineIndex.read();
-        final Map<String, Set<String>> feedsByPipeline = ProcessorFilters.feedsByPipeline(processorFilters.all());
+        final Map<String, Set<String>> feedsByPipeline = processorFilters.feedsByPipeline(processorFilters.all());
         // Production content: one document Stroom can't give (deleted since it was listed, a pipeline it can no
         // longer load) is left out and said, not the whole answer lost.
         final List<String> unreadable = new ArrayList<>();

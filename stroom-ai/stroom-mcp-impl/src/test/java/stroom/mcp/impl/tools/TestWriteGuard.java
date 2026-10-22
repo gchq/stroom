@@ -29,6 +29,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -49,6 +51,17 @@ class TestWriteGuard {
 
     private final BuildWorld world = new BuildWorld();
     private final WriteGuard guard = world.guard();
+
+    @Test
+    void foldersAreMadeUnderAFixedSetOfLocks() {
+        // Before, a lock was kept for every parent and name a folder was ever made with, never removed.
+        final Set<Object> locks = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (int i = 0; i < 1_000; i++) {
+            locks.add(guard.folderLock("parent", "folder " + i));
+            assertThat(guard.folderLock("parent", "folder " + i)).isSameAs(guard.folderLock("parent", "folder " + i));
+        }
+        assertThat(locks).hasSizeLessThanOrEqualTo(WriteGuard.FOLDER_LOCKS);
+    }
 
     @Test
     void refusalsAreAudited() {

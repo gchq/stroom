@@ -28,6 +28,7 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.trans.XPathException;
+import org.xml.sax.InputSource;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.function.Supplier;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
-import javax.xml.transform.stream.StreamSource;
+import javax.xml.transform.sax.SAXSource;
 
 /// Compiles an XSLT as Stroom compiles it before running it (as its XSLT pool does for an XSLT filter): with a
 /// Saxon processor of its own, Stroom's XSLT function library (stroom:lookup(), stroom:format-date() and the
@@ -50,7 +51,8 @@ import javax.xml.transform.stream.StreamSource;
 ///
 /// It only compiles, but compiling runs an XSLT's static expressions (`use-when`, static parameters), so an XSLT
 /// with a function or instruction that reads the environment or a resource ([XsltSafety#unsafeInXslt(String)]) is
-/// refused here, before it is compiled, whatever its caller has checked.
+/// refused here, before it is compiled, whatever its caller has checked; and the processor it compiles with is
+/// locked down as [LockedSaxon]'s is, Stroom's import resolver aside, in case anything is missed.
 public class XsltCompileCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltCompileCheck.class);
@@ -95,12 +97,14 @@ public class XsltCompileCheck {
         }
         final Collected collected = new Collected();
         try {
-            final Processor processor = new Processor(false);
+            // Locked down as the XPath evaluation is (no file, URL, collection, environment variable or system
+            // property, no external entity), with Stroom's functions and its resolver of imports by name added.
+            final Processor processor = LockedSaxon.newLocked();
             functions.accept(processor.getUnderlyingConfiguration());
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setErrorListener(collected);
             compiler.setURIResolver(uriResolver.get());
-            compiler.compile(new StreamSource(new StringReader(xslt)));
+            compiler.compile(new SAXSource(LockedSaxon.reader(), new InputSource(new StringReader(xslt))));
         } catch (final SaxonApiException | RuntimeException e) {
             LOGGER.debug(() -> "XSLT did not compile: " + e.getMessage(), e);
             if (collected.errors.isEmpty()) {

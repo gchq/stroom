@@ -16,11 +16,15 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.docref.DocRef;
 import stroom.query.api.DestroyReason;
+import stroom.query.api.FindResultStoreCriteria;
 import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -51,6 +55,23 @@ class AgentSearches {
             resultStoreManagerProvider.get().destroy(queryKey, DestroyReason.NO_LONGER_NEEDED);
         } catch (final RuntimeException e) {
             LOGGER.warn(() -> "Unable to stop the agent's search " + queryKey + ": " + e.getMessage(), e);
+        }
+    }
+
+    /// Stops and removes the searches made for an owner the agent's tool made up for them (a dashboard UUID no
+    /// dashboard has): for when the search's key was never read, e.g. the first request failed after Stroom
+    /// started the search. Only the user's own searches are found.
+    ///
+    /// @param ownerUuid The owner's UUID, as the search's request source gave it.
+    void destroyOwnedBy(final String ownerUuid) {
+        try {
+            final ResultStoreManager manager = resultStoreManagerProvider.get();
+            NullSafe.list(manager.find(new FindResultStoreCriteria()).getValues()).stream()
+                    .filter(info -> ownerUuid.equals(NullSafe.get(info.getSearchRequestSource(),
+                            SearchRequestSource::getOwnerDocRef, DocRef::getUuid)))
+                    .forEach(info -> manager.destroy(info.getQueryKey(), DestroyReason.NO_LONGER_NEEDED));
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> "Unable to stop the agent's searches for " + ownerUuid + ": " + e.getMessage(), e);
         }
     }
 
