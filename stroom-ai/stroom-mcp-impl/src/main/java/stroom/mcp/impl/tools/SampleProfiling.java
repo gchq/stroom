@@ -16,16 +16,18 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.SampleRefusal;
+
 import java.util.Map;
 
 /// Profiles sample text: its format, fields, timestamp patterns, what differs between files, which parser reads it
 /// and whether a text converter is needed (the Stroom MCP server's `utils/profile.py` `profile` and
 /// `profile_many`, and `tools/translation.py` `with_fragment_setup`).
 ///
-/// The plan ([BuildPlan]) and start_onboarding read samples through it. Its profiling is ported with the sampling
-/// tools: until then the binding is [Unavailable], and the plan goes on without a sample's format (its converter
-/// step is then not needed). The sampling port binds its own with Guice's `OptionalBinder.setBinding()`.
-public interface SampleProfiler {
+/// The plan ([BuildPlan]) and start_onboarding read samples through it. It is bound to [Profiled], the ported
+/// profiler ([stroom.ai.impl.tools.sample.SampleProfiler]); [Unavailable] is for tests of a plan without it.
+public interface SampleProfiling {
 
     /// @param sample One sample's text.
     /// @return Its profile, as the Stroom MCP server's `profile` gave it: at least `format` (e.g. `json lines`,
@@ -50,8 +52,31 @@ public interface SampleProfiler {
     // --------------------------------------------------------------------------------
 
 
-    /// The binding until sample profiling is ported: it profiles nothing, and says so.
-    final class Unavailable implements SampleProfiler {
+    /// Profiles with the ported profiler ([stroom.ai.impl.tools.sample.SampleProfiler]), as the Stroom MCP server
+    /// profiled samples: up to [stroom.ai.impl.tools.sample.SampleProfiler#MAX_RECORDS] records each.
+    final class Profiled implements SampleProfiling {
+
+        @Override
+        public Map<String, Object> profile(final String sample) {
+            try {
+                return SampleProfiler.profile(sample);
+            } catch (final SampleRefusal e) {
+                throw new ToolRefusal(e.getMessage());
+            }
+        }
+
+        @Override
+        public Map<String, Object> profileMany(final Map<String, String> samples) {
+            try {
+                return SampleProfiler.profileMany(samples, SampleProfiler.MAX_RECORDS);
+            } catch (final SampleRefusal e) {
+                throw new ToolRefusal(e.getMessage());
+            }
+        }
+    }
+
+    /// Profiles nothing, and says so: for a plan without sample profiling (e.g. in tests).
+    final class Unavailable implements SampleProfiling {
 
         /// What it says.
         static final String NOT_AVAILABLE = "Profiling sample text isn't available in this Stroom yet.";

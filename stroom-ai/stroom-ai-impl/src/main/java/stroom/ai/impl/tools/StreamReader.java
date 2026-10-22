@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -294,14 +295,32 @@ public class StreamReader {
     /// @return The text, and whether it was cut short.
     /// @throws StreamReadException if the stream can't be read.
     public RawText rawText(final long streamId, final int maxChars) {
+        final RawHead head = readHead(streamId, 0, maxChars);
+        return new RawText(head.text(), head.truncated());
+    }
+
+    /// The start of one part of a raw stream (a stream of several files received at once has a part each), as a
+    /// survey reads it: up to `maxChars` and then cut at a line end, decoded with its feed's encoding as a pipeline
+    /// decodes it (each byte the encoding can't decode replaced, and what was replaced remembered for the stream:
+    /// see [#charsetReport(long)]). Read through the stream store, the text is the stream as stored, emoji and all,
+    /// however big the part.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param maxChars The most characters.
+    /// @return The text, whether it was cut short, and the number of parts the stream has.
+    /// @throws StreamReadException if the stream can't be read.
+    public RawHead readHead(final long streamId, final int part, final int maxChars) {
         final int maxBytes = (int) Math.min(Integer.MAX_VALUE - 8L, (long) maxChars * MAX_BYTES_PER_CHAR);
         final byte[] bytes;
         final boolean moreBytes;
         final String encoding;
+        final long parts;
         try (final Source source = storeProvider.get().openSource(streamId)) {
             final Meta meta = source.getMeta();
             encoding = encoding(meta);
-            try (final InputStreamProvider provider = source.get(0);
+            parts = Math.max(1, source.count());
+            try (final InputStreamProvider provider = source.get(part);
                     final SegmentInputStream in = provider.get()) {
                 in.includeAll();
                 final byte[] read = in.readNBytes(maxBytes + 1);
@@ -329,7 +348,7 @@ public class StreamReader {
                 text = text.substring(0, lineEnd + 1);
             }
         }
-        return new RawText(text, truncated);
+        return new RawHead(text, truncated, (int) Math.min(Integer.MAX_VALUE, parts));
     }
 
     /// As [#rawText(long, int)], kept a while for the user: a stream never changes, and the same sample is read
@@ -601,6 +620,15 @@ public class StreamReader {
     /// @param text      The text.
     /// @param truncated True if it was cut short.
     public record RawText(String text, boolean truncated) {
+
+    }
+
+    /// The start of one part of a stream.
+    ///
+    /// @param text      The text.
+    /// @param truncated True if it was cut short.
+    /// @param parts     The number of parts the stream has.
+    public record RawHead(String text, boolean truncated, int parts) {
 
     }
 
