@@ -72,9 +72,12 @@ public interface StroomTool {
     /// `openWorldHint` tool annotation.
     ///
     /// @return True if what the tool returns could hold instructions planted by someone other than the user (e.g.
-    /// tool output, workspace files or Stroom data). Once a run has used such a tool, changes it makes that outlive
-    /// the chat need the user's approval. Defaults to true; override only for tools whose output is known to be
-    /// safe.
+    /// tool output, workspace files or Stroom data). Once a run has used such a tool, or the chat holds such a
+    /// tool's result from an earlier run, changes it makes that outlive the chat need the user's approval; the
+    /// results of a tool that returns false don't count. Defaults to true; override with false only for tools whose
+    /// output holds nothing but Stroom's own fixed text, what the model gave the tool or the user's own answers
+    /// (e.g. the time, or the chat's task list). A tool that names a document as Stroom holds it, or quotes data or
+    /// errors from data, returns true.
     default boolean readsUntrustedContent() {
         return true;
     }

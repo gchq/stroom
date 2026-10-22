@@ -22,6 +22,7 @@ import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.ScriptedRunMemory;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.ScriptedRunTools;
+import stroom.ai.impl.tools.StandInTools;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -43,6 +44,7 @@ import stroom.query.impl.QueryService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContext;
+import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.ChatMessage;
@@ -103,6 +105,13 @@ class TestScriptedChatRuns {
     private static final DocRef SECRET = new DocRef("Index", "secret-uuid", "Secret events");
     // A tool its server says only reads.
     private static final ToolAnnotations READ_ONLY = new ToolAnnotations(null, true, false, true, false, null);
+    // Stand-ins for Stroom's own tools: one whose results hold only trusted content (e.g. get_current_time), one
+    // whose results could hold anything (e.g. fetch_events), and one that changes something in Stroom.
+    private static final String TRUSTED_TOOL = "get_current_time";
+    private static final String UNTRUSTED_TOOL = "fetch_events";
+    private static final String WRITE_TOOL = "save_note";
+    private static final String MEMORY_WRITE = "{\"command\":\"write\",\"path\":\"/memories/role.md\","
+                                               + "\"content\":\"Looks after ACME.\\n\"}";
 
     private final ChatStore store = new ChatStore();
     private final AiService aiService = store.aiService();
@@ -123,14 +132,7 @@ class TestScriptedChatRuns {
             memoryService, queryService, registry, securityContext);
     private final ToolApprovalService approvals = new ToolApprovalService(aiService, aiDao, approvalDao,
             runManager, securityContext);
-    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager,
-            workspaceFiles.workspaceStore(), Mockito.mock(ContextUsageTracker.class),
-            ConsentGates.chat(new ToolConsent(approvalDao, aiDao, AiConfig::new, () -> runManager), aiService,
-                    runManager),
-            Mockito.mock(AiAuditLog.class),
-            new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
-            new UserActions(userActionLookup),
-            new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
+    private final McpAgentChat agentChat = agentChat(builtInTools);
     private final StringBuilder happened = new StringBuilder();
     private final List<ChatRequest> requests = new ArrayList<>();
     private final Map<String, ToolSpecification> mcpToolsOffered = new LinkedHashMap<>();
@@ -341,6 +343,75 @@ class TestScriptedChatRuns {
     }
 
     @Test
+    void afterOnlyTrustedToolResultsChangesRunWithoutAsking() {
+        final McpAgentChat chat = agentChat(withStandIns());
+        earlierTurnCalling(TRUSTED_TOOL);
+        ask("Save a note, and remember that I look after ACME.");
+
+        // The memory first: the write tool's own result (e.g. "Feed X created") could hold anything, like any
+        // other tool's that doesn't say it reads only trusted content.
+        run(new ScriptedChatModel(
+                        ScriptedChatModel.toolCalls(null, ScriptedChatModel.call("call-2", "memory",
+                                MEMORY_WRITE)),
+                        ScriptedChatModel.toolCalls(null, ScriptedChatModel.call("call-3", WRITE_TOOL, "{}")),
+                        ScriptedChatModel.answer("Done.")),
+                McpToolset.EMPTY, chat);
+
+        assertThat(store.messages()).noneMatch(message -> message.getMessageType()
+                                                         == AiMessageType.APPROVAL_REQUEST);
+        assertThat(store.messages()).anyMatch(message -> message.getMessageType() == AiMessageType.TOOL_RESULT
+                                                         && message.getMessage().contains(WRITE_TOOL + " ran."));
+        assertThat(store.messages()).anyMatch(message -> message.getMessageType() == AiMessageType.MEMORY_UPDATE);
+    }
+
+    @Test
+    void afterAnUntrustedToolResultAWriteToolAsks() {
+        final McpAgentChat chat = agentChat(withStandIns());
+        earlierTurnCalling(UNTRUSTED_TOOL);
+        ask("Save a note.");
+
+        run(new ScriptedChatModel(
+                        ScriptedChatModel.toolCalls(null, ScriptedChatModel.call("call-2", WRITE_TOOL, "{}"))),
+                McpToolset.EMPTY, chat);
+
+        assertThat(runFlags.tainted).contains(CHAT_ID);
+        final ToolApprovalRequest request = store.messages().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.APPROVAL_REQUEST)
+                .map(message -> JsonUtil.readValue(message.getMessage(), ToolApprovalRequest.class))
+                .findFirst()
+                .orElseThrow();
+        assertThat(request.reason()).isEqualTo(ToolConsent.BUILT_IN_AFTER_UNTRUSTED_REASON);
+        assertThat(store.messages()).noneMatch(message -> message.getMessage().contains(WRITE_TOOL + " ran."));
+    }
+
+    @Test
+    void afterAnUntrustedToolResultAMemoryChangeNeedsApproval() {
+        final McpAgentChat chat = agentChat(withStandIns());
+        earlierTurnCalling(UNTRUSTED_TOOL);
+        ask("Remember that I look after ACME.");
+
+        runMemoryWrite(chat);
+
+        assertThat(runFlags.tainted).contains(CHAT_ID);
+        assertThat(memoryApprovalReason()).isEqualTo(ChatConsentGate.READ_DATA_REASON);
+    }
+
+    @Test
+    void afterAResultWhoseToolCannotBeToldAMemoryChangeNeedsApproval() {
+        final McpAgentChat chat = agentChat(withStandIns());
+        // An old row, without the tool's name, and no call that names it.
+        store.store(AiMessageType.USER_MESSAGE, "What time is it?");
+        store.store(AiMessageType.TOOL_RESULT, "{\"callId\":\"call-1\",\"text\":\"12:00\"}");
+        store.store(AiMessageType.AI_RESPONSE, "It is noon.");
+        ask("Remember that I look after ACME.");
+
+        runMemoryWrite(chat);
+
+        assertThat(runFlags.tainted).contains(CHAT_ID);
+        assertThat(memoryApprovalReason()).isEqualTo(ChatConsentGate.READ_DATA_REASON);
+    }
+
+    @Test
     void aMessageTheUserQueuesMidRunIsPickedUpAtTheNextStep() {
         // The user sends a message while the tool works, which waits for the step to finish.
         final McpToolset toolset = mcpServer("stroom", trusted("stroom"), List.of(tool("search", READ_ONLY)),
@@ -401,6 +472,10 @@ class TestScriptedChatRuns {
     /// Runs the agent loop as a chat run does: on the latest question, carrying on with whatever its turn holds so
     /// far (see [ContextAssembler#currentTurn(List)]), picking up messages the user sends after the run starts.
     private void run(final ScriptedChatModel model, final McpToolset toolset) {
+        run(model, toolset, agentChat);
+    }
+
+    private void run(final ScriptedChatModel model, final McpToolset toolset, final McpAgentChat chat) {
         runs++;
         final List<AiChatMessage> history = store.messages();
         final String question = history.reversed().stream()
@@ -414,7 +489,7 @@ class TestScriptedChatRuns {
         messages.addAll(ContextAssembler.currentTurn(history));
         happened.append("Run ").append(runs).append(": ");
         try {
-            final ChatResponse response = agentChat.chat(model, null, CHAT_ID, messages, toolset,
+            final ChatResponse response = chat.chat(model, null, CHAT_ID, messages, toolset,
                     WORKING_MESSAGE_ID, new AtomicBoolean(false), Mockito.mock(TaskContext.class), 1,
                     new StringBuilder(), steerAfterMessageId, ContextBudget.UNKNOWN);
             happened.append("answered: ").append(response.aiMessage().text()).append("\n");
@@ -455,6 +530,55 @@ class TestScriptedChatRuns {
                 : "denies").append(" the tool calls").append(reason == null
                 ? ""
                 : " saying '" + reason + "'").append(": ").append(status).append("\n");
+    }
+
+    // The agent loop, with the real consent, approval and memory services, offering the given built-in tools.
+    private McpAgentChat agentChat(final BuiltInTools tools) {
+        return new McpAgentChat(aiService, tools, runManager,
+                workspaceFiles.workspaceStore(), Mockito.mock(ContextUsageTracker.class),
+                ConsentGates.chat(new ToolConsent(approvalDao, aiDao, AiConfig::new, () -> runManager), aiService,
+                        runManager),
+                Mockito.mock(AiAuditLog.class),
+                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
+                new UserActions(userActionLookup),
+                new WorkspaceArguments(Mockito.mock(ChatWorkspace.class)), ToolGrants::all);
+    }
+
+    // The scenarios' built-in tools, with the stand-ins.
+    private BuiltInTools withStandIns() {
+        return ScriptedRunTools.builtInTools(aiService, elicitations, runManager, memoryService, queryService,
+                registry, securityContext,
+                StandInTools.trustedReadOnlyTool(TRUSTED_TOOL),
+                StandInTools.readOnlyTool(UNTRUSTED_TOOL),
+                StandInTools.writeTool(WRITE_TOOL));
+    }
+
+    // An earlier, answered turn of the chat that called the tool.
+    private void earlierTurnCalling(final String tool) {
+        store.store(AiMessageType.USER_MESSAGE, "Use " + tool + ".");
+        store.store(AiMessageType.TOOL_CALL, JsonUtil.writeValueAsString(
+                new ToolCallRecord("call-1", tool, "{}", null), false));
+        store.store(AiMessageType.TOOL_RESULT, JsonUtil.writeValueAsString(
+                new ToolResultRecord("call-1", tool, false, tool + " ran.", null, 10, 1, null), false));
+        store.store(AiMessageType.AI_RESPONSE, "Done.");
+    }
+
+    // A run in which the model writes to the user's memory, then answers.
+    private void runMemoryWrite(final McpAgentChat chat) {
+        run(new ScriptedChatModel(
+                        ScriptedChatModel.toolCalls(null, ScriptedChatModel.call("call-2", "memory", MEMORY_WRITE)),
+                        ScriptedChatModel.answer("Noted.")),
+                McpToolset.EMPTY, chat);
+    }
+
+    // Why the memory change waits for the user's approval, as its approval card says.
+    private String memoryApprovalReason() {
+        return store.messages().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.APPROVAL_REQUEST)
+                .map(message -> AiMemoryService.readChange(message.getMessage()).orElseThrow())
+                .findFirst()
+                .orElseThrow()
+                .reason();
     }
 
     private boolean isBuiltIn(final String name) {

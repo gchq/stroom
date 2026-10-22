@@ -98,12 +98,16 @@ Before a tool runs, Stroom decides whether to ask the user:
 * Stroom's own tools (built-in and ported) run as the user, within their permissions and tool policies.
   Calls that only read never ask. A call that changes something in Stroom runs without asking until the
   chat has read untrusted content; from then on it asks on an approval card, which says why. Untrusted
-  content is anything that could hold instructions planted by someone other than the user: any earlier
-  tool result, attached tab or table, dashboard or query data in the chat, the output of any tool not
-  marked as reading only trusted content (nearly all of Stroom's tools that read Stroom data, e.g. events,
-  streams or documents, and every MCP tool), and workspace files put into an MCP tool's arguments. In
-  practice a chat counts as having read it from its first tool result. This is the same signal that makes
-  a change to the user's memory ask. A tool that confirms each change itself through its own forms (e.g.
+  content is anything that could hold instructions planted by someone other than the user: an attached
+  tab or table, dashboard or query data in the chat, the result (in this run or stored from an earlier
+  one) of any tool not marked as reading only trusted content (`StroomTool.readsUntrustedContent()`:
+  nearly all of Stroom's tools, as they read Stroom data, e.g. events, streams, documents or their names,
+  and every MCP tool), and workspace files put into an MCP tool's arguments. The results of the few tools
+  that return only Stroom's own fixed text, what the model gave them or the user's own answers (e.g.
+  `get_current_time`, `task_list`, `ask_user`, `memory`, the workspace file tools that only report what they
+  did) don't count. A stored result whose tool can't be told (an old row without the tool's name, or a tool
+  since removed) counts, as does a chat with no run on this node, as nothing is known of what it read. This
+  is the same signal that makes a change to the user's memory ask. A tool that confirms each change itself through its own forms (e.g.
   `create_feed`, `create_pipeline`) isn't asked about twice, and the workspace file tools and memory (which
   asks about a lasting change itself) don't ask, as their changes stay in the chat.
 * MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking, and so
@@ -297,8 +301,8 @@ _Steps for you_ card. The model can neither make nor click one.
   _Request detail_ entry of an attempt that overflowed (with _Show request detail_ on) shows what the model
   said.
 * The agent has memory: the user's own (`/memories/`, loaded into every chat) and the chat's
-  (`/memories/session/`). Changes to the user's memory from a chat that has read tool output or data need
-  the user's approval. Users view, edit and undo changes in **Memory**.
+  (`/memories/session/`). Changes to the user's memory from a chat that has read untrusted content (see
+  Approvals) need the user's approval. Users view, edit and undo changes in **Memory**.
 
 
 ## Attaching a tab

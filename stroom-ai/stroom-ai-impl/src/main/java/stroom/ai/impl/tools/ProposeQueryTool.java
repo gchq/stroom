@@ -158,6 +158,8 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
 
     @Override
     public boolean readsUntrustedContent() {
-        return false;
+        // It names the data source the query reads as Stroom holds it (a document name, written by whoever made
+        // the document), and the parser's errors are not known to quote only what the model wrote.
+        return true;
     }
 }
