@@ -564,7 +564,7 @@ td {
 /* INPUT CONTROLS. Text fields (every text box, text area and password box) are styled by
    text-field.css alone: the bare input and textarea rules here are for inputs with no block of their
    own yet, and leave text fields out (:where() keeps their specificity as it was) */
-.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-ListBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 3px 5px;
@@ -572,7 +572,6 @@ td {
 }
 
 .gwt-ListBox,
-.gwt-DateBox,
 .stroom-DropDownTree,
 .stroom-control,
 select,
@@ -611,7 +610,6 @@ input:where(:not(.text-field)):-webkit-autofill:active {
 
 
 .gwt-ListBox:disabled,
-.gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
 .stroom-control.disabled,
@@ -687,7 +685,7 @@ textarea:where(:not(.text-field))[readonly],
   color: var(--text-color--disabled);
 }
 
-/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
+/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.stroom-DropDownTree { */
 /* 	padding: 1px; */
 /* } */
 
@@ -920,14 +918,15 @@ textarea:where(:not(.text-field)):focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
-select.invalid:focus-visible,
-input:where(:not(.text-field)).invalid:focus-visible,
-textarea:where(:not(.text-field)).invalid:focus-visible {
+select[aria-invalid="true"]:focus-visible,
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
-select.invalid,
-input:where(:not(.text-field)).invalid,
-textarea:where(:not(.text-field)).invalid {
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+select[aria-invalid="true"],
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
 }
 

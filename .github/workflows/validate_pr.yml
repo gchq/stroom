@@ -1,0 +1,80 @@
+name: Validate Pull Requests
+on:
+  # WARNGING!!: Make sure you understand the implications of 'pull_request_target'.
+  # This runs with secrets and write perms against the trusted base branch, not the fork.
+  # See https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
+  pull_request_target:
+
+permissions:
+  # We need to do the following:
+  # - Read the files that are in the PR
+  # - Close the PR (with a comment) if the author is not a collaborator, member or owner
+  pull-requests: write
+
+jobs:
+  check_pr_job:
+    runs-on: ubuntu-slim
+    steps:
+
+        # You must be a COLLABORATOR, MEMBER or OWNER to raise a PR, else it will be closed.
+      - name: Close PRs from non-collaborators
+        id: close_pr
+        if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+        run: |
+          echo "PR: ${PR}, author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
+          gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
+          --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."
+          
+          echo "::error::PR ${PR} was closed as author is not a collaborator, member or owner."
+          exit 1
+          
+
+        # You must be a MEMBER or OWNER to make changes to CI related files.
+      - name: Look for changes to CI related files
+        id: check_ci_files
+        if: ${{ !contains(fromJSON('["MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+        run: |
+          set -e
+          echo "PR: ${PR}, author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
+          
+          # List all the files in the PR.
+          # Check both the current and previous filenames to allow for renames.
+          # If any file matches a pattern then exit with an error to indicate 
+          # that the PR should be rejected or checked with greater caution.
+          
+          for json_field in filename previous_filename; do
+            files=$(gh api --paginate \
+              "repos/$GITHUB_REPOSITORY/pulls/$PR/files" \
+              --jq ".[].${json_field}")
+
+            if [ -n "${files}" ]; then
+              file_count=$(echo "${files}" | wc -l)
+              echo "PR contains $file_count file(s) with field '${json_field}'"
+
+              if echo "$files" | grep -Eq '^\.github/'; then
+                echo "::error::This PR modifies GH Workflow related files."
+                exit 1
+              fi
+
+              if echo "$files" | grep -Eq '^container_build/'; then
+                echo "::error::This PR modifies container_build files."
+                exit 1
+              fi
+
+              if echo "$files" | grep -Eq '^(ci_)?build.*\.sh$'; then
+                echo "::error::This PR modifies build scripts."
+                exit 1
+              fi
+
+            fi
+          done

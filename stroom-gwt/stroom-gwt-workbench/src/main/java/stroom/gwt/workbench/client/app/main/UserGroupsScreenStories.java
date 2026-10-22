@@ -60,6 +60,9 @@ public final class UserGroupsScreenStories {
     /// The name of the spy recording the screens opened from the action menus.
     static final String OPEN_SCREEN = "openScreen";
 
+    // Each list's quick filter, named for what it filters (UserListPresenter)
+    private static final String FILTER = "Filter users and groups";
+
     private static final String ALICE = """
             {"id": 1, "uuid": "u-alice", "subjectId": "alice", "displayName": "Alice Anderson",
               "fullName": "Alice A Anderson", "group": false, "enabled": true}""";
@@ -152,12 +155,12 @@ public final class UserGroupsScreenStories {
                     // resizes) between each. A grid's row with the keyboard focus is followed by
                     // its row's open buttons (row actions)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            "input", "Show Recent Filters", "Create Group", "First", "div",
+                            FILTER, "Show Recent Filters", "Create Group", "First", "div",
                             "Open group Administrators",
                             "Users and groups",
-                            "input", "Show Recent Filters", "Add to Group", "First",
+                            FILTER, "Show Recent Filters", "Add to Group", "First",
                             "Members",
-                            "input", "Show Recent Filters", "Add Member to Group", "First", "div",
+                            FILTER, "Show Recent Filters", "Add Member to Group", "First", "div",
                             "Open user Alice Anderson", "Open user Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group

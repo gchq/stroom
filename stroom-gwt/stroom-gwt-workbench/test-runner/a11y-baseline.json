@@ -36,6 +36,15 @@
   "app-editors-documentationeditor--read-only": [
     "frame-title"
   ],
+  "app-editors-floormapforms--icon-picker": [
+    "color-contrast"
+  ],
+  "app-editors-floormapforms--icon-picker-rows": [
+    "color-contrast"
+  ],
+  "app-editors-floormapforms--layer-style": [
+    "color-contrast"
+  ],
   "app-editors-queryeditor--column-filter-menu": [
     "target-size"
   ],
@@ -90,6 +99,9 @@
   "app-editors-queryeditor--query-info-popup": [
     "target-size"
   ],
+  "app-editors-queryeditor--query-side-filter-has-no-include-exclude-tab": [
+    "target-size"
+  ],
   "app-editors-queryeditor--read-only": [
     "target-size"
   ],
@@ -103,6 +115,9 @@
     "target-size"
   ],
   "app-editors-queryeditor--stepping-hyperlink": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--time-range-dialog-keys": [
     "target-size"
   ],
   "app-editors-queryeditor--time-range-rerun": [
@@ -387,49 +402,6 @@
   "app-query-queryresultstable--url-link-named-by-host-and-path": [
     "target-size"
   ],
-  "widgets-date-time-calendargrid--basic": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-calendargrid--no-selection": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-calendargrid--past-date": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-customdatebox--default": [
-    "label"
-  ],
-  "widgets-date-time-customdatebox--disabled": [
-    "label"
-  ],
-  "widgets-date-time-customdatebox--empty": [
-    "label"
-  ],
-  "widgets-date-time-customdatebox--format-error": [
-    "label"
-  ],
-  "widgets-date-time-customdatebox--local-time": [
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--basic": [
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--calendar-toolbars-in-the-dialog": [
-    "aria-allowed-attr",
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--disabled": [
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--empty": [
-    "label"
-  ],
-  "widgets-date-time-timepicker--basic": [
-    "label"
-  ],
-  "widgets-date-time-timepicker--hour-minute": [
-    "label"
-  ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"
   ],
@@ -457,95 +429,6 @@
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
   ],
-  "widgets-inputs-tickbox--no-label": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--arrow-left-closes-only-the-current-level": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--click-inside-a-portalled-child-keeps-the-parent-open": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--closing-a-menu-closes-its-descendants": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--closing-a-portalled-parent-closes-its-child": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--escape-closes": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--escape-closes-the-innermost-popup-only": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--escape-closes-the-whole-menu-hierarchy": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--every-registered-partner-is-exempt": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--inside-click-keeps-it-open": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--menu-paints-exactly-one-border": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--nested-real-widgets-route-escape-to-the-innermost": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--never-covers-its-trigger": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--no-shield-behind-any-popup": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--non-partner-mousedown-does-auto-hide": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--outside-click-closes-the-whole-chain": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--outside-click-reaches-target": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--parent-item-click-toggles-its-submenu": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--placed-on-its-requested-side": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--positioner-flips-and-clamps": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--quick-filter-help-uses-gwts-own-offset": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--registry-does-not-leak": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--submenu-anchor-is-clipped-to-its-menu": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--submenu-first-item-aligns-with-its-parent-row": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--submenu-opens-clear-of-its-parent": [
-    "label"
-  ],
-  "widgets-popuppositioner-popup-contract--trigger-click-closes-and-stays-closed": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
-    "label"
-  ],
-  "widgets-selectors-docselectionbox--warning-and-disabled": [
-    "nested-interactive",
-    "target-size"
-  ],
-  "widgets-selectors-dropdownselector--warning": [
-    "nested-interactive",
-    "target-size"
-  ],
   "widgets-selectors-selectionbox--basic": [
     "label"
   ],
@@ -559,9 +442,6 @@
     "label"
   ],
   "widgets-selectors-selectionbox--long-list": [
-    "label"
-  ],
-  "widgets-selectors-selectionbox--model-backed-always-shows-filter-and-pager": [
     "label"
   ],
   "widgets-selectors-selectionbox--popup-uses-gwt-markup": [

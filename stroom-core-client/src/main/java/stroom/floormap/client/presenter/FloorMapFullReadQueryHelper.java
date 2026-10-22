@@ -103,8 +103,7 @@ class FloorMapFullReadQueryHelper {
     /// Plan B *store capacity*, where collapsing runs of identical positions keeps event
     /// values low-cardinality — which is worth roughly a factor of five in bytes per row, because
     /// the default `VARIABLE` value type deduplicates repeated values through a lookup table.
-    /// See `docs/floormap-single-read-feasibility.md` §5. The two limits are unrelated and
-    /// both statements hold.
+    /// The two limits are unrelated and both statements hold.
     ///
     /// @see Outcome#truncated()
     static final int MAX_ROWS = 20_000;

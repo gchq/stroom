@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.cell.textfield.client.TextFieldCell;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
@@ -23,14 +24,16 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.floormap.client.FloorMapAria;
-import stroom.floormap.client.cell.AccessibleSelectionCell;
-import stroom.floormap.client.cell.AccessibleTextInputCell;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.ValueFormat;
+import stroom.item.client.SelectionBox;
+import stroom.item.client.SelectionBoxCell;
+import stroom.item.client.SimpleSelectionItemWrapper;
+import stroom.item.client.SimpleSelectionListModel;
 import stroom.security.shared.DocumentPermission;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.svg.shared.SvgImage;
@@ -44,7 +47,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SingleSelectionModel;
@@ -91,7 +93,7 @@ public class FloorMapSettingsPresenter
     private final DocSelectionBoxPresenter factsStoreRefPresenter;
 
     // Value Format
-    private final ListBox valueFormatListBox;
+    private final SelectionBox<ValueFormat> valueFormatListBox;
 
     // Value Schema grid
     private final MyDataGrid<FloorMapFieldMapping> schemaGrid;
@@ -101,10 +103,10 @@ public class FloorMapSettingsPresenter
     // Held so that onRead can push the read-only state into them: the cells render
     // `disabled` when read-only, rather than looking editable while the field updaters
     // silently discard the edit.
-    private AccessibleSelectionCell roleCell;
-    private AccessibleTextInputCell pathCell;
-    private AccessibleTextInputCell nameCell;
-    private AccessibleTextInputCell defaultCell;
+    private SelectionBoxCell<String, SimpleSelectionItemWrapper<String>> roleCell;
+    private TextFieldCell pathCell;
+    private TextFieldCell nameCell;
+    private TextFieldCell defaultCell;
     private final ToolbarButton addButton;
     private final ToolbarButton removeButton;
     private boolean readOnly;
@@ -139,12 +141,10 @@ public class FloorMapSettingsPresenter
         view.setFactsStoreRefView(this.factsStoreRefPresenter.getView());
 
         // Value Format dropdown
-        valueFormatListBox = new ListBox();
-        for (final ValueFormat vf : ValueFormat.values()) {
-            valueFormatListBox.addItem(vf.name());
-        }
+        valueFormatListBox = new SelectionBox<>();
+        valueFormatListBox.addItems(ValueFormat.values());
         //noinspection unused e
-        valueFormatListBox.addChangeHandler(e -> onChange());
+        valueFormatListBox.addValueChangeHandler(e -> onChange());
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
@@ -210,28 +210,25 @@ public class FloorMapSettingsPresenter
     ///
     /// Four editable columns are added in order:
     ///
-    /// 1. **Role** – a dropdown ([AccessibleSelectionCell]) of
-    ///    [Role] values.
-    /// 2. **Path** – an [AccessibleTextInputCell] for the JSON path.
-    /// 3. **Display Name** – an [AccessibleTextInputCell] for the
-    ///    label.
-    /// 4. **Default** – an [AccessibleTextInputCell] for the default
-    ///    value.
+    /// 1. **Role** – a selection box ([SelectionBoxCell]) of [Role] values.
+    /// 2. **Path** – a text field ([TextFieldCell]) for the JSON path.
+    /// 3. **Display Name** – a text field for the label.
+    /// 4. **Default** – a text field for the default value.
     ///
-    /// These are the accessible variants rather than GWT's `SelectionCell` and
-    /// `EditTextCell`, both of which render `tabindex="-1"` and so cannot be
-    /// reached by keyboard in a Stroom grid — see [AccessibleSelectionCell] for the
-    /// reason.
+    /// These are Stroom's selection box and text field as cells, rather than GWT's
+    /// `SelectionCell` and `EditTextCell`, both of which render `tabindex="-1"` and so cannot be
+    /// reached by keyboard in a Stroom grid. Each is named for its column and row.
     ///
     /// Because [FloorMapFieldMapping] is immutable, each column's
     /// `FieldUpdater` creates a replacement instance and swaps it in
     /// the data provider list at the same index.
     private void initSchemaColumns() {
         // Role column – dropdown
-        final List<String> roleOptions = Arrays.stream(Role.values())
+        final SimpleSelectionListModel<String> roleModel = new SimpleSelectionListModel<>();
+        roleModel.addItems(Arrays.stream(Role.values())
                 .map(Role::name)
-                .collect(Collectors.toList());
-        roleCell = new AccessibleSelectionCell(roleOptions, index -> schemaCellLabel("Role", index));
+                .collect(Collectors.toList()));
+        roleCell = new SelectionBoxCell<>(roleModel, index -> schemaCellLabel("Role", index));
         final Column<FloorMapFieldMapping, String> roleColumn =
                 new Column<>(roleCell) {
                     @Override
@@ -249,7 +246,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(roleColumn, "Role");
 
         // Path column – editable text
-        pathCell = new AccessibleTextInputCell(index -> schemaCellLabel("Path", index));
+        pathCell = new TextFieldCell(index -> schemaCellLabel("Path", index));
         final Column<FloorMapFieldMapping, String> pathColumn =
                 new Column<>(pathCell) {
                     @Override
@@ -266,7 +263,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(pathColumn, "Path");
 
         // Display Name column – editable text
-        nameCell = new AccessibleTextInputCell(index -> schemaCellLabel("Display Name", index));
+        nameCell = new TextFieldCell(index -> schemaCellLabel("Display Name", index));
         final Column<FloorMapFieldMapping, String> nameColumn =
                 new Column<>(nameCell) {
                     @Override
@@ -283,7 +280,7 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(nameColumn, "Display Name");
 
         // Default Value column – editable text
-        defaultCell = new AccessibleTextInputCell(index -> schemaCellLabel("Default", index));
+        defaultCell = new TextFieldCell(index -> schemaCellLabel("Default", index));
         final Column<FloorMapFieldMapping, String> defaultColumn =
                 new Column<>(defaultCell) {
                     @Override
@@ -512,13 +509,7 @@ public class FloorMapSettingsPresenter
                 : floorMapDoc.getExtentQuery());
 
         // Value Format
-        final ValueFormat vf = floorMapDoc.getValueFormat();
-        for (int i = 0; i < valueFormatListBox.getItemCount(); i++) {
-            if (valueFormatListBox.getItemText(i).equals(vf.name())) {
-                valueFormatListBox.setSelectedIndex(i);
-                break;
-            }
-        }
+        valueFormatListBox.setValue(floorMapDoc.getValueFormat());
         valueFormatListBox.setEnabled(!readOnly);
 
         // Value Schema
@@ -594,13 +585,9 @@ public class FloorMapSettingsPresenter
     @Override
     protected FloorMapDoc onWrite(final FloorMapDoc doc) {
         // Read value format from dropdown
-        final String selectedFormat = valueFormatListBox.getSelectedValue();
-        ValueFormat vf = ValueFormat.JSON;
-        try {
-            vf = ValueFormat.valueOf(selectedFormat);
-        } catch (final IllegalArgumentException ignored) {
-            // Fall back to JSON
-        }
+        final ValueFormat vf = valueFormatListBox.getValue() != null
+                ? valueFormatListBox.getValue()
+                : ValueFormat.JSON;
 
         // Note: typeStyles is intentionally NOT written here — it is owned by
         // the Layers panel (persisted via the Editor tab). copy() preserves the
@@ -653,7 +640,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the widget used for the Value Format dropdown.
         ///
-        /// @param widget the [ListBox] (or equivalent) widget
+        /// @param widget the selection box
         void setValueFormatWidget(Widget widget);
 
         /// Sets the toolbar widget (add/remove buttons) above the schema grid.

@@ -22,9 +22,6 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-// Part of "Dialog box validation now supports disabling only the OK button" - a local addition
-// upstream does not have. FloorMap's edit dialogs rely on it, so keep this side on merge.
 public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;

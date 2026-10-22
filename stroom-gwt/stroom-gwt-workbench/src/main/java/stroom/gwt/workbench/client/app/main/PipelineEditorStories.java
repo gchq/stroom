@@ -70,6 +70,13 @@ public final class PipelineEditorStories {
 
     /// The name of the spy recording the editor's dirty state (its `DirtyEvent`s).
     static final String ON_DIRTY = "onDirty";
+    // The classes of the box a dragged element would be dropped on, and of one that won't take it
+    private static final String HOTSPOT = "pipeline-element--target";
+    private static final String REFUSED = "pipeline-element--refused";
+    // The class of an element detached with the keyboard, to be attached to another parent
+    private static final String DETACHED = "pipeline-element--detached";
+    // The tree's tab stop: one box, the selected element's (or the source's when none is)
+    private static final String TREE_TAB_STOP = ".pipeline-tree__items [tabindex='0']";
     /// The name of the spy recording embedded documents created.
     static final String ON_EMBED = "onEmbed";
 
@@ -105,6 +112,42 @@ public final class PipelineEditorStories {
               {"sourcePipeline": {"type": "Pipeline", "uuid": "child", "name": "Child"},
                 "pipelineData": CHILD_DATA}
             ]""".replace("CHILD_DATA", CHILD_DATA);
+
+    // ComplexStructure: a parent pipeline's straight run, which its child branches three ways
+    private static final String COMPLEX_CHILD = """
+            {
+              "elements": {"add": [
+                {"id": "rawWriter", "type": "XMLWriter"}, {"id": "rawAppender", "type": "StreamAppender"},
+                {"id": "indexFilter", "type": "XSLTFilter"}, {"id": "indexWriter", "type": "XMLWriter"},
+                {"id": "indexAppender", "type": "StreamAppender"},
+                {"id": "jsonFilter", "type": "XSLTFilter"}, {"id": "jsonWriter", "type": "XMLWriter"},
+                {"id": "jsonAppender", "type": "StreamAppender"}, {"id": "archiveAppender", "type": "StreamAppender"}]},
+              "links": {"add": [
+                {"from": "parser", "to": "rawWriter"}, {"from": "rawWriter", "to": "rawAppender"},
+                {"from": "decoration", "to": "indexFilter"}, {"from": "indexFilter", "to": "indexWriter"},
+                {"from": "indexWriter", "to": "indexAppender"},
+                {"from": "decoration", "to": "jsonFilter"}, {"from": "jsonFilter", "to": "jsonWriter"},
+                {"from": "jsonWriter", "to": "jsonAppender"}, {"from": "jsonWriter", "to": "archiveAppender"}]}
+            }""";
+
+    private static final String COMPLEX_DOC = """
+            {"type": "Pipeline", "uuid": "child", "name": "Event Pipeline", "version": "v1",
+              "parentPipeline": {"type": "Pipeline", "uuid": "parent", "name": "Base Event Pipeline"},
+              "pipelineData": COMPLEX_CHILD}""".replace("COMPLEX_CHILD", COMPLEX_CHILD);
+
+    private static final String COMPLEX_LAYERS = """
+            [
+              {"sourcePipeline": {"type": "Pipeline", "uuid": "parent", "name": "Base Event Pipeline"},
+                "pipelineData": {
+                  "elements": {"add": [{"id": "parser", "type": "CombinedParser"},
+                    {"id": "translation", "type": "XSLTFilter"}, {"id": "decoration", "type": "XSLTFilter"},
+                    {"id": "xmlWriter", "type": "XMLWriter"}, {"id": "streamAppender", "type": "StreamAppender"}]},
+                  "links": {"add": [{"from": "Source", "to": "parser"}, {"from": "parser", "to": "translation"},
+                    {"from": "translation", "to": "decoration"}, {"from": "decoration", "to": "xmlWriter"},
+                    {"from": "xmlWriter", "to": "streamAppender"}]}}},
+              {"sourcePipeline": {"type": "Pipeline", "uuid": "child", "name": "Event Pipeline"},
+                "pipelineData": COMPLEX_CHILD}
+            ]""".replace("COMPLEX_CHILD", COMPLEX_CHILD);
 
     private static final String NO_ROWS = """
             {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}""";
@@ -234,6 +277,8 @@ public final class PipelineEditorStories {
                     .post(LAYERS_PATH, RestReply.json(INHERIT_LAYERS)));
     private static final RestFixtures REF_FIXTURES = fixtures(REF_DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(REF_LAYERS)));
+    private static final RestFixtures COMPLEX_FIXTURES = fixtures(COMPLEX_DOC, STREAMS, NO_ROWS,
+            RestFixtures.builder().post(LAYERS_PATH, RestReply.json(COMPLEX_LAYERS)));
 
     private PipelineEditorStories() {
         // Static utility
@@ -246,6 +291,417 @@ public final class PipelineEditorStories {
         registry.component("App/Main/PipelineEditor", PipelineEditorStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // The structure, a property, its reference loaders, the source and the add/remove actions
+                // A larger pipeline, with no play so that it can be looked at: a parent's straight run
+                // of 6 elements, which the child branches three ways (15 elements in all)
+                .story("ComplexStructure", context -> render(context, COMPLEX_FIXTURES))
+                // Moving round the tree with the keyboard: it is one tab stop, Left goes to an element's
+                // parent and Right to its first child, Up and Down to its siblings and Home and End to
+                // the first and last of them, stopping at the ends; the selection follows the focus
+                .story("KeyboardNavigation", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    play.expect(play.getByRole("tree", "Pipeline structure")).toBeInTheDocument();
+                    play.expect(play.querySelectorAll(TREE_TAB_STOP)).toHaveLength(1);
+
+                    // Clicking Source focuses it; Right twice (pressed quickly) goes to the parser's
+                    // first child
+                    play.click(elementBox(tree, "Source"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "Source")).toHaveFocus());
+                    play.keyboard("{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    final Query rawWriter = elementBox(tree, "rawWriter");
+                    play.expect(rawWriter).toHaveAttribute("role", "treeitem");
+                    play.expect(rawWriter).toHaveAttribute("aria-label", "rawWriter, XML Writer");
+                    play.expect(rawWriter).toHaveAttribute("aria-level", "3");
+                    play.expect(rawWriter).toHaveAttribute("aria-posinset", "1");
+                    play.expect(rawWriter).toHaveAttribute("aria-setsize", "2");
+                    play.expect(rawWriter).toHaveAttribute("aria-selected", "true");
+                    play.expect(rawWriter).toHaveAttribute("tabindex", "0");
+                    play.expect(play.querySelectorAll(TREE_TAB_STOP)).toHaveLength(1);
+                    play.expect(elementBox(tree, "Source")).toHaveAttribute("aria-selected", "false");
+
+                    // Up and Down go to its siblings, stopping at the first and last
+                    play.keyboard("{ArrowUp}");
+                    play.expect(elementBox(tree, "rawWriter")).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "translation")).toHaveFocus());
+                    play.expect(elementBox(tree, "translation")).toHaveAttribute("aria-posinset", "2");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(elementBox(tree, "translation")).toHaveFocus();
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+
+                    // Home and End go to the first and last of decoration's three children
+                    play.keyboard("{ArrowDown}{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexFilter")).toHaveFocus());
+                    play.keyboard("{End}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "xmlWriter")).toHaveFocus());
+                    play.expect(elementBox(tree, "xmlWriter")).toHaveAttribute("aria-posinset", "3");
+                    play.expect(elementBox(tree, "xmlWriter")).toHaveAttribute("aria-setsize", "3");
+                    play.keyboard("{Home}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexFilter")).toHaveFocus());
+
+                    // Right stops at an element with no children
+                    play.keyboard("{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexAppender")).toHaveFocus());
+                    play.keyboard("{ArrowRight}");
+                    play.expect(elementBox(tree, "indexAppender")).toHaveFocus();
+
+                    // Left goes back to the parents, stopping at the source
+                    play.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "Source")).toHaveFocus());
+                    play.expect(elementBox(tree, "Source")).toHaveAttribute("aria-level", "1");
+                    play.keyboard("{ArrowLeft}{ArrowUp}{ArrowDown}");
+                    play.expect(elementBox(tree, "Source")).toHaveFocus();
+                    play.expect(elementBox(tree, "Source")).toHaveAttribute("aria-selected", "true");
+
+                    // Tab leaves the tree, and Shift+Tab comes back to the selected element
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "parser")).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.expect(play.querySelector(".pipeline-tree__items :focus")).toBeNull();
+                    play.keyboard("{Shift>}{Tab}{/Shift}");
+                    play.expect(elementBox(tree, "parser")).toHaveFocus();
+                    expectNoProblems(play);
+                })
+                // Moving an element (with its children) with the keyboard: Ctrl+X detaches it, the
+                // element focused shows whether it would take it (green or red, as when dragging),
+                // Ctrl+V attaches it there and Escape puts it back
+                .story("KeyboardMove", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".draggable-tree__status");
+                    play.click(elementBox(tree, "rawWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+
+                    // The source can't be detached
+                    play.keyboard("{ArrowLeft}{ArrowLeft}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "Source")).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+                    play.keyboard("{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+
+                    // Ctrl+X detaches rawWriter and rawAppender, which stay where they are, faded
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+                    play.expect(elementBox(tree, "rawAppender")).toHaveClass(DETACHED);
+                    play.expect(elementBox(tree, "translation")).not().toHaveClass(DETACHED);
+                    play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-label",
+                            "rawWriter, XML Writer, detached");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            TextMatch.startingWith("rawWriter and the 1 element after it detached")));
+
+                    // Ctrl+V on its own parent leaves it there
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "parser")).toHaveFocus());
+                    play.expect(elementBox(tree, "parser")).toHaveClass(HOTSPOT);
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter left under parser."));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED + ", ." + DETACHED))
+                            .toHaveLength(0);
+                    play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
+
+                    // Moving on shows whether each element would take it; it can't go under itself
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+                    play.expect(elementBox(tree, "rawWriter")).not().toHaveClass(HOTSPOT);
+                    play.expect(elementBox(tree, "rawWriter")).not().toHaveClass(REFUSED);
+                    play.keyboard("{ArrowDown}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveFocus());
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
+                    // Each element's name says whether it can take it, before trying
+                    play.expect(elementBox(tree, "decoration")).toHaveAttribute("aria-label",
+                            "decoration, XSLT Filter, can take rawWriter");
+                    play.expect(refusedIcon(tree, "decoration")).toBeNull();
+                    play.keyboard("{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveFocus());
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveClass(REFUSED));
+                    play.expect(elementBox(tree, "decoration")).not().toHaveClass(HOTSPOT);
+                    // It refuses it: not by colour alone, its type icon is the "not allowed" icon
+                    play.expect(elementBox(tree, "indexWriter")).toHaveAttribute("aria-label",
+                            "indexWriter, XML Writer, can't take rawWriter");
+                    play.expect(refusedIcon(tree, "indexWriter")).toBeVisible();
+                    play.expect(typeIcon(tree, "indexWriter")).toBeNull();
+                    // A writer can't take another: Ctrl+V says so and keeps it detached
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("indexWriter can't take rawWriter."));
+                    play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED);
+
+                    // Ctrl+V on decoration attaches it there, keeping the focus on it
+                    play.keyboard("{ArrowLeft}{ArrowLeft}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveFocus());
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter attached to decoration."));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.expect(elementBox(tree, "indexWriter"))
+                            .toHaveAttribute("aria-label", "indexWriter, XML Writer");
+                    play.expect(typeIcon(tree, "indexWriter")).toBeVisible();
+                    final Query movedWriter = elementBox(tree, "rawWriter");
+                    final Query xmlWriter = elementBox(tree, "xmlWriter");
+                    play.waitFor(() -> play.expect("rawWriter's left less xmlWriter's",
+                            () -> movedWriter.left().get() - xmlWriter.left().get()).toBe(0.0));
+                    play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-level", "5");
+                    play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED + ", ." + DETACHED))
+                            .toHaveLength(0);
+                    play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
+
+                    // Escape puts a detached element back
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter put back."));
+                    play.expect(elementBox(tree, "rawWriter")).not().toHaveClass(DETACHED);
+                    play.expect(elementBox(tree, "rawWriter")).toHaveFocus();
+
+                    // Delete asks to remove the focused element
+                    play.keyboard("{Delete}");
+                    play.click(dialogWith(screen, TextMatch.exact("Are you sure you want to remove this element?"))
+                            .getByRole("button", StroomDom.button("Cancel")));
+                    expectNoProblems(play);
+                })
+                // The keyboard's moves are in the element's context menu too, which Shift+F10 or the
+                // context menu key opens: Detach, and while an element is detached "Attach '…' here"
+                // (only where it would be taken) and "Put '…' back"
+                .story("KeyboardContextMenu", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".draggable-tree__status");
+                    play.click(elementBox(tree, "rawWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+
+                    // Shift+F10 opens rawWriter's menu; Detach detaches it
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Detach")));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+                    play.expect(elementBox(tree, "rawAppender")).toHaveClass(DETACHED);
+
+                    // An element that won't take it can't have it attached
+                    play.click(elementBox(tree, "indexWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveFocus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.expect(screen.findByRole("menuitem", TextMatch.containing("Attach 'rawWriter' here")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(screen.getByRole("menuitem", TextMatch.containing("Put 'rawWriter' back")))
+                            .toBeInTheDocument();
+                    play.expect(screen.queryByRole("menuitem", TextMatch.containing("Detach"))).toBeNull();
+                    play.keyboard("{Escape}");
+                    play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED);
+
+                    // decoration takes it: the context menu key's menu attaches it there
+                    play.click(elementBox(tree, "decoration"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveFocus());
+                    play.keyboard("{ContextMenu}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Attach 'rawWriter' here")));
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter attached to decoration."));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-level", "5"));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+                    play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
+
+                    // "Put 'rawWriter' back" puts it back
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Put 'rawWriter' back")));
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter put back."));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+                    expectNoProblems(play);
+                })
+                // Dragging while an element is detached with the keyboard puts it back first
+                .story("DragCancelsKeyboardMove", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".draggable-tree__status");
+                    play.click(elementBox(tree, "rawWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveClass(DETACHED));
+
+                    // Dragging xmlWriter puts rawWriter back, and the drag shows its own target
+                    final Query xmlWriter = elementBox(tree, "xmlWriter");
+                    play.fireEvent().mouseDown(xmlWriter, EventInit.create().atCentreOf(xmlWriter).buttons(1));
+                    play.fireEvent().mouseMove(xmlWriter, EventInit.create().relativeTo(xmlWriter, 60, 40).buttons(1));
+                    play.waitFor(() -> play.expect(tree.queryByText("xmlWriter")).toBeNull());
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter put back."));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+
+                    // Dropping it on the parser moves it there
+                    final Query parser = elementBox(tree, "parser");
+                    play.fireEvent().mouseMove(parser, EventInit.create().atCentreOf(parser).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "parser")).toHaveClass(HOTSPOT));
+                    play.fireEvent().mouseUp(parser, EventInit.create().atCentreOf(parser));
+                    play.waitFor(() -> play.expect(elementBox(tree, "xmlWriter")).toHaveAttribute("aria-level", "3"));
+                    play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED + ", ." + DETACHED))
+                            .toHaveLength(0);
+                    expectNoProblems(play);
+                })
+                // Dragging an element (with its children) to a new parent: the element under the
+                // pointer has a green border if it would take it, or a red one (and the "not allowed"
+                // icon) if not, and nothing else is marked; dropping on a green one moves it
+                .story("DragToMove", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
+                    // The tree's boxes, not those of the dragged copy (a second tree panel)
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+
+                    // Pressing on rawWriter and moving past the drag threshold lifts it (and
+                    // rawAppender) out of the tree
+                    final Query rawWriter = elementBox(tree, "rawWriter");
+                    play.fireEvent().mouseDown(rawWriter, EventInit.create().atCentreOf(rawWriter).buttons(1));
+                    play.fireEvent().mouseMove(rawWriter, EventInit.create().relativeTo(rawWriter, 60, 40).buttons(1));
+                    play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeNull());
+
+                    // An appender can't have children: it refuses it, and is the only one marked
+                    final Query streamAppender = elementBox(tree, "streamAppender");
+                    play.fireEvent().mouseMove(streamAppender,
+                            EventInit.create().atCentreOf(streamAppender).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "streamAppender")).toHaveClass(REFUSED));
+                    play.expect(refusedIcon(tree, "streamAppender")).toBeVisible();
+                    play.expect(play.querySelectorAll("." + HOTSPOT)).toHaveLength(0);
+
+                    // decoration takes it: it is the target, and the appender no longer refuses
+                    final Query decoration = elementBox(tree, "decoration");
+                    play.fireEvent().mouseMove(decoration, EventInit.create().atCentreOf(decoration).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
+                    play.expect(elementBox(tree, "streamAppender")).not().toHaveClass(REFUSED);
+                    play.expect(refusedIcon(tree, "streamAppender")).toBeNull();
+                    play.expect(typeIcon(tree, "streamAppender")).toBeVisible();
+
+                    // Over nothing, nothing is marked; back over decoration, it is again
+                    play.fireEvent().mouseMove(streamAppender,
+                            EventInit.create().relativeTo(streamAppender, 0, 120).buttons(1));
+                    play.waitFor(() -> play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED))
+                            .toHaveLength(0));
+                    play.fireEvent().mouseMove(decoration, EventInit.create().atCentreOf(decoration).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
+
+                    // Dropping it there moves it into decoration's children's column, as wide as them
+                    play.fireEvent().mouseUp(decoration, EventInit.create().atCentreOf(decoration));
+                    play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeInTheDocument());
+                    final Query movedWriter = elementBox(tree, "rawWriter");
+                    final Query xmlWriter = elementBox(tree, "xmlWriter");
+                    play.waitFor(() -> play.expect("rawWriter's left less xmlWriter's",
+                            () -> movedWriter.left().get() - xmlWriter.left().get()).toBe(0.0));
+                    play.expect("rawWriter's width less xmlWriter's",
+                            () -> movedWriter.width().get() - xmlWriter.width().get()).toBe(0.0);
+                    play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED)).toHaveLength(0);
+                    play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
+                    expectNoProblems(play);
+                })
+                // A drag that isn't dropped on an element that takes it puts what is dragged back where
+                // it was, among its siblings as it was, changing nothing: released over nothing, over
+                // an element that refuses it or over where it came from, or with Escape pressed
+                .story("DragToCancel", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query streamAppender = elementBox(tree, "streamAppender");
+                    final Query decoration = elementBox(tree, "decoration");
+                    final Query parser = elementBox(tree, "parser");
+
+                    // Released over nothing
+                    liftRawWriter(play, tree);
+                    play.fireEvent().mouseMove(streamAppender,
+                            EventInit.create().relativeTo(streamAppender, 0, 120).buttons(1));
+                    play.fireEvent().mouseUp(streamAppender, EventInit.create().relativeTo(streamAppender, 0, 120));
+                    expectRawWriterBack(play, tree);
+
+                    // Released over an element that refuses it
+                    liftRawWriter(play, tree);
+                    play.fireEvent().mouseMove(streamAppender,
+                            EventInit.create().atCentreOf(streamAppender).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "streamAppender")).toHaveClass(REFUSED));
+                    play.fireEvent().mouseUp(streamAppender, EventInit.create().atCentreOf(streamAppender));
+                    expectRawWriterBack(play, tree);
+
+                    // Released over where it came from (it stays first of the parser's children)
+                    liftRawWriter(play, tree);
+                    play.fireEvent().mouseMove(parser, EventInit.create().atCentreOf(parser).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "parser")).toHaveClass(HOTSPOT));
+                    play.fireEvent().mouseUp(parser, EventInit.create().atCentreOf(parser));
+                    expectRawWriterBack(play, tree);
+
+                    // Escape over an element that would take it
+                    liftRawWriter(play, tree);
+                    play.fireEvent().mouseMove(decoration, EventInit.create().atCentreOf(decoration).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
+                    play.keyboard("{Escape}");
+                    expectRawWriterBack(play, tree);
+                    // Releasing after Escape doesn't drop it
+                    play.fireEvent().mouseUp(decoration, EventInit.create().atCentreOf(decoration));
+                    expectRawWriterBack(play, tree);
+
+                    play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
+                    expectNoProblems(play);
+                })
+                // A tree too wide for its pane: moving to an element off screen with the keyboard
+                // scrolls it into view, pressing on the background and dragging pans it, and
+                // dragging an element to the pane's edge scrolls it, so that an element off screen can
+                // take it
+                .story("ScrollAndPan", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query boxPanel = play.querySelector(".pipeline-tree__items");
+                    final Query pane = play.querySelector(".pipelineStructureViewImpl-treeContainer");
+                    play.run("narrow the tree's pane, so that it scrolls",
+                            () -> pane.element().get().getStyle().setProperty("width", "360px"));
+                    play.waitFor(() -> play.expect("the pane's scrollable width",
+                            () -> scrollLeftMax(pane)).toBeGreaterThan(100));
+
+                    // Moving to indexWriter, off screen, scrolls all of it into view
+                    play.click(elementBox(tree, "Source"));
+                    play.keyboard("{ArrowRight}{ArrowRight}{ArrowDown}{ArrowRight}{ArrowRight}{ArrowRight}");
+                    play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveFocus());
+                    final Query indexWriter = elementBox(tree, "indexWriter");
+                    play.waitFor(() -> play.expect("indexWriter's right beyond the pane's",
+                            () -> indexWriter.right().get() - pane.right().get()).toBeLessThanOrEqual(0));
+
+                    // Pressing on the background and dragging pans it, and selects nothing
+                    play.run("scroll the pane back", () -> pane.element().get().setScrollLeft(0));
+                    play.click(elementBox(tree, "Source"));
+                    play.fireEvent().mouseDown(boxPanel, EventInit.create().relativeTo(pane, 300, 12).buttons(1));
+                    play.fireEvent().mouseMove(boxPanel, EventInit.create().relativeTo(pane, 225, 12).buttons(1));
+                    play.fireEvent().mouseMove(boxPanel, EventInit.create().relativeTo(pane, 150, 12).buttons(1));
+                    play.fireEvent().mouseUp(boxPanel, EventInit.create().relativeTo(pane, 150, 12));
+                    play.expect("the pane's scroll", () -> scrollLeft(pane)).toBe(150.0);
+                    play.expect(elementBox(tree, "Source")).toHaveAttribute("aria-selected", "true");
+
+                    // Dragging rawWriter to the pane's right edge scrolls it, as far as the tree goes
+                    play.run("scroll the pane back", () -> pane.element().get().setScrollLeft(0));
+                    final Query rawWriter = elementBox(tree, "rawWriter");
+                    play.fireEvent().mouseDown(rawWriter, EventInit.create().atCentreOf(rawWriter).buttons(1));
+                    play.fireEvent().mouseMove(rawWriter, EventInit.create().relativeTo(rawWriter, 60, 40).buttons(1));
+                    play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeNull());
+                    play.fireEvent().mouseMove(boxPanel, EventInit.create().relativeTo(pane, 355, 60).buttons(1));
+                    play.waitFor(() -> play.expect("the pane's scroll", () -> scrollLeft(pane))
+                            .toBeGreaterThan(200));
+                    // jsonFilter, off screen before, takes it
+                    final Query jsonFilter = elementBox(tree, "jsonFilter");
+                    play.fireEvent().mouseMove(jsonFilter, EventInit.create().atCentreOf(jsonFilter).buttons(1));
+                    play.waitFor(() -> play.expect(elementBox(tree, "jsonFilter")).toHaveClass(HOTSPOT));
+                    play.fireEvent().mouseUp(jsonFilter, EventInit.create().atCentreOf(jsonFilter));
+                    play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-level", "6"));
+                    play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
+                    expectNoProblems(play);
+                })
                 .story("Structure", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -425,7 +881,7 @@ public final class PipelineEditorStories {
                     play.findByText("Parser A");
                     play.findByText("xslt");
                     // Open the Inherit From picker and choose Parent B
-                    play.fireEvent().mouseDown(play.querySelector(".dropDownView-container"), EventInit.create());
+                    play.fireEvent().mouseDown(play.querySelector(".drop-down"), EventInit.create());
                     final Play picker = dialog(screen, "Choose item");
                     play.click(picker.findByText("Parent B"));
                     play.click(picker.getByRole("button", StroomDom.button("OK")));
@@ -592,6 +1048,49 @@ public final class PipelineEditorStories {
         return "{\"type\": \"" + docRef.get("type")
                + "\", \"uuid\": \"" + docRef.get("uuid")
                + "\", \"name\": \"" + docRef.get("name") + "\"}";
+    }
+
+    // The box of an element of the tree
+    private static Query elementBox(final Play tree, final String name) {
+        return tree.getByText(name, ".pipeline-element__label").closest(".pipeline-element");
+    }
+
+    // How far an element is scrolled across, and how far it can be
+    private static double scrollLeft(final Query element) {
+        return element.element().get().getScrollLeft();
+    }
+
+    private static double scrollLeftMax(final Query element) {
+        return element.element().get().getScrollWidth() - element.element().get().getClientWidth();
+    }
+
+    // Presses on rawWriter and moves past the drag threshold, lifting it (and rawAppender) out of the
+    // tree
+    private static void liftRawWriter(final Play play, final Play tree) {
+        final Query rawWriter = elementBox(tree, "rawWriter");
+        play.fireEvent().mouseDown(rawWriter, EventInit.create().atCentreOf(rawWriter).buttons(1));
+        play.fireEvent().mouseMove(rawWriter, EventInit.create().relativeTo(rawWriter, 60, 40).buttons(1));
+        play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeNull());
+    }
+
+    // rawWriter (and rawAppender) are back where they were: the parser's first child, with nothing
+    // marked
+    private static void expectRawWriterBack(final Play play, final Play tree) {
+        play.waitFor(() -> play.expect(tree.queryByText("rawWriter")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-level", "3"));
+        play.expect(elementBox(tree, "rawWriter")).toHaveAttribute("aria-posinset", "1");
+        play.expect(elementBox(tree, "rawAppender")).toHaveAttribute("aria-level", "4");
+        play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED)).toHaveLength(0);
+    }
+
+    // A box's type icon, and the "not allowed" icon that takes its place while it refuses what is
+    // moved
+    private static Query typeIcon(final Play tree, final String name) {
+        return tree.within(elementBox(tree, name)).querySelector(".pipeline-element__type-icon");
+    }
+
+    private static Query refusedIcon(final Play tree, final String name) {
+        return tree.within(elementBox(tree, name)).querySelector(".pipeline-element__refused-icon");
     }
 
     private static void expectNoProblems(final Play play) {

@@ -16,6 +16,9 @@
 
 package stroom.aws.common.shared;
 
+import stroom.util.shared.IsAtomicConfigValue;
+import stroom.util.shared.NotInjectableConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -23,8 +26,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
-public class AwsAssumeRole {
+public class AwsAssumeRole implements IsAtomicConfigValue {
 
     @JsonProperty
     private final AwsAssumeRoleClientConfig clientConfig;

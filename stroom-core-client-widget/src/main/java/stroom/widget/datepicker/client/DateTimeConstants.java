@@ -30,9 +30,11 @@ public class DateTimeConstants {
     public static final int MONTHS_IN_YEAR = 12;
 
     private static final int MAX_DAYS_IN_MONTH = 31;
+    private static final String UTC = "UTC";
 
     private final String[] languages;
     private final String[] dayOfWeekNames;
+    private final String[] longDayOfWeekNames;
     private final String[] dayOfMonthNames;
     private final String[] monthNames;
 
@@ -43,19 +45,23 @@ public class DateTimeConstants {
             GWT.log(languages[i]);
         }
 
+        // The sample dates are midnight UTC, so are formatted in UTC: in the browser's own time
+        // zone, west of UTC, each would be the day before
         dayOfWeekNames = new String[DAYS_IN_WEEK];
+        longDayOfWeekNames = new String[DAYS_IN_WEEK];
         for (int i = 0; i < dayOfWeekNames.length; i++) {
             final UTCDate date = UTCDate.create(2000, 0, i + 1);
-            final String dayOfWeekName = IntlDateTimeFormat.format(date, languages,
-                    FormatOptions.builder().weekday(Weekday.SHORT).build());
-            dayOfWeekNames[date.getDay()] = dayOfWeekName;
+            dayOfWeekNames[date.getDay()] = IntlDateTimeFormat.format(date, languages,
+                    FormatOptions.builder().weekday(Weekday.SHORT).timeZone(UTC).build());
+            longDayOfWeekNames[date.getDay()] = IntlDateTimeFormat.format(date, languages,
+                    FormatOptions.builder().weekday(Weekday.LONG).timeZone(UTC).build());
         }
 
         dayOfMonthNames = new String[MAX_DAYS_IN_MONTH + 1];
         for (int i = 1; i < dayOfMonthNames.length; i++) {
             final UTCDate date = UTCDate.create(2000, 0, i);
             final String dayOfMonthName = IntlDateTimeFormat.format(date, languages,
-                    FormatOptions.builder().day(Day.NUMERIC).build());
+                    FormatOptions.builder().day(Day.NUMERIC).timeZone(UTC).build());
             dayOfMonthNames[i] = dayOfMonthName;
         }
 
@@ -63,7 +69,7 @@ public class DateTimeConstants {
         for (int i = 0; i < monthNames.length; i++) {
             final UTCDate date = UTCDate.create(2000, i, 1);
             final String monthName = IntlDateTimeFormat.format(date, languages,
-                    FormatOptions.builder().month(Month.LONG).build());
+                    FormatOptions.builder().month(Month.LONG).timeZone(UTC).build());
             monthNames[i] = monthName;
         }
     }
@@ -74,6 +80,11 @@ public class DateTimeConstants {
 
     public String[] getDayOfWeekNames() {
         return dayOfWeekNames;
+    }
+
+    /// @return The days' full names, e.g. "Monday", indexed from 0 (Sunday) to 6 (Saturday).
+    public String[] getLongDayOfWeekNames() {
+        return longDayOfWeekNames;
     }
 
     public String[] getDayOfMonthNames() {

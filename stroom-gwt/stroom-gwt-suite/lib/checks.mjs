@@ -37,7 +37,7 @@ export function readColumn(page, name) {
   return page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const strip = (t) => norm(t).replace(/\s+\d+$/, '');
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     for (const g of scope.querySelectorAll('.dataGridWidget, [role=grid]')) {
       if (!(g.offsetWidth > 0)) continue;
@@ -145,7 +145,7 @@ export function sortVerdict(before, after) {
 export function readPager(page, title) {
   return page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const btn = [...scope.querySelectorAll(`button[title="${wanted}"]`)].find((b) => b.offsetWidth > 0);
     const pager = btn?.closest('.pager-paging');
@@ -257,11 +257,11 @@ export const PAGER_BUTTONS = new Set(['First', 'Backward', 'Forward', 'Last']);
 export function readFeedback(page) {
   return page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const texts = [...scope.querySelectorAll('.feedback, .form-group__feedback')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).filter(Boolean);
-    const invalid = scope.querySelectorAll('.invalid').length;
+    const invalid = scope.querySelectorAll('[aria-invalid="true"]').length;
     return { texts, invalid };
   }).catch(() => null);
 }

@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -54,6 +55,18 @@ public final class FileChooserStories {
                     style.setProperty("color", "var(--text-color--disabled)");
                     style.setProperty("fontSize", "var(--font-size-13)");
                     return padded(hint, fileUpload());
+                })
+                .withPlay(play -> {
+                    // A button described by the chosen file, which says none is chosen yet
+                    final Query button = play.getByRole("button", "Choose File");
+                    play.expect(button).toHaveAccessibleDescription("No file chosen");
+                    play.expect(button).toHaveAttribute("aria-haspopup", "dialog");
+                    // BEM (file-upload.css)
+                    play.expect(button).toHaveClass("file-upload__button");
+                    play.expect(play.getByText("No file chosen")).toHaveClass("file-upload__name--empty");
+                    play.expect(play.querySelector("input[type='file']")).toHaveClass("file-upload__input");
+                    play.expect(play.querySelectorAll(".customFileUpload, .gwt-FileUpload, .gwt-Label"))
+                            .toHaveLength(1);
                 })
                 // With an accept filter and a callback reporting the chosen file name
                 .story("WithCallback", context -> {

@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -48,12 +49,19 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 // TODO I think this is not really needed as AccountService will create/update stroom_user
@@ -97,12 +105,23 @@ public class UserRefPopupPresenter
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users and groups");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Users");
-        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        dataGrid.setAccessibleName("Users and groups");
+        selectionModel = new MultiSelectionModelImpl<>();
+        // A picker's keys: Down in the filter goes to the chosen user, Up from the first row back
+        // to the filter, and typing in the grid goes to the filter; moving chooses
+        final DataGridSelectionEventManager<UserRef> selectionEventManager =
+                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        selectionEventManager.setSelectionFollowsFocus(true);
+        selectionEventManager.setMoveUpFromFirst(userListView::focus);
+        selectionEventManager.setTypedHandler(userListView::typeInFilter);
+        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        userListView.setFilterMoveDown(this::focusSelected);
         pagerView.setDataWidget(dataGrid);
 
         // Not easy to determine if we are dealing in users or groups at this point so just
@@ -172,8 +191,24 @@ public class UserRefPopupPresenter
                 if (selectionModel.getSelected() != null) {
                     HidePopupRequestEvent.builder(this).fire();
                 }
+            } else {
+                NullSafe.consume(selectionModel.getSelected(), userRef ->
+                        getView().announce(userRef.getDisplayName() + " chosen"));
             }
         }));
+        // Enter on a row chooses that row (the one with the focus, which may not be chosen yet, e.g.
+        // after filtering) and closes the dialog, as OK does
+        registerHandler(dataGrid.addDomHandler(event -> {
+            final int row = dataGrid.getKeyboardSelectedRow();
+            final List<UserRef> rows = dataGrid.getVisibleItems();
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
+                && isInRows(event.getNativeEvent())
+                && row >= 0 && row < rows.size()) {
+                event.preventDefault();
+                selectionModel.setSelected(rows.get(row));
+                HidePopupRequestEvent.builder(this).fire();
+            }
+        }, KeyDownEvent.getType()));
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
@@ -214,6 +249,8 @@ public class UserRefPopupPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
+                // Modal, as it asks for a choice: the page behind can't be used, and Tab stays in it
+                .modal(true)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
@@ -222,6 +259,8 @@ public class UserRefPopupPresenter
                         consumer.accept(selected);
                         e.hide();
                     } else {
+                        // Put back what was chosen when it opened (moving through the grid chooses)
+                        setSelected(initialSelection);
                         selectionChangeConsumer.accept(initialSelection);
                         e.hide();
                     }
@@ -231,6 +270,25 @@ public class UserRefPopupPresenter
 
     public UserRef getSelected() {
         return selectionModel.getSelected();
+    }
+
+    // Moves the focus to the chosen user's row (or the first, if none is), from the filter above
+    private void focusSelected() {
+        dataGrid.setKeyboardSelectedRow(Math.max(0, dataGrid.getVisibleItems().indexOf(getSelected())), true);
+    }
+
+    // Makes the chosen user's row the grid's tab stop, so tabbing into it lands there
+    private void showSelectedAsTabStop() {
+        final int index = dataGrid.getVisibleItems().indexOf(getSelected());
+        if (index >= 0) {
+            dataGrid.setKeyboardSelectedRow(index, false);
+        }
+    }
+
+    // Whether a key was pressed in the grid's rows (not, e.g., in its column headers)
+    private boolean isInRows(final NativeEvent event) {
+        final EventTarget target = event.getEventTarget();
+        return Element.is(target) && dataGrid.isInRows(Element.as(target));
     }
 
     public void setSelected(final UserRef userRef) {
@@ -277,6 +335,7 @@ public class UserRefPopupPresenter
                                 getView().setFilterError(NullSafe.get(
                                         resultPage.getFilterError(), TokenError::getText));
                                 dataConsumer.accept(resultPage);
+                                Scheduler.get().scheduleDeferred(UserRefPopupPresenter.this::showSelectedAsTabStop);
                             })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)

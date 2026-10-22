@@ -44,19 +44,19 @@ const AWAY = { x: 4, y: 4 };
 /** The frontmost dialog's box, its caption point, whether it can resize, and the drag glass. */
 export function readDialogBox(page) {
   return page.evaluate(() => {
-    const pops = [...document.querySelectorAll('.resizableDialog-popup, .dialog-popup')]
+    const pops = [...document.querySelectorAll('.dialog')]
       .filter((e) => e.offsetWidth > 0);
     const p = pops[pops.length - 1];
     if (!p) return null;
     const r = p.getBoundingClientRect();
     // The TITLE TEXT, not the title bar: the bar also holds the icon and the busy spinner, and a
     // press on those is still a caption event but reads less obviously as "drag by the caption".
-    const cap = p.querySelector('.dialog-titleText') ?? p.querySelector('.dialog-titleBar');
+    const cap = p.querySelector('.dialog__title') ?? p.querySelector('.dialog__title-bar');
     const c = cap?.getBoundingClientRect();
-    const se = p.querySelector('.resizableDialog-resizeSE')?.getBoundingClientRect();
+    const se = p.querySelector('.dialog__resize--se')?.getBoundingClientRect();
     return {
-      resizable: p.classList.contains('resizableDialog-popup'),
-      caption: String(p.querySelector('.dialog-titleText')?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      resizable: p.classList.contains('dialog--resizable'),
+      caption: String(p.querySelector('.dialog__title')?.textContent ?? '').replace(/\s+/g, ' ').trim(),
       x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
       at: c && c.width > 0 ? { x: Math.round(c.x + c.width / 2), y: Math.round(c.y + c.height / 2) } : null,
       se: se && se.width > 0 ? { x: Math.round(se.x + se.width / 2), y: Math.round(se.y + se.height / 2) } : null,
@@ -352,7 +352,7 @@ export function spinnerVerdicts(ev, label) {
 //   MenubarItem:53   MouseOut  -> background opacity 0
 //
 // `MenubarItem` is a GWTP view built only by injection, and its DOM (`.menuItem > .background`) is
-// not the popup menu's (`.menuItem-outer > .menuItem-text`). It may not be in the running
+// not the popup menu's (`.menu__item > .menu__text`). It may not be in the running
 // application at all, which `readMenubarItems` returning nothing says plainly.
 
 export function readMenubarItems(page) {

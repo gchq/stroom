@@ -44,7 +44,7 @@ import { setAce, tab as toLinkTab } from './fills.mjs';
 export function readRows(page) {
   return page.evaluate(() => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return [];
@@ -55,14 +55,14 @@ export function readRows(page) {
 
 /**
  * A row's SIGNATURE: its text plus the state of any tick box in it. A grid's boolean column is a
- * `TickBoxCell` — a `div.tickBox`, not a checkbox — so it contributes NO text, and a row whose
+ * `TickBoxCell` — a `div.tick-box--cell`, not an input — so it contributes NO text, and a row whose
  * Enabled flag was just toggled reads identically by text. The tick's class names carry the state,
  * so they are part of the signature.
  */
 export function rowSignature(page, text) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
@@ -76,7 +76,7 @@ export function rowSignature(page, text) {
 
 /** The captions of every visible dialog, outermost first. */
 export function dialogCaptions(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+  return page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
     .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim())).catch(() => []);
 }
 
@@ -91,7 +91,7 @@ export async function clickButton(page, label) {
       const twice = s.match(/^(.+) \1$/);
       if (twice) return twice[1];
       return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const matches = [...scope.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0 && !b.disabled
       && !b.classList.contains('disabled')
@@ -120,10 +120,10 @@ export async function clickButton(page, label) {
 export async function fillField(page, label, text) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const boxes = [...scope.querySelectorAll('input[type="text"], input[type="password"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'));
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'));
     const want = wanted === null ? null : (Array.isArray(wanted) ? wanted : [wanted]);
     const el = want
       ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)))
@@ -142,21 +142,21 @@ export async function fillField(page, label, text) {
 
 /**
  * Click the tick box labelled `label`: the one inside the FormGroup of that label, or a
- * `CustomCheckBox` that carries the label itself (`.SimpleTickBox` with its own `.form-label`, in a
+ * `CustomCheckBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
  * FormGroup with none, as Node Group's "Enabled" is). GWT renders a tick box as a div, not as a
  * bare checkbox (the CustomCheckBox's input is hidden), so the click has to land on the div.
  */
 export async function clickTickBox(page, label) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
-    const el = tick?.querySelector('.checkmark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
+    const tick = group?.querySelector('.tick-box') ?? own;
+    const el = tick?.querySelector('.tick-box__mark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
     if (!el || !(el.offsetWidth > 0)) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -173,16 +173,16 @@ export async function clickTickBox(page, label) {
 export async function readTick(page, label) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
+    const tick = group?.querySelector('.tick-box') ?? own;
     if (!tick) return null;
     const input = tick.querySelector('input[type="checkbox"]');
-    return input ? input.checked : /\btickBox-tick\b/.test(tick.className);
+    return input ? input.checked : tick.getAttribute('aria-checked') === 'true';
   }, [label]).catch(() => null);
 }
 
@@ -190,7 +190,7 @@ export async function readTick(page, label) {
 export async function selectRow(page, text) {
   const box = await page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
@@ -200,7 +200,7 @@ export async function selectRow(page, text) {
     // the walker's `select-row` does: a query result's first column is blank, and a click there left
     // the row unselected, so the Annotate menu had no annotation ids and offered no Change Status.
     const cells = [...row.querySelectorAll('td, [role=gridcell]')]
-      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, [role=button], svg'));
+      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, [role=button], svg'));
     const cell = cells.find((c) => n(c.textContent)) ?? cells[0] ?? row;
     // A row below the grid's fold is measured off-screen, and the click landed on nothing.
     cell.scrollIntoView({ block: 'center' });
@@ -522,11 +522,11 @@ export async function runCycle(page, spec, { guard, settle, log = () => {} }) {
 export function readField(page, label) {
   return page.evaluate(([wanted]) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const want = Array.isArray(wanted) ? wanted : [wanted];
     const el = [...scope.querySelectorAll('input[type="text"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'))
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'))
       .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)));
     return el ? String(el.value ?? '') : null;
   }, [label]).catch(() => null);
@@ -704,7 +704,7 @@ export function gridFilter(page) {
     const grid = [...document.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
     const g = grid.getBoundingClientRect();
-    const boxes = [...document.querySelectorAll('.quickFilter-textBox')].filter((e) => e.offsetWidth > 0);
+    const boxes = [...document.querySelectorAll('.quick-filter__input')].filter((e) => e.offsetWidth > 0);
     const mine = boxes
       .map((e) => ({ e, r: e.getBoundingClientRect() }))
       .filter(({ r }) => r.x + r.width > g.x && r.x < g.x + g.width && r.y <= g.y)
@@ -843,8 +843,8 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       await settle(600);
       if (!(await dialogCaptions(page)).length) throw new Error('New opened no dialog');
       // The name box is the full-width one that is not the folder picker's quick filter.
-      const nameBox = page.locator('.resizableDialog-popup, .dialog-popup').last()
-        .locator('input.text-field.w-100:not(.quickFilter-textBox)').first();
+      const nameBox = page.locator('.dialog').last()
+        .locator('input.text-field.w-100:not(.quick-filter__input)').first();
       await nameBox.fill(spec.seed, { timeout: 10_000 });
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the New dialog');
       await settle(2000);
@@ -882,7 +882,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('Rename opened no dialog');
       if (!(await fillField(page, null, spec.edited)) && !(await fillField(page, 'Name', spec.edited))) {
         // A pre-filled box: fillField(null) wants an empty one, so take the dialog's only text box.
-        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.text-field').first();
+        const box = page.locator('.dialog').last().locator('input.text-field').first();
         await box.fill(spec.edited, { timeout: 5_000 });
       }
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the Rename dialog');
@@ -948,13 +948,13 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
  * listens for mousedown, not click. Returns the text the box shows afterwards.
  */
 export async function chooseInSelectionBox(page, label, item, settle) {
-  const scope = page.locator('.dialog-popup, .resizableDialog-popup').last();
+  const scope = page.locator('.dialog').last();
   const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
   await group.locator('.selection-box .svg-icon-box__icon').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const row = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+    const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
       .find((e) => e.offsetWidth > 0 && n(e.textContent) === wanted);
     if (!row) return null;
     const r = row.getBoundingClientRect();
@@ -980,7 +980,7 @@ export async function chooseInSelectionBox(page, label, item, settle) {
 export function readGridRow(page, text) {
   return page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
@@ -1050,9 +1050,9 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
     if (!(await clickButton(page, 'Set Document Create Permissions'))) throw new Error('no "Set Document Create Permissions" button');
     await settle(1500);
     await caption(page, 'Set Document Create Permissions');
-    const row = page.locator('.dialog-popup, .resizableDialog-popup').last().locator('tbody tr')
+    const row = page.locator('.dialog').last().locator('tbody tr')
       .filter({ has: page.locator('td:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
-    await row.locator('.tickBox').first().click({ timeout: 5_000 });
+    await row.locator('.tick-box--cell').first().click({ timeout: 5_000 });
     await settle(400);
     if (!(await clickButton(page, 'OK'))) throw new Error('no OK in "Set Document Create Permissions"');
     await closed(ctx, 'the create permission change');
@@ -1204,7 +1204,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
 
     if (!await phase(`change it to ${spec.status} (Change Status)`, async () => {
       await annotate('Change Status');
-      const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+      const dlg = page.locator('.dialog').last();
       await dlg.locator('.annotationSettingHeading').first().click({ timeout: 5_000 });
       await settle(1000);
       // The chooser is a popup of its own, not inside the dialog.
@@ -1221,7 +1221,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
 
     await phase('change it to assigned to me (Change Assignee)', async () => {
       await annotate('Change Assignee');
-      const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+      const dlg = page.locator('.dialog').last();
       await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
       await settle(600);
       const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
@@ -1281,7 +1281,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
         // The dialog's text is an Ace editor (CommentEditPresenter's editorPresenter), whose textarea
         // is only Ace's input catcher; and the query's own Ace editor is on the page behind it.
         const ace = (value) => page.evaluate((v) => {
-          const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+          const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
           const el = popups[popups.length - 1]?.querySelector('.ace_editor');
           const ed = el && (window.ace?.edit ? window.ace.edit(el) : el.env?.editor);
           if (!ed) return null;
@@ -1409,7 +1409,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     const box = await page.evaluate((text) => {
       const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]')]
         .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
-      const t = row?.querySelector('.tickBox');
+      const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
       t.scrollIntoView({ block: 'center' });
       const r = t.getBoundingClientRect();
@@ -1455,7 +1455,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
         await open();
         if (!(await clickButton(page, 'Filter Streams'))) throw new Error('no Filter Streams button');
         await settle(1200);
-        const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+        const dlg = page.locator('.dialog').last();
         await dlg.getByText('Status = Unlocked', { exact: true }).click({ timeout: 5_000 });
         await settle(400);
         if (!(await clickButton(page, 'Disable Selected Expression Item'))) {
@@ -1511,7 +1511,7 @@ export function volumeSteps({ path, fields = {}, labels }) {
   const { editGroup, newVolume, deleteVolume } = labels;
   /** The top dialog's grid rows as text. */
   const dialogRows = (page) => page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
     return top ? [...top.querySelectorAll('tbody tr, [role=row]')].filter((r) => r.offsetWidth > 0)
       .map((r) => r.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean) : [];
@@ -1571,7 +1571,7 @@ export function volumeSteps({ path, fields = {}, labels }) {
       const { page, settle } = ctx;
       await openGroup(ctx);
       const box = await page.evaluate((p) => {
-        const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+        const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
         const row = [...popups[popups.length - 1].querySelectorAll('tbody tr, [role=row]')]
           .find((r) => r.offsetWidth > 0 && r.textContent.includes(p));
         const cell = row && [...row.querySelectorAll('td, [role=gridcell]')].find((c) => c.textContent.trim());
@@ -1636,7 +1636,10 @@ export async function runProcessorBatchCycle(page, spec, { guard, settle, log = 
     return [...g.querySelectorAll('tbody tr')].filter((r) => r.offsetWidth > 0)
       .map((r) => [...r.querySelectorAll('td')])
       .filter((tds) => tds[at('Run As User')]?.textContent.trim())
-      .map((tds) => tds[at('Enabled')]?.querySelector('.tickBox')?.classList.contains('tickBox-tick') ?? null);
+      .map((tds) => {
+        const tick = tds[at('Enabled')]?.querySelector('.tick-box--cell');
+        return tick ? tick.getAttribute('aria-checked') === 'true' : null;
+      });
   });
   /** Choose a change in the batch dialog and see it through its Confirm and its info Alert. */
   const batch = async (change) => {

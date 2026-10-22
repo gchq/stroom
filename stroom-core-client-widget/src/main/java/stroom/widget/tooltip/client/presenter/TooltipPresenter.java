@@ -63,6 +63,7 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
     private void show(final PopupPosition popupPosition, final Element anchor) {
         final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
+                .caption("Information")
                 .popupPosition(popupPosition)
                 .onShow(e -> getView().focus());
         if (anchor != null) {

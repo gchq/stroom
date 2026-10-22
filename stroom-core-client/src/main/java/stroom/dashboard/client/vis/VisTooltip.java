@@ -42,10 +42,9 @@ import com.google.gwt.user.client.Window;
 /// elements, with only their `class` and `style` attributes, before it is shown.
 public final class VisTooltip {
 
-    private static final String CLASS_NAME = "vis-tooltip";
-    // The background of Stroom's popups (SimplePopup), so that the tooltip looks as they do and, as
-    // they are, is see-through when the user's preferences say so (the page's `transparency` class)
-    private static final String POPUP_BACKGROUND_CLASS_NAME = "simplePopup-background-behind";
+    // Also a Stroom popup (popup.css), so that the tooltip looks as they do and, as they are, is
+    // see-through when the user's preferences say so (the page's `transparency` class)
+    private static final String CLASS_NAME = "popup vis-tooltip";
     private static final String CONTENT_CLASS_NAME = "vis-tooltip__content";
     private static final int NO_OWNER = 0;
 
@@ -116,9 +115,6 @@ public final class VisTooltip {
             tooltip.setClassName(CLASS_NAME);
             tooltip.setAttribute("aria-hidden", "true");
             tooltip.getStyle().setDisplay(Display.NONE);
-            final Element background = Document.get().createDivElement();
-            background.setClassName(POPUP_BACKGROUND_CLASS_NAME);
-            tooltip.appendChild(background);
             content = Document.get().createDivElement();
             content.setClassName(CONTENT_CLASS_NAME);
             tooltip.appendChild(content);

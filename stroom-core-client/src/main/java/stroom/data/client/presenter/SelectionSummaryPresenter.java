@@ -72,6 +72,7 @@ public class SelectionSummaryPresenter
                 : PopupType.CLOSE_DIALOG;
         ShowPopupEvent.builder(this)
                 .popupType(popupType)
+                .modal(popupType == PopupType.OK_CANCEL_DIALOG)
                 .caption(caption)
                 .onShow(e -> {
                     if (reprocess) {

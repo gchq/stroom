@@ -83,7 +83,6 @@ public class TableFilterPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Filter '" + column.getName() + "'")
-                .modal(true)
                 .onShow(e -> focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

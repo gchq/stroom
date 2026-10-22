@@ -34,7 +34,8 @@ import org.xml.sax.helpers.AttributesImpl;
         category = Category.FILTER,
         description = "Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["
                       + SafeBuffer.OTHER_CHARS
-                      + "]`. All other characters are replaced by `~NNN`, where `NNN` is a three " +
+                      + "]`.\n" +
+                      "All other characters are replaced by `~NNN`, where `NNN` is a three " +
                       "digit codepoint for the replaced character.",
         roles = {
                 PipelineElementType.ROLE_TARGET,

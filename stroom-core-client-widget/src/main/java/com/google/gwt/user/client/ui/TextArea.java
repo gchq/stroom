@@ -30,7 +30,6 @@ import com.google.gwt.dom.client.TextAreaElement;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.text-field.text-field--multiline { primary style (Stroom's, in text-field.css) }</li>
- * <li>.text-field-readonly { dependent style set when the text area is read-only }</li>
  * </ul>
  *
  * <p>

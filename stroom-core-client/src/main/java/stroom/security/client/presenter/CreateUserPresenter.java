@@ -97,6 +97,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> {

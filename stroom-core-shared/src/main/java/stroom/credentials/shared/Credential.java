@@ -44,6 +44,8 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "credentialType",
+        "keyStoreType",
+        "keyStorePath",
         "expiryTimeMs",
         "secret"
 })
@@ -73,16 +75,56 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     @JsonProperty
     private final KeyStoreType keyStoreType;
     @JsonProperty
+    private final String keyStorePath;
+    @JsonProperty
     private final Long expiryTimeMs;
 
-    /**
-     * Constructor.
-     *
-     * @param uuid           UUID. Can be null in which case UUID will be assigned the default (unusable) value.
-     * @param name           Name. If null then empty string is assigned.
-     * @param credentialType Type. If null then empty string is assigned.
-     * @param expiryTimeMs   Time in ms since epoch when this expires.
-     */
+    /// Constructor for credentials with no key store file path, i.e. any type other than
+    /// [CredentialType#KEY_STORE_FILE].
+    ///
+    /// @param uuid           UUID.
+    /// @param name           Name.
+    /// @param createTimeMs   Time in ms since epoch when this was created.
+    /// @param updateTimeMs   Time in ms since epoch when this was last updated.
+    /// @param createUser     The user that created this.
+    /// @param updateUser     The user that last updated this.
+    /// @param credentialType Type. If null then [CredentialType#USERNAME_PASSWORD] is assigned.
+    /// @param keyStoreType   The type of key store, for key store credentials only.
+    /// @param expiryTimeMs   Time in ms since epoch when this expires.
+    public Credential(final String uuid,
+                      final String name,
+                      final Long createTimeMs,
+                      final Long updateTimeMs,
+                      final String createUser,
+                      final String updateUser,
+                      final CredentialType credentialType,
+                      final KeyStoreType keyStoreType,
+                      final Long expiryTimeMs) {
+        this(uuid,
+                name,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser,
+                credentialType,
+                keyStoreType,
+                null,
+                expiryTimeMs);
+    }
+
+    /// Constructor.
+    ///
+    /// @param uuid           UUID.
+    /// @param name           Name.
+    /// @param createTimeMs   Time in ms since epoch when this was created.
+    /// @param updateTimeMs   Time in ms since epoch when this was last updated.
+    /// @param createUser     The user that created this.
+    /// @param updateUser     The user that last updated this.
+    /// @param credentialType Type. If null then [CredentialType#USERNAME_PASSWORD] is assigned.
+    /// @param keyStoreType   The type of key store, for key store credentials only.
+    /// @param keyStorePath   The path of the key store file, for key store file credentials only.
+    ///                       This is not secret so can be shown.
+    /// @param expiryTimeMs   Time in ms since epoch when this expires.
     @JsonCreator
     public Credential(
             @JsonProperty("uuid") final String uuid,
@@ -93,6 +135,7 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("credentialType") final CredentialType credentialType,
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
+            @JsonProperty("keyStorePath") final String keyStorePath,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
         this.uuid = uuid;
         this.name = name;
@@ -104,6 +147,7 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                 ? CredentialType.USERNAME_PASSWORD
                 : credentialType;
         this.keyStoreType = keyStoreType;
+        this.keyStorePath = keyStorePath;
         this.expiryTimeMs = expiryTimeMs;
     }
 
@@ -141,6 +185,11 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
     public KeyStoreType getKeyStoreType() {
         return keyStoreType;
+    }
+
+    /// @return The path of the key store file, for key store file credentials only, otherwise null.
+    public String getKeyStorePath() {
+        return keyStorePath;
     }
 
     public Long getExpiryTimeMs() {
@@ -182,6 +231,7 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", updateUser='" + updateUser + '\'' +
                ", credentialType=" + credentialType +
                ", keyStoreType=" + keyStoreType +
+               ", keyStorePath='" + keyStorePath + '\'' +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
     }

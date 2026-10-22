@@ -96,6 +96,7 @@ public class MoveDocumentPresenter
         final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> entityTreePresenter.focus())

@@ -34,6 +34,8 @@
        band of it at 30% around the control, so focus changes the control's shape as well as its colour */
     --focus-border: var(--blue-800);
     --focus-shadow: 0 0 0 4px rgba(21, 101, 192, .3); /* blue-800 */
+    /* The focus shadow's colour, for a focus ring drawn as a shape (e.g. PipelinePath.css) */
+    --focus-ring__color: rgba(21, 101, 192, .3);
     --focus-border--valid: var(--valid);
     --focus-shadow--valid: 0 0 0 4px rgba(var(--valid-rgb), .3);
     --focus-border--invalid: var(--invalid);
@@ -129,27 +131,42 @@
     --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
     --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
-    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
-    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
-    --expression-item-box__background-color--disabled: #ccc;
-    /* 4.5:1 on that grey */
-    --expression-item-box__text-color--disabled: #555;
-    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
+    /* The brackets between an operator and its items: 3.9:1 on the page */
+    --expression-tree__bracket: #808080;
+    /* 7.5:1 on the page */
+    --expression-item__text-color--disabled: #555;
+    --expression-item__drop-target: var(--icon-colour__dark-green);
+    --expression-item__drop-refused: var(--icon-colour__red);
 
-    --pipeline-element-box__background-color: #f5f9fd;
-    --pipeline-element-box__background-color--hover: #f7fbff;
-    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
-    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
-    --pipeline-element-box__text-color: #666;
-    --pipeline-element-box__text-color--selected: #000;
-    --pipeline-element-box__border-color: #918e8c;
-    --pipeline-element-box__border-color--selected: #717e7c;
-    --pipeline-element-box__border-color--info: #378cff;
-    --pipeline-element-box__border-color--warn: yellow;
-    --pipeline-element-box__border-color--error: orangered;
-    --pipeline-element-box__border-color--fatal-error: red;
-    --pipeline-element-box__border-color--fatal-error-dark: #c60000;
-    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
+    /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
+       screen's pipeline bar (pipeline-path.css) */
+    --pipeline-element__background-color: #f5f9fd;
+    --pipeline-element__text-color: #444;
+    /* The names of pipeline elements held down with the mouse (pipeline-element.css,
+       pipeline-path.css), at least 4.5:1 against the pressed fill */
+    --pipeline-element__text-color--pressed: var(--pipeline-element__text-color);
+    --pipeline-element__border-color: #918e8c;
+    /* The pipeline bar's borders for a warning and an error (pipeline-path.css), at least 3:1
+       against the page for a meaningful graphic (WCAG 1.4.11): the error icon's red, and for a
+       warning orange, as the warning icon's yellow is 1.5:1 */
+    --pipeline-path__warn: var(--orange-900);
+    --pipeline-path__error: var(--icon-colour__red);
+    /* The pipeline tree's connectors (PipelineConnectorRenderer), by what flows along them, each
+       at least 3:1 against the page */
+    --pipeline-connector__raw: var(--orange-900);
+    --pipeline-connector__xml: var(--purple-600);
+    --pipeline-connector__bytes: var(--blue-700);
+    /* The pipeline tree's drop target's border (pipeline-element.css), and that of an element
+       that refuses what is dropped, at least 3:1 against the page as the bar's */
+    --pipeline-element__drop-target: var(--icon-colour__dark-green);
+    --pipeline-element__drop-refused: var(--icon-colour__red);
+    /* A selected pipeline element (pipeline-element.css, pipeline-path.css), as a selected row */
+    --pipeline-element__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element__background-color--selected--hover: var(--row__background-color--selected--hovered);
+    --pipeline-element__text-color--selected: var(--text-color--selected);
+    /* The pipeline bar's filter icons: a darker green than the usual, which is under 3:1 against
+       white for a meaningful graphic (WCAG 1.4.11) */
+    --pipeline-path__filter: var(--icon-colour__dark-green);
 
     --link__text-color: #0000AA;
 
@@ -331,6 +348,9 @@
     --dialog__border-color: rgba(var(--black-rgb), .3);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
     --dialog__border-radius: 8px;
+    /* A menu's items (5px) sit 6px in, so its corners are 11px, for the items and their focus ring
+       to follow them (menu.css) */
+    --menu__border-radius: 11px;
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
     --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
     --transparency__backdrop-filter: saturate(2) blur(20px);

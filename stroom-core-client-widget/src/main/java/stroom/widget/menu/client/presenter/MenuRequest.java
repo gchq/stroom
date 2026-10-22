@@ -35,11 +35,16 @@ public final class MenuRequest {
     private final String name;
     private final List<Item> items;
     private final PopupPosition popupPosition;
+    private final Element opener;
 
-    private MenuRequest(final String name, final List<Item> items, final PopupPosition popupPosition) {
+    private MenuRequest(final String name,
+                        final List<Item> items,
+                        final PopupPosition popupPosition,
+                        final Element opener) {
         this.name = name;
         this.items = items;
         this.popupPosition = popupPosition;
+        this.opener = opener;
     }
 
     /// Asks for a menu to be shown.
@@ -52,7 +57,21 @@ public final class MenuRequest {
                             final String name,
                             final List<Item> items,
                             final PopupPosition popupPosition) {
-        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition));
+        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition, null));
+    }
+
+    /// Asks for a menu to be shown, opened by a button (see [ShowMenuEvent.Builder#opener]), which the
+    /// request bubbles up from.
+    ///
+    /// @param opener        The button that opens the menu, marked as doing so (see [MenuOpener#mark]).
+    /// @param name          The menu's accessible name (see [ShowMenuEvent.Builder#name]).
+    /// @param items         The menu's items.
+    /// @param popupPosition Where the menu is shown, e.g. below the button.
+    public static void fireFromOpener(final Element opener,
+                                      final String name,
+                                      final List<Item> items,
+                                      final PopupPosition popupPosition) {
+        dispatch(opener, EVENT, new MenuRequest(name, items, popupPosition, opener));
     }
 
     /// Shows the menus that widgets on the page ask for, by firing a [ShowMenuEvent] for each.
@@ -66,11 +85,14 @@ public final class MenuRequest {
     }
 
     private static void show(final MenuRequest request, final HasHandlers handlers) {
-        ShowMenuEvent.builder()
+        final ShowMenuEvent.Builder builder = ShowMenuEvent.builder()
                 .name(request.name)
                 .items(request.items)
-                .popupPosition(request.popupPosition)
-                .fire(handlers);
+                .popupPosition(request.popupPosition);
+        if (request.opener != null) {
+            builder.opener(request.opener);
+        }
+        builder.fire(handlers);
     }
 
     private static native void dispatch(Element source, String type, MenuRequest request) /*-{

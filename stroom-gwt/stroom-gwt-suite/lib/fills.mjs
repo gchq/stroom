@@ -73,12 +73,12 @@ export async function saveDocument(page, { budgetMs = 15_000 } = {}) {
     // "still dirty" alone sent one of these fills round three diagnostic loops.
     const alert = await page.evaluate(() => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const p = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].find(
-        (x) => norm(x.querySelector('.dialog-titleText')?.textContent) === 'Alert',
+      const p = [...document.querySelectorAll('.dialog')].find(
+        (x) => norm(x.querySelector('.dialog__title')?.textContent) === 'Alert',
       );
       if (!p) return null;
       const detail = [...p.querySelectorAll('textarea, .text-field--multiline')].map((t) => t.value || t.textContent).join(' ');
-      return `${norm(p.querySelector('.dialog-content')?.textContent)} ${detail}`.replace(/(Show|Hide) Detail/g, '').trim();
+      return `${norm(p.querySelector('.dialog__content')?.textContent)} ${detail}`.replace(/(Show|Hide) Detail/g, '').trim();
     });
     if (alert) return `rejected: ${alert.slice(0, 300)}`;
   }
@@ -159,7 +159,7 @@ export async function pickDocRef(page, label, name) {
   if (!(await box.count())) return false;
   await box.click();
   await page.waitForTimeout(800);
-  const filter = page.locator('input.quickFilter-textBox:visible').last();
+  const filter = page.locator('input.quick-filter__input:visible').last();
   if (await filter.count()) {
     await filter.pressSequentially(name, { delay: 30 });
     await page.waitForTimeout(1000);

@@ -17,6 +17,9 @@
 package stroom.sqlstore.impl;
 
 import stroom.docref.DocRef;
+import stroom.event.logging.mock.MockStroomEventLoggingService;
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.sqlstore.shared.ApplyChangesRequest;
 import stroom.sqlstore.shared.ApplyChangesResult;
 import stroom.sqlstore.shared.ChangeOperation;
@@ -30,8 +33,10 @@ import stroom.util.shared.TemporalEntryId;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +57,8 @@ class TestSqlTemporalStoreResourceImpl extends AbstractResourceTest<SqlTemporalS
 
     @Override
     public SqlTemporalStoreResource getRestResource() {
-        return new SqlTemporalStoreResourceImpl(() -> mockStore);
+        final MockStroomEventLoggingService eventLoggingService = new MockStroomEventLoggingService();
+        return new SqlTemporalStoreResourceImpl(() -> mockStore, () -> eventLoggingService);
     }
 
     @Override
@@ -106,6 +112,45 @@ class TestSqlTemporalStoreResourceImpl extends AbstractResourceTest<SqlTemporalS
         when(mockStore.applyChanges(any())).thenReturn(result);
 
         doPostTest("applyChanges", request, ApplyChangesResult.class, result);
+    }
+
+    /** A failed batch still reaches the client as a well-formed result, not an HTTP error. */
+    @Test
+    void testApplyChangesFailureIsReturned() {
+        final ApplyChangesRequest request = new ApplyChangesRequest(
+                List.of(ChangeOperation.delete(id("gate", 1000L))));
+        final ApplyChangesResult result = new ApplyChangesResult(false, "No permission");
+        when(mockStore.applyChanges(any())).thenReturn(result);
+
+        doPostTest("applyChanges", request, ApplyChangesResult.class, result);
+    }
+
+    /** Clear takes a body, so it is a POST: some proxies drop the body of a DELETE. */
+    @Test
+    void testClear() {
+        doPostTest("clear", docRef(), Boolean.class, Boolean.TRUE);
+    }
+
+    /**
+     * Regression test: with only the class-level annotation, create, update, delete and clear were
+     * audited twice (by the store and by the auto-logger), and applyChanges was audited as an
+     * uncategorised call that always succeeded, even when its result reported a failure.
+     */
+    @Test
+    void testWriteMethodsAreManuallyLogged() throws NoSuchMethodException {
+        final List<Method> writeMethods = List.of(
+                SqlTemporalStoreResourceImpl.class.getMethod("create", TemporalEntry.class),
+                SqlTemporalStoreResourceImpl.class.getMethod("update", TemporalEntry.class),
+                SqlTemporalStoreResourceImpl.class.getMethod("delete", TemporalEntryId.class),
+                SqlTemporalStoreResourceImpl.class.getMethod("clear", DocRef.class),
+                SqlTemporalStoreResourceImpl.class.getMethod("applyChanges", ApplyChangesRequest.class));
+        for (final Method method : writeMethods) {
+            assertThat(method.getAnnotation(AutoLogged.class))
+                    .as("@AutoLogged on %s", method.getName())
+                    .isNotNull()
+                    .extracting(AutoLogged::value)
+                    .isEqualTo(OperationType.MANUALLY_LOGGED);
+        }
     }
 
     // -----------------------------------------------------------------------

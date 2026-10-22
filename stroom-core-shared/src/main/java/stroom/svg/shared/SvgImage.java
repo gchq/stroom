@@ -2894,6 +2894,19 @@ public enum SvgImage {
             "6 0-218-86l-360 180q2 22 2 34t-2 34l360 180q92-86 218-86z\"/></svg>\n" +
             ""),
 
+    NOT_ALLOWED("not-allowed.svg", "svg-image__not-allowed", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><!-- Font Awesome " +
+            "Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawes" +
+            "ome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) -" +
+            "-><!-- \"ban\", on a white disc so that it shows on any background --><circle styl" +
+            "e=\"fill:#fff\" cx=\"256\" cy=\"256\" r=\"256\"/><path style=\"fill:var(--icon-colour__re" +
+            "d)\" d=\"M256 8C119.034 8 8 119.033 8 256s111.034 248 248 248 248-111.034 248-248S" +
+            "392.967 8 256 8zm130.108 117.892c65.448 65.448 70 165.481 20.677 235.637L150.47 " +
+            "105.216c70.204-49.356 170.226-44.735 235.638 20.676zM125.892 386.108c-65.448-65." +
+            "448-70-165.481-20.677-235.637L361.53 406.784c-70.203 49.356-170.226 44.736-235.6" +
+            "38-20.676z\"/></svg> \n" +
+            ""),
+
     OK("ok.svg", "svg-image__ok", "" +
             "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" cl" +
             "ass=\"svg-inline--fa fa-check fa-w-16 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org" +

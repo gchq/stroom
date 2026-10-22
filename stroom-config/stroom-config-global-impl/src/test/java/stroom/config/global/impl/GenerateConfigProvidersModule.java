@@ -21,7 +21,7 @@ import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 
@@ -131,7 +131,7 @@ public class GenerateConfigProvidersModule {
                 .map(ClassInfo::load)
                 .filter(clazz -> clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(AbstractConfig.class::isAssignableFrom)
-                .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz))
+                .filter(IsStroomConfig.class::isAssignableFrom)
                 .sorted(Comparator.comparing(Class::getName))
                 .map(clazz ->
                         buildThrowingMethod(simpleNames, simpleNameToFullNamesMap,

@@ -50,7 +50,7 @@ await click('New API Key');
 await page.waitForTimeout(1200);
 
 const before = await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const form = popups[popups.length - 1];
   return [...(form?.querySelectorAll('input[type=text], input:not([type])') ?? [])]
     .filter((e) => e.offsetWidth > 0).map((e) => ({ value: e.value, cls: e.className }));
@@ -60,7 +60,7 @@ console.log('boxes as opened:', JSON.stringify(before, null, 1));
 // The expiry box is the one holding an ISO date. Clear it, and give the name a value so the
 // expiry rule is the one under test.
 const box = await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const form = popups[popups.length - 1];
   const el = [...(form?.querySelectorAll('input[type=text], input:not([type])') ?? [])]
     .find((e) => e.offsetWidth > 0 && /^\d{4}-\d{2}-\d{2}T/.test(String(e.value ?? '')));
@@ -72,7 +72,7 @@ if (!box) { console.log('no ISO-dated box found — the dialog may have changed'
 console.log('expiry box held:', box.was);
 
 const name = await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const form = popups[popups.length - 1];
   const el = [...(form?.querySelectorAll('input[type=text], input:not([type])') ?? [])]
     .find((e) => e.offsetWidth > 0 && !String(e.value ?? '').trim());
@@ -88,19 +88,19 @@ await page.keyboard.press('Delete');
 await page.keyboard.press('Tab');           // blur: does the box put the date back?
 await page.waitForTimeout(600);
 const afterBlur = await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const form = popups[popups.length - 1];
   return [...(form?.querySelectorAll('input[type=text], input:not([type])') ?? [])]
     .filter((e) => e.offsetWidth > 0).map((e) => e.value);
 });
 console.log('boxes after clearing the expiry and blurring:', JSON.stringify(afterBlur));
 
-const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.trim()));
 console.log('dialogs before OK:', JSON.stringify(await dialogs()));
 // The TOPMOST dialog's OK, and its state — a disabled OK is #40's shape.
 const okState = await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
   const btns = [...top.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0);
   // A GWT button's text is DOUBLED ("OK\nOK") — walk.mjs undoubles it before matching.
@@ -119,10 +119,10 @@ await page.waitForTimeout(2000);
 console.log('dialogs after OK:', JSON.stringify(await dialogs()));
 console.log('after OK, top dialog:', JSON.stringify(await readTopDialogBody(page), null, 1));
 console.log('feedback/invalid:', JSON.stringify(await page.evaluate(() => {
-  const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
   return { feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => e.textContent.trim()),
-    invalid: top.querySelectorAll('.invalid').length };
+    invalid: top.querySelectorAll('[aria-invalid="true"]').length };
 })));
 console.log('page errors:', JSON.stringify(errors, null, 1));
 await browser.close();

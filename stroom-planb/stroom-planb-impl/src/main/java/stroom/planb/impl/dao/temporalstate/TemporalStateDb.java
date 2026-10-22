@@ -49,6 +49,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
@@ -83,6 +84,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
     private final TimeSerde timeSerde;
     private final TemporalKeySerde keySerde;
     private final ValTimeSerde valueSerde;
+    private final KeyType keyType;
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
 
@@ -106,6 +108,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         this.timeSerde = timeSerde;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        this.keyType = settings.getKeySchema().getKeyType();
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
         this.valueRecorder = valueSerde.getUsedLookupsRecorder(env);
     }
@@ -251,11 +254,6 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         });
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. Everything from here to
-    // getKeyExtractionFunction is this fork's, added for the FloorMap Event Store. origin/master has
-    // no equivalent, so an incoming version of this file will not contain it and must not be allowed
-    // to remove it. Nothing upstream calls it: search() above is untouched.
-
     /// Emits the newest entry at or before `asAt` for each key, ignoring keys whose newest
     /// entry in scope predates `notBefore`.
     ///
@@ -304,6 +302,14 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                                final Instant asAt,
                                final Instant notBefore) {
         Objects.requireNonNull(asAt, "asAt is required for a snapshot read");
+        // The precondition documented above, enforced: on any other encoding a key whose bytes
+        // extend another's is silently skipped, so refuse rather than return an incomplete answer.
+        if (keyType != KeyType.TERMINATED_STRING) {
+            throw new IllegalStateException("A snapshot read needs keys of type "
+                                            + KeyType.TERMINATED_STRING.getDisplayValue()
+                                            + ", but this store's keys are "
+                                            + NullSafe.get(keyType, KeyType::getDisplayValue));
+        }
 
         env.read(readTxn -> {
             // Ensure we have fields for all expression criteria, and do so before the extractor

@@ -16,6 +16,7 @@
 
 package stroom.receive.rules.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.CellIcon;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -535,16 +536,22 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     if (e.isOk()) {
                         final DataRetentionRule rule = editRulePresenter.write();
                         final int index = visibleRules.indexOf(existingRule);
-                        visibleRules.remove(index);
-                        visibleRules.add(index, rule);
+                        if (index < 0) {
+                            // Deleted behind the dialog, which isn't modal
+                            AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                                      + "so the changes can't be kept.", null);
+                        } else {
+                            visibleRules.remove(index);
+                            visibleRules.add(index, rule);
 
-                        update();
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
+                            update();
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
+
+                            listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                         }
-
-                        listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
                     e.hide();
                 })

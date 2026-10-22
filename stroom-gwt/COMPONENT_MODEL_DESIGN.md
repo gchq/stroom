@@ -421,12 +421,19 @@ for that directory), so no screen needed editing.
 - **States** come from the element: `:disabled` (the filled field with no border that every
   disabled control has), `[readonly]` (the normal field, its value greyed), `:focus-visible`, and,
   for a rejected value, `aria-invalid` (`FieldValidity`: a red border, and a red ring with the
-  focus). Its placeholder and the browser's autofill colours are there too. GWT's `ValueBoxBase`
-  also adds `text-field-readonly` when read only; nothing styles it.
+  focus). Its placeholder and the browser's autofill colours are there too. Each state is the
+  attribute alone: Stroom's copy of GWT's `ValueBoxBase` no longer adds a `<primary>-readonly`
+  class, and `FieldValidity` no longer adds an `invalid` class (the fallback for inputs with no
+  block uses `[aria-invalid="true"]` too). The password box's input is a text field, given by
+  Stroom's copy of `PasswordTextBox`.
 - **One stylesheet.** `text-field.css` has every look a text field has. `stroom.css`'s rules for
   bare `input` and `textarea` elements (for inputs with no block of their own yet) leave text
   fields out, with `:where(:not(.text-field))`, which adds nothing to their weight. The password
   box's input is a text field too.
+- **Quick filters** are named for what they filter ("Filter users and groups"), as a placeholder is
+  only a hint: by a form group's label, in their template (`accessibleName`), or by their presenter
+  through the shared views' `setAccessibleName` (`QuickFilterPageView`, `QuickFilterDialogView`,
+  `ExplorerPopupView`). A selection box's list's filter is "Filter" and the box's name.
 - **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
   were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
   (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
@@ -446,9 +453,154 @@ for that directory), so no screen needed editing.
 Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAndReadonly`) and
 `Widgets/Inputs/LineColInput` (`InvalidValueIsMarked`).
 
-Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); nine
-fields whose template replaces the class with `styleName` (so they get those rules instead); it
+A template adds a field's own classes with `addStyleNames`, never `styleName`, which would replace
+`text-field` and leave the field to `stroom.css`'s bare element rules. Nine fields did (the pager's
+page boxes, the query data box, the annotation editor's Title, Subject and comment, the include and
+exclude filter areas and Create Multiple Users' batch); they are text fields now, each looking as it
+did (a screen's own rules for one, e.g. `.annotationComment`, win as they did), with `w-100` where it
+filled its place (a text field is 200px wide unless the screen sizes it).
+
+`TextFieldCell` (`stroom.cell.textfield.client`) is a text field in a grid's cell: the same
+`text-field` input, filling its column (`text-field--cell`), each row's named for its column and
+row (e.g. "Path for $.type"), read only with `readonly` (not `disabled`, so it can still be reached
+and read). `SelectionBoxCell` (`stroom.item.client`) is the selection box in a cell: the same markup
+and classes as `BaseSelectionBox` (`selection-box--cell` fills the column), the same keys (Enter,
+Space, Down, Up and Alt+Down open the list, typing goes to it) and the same `SelectionPopup`;
+choosing gives the value to the column's field updater, and the focus comes back to the row's box
+once the grid has drawn it again. Every row's controls are tab stops, and while one has the focus
+the grid leaves its keys to it, as the cell is editing (the selection box cell takes focus and blur
+so that the grid knows before a key arrives). They replace the floor map's `AccessibleTextInputCell`
+and `AccessibleSelectionCell` (bare `input` and `select` elements). Stories
+`App/Editors/FloorMapSettings`; real input: `selection-box.mjs`. Not yet: the grid's own keyboard
+cell is still a stray tab stop between the controls, as in every grid (session 4); in a grid that
+uses Stroom's own selection handling (`MyDataGrid.addDefaultSelectionModel`) rather than GWT's, the
+grid doesn't yet ask whether a cell is editing, so would take the arrows (none does yet).
+
+Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); it
 hasn't been tried with a screen reader.
+
+## Tick box
+
+The tick box is the BEM block `tick-box` (`tick-box.css`), in two forms that look the same:
+
+- **The widget** (`CustomCheckBox`): a `label` element wrapping a native check box
+  (`tick-box__input`, unseen and over the box, so it has the focus, the clicks and the state), the
+  box drawn for it (`tick-box__mark`) and its text (`tick-box__label`). The label wraps the check
+  box, so its text names it and clicking anywhere on it ticks it, with no `for` and no id needed.
+  Its states are the check box's: `:checked`, `:disabled` and `aria-readonly` (a read-only tick box
+  can be focused and read, but a click is cancelled). It has no part-ticked state.
+- **The grid's cell** (`TickBoxCell`, `tick-box--cell`, an icon's size): an element with
+  `role="checkbox"`, `aria-checked` (`true`, `false` or `mixed`, part ticked, e.g. a header's
+  select-all) and `aria-readonly`, holding the drawn box. The part-ticked square is drawn by the
+  stylesheet, so the box has nothing inside it but the tick. A cell that can't be clicked is
+  `aria-readonly`, which gives it the read-only look (`NoBorderAppearance` no longer adds a class).
+  `ColumnValueCell` draws the same markup for its read-only ticks.
+
+Ticked is a white tick on the widget's blue (`--blue-500`); read only, a grey tick on the normal
+box; disabled, a grey tick on the filled box with no border every disabled control has.
+
+Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) and
+`Widgets/Cell Renderers/TickBoxCell` (`InGrid`, `ReadOnly`).
+
+Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
+session 4); it hasn't been tried with a screen reader.
+
+## Radio group
+
+`RadioGroup<T>` (`stroom.widget.form.client`) is a choice of one of a few options, all shown. It
+replaces GWT's `RadioButton`, of which the floor map's layer style had three.
+
+- **Native radio buttons.** Its options are native radio inputs sharing a name, so the browser
+  makes the group one tab stop, and the arrow keys move between the options, choosing as they go.
+  Each option is a label holding its radio button and text, so its text names it, and clicking the
+  text chooses it.
+- **A named radio group.** The block is `role="radiogroup"`, named by its form group's label, or by
+  `setAccessibleName` where there is none. A form group marks a child holding several controls as a
+  `group`; it now leaves a child that has a role of its own (a radio group's) as it is.
+- **Value.** `addItem(value, label[, title])`, then `getValue`, `setValue(value[, fireEvents])`
+  and a value change handler, which a choice fires once (the browser fires `change` only on the
+  radio button chosen).
+- **CSS.** `radio-button.css`: the BEM block `radio-group`, its `__option`, `__input` and `__label`.
+  Every radio input looks the same, including those in an activity's form, which have no classes
+  of their own.
+
+Stories `Widgets/Inputs/RadioGroup` (`Basic`, `Disabled`, `AccessibleName`), and
+`App/Editors/FloorMapForms` `LayerStyle`.
+
+The floor map's icon picker (`FloorMapIconPicker`) is a radio group in the same way: each icon a
+label holding an unseen native radio button, so the grid is one tab stop with the arrow keys
+choosing, its chosen and focused looks drawn from the radio button's state (`:has(:checked)`,
+`:has(:focus-visible)`).
+
+## Quick filter
+
+`QuickFilter` (`stroom.widget.dropdowntree.client.view`) is the BEM block `quick-filter`
+(`quick-filter.css`):
+
+- **A search field.** Its input (`quick-filter__input`) is `type="search"`, so assistive technology
+  meets a `searchbox`, not a text box. Chrome's own clear button and decoration are hidden, as the
+  filter has its own Clear button; its look, and its disabled, focused and invalid looks, are the
+  text field's (`text-field.css`). Escape clears it, as it did before (and as a search field does).
+- **Its buttons** are a toolbar (`quick-filter__toolbar`, one tab stop, a toolbar only while two
+  buttons show) over the end of the box: Clear, the recent filters (`quick-filter__recent`, shown
+  with the block's `quick-filter--recent` modifier, which leaves room for it in the box) and its
+  syntax help, each 24px.
+- **One stylesheet.** The rules other stylesheets had for it are in `quick-filter.css`: the column
+  function editor's and query help's flat filter (a bottom border only), and the gap under it in a
+  selection box's list. `quick-filter-layout` is a panel holding a quick filter above what it
+  filters (it was `quickFilter-container`). The state classes it no longer needs are gone
+  (`disabled`, which the input's own `:disabled` carries).
+
+Stories `Widgets/Inputs/QuickFilter` (`FiltersAList` checks the search role and the classes).
+
+Its syntax help is the shared help popup and its Advanced Query dialog's content is BEM
+(`advanced-query`), both done with the overlays (see [Overlays](#overlays)). Not yet done: it hasn't
+been tried with a screen reader.
+
+## Pickers
+
+The document and user pickers (`DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, drawn by
+`DropDownView`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
+quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of users and groups
+(`UserRefPopupPresenter`). Enter or Space on a picker opens it.
+
+- **Modal.** The dialogs are shown `.modal(true)`: the glass covers the page, they are `aria-modal`,
+  and `DialogFocusTrap` keeps the focus in them (Tab from the last tab stop goes to the first, and
+  Shift+Tab back), as it does in every modal dialog. Escape cancels, and the focus goes back to the
+  picker (`CurrentFocus`).
+- **Filter and list.** The focus starts in the quick filter. Down goes to the chosen item (or the
+  first), Up from the first item back to the filter, and typing in the list goes to the filter
+  (`QuickFilter.setMoveDown`, and `AbstractSelectionEventManager.setMoveUpFromFirst` and
+  `setTypedHandler`, which other lists with a filter above them can use too).
+- **Choosing.** Moving chooses (selection follows focus,
+  `AbstractSelectionEventManager.setSelectionFollowsFocus`), as in a list that chooses one item;
+  what is chosen is announced in a live region ("Normalise chosen"). Tabbing into the list lands on
+  the chosen item. Enter on an item chooses it and closes the dialog, as OK does; on the grid it is
+  the row with the focus, even one only highlighted after filtering hid what was chosen. Cancel puts
+  back what was chosen when the dialog opened.
+- **The filter's focus.** `QuickFilter.forceFocus` tries again for half a second while a popup
+  settles, but no longer once the filter has had the focus, so it doesn't pull the focus back from
+  the list.
+
+The lists are named ("Documents", "Users and groups"), but the tree and grid have no roles or
+states yet; those come with sessions 5 (trees) and 4 (grids).
+
+The picker itself is the BEM block `drop-down` (`drop-down.css`): its value (`drop-down__value`,
+filling the box and ending in an ellipsis clear of the icon) and the "…" icon (`drop-down__icon`).
+Its field look, and its read-only and disabled looks, are the shared `stroom-control` classes'.
+
+A document that can't be found (deleted, or not visible to the user) is a problem with the field's
+value, so it is shown as #5409's form feedback is, not behind a button: the picker is
+`aria-invalid`, with the red border of an invalid field, and described by a message under it
+(`DropDownView.setProblem(short, full)`). The message is short ("'Deleted Feed' can't be found, or
+you don't have permission to see it."), with the full one (the id, and what to do) as its tooltip
+and what screen readers read; in a form group it is the group's feedback
+(`FormGroup.setFeedback(short, full)`), and outside one a line of the picker's own
+(`drop-down__feedback`), added while there is a problem. It replaced a 17px warning button that only
+a mouse could use, which sat inside the picker's own button, and opened an alert.
+
+Stories `Widgets/Selectors/DocSelectionBox` `KeysInTheDialog` and
+`Widgets/Selectors/UserRefSelectionBox` `KeysInTheDialog`.
 
 ## Value spinner
 
@@ -469,23 +621,96 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 
 `SvgIconBox` (`stroom.svg.client`, styled by `svg-icon-box.css`) is a field with an icon inside the end of its border that opens what the field chooses from: a selection box's drop-down arrow, a date box's calendar, a time or schedule box's clock. The icon is a picture, not a button: the field opens the same thing from the keyboard (Enter, and a click on a selection box that can't be typed in), so it is hidden from screen readers (`aria-hidden`) and is no tab stop, though a click on it opens it too. It has no hover or focus states.
 
-- **Names.** The block is `svg-icon-box`; the field (the wrapped widget's first input) is `svg-icon-box__field`, padded clear of the icon; the icon is `svg-icon-box__icon` (a 26px strip over the end of the field) holding `svg-icon-box__image`.
+- **Names.** The block is `svg-icon-box`; the field (the wrapped widget's first input) is `svg-icon-box__field`, padded clear of the icon (its 26px and 4px more, see Field ends); the icon is `svg-icon-box__icon` (a 26px strip over the end of the field) holding `svg-icon-box__image`.
 - **Drop-down arrow.** `setDropDownWidget` gives the box the value spinner's arrow (`ARROW_DOWN`), 10px, in `--icon-colour__black`, as the date picker's month and year arrows' size (`svg-icon-box--drop-down`, a variant with no ARIA meaning). Every "opens a list" arrow in a field looks the same: the selection box's, QuickFilter's Recent Filters (a toolbar button, so a tab stop, with the same icon) and, as a pair, the value spinner's. `SvgImage.DROP_DOWN`, which drew a smaller, thinner arrow, is deleted.
 - **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
 - **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
+
+## Schedule box
+
+`ScheduleBox` (`stroom.schedule.client`, styled by `schedule-box.css`) is a text field for a schedule's expression (a frequency such as `10m`, or a cron expression), with a clock at its end, and behaves as a date-time box: Enter or Alt+Down in the field, or a click on the clock, opens the Change Schedule dialog (`SchedulePopup`), never focus, and the field is `aria-haspopup="dialog"`. An expression the server rejects marks the field invalid when it is left; that check, and the dialog's, use the box's one dialog. In the dialog, the quick settings are a `QuickSettings`, and the Next Scheduled Time is a polite live region, as it changes when the expression is calculated.
+
+`QuickSettings` (`stroom.widget.button.client`, styled by `quick-settings.css`) is presets that fill in a value, in titled groups side by side: each group a `group` named by its title, each preset a `LinkButton` named by its text, at least 24px high. The schedule dialog and the time range dialog use it (they had built the same markup each, with the time range's `timeRange-quick*` classes).
+
+Stories `Widgets/Date & Time/ScheduleBox` (`ScheduleBoxStories`): `KeysOpenTheDialog`, `QuickSettingsAreGroupedButtons`, `CheckingReusesTheDialog`.
+
+## Time range selector
+
+`TimeRangeSelector` (`stroom.query.client.view`, styled by `time-range-selector.css`) shows the time range a query or dashboard applies, as a `LinkButton` whose text is the range ("Today", "After now()-1d"), named "Time range: " and its text, and `aria-haspopup="dialog"`. It opens the Time Range dialog (`TimeRangeDialog`, its content `TimeRangePopup`): quick settings (`QuickSettings`) and the After and Before times (date-time boxes that allow expressions), as a modal OK/Cancel dialog below the selector, made on the app's event bus (`StaticEventBus`), as the selector has none of its own. As a modal Stroom dialog, it is a `dialog` named by its title, the focus starts in After Time and is kept in it, Escape cancels it and the focus goes back to the selector. Disabled and read only are both `aria-disabled` (a button can't be read only), so it stays focusable and doesn't open; read only, greyed less, is the `time-range-selector--readonly` modifier.
+
+Stories `App/Editors/QueryEditor` `TimeRangeRerun` (a quick setting chosen with the keys reruns the query) and `TimeRangeDialogKeys` (the dialog's role, name, focus and Escape).
+
+## Field ends
+
+A field with something drawn over its end (an icon box's icon, a password box's button and badge, a quick filter's buttons, a spinner's arrows) keeps its text 4px (`FieldEnd.GAP`) clear of it: its text never runs under what is over its end. Where that never changes width (an icon box's 26px icon, a selection box's arrow), the stylesheet pads the field's end by its width and 4px. Where it does (a quick filter's Clear comes and goes, a password badge's width depends on its text), `FieldEnd` (`stroom.widget.util.client`) watches it (`ResizeObserver`) while the widget is attached and sets the field's `--field__end-space`, which the stylesheet uses as its end padding, with a fallback for before it is shown. Story `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd` gives each such field a value too long for it and measures the space.
 
 ## Selection box
 
 `BaseSelectionBox` (`stroom.item.client`, styled by `selection-box.css`) is a WAI-ARIA combobox: its text box (`role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`) sits over a picture of its value (`selection-box__value`, `aria-hidden`), with an icon box's drop-down arrow at its end. Its list is a `SelectionPopup` (`selection-popup.css`) holding a `SelectionList`: a quick filter over 10 items, a pager over 100, and a list box whose rows are options. Opening the list moves the focus into it (to its quick filter if it has one, else to the chosen option), rather than keeping it in the box with `aria-activedescendant`.
 
-- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
-- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter); Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it; the focus goes back to the box. Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
+- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, Home and End open it at its first and last option, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
+- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter), only highlighting, as a combobox's list does; Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it, and the focus goes back to the box. Tab closes it, leaving the value, and goes on to what follows the box (`TabOrder.focusNext`); Shift+Tab closes it and goes back to the box. (It once sent the focus to the page, leaving the list open.) Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
 - **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
 - **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
 
 Stories `Widgets/Selectors/SelectionBox` (`SelectionBoxStories`): `KeysOpenTheList`, `AltUpChoosesTheOption`, `TypingJumpsToAnOption`, `TypingFiltersALongList` and `LongValue`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-box.mjs`): typing, Alt+Up, Space and Escape pressed for real, and typing into a long list's quick filter.
 
-Not yet done: it hasn't been tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM; and Home and End in the closed box don't open the list at its ends (optional in the pattern).
+- **The list's names.** `SelectionList` is styled by `selection-list.css`: the block `selection-list`, its quick filter `selection-list__filter`, its path `selection-list__path` (a `nav` holding a `selection-list__path-link` button for each level above, `selection-list__path-separator`s hidden from screen readers, and the level shown, `selection-list__path-current`, `aria-current="page"`), and its options with their pager, `selection-list__options`. The rows are still the cell table's (`cellTable*`), which the grid session renames. The option with the focus has the focus border and ring every other control has (`--focus-border`, `--focus-ring__color`), drawn inside the row, as the list's scrolling box would cut off one drawn round it; a chosen one with the focus takes `--row__background-color--selected--focussed`, as the expression tree's and the explorer's rows do, so that the border is 3:1 against it in both themes (the row tokens' pale ring it had was 1.7:1, and 1.05:1 on a chosen row, in the light theme; the grids still use it). A chosen row looks the same under the mouse, as the expression tree's does; only an unchosen row shows the hover colour. Story `Widgets/Selectors/SelectionListStates` `RowStates` shows a row in each state (at rest, mouse over, mouse down, selected, selected and mouse over, focused, selected and focused), with the pseudo-classes copied into classes as `Widgets/Layout/SplitPaneStates` does.
+- **Several choices.** `setMultiSelect(true)` makes the list WAI-ARIA's list box with multiple selection (`aria-multiselectable`), for a list on a form rather than a selection box's: moving only moves the focus; Space adds the option with the focus to those chosen or takes it out (it is never typed into the quick filter), Shift+Down and Shift+Up move to the next option and do the same there, and Shift+Space chooses the run from the last one chosen; a click chooses only that option, Ctrl+click adds or takes it, Shift+click chooses the run from the last one chosen; Ctrl+A chooses every option; Enter or a double click acts on those chosen (first choosing only the option with the focus, if it isn't one), which the selection model announces as a double select. Alt+Up doesn't choose, and Left at the top level doesn't go back to the first page. The choices are kept when the list is refreshed or paged; a screen that changes the options keeps only the choices still shown (the explorer's `TagListModel.setTags`), so it never acts on a choice that can't be seen. Such a list on a form is drawn as a field (`selection-list--field`: a variant, so a modifier) and named by its form group's label, which names a `listbox` with `aria-labelledby` (its own text, every option's, isn't part of its name). `setMoveUpFromFirst` sends Up on the first option elsewhere, e.g. to a field above that filters the list. The explorer's Edit Tags and Remove Tags lists are such lists.
+
+Stories `App/Main/EditTagsDialog`: `KeysChooseAndAddTags`, `DeleteRemovesTags`, `FilteringDropsHiddenChoices`, `ManyKnownTags` and `RemoveByKeyboard`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-list.mjs`): Ctrl+click, Shift+click, Ctrl+A, Delete, Enter and a double click, done for real.
+
+Not yet done: it hasn't been tried with a screen reader; a key or click sent within a millisecond of a choice is lost, as the rows are redrawn and the cell table hands its events on in a deferred command (no person's hand is that quick, but a play must wait for the focus to come back between keys; the grid session's to change).
+
+## Code editor
+
+Stroom's code editor (`Editor`, in `EditorViewImpl` and `SingleLineEditorViewImpl`) is Ace, retrofitted rather than replaced: Ace's sources (`edu/ycp/cs/dh/acegwt`) change only with approval, so the editor uses what Ace 1.44 offers.
+
+- **Keyboard.** Ace's keyboard accessibility mode is on for every editor (`AceEditor.setKeyboardAccessibility`). An editor is one tab stop, its content (`role="group"`, `aria-roledescription` "editor"); Ace's text input isn't one. Enter on the content starts editing (the caret where it was, scrolled into view); while editing, Tab indents, as a code editor's should. Escape stops editing, back to the content, and Tab then moves on. A click goes straight into the text, as before. A read-only editor works the same way, Enter putting the caret in its text to move through it and select.
+- **The gutter.** The mode also makes the gutter a tab stop, with the arrow keys through its fold widgets and annotations; `Editor` puts it back as Ace makes it (no `tabindex`, `aria-hidden`), as agreed, so an editor is one tab stop and a thin splitter beside one keeps the room WCAG 2.5.8 asks for. Its errors and folds have Ace's keys while editing instead: Alt+E and Alt+Shift+E (F4 and Shift+F4 on a Mac) go to the next and previous annotation and show its message under its line; F2 folds or unfolds the line's element, Alt+L and Alt+Shift+L fold and unfold at the cursor.
+- **Escape.** The editor handles Escape first: Ace's popups (autocompletion, the search box) close on it, Vim keys leave insert or visual mode on it, and only then does it stop editing. Dialogs leave keys from Ace's text input to Ace (`AbstractPopupPanel` checks for `ace_text-input`), so in a dialog the first Escape stops editing and the next one, from the content, cancels the dialog, as Escape reaches an inner widget first everywhere else.
+- **Names.** Ace names the content ("Editor content, press Enter to start editing, press Escape to exit"), and labels its text input with the cursor's row, after Stroom's name for it ("Code editor, Cursor at row 3", through Ace's `textInputAriaLabel`). The text input is a `textbox`, `aria-readonly` when the editor is read only. Ace hides its drawn lines from screen readers (`aria-hidden`), which read the text through its input.
+- **Focus.** Ace's own ring (a box shadow in a fixed blue, on any focus) is replaced in `editor.css` by a 2px outline inside the content's edge, for keyboard focus only (`:focus-visible`), so it stays in forced colours. Its colour follows the editor's theme (`ace_dark`), not Stroom's, as a user can pair any editor theme with either Stroom theme: `--blue-800` on light editor themes (4.2:1 or more, measured on every theme's gutter), `--blue-300` on dark ones (4.9:1 or more).
+
+Stories `Widgets/Editors & Viewers/AceEditor` (`AceEditorStories`): `KeyboardWayOut` (the one tab stop, Enter, Tab indenting, Escape, Tab out and Shift+Tab back), `KeyboardErrorsAndFolds` (Alt+E and F2 while editing) and `KeyboardReadOnly`; `AceEditorFeatures` `VimKeys` (Escape out of insert mode, then out of editing); `App/Editors/QueryEditor` `ColumnFilterMenu` (Escape in a dialog's editor leaves the dialog open). Real input (`test-runner/lib/real-input/ace-editor.mjs`): real Tab, Enter and Escape through `KeyboardWayOut`, with the focus ring shown.
+
+Not yet done: it hasn't been tried with a screen reader; an annotation's message, shown by Alt+E inside the content, which Ace hides from screen readers, isn't read out (no worse than before, when the gutter couldn't be reached at all; a live region could say it); Ace's names are its own English strings; and Ace's search box, autocompletion popup and Stroom's editor context menu haven't been audited.
+
+## Date and time
+
+Every field for a moment in time is a `DateTimeBox` (`stroom.widget.datepicker.client`, styled by `date-time-box.css`): a text field for an ISO 8601 time with a calendar icon at its end. No value in Stroom is only a date, so there is no date-only box: GWT's `DateBox` and `DatePicker`, and Stroom's `MyDateBox` built on them, are deleted. A time of day is a `TimeBox`, which has the same look and keys.
+
+- **Opening.** Enter or Alt+Down in the field, or a click on the icon, opens the Set Date And Time dialog (`DateTimePopup`) on the field's time; it never opens on focus. The field is `aria-haspopup="dialog"`; the icon is a picture hidden from screen readers (see Icon boxes). OK puts the time chosen in the field, formatted in the user's time zone (`ClientTimeZone`), Cancel or Escape leaves it, and the focus goes back to the field.
+- **Expressions.** `setExpressionsAllowed(true)` (the expression term editor's dates, the query time range and a visualisation's date settings) allows any text, e.g. `now()-1d` or `day()`, which is never marked invalid; `getText()` and `setText()` read and write it. The dialog only edits a plain time, so it opens on now and replaces an expression. Such a box is typed in first, so Enter is its screen's (the term editor runs the query) and only Alt+Down or the icon opens the dialog.
+- **Width.** 17 of the field's font size (`--font-size-13`), 245px at the medium font size, so a whole ISO time with an offset (`2024-12-28T23:58:58.888+0530`, 241px) fits beside the calendar at every font size; the same in an expression term (where a narrow field is 175px). A screen's width (`w-100`, or a class of its own) still wins. A `TimeBox` (the `date-time-box--time` variant) is 200px.
+- **Format.** The field shows and takes ISO 8601, in the user's time zone (its offset, or `Z` for UTC), not the user's date and time format preference: that is a display format, some of whose choices drop the time (`yyyy-MM-dd`), the century (`dd/MM/yy`) or are ambiguous (`dd/MM` against `MM/dd`), the client has nothing to parse it, and expressions (`now()-1d`) are written in ISO. The dialog shows the date and time readably.
+- **Validity.** A box that doesn't allow expressions marks text that isn't a time invalid (`FieldValidity`) when it is left; `setOptional(true)` allows it to be empty.
+- **Its dialog.** A box makes its own dialog when first opened, shown on the app's event bus (`StaticEventBus`), unless given a provider (`setPopupProvider`, as the schedule screens do). The dialog's shortcuts (Today, Yesterday, Week Start; Now, Midnight, Midday) and each spinner's Reset are `LinkButton`s, at least 24px high (`date-time-view.css`).
+
+The calendar (`CustomDatePicker`, the block `calendar`, `calendar.css`) is its year and month rows (`DefaultMonthSelector`: a selection box and a Previous/Next toolbar each, `calendar__header`, `calendar__row`) above the month's days (`CalendarGrid`), a WAI-ARIA grid:
+
+- **Roles and names.** A `table` with `role="grid"`, named for the month it shows ("January 2024"); a header row of `columnheader`s (the short day name, its full name in `abbr`); each day a `gridcell` named by its full date in the browser's language ("Monday, 15 January 2024"). The chosen day is `aria-selected="true"`, today `aria-current="date"`; the days of the months before and after that fill the six weeks are `calendar__day--outside` (a modifier, as ARIA has no attribute for it). In a form group, the calendar is a `group` named by the label, as it has two form controls (Year and Month).
+- **Keys.** The grid is one tab stop, the focus on a day (a roving `tabindex`): the chosen day if it is in the month shown, else today if it is, else the same day of the month. Left and Right move a day, Up and Down a week, Home and End to the start and end of its week, Page Up and Page Down a month, Shift+Page Up and Shift+Page Down a year (keeping the day of the month, or the month's last day if it is shorter); moving to a day of another month shows that month. Moving doesn't choose: Enter, Space or a click chooses the day (a click on a day outside the month shows its month). The Year and Month toolbars change the month without choosing, moving the tab stop to the same day of the new month.
+- **Looks.** Each state comes from its ARIA attribute: the chosen day is filled in the selected row colour, today is bold with a border in it (the border alone is 2.6:1 dark and 1.3:1 light, so the bold is what shows it); a day's number is centred in its round fill (a table cell's content is at its top otherwise, `stroom.css`), hover the hovered row colour; keyboard focus is a 2px ring in `--focus-border` 1px outside the day, so it is against the page's colour on both sides (7.1:1 dark, 5.8:1 light; inside a chosen day's fill it would be 2.8:1 in the dark theme). In forced colours, the chosen day is `Highlight` and today's border and the focus outline `CanvasText`.
+
+A duration is a `DurationPicker` (`stroom.widget.customdatebox.client`, styled by `duration-picker.css`): its amount (a value spinner, `duration-picker__amount`, "Amount") beside its unit (a selection box, `duration-picker__unit`, "Unit"), which a form group names together as a `group`. Each part is as wide as its longest value needs (1000000, "Milliseconds"), in units of the fields' font size, and neither shrinks. Stories `Widgets/Date & Time/DurationPicker`: `InAFormGroup`, `KeysChangeTheAmount`, `LargestValuesFit`, `SetValueFiresWhenAsked`.
+
+Stories `Widgets/Date & Time/CalendarGrid` (`CalendarGridStories`): roles and names, the one tab stop, each key, crossing months, choosing with Enter, Space and a click, and the toolbars. Stories `Widgets/Date & Time/DateTimePicker` (`DateTimePickerStories`): opening with Enter and Alt+Down, choosing a day with the keys, the dialog's buttons, invalid text, expressions and disabled; `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, a date term's From and To. Real input (`test-runner/lib/real-input/date-time.mjs`): the grid's keys, its focus ring and Tab pressed for real, and Alt+Down and Escape on the box.
+
+Not yet done: it hasn't been tried with a screen reader; the dialogs' own markup (the Popups and Dialogs rows, session 3); the schedule box and time range selector (their own rows).
+
+## Overlays
+
+Dialogs, menus and help popups (session 3), each a popup shown by `PopupUtil.showPopup` (directly, or through `ShowPopupEvent` and `PopupManager`), which remembers where the focus was and puts it back on close (`CurrentFocus`).
+
+- **Escape.** A popup (`AbstractPopupPanel`) previews every key, but Escape pressed inside it isn't handled there: it goes to the widget with the focus first, which uses it if it has something to undo or close (a quick filter with text clears, a date box's picker closes, a tree puts back a move, a grid's list closes its popup, a chart's tooltip goes) and calls `preventDefault()`. The popup's own keydown handler then closes it (through its Close or Cancel button, so a disabled one keeps it open) only if no widget did, and stops it there, so the page behind (whose key handler stops a dashboard's query on Escape) never sees it. Escape with the focus outside every popup closes the top one, as before. A widget in a popup that handles Escape must call `preventDefault()` only when it used it; `AbstractSelectionEventManager.onClose` returns whether it did. Escape in Ace is Ace's (session 6). Stories `Widgets/Dialogs/Escape`.
+- **Modal or not.** A dialog is modal (`ShowPopupEvent.Builder.modal()`: glass over the page, `aria-modal`, the focus kept in it by `DialogFocusTrap`) when what it does must not change under it: a picker whose value goes back into a field; a confirmation, or an action on the page's selection or filter; create, copy, move, rename, import and upload; accounts, credentials and permissions; alerts. The rest aren't, so the page behind can be read, and text copied from it, while the dialog is open (an editor of an item in a list, a filter or property whose value comes from the page). A dialog that isn't modal must cope with its subject changing behind it: on OK, apply to the item as it is now (found by its id), and say if it was removed rather than throw (`AlertEvent.fireWarn`).
+- **Dialogs.** `Dialog` and `ResizableDialog` are the block `dialog` (`dialog.css`; `dialog--resizable`), named by their title (`aria-labelledby`); an alert or confirmation is an `alertdialog`, and any dialog can be described by a message in it (`PopupUtil.setDialogDescription`, as Advanced Query's is). Elements: `__container`, `__frame` (border, shadow and background, behind the rest), `__layout`, `__title-bar` holding `__icon`, `__title` and `__spinner`, `__body` holding the content template's `__content` and `__buttons` (`--end` for OK and Cancel, `--start` with a `__button-group` at the end), and `__resize--n` to `--sw`.
+- **Menus.** The block `menu` (`menu.css`) on the menu's table (`role="menu"`), whose rows' focusable elements are `menuitem` or `menuitemcheckbox`, with `aria-disabled` (which gives the disabled look), and `aria-haspopup` and `aria-expanded` on an item with a sub menu. Up, Down, Home, End, Page Up and Page Down move; Right or Enter opens a sub menu, Left or Escape closes it and goes back to its parent item; Escape in the root menu closes the menu; Enter or Space chooses. A button that opens a menu is marked (`ToolbarButton.setOpensMenu` or `MenuOpener.mark`: `aria-haspopup="menu"`) and passed as the menu's opener (`ShowMenuEvent.Builder.opener`), which keeps its `aria-expanded` up to date. Look: each item draws its own look with rounded corners (5px), not the table's row; the highlighted item (the one the keyboard or mouse is on) is filled, and the mouse over it changes nothing more; keyboard focus is the focus border and ring used elsewhere (`0 0 0 1px --focus-border, 0 0 0 5px --focus-ring__color`), shown only while the keyboard is in use (`menu--keyboard`, set from `InputModality` when the menu opens, on a key press in it, and cleared by the mouse moving or pressing in it), as the menu moves the focus itself as the mouse moves, so the browser's `:focus-visible` can't tell; the menu's viewport (`menu__viewport`) has 5px of room for the ring, the popup no padding of its own. A disabled item greys its content, not its highlight or ring. Stories `Widgets/Menu/MenuPanel`, `PopupContract`'s `EscapeClosesOneLevelAtATime`.
+- **Popups.** `SimplePopup` (`PopupType.POPUP`: a menu, a chooser, a filter's list, a tooltip) is the block `popup` (`popup.css`), its look (border, shadow, background, a 4px inset) on the popup itself, with its content in GWT's `popupContent`; `popup--floating` marks a popup panel of its own, hidden until `PopupUtil` has placed it. `SimplePopupLayout` gives another popup panel the same look (one element). A popup's caption isn't shown: it names the popup, making it a dialog that isn't modal; a popup with none has no role (a menu's content has its own).
+- **Help popups.** `HelpPopup` (`stroom.widget.help.client`, `help-popup.css`) shows help beside the button that opens it: a form group's (through `ShowHelpEvent` and `HelpManager`, as markdown, `help-popup--markdown`), the floor map's, and a quick filter's syntax help. It is a dialog that isn't modal, named for what it helps with, and doesn't take the focus; Escape, a click outside it or its button again closes it. Its button is marked (`HelpPopup.markOpener`: `aria-haspopup="dialog"`, `aria-expanded`) and passed to it (`setOpener`).
+
+Not yet done: menus have no type-ahead (letters move the highlight, as `KeyBinding`'s movement keys); a dialog's content is seven elements in (GWT's `popupContent` and the content template's wrapper among them); none of it has been tried with a screen reader.
 
 ## CSS for new widgets
 

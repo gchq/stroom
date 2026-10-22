@@ -372,9 +372,16 @@ public class PropertyListPresenter
                     inheritedValue,
                     inheritedFrom);
 
+            // The dialog isn't modal, so another element can be chosen, or this one removed, while
+            // it is open
+            final PipelineElement element = currentElement;
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
-                    if (editor.isDirty()) {
+                    if (editor.isDirty() && !pipelineModel.hasElement(element)) {
+                        AlertEvent.fireWarn(this, "'" + element.getId() + "' was removed from the pipeline "
+                                                  + "while its property was being edited, so the change "
+                                                  + "can't be kept.", null);
+                    } else if (editor.isDirty()) {
 
                         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
 
@@ -404,7 +411,7 @@ public class PropertyListPresenter
                                 final String docType = pipelinePropertyType.getDocRefTypes()[0];
                                 final DocRef parentDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
                                 final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
-                                                                    currentElement.getId() + ")";
+                                                                    element.getId() + ")";
 
                                 final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
                                         Document.class);
@@ -449,7 +456,6 @@ public class PropertyListPresenter
                     .caption("Edit Property")
                     .onShow(e -> editor.getView().focus())
                     .onHideRequest(handler)
-                    .modal(true)
                     .fire();
         }
     }

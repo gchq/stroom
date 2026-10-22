@@ -27,8 +27,13 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.sqlstore.api.UpdatableTemporalStore;
 import stroom.sqlstore.impl.UpdatableTemporalStoreProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TemporalEntry;
 
 import jakarta.inject.Inject;
@@ -38,6 +43,8 @@ import java.util.Map;
 
 @PipelineScoped
 public class SqlStoreLookupImpl implements SqlStoreLookup {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlStoreLookupImpl.class);
 
     private final UpdatableTemporalStoreProvider storeProvider;
 
@@ -100,8 +107,22 @@ public class SqlStoreLookupImpl implements SqlStoreLookup {
                             entry.getKey(), entry.getValue(), mapDefinition));
                 }
             }
-        } catch (final Exception e) {
-            // Ignore lookup exceptions during pipelining (similar to other lookup providers)
+        } catch (final PermissionException | IllegalArgumentException | IllegalStateException e) {
+            // Our own messages: no visible store of that name, or more than one. Reported rather than
+            // swallowed, or a misconfigured store is indistinguishable from "key not found".
+            LOGGER.debug(() -> LogUtil.message("SQL store lookup failed for map '{}', key '{}': {}",
+                    mapName, key, e.getMessage()), e);
+            result.logSimpleTemplate(Severity.ERROR,
+                    "SQL store lookup failed for map '{}', key '{}': {}",
+                    mapName, key, e.getMessage());
+        } catch (final RuntimeException e) {
+            // Anything else - a database outage, say - may carry detail that belongs in the server
+            // log rather than in the pipeline's output.
+            LOGGER.error(() -> LogUtil.message("SQL store lookup failed for map '{}', key '{}': {}",
+                    mapName, key, e.getMessage()), e);
+            result.logSimpleTemplate(Severity.ERROR,
+                    "SQL store lookup failed for map '{}', key '{}'. See the server log for details.",
+                    mapName, key);
         }
     }
 }

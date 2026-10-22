@@ -15,9 +15,12 @@
  */
 
 /*
-   Radio buttons (GWT's RadioButton, one of the raw GWT controls still to be replaced by a radio
-   group). Not BEM yet: they keep GWT's gwt-RadioButton classes until then. Moved here from
-   stroom.css so every input's looks are in its own stylesheet.
+   Radio buttons. Every radio input looks like this, including those in the forms an activity's
+   HTML describes, which have no classes of their own.
+
+   A radio group (stroom.widget.form.client.RadioGroup), named BEM style: the block radio-group
+   (role="radiogroup"), its options (radio-group__option, a label), each holding its radio button
+   (radio-group__input) and its text (radio-group__label).
 */
 
 input[type="radio"] {
@@ -36,8 +39,8 @@ input[type="radio"] {
 }
 
 input[type="radio"]:checked {
-    border-color: #2196F3;
-    background: radial-gradient(circle, white 0 3.5px, #2196F3 4px);
+    border-color: var(--blue-500);
+    background: radial-gradient(circle, white 0 3.5px, var(--blue-500) 4px);
 }
 
 input[type="radio"]:focus-visible {
@@ -57,18 +60,28 @@ input[type="radio"]:disabled:checked {
                 var(--control__background-color--disabled);
 }
 
-.gwt-RadioButton {
+/* The options in a row */
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+}
+
+/* An option: its radio button and its text, both of which choose it */
+.radio-group__option {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    margin: 0;
+    cursor: pointer;
 }
 
-.gwt-RadioButton label {
-    cursor: pointer;
+.radio-group__label {
     font-weight: normal;
 }
 
-.gwt-RadioButton-disabled label {
+.radio-group__option:has(.radio-group__input:disabled) {
     color: var(--control__text-color--disabled);
     cursor: default;
 }

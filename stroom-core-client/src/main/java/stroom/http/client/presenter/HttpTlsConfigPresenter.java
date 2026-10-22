@@ -54,14 +54,14 @@ public class HttpTlsConfigPresenter
         final CredentialListModel keyStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         keyStoreListModel.setTaskMonitorFactory(this);
         view.getKeyStoreSelectionBox().setModel(keyStoreListModel);
 
         final CredentialListModel trustStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         trustStoreListModel.setTaskMonitorFactory(this);
         view.getTrustStoreSelectionBox().setModel(trustStoreListModel);
     }
@@ -74,6 +74,7 @@ public class HttpTlsConfigPresenter
 //        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
 //                .popupSize(PopupSize.)
                 .caption("Edit HTTP TLS Configuration")
                 .onShow(e -> getView().focus())

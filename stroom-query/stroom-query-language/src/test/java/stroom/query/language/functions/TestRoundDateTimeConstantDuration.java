@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * with no error anywhere. A silent wrong answer is the kind of regression a test has to hold down,
  * because nothing else will notice it.</p>
  *
- * <p>See {@code AbstractRoundDateTime.constantString} for the fix and why it is marked local.</p>
+ * <p>See {@code AbstractRoundDateTime.constantString} for the fix.</p>
  */
 class TestRoundDateTimeConstantDuration {
 

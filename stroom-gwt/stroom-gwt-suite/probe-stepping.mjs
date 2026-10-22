@@ -36,7 +36,7 @@ await page.locator('button[title="Expand All Folders"]').first().click({ timeout
 await page.waitForTimeout(3000);
 const firstOf = (type) => page.evaluate((t) => { const c = [...document.querySelectorAll('.explorerCell')].find((e) => e.offsetWidth > 0 && e.querySelector('.explorerCell-icon')?.getAttribute('title') === t); return c?.textContent.trim(); }, type);
 const buttons = () => page.evaluate(() => [...document.querySelectorAll('button, .Button, [role=button]')].filter((b) => b.offsetWidth > 0).map((b) => (b.getAttribute('title') || b.textContent.trim()).slice(0, 30) + (b.disabled ? '(d)' : '')));
-const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0).map((e) => ({ caption: e.querySelector('.dialog-titleText')?.textContent.trim(), text: e.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) })));
+const dialogs = () => page.evaluate(() => [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0).map((e) => ({ caption: e.querySelector('.dialog__title')?.textContent.trim(), text: e.textContent.replace(/\s+/g, ' ').trim().slice(0, 300) })));
 const name = await firstOf('Pipeline');
 console.log('pipeline:', name);
 await gwt.openDocByName(page, name, 'Pipeline');
@@ -75,7 +75,7 @@ console.log('after refresh — dialogs:', JSON.stringify(await dialogs()));
 console.log('api:', JSON.stringify(api, null, 1));
 await closeDialogs(page);
 // select the xslt element in the stepping tree
-const box = await page.evaluate(() => { const boxes = [...document.querySelectorAll('.pipelineElementBox-label')].filter((e) => e.offsetWidth > 0); const el = boxes.find((e) => /xslt/i.test(e.textContent)); if (!el) return { n: boxes.length, labels: boxes.map((b) => b.textContent) }; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, labels: boxes.map((b) => b.textContent) }; });
+const box = await page.evaluate(() => { const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0); const el = boxes.find((e) => /xslt/i.test(e.textContent)); if (!el) return { n: boxes.length, labels: boxes.map((b) => b.textContent) }; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, labels: boxes.map((b) => b.textContent) }; });
 console.log('tree:', JSON.stringify(box));
 if (box.x) { await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(2500); }
 console.log('after select — dialogs:', JSON.stringify(await dialogs()));

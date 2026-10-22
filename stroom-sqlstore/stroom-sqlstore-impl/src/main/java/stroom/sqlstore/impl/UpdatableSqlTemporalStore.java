@@ -44,6 +44,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.sqlstore.api.TemporalEntryValidator;
 import stroom.sqlstore.api.UpdatableTemporalStore;
 import stroom.sqlstore.shared.ApplyChangesRequest;
 import stroom.sqlstore.shared.ApplyChangesResult;
@@ -52,8 +53,13 @@ import stroom.sqlstore.shared.FetchAtTimeRequest;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.sqlstore.shared.TemporalStoreTimeRange;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
+import stroom.task.api.TaskTerminatedException;
+import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TemporalEntry;
@@ -70,6 +76,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
 public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
@@ -89,6 +96,7 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
     private final ResultStoreFactory resultStoreFactory;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final TaskManager taskManager;
     private final SecurityContext securityContext;
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
@@ -100,6 +108,7 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
                                      final ResultStoreFactory resultStoreFactory,
                                      final Executor executor,
                                      final TaskContextFactory taskContextFactory,
+                                     final TaskManager taskManager,
                                      final SecurityContext securityContext,
                                      final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.dao = dao;
@@ -109,30 +118,53 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
         this.resultStoreFactory = resultStoreFactory;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
+        this.taskManager = taskManager;
         this.securityContext = securityContext;
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
     @Override
     public TemporalEntry create(final TemporalEntry entry) {
-        final String docUuid = resolveStore(entry.getMap(), DocumentPermission.EDIT).getUuid();
         return eventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "create"))
                 .withDescription("Create temporal entry")
                 .withDefaultEventAction(event.logging.CreateEventAction.builder()
-                        .addObject(entryAsLoggedObject(entry.getMap(), entry.getKey(),
-                                entry.getEffectiveTimeMs()))
+                        .addObject(entryAsLoggedObject(entry))
                         .build())
-                .withSimpleLoggedResult(() -> {
-                    validateKey(entry.getKey());
-                    return dao.create(docUuid, entry);
-                })
+                .withSimpleLoggedResult(() -> write(entry))
                 .getResultAndLog();
     }
 
+    /// Writes an entry, as [#create] does, but audits it as an update.
+    ///
+    /// The store keeps one value per key and effective time, so creating and updating are the same
+    /// write; only the audit event says which the caller asked for.
+    ///
+    /// @param entry The entry to write.
+    /// @return The entry written.
     @Override
     public TemporalEntry update(final TemporalEntry entry) {
-        return create(entry);
+        return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
+                .withDescription("Update temporal entry")
+                .withDefaultEventAction(event.logging.UpdateEventAction.builder()
+                        .withAfter()
+                        .addObjects(entryAsLoggedObject(entry))
+                        .end()
+                        .build())
+                .withSimpleLoggedResult(() -> write(entry))
+                .getResultAndLog();
+    }
+
+    // Everything that can fail - including a missing entry - happens here, inside the logged work, so
+    // that every failed attempt is audited rather than escaping before anything is logged.
+    private TemporalEntry write(final TemporalEntry entry) {
+        if (entry == null) {
+            throw new IllegalArgumentException("Entry must not be null.");
+        }
+        final String docUuid = resolveStore(entry.getMap(), DocumentPermission.EDIT).getUuid();
+        throwIfInvalid(TemporalEntryValidator.entryProblem(entry));
+        return dao.create(docUuid, entry);
     }
 
     @Override
@@ -142,15 +174,22 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
 
     @Override
     public boolean delete(final TemporalEntryId id) {
-        final String docUuid = resolveStore(id.getMap(), DocumentPermission.DELETE).getUuid();
         return eventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "delete"))
                 .withDescription("Delete temporal entry")
                 .withDefaultEventAction(event.logging.DeleteEventAction.builder()
-                        .addObject(entryAsLoggedObject(id.getMap(), id.getKey(),
-                                id.getEffectiveTimeMs()))
+                        .addObject(id == null
+                                ? entryAsLoggedObject(null, null, null)
+                                : entryAsLoggedObject(id.getMap(), id.getKey(), id.getEffectiveTimeMs()))
                         .build())
-                .withSimpleLoggedResult(() -> dao.delete(docUuid, id))
+                .withSimpleLoggedResult(() -> {
+                    // Checked inside the logged work so that the failed attempt is audited.
+                    if (id == null) {
+                        throw new IllegalArgumentException("Entry id must not be null.");
+                    }
+                    final String docUuid = resolveStore(id.getMap(), DocumentPermission.DELETE).getUuid();
+                    return dao.delete(docUuid, id);
+                })
                 .getResultAndLog();
     }
 
@@ -176,23 +215,46 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
         return dao.find(docUuid, criteria);
     }
 
+    /// Deletes every entry in a store.
+    ///
+    /// Requires `DELETE` permission on the store, as deleting a single entry does: clearing is the
+    /// larger deletion, so it cannot need less.
+    ///
+    /// The audit event names the store by the name it really has, looked up on the server, never the
+    /// name in the caller's [DocRef]. The lookup is done as the processing user, so that a caller who
+    /// may not even see the store is still audited against its real name. The name is only written to
+    /// the audit log; it is never returned to the caller.
+    ///
+    /// @param docRef The store to clear.
     @Override
     public void clear(final DocRef docRef) {
-        checkPermission(docRef, DocumentPermission.EDIT);
-        final String mapName = docRef.getName();
+        final String docUuid = NullSafe.get(docRef, DocRef::getUuid);
+        final String storeName = docUuid == null
+                ? null
+                : securityContext.asProcessingUserResult(() -> sqlStoreDocStore.list().stream()
+                        .filter(dr -> docUuid.equals(dr.getUuid()))
+                        .map(DocRef::getName)
+                        .findFirst()
+                        .orElse(null));
         eventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "clear"))
-                .withDescription("Clear temporal store: " + mapName)
+                .withDescription("Clear temporal store " + docUuid
+                                 + (storeName == null ? "" : " (" + storeName + ")"))
                 .withDefaultEventAction(event.logging.DeleteEventAction.builder()
                         // The whole map is the subject here, not a single entry.
                         .addObject(event.logging.OtherObject.builder()
                                 .withType(LOGGED_MAP_TYPE)
-                                .withId(mapName)
-                                .withName(mapName)
+                                .withId(docUuid)
+                                .withName(storeName)
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> {
-                    dao.clear(docRef.getUuid());
+                    // Checked inside the logged work so that the failed attempt is audited.
+                    if (docUuid == null) {
+                        throw new IllegalArgumentException("Store DocRef must not be null.");
+                    }
+                    checkPermission(docRef, DocumentPermission.DELETE);
+                    dao.clear(docUuid);
                     return null;
                 })
                 .getResultAndLog();
@@ -213,15 +275,21 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
      * @param effectiveTimeMs the entry's effective time
      * @return the object to attach to the event action
      */
-    private static event.logging.OtherObject entryAsLoggedObject(final String mapName,
-                                                                 final String key,
-                                                                 final Long effectiveTimeMs) {
+    static event.logging.OtherObject entryAsLoggedObject(final String mapName,
+                                                         final String key,
+                                                         final Long effectiveTimeMs) {
         return event.logging.OtherObject.builder()
                 .withType(LOGGED_ENTRY_TYPE)
                 .withId(key)
                 .withName(mapName + "/" + key)
                 .withDescription("Effective time " + effectiveTimeMs)
                 .build();
+    }
+
+    private static event.logging.OtherObject entryAsLoggedObject(final TemporalEntry entry) {
+        return entry == null
+                ? entryAsLoggedObject(null, null, null)
+                : entryAsLoggedObject(entry.getMap(), entry.getKey(), entry.getEffectiveTimeMs());
     }
 
     /**
@@ -248,9 +316,9 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
 
         // Build criteria that trigger the DAO's temporal-deduplication subquery path.
         // The Map = mapName term scopes the query to the correct store.
-        // The EffectiveTime <= timeTo term is detected by getQueryTime() in the DAO,
-        // which switches from a plain SELECT to the correlated MAX(effective_time) subquery,
-        // returning one row per key rather than all historical versions.
+        // The EffectiveTime <= timeTo term is taken by the DAO as the snapshot instant, which
+        // switches from a plain SELECT to the grouped MAX(effective_time) subquery, returning one
+        // row per key rather than all historical versions.
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder()
                         .field(UpdatableTemporalStore.MAP_FIELD.getFldName())
@@ -264,15 +332,19 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
                         .build())
                 .build();
 
-        // No page limit — we want all keys for the map.
+        // Unpaged - we want all keys for the map, up to the DAO's unpaged limit, beyond which it fails
+        // rather than return a partial list.
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<TemporalEntry> page = dao.find(docUuid, criteria);
 
         // Sort by key for a predictable, user-friendly order. No per-row permission filter is
         // needed - the query was scoped to the single store authorised above.
+        // Keys are case-sensitive, so "Room1" and "room1" are different keys; the second comparator
+        // keeps their order stable rather than leaving it to the database.
         return page.getValues().stream()
                 .sorted(Comparator.comparing(TemporalEntry::getKey,
-                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER
+                                .thenComparing(Comparator.naturalOrder()))))
                 .toList();
     }
 
@@ -322,12 +394,16 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
      *
      * <p>Validates the request, asserts that all operations target the same map
      * (cross-map batches are rejected outright), checks {@code EDIT} permission
-     * on that map, then delegates to {@link UpdatableTemporalStoreDao#applyChanges}
+     * on that map - or {@code DELETE} if the batch contains a delete, matching
+     * {@link #delete} - then delegates to {@link UpdatableTemporalStoreDao#applyChanges}
      * which wraps all operations in a single JOOQ transaction.</p>
      *
-     * <p>Any exception thrown by the DAO is caught and converted into an
+     * <p>Any exception thrown is caught and converted into an
      * {@link ApplyChangesResult} with {@code success = false} so that the REST
-     * layer always receives a well-formed response rather than an HTTP 500.</p>
+     * layer always receives a well-formed response rather than an HTTP 500.
+     * Validation and permission failures carry their own message; anything else
+     * is logged here and reported with a generic message, so database detail
+     * such as SQL text never reaches the client.</p>
      *
      * @param request the ordered list of operations; must not be {@code null}
      * @return result indicating success or failure; never {@code null}
@@ -338,9 +414,10 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
             return new ApplyChangesResult(false, "Request must not be null.");
         }
 
-        // Extract the map name from every operation and verify they all agree.
-        // A batch that spans multiple maps is rejected before any DB work is done.
+        // Extract the map name from every operation and verify they all agree, and validate each
+        // operation, so a batch that is bad anywhere is rejected before any DB work is done.
         String mapName = null;
+        boolean containsDelete = false;
         for (int i = 0; i < request.getOperations().size(); i++) {
             final ChangeOperation op = request.getOperations().get(i);
             if (op == null) {
@@ -363,26 +440,90 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
                         + "Expected '" + mapName + "' but operation at index " + i
                         + " targets '" + opMap + "'.");
             }
+            final String invalidReason = validateOperation(op);
+            if (invalidReason != null) {
+                return new ApplyChangesResult(false,
+                        "Operation at index " + i + " is invalid: " + invalidReason);
+            }
+            containsDelete |= op.getType() == ChangeOperation.Type.DELETE;
         }
 
         if (mapName == null) {
             return new ApplyChangesResult(false,
                     "Could not determine map name: the operations list is empty or contains only nulls.");
         }
+        final String finalMapName = mapName;
         try {
-            final String docUuid = resolveStore(mapName, DocumentPermission.EDIT).getUuid();
+            final String docUuid = resolveStoreForChanges(mapName, containsDelete).getUuid();
             dao.applyChanges(docUuid, request.getOperations());
             return new ApplyChangesResult(true, null);
-        } catch (final Exception e) {
-            LOGGER.error("applyChanges failed for map '{}': {}", mapName, e.getMessage(), e);
+        } catch (final PermissionException | IllegalArgumentException | IllegalStateException e) {
+            // Our own messages - which store, which permission, which operation - written for the user.
+            LOGGER.debug(() -> LogUtil.message("applyChanges rejected for map '{}': {}",
+                    finalMapName, e.getMessage()), e);
             return new ApplyChangesResult(false, e.getMessage());
+        } catch (final Exception e) {
+            LOGGER.error(() -> LogUtil.message("applyChanges failed for map '{}': {}",
+                    finalMapName, e.getMessage()), e);
+            return new ApplyChangesResult(false,
+                    "Failed to apply changes to temporal store '" + mapName
+                    + "'. No changes were saved. See the server log for details.");
+        }
+    }
+
+    /// Resolves the store a batch of changes targets, requiring `EDIT` permission, or `DELETE` if the
+    /// batch contains a delete - the permission [#delete] requires on its own.
+    ///
+    /// A caller who may edit the store but not delete from it is told that, rather than that the
+    /// store is not available: they can already see the store, so saying so discloses nothing.
+    private DocRef resolveStoreForChanges(final String mapName, final boolean containsDelete) {
+        if (!containsDelete) {
+            return resolveStore(mapName, DocumentPermission.EDIT);
+        }
+        try {
+            return resolveStore(mapName, DocumentPermission.DELETE);
+        } catch (final PermissionException e) {
+            final boolean mayEdit = sqlStoreDocStore.list().stream()
+                    .filter(dr -> mapName.equalsIgnoreCase(dr.getName()))
+                    .anyMatch(dr -> securityContext.hasDocumentPermission(dr, DocumentPermission.EDIT));
+            if (!mayEdit) {
+                throw e;
+            }
+            throw new PermissionException(securityContext.getUserRef(),
+                    "Deleting entries from temporal store '" + mapName
+                    + "' requires DELETE permission on it, which you do not have.");
+        }
+    }
+
+    // Checks one operation of an applyChanges batch against the rules every write path shares - see
+    // TemporalEntryValidator. Returns why the operation is invalid, or null if it is valid.
+    private static String validateOperation(final ChangeOperation op) {
+        if (op.getType() == null) {
+            return "it has no type.";
+        }
+        if (op.getType() == ChangeOperation.Type.UPSERT) {
+            return op.getEntry() == null
+                    ? "an upsert must have an entry."
+                    : TemporalEntryValidator.entryProblem(op.getEntry());
+        }
+        return op.getId() == null
+                ? "a delete must have an id."
+                : TemporalEntryValidator.idProblem(op.getId());
+    }
+
+    private static void throwIfInvalid(final String problem) {
+        if (problem != null) {
+            throw new IllegalArgumentException("Invalid temporal entry: " + problem);
         }
     }
 
     private void checkPermission(final DocRef docRef, final DocumentPermission permission) {
         if (!securityContext.hasDocumentPermission(docRef, permission)) {
+            // Named by UUID, the only part of the caller's DocRef that was checked: its name is
+            // whatever the caller sent, and may not be the store's.
             throw new PermissionException(securityContext.getUserRef(),
-                    "User does not have " + permission + " permission on store " + docRef.getName());
+                    "User does not have " + permission + " permission on temporal store "
+                    + docRef.getUuid());
         }
     }
 
@@ -524,26 +665,6 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
 
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
 
-        final SearchProcess searchProcess = new SearchProcess() {
-            @Override
-            public SearchTaskProgress getSearchTaskProgress() {
-                return new SearchTaskProgress(
-                        searchName,
-                        "Searching...",
-                        securityContext.getUserRef(),
-                        Thread.currentThread().getName(),
-                        "node", // Generic node name for now
-                        System.currentTimeMillis(),
-                        System.currentTimeMillis());
-            }
-
-            @Override
-            public void onTerminate() {
-            }
-        };
-
-        resultStore.setSearchProcess(searchProcess);
-
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         if (query.getExpression() != null) {
             builder.addOperator(query.getExpression());
@@ -555,41 +676,60 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
 
         final ExpressionCriteria criteria = new ExpressionCriteria(builder.build());
 
-        //noinspection unused taskContext
         final Runnable runnable = taskContextFactory.context(searchName, taskContext -> {
-            try {
-                // The value column is a longtext; only read it if a coprocessor actually wants it.
-                // The timeline histogram asks for times alone, so this keeps every row's payload
-                // out of the result set for it.
-                final boolean includeValue = fieldIndexWants(
-                        coprocessors, UpdatableTemporalStore.VALUE_FIELD.getFldName());
+            // Set if the search is terminated, so the read is skipped if termination was requested
+            // before the task got the chance to start, and stopped part-way if it was requested after.
+            final AtomicBoolean destroyed = new AtomicBoolean();
 
-                dao.search(docRef.getUuid(), criteria, includeValue, entry -> {
-                    final Map<String, Object> attributeMap = new HashMap<>();
-                    attributeMap.put(UpdatableTemporalStore.MAP_FIELD.getFldName(), entry.getMap());
-                    attributeMap.put(UpdatableTemporalStore.KEY_FIELD.getFldName(), entry.getKey());
-                    attributeMap.put(UpdatableTemporalStore.TIME_FIELD.getFldName(), entry.getEffectiveTimeMs());
-                    attributeMap.put(UpdatableTemporalStore.VALUE_FIELD.getFldName(), entry.getValue());
-
-                    final String[] fields = coprocessors.getFieldIndex().getFields();
-                    final Val[] arr = new Val[fields.length];
-                    for (int i = 0; i < fields.length; i++) {
-                        final String fieldName = fields[i];
-                        Val val = ValNull.INSTANCE;
-                        if (fieldName != null) {
-                            final Object o = attributeMap.get(fieldName);
-                            if (o != null) {
-                                if (UpdatableTemporalStore.TIME_FIELD.getFldName().equals(fieldName)) {
-                                    val = ValDate.create((Long) o);
-                                } else {
-                                    val = ValString.create(String.valueOf(o));
-                                }
-                            }
-                        }
-                        arr[i] = val;
+            // Links the result store to this task, so it can report the task's progress and
+            // terminate the task when the search is cancelled or the result store destroyed.
+            final SearchProcess searchProcess = new SearchProcess() {
+                @Override
+                public SearchTaskProgress getSearchTaskProgress() {
+                    final TaskProgress taskProgress = taskManager.getTaskProgress(taskContext);
+                    if (taskProgress != null) {
+                        return new SearchTaskProgress(
+                                taskProgress.getTaskName(),
+                                taskProgress.getTaskInfo(),
+                                taskProgress.getUserRef(),
+                                taskProgress.getThreadName(),
+                                taskProgress.getNodeName(),
+                                taskProgress.getSubmitTimeMs(),
+                                taskProgress.getTimeNowMs());
                     }
-                    coprocessors.accept(arr);
-                });
+                    return null;
+                }
+
+                @Override
+                public void onTerminate() {
+                    destroyed.set(true);
+                    taskManager.terminate(taskContext.getTaskId());
+                }
+            };
+
+            // If the result store has already been terminated, this immediately calls
+            // onTerminate(), setting `destroyed`, so the read below is skipped.
+            resultStore.setSearchProcess(searchProcess);
+
+            try {
+                if (!destroyed.get()) {
+                    // The value column is a longtext; only read it if a coprocessor actually wants it.
+                    // The timeline histogram asks for times alone, so this keeps every row's payload
+                    // out of the result set for it.
+                    final boolean includeValue = fieldIndexWants(
+                            coprocessors, UpdatableTemporalStore.VALUE_FIELD.getFldName());
+
+                    dao.search(docRef.getUuid(), criteria, includeValue, entry -> {
+                        // Throwing stops the database read, which streams from a cursor.
+                        if (destroyed.get()) {
+                            throw new TaskTerminatedException();
+                        }
+                        taskContext.checkTermination();
+                        coprocessors.accept(toValues(coprocessors, entry));
+                    });
+                }
+            } catch (final TaskTerminatedException e) {
+                LOGGER.debug("SQL temporal store search terminated: {}", searchName);
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> "Error running SQL temporal store search: " + e.getMessage(), e);
                 resultStore.addError(e);
@@ -609,6 +749,34 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
         return dao.count(docRef.getUuid());
     }
 
+    /** Converts an entry to the values the search's coprocessors expect, in field-index order. */
+    private static Val[] toValues(final CoprocessorsImpl coprocessors, final TemporalEntry entry) {
+        final Map<String, Object> attributeMap = new HashMap<>();
+        attributeMap.put(UpdatableTemporalStore.MAP_FIELD.getFldName(), entry.getMap());
+        attributeMap.put(UpdatableTemporalStore.KEY_FIELD.getFldName(), entry.getKey());
+        attributeMap.put(UpdatableTemporalStore.TIME_FIELD.getFldName(), entry.getEffectiveTimeMs());
+        attributeMap.put(UpdatableTemporalStore.VALUE_FIELD.getFldName(), entry.getValue());
+
+        final String[] fields = coprocessors.getFieldIndex().getFields();
+        final Val[] arr = new Val[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            final String fieldName = fields[i];
+            Val val = ValNull.INSTANCE;
+            if (fieldName != null) {
+                final Object o = attributeMap.get(fieldName);
+                if (o != null) {
+                    if (UpdatableTemporalStore.TIME_FIELD.getFldName().equals(fieldName)) {
+                        val = ValDate.create((Long) o);
+                    } else {
+                        val = ValString.create(String.valueOf(o));
+                    }
+                }
+            }
+            arr[i] = val;
+        }
+        return arr;
+    }
+
     /** Whether the search's coprocessors reference the named field at all. */
     private static boolean fieldIndexWants(final CoprocessorsImpl coprocessors, final String fieldName) {
         for (final String field : coprocessors.getFieldIndex().getFields()) {
@@ -617,11 +785,5 @@ public class UpdatableSqlTemporalStore implements UpdatableTemporalStore {
             }
         }
         return false;
-    }
-
-    private void validateKey(final String key) {
-        if (key != null && key.length() > 255) {
-            throw new IllegalArgumentException("Key length exceeds 255 characters: " + key);
-        }
     }
 }

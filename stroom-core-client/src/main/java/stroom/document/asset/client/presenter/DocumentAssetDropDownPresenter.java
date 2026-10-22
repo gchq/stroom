@@ -46,9 +46,9 @@ public class DocumentAssetDropDownPresenter extends MyPresenterWidget<DropDownVi
     public void setSelectedAssetPath(final String selectedAssetPath) {
         this.selectedAssetPath = selectedAssetPath;
         if (selectedAssetPath == null || selectedAssetPath.isEmpty()) {
-            getView().setText("None", false);
+            getView().setText("None");
         } else {
-            getView().setText(selectedAssetPath, false);
+            getView().setText(selectedAssetPath);
         }
     }
 

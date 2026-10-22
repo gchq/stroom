@@ -41,6 +41,7 @@ public class TimePopup extends MyPresenterWidget<TimeView> {
     public void show(final Consumer<Time> consumer) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Set Time")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

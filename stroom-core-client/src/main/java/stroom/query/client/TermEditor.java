@@ -35,11 +35,12 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -66,15 +67,17 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
+    // The row of its fields
+    private final FlowPanel inner;
     private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
     private final SuggestBox valueFrom;
     private final SuggestBox valueTo;
-    private final MyDateBox date;
-    private final MyDateBox dateFrom;
-    private final MyDateBox dateTo;
+    private final DateTimeBox date;
+    private final DateTimeBox dateFrom;
+    private final DateTimeBox dateTo;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
@@ -142,7 +145,7 @@ public class TermEditor extends Composite {
 
         fieldTypeLabel = createFieldTypeLabel();
 
-        final FlowPanel inner = new FlowPanel();
+        inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");
         inner.add(fieldListBox);
         inner.add(conditionListBox);
@@ -163,12 +166,6 @@ public class TermEditor extends Composite {
         layout.setStyleName("termEditor-outer");
 
         initWidget(layout);
-    }
-
-    public void setUtc(final boolean utc) {
-        date.setUtc(utc);
-        dateFrom.setUtc(utc);
-        dateTo.setUtc(utc);
     }
 
     public void init(final RestFactory restFactory,
@@ -195,6 +192,21 @@ public class TermEditor extends Composite {
             });
             editing = true;
         }
+    }
+
+    /// @return Whether a field's own popup is open: a value's suggestions (whose keys, e.g. Escape
+    /// to close it, are the field's). A date's dialog is modal, so takes the keys itself.
+    public boolean isPopupShowing() {
+        return value.isSuggestionListShowing()
+               || valueFrom.isSuggestionListShowing()
+               || valueTo.isSuggestionListShowing();
+    }
+
+    /// Closes the fields' own popups (see [#isPopupShowing]).
+    public void hidePopups() {
+        value.hideSuggestionList();
+        valueFrom.hideSuggestionList();
+        valueTo.hideSuggestionList();
     }
 
     public void endEdit() {
@@ -251,8 +263,8 @@ public class TermEditor extends Composite {
                 if (widget instanceof SuggestBox) {
                     sb.append(((SuggestBox) widget).getText());
                     sb.append(",");
-                } else if (widget instanceof MyDateBox) {
-                    sb.append(((MyDateBox) widget).getValue());
+                } else if (widget instanceof DateTimeBox) {
+                    sb.append(((DateTimeBox) widget).getText());
                     sb.append(",");
                 } else if (widget.equals(docRefWidget)) {
                     if (docSelectionBoxPresenter != null) {
@@ -495,15 +507,15 @@ public class TermEditor extends Composite {
             final String[] vals = term.getValue().split(",");
             if (vals.length > 0) {
                 if (date != null) {
-                    date.setValue(vals[0]);
+                    date.setText(vals[0]);
                 }
                 if (dateFrom != null) {
-                    dateFrom.setValue(vals[0]);
+                    dateFrom.setText(vals[0]);
                 }
             }
             if (vals.length > 1) {
                 if (dateTo != null) {
-                    dateTo.setValue(vals[1]);
+                    dateTo.setText(vals[1]);
                 }
             }
         }
@@ -608,8 +620,10 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final String widthClassName, final String name) {
-        final MyDateBox dateBox = new MyDateBox();
+    private DateTimeBox createDateBox(final String widthClassName, final String name) {
+        // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
+        final DateTimeBox dateBox = new DateTimeBox();
+        dateBox.setExpressionsAllowed(true);
         AccessibleName.set(dateBox, name);
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);
@@ -637,6 +651,12 @@ public class TermEditor extends Composite {
                 uiHandlers.onChange();
             }
         }
+    }
+
+    /// @return The row of its fields, on which the item it edits draws its looks (e.g. being
+    /// selected).
+    public Element getRow() {
+        return inner.getElement();
     }
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {

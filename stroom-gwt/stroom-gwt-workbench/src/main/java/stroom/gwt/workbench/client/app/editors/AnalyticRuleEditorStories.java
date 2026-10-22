@@ -289,7 +289,7 @@ public final class AnalyticRuleEditorStories {
     private static void showSettings(final Play play, final boolean readOnly) {
         openTab(play, "Settings");
         play.waitFor(() -> play.expect(play.getByText("Feed For Errors", "label")).toBeInTheDocument());
-        play.expect(play.getByText("Include Rule Documentation", "label")).toBeInTheDocument();
+        play.expect(play.getByRole("checkbox", "Include Rule Documentation")).toBeInTheDocument();
         expectReadOnlyNote(play, readOnly);
         expectNoProblems(play);
     }

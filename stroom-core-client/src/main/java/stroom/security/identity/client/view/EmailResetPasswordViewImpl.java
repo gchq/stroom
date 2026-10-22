@@ -95,9 +95,6 @@ public class EmailResetPasswordViewImpl
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             getUiHandlers().hideRequest(new HideRequest(DialogAction.OK, () -> {
             }));
-        } else if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.CANCEL, () -> {
-            }));
         }
     }
 

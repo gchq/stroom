@@ -100,6 +100,7 @@ public class UserListPresenter
                              final UiConfigCache uiConfigCache,
                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users and groups");
         this.securityContext = securityContext;
         this.pagerView = pagerView;
         this.restFactory = restFactory;

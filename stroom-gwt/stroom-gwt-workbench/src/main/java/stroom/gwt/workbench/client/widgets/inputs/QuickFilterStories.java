@@ -84,7 +84,11 @@ public final class QuickFilterStories {
                     return InputWidgets.maxWidth(column, MAX_WIDTH);
                 })
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
+                    // A search field, named BEM style
+                    play.expect(textBox).toHaveAttribute("type", "search");
+                    play.expect(play.getByRole("searchbox")).toHaveClass("quick-filter__input");
+                    play.expect(play.querySelector(".quick-filter")).not().toHaveClass("quickFilter");
                     play.type(textBox, "al");
                     play.click(play.getByTitle("Clear Filter"));
                     play.expect(textBox).toHaveValue("");
@@ -111,7 +115,16 @@ public final class QuickFilterStories {
                 // The help ends with a link to the quick filter's documentation, which says what it
                 // is and, to screen readers, that it opens a new tab (gchq/stroom#5406)
                 .withPlay(play -> {
-                    play.click(play.getByTitle("Quick Filter Syntax Help"));
+                    final Query helpButton = play.getByTitle("Quick Filter Syntax Help");
+                    // The button says it opens a dialog, and whether it is open
+                    play.expect(helpButton).toHaveAttribute("aria-haspopup", "dialog");
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
+                    play.click(helpButton);
+                    // The shared help popup, a dialog named for what it helps with
+                    final Query help = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
+                    play.expect(help).toHaveClass("help-popup");
+                    play.expect(help).not().toHaveClass("quickFilter-tooltip");
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "true");
                     final Query docsLink = play.screen().findByRole("link",
                             "quick filter documentation (opens in new tab)");
                     play.expect(docsLink).toHaveAttribute("href", "https://gchq.github.io/stroom-docs/");
@@ -122,6 +135,8 @@ public final class QuickFilterStories {
                     play.expect(play.screen().getByText(TextMatch.containing("(opens in new tab)")))
                             .toHaveClass("sr-only");
                     play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
+                    play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
                 })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {
@@ -152,7 +167,7 @@ public final class QuickFilterStories {
                 // here the stand-in picks one at once
                 .story("RecentFilters", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).toHaveBeenCalledTimes(1);
                     play.expect(textBox).toHaveValue(RECENT_FILTER);
@@ -170,7 +185,7 @@ public final class QuickFilterStories {
                 // one the server rejects. The stand-in server rejects a filter with a '('
                 .story("RecordsAcceptedFilters", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.type(textBox, "alpha");
                     // Applied after the 400ms pause, and accepted, but not committed
                     play.waitFor(() -> play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith("alpha"));
@@ -195,9 +210,9 @@ public final class QuickFilterStories {
                 // and the syntax help leads with it
                 .story("RejectedFilter", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.type(textBox, REJECTED_CHARACTER + "alpha{Enter}");
-                    play.expect(textBox).toHaveClass("invalid");
+                    play.expect(textBox).toHaveAttribute("aria-invalid", "true");
                     play.expect(textBox).toHaveAttribute("title", REJECTION);
                     // Screen readers are told too: the box is invalid and described by the reason,
                     // which is in a live region, as the focus stays in the box (#5409)
@@ -207,12 +222,12 @@ public final class QuickFilterStories {
                     play.click(play.getByTitle("Quick Filter Syntax Help"));
                     play.expect(play.screen().findByText("This filter was not applied")).toBeInTheDocument();
                     // In the popup (the box's screen reader text says it too)
-                    play.expect(play.screen().getByText(TextMatch.containing(REJECTION), ".quickFilter-tooltip *"))
+                    play.expect(play.screen().getByText(TextMatch.containing(REJECTION), ".help-popup *"))
                             .toBeInTheDocument();
                     play.keyboard("{Escape}");
                     // Clearing the box clears the error
                     play.click(play.getByTitle("Clear Filter"));
-                    play.expect(textBox).not().toHaveClass("invalid");
+                    play.expect(textBox).not().toHaveAttribute("aria-invalid");
                     play.expect(textBox).not().toHaveAttribute("title");
                     play.expect(textBox).not().toHaveAttribute("aria-invalid");
                     play.expect(textBox).not().toHaveAttribute("aria-describedby");

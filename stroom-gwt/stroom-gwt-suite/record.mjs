@@ -277,7 +277,7 @@ for (const [type, label] of docs) {
           .find((e) => e.offsetHeight > 0 && e.textContent.trim());
         if (!row) return null;
         const cell = [...row.querySelectorAll('td, [role=gridcell]')]
-          .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, svg')) ?? row;
+          .find((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, svg')) ?? row;
         const r = cell.getBoundingClientRect();
         return { x: r.x + Math.min(r.width / 2, 60), y: r.y + r.height / 2 };
       }).catch(() => null);

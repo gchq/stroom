@@ -6,7 +6,7 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal align-center form-padding input-row">
             <g:Label text="Query:" styleName="dock-min"/>
-            <g:TextBox ui:field="query" styleName="dock-max" />
+            <g:TextBox ui:field="query" addStyleNames="dock-max"/>
             <!-- Reset, Run, Stop and Create Dashboard, added by the view -->
             <b:Toolbar ui:field="toolbar" name="Query actions" addStyleNames="dock-min"/>
         </g:FlowPanel>

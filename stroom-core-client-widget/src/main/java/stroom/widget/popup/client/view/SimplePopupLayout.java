@@ -16,33 +16,20 @@
 
 package stroom.widget.popup.client.view;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SimplePopupLayout extends Composite {
+/// The look of a popup (the BEM block `popup`) for a popup panel that isn't a [SimplePopup]
+/// (e.g. a selection box's list): one element, holding the content.
+public class SimplePopupLayout extends SimplePanel {
 
-    private static final Binder binder = GWT.create(Binder.class);
-
-    @UiField
-    SimplePanel content;
-
-    /**
-     * Creates an empty dialog box. It should not be shown until its child
-     * widget has been added using {@link #add(Widget)}.
-     */
+    /// Creates an empty layout. Its content is set with [#setContent(Widget)].
     public SimplePopupLayout() {
-        initWidget(binder.createAndBindUi(this));
+        setStyleName("popup");
     }
 
+    /// @param widget The popup's content.
     public void setContent(final Widget widget) {
-        content.setWidget(widget);
-    }
-
-    public interface Binder extends UiBinder<Widget, SimplePopupLayout> {
-
+        setWidget(widget);
     }
 }

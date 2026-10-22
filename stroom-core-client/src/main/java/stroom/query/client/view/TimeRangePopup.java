@@ -18,8 +18,8 @@ package stroom.query.client.view;
 
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
-import stroom.widget.button.client.LinkButton;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.button.client.QuickSettings;
+import stroom.widget.datepicker.client.DateTimeBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,55 +28,33 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class TimeRangePopup implements HasValue<TimeRange>, Focus {
+/// The content of the Time Range dialog ([TimeRangeDialog]): quick settings for common ranges, and
+/// the After and Before times, each a date-time box that also takes expressions such as `now()-1d`.
+public class TimeRangePopup extends ViewImpl implements TimeRangeDialog.TimeRangeView {
 
     private final Widget widget;
 
     @UiField
     SimplePanel quickSettings;
     @UiField
-    MyDateBox timeFrom;
+    DateTimeBox timeFrom;
     @UiField
-    MyDateBox timeTo;
+    DateTimeBox timeTo;
 
     public TimeRangePopup() {
         final Binder binder = GWT.create(Binder.class);
         widget = binder.createAndBindUi(this);
 
-        final FlowPanel recent = createPanel("Relative");
-        for (final TimeRange timeRange : stroom.query.api.TimeRanges.RELATIVE_RANGES) {
-            recent.add(createLabel(timeRange));
-        }
-
-        final FlowPanel present = createPanel("Present");
-        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PRESENT_RANGES) {
-            present.add(createLabel(timeRange));
-        }
-
-        final FlowPanel past = createPanel("Past");
-        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PAST_RANGES) {
-            past.add(createLabel(timeRange));
-        }
-
-        final FlowPanel other = createPanel("All");
-        other.add(createLabel(stroom.query.api.TimeRanges.ALL_TIME));
-
-        final FlowPanel quickSettingsPanel = new FlowPanel();
-        quickSettingsPanel.setStyleName("timeRange-quickSettings");
-        quickSettingsPanel.add(recent);
-        quickSettingsPanel.add(present);
-        quickSettingsPanel.add(past);
-        quickSettingsPanel.add(other);
-
-        this.quickSettings.setWidget(quickSettingsPanel);
+        final QuickSettings settings = new QuickSettings();
+        addRanges(settings.addGroup("Relative"), stroom.query.api.TimeRanges.RELATIVE_RANGES);
+        addRanges(settings.addGroup("Present"), stroom.query.api.TimeRanges.PRESENT_RANGES);
+        addRanges(settings.addGroup("Past"), stroom.query.api.TimeRanges.PAST_RANGES);
+        addRanges(settings.addGroup("All"), stroom.query.api.TimeRanges.ALL_TIME);
+        this.quickSettings.setWidget(settings);
     }
 
     @Override
@@ -84,15 +62,10 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         timeFrom.focus();
     }
 
-    public void setUtc(final boolean utc) {
-        timeFrom.setUtc(utc);
-        timeTo.setUtc(utc);
-    }
-
     @Override
     public TimeRange getValue() {
-        final String from = normalise(timeFrom.getValue());
-        final String to = normalise(timeTo.getValue());
+        final String from = normalise(timeFrom.getText());
+        final String to = normalise(timeTo.getText());
 
         final TimeRange range = new TimeRange(null, Condition.BETWEEN, from, to);
         // See if this is a quick select range.
@@ -111,8 +84,8 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
 
     @Override
     public void setValue(final TimeRange value, final boolean fireEvents) {
-        timeFrom.setValue(value.getFrom());
-        timeTo.setValue(value.getTo());
+        timeFrom.setText(value.getFrom());
+        timeTo.setText(value.getTo());
         if (fireEvents) {
             ValueChangeEvent.fire(this, value);
         }
@@ -135,29 +108,14 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         return null;
     }
 
-    private FlowPanel createPanel(final String name) {
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("timeRange-quickSettingPanel");
-        final Label label = new Label(name, false);
-        label.addStyleName("timeRange-quickSettingPanel-title");
-        panel.add(label);
-        // A group of buttons named by its title
-        final String labelId = DOM.createUniqueId();
-        label.getElement().setId(labelId);
-        panel.getElement().setAttribute("role", "group");
-        panel.getElement().setAttribute("aria-labelledby", labelId);
-        return panel;
+    // A quick setting fills in both times
+    private void addRanges(final QuickSettings.Group group, final TimeRange... timeRanges) {
+        for (final TimeRange timeRange : timeRanges) {
+            group.add(timeRange.getName(), () -> setValue(timeRange, true));
+        }
     }
 
-    private LinkButton createLabel(final TimeRange timeRange) {
-        final LinkButton button = new LinkButton(timeRange.getName());
-        button.addStyleName("timeRange-quickSetting");
-        button.addClickHandler(event -> {
-            setValue(timeRange, true);
-        });
-        return button;
-    }
-
+    @Override
     public Widget asWidget() {
         return widget;
     }

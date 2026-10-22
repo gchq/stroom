@@ -30,9 +30,11 @@ import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
+import stroom.widget.util.client.TypeAhead;
+import stroom.widget.util.client.TypedKey;
 
-import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -65,20 +67,32 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
+/// A list box whose rows are options, with a quick filter above it for a long list, a pager for a very
+/// long one, and a path back up through the levels of a list of lists. A selection box's list, and
+/// a list on a screen of its own (e.g. query help's).
+///
+/// Styled by selection-list.css: `selection-list`, `selection-list__filter`, `selection-list__path`
+/// (holding `selection-list__path-link`, `selection-list__path-separator` and
+/// `selection-list__path-current`) and `selection-list__options`.
 public class SelectionList<T, I extends SelectionItem> extends Composite {
+
+    // The block's classes (selection-list.css)
+    private static final String BLOCK = "selection-list";
+    private static final String FILTER = BLOCK + "__filter";
+    private static final String PATH = BLOCK + "__path";
+    private static final String PATH_LINK = BLOCK + "__path-link";
+    private static final String PATH_SEPARATOR = BLOCK + "__path-separator";
+    private static final String PATH_CURRENT = BLOCK + "__path-current";
+    private static final String OPTIONS = BLOCK + "__options";
 
     private static final String ROLE = "role";
     private static final String ROLE_NONE = "none";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
-    // How long a pause in typing starts what is typed to jump to an option again
-    private static final int TYPE_AHEAD_PAUSE_MILLIS = 500;
 
     private final QuickFilter quickFilter;
     private final SelectionEventManager<T, I> selectionEventManager;
-    // What has been typed to jump to an option (in a list with no quick filter), and when it was last
-    // typed to, so that a pause starts it again
-    private String typedPrefix = "";
-    private double lastTypedMillis;
+    // What has been typed to jump to an option (in a list with no quick filter)
+    private final TypeAhead typeAhead = new TypeAhead();
     private final FlowPanel links;
     private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
@@ -86,6 +100,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final MultiSelectionModelImpl<I> selectionModel;
     private final List<NavigationState<I>> navigationStates = new ArrayList<>();
     private String lastFilter;
+    // Whether more than one option can be chosen (see setMultiSelect)
+    private boolean multiSelect;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -116,12 +132,21 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             @Override
             protected void onBrowserEvent2(final Event event) {
                 if (event.getTypeInt() == Event.ONKEYDOWN) {
-                    final String key = keyOf(event);
-                    if (event.getAltKey() && event.getKeyCode() == KeyCodes.KEY_UP) {
+                    final String key = TypedKey.keyOf(event);
+                    if (!multiSelect && event.getAltKey() && event.getKeyCode() == KeyCodes.KEY_UP) {
                         // Alt+Up chooses the option with the focus and closes the list (WAI-ARIA
                         // combobox)
                         chooseKeyboardSelected();
-                    } else if (isTypedCharacter(event, key)) {
+                    } else if (multiSelect && isShiftOnly(event) && event.getKeyCode() == KeyCodes.KEY_SPACE) {
+                        // Shift+Space chooses the options from the last one chosen to this one
+                        selectionEventManager.chooseRunToFocus();
+                    } else if (multiSelect && isShiftOnly(event) && event.getKeyCode() == KeyCodes.KEY_DOWN) {
+                        // Shift+Down and Shift+Up move to the next option and choose or unchoose it
+                        selectionEventManager.moveAndToggle(1);
+                    } else if (multiSelect && isShiftOnly(event) && event.getKeyCode() == KeyCodes.KEY_UP) {
+                        selectionEventManager.moveAndToggle(-1);
+                    } else if (TypedKey.isTypedCharacter(event, key) && !(multiSelect && " ".equals(key))) {
+                        // (In a list of several choices, Space chooses rather than being typed)
                         typeAhead(key);
                     } else if (event.getKeyCode() == KeyCodes.KEY_UP) {
                         if (model.displayFilter()) {
@@ -178,19 +203,19 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         };
 
-        quickFilter.addStyleName("dock-min selectionList-quickFilter");
+        quickFilter.addStyleName("dock-min " + FILTER);
 
         // A breadcrumb trail: where the list is, with a button to go back to each level above
         links = new FlowPanel("nav");
-        links.setStyleName("dock-min selectionList-links");
+        links.setStyleName("dock-min " + PATH);
         links.getElement().setAttribute("aria-label", "Breadcrumb");
 
         final SimplePanel elementChooser = new SimplePanel();
-        elementChooser.setStyleName("dock-max selectionList-elementChooser");
+        elementChooser.setStyleName("dock-max " + OPTIONS);
         elementChooser.add(pagerView.asWidget());
 
         final FlowPanel layout = new FlowPanel();
-        layout.setStyleName("selectionList dock-container-vertical");
+        layout.setStyleName(BLOCK + " dock-container-vertical");
         layout.add(quickFilter);
         layout.add(links);
         layout.add(elementChooser);
@@ -209,14 +234,47 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     public void setAccessibleName(final String name) {
         if (NullSafe.isBlankString(name)) {
             cellTable.getElement().removeAttribute("aria-label");
+            // Still named, by what it filters, as a placeholder is only a hint
+            quickFilter.setAccessibleName("Filter options");
         } else {
             cellTable.getElement().setAttribute("aria-label", name);
+            // Its quick filter too, by what it filters
+            quickFilter.setAccessibleName("Filter " + name);
         }
     }
 
     /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).
     public String getListBoxId() {
         return cellTable.getElement().getId();
+    }
+
+    /// Lets more than one option be chosen, as in WAI-ARIA's list box with multiple selection, for a
+    /// list on a form rather than a selection box's. Moving only moves the focus. Space adds the
+    /// option with the focus to those chosen, or takes it from them; Shift+Down and Shift+Up move to
+    /// the next option and do the same there; Shift+Space chooses the options from the last one
+    /// chosen to the one with the focus, keeping the others; a click chooses only the option
+    /// clicked, Ctrl+click adds or takes it, and Shift+click chooses the options from the last one
+    /// chosen to it; Ctrl+A chooses every option. Enter, or a double click, acts on those chosen
+    /// (choosing the option with the focus first, if it isn't), which the selection model announces
+    /// as a double select (see [#getSelectionModel()]). The options chosen are kept when the list is
+    /// refreshed.
+    ///
+    /// @param multiSelect Whether more than one option can be chosen.
+    public void setMultiSelect(final boolean multiSelect) {
+        this.multiSelect = multiSelect;
+        if (multiSelect) {
+            cellTable.getElement().setAttribute("aria-multiselectable", "true");
+        } else {
+            cellTable.getElement().removeAttribute("aria-multiselectable");
+        }
+    }
+
+    /// Sets what Up on the first option does in a list with no quick filter, e.g. moves the focus
+    /// to a field above the list that filters it.
+    ///
+    /// @param moveUpFromFirst What to do, or null for nothing (the first option keeps the focus).
+    public void setMoveUpFromFirst(final Runnable moveUpFromFirst) {
+        selectionEventManager.setMoveUpFromFirst(moveUpFromFirst);
     }
 
     // Gives the table the structure of a list box: the table's own parts have no role, and the
@@ -264,43 +322,37 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             quickFilter.type(text);
             return;
         }
-        final double now = Duration.currentTimeMillis();
-        typedPrefix = now - lastTypedMillis < TYPE_AHEAD_PAUSE_MILLIS
-                ? typedPrefix + text
-                : text;
-        lastTypedMillis = now;
-        // The same character typed again (e.g. "dd") goes on to the next option starting with it
-        final boolean repeated = isOneCharacterRepeated(typedPrefix);
-        final String prefix = (repeated
-                ? typedPrefix.substring(0, 1)
-                : typedPrefix).toLowerCase(Locale.ROOT);
         final List<I> items = cellTable.getVisibleItems();
-        final int current = Math.max(cellTable.getKeyboardSelectedRow(), 0);
-        // One character (or the same one again) moves on from the option with the focus; more
-        // characters keep to it while it still matches
-        final int start = repeated
-                ? current + 1
-                : current;
-        for (int i = 0; i < items.size(); i++) {
-            final int row = (start + i) % items.size();
-            final String label = NullSafe.string(items.get(row).getLabel()).toLowerCase(Locale.ROOT);
-            if (label.startsWith(prefix)) {
-                cellTable.setKeyboardSelectedRow(row, true);
-                return;
-            }
+        final int row = typeAhead.next(text,
+                cellTable.getKeyboardSelectedRow(),
+                items.size(),
+                i -> NullSafe.string(items.get(i).getLabel()));
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    // Whether Shift is the only modifier held
+    private static boolean isShiftOnly(final Event event) {
+        return event.getShiftKey() && !event.getCtrlKey() && !event.getAltKey() && !event.getMetaKey();
+    }
+
+    /// Gives the focus to the first or last option, e.g. as Home or End opens a selection box's list.
+    /// With no options yet, the list takes the focus as [#focus()] gives it.
+    ///
+    /// @param last Whether to go to the last option rather than the first.
+    public void focusFirstOrLast(final boolean last) {
+        final int count = cellTable.getVisibleItemCount();
+        if (count == 0) {
+            focus();
+        } else {
+            cellTable.setKeyboardSelectedRow(last
+                    ? count - 1
+                    : 0, true);
         }
     }
 
     // Whether the text is one character, perhaps typed more than once (e.g. "d" or "ddd")
-    private static boolean isOneCharacterRepeated(final String text) {
-        for (int i = 1; i < text.length(); i++) {
-            if (text.charAt(i) != text.charAt(0)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     // Chooses the option with the focus, as Enter does, which closes the list
     private void chooseKeyboardSelected() {
         final int row = cellTable.getKeyboardSelectedRow();
@@ -314,21 +366,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
-    /// @param event An event's key.
-    /// @return The key's value (e.g. `a`, or `ArrowUp`), as the browser names it.
-    static native String keyOf(NativeEvent event) /*-{
-        return event.key || "";
-    }-*/;
-
-    /// @param event A key event.
-    /// @param key   Its key (see [#keyOf(NativeEvent)]).
-    /// @return Whether the key types a character (with no Ctrl, Alt or Meta, which make it a shortcut).
-    static boolean isTypedCharacter(final NativeEvent event, final String key) {
-        return key.length() == 1
-               && !event.getCtrlKey()
-               && !event.getAltKey()
-               && !event.getMetaKey();
-    }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
         cellTable.setKeyboardSelectionPolicy(policy);
@@ -404,7 +441,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 quickFilter.setFilterError(
                         NullSafe.get(pageResponse.getFilterError(), TokenError::getText));
 
-                selectionModel.clear(false);
+                // A list of several choices keeps them, e.g. when it is paged
+                if (!multiSelect) {
+                    selectionModel.clear(false);
+                }
 
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
                 cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
@@ -473,7 +513,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         private final MultiSelectionModelImpl<I> selectionModel;
         private final SelectionList<T, I> selectionList;
         private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
-        private final boolean allowMultiSelect = false;
+        // In a list of several choices, the option chosen last, where Shift chooses a run from
+        private I multiSelectStart;
 
         public SelectionEventManager(final AbstractHasData<I> cellTable,
                                      final MultiSelectionModelImpl<I> selectionModel,
@@ -493,31 +534,44 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         @Override
         protected void onMoveLeft(final CellPreviewEvent<I> e) {
-            selectionList.navigateBack(false, true);
+            // A list of several choices keeps them at its top level, where there is nowhere to go
+            // back to (going back would show its first page again)
+            if (!selectionList.multiSelect || !selectionList.navigationStates.isEmpty()) {
+                selectionList.navigateBack(false, true);
+            }
         }
 
         @Override
         protected void onExecute(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final I item = e.getValue();
-            doSelect(item,
-                    new SelectionType(true,
-                            false,
-                            allowMultiSelect,
-                            nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()), false);
+            if (selectionList.multiSelect) {
+                actOnChosen(item);
+            } else {
+                doSelect(item,
+                        new SelectionType(true,
+                                false,
+                                false,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()), false);
+            }
         }
 
         @Override
         protected void onSelect(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            // Change the selection.
-            doSelect(e.getValue(),
-                    new SelectionType(false,
-                            false,
-                            true,
-                            nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()), true);
+            if (selectionList.multiSelect) {
+                // Space adds the option to those chosen or takes it from them, as Ctrl+click does
+                multiSelect(e.getValue(), true, nativeEvent.getShiftKey(), true);
+            } else {
+                // Change the selection.
+                doSelect(e.getValue(),
+                        new SelectionType(false,
+                                false,
+                                true,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()), true);
+            }
         }
 
         @Override
@@ -527,7 +581,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         @Override
         protected void onSelectAll(final CellPreviewEvent<I> e) {
-//            selectAll();
+            if (selectionList.multiSelect) {
+                final Selection<I> selection = selectionModel.getSelection();
+                cellTable.getVisibleItems().forEach(item -> selection.setSelected(item, true));
+                selectionModel.setSelection(selection, new SelectionType(false, false, true, true, false));
+            }
         }
 
         @Override
@@ -544,13 +602,89 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             final I selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
                 final boolean doubleClick = doubleClickTest.test(selectedItem);
-                doSelect(selectedItem,
-                        new SelectionType(doubleClick,
-                                false,
-                                allowMultiSelect,
+                if (selectionList.multiSelect) {
+                    if (doubleClick) {
+                        actOnChosen(selectedItem);
+                    } else {
+                        multiSelect(selectedItem,
                                 nativeEvent.getCtrlKey(),
-                                nativeEvent.getShiftKey()), stealFocus);
+                                nativeEvent.getShiftKey(),
+                                stealFocus);
+                    }
+                } else {
+                    doSelect(selectedItem,
+                            new SelectionType(doubleClick,
+                                    false,
+                                    false,
+                                    nativeEvent.getCtrlKey(),
+                                    nativeEvent.getShiftKey()), stealFocus);
+                }
             }
+        }
+
+        // Chooses in a list of several choices: with Shift, the options from the last one chosen to
+        // this one (keeping the others with Ctrl too); with Ctrl alone, this one is added or taken
+        // away; otherwise only this one is chosen
+        private void multiSelect(final I row,
+                                 final boolean control,
+                                 final boolean shift,
+                                 final boolean stealFocus) {
+            if (row == null) {
+                return;
+            }
+            final Selection<I> selection = selectionModel.getSelection();
+            final List<I> rows = cellTable.getVisibleItems();
+            final int start = rows.indexOf(multiSelectStart);
+            final int end = rows.indexOf(row);
+            if (shift && start != -1 && end != -1) {
+                if (!control) {
+                    selection.clear();
+                }
+                for (int i = Math.min(start, end); i <= Math.max(start, end); i++) {
+                    selection.setSelected(rows.get(i), true);
+                }
+            } else if (control) {
+                multiSelectStart = row;
+                selection.setSelected(row, !selection.isSelected(row));
+            } else {
+                multiSelectStart = row;
+                selection.setSelected(row);
+            }
+            selectionModel.setSelection(selection, new SelectionType(false, false, true, control, shift));
+            selectionList.setKeyboardSelection(row, stealFocus);
+        }
+
+        // Shift+Up or Shift+Down: moves to the option above or below and chooses it or takes it out of
+        // those chosen, as Space does there
+        void moveAndToggle(final int delta) {
+            final List<I> rows = cellTable.getVisibleItems();
+            final int row = cellTable.getKeyboardSelectedRow() + delta;
+            if (row >= 0 && row < rows.size()) {
+                multiSelect(rows.get(row), true, false, true);
+            }
+        }
+
+        // Shift+Space: chooses the options from the last one chosen to the one with the focus,
+        // keeping the others
+        void chooseRunToFocus() {
+            final List<I> rows = cellTable.getVisibleItems();
+            final int row = cellTable.getKeyboardSelectedRow();
+            if (row >= 0 && row < rows.size()) {
+                multiSelect(rows.get(row), true, true, true);
+            }
+        }
+
+        // Acts on the options chosen in a list of several choices (Enter, or a double click), first
+        // choosing only the option with the focus if it isn't one of them, so that Enter acts on what
+        // it is on. The selection model announces it as a double select, as a selection box's list
+        // does a choice
+        private void actOnChosen(final I row) {
+            final Selection<I> selection = selectionModel.getSelection();
+            if (row != null && !selection.isSelected(row)) {
+                multiSelectStart = row;
+                selection.setSelected(row);
+            }
+            selectionModel.setSelection(selection, new SelectionType(true, false, true, false, false));
         }
 
         // Choosing the item that is already the only one selected doesn't change the selection, so
@@ -620,7 +754,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // it is a button that looks like a link
     private LinkButton createLevelButton(final String label, final I row) {
         final LinkButton button = new LinkButton(label);
-        button.addStyleName("selectionList-pathLink");
+        button.addStyleName(PATH_LINK);
         // The button is replaced as the path changes, so the list takes the focus
         button.addClickHandler(event -> navigateBack(row, false, true));
         return button;
@@ -629,6 +763,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // The level the list shows, which screen readers announce as the current one
     private static Label createCurrentLevel(final String label) {
         final Label current = new Label(label);
+        current.setStyleName(PATH_CURRENT);
         current.getElement().setAttribute("aria-current", "page");
         return current;
     }
@@ -636,6 +771,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     // Screen readers needn't read the separators out
     private static Label createSeparator() {
         final Label separator = new Label("/");
+        separator.setStyleName(PATH_SEPARATOR);
         separator.getElement().setAttribute("aria-hidden", "true");
         return separator;
     }

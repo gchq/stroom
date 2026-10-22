@@ -5,7 +5,7 @@
     display: flex;
 }
 
-.dialog-content .askStroomAiViewImpl {
+.dialog__content .askStroomAiViewImpl {
   border: 1px solid var(--control__border-color);
   border-radius: .25rem;
   overflow: auto;
@@ -78,7 +78,7 @@
 }
 
 .askStroomAiViewImpl-messagePane input,
-.askStroomAiViewImpl-modelPane .dropDownView-container {
+.askStroomAiViewImpl-modelPane .drop-down {
     border: 1px solid transparent;
     background: none;
 }
@@ -101,11 +101,11 @@
     color: #d32f2f;
 }
 
-.askStroomAiViewImpl-modelPane .dropDownView-container {
+.askStroomAiViewImpl-modelPane .drop-down {
     width: 100%;
 }
 
-.askStroomAiViewImpl-modelPane .dropDownView-button {
+.askStroomAiViewImpl-modelPane .drop-down__icon {
     bottom: 3px;
 }
 

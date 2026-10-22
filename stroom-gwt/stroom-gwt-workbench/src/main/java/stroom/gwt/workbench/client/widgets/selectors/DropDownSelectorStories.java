@@ -35,6 +35,9 @@ import com.google.gwt.user.client.ui.Widget;
 public final class DropDownSelectorStories {
 
     private static final String ON_OPEN = "onOpen";
+    private static final String PROBLEM = "'Selected item' can't be found, or you don't have permission to see it.";
+    private static final String FULL_PROBLEM = "Item 'Selected item' doesn't exist or you do not have permission to "
+                                               + "view it. Select a different item or speak to your administrator.";
 
     private DropDownSelectorStories() {
         // Static utility
@@ -79,8 +82,18 @@ public final class DropDownSelectorStories {
                     play.click(picker);
                     play.expect(play.spy(ON_OPEN)).not().toHaveBeenCalled();
                 })
-                // Warning indicator - shows the alert triangle
-                .story("Warning", context -> minWidth(view(context, "Selected item", true, true).asWidget()));
+                // A problem with the value: the message under the picker (a line of its own, as it isn't
+                // in a form group), the full one its tooltip and what a screen reader reads
+                .story("Warning", context -> minWidth(view(context, "Selected item", true, true).asWidget()))
+                .withPlay(play -> {
+                    final Query picker = play.getByRole("button", TextMatch.startingWith("Selected item"));
+                    play.expect(picker).toHaveAttribute("aria-invalid", "true");
+                    play.expect(play.querySelector(".drop-down__feedback")).toHaveTextContent(
+                            TextMatch.containing(PROBLEM));
+                    // (Chrome reads the full message alone, as the short one is hidden from it; the
+                    // test library's description also has the hidden text, so this checks it is there)
+                    play.expect(picker).toHaveAccessibleDescription(TextMatch.containing(FULL_PROBLEM));
+                });
     }
 
     private static DropDownViewImpl view(final StoryContext context,
@@ -88,12 +101,15 @@ public final class DropDownSelectorStories {
                                          final boolean hasWarning,
                                          final boolean enabled) {
         final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
-        view.setText(text, hasWarning);
+        view.setText(text);
+        if (hasWarning) {
+            view.setProblem(PROBLEM, FULL_PROBLEM);
+        }
         final Spy onOpen = context.fn(ON_OPEN);
         final DropDownUiHandlers handlers = () -> {
             if (enabled) {
                 onOpen.call();
-                view.setText("(popup would open)", hasWarning);
+                view.setText("(popup would open)");
             }
         };
         view.setUiHandlers(handlers);

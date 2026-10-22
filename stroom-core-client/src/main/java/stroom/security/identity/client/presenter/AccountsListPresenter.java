@@ -88,6 +88,7 @@ public class AccountsListPresenter
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter accounts");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;

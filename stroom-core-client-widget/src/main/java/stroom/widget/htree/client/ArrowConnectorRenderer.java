@@ -30,9 +30,25 @@ public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {
     private final CssColor headColor;
 
     private final Context2d ctx;
+    // The width of the line, and the length of a solid arrow head (or 0 for the open head of
+    // HEAD_SIZE)
+    private final double lineWidth;
+    private final double solidHeadLength;
 
     public ArrowConnectorRenderer(final Context2d ctx) {
+        this(ctx, 1, 0);
+    }
+
+    /// Draws connectors as lines of a width, ending in a solid arrow head.
+    ///
+    /// @param ctx             The context to draw on.
+    /// @param lineWidth       The width of the lines, in pixels.
+    /// @param solidHeadLength The length of the arrow heads, in pixels, which are as wide as they
+    ///                        are long; or 0 for an open arrow head of lines.
+    public ArrowConnectorRenderer(final Context2d ctx, final double lineWidth, final double solidHeadLength) {
         this.ctx = ctx;
+        this.lineWidth = lineWidth;
+        this.solidHeadLength = solidHeadLength;
         lineColor = CssColor.make("grey");
         headColor = CssColor.make("grey");
     }
@@ -40,23 +56,35 @@ public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {
     @Override
     public void render(final TreeLayout<T> treeLayout, final double x1, final double y1, final double x2,
                        final double y2, final boolean firstChild, final boolean lastChild) {
-        final double midx = x1 + ((x2 - x1) / 2);
+        // A solid head takes the end of the line, so that a wide line doesn't show past its point
+        final double lineEndX = x2 - solidHeadLength;
+        final double midx = x1 + ((lineEndX - x1) / 2);
 
         // Draw arrow line.
         ctx.beginPath();
         ctx.moveTo(x1, y1);
-        ctx.bezierCurveTo(midx + EXAGERATE_CURVE, y1, midx - EXAGERATE_CURVE, y2, x2, y2);
+        ctx.bezierCurveTo(midx + EXAGERATE_CURVE, y1, midx - EXAGERATE_CURVE, y2, lineEndX, y2);
+        ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(lineColor);
         ctx.stroke();
 
         // Draw arrow head.
         ctx.beginPath();
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - HEAD_SIZE, y2 - HEAD_SIZE);
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - HEAD_SIZE, y2 + HEAD_SIZE);
-
-        ctx.setStrokeStyle(headColor);
-        ctx.stroke();
+        if (solidHeadLength > 0) {
+            final double halfWidth = solidHeadLength / 2;
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(lineEndX, y2 - halfWidth);
+            ctx.lineTo(lineEndX, y2 + halfWidth);
+            ctx.closePath();
+            ctx.setFillStyle(headColor);
+            ctx.fill();
+        } else {
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - HEAD_SIZE, y2 - HEAD_SIZE);
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - HEAD_SIZE, y2 + HEAD_SIZE);
+            ctx.setStrokeStyle(headColor);
+            ctx.stroke();
+        }
     }
 }

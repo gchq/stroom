@@ -23,6 +23,8 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -39,20 +41,20 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
                               final boolean modal) {
         super(autoHide, modal);
         this.dialogActionHandler = dialogActionHandler;
+        // Escape from inside the popup closes it here, once the widget with the focus has had it
+        addDomHandler(this::onKeyDown, KeyDownEvent.getType());
     }
 
     public Glass getDragGlass() {
         return dragGlass;
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-    // Upstream shows the drag glass in beginDragging and hides it ONLY in endDragging, i.e. only
-    // on a mouse-up the popup actually receives. Any drag whose release is never delivered - the
-    // button let go outside the browser window, focus lost mid-drag, or the dialog closed while
-    // the button is still down - leaves a full-viewport glass attached to the body. It swallows
+    // The drag glass is shown in beginDragging and hidden in endDragging, i.e. on a mouse-up the
+    // popup actually receives. Any drag whose release is never delivered - the button let go
+    // outside the browser window, focus lost mid-drag, or the dialog closed while the button is
+    // still down - would otherwise leave a full-viewport glass attached to the body. It swallows
     // every click, so the whole UI is dead: no CPU, nothing in the console, the server healthy,
-    // and DevTools the only way back. Diagnosed 2026-09-04; see
-    // docs/task-popup-drag-glass-orphaned.md. Dropping these hunks reinstates that.
+    // and DevTools the only way back. abandonDrag below exists to recover from that.
 
     /**
      * Abandons any drag in progress and removes the drag glass.
@@ -89,11 +91,13 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
         abandonDrag();
     }
 
-    /**
-     * Notify the dialog when either the Enter or Escape key is pressed.
-     * For dialogs with a close button, the Escape will cause them to close.
-     * The combination Ctrl+Enter key will close the dialog, with a `true` result.
-     */
+    /// Notifies the popup when Escape or Ctrl+Enter is pressed: Escape closes it (through its
+    /// Close or Cancel button, where it has one) and Ctrl+Enter is OK.
+    ///
+    /// Escape pressed inside the popup isn't handled here: it goes to the widget with the focus
+    /// first, which may use it (a quick filter clears, a field's list closes, a move is put back)
+    /// and call `preventDefault()`, and the popup closes in `onKeyDown` only if none did. Escape
+    /// pressed anywhere else (the focus on the page, or on nothing) closes the popup at once.
     @Override
     protected void onPreviewNativeEvent(final NativePreviewEvent event) {
         super.onPreviewNativeEvent(event);
@@ -101,37 +105,62 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
         final NativeEvent nativeEvent = event.getNativeEvent();
         final Action action = KeyBinding.test(nativeEvent);
         if (event.getTypeInt() == Event.ONKEYDOWN) {
-            final EventTarget eventTarget = nativeEvent.getEventTarget();
-            final boolean isEditor;
-            if (eventTarget != null) {
-                final Element element = Element.as(eventTarget);
-//                GWT.log("element: " + element.getTagName() + "." + element.getClassName());
-                // We should not be handling key down events if the target is the ACE editor
-                // as this messes with things like code completion, vim bindings, etc.
-                // If the user is focused on something other than the editor then it's all fine.
-                isEditor = element != null && element.hasClassName("ace_text-input");
-            } else {
-                isEditor = false;
-            }
-
-            if (!isEditor) {
-                if (action != null) {
-                    switch (action) {
-                        case CLOSE:
+            final Element target = getTargetElement(nativeEvent);
+            // We should not be handling key down events if the target is the ACE editor
+            // as this messes with things like code completion, vim bindings, etc.
+            // If the user is focused on something other than the editor then it's all fine.
+            if (!isAceEditor(target) && action != null) {
+                switch (action) {
+                    case CLOSE:
+                        if (target == null || !getElement().isOrHasChild(target)) {
                             // Cancel the event so ancestors don't also handle it
                             event.cancel();
                             onCloseAction();
-                            break;
-                        case OK:
-                            // Cancel the event so ancestors don't also handle it
-                            event.cancel();
-                            onOkAction();
-                            break;
-                    }
+                        }
+                        // Otherwise it goes on to the widget with the focus (PopupPanel consumes
+                        // it, so popups below this one don't see it either)
+                        break;
+                    case OK:
+                        // Cancel the event so ancestors don't also handle it
+                        event.cancel();
+                        onOkAction();
+                        break;
                 }
             }
         }
     }
+
+    // Escape from inside the popup that no widget used closes it, and goes no further (so the page
+    // behind, e.g. a dashboard that stops its query on Escape, doesn't see it)
+    private void onKeyDown(final KeyDownEvent event) {
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        if (nativeEvent.getKeyCode() == KeyCodes.KEY_ESCAPE
+            && !nativeEvent.getAltKey()
+            && !nativeEvent.getCtrlKey()
+            && !nativeEvent.getMetaKey()
+            && !nativeEvent.getShiftKey()
+            && !isDefaultPrevented(nativeEvent)
+            && !isAceEditor(getTargetElement(nativeEvent))) {
+            nativeEvent.preventDefault();
+            nativeEvent.stopPropagation();
+            onCloseAction();
+        }
+    }
+
+    private static Element getTargetElement(final NativeEvent nativeEvent) {
+        final EventTarget eventTarget = nativeEvent.getEventTarget();
+        return eventTarget != null && Element.is(eventTarget)
+                ? Element.as(eventTarget)
+                : null;
+    }
+
+    private static boolean isAceEditor(final Element element) {
+        return element != null && element.hasClassName("ace_text-input");
+    }
+
+    private static native boolean isDefaultPrevented(NativeEvent event) /*-{
+        return !!event.defaultPrevented;
+    }-*/;
 
     private void onCloseAction() {
         if (dialogActionHandler != null) {

@@ -32,11 +32,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local change, confirmed deliberate by the author: adds the Data tab (PlanBDataPresenter), second
-// in the tab order after Settings. Settings stays the tab a PlanB document opens on, as upstream
-// has it - the Data tab is for inspecting what a store holds, not the first thing a user wants on
-// opening one. Only the extra tab is local; the selection is upstream's and must stay that way.
+// The Data tab (PlanBDataPresenter) is second in the tab order after Settings. Settings stays the
+// tab a PlanB document opens on - the Data tab is for inspecting what a store holds, not the first
+// thing a user wants on opening one.
 public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");

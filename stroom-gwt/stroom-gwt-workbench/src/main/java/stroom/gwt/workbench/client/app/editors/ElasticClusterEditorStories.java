@@ -99,6 +99,23 @@ public final class ElasticClusterEditorStories {
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
+                // The timeouts are value spinners, named by their labels, that step a second at a
+                // time (they were GWT's own IntegerBox, which an emptied box broke when read)
+                .story("TimeoutSpinners", context -> render(context, fixtures(true, null), false))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    final Query connection = play.findByRole("spinbutton", "Connection timeout (ms)");
+                    play.waitFor(() -> play.expect(connection).toHaveAttribute("aria-valuenow", "5000"));
+                    play.expect(play.getByRole("spinbutton", "Response timeout (ms)"))
+                            .toHaveAttribute("aria-valuenow", "30000");
+                    play.expect(connection).toHaveAttribute("aria-valuemin", "0");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(connection);
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(connection).toHaveAttribute("aria-valuenow", "6000"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
                 .story("TestConnectionSuccess", context -> render(context,
                         fixtures(true, "{\"ok\": true, \"message\": \"Connected to 3 nodes.\"}"), false))
                 .withPlay(play -> {

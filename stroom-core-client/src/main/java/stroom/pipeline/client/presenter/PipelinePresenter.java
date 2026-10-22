@@ -137,7 +137,6 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 loadPipelineModel(docRef, model -> {
                     steppingPresenter.setPipelineModel(model);
                     steppingPresenter.setPipelineDoc(document);
-                    steppingPresenter.resize();
                 });
 
                 if (!steppingMetaListLoaded && steppingMetaExpression == null) {

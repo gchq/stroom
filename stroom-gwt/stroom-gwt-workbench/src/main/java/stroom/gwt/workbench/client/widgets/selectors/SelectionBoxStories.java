@@ -36,6 +36,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -138,6 +139,29 @@ public final class SelectionBoxStories {
                     play.expect(box).toHaveValue("Bravo");
                     play.expect(box).toHaveFocus();
                 })
+                // In a box that can't be typed in, Home and End open the list at its first and last
+                // option (WAI-ARIA combobox), whatever the value
+                .story("HomeAndEndOpenAtTheEnds", context -> {
+                    final SelectionBox<String> box = selectionBox(context, NAMES);
+                    box.setValue("Charlie");
+                    return named(box);
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox");
+                    play.tab();
+                    play.keyboard("{End}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Echo")).toHaveFocus());
+                    play.expect(box).toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.waitFor(() -> play.expect(box).toHaveFocus());
+                    play.keyboard("{Home}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(box).toHaveValue("Charlie");
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
                 // In a list with no quick filter, typing a character opens the list and goes to the
                 // first option that starts with it; typing it again goes to the next
                 .story("TypingJumpsToAnOption", context -> named(selectionBox(context, NAMES)))
@@ -160,11 +184,40 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.tab();
                     play.keyboard("15");
-                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox");
+                    final Query filter = play.screen().querySelector(".selection-list__filter .quick-filter__input");
                     play.waitFor(() -> play.expect(filter).toHaveValue("15"));
                     play.expect(filter).toHaveFocus();
+                    // Named for the box it filters, not only by its placeholder
+                    play.expect(filter).toHaveAttribute("aria-label", "Filter Name");
                     play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
                     play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
+                })
+                // Tab in the open list closes it, leaving the value, and goes on to what follows the
+                // box; Shift+Tab closes it and goes back to the box
+                .story("TabClosesTheList", context -> {
+                    final FlowPanel panel = named(selectionBox(context, NAMES));
+                    final TextBox after = new TextBox();
+                    AccessibleName.set(after, "After");
+                    panel.add(after);
+                    return panel;
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox", "Name");
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.getByRole("textbox", "After")).toHaveFocus();
+                    play.expect(box).toHaveAttribute("aria-expanded", "false");
+                    play.tab(true);
+                    play.expect(box).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab(true);
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(box).toHaveFocus();
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 })
                 // The list is named for the box that opened it, here by the box's form group label
                 .story("TheListIsNamedForTheBox", context -> {
@@ -207,6 +260,7 @@ public final class SelectionBoxStories {
                     final SimpleSelectionListModel<String> model = new ModelBackedListModel();
                     model.addItem("Only one");
                     box.setModel(model);
+                    AccessibleName.set(box, "Name");
                     final Spy onChange = context.fn(ON_CHANGE);
                     box.addValueChangeHandler(event -> onChange.call(event.getValue()));
                     return minWidth(box);
@@ -214,8 +268,9 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.click(play.querySelector(OPENER));
                     // Stroom's popup is on the page's body, not in the canvas
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                            .toBeVisible());
+                    play.expect(play.screen().querySelector(".selection-list__filter .quick-filter__input"))
                             .not().toBeNull();
                     // The pager is Stroom's PagerViewImpl, so it reads "N to M of T"
                     play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))
@@ -227,7 +282,7 @@ public final class SelectionBoxStories {
                     play.click(play.querySelector(OPENER));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager container rather than omitting it
-                    play.expect(play.screen().querySelector(".selectionList .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
                 })
                 // The popup's markup is GWT's (SelectionPopup > SimplePopupLayout > SelectionList)
                 .story("PopupUsesGwtMarkup", context -> selectionBox(context, List.of("One", "Two")))
@@ -246,24 +301,17 @@ public final class SelectionBoxStories {
         play.click(play.querySelector(OPENER));
         play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
         final Play popup = play.screen().within(play.screen().querySelector(POPUP));
-        // The chrome Stroom wraps every popup in (SimplePopupLayout)
-        for (final String selector : new String[]{
-                ".popupContent",
-                ".simplePopup-container",
-                ".simplePopup-background-behind",
-                ".simplePopup-background",
-                ".simplePopup-content"}) {
-            play.expect(popup.querySelector(selector)).not().toBeNull();
-        }
+        // The look Stroom gives every popup (SimplePopupLayout): one element, in GWT's popupContent
+        play.expect(popup.querySelector(".popupContent > .popup > .selection-list")).not().toBeNull();
         // SelectionList's own three children, in order
-        final Query list = popup.querySelector(".selectionList.dock-container-vertical");
+        final Query list = popup.querySelector(".selection-list.dock-container-vertical");
         play.expect(list).not().toBeNull();
         final Play inList = play.screen().within(list);
-        play.expect(inList.querySelector(":scope > .selectionList-quickFilter")).not().toBeNull();
-        play.expect(inList.querySelector(":scope > .selectionList-links")).not().toBeNull();
-        play.expect(inList.querySelector(":scope > .selectionList-elementChooser")).not().toBeNull();
+        play.expect(inList.querySelector(":scope > .selection-list__filter")).not().toBeNull();
+        play.expect(inList.querySelector(":scope > .selection-list__path")).not().toBeNull();
+        play.expect(inList.querySelector(":scope > .selection-list__options")).not().toBeNull();
         // PagerViewImpl: the pager container above the list container
-        play.expect(popup.querySelector(".selectionList-elementChooser .pager")).not().toBeNull();
+        play.expect(popup.querySelector(".selection-list__options .pager")).not().toBeNull();
         play.expect(popup.querySelector(".listContainer")).not().toBeNull();
         // The rows are a real cell table
         play.expect(popup.querySelector("table.cellTableWidget")).not().toBeNull();

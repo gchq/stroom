@@ -18,6 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,6 +40,8 @@ public class Menu {
     public Menu(final EventBus eventBus,
                 final Provider<MenuPresenter> menuPresenterProvider) {
         this.menuPresenterProvider = menuPresenterProvider;
+        // So that a menu knows whether it was opened with the keyboard (and shows its focus ring)
+        InputModality.install();
         eventBus.addHandler(ShowMenuEvent.getType(), this::show);
         eventBus.addHandler(HideMenuEvent.getType(), this::hide);
     }
@@ -69,7 +72,7 @@ public class Menu {
                         if (currentItems == event.getItems()) {
                             MenuOpener.setExpanded(event.getOpener(), true);
                         }
-                        menuPresenter.focus();
+                        menuPresenter.focusItem(event.getFocusItem());
                     })
                     .onHide(e -> {
                         MenuOpener.setExpanded(event.getOpener(), false);

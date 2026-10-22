@@ -1,0 +1,160 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The tick box, named BEM style (block, block__element, block--modifier), in two forms:
+
+   - The widget (stroom.widget.tickbox.client.view.CustomCheckBox): a label element holding a native
+     checkbox (tick-box__input, unseen, over the box), the box drawn for it (tick-box__mark) and its
+     text (tick-box__label). Clicking anywhere on it ticks it. Its states come from the input:
+     :checked, :disabled and aria-readonly.
+   - The grid's cell (stroom.cell.tickbox.client.TickBoxCell), tick-box--cell: an element with
+     role="checkbox" holding the drawn box, its states from aria-checked (true, false or mixed,
+     part ticked) and aria-readonly. It is the size of an icon, to fit a grid's row.
+
+   The tick is white on the blue (--blue-500) box; read only, it is grey on the normal box; disabled,
+   it is grey on the filled box with no border that every disabled control has.
+*/
+
+/* The widget. A label element, so it undoes the label rules (bold, a margin below) */
+.tick-box {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    font-weight: normal;
+}
+
+/* The native checkbox, unseen over the drawn box, so it has the focus, the clicks and the state */
+.tick-box__input {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    transform: translateY(-50%);
+    opacity: 0;
+    z-index: 1;
+}
+
+/* The drawn box */
+.tick-box__mark {
+    position: relative;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+    font-size: 0;
+}
+
+.tick-box__mark svg {
+    display: none;
+    margin: 3px;
+    color: white;
+}
+
+/* Its text, in a form label's colour */
+.tick-box__label {
+    margin: 0 0 0 9px;
+    color: var(--form-group__label-color);
+}
+
+/* A tick box that can be changed shows it can be clicked */
+.tick-box:has(> .tick-box__input:not(:disabled):not([aria-readonly="true"])) {
+    cursor: pointer;
+}
+
+/* Ticked: the tick, white on the blue box */
+.tick-box__input:checked ~ .tick-box__mark,
+.tick-box--cell[aria-checked="true"] > .tick-box__mark {
+    background-color: var(--blue-500);
+}
+
+.tick-box__input:checked ~ .tick-box__mark svg,
+.tick-box--cell[aria-checked="true"] > .tick-box__mark svg {
+    display: block;
+}
+
+/* Keyboard focus, on the box */
+.tick-box__input:focus ~ .tick-box__mark {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Read only: the normal box, with a grey tick rather than a blue fill, and grey text */
+.tick-box__input[aria-readonly="true"]:checked ~ .tick-box__mark,
+.tick-box--cell[aria-readonly="true"][aria-checked="true"] > .tick-box__mark {
+    background-color: var(--control__background-color);
+}
+
+.tick-box__input[aria-readonly="true"] ~ .tick-box__mark svg,
+.tick-box--cell[aria-readonly="true"] > .tick-box__mark svg {
+    color: var(--control__text-color--readonly);
+}
+
+/* Disabled: the filled box with no border that every disabled control has, with a grey tick */
+.tick-box__input:disabled ~ .tick-box__mark {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
+}
+
+.tick-box__input:disabled ~ .tick-box__mark svg {
+    color: var(--control__text-color--disabled);
+}
+
+.tick-box__input:is(:disabled, [aria-readonly="true"]) ~ .tick-box__label {
+    color: var(--control__text-color--disabled);
+}
+
+/* The grid's cell: an icon's size, so it fits a row (within the block, to outweigh a grid's own
+   padding for what is in its cells) */
+.tick-box.tick-box--cell {
+    display: flex;
+    flex: none;
+    width: var(--icon-width);
+    height: var(--icon-height);
+    padding: 0;
+}
+
+.tick-box--cell > .tick-box__mark {
+    width: var(--icon-width);
+    height: var(--icon-height);
+}
+
+.tick-box--cell > .tick-box__mark svg {
+    margin: 2px;
+}
+
+.tick-box--cell[aria-readonly="false"] {
+    cursor: pointer;
+}
+
+/* Part ticked (mixed, e.g. a folder some of whose documents are ticked): a blue square in the box */
+.tick-box--cell[aria-checked="mixed"] > .tick-box__mark::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 1px;
+    background-color: var(--blue-500);
+}
+
+.tick-box--cell[aria-readonly="true"][aria-checked="mixed"] > .tick-box__mark::after {
+    background-color: var(--control__text-color--readonly);
+}

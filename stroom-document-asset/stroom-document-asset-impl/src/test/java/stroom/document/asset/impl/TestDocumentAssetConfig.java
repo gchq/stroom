@@ -16,6 +16,7 @@
 
 package stroom.document.asset.impl;
 
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 
 import org.junit.jupiter.api.Test;
@@ -69,5 +70,25 @@ class TestDocumentAssetConfig {
                 ByteSize.ofMebibytes(5));
 
         assertThat(config.getMaxUploadSize()).isEqualTo(ByteSize.ofMebibytes(5));
+    }
+
+    /// `maxUploadSize` is read from a fresh config on every upload, so a change takes effect live.
+    ///
+    /// Regression test: the getter was inserted between `getMimetypes()` and its
+    /// `@RequiresRestart`, so the annotation moved onto the wrong property.
+    @Test
+    void testMaxUploadSizeDoesNotRequireRestart() throws NoSuchMethodException {
+        assertThat(DocumentAssetConfig.class.getMethod("getMaxUploadSize")
+                .isAnnotationPresent(RequiresRestart.class))
+                .isFalse();
+    }
+
+    /// `mimetypes` is cached by the singleton `DocumentAssetServlet` at construction, so a change
+    /// is ignored until restart and the property must say so.
+    @Test
+    void testMimetypesRequiresRestart() throws NoSuchMethodException {
+        assertThat(DocumentAssetConfig.class.getMethod("getMimetypes")
+                .isAnnotationPresent(RequiresRestart.class))
+                .isTrue();
     }
 }

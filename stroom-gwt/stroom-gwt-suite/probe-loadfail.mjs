@@ -88,7 +88,7 @@ const dialogs = await readDialogs(page).catch(() => []);
 const tabsAfter = await page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
 const bodyText = await page.evaluate(() => {
-  const pops = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+  const pops = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   return pops.map((p) => p.textContent.replace(/\s+/g, ' ').trim()).join(' || ');
 });
 

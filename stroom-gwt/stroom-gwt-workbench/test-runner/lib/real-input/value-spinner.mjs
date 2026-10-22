@@ -61,6 +61,12 @@ async function touchHold(page, point, millis) {
 // Presses a key, then waits (up to a second) for the field to show the value it should
 async function pressFor(page, field, key, expected, message) {
   await page.keyboard.press(key);
+  await expectValue(page, field, expected, message);
+}
+
+// Waits (up to a second) for the field to show the value it should, as the grid hands a cell its
+// events a moment after they happen
+async function expectValue(page, field, expected, message) {
   const deadline = Date.now() + 1000;
   let actual = await field.inputValue();
   while (actual !== expected && Date.now() < deadline) {
@@ -130,7 +136,7 @@ export const CHECKS = {
     const up = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     const start = Number(await field.inputValue());
     await page.mouse.click(up.x, up.y);
-    assert.equal(Number(await field.inputValue()), start + 1, 'a real click steps once');
+    await expectValue(page, field, String(start + 1), 'a real click steps once');
     await page.mouse.move(up.x, up.y);
     await page.mouse.down();
     await page.waitForTimeout(1500);
@@ -143,8 +149,9 @@ export const CHECKS = {
     await page.mouse.move(0, 0);
     const down = await row.locator('[title="Decrease value"]').boundingBox();
     await touchHold(page, { x: down.x + down.width / 2, y: down.y + down.height / 2 }, 50);
+    await expectValue(page, field, String(held - 1), 'a tap steps once');
     await page.waitForTimeout(200);
-    assert.equal(Number(await field.inputValue()), held - 1, 'a tap steps once');
+    assert.equal(Number(await field.inputValue()), held - 1, 'a tap steps only once');
   },
   // The grid spinner's keys, pressed for real while its field has the focus (clicked in its text,
   // clear of the arrows)

@@ -53,11 +53,10 @@ public class DateTimeFormatter {
                ")";
     }
 
-    // STROOMWORKS-LOCAL: formatCompact and toCompactPattern are a local addition -
-    // KEEP LOCAL ON MERGE FROM master. Upstream has only format(Long). FloorMap's timeline
-    // axis and scrub tooltip cannot fit the user's full pattern, but must still show the
-    // same instant, zone and field order as every other time in the UI - they previously
-    // hand-rolled UTC and ignored the user's preferences entirely. Dropping these breaks that.
+    // formatCompact and toCompactPattern exist because FloorMap's timeline axis and scrub
+    // tooltip cannot fit the user's full pattern, but must still show the same instant, zone
+    // and field order as every other time in the UI rather than hand-rolling UTC and ignoring
+    // the user's preferences.
     /**
      * Formats {@code ms} like {@link #format(Long)} but without sub-minute precision or a
      * time-zone suffix, for places with a hard width limit.

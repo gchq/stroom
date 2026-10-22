@@ -1961,24 +1961,20 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     }
 
     /// Resolves the id of the map object under an event target, or `null`
-    /// if the target is not a real object shape. Wrapper `<g>` groups
-    /// (prefixed [FloorMapJsonKeys#SVG_GROUP_PREFIX]), transform handles
-    /// (prefixed [FloorMapJsonKeys#HANDLE_PREFIX]) and cluster glyphs
-    /// (prefixed [FloorMapJsonKeys#CLUSTER_PREFIX]) are not objects.
+    /// if the target is not a real object shape.
     ///
-    /// The cluster exclusion is load-bearing: a cluster's key is one of its
-    /// members' ids, so without it a press on a cluster would announce that member
+    /// Only an id written by [FloorMapJsonKeys#objectDomId] names an object. Wrapper `<g>`
+    /// groups, transform handles and cluster glyphs carry other prefixes and so are never
+    /// mistaken for one. Matching on the object prefix, rather than excluding the others, is what
+    /// stops an object whose key happens to start `__handle_` being taken for a handle.
+    ///
+    /// The cluster case is load-bearing: a cluster's key is one of its
+    /// members' ids, so treating its glyph as an object would announce that member
     /// as the thing that was clicked — selecting an entity the user cannot see and
     /// did not aim at.
     private String hitObjectId(final EventTarget target) {
         if (Element.is(target)) {
-            final String id = Element.as(target).getId();
-            if (id != null && !id.isEmpty()
-                    && !id.startsWith(FloorMapJsonKeys.SVG_GROUP_PREFIX)
-                    && !id.startsWith(FloorMapJsonKeys.HANDLE_PREFIX)
-                    && !id.startsWith(FloorMapJsonKeys.CLUSTER_PREFIX)) {
-                return id;
-            }
+            return FloorMapJsonKeys.objectKeyFromDomId(Element.as(target).getId());
         }
         return null;
     }

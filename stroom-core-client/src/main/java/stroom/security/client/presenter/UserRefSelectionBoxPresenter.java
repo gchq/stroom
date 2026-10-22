@@ -84,9 +84,9 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
 
     private void changeSelection(final UserRef selection) {
         if (selection == null) {
-            getView().setText("None", false);
+            getView().setText("None");
         } else {
-            getView().setText(selection.toDisplayString(), false);
+            getView().setText(selection.toDisplayString());
         }
     }
 

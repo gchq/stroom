@@ -52,7 +52,6 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Filter '" + column.getName() + "'")
-                .modal(true)
                 .onShow(e -> editorPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

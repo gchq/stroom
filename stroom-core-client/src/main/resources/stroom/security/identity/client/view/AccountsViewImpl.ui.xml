@@ -4,7 +4,7 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
 <!--        <g:SimplePanel styleName="dock-min form-padding">-->
-<!--            <v:QuickFilter ui:field="quickFilter"/>-->
+<!--            <v:QuickFilter accessibleName="Filter accounts" ui:field="quickFilter"/>-->
 <!--        </g:SimplePanel>-->
         <g:SimplePanel styleName="dock-max" ui:field="listContainer"/>
     </g:FlowPanel>

@@ -94,8 +94,8 @@ public class TreeRenderer2<T> {
 
                 drawItem(treeLayout, childBounds, child);
 
-                connectorRenderer.render(treeLayout, bounds.getMaxX(), bounds.getCenterY(), childBounds.getX(),
-                        childBounds.getCenterY(), child.equals(first), child.equals(last));
+                connectorRenderer.render(treeLayout, item, child, bounds.getMaxX(), bounds.getCenterY(),
+                        childBounds.getX(), childBounds.getCenterY(), child.equals(first), child.equals(last));
             }
         }
     }

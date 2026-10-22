@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table.cf;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
@@ -262,15 +263,21 @@ public class RulesPresenter
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
                         final int index = rules.indexOf(existingRule);
-                        rules.remove(index);
-                        rules.add(index, rule);
+                        if (index < 0) {
+                            // Deleted behind the dialog, which isn't modal
+                            AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                                      + "so the changes can't be kept.", null);
+                        } else {
+                            rules.remove(index);
+                            rules.add(index, rule);
 
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
 
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
                         }
                     }
                     e.hide();

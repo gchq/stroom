@@ -57,7 +57,7 @@ const press = async (want) => {
   await settle(1600);
   return true;
 };
-const caps = () => page.evaluate(() => [...document.querySelectorAll('.dialog-titleText')]
+const caps = () => page.evaluate(() => [...document.querySelectorAll('.dialog__title')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.trim()));
 
 await gwt.openMainMenu(page);

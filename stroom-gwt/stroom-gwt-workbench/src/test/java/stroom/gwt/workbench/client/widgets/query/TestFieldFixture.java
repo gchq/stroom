@@ -54,10 +54,21 @@ class TestFieldFixture {
 
     @Test
     void testFindByName() {
+        // As DataSourceClient.findFieldByName asks (StringExpressionUtil.equalTo)
+        final String request = "{\"quickFilter\":\"=\\\"UserId\\\"\"}";
+        assertThat(names(FIXTURE.find(request))).containsExactly("UserId");
+        assertThat(FieldFixture.describe(request)).isEqualTo("findFieldByName:UserId");
+        // Ignoring case
+        assertThat(names(FIXTURE.find(request.replace("UserId", "userid")))).containsExactly("UserId");
+        // Not a contains
+        assertThat(names(FIXTURE.find(request.replace("UserId", "User")))).isEmpty();
+    }
+
+    @Test
+    void testFindByNameCaseSensitive() {
         final String request = "{\"quickFilter\":\"==\\\"UserId\\\"\"}";
         assertThat(names(FIXTURE.find(request))).containsExactly("UserId");
         assertThat(FieldFixture.describe(request)).isEqualTo("findFieldByName:UserId");
-        // Case sensitive
         assertThat(names(FIXTURE.find(request.replace("UserId", "userid")))).isEmpty();
     }
 

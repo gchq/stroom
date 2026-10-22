@@ -40,7 +40,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
-import stroom.util.shared.IsAtomicConfig;
+import stroom.util.shared.IsAtomicConfigValue;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
@@ -59,6 +59,8 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectReader;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -132,9 +134,12 @@ public class ConfigMapper {
     private static final List<String> VALID_DELIMITERS_LIST = List.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
+    private static final ObjectReader OBJECT_READER = createObjectReader();
 
     private static final String DOCREF_PREFIX = "docRef";
     private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
+    private static final String PASSWORD_MASK = "********";
+
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
     public static final String DOCREF_EXAMPLE =
@@ -346,6 +351,11 @@ public class ConfigMapper {
         SAXParserSettings.setExternalEntitiesDisabled(parserConfig.isDisableExternalEntities());
     }
 
+    private static boolean isConfigBranch(final Class<?> clazz) {
+        return AbstractConfig.class.isAssignableFrom(clazz)
+               && !IsAtomicConfigValue.class.isAssignableFrom(clazz);
+    }
+
     private synchronized AbstractConfig rebuildObjectInstance(
             final PropertyPath propertyPath,
             final Map<Class<?>, AbstractConfig> newInstanceMap) {
@@ -358,7 +368,7 @@ public class ConfigMapper {
         AbstractConfig instance = objectInfo.createInstance(argPropName -> {
             final PropertyPath childPropertyPath = propertyPath.merge(argPropName);
             final Prop childProp = objectInfo.getPropertyMap().get(argPropName);
-            if (AbstractConfig.class.isAssignableFrom(childProp.getValueClass())) {
+            if (isConfigBranch(childProp.getValueClass())) {
                 // branch so recurse
                 return rebuildObjectInstance(childPropertyPath, newInstanceMap);
             } else {
@@ -378,7 +388,8 @@ public class ConfigMapper {
         // DB config objects are bound separately in AppConfigModule
         final Class<?> configClass = instance.getClass();
         if (!configClass.isAnnotationPresent(NotInjectableConfig.class)
-            && !AbstractDbConfig.class.isAssignableFrom(configClass)) {
+            && !AbstractDbConfig.class.isAssignableFrom(configClass)
+            && !IsAtomicConfigValue.class.isAssignableFrom(configClass)) {
             newInstanceMap.put(configClass, instance);
         }
 
@@ -707,9 +718,9 @@ public class ConfigMapper {
         final SourceType sourceAfter = configProperty.getSource();
 
         LOGGER.trace(() -> LogUtil.message("effectiveValueBefore: [{}] ({}), effectiveValueAfter [{}] ({})",
-                effectiveValueBefore,
+                toLoggableValue(configProperty, effectiveValueBefore),
                 sourceBefore,
-                effectiveValueAfter,
+                toLoggableValue(configProperty, effectiveValueAfter),
                 sourceAfter));
 
         if (!Objects.equals(effectiveValueBefore, effectiveValueAfter)) {
@@ -720,9 +731,9 @@ public class ConfigMapper {
                 LOGGER.info(
                         "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
                         fullPath,
-                        effectiveValueBefore.orElse(""),
+                        toLoggableValue(configProperty, effectiveValueBefore),
                         sourceBefore,
-                        effectiveValueAfter.orElse(""),
+                        toLoggableValue(configProperty, effectiveValueAfter),
                         sourceAfter);
             }
 //            }
@@ -730,6 +741,17 @@ public class ConfigMapper {
         } else {
             LOGGER.trace("Values are equal for {}", fullPath);
             return false;
+        }
+    }
+
+    // The value of a password property must never be logged
+    private static String toLoggableValue(final ConfigProperty configProperty, final Optional<String> value) {
+        if (value.isEmpty()) {
+            return "";
+        } else if (configProperty.isPassword()) {
+            return PASSWORD_MASK;
+        } else {
+            return value.get();
         }
     }
 
@@ -799,7 +821,7 @@ public class ConfigMapper {
                                     type.equals(boolean.class) ||
                                     type.equals(Character.class) ||
                                     type.equals(char.class) ||
-                                    IsAtomicConfig.class.isAssignableFrom(type) ||
+                                    IsAtomicConfigValue.class.isAssignableFrom(type) ||
                                     Set.class.isAssignableFrom(type) ||
                                     List.class.isAssignableFrom(type) ||
                                     Map.class.isAssignableFrom(type) ||
@@ -861,6 +883,9 @@ public class ConfigMapper {
                 } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL,
                             valueClass.getSimpleName()) + " of ";
+                } else if (IsAtomicConfigValue.class.isAssignableFrom(valueClass)) {
+                    dataTypeName = "JSON (" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL,
+                            valueClass.getSimpleName()) + ")";
                 } else {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
                 }
@@ -872,7 +897,7 @@ public class ConfigMapper {
                     final String genericTypes = Arrays.stream(parameterizedType.getActualTypeArguments())
                             .map(ConfigMapper::getDataTypeName)
                             .collect(Collectors.joining(", "));
-                    return rawTypeName + genericTypes;
+                    return rawTypeName + "(" + genericTypes + ")";
                 } else {
                     return rawTypeName;
                 }
@@ -924,18 +949,34 @@ public class ConfigMapper {
     }
 
     private static String serialiseToJson(final Object value) {
+        // Use Jackson v3 as this is our own (de)serialisation of a value
         return JsonUtil.writeValueAsString(value, true);
     }
 
     private static <T> T deserialiseFromJson(final Class<T> clazz, final String json) {
-        return JsonUtil.readValue(json, clazz);
+        // Use Jackson v3 as this is our own (de)serialisation of a value
+        return OBJECT_READER.forType(clazz)
+                .readValue(json);
+    }
+
+    private static <T> List<T> deserialiseListFromJson(final Class<T> itemClass, final String json) {
+        // Use Jackson v3 as this is our own (de)serialisation of a value
+        return OBJECT_READER.forType(OBJECT_READER.typeFactory().constructCollectionType(List.class, itemClass))
+                .readValue(json);
+    }
+
+    private static ObjectReader createObjectReader() {
+        // We need to fail on unknown properties so the user knows they have made a mistake
+        return JsonUtil.getMapper()
+                .reader()
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     private static String convertToString(final Object value,
                                           final List<String> availableDelimiters) {
         if (value != null) {
             if (isSupportedPropertyType(value.getClass())) {
-                if (value instanceof IsAtomicConfig) {
+                if (value instanceof IsAtomicConfigValue) {
                     return serialiseToJson(value);
                 } else if (value instanceof List) {
                     return listToString((List<?>) value, availableDelimiters);
@@ -1027,8 +1068,8 @@ public class ConfigMapper {
                 return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
-            } else if (IsAtomicConfig.class.isAssignableFrom(type)) {
-                return deserialiseFromJson(IsAtomicConfig.class, value);
+            } else if (IsAtomicConfigValue.class.isAssignableFrom(type)) {
+                return deserialiseFromJson(type, value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);
@@ -1126,16 +1167,20 @@ public class ConfigMapper {
         }
     }
 
-    private static boolean isAtomicValue(final Collection<?> collection) {
+    private static boolean areItemsAtomicValues(final Collection<?> collection) {
         if (NullSafe.isEmptyCollection(collection)) {
             return false;
         } else {
+            if (collection.stream().anyMatch(Objects::isNull)) {
+                throw new ConfigPropertyValidationException(
+                        "Collection contains null values");
+            }
             final boolean oneMatches = collection.stream()
-                    .anyMatch(item -> item instanceof IsAtomicConfig);
+                    .anyMatch(item -> item instanceof IsAtomicConfigValue);
 
             if (oneMatches) {
                 final boolean allMatch = collection.stream()
-                        .allMatch(item -> item instanceof IsAtomicConfig);
+                        .allMatch(item -> item instanceof IsAtomicConfigValue);
                 if (allMatch) {
                     return true;
                 } else {
@@ -1158,7 +1203,7 @@ public class ConfigMapper {
         final String str;
         if (list.isEmpty()) {
             str = "";
-        } else if (isAtomicValue(list)) {
+        } else if (areItemsAtomicValues(list)) {
             str = serialiseToJson(list);
         } else {
             final List<String> strList = list.stream()
@@ -1183,7 +1228,7 @@ public class ConfigMapper {
         final String str;
         if (set.isEmpty()) {
             str = "";
-        } else if (isAtomicValue(set)) {
+        } else if (areItemsAtomicValues(set)) {
             str = serialiseToJson(set);
         } else {
             final List<String> strList = set.stream()
@@ -1210,6 +1255,11 @@ public class ConfigMapper {
         }
         // convert keys/values to strings
         final List<Map.Entry<String, String>> strEntries = map.entrySet().stream()
+                .peek(entry -> {
+                    if (entry.getKey() == null) {
+                        throw new ConfigPropertyValidationException("Map cannot contain null keys");
+                    }
+                })
                 .map(entry -> {
                     final String key = ConfigMapper.convertToString(entry.getKey());
                     final String value = ConfigMapper.convertToString(entry.getValue());
@@ -1272,6 +1322,10 @@ public class ConfigMapper {
             final Class<T> type) {
         if (serialisedForm == null || serialisedForm.isEmpty()) {
             return Collections.emptyList();
+        } else if (IsAtomicConfigValue.class.isAssignableFrom(type)) {
+            // listToString serialises a list of atomic values as a JSON array rather than
+            // in the delimited form
+            return deserialiseListFromJson(type, serialisedForm);
         } else {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(
@@ -1441,7 +1495,7 @@ public class ConfigMapper {
             objectInfoMap = new HashMap<>();
 
             buildObjectInfoMap(
-                    new AppConfig(),
+                    defaultAppConfigSupplier.get(),
                     PropertyPath.fromParts("stroom"),
                     objectInfoMap);
         } else {
@@ -1485,7 +1539,9 @@ public class ConfigMapper {
 
                     LOGGER.trace(() -> LogUtil.message("prop: {}, class: {}", prop, prop.getValueClass()));
 
-                    if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                    // Don't descend into atomic config objects
+                    if (AbstractConfig.class.isAssignableFrom(valueType)
+                        && !IsAtomicConfigValue.class.isAssignableFrom(valueType)) {
                         final AbstractConfig childConfigObject = (AbstractConfig) prop.getValueFromConfigObject();
                         // This must be a branch, i.e. config object so recurse into that
                         if (childConfigObject != null) {

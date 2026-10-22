@@ -1488,6 +1488,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationStatusPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Status")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationStatusPresenter.focus())
@@ -1516,6 +1517,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationLabelPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Labels")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationLabelPresenter.focus())
@@ -1536,6 +1538,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationCollectionPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Collections")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> annotationCollectionPresenter.focus())
@@ -1554,6 +1557,7 @@ public class AnnotationEditPresenter
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(commentPresenter)
                 .popupType(PopupType.POPUP)
+                .caption("Choose Comment")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> commentPresenter.focus())

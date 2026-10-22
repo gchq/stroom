@@ -67,10 +67,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-// Part of adding the SQL Temporal Store, which upstream does not have. FloorMap stores its
-// facts and events in one, so dropping these hunks breaks reference-data lookup, XSLT lookup
-// or the store's Data tab depending on the file. Upstream's version must not simply win here.
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLookup.class);

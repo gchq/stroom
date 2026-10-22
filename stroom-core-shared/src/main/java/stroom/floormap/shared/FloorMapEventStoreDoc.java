@@ -17,6 +17,7 @@
 package stroom.floormap.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.planb.shared.AbstractPlanBDoc;
@@ -65,6 +66,17 @@ import java.util.Objects;
 /// do for any other temporal state store. The type is registered through
 /// `PlanBDocumentTypes` so that `PlanBDocCache` resolves it by map name like any other,
 /// which is how a pipeline writes to it. Only the *read* is ours.
+@Description(
+        """
+        Defines a Plan B temporal state store that holds the events displayed by a Floor Map.
+        Each event records the state of an entity, e.g. its position, from a point in time, so the Floor Map \
+        can show where every entity was at any moment.
+        The key and value encodings are fixed so that the Floor Map can always read the store efficiently.
+        How long an entity stays on the map after its last event, how long data is retained, the maximum \
+        size of the store and whether to condense data can all be configured.
+
+        Data is loaded into the store using the {{< pipe-elm "PlanBFilter" >}} pipeline element.
+        """)
 @JsonPropertyOrder({
         "type",
         "uuid",

@@ -39,12 +39,10 @@ workbench.TooltipTestVis = function() {
     var element = document.createElement("div");
     element.style.cssText = "position: absolute; inset: 0;";
 
+    // Made as the visualisations make theirs (stroom.tooltipHtml), with the Hostile bar's markup
+    // after it
     var tipHtml = function(bar) {
-        var html = '<div class="grid">'
-                   + '<div class="col"><div>Bar:</div><div>Value:</div></div>'
-                   + '<div class="col"><div><span>' + bar.name + '</span></div>'
-                   + '<div><span>' + bar.value + '</span></div></div>'
-                   + '</div>';
+        var html = stroom.tooltipHtml(null, [["Bar", bar.name], ["Value", bar.value]]);
         if (bar.hostile) {
             html += '<img src="no-such-image" onerror="window.parent.visTooltipTestXss = true">'
                     + '<script>window.parent.visTooltipTestXss = true;</script>';

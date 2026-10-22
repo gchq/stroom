@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.8] - 2026-10-16
+
+* Feature : Add `random-integer(upperbound)` XSLT function.
+
+* Refactor : Refactor `meta-stream` and `meta-stream-for-id` into two classes. Refactor `manifest` and `manifest-for-id` into two classes.
+
+* Bug **#5843** : Fix NPE when fetching explorer tree nodes with debug logging enabled.
+
+* Feature **#5833** : Add XSLT function `send-email()` to send an email using the SMTP server configured in `stroom.analytics.emailConfig`.
+
+* Bug **#5597** : Fix `TypeError: Cannot read properties of null` error when an embedded query with a visualisation returns no rows.
+
+* Bug **#5853** : Fix error saying SQS has not been configured when it has.
+
+* Bug : Fix the OK and Cancel buttons being permanently disabled when OK is clicked on the Lucene index New Field dialog with a blank name.
+
+
 ## [v7.14-beta.7] - 2026-10-14
 
 * Feature **#5834** : Enterprise Floor Mapping
@@ -2684,7 +2701,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.8...HEAD
+[v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
 [v7.14-beta.6]: https://github.com/gchq/stroom/compare/v7.14-beta.5...v7.14-beta.6
 [v7.14-beta.5]: https://github.com/gchq/stroom/compare/v7.14-beta.4...v7.14-beta.5

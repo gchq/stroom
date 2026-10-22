@@ -151,6 +151,90 @@ class TestSqlStoreFilter {
         assertThat(captured.getValue()).contains("<Location><Country>UK</Country></Location>");
     }
 
+    /**
+     * Regression test: the end of any element called {@code value} closed the value, so a payload
+     * containing its own {@code <value>} element was cut short there, and the rest of it leaked into
+     * the surrounding reference.
+     */
+    @Test
+    void testNestedValueElementDoesNotEndTheValue() {
+        Mockito.when(storeProvider.get("test-map")).thenReturn(updatableTemporalStore);
+
+        final String xml = """
+                <referenceData xmlns="reference-data:2">
+                    <reference>
+                        <map>test-map</map>
+                        <key>k1</key>
+                        <value><Reading><value>42</value><unit>C</unit></Reading></value>
+                    </reference>
+                </referenceData>
+                """;
+
+        processXml(xml);
+
+        assertThat(loggedSeverities).isEmpty();
+
+        final TemporalEntry captured = singleUpsertedEntry();
+        assertThat(captured.getKey()).isEqualTo("k1");
+        assertThat(captured.getValue()).contains("<value>42</value><unit>C</unit></Reading>");
+    }
+
+    /**
+     * Regression test: a namespace declared on the value's first element was dropped, because SAX
+     * reports the declaration before the element that creates the serialising transformer.
+     */
+    @Test
+    void testNamespaceDeclaredOnTheFirstValueElementIsKept() {
+        Mockito.when(storeProvider.get("test-map")).thenReturn(updatableTemporalStore);
+
+        final String xml = """
+                <referenceData xmlns="reference-data:2">
+                    <reference>
+                        <map>test-map</map>
+                        <key>k1</key>
+                        <value><evt:Location xmlns:evt="event-logging:3">
+                            <evt:Country>UK</evt:Country></evt:Location></value>
+                    </reference>
+                </referenceData>
+                """;
+
+        processXml(xml);
+
+        assertThat(loggedSeverities).isEmpty();
+
+        final String value = singleUpsertedEntry().getValue();
+        assertThat(value).contains("xmlns:evt=\"event-logging:3\"");
+        assertThat(value).contains("<evt:Country>UK</evt:Country>");
+    }
+
+    /**
+     * Regression test: an over-long key failed in the database and took the whole batch with it,
+     * losing up to a thousand good entries. It is now rejected on its own and the rest are written.
+     */
+    @Test
+    void testAnOverLongKeyIsSkippedWithoutLosingTheRestOfTheBatch() {
+        Mockito.when(storeProvider.get("test-map")).thenReturn(updatableTemporalStore);
+        final String longKey = "k".repeat(UpdatableTemporalStore.MAX_KEY_LENGTH + 1);
+
+        processXml("<referenceData>"
+                   + reference("test-map", "good1", "v1")
+                   + reference("test-map", longKey, "v2")
+                   + reference("test-map", "good2", "v3")
+                   + "</referenceData>");
+
+        assertThat(loggedSeverities).containsExactly(Severity.ERROR);
+        assertThat(loggedMessages.getFirst())
+                .contains(String.valueOf(UpdatableTemporalStore.MAX_KEY_LENGTH))
+                .contains("skipped");
+
+        final ArgumentCaptor<ApplyChangesRequest> captor =
+                ArgumentCaptor.forClass(ApplyChangesRequest.class);
+        Mockito.verify(updatableTemporalStore, Mockito.times(1)).applyChanges(captor.capture());
+        assertThat(captor.getValue().getOperations())
+                .extracting(op -> op.getEntry().getKey())
+                .containsExactly("good1", "good2");
+    }
+
     @Test
     void testCustomTimeHandling() {
         Mockito.when(storeProvider.get("test-map")).thenReturn(updatableTemporalStore);

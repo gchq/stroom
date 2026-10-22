@@ -483,6 +483,7 @@ public class QueryPresenter
                 processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
                 ShowPopupEvent.builder(processorLimitsPresenter)
                         .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .modal()
                         .caption("Process Search Results")
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {
@@ -826,6 +827,7 @@ public class QueryPresenter
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(6));
 
         return menuItems;
     }

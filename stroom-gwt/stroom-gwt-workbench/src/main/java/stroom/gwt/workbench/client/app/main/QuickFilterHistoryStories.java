@@ -99,8 +99,8 @@ public final class QuickFilterHistoryStories {
                     play.expect(screen.findByText("display:\"Bob Brown\"")).toBeInTheDocument();
                     // The menu is as wide as the filter, as a combo box's list is, and lined up
                     // with it, however long its filters
-                    final Query box = play.querySelector(".quickFilter");
-                    final Query menu = screen.querySelector(".menuCellTable").closest(".simplePopup-container");
+                    final Query box = play.querySelector(".quick-filter");
+                    final Query menu = screen.querySelector(".menu").closest(".popup");
                     play.expect("menu's left edge", () -> Math.abs(menu.left().get() - box.left().get()))
                             .toBeLessThanOrEqual(1);
                     play.expect("menu's width", () -> Math.abs(menu.width().get() - box.width().get()))
@@ -159,7 +159,7 @@ public final class QuickFilterHistoryStories {
                     play.findByText("Alice Anderson");
                     play.type(filter, REJECTED_FILTER + "{Enter}");
                     play.waitFor(() -> play.expect(play.queryByText("Alice Anderson")).toBeNull());
-                    play.expect(filter).toHaveClass("invalid");
+                    play.expect(filter).toHaveAttribute("aria-invalid", "true");
                     play.expect(filter).toHaveAttribute("title", REJECTION);
                     play.click(play.getByTitle("Quick Filter Syntax Help"));
                     play.expect(play.screen().findByText("This filter was not applied")).toBeInTheDocument();
@@ -191,8 +191,8 @@ public final class QuickFilterHistoryStories {
                     play.expect(screen.queryByText("Replace the filter text?")).toBeNull();
                     expectNoProblems(play);
                 })
-                // A filter the tree can't show opens an empty tree, saying so. OK then replaces
-                // the text, once the user confirms losing it
+                // A filter the tree can't show opens an empty tree, saying so (and that OK will
+                // replace the text). OK then replaces it, with no confirmation
                 .story("AdvancedQueryUnconvertible", context -> render(context, fixtures(RestReply.json("[]"))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -206,13 +206,12 @@ public final class QuickFilterHistoryStories {
                     play.expect(dialog.findByText(TextMatch.startingWith("The current filter could not be converted")))
                             .toBeInTheDocument();
                     play.expect(dialog.getByText(TextMatch.containing(REJECTION))).toBeInTheDocument();
+                    play.expect(dialog.getByText(TextMatch.containing("OK will replace the filter text")))
+                            .toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    final Play confirm = screen.within(
-                            screen.findByText("Replace the filter text?").closest(StroomDom.DIALOG));
-                    play.expect(confirm.getByText(TextMatch.containing(REJECTED_FILTER))).toBeInTheDocument();
-                    play.click(confirm.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Advanced Query", StroomDom.DIALOG_TITLE))
                             .toBeNull());
+                    play.expect(screen.queryByText("Replace the filter text?")).toBeNull();
                     play.expect(filter).toHaveValue("");
                     play.findByText("Alice Anderson");
                     expectNoProblems(play);

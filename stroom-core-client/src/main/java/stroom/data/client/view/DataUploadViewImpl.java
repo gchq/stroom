@@ -18,8 +18,7 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.SelectionBox;
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,15 +37,13 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     CustomFileUpload fileUpload;
     @UiField
-    MyDateBox effective;
+    DateTimeBox effective;
     @UiField
     TextArea metaData;
 
     @Inject
-    public DataUploadViewImpl(final Binder binder,
-                              final UserPreferencesManager userPreferencesManager) {
+    public DataUploadViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        effective.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override
@@ -66,7 +63,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Override
     public Long getEffectiveDate() {
-        return effective.getMilliseconds();
+        return effective.getValue();
     }
 
     @Override

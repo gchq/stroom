@@ -77,13 +77,6 @@ import jakarta.validation.constraints.AssertTrue;
 
 import java.util.Objects;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
-// Local change, and not the upstream merge it resembles. Semantically the diff is exactly:
-// visualisationAssetConfig / visualisationAssetDbConfig and their getters removed, and
-// documentAssetConfig / documentAssetDbConfig / sqlStoreConfig plus getters added. That is the
-// "Make the Visualisation Asset system generic" rename (VisualisationAsset* generalised into
-// stroom.document.asset) together with the new SQL Temporal Store config. A merge will try to
-// reinstate the VisualisationAsset* entries; they are superseded, not missing.
 @JsonRootName(AppConfig.NAME)
 @JsonPropertyOrder(alphabetic = true)
 public class AppConfig extends AbstractConfig implements IsStroomConfig {

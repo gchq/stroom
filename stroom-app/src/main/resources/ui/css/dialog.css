@@ -1,0 +1,281 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The dialog (stroom.widget.popup.client.view.Dialog and ResizableDialog, with the content
+   templates holding their buttons). Named BEM style (block, block__element, block--modifier).
+
+   dialog                          the popup (role dialog or alertdialog)
+     dialog__container             the template's root
+       dialog__frame               its border, shadow and background, behind the rest
+       dialog__layout              the title bar above the body
+         dialog__title-bar         dialog__icon, dialog__title (names the dialog), dialog__spinner,
+                                   dialog__toolbar (window options)
+         dialog__body              the content template:
+           dialog__content         the screen's own content
+           dialog__buttons         OK, Cancel and so on (--end: at the end; --start: at the
+                                   start, with a dialog__button-group at the end)
+       dialog__resize--n … --sw    the resize handles (dialog--resizable)
+       dialog__hint                what to do while moving or resizing (centred over the dialog)
+
+   --resizable, --moving, --resizing and the buttons' --start and --end are modifiers with no ARIA
+   attribute.
+*/
+
+.dialog {
+    position: relative;
+    z-index: 100;
+}
+
+.dialog__frame {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: thin solid var(--dialog__border-color);
+    border-radius: var(--dialog__border-radius);
+    box-shadow: var(--dialog__shadow);
+    overflow: hidden;
+    background-color: var(--dialog__background-color);
+}
+
+/* The transparency theme option (a class on the page) */
+.transparency .dialog__frame {
+    background-color: var(--transparency__background-color);
+    backdrop-filter: var(--transparency__backdrop-filter);
+}
+
+.dialog__layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.dialog__title-bar {
+    flex-grow: 0;
+    /* Less below, where the content's own padding (its focus room) makes up the gap */
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal)
+             calc(var(--dialog__padding--vertical) - var(--focus-ring__room));
+    display: flex;
+    gap: 5px;
+}
+
+/* Centred in the title bar, in line with the title and the window options button */
+.dialog__spinner {
+    align-self: center;
+    width: 22px;
+    height: 22px;
+}
+
+.dialog__icon {
+    display: flex;
+    align-items: center;
+}
+
+.dialog__icon svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+    color: var(--text-color);
+}
+
+.dialog__title {
+    color: var(--text-color);
+    cursor: default;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+    font-size: 1.5rem;
+    flex-grow: 1;
+}
+
+/* What to do while the dialog is being moved or resized from the keyboard: a badge centred over the
+   dialog, whatever its title's length. A live region, so always there: empty, and of no size, until
+   then */
+.dialog__hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: calc(100% - 2 * var(--dialog__padding--horizontal));
+    color: var(--text-color);
+    font-size: var(--font-size-13);
+    line-height: 1.5;
+    text-align: center;
+    /* Its two lines (what is happening, then the keys) */
+    white-space: pre-line;
+    pointer-events: none;
+}
+
+.dialog--moving .dialog__hint,
+.dialog--resizing .dialog__hint {
+    padding: 8px 14px;
+    border: 1px solid var(--dialog__border-color);
+    border-radius: var(--dialog__border-radius);
+    box-shadow: var(--popup__shadow);
+    background-color: var(--popup__background-color);
+}
+
+/* The window options button (Move, Resize, Maximise, Restore Size) */
+.dialog__toolbar {
+    align-self: center;
+}
+
+/* Its icon in the title's colour, as part of the window rather than an action of the dialog */
+.dialog__toolbar .toolbar-button__icon {
+    color: var(--text-color);
+}
+
+/* Being moved or resized from the keyboard (modifiers with no ARIA attribute): the focus border and
+   ring round the dialog, and the cursor that says so */
+.dialog--moving .dialog__frame,
+.dialog--resizing .dialog__frame {
+    box-shadow: var(--dialog__shadow), 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
+}
+
+.dialog--moving .dialog__title-bar {
+    cursor: move;
+}
+
+.dialog--resizing .dialog__title-bar {
+    cursor: nwse-resize;
+}
+
+.dialog__body {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.dialog__content {
+    flex-grow: 1;
+    overflow: auto;
+    /* Inside the scrolling box, so a focus ring at any edge isn't clipped */
+    padding: var(--focus-ring__room) var(--dialog__padding--horizontal);
+}
+
+.dialog__buttons {
+    width: 100%;
+    flex-grow: 0;
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
+    gap: var(--dialog__padding--horizontal);
+    display: flex;
+    justify-content: space-between;
+}
+
+.dialog__buttons--start {
+    justify-content: flex-start;
+}
+
+.dialog__buttons--end {
+    justify-content: flex-end;
+}
+
+/* A group of buttons at the end of a row whose others are at the start */
+.dialog__button-group {
+    width: 100%;
+    flex-grow: 0;
+    display: flex;
+    gap: var(--dialog__padding--horizontal);
+    justify-content: flex-end;
+}
+
+/* Resize handles */
+.dialog__resize {
+    position: absolute;
+    opacity: .4;
+}
+
+.dialog__resize--n {
+    left: 0;
+    top: -10px;
+    width: 100%;
+    height: 12px;
+    cursor: n-resize;
+}
+
+.dialog__resize--e {
+    right: -10px;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: e-resize;
+}
+
+.dialog__resize--s {
+    left: 0;
+    bottom: -10px;
+    width: 100%;
+    height: 12px;
+    cursor: s-resize;
+}
+
+.dialog__resize--w {
+    left: -10px;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: w-resize;
+}
+
+.dialog__resize--ne {
+    right: -10px;
+    top: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: ne-resize;
+}
+
+.dialog__resize--nw {
+    left: -10px;
+    top: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: nw-resize;
+}
+
+.dialog__resize--se {
+    right: -16px;
+    bottom: -16px;
+    width: 32px;
+    height: 32px;
+    cursor: se-resize;
+}
+
+.dialog__resize--sw {
+    left: -10px;
+    bottom: -10px;
+    width: 12px;
+    height: 12px;
+    cursor: sw-resize;
+}
+
+.dialog__resize--se svg {
+    width: 20px;
+    height: 20px;
+    cursor: nw-resize;
+}
+
+/* Forced colours (e.g. Windows high contrast) drop box shadows, so a dialog being moved or resized
+   from the keyboard has an outline instead of its ring */
+@media (forced-colors: active) {
+    .dialog--moving .dialog__frame,
+    .dialog--resizing .dialog__frame {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}

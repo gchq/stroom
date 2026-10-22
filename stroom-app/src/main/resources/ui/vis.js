@@ -316,7 +316,10 @@ var stroomLink = function(href, target) {
         if (rows && rows.length > 0) {
             html += "<table class=\"vis-tooltip__rows\">";
             rows.forEach(function(row) {
-                html += "<tr><th>" + escape(row[0]) + "</th><td>" + escape(row[1]) + "</td></tr>";
+                html += "<tr class=\"vis-tooltip__row\">"
+                        + "<th class=\"vis-tooltip__key\">" + escape(row[0]) + "</th>"
+                        + "<td class=\"vis-tooltip__value\">" + escape(row[1]) + "</td>"
+                        + "</tr>";
             });
             html += "</table>";
         }

@@ -67,6 +67,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private final boolean allowMultiSelect;
     private final String expanderClassName;
     private final ExplorerCell explorerCell;
+    private final ExplorerTreeSelectionEventManager selectionEventManager;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
@@ -94,8 +95,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             }
         });
         selectionModel = getSelectionModel();
-        final ExplorerTreeSelectionEventManager selectionEventManager =
-                new ExplorerTreeSelectionEventManager(cellTable);
+        selectionEventManager = new ExplorerTreeSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         treeModel = new ExplorerTreeModel(this, restFactory, taskMonitorFactory) {
@@ -148,6 +148,49 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
+
+    /// Sets the keys of a tree with a filter above it, as in a picker's dialog.
+    ///
+    /// @param moveUpFromFirst What Up on the first item does, e.g. moves the focus to the filter.
+    /// @param typedHandler    Given each character typed in the tree, e.g. to type it in the filter.
+    public void setFilterKeys(final Runnable moveUpFromFirst, final Consumer<String> typedHandler) {
+        selectionEventManager.setMoveUpFromFirst(moveUpFromFirst);
+        selectionEventManager.setTypedHandler(typedHandler);
+    }
+
+    /// Sets whether moving to an item with the keyboard also chooses it, as in a picker that
+    /// chooses one item, rather than only moving a highlight that Space chooses.
+    ///
+    /// @param selectionFollowsFocus Whether the selection follows the focus.
+    public void setSelectionFollowsFocus(final boolean selectionFollowsFocus) {
+        selectionEventManager.setSelectionFollowsFocus(selectionFollowsFocus);
+    }
+
+    /// Names the tree for screen readers, e.g. `Documents`.
+    ///
+    /// @param name The name.
+    public void setAccessibleName(final String name) {
+        cellTable.getElement().setAttribute("aria-label", name);
+    }
+
+    /// Moves the focus to the chosen item (or the first, if none is), e.g. from a filter above.
+    public void focusSelected() {
+        cellTable.setKeyboardSelectedRow(Math.max(0, getItemIndex(getSelected())), true);
+    }
+
+    /// Makes the chosen item the tree's tab stop, so tabbing into the tree lands on it.
+    public void showSelectedAsTabStop() {
+        final int index = getItemIndex(getSelected());
+        if (index >= 0) {
+            cellTable.setKeyboardSelectedRow(index, false);
+        }
+    }
+
+    private ExplorerNode getSelected() {
+        return selectionModel == null
+                ? null
+                : selectionModel.getSelected();
+    }
 
     void onData(final FetchExplorerNodeResult result) {
     }
@@ -415,6 +458,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         @Override
         protected void onMenu(final CellPreviewEvent<ExplorerNode> e) {
             showMenu(e);
+        }
+
+        @Override
+        protected void onSelectionFollowsFocus(final ExplorerNode item) {
+            doSelect(item, new SelectionType());
         }
 
         @Override

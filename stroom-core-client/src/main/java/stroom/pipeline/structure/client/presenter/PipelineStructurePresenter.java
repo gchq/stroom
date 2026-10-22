@@ -166,6 +166,12 @@ public class PipelineStructurePresenter
 
                     enableButtons();
                 }));
+        // The Delete key removes the selected element (which has the focus), as Remove does
+        pipelineTreePresenter.setRemoveHandler(element -> {
+            if (isRemoveEnabled()) {
+                onRemove(null);
+            }
+        });
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
@@ -385,6 +391,32 @@ public class PipelineStructurePresenter
                 .enabled(restoreMenuItems != null && !restoreMenuItems.isEmpty())
                 .children(restoreMenuItems)
                 .build());
+        // Moving an element (and those after it) to another parent, as dragging it does, and as
+        // Ctrl+X and Ctrl+V do in the tree
+        final PipelineElement detached = pipelineTreePresenter.getDetached();
+        if (detached == null) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(4)
+                    .icon(SvgImage.MOVE)
+                    .text("Detach")
+                    .enabled(isRemoveEnabled())
+                    .command(() -> pipelineTreePresenter.detach(selectedElement))
+                    .build());
+        } else {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(4)
+                    .icon(SvgImage.MOVE)
+                    .text("Attach '" + detached.getDisplayName() + "' here")
+                    .enabled(pipelineTreePresenter.canAttach(selectedElement))
+                    .command(() -> pipelineTreePresenter.attach(selectedElement))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(5)
+                    .icon(SvgImage.UNDO)
+                    .text("Put '" + detached.getDisplayName() + "' back")
+                    .command(pipelineTreePresenter::cancelDetach)
+                    .build());
+        }
         return menuItems;
     }
 
@@ -563,6 +595,7 @@ public class PipelineStructurePresenter
                         jsonEditor.setText(text, true);
                         ShowPopupEvent.builder(jsonEditor)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .modal()
                                 .popupSize(popupSize)
                                 .caption("Pipeline Source")
                                 .onShow(e -> jsonEditor.focus())

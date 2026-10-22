@@ -22,6 +22,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -45,7 +46,8 @@ import java.util.Map;
 /// Stories of `App/Main/PipelineTree`, showing Stroom's real [PipelineTreePresenter] (the pipeline
 /// structure's element tree) with the [PipelineModel] Stroom builds for an inheritance stack
 /// (`PipelineModelFactory`): a parent layer adding `parser` under `Source`, and the edited child
-/// layer adding `xslt` under `parser`.
+/// layer adding `xslt` under `parser`. Each has an embedded document: `parser`'s from the parent,
+/// `xslt`'s its own.
 ///
 /// | Stroom endpoint | Used for |
 /// |---|---|
@@ -63,9 +65,15 @@ public final class PipelineTreeStories {
             [
               {"sourcePipeline": {"type": "Pipeline", "uuid": "parent", "name": "Parent"},
                 "pipelineData": {"elements": {"add": [{"id": "parser", "type": "CombinedParser"}]},
+                  "properties": {"add": [{"element": "parser", "name": "textConverter",
+                    "value": {"entity": {"type": "TextConverter", "uuid": "tc", "name": "EMBEDDED TC"},
+                      "embedded": true}}]},
                   "links": {"add": [{"from": "Source", "to": "parser"}]}}},
               {"sourcePipeline": {"type": "Pipeline", "uuid": "child", "name": "Child"},
                 "pipelineData": {"elements": {"add": [{"id": "xslt", "type": "XSLTFilter"}]},
+                  "properties": {"add": [{"element": "xslt", "name": "xslt",
+                    "value": {"entity": {"type": "XSLT", "uuid": "x", "name": "EMBEDDED XSLT"},
+                      "embedded": true}}]},
                   "links": {"add": [{"from": "parser", "to": "xslt"}]}}}
             ]""";
 
@@ -93,6 +101,19 @@ public final class PipelineTreeStories {
                     // The merged structure renders Source -> parser -> xslt
                     play.findByText("Source");
                     play.findByText("parser");
+                    // Each element's name says what its icons show, which are hover tips only
+                    final Query xslt = play.getByText("xslt", ".pipeline-element__label").closest(".pipeline-element");
+                    play.expect(xslt).toHaveAttribute("aria-label", "xslt, XSLT Filter, has embedded document");
+                    final Query parser = play.getByText("parser", ".pipeline-element__label")
+                            .closest(".pipeline-element");
+                    play.expect(parser).toHaveAttribute("aria-label",
+                            "parser, Combined Parser, has embedded document inherited from parent pipeline");
+                    final Query embedded = play.within(xslt).querySelector(".pipeline-element__embedded");
+                    play.expect(embedded).toHaveAttribute("aria-hidden", "true");
+                    play.expect(embedded).toHaveAttribute("title", "Has embedded document");
+                    play.expect(play.within(xslt).querySelector(".pipeline-element__type-icon"))
+                            .toHaveAttribute("aria-hidden", "true");
+                    play.expect(play.querySelectorAll(".pipeline-tree__items [role='img']")).toHaveLength(0);
                     // Selecting a node reports it
                     play.click(play.findByText("xslt"));
                     play.waitFor(() -> play.expect(play.spy(ON_SELECT)).toHaveBeenCalled());

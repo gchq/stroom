@@ -24,10 +24,7 @@
                         label="Time Zone Offset"
                         helpText="Fixed offset from UTC in whole hours, from -12 to +12. Shown when Time Zone is set to Offset."
                         screenReaderText="Whole hours from -12 to +12.">
-            <g:FlowPanel>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
-                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
-            </g:FlowPanel>
+            <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -103,12 +103,12 @@ public final class VisTooltipStories {
                     play.waitFor(() -> play.expect(tooltip).toBeVisible());
                     play.expect(tooltip).toHaveTextContent(TextMatch.containing("Right"));
                     play.expect(tooltip).toHaveTextContent(TextMatch.containing("20"));
-                    // Drawn over the background of Stroom's other popups, so see-through as they
-                    // are with the user's Enable Transparency preference (on in this page's
-                    // classes): the popup colour at 80%, the page blurred behind it
-                    final Query background = play.screen().querySelector(TOOLTIP + " > .simplePopup-background-behind");
-                    play.expect(background.computedStyle("background-color")).toMatch(", 0.8)");
-                    play.expect(background.computedStyle("backdrop-filter")).toMatch("blur(20px)");
+                    // A popup as Stroom's others are, so see-through as they are with the user's
+                    // Enable Transparency preference (on in this page's classes): the popup colour
+                    // at 80%, the page blurred behind it
+                    play.expect(tooltip).toHaveClass("popup");
+                    play.expect(tooltip.computedStyle("background-color")).toMatch(", 0.8)");
+                    play.expect(tooltip.computedStyle("backdrop-filter")).toMatch("blur(20px)");
                     // East of the bar, so past the right of the frame
                     play.expect("the tooltip's left less the frame's right",
                                     () -> side(tooltip, "left") - side(frame, "right"))
@@ -167,8 +167,16 @@ public final class VisTooltipStories {
                     final Query tooltip = play.screen().querySelector(TOOLTIP);
                     play.waitFor(() -> play.expect(tooltip).toBeVisible());
                     play.expect(tooltip).toHaveTextContent(TextMatch.containing("Hostile"));
-                    // The key and value columns are kept
-                    play.expect(play.screen().within(tooltip).querySelectorAll(".col")).toHaveLength(2);
+                    // The rows of keys and values are kept
+                    play.expect(play.screen().within(tooltip).querySelectorAll(".vis-tooltip__row")).toHaveLength(2);
+                    // Laid out by the tooltip's own styles alone (not, say, the page's Bootstrap),
+                    // so a short value doesn't wrap: the bar's name is no taller than its key
+                    final Query key = play.screen().within(tooltip).querySelector(".vis-tooltip__key");
+                    final Query name = play.screen().within(tooltip).querySelector(".vis-tooltip__value");
+                    play.expect(name).toHaveTextContent(TextMatch.exact("Hostile"));
+                    play.expect("the bar name's height less its key's",
+                                    () -> side(name, "height") - side(key, "height"))
+                            .toBeLessThanOrEqual(0);
                     play.expect(play.screen().within(tooltip).querySelectorAll("img, script")).toHaveLength(0);
                     // Give an image's error handler time to have run, had the image been kept
                     play.sleep(200);

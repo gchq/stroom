@@ -365,10 +365,8 @@ public final class QueryEditorStories {
                     execute(play);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
                             .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
-                    play.click(play.querySelector(".timeRange-selector"));
-                    // The popup is a GWT PopupPanel on the page's body
-                    play.waitFor(() -> play.expect(screen.querySelector(".timeRange-popup")).toBeInTheDocument());
-                    final Play popup = screen.within(screen.querySelector(".timeRange-popup"));
+                    play.click(screen.getByRole("button", "Time range: All time"));
+                    final Play popup = screen.within(screen.findByRole("dialog", "Time Range"));
                     // The quick settings are buttons in groups named by their titles (they were
                     // labels with click handlers, which the keyboard couldn't reach), pressed here
                     // with Enter
@@ -379,6 +377,28 @@ public final class QueryEditorStories {
                     play.keyboard("{Enter}");
                     play.click(popup.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryContext\": {\"timeRange\": {\"name\": \"Today\"}}}");
+                    play.expect(screen.getByRole("button", "Time range: Today")).toBeInTheDocument();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The time range is a button that opens a modal dialog named "Time Range" below it
+                // (it was text acting as a button, opening a popup with no role, name or Escape):
+                // the focus starts in After Time and is kept in the dialog, and Escape cancels it,
+                // putting the focus back on the button
+                .story("TimeRangeDialogKeys", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query selector = screen.findByRole("button", "Time range: All time");
+                    play.expect(selector).toHaveAttribute("aria-haspopup", "dialog");
+                    play.run("focus the time range", () -> selector.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query dialog = screen.findByRole("dialog", "Time Range");
+                    play.expect(dialog).toHaveAttribute("aria-modal", "true");
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "After Time (inclusive)"))
+                            .toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Time Range")).toBeNull());
+                    play.expect(selector).toHaveFocus();
+                    play.expect(screen.getByRole("button", "Time range: All time")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The query help: the root rows load, expanding one loads its children and
@@ -498,8 +518,9 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Filter 'Count'");
-                    // A modal dialog, named by its title, for screen readers
-                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).toHaveAttribute("aria-modal", "true");
+                    // A dialog named by its title, for screen readers. Not modal, so the results behind
+                    // can be read and copied from while writing the filter (as agreed)
+                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).not().toHaveAttribute("aria-modal");
                     // The filter is an Ace editor, which the dialog focuses once it is shown. That
                     // happens after the dialog appears, so the play waits for it: clicking before it
                     // would let it move the focus after the click
@@ -515,6 +536,11 @@ public final class QueryEditorStories {
                     play.keyboard("foo");
                     play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
                             .toMatch(TextMatch.containing("foo")));
+                    // Escape stops editing, leaving the dialog open, with the editor's content
+                    // focused so Tab can leave it (a second Escape would cancel the dialog)
+                    play.keyboard("{Escape}");
+                    play.expect(dialog.querySelector(".ace_scroller")).toHaveFocus();
+                    play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"columnFilter\": {\"filter\": \"foo\"}}, "

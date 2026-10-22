@@ -17,12 +17,14 @@
 /*
    A visualisation's hover tooltip (stroom.dashboard.client.vis.VisTooltip), shown on the page
    rather than inside the visualisation's frame so that it isn't cut off at the frame's edges.
-   Its content is the visualisation's own HTML; the grid and col classes are the key and value
-   columns that the visualisations' common tooltip builder makes.
+   Its content is the visualisation's own HTML, usually made by vis.js's stroom.tooltipHtml: a
+   title over a table of rows, each a key and its value. Named BEM style (block, block__element),
+   and styled only by its own classes, so that it doesn't depend on the page's other styles (e.g.
+   Bootstrap's).
 
-   It looks as Stroom's other popups do, drawn over their background (SimplePopup.css's
-   simplePopup-background-behind: colour, edge, rounded corners and shadow), so that it is
-   see-through, as they are, when the user's preferences say so (the page's transparency class).
+   It is also a popup block (popup.css: colour, edge, rounded corners and shadow), so that it looks
+   as Stroom's other popups do and is see-through, as they are, when the user's preferences say so
+   (the page's transparency class).
 */
 
 .vis-tooltip {
@@ -36,39 +38,33 @@
     pointer-events: none;
 }
 
+/* 6px by 8px from the edge in all, with the popup's own 4px (its padding and border) */
 .vis-tooltip__content {
-    padding: 6px 8px;
+    padding: 2px 4px;
 }
 
-.vis-tooltip .grid {
-    display: flex;
-    column-gap: 8px;
-}
-
-.vis-tooltip .col {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-/* The title and rows of a tooltip made by vis.js's stroom.tooltipHtml */
 .vis-tooltip__title {
     font-weight: 600;
 }
 
+/* The rows, each a key and its value, the keys lined up in a column */
 .vis-tooltip__rows {
+    margin: 0;
     border-collapse: collapse;
 }
 
-.vis-tooltip__rows th,
-.vis-tooltip__rows td {
+/* A key, never wrapped, so that its value gives way when the tooltip is too narrow */
+.vis-tooltip__key {
+    padding: 0 8px 0 0;
+    font-weight: 400;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+    opacity: 0.8;
+}
+
+.vis-tooltip__value {
     padding: 0;
     text-align: left;
     vertical-align: top;
-}
-
-.vis-tooltip__rows th {
-    padding-right: 8px;
-    font-weight: 400;
-    opacity: 0.8;
 }

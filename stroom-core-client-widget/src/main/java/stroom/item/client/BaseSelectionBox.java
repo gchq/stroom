@@ -18,6 +18,7 @@ package stroom.item.client;
 
 import stroom.svg.client.SvgIconBox;
 import stroom.widget.util.client.SelectionType;
+import stroom.widget.util.client.TypedKey;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -40,7 +41,8 @@ import java.util.function.Supplier;
 
 /// A box for choosing a value from a list, a WAI-ARIA combobox: its text box (`role="combobox"`) opens
 /// the list below it (a [SelectionPopup]) on a click, Enter, Down, Up or Alt+Down, and in a box that
-/// can't be typed in, on Space or a typed character, which the list goes to. The list takes the focus,
+/// can't be typed in, on Space or a typed character, which the list goes to, or Home or End, which
+/// open it at its first or last option. The list takes the focus,
 /// and Enter or Alt+Up there chooses an option, and Escape closes it. Its drop-down arrow is an
 /// [SvgIconBox]'s.
 ///
@@ -131,8 +133,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     // The keys of the WAI-ARIA combobox, while the list is closed (once open, the focus is in the
     // list, which has its own): Enter, Down, Up and Alt+Down open it; in a box that can't be typed in,
-    // Space does too, and typing a character opens it and goes to what was typed (into the list's
-    // quick filter, or to the first option that starts with it)
+    // Space does too, Home and End open it at its first or last option, and typing a character opens
+    // it and goes to what was typed (into the list's quick filter, or to the first option that starts
+    // with it)
     private void onKeyDown(final NativeEvent event) {
         final int keyCode = event.getKeyCode();
         if (keyCode == KeyCodes.KEY_ENTER) {
@@ -141,11 +144,14 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             event.preventDefault();
             openPopup(null);
         } else if (!allowTextEntry) {
-            final String key = SelectionList.keyOf(event);
+            final String key = TypedKey.keyOf(event);
             if (keyCode == KeyCodes.KEY_SPACE) {
                 event.preventDefault();
                 openPopup(null);
-            } else if (SelectionList.isTypedCharacter(event, key)) {
+            } else if (keyCode == KeyCodes.KEY_HOME || keyCode == KeyCodes.KEY_END) {
+                event.preventDefault();
+                openPopup(null, keyCode == KeyCodes.KEY_END);
+            } else if (TypedKey.isTypedCharacter(event, key)) {
                 event.preventDefault();
                 if (popup != null) {
                     // Typed before the list took the focus
@@ -188,6 +194,12 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     // Opens the list, unless it is open or the value can't be changed, going to what was typed to
     // open it, if anything
     private void openPopup(final String typed) {
+        openPopup(typed, null);
+    }
+
+    // Opens the list as openPopup(String) does, or with the focus on its last option (true) or its
+    // first (false), as End and Home open it
+    private void openPopup(final String typed, final Boolean atLast) {
         if (readOnly || !isEnabled() || popup != null) {
             return;
         }
@@ -226,7 +238,11 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             hidePopup();
         }));
 
-        popup.show(textBox.getElement(), typed);
+        if (atLast == null) {
+            popup.show(textBox.getElement(), typed);
+        } else {
+            popup.showAtFirstOrLast(textBox.getElement(), atLast);
+        }
     }
 
     // The box's name, as a screen reader works it out: the elements it is labelled by

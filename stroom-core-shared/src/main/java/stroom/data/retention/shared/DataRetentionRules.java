@@ -17,6 +17,7 @@
 package stroom.data.retention.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.NotDocumented;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@NotDocumented(reason = "Users are not aware data retention rules are a doc")
 @JsonPropertyOrder({
         "type",
         "uuid",

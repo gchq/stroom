@@ -1,0 +1,134 @@
+/*
+ * Stroom's calendar (CustomDatePicker): its year and month rows above a grid of the month's days
+ * (CalendarGrid, role="grid"). A day's states come from its ARIA attributes: the chosen day is
+ * [aria-selected="true"], today is [aria-current="date"]. A day of the month before or after,
+ * shown to fill the weeks, is calendar__day--outside, a modifier as it has no ARIA meaning.
+ */
+
+/* The year's and month's rows, one above the other, as far apart as the 4px focus ring
+   (--focus-shadow) reaches, so a focused box's ring doesn't overlap the box below or above it (and
+   as far apart as each row's box and buttons are) */
+.calendar__header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar__row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 2px;
+}
+
+/* The row's box shares it with the Previous and Next toolbar */
+.calendar__row .selection-box {
+    flex-grow: 1;
+    width: 5px;
+}
+
+.calendar__row .selection-box input {
+    min-width: 5px;
+}
+
+/* The Previous and Next buttons, a toolbar beside each box, spaced as the row is */
+.calendar__row > .toolbar {
+    margin: 0;
+    gap: 4px;
+}
+
+.calendar__row .toolbar-button {
+    width: 26px;
+    height: 26px;
+}
+
+.calendar__row .toolbar-button__icon {
+    color: var(--navigation__text-color);
+    width: 10px;
+    height: 10px;
+}
+
+.calendar__grid {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 4px;
+}
+
+.calendar__weekday,
+.calendar__day {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    /* Centred both ways, so a day's fill and focus ring are round its number (stroom.css puts a
+       table cell's content at its top) */
+    text-align: center;
+    vertical-align: middle;
+    color: var(--text-color);
+}
+
+.calendar__weekday {
+    font-weight: normal;
+    cursor: default;
+}
+
+.calendar__day {
+    /* Centring the line box leaves the digits about 1.25px high (measured at the medium font size),
+       as it has room below the baseline for descenders that digits don't have. Padding at the top
+       of a cell whose height is fixed moves its centred content down by half the padding, so this
+       moves them down by that much, at every font size */
+    padding-top: 0.17em;
+    border: 1px solid transparent;
+    border-radius: 2rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.calendar__day--outside {
+    color: var(--text-color--disabled);
+}
+
+.calendar__day:hover {
+    background: var(--row__background-color--hovered);
+}
+
+/* Today: bold, as its border is faint (2.6:1 dark, 1.3:1 light) */
+.calendar__day[aria-current="date"] {
+    border-color: var(--row__background-color--selected);
+    font-weight: bold;
+}
+
+.calendar__day[aria-selected="true"] {
+    background: var(--row__background-color--selected);
+    border-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+.calendar__day[aria-selected="true"]:hover {
+    background: var(--row__background-color--selected--hovered);
+    border-color: var(--row__background-color--selected--hovered);
+}
+
+/* Keyboard focus: a 2px ring 1px outside the day, drawn above the days beside it, so it is against the
+   page's colour on both sides (7.1:1 dark, 5.8:1 light), not against a chosen day's fill (2.8:1 dark) */
+.calendar__day:focus-visible {
+    position: relative;
+    outline: 2px solid var(--focus-border);
+    outline-offset: 1px;
+}
+
+@media (forced-colors: active) {
+    .calendar__day[aria-current="date"] {
+        border-color: CanvasText;
+    }
+
+    .calendar__day[aria-selected="true"] {
+        background: Highlight;
+        border-color: Highlight;
+        color: HighlightText;
+        forced-color-adjust: none;
+    }
+
+    .calendar__day:focus-visible {
+        outline-color: CanvasText;
+    }
+}

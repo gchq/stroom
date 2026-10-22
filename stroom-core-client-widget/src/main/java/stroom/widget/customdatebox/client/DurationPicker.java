@@ -30,7 +30,13 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 
+/// A duration: an amount (a value spinner, "Amount") and its unit (a selection box, "Unit"), side by
+/// side. In a form group, which all of Stroom's are in, the two are a `group` named by its label.
+///
+/// Styled by `duration-picker.css`: `duration-picker`, `__amount`, `__unit`.
 public class DurationPicker extends Composite implements HasValue<SimpleDuration>, Focus {
+
+    private static final String BLOCK = "duration-picker";
 
     private final ValueSpinner time;
     private final SelectionBox<TimeUnit> timeUnit;
@@ -58,8 +64,11 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         timeUnit.addItem(TimeUnit.MONTHS);
         timeUnit.addItem(TimeUnit.YEARS);
 
+        time.addStyleName(BLOCK + "__amount");
+        timeUnit.addStyleName(BLOCK + "__unit");
+
         final FlowPanel flowPanel = new FlowPanel();
-        flowPanel.setStyleName("duration-picker");
+        flowPanel.setStyleName(BLOCK);
         flowPanel.add(time);
         flowPanel.add(timeUnit);
         initWidget(flowPanel);
@@ -112,8 +121,11 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
 
     @Override
     public void setValue(final SimpleDuration value, final boolean fireEvents) {
-        time.setValue(value.getTime());
-        timeUnit.setValue(value.getTimeUnit());
+        // As setValue(value), which this once didn't call: it threw on null, and never fired
+        setValue(value);
+        if (fireEvents) {
+            ValueChangeEvent.fire(this, getValue());
+        }
     }
 
     @Override

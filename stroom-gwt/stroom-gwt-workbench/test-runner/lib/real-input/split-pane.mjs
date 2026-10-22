@@ -147,7 +147,7 @@ export const CHECKS = {
   // the first pane maximised)
   'widgets-layout-splitpanecontent--splitter-menu': async (page) => {
     const splitter = page.getByRole('separator', { name: 'Properties' });
-    const menu = page.locator('.menuItem-text', { hasText: 'Restore' });
+    const menu = page.locator('.menu__text', { hasText: 'Restore' });
     await splitter.focus();
     for (const key of ['ContextMenu', 'Shift+F10']) {
       await page.keyboard.press(key);

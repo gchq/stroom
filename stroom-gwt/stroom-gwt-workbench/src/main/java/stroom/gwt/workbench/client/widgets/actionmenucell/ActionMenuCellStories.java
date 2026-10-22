@@ -87,7 +87,7 @@ public final class ActionMenuCellStories {
                     // down on it then shows no menu
                     play.expect(play.getByTitle("Actions...")).toBeInTheDocument();
                     play.click(play.getByTitle("Actions..."));
-                    play.expect(play.screen().querySelector(".menuCellTable")).toBeNull();
+                    play.expect(play.screen().querySelector(".menu")).toBeNull();
                 });
     }
 

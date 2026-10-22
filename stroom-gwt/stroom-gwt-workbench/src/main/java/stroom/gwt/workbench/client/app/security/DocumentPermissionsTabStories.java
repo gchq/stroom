@@ -147,7 +147,7 @@ public final class DocumentPermissionsTabStories {
                     play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
                     play.click(edit);
                     // Stroom's dialogs have no role="dialog"; each is the closest
-                    // '.dialog-container' of its caption
+                    // '.dialog__container' of its caption
                     final Play parent = screen.within(screen.findByText("Set Permissions").closest(StroomDom.DIALOG));
                     // The parent dialog holds no create grid, only the button that raises it
                     play.expect(parent.queryByText("Document Type")).toBeNull();
@@ -163,7 +163,7 @@ public final class DocumentPermissionsTabStories {
                             .toBeInTheDocument();
                     // Pipeline is half ticked (inherited); ticking it makes it explicit.
                     // The tick box is a TickBoxCell div with no label
-                    play.click(nested.within(nested.getByText("Pipeline").closest("tr")).querySelector(".tickBox"));
+                    play.click(nested.within(nested.getByText("Pipeline").closest("tr")).querySelector(".tick-box"));
                     play.click(nested.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
