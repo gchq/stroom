@@ -111,6 +111,37 @@ class TestWorkbenchServer {
     }
 
     @Test
+    void testDocumentSaveIsAnsweredAsStroomAnswersIt() throws Exception {
+        Files.createDirectories(tempDir.resolve("api/dictionary/v1"));
+        Files.writeString(tempDir.resolve("api/dictionary/v1/zones"), "{\"uuid\": \"zones\", \"data\": \"{}\"}");
+        final String saved = "{\"uuid\": \"zones\", \"data\": \"{\\\"HQ\\\": {}}\"}";
+
+        final HttpResponse<String> response = put("/api/dictionary/v1/zones", saved, true);
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo(saved);
+        assertThat(response.headers().firstValue("Content-Type")).contains("application/json; charset=utf-8");
+        // Not stored: the document is as it was
+        assertThat(get("/api/dictionary/v1/zones").body()).isEqualTo("{\"uuid\": \"zones\", \"data\": \"{}\"}");
+    }
+
+    @Test
+    void testDocumentSaveWithoutCsrfHeaderIsRefused() throws Exception {
+        Files.createDirectories(tempDir.resolve("api/dictionary/v1"));
+        Files.writeString(tempDir.resolve("api/dictionary/v1/zones"), "{}");
+        assertThat(put("/api/dictionary/v1/zones", "{}", false).statusCode()).isEqualTo(403);
+    }
+
+    @Test
+    void testDocumentSaveOfMissingDocumentIsNotFound() throws Exception {
+        assertThat(put("/api/dictionary/v1/missing", "{}", true).statusCode()).isEqualTo(404);
+    }
+
+    @Test
+    void testPutOutsideApiIsNotAllowed() throws Exception {
+        assertThat(put("/index.html", "x", true).statusCode()).isEqualTo(405);
+    }
+
+    @Test
     void testMainRequiresArgs() {
         assertThatThrownBy(() -> WorkbenchServer.main(new String[]{"6008"}))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -210,5 +241,16 @@ class TestWorkbenchServer {
         return httpClient.send(
                 HttpRequest.newBuilder(URI.create(baseUrl + path)).GET().build(),
                 HttpResponse.BodyHandlers.ofString());
+    }
+
+    // A PUT of some JSON, with Stroom's X-CSRF header if asked
+    private HttpResponse<String> put(final String path, final String json, final boolean csrf) throws Exception {
+        final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(baseUrl + path))
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .header("Content-Type", "application/json");
+        if (csrf) {
+            builder.header("X-CSRF", "1");
+        }
+        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 }

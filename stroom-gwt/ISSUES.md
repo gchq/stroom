@@ -291,6 +291,76 @@ rows) focusable, ideally with the keys of a tree, as the rows expand.
 * `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceOverviewWidget.java`
   (`appendOperationList`)
 
+### Some visualisation stories' screenshots differ from run to run
+
+**Confirmed** (two screenshot runs of the same code, 21 October 2026). The stories pass, but their
+screenshots can't be used for a screenshot diff: they change between runs of the same code, so a
+diff around a change always reports them. Seen across dark, light and forced colours:
+
+* `App/Visualisations/Force` `Keyboard`, `ExpandLine`, `ExpandGroup`, `Teams` and `SelectionPayload`,
+  `App/Visualisations/Tree` `Keyboard`, `ShowAndHide` and `Radial`, `App/Visualisations/LineChart`
+  `PageKeys` and `ArrowKeysMoveBetweenPoints`, `App/Visualisations/Bubble` `KeyboardZoom`: the
+  screenshot catches a tooltip fading in or out, or a transition (a re-layout, a zoom) part of the way.
+* Every `App/Visualisations/Force2D` and `Force3D` story: the dots flowing along the lines are
+  wherever the flow has got to.
+
+A fix: the screenshots wait for transitions and tooltips to finish (e.g. the plays end by waiting for
+the tooltip's opacity, or the runner turns motion off when it takes screenshots), and the flow is
+paused (or its time fixed) when screenshots are taken.
+
+`App/Visualisations/Force3D` `ViewKeys` can also fail, not just differ: in a run of all 269
+visualisation stories with 6 workers (22 October 2026) the camera was 0.55 from where the play
+expected (under 0.5), taking 14 s rather than about 5 s, and it passed when re-run on its own. WebGL
+is slow when many stories share the machine, so the camera hadn't settled. A fix: the play waits for
+the camera to settle rather than checking once.
+
+* `stroom-gwt/stroom-gwt-workbench/test-runner/run.mjs` (`--screenshots`, `--settle`)
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/vis/`
+
+### A visualisation's selection offers only Name and Value to selection handlers
+
+**Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
+turns each into a parameter (`VisComponentSelection.getParams`). But `VisSelectionModel.getColumnRefs`
+offers only `name` and `value`, so the dashboard's selection handler editor can't pick the keys
+most visualisations send (`series`, `x`, `y`, `path`, `lat`, `lon`, `campus`, `floor`, `minTime`,
+`maxTime` and so on); they work only if typed by hand. Found by the visualisation audit of 21 October
+2026. A fix would let each visualisation declare its selection keys (e.g. in its settings JSON, as
+its inputs are) and offer those.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java`
+* `stroom-core-client/src/main/java/stroom/query/client/presenter/VisComponentSelection.java`
+
+### GeoMap's map tiles are blocked in an asset-based visualisation
+
+**Suspected (from the code, not yet seen on a running Stroom).** `DocumentAssetServlet` serves every
+asset, including a visualisation's `index.html`, with `img-src 'self' data:` and `default-src 'self'`.
+So an asset-based visualisation can't load images from other sites. GeoMap's default Tile Server
+URL (`https://{s}.tile.osm.org/...`) and any other external tile server would show no map. A
+FloorMap plan at an external address would fail the same way (plans held as Stroom assets, or as
+`data:` URLs, are fine; see the vis repo's `docs/FAQ.md`). The workbench doesn't send the header,
+so its stories don't catch this. A fix would either let the policy allow configured tile servers
+(e.g. a Stroom property listing allowed image origins) or proxy tiles through Stroom. Found while
+retiring FloorMapLocalBuilder, 22 October 2026.
+
+* `stroom-document-asset/stroom-document-asset-impl/src/main/java/stroom/document/asset/impl/DocumentAssetServlet.java`
+  (`CONTENT_SECURITY_POLICY_ASSET`)
+
+### Bootstrap's styles apply to every page
+
+**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
+`custom-bootstrap.css` recolouring parts of it), but Stroom uses only a few of its classes:
+`form-group` and `form-label` (`FormGroup`, `FormLabel` and about ten settings views), `dropdown`
+(`TermEditor`), and the `badge-*`, `form-control` and `dropdown-menu` looks. Its reboot and its
+generic classes (`.col`, `.row`, `.container`, `.table` and so on) apply to anything else with those
+names. The vis tooltip's key and value columns were classed `grid` and `col`, so they took
+Bootstrap's grid column (the whole width, shared equally, 1rem each side) and short values wrapped
+mid-word; the tooltip is now styled only by its own BEM classes (22 October 2026). Dropping
+Bootstrap would mean moving the classes Stroom uses into its own BEM styles, replacing the parts of
+reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.
+
+* `stroom-app/src/main/resources/ui/css/app.css`
+* `stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`
+
 ## Controls that stay enabled but do nothing
 
 **Reported.**
@@ -521,6 +591,11 @@ last closed dialog for a moment only.
 
 **Reported.**
 
+* Traces: the Service & Operation list (`#operationList`, `TraceOverviewWidget`) scrolls when it is
+  taller than its pane, but neither it nor its rows take the focus, so a keyboard user can't scroll
+  it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
+  once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
+  list (or tree, as they nest), which would also let a row be selected without a mouse.
 * Annotation edit: Status, Assigned To, Labels, Collections and Retain are clickable blocks with no
   tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
   group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
@@ -952,6 +1027,12 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
   group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
 * Iframes have no title: the Documentation editor's markdown preview (`#markdown-frame`,
   `MarkdownEditPresenter`) and dashboard visualisations (`VisFrame`).
+
+  `MarkdownEditPresenter`). Visualisation frames (`VisFrame`) are now named after their dashboard
+  component, or 'Visualisation' in a query editor (`App/Editors/DashboardEditor`
+  `VisLinkedToTable`).
+* The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
+  their row (e.g. "Create Pipeline").
 
 ### Missing roles and states
 

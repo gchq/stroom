@@ -15,23 +15,8 @@
   "app-ai-askstroomaidialog--view-attachment-data": [
     "button-name"
   ],
-  "app-dashboard-queryresultvis--pause-button-reports-up": [
-    "frame-title"
-  ],
-  "app-editors-dashboardeditor--splitter-above-visualisation": [
-    "frame-title"
-  ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
-  ],
-  "app-editors-dashboardeditor--vis-dynamic-controls": [
-    "frame-title"
-  ],
-  "app-editors-dashboardeditor--vis-linked-to-table": [
-    "frame-title"
-  ],
-  "app-editors-dashboardeditor--vis-refetches-on-column-filter": [
-    "frame-title"
   ],
   "app-editors-documentationeditor--default": [
     "frame-title"
@@ -50,9 +35,6 @@
   ],
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
-  ],
-  "app-editors-queryeditor--visualisation-data-latch": [
-    "frame-title"
   ],
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"

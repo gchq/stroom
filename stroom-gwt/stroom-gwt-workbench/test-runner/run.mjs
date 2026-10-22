@@ -117,6 +117,8 @@ Options:
                            (default: ${path.relative(process.cwd(), DEFAULT_OUTPUT_DIR) || '.'})
   --screenshots            Save a PNG of every story (failed stories are always saved)
   --theme <dark|light>     The theme to show the stories in (default: the workbench's, dark)
+  --forced-colours         Show the stories as with a high contrast theme (e.g. Windows'), the
+                           browser emulating forced colours (CSS's forced-colors: active)
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            so that times they show are the same every run (for comparing
                            screenshots). Timers still run
@@ -181,6 +183,7 @@ function parseOptions() {
       screenshots: { type: 'boolean', default: false },
       'fixed-time': { type: 'string' },
       theme: { type: 'string' },
+      'forced-colours': { type: 'boolean', default: false },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -216,6 +219,7 @@ function parseOptions() {
     screenshots: values.screenshots,
     fixedTime: fixedTime(values['fixed-time']),
     theme: theme(values.theme),
+    forcedColours: values['forced-colours'],
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -332,7 +336,10 @@ async function runStoryOnce(browser, story, options, attempt) {
   const seen = { crashed: false, pageErrors: [], consoleErrors: [] };
   let context = null;
   try {
-    context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+    context = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
+      forcedColors: options.forcedColours ? 'active' : 'none',
+    });
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
     if (options.fixedTime) {
       await context.clock.setFixedTime(options.fixedTime);

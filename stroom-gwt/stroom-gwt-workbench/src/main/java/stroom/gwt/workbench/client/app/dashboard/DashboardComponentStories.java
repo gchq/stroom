@@ -157,9 +157,10 @@ public final class DashboardComponentStories {
                     for (final String tab : List.of("Q", "T", "Chart")) {
                         play.expect(DashboardPlays.tab(play, tab)).toBeInTheDocument();
                     }
-                    // The visualisation frame (VisFrame) has no title
                     final Query visFrame = play.screen().querySelector("iframe.VisFrame-frame");
                     play.waitFor(() -> play.expect(visFrame).toBeInTheDocument());
+                    // The visualisation frame (VisFrame) is named after its component, as its tab is
+                    play.expect(visFrame).toHaveAttribute("title", "Chart");
                     // Its page (ui/vis.html) says it is in English, for screen readers (gchq/stroom#5408)
                     play.waitFor(() -> play.expect(FrameDocuments.language(visFrame)).toBe("en"));
                     DashboardPlays.expectNoProblems(play);

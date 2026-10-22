@@ -17,24 +17,34 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.presenter.CredentialListModel;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.http.client.presenter.HttpClientConfigPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.http.HttpClientConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
+import java.util.Set;
 
 public class ElasticClusterSettingsPresenter
         extends DocPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
@@ -43,15 +53,29 @@ public class ElasticClusterSettingsPresenter
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
 
     private final RestFactory restFactory;
+    private final CredentialClient credentialClient;
+    private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+    private HttpClientConfig httpClientConfiguration;
 
     @Inject
     public ElasticClusterSettingsPresenter(
             final EventBus eventBus,
             final ElasticClusterSettingsView view,
-            final RestFactory restFactory) {
+            final RestFactory restFactory,
+            final CredentialClient credentialClient,
+            final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
         super(eventBus, view);
 
         this.restFactory = restFactory;
+        this.credentialClient = credentialClient;
+        this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
+
+        final CredentialListModel credentialListModel = new CredentialListModel(
+                eventBus,
+                credentialClient,
+                Set.of(CredentialType.ACCESS_TOKEN));
+        credentialListModel.setTaskMonitorFactory(this);
+        view.getApiKeySelectionBox().setModel(credentialListModel);
 
         view.setUiHandlers(this);
     }
@@ -62,10 +86,9 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ElasticClusterDoc cluster = onWrite(ElasticClusterDoc
-                .builder()
-                .uuid(UUID.randomUUID().toString())
-                .build());
+        // Send the real document identity, as the server checks the user can edit this cluster before
+        // testing it with the stored credentials.
+        final ElasticClusterDoc cluster = onWrite(getEntity());
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.testCluster(cluster))
@@ -81,17 +104,38 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
-        final ElasticConnectionConfig connectionConfig = cluster.getConnection();
+    public void onSetHttpClientConfiguration() {
+        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, isReadOnly(), updated -> {
+            if (!Objects.equals(httpClientConfiguration, updated)) {
+                httpClientConfiguration = updated;
+                onChange();
+            }
+        });
+    }
 
-        if (connectionConfig != null) {
-            getView().setConnectionUrls(connectionConfig.getConnectionUrls());
-            getView().setCaCertificate(connectionConfig.getCaCertificate());
-            getView().setUseAuthentication(connectionConfig.getUseAuthentication());
-            getView().setApiKeyId(connectionConfig.getApiKeyId());
-            getView().setApiKeySecret(connectionConfig.getApiKeySecret());
-            getView().setConnectionTimeoutMillis(connectionConfig.getConnectionTimeoutMillis());
-            getView().setResponseTimeoutMillis(connectionConfig.getResponseTimeoutMillis());
+    @Override
+    protected void onRead(final DocRef docRef, final ElasticClusterDoc cluster, final boolean readOnly) {
+        final ElasticConnectionConfig connectionConfig = cluster.getConnection() != null
+                ? cluster.getConnection()
+                : new ElasticConnectionConfig();
+
+        getView().setConnectionUrls(NullSafe.list(connectionConfig.getConnectionUrls()));
+
+        if (connectionConfig.getApiKeyName() != null) {
+            credentialClient.getCredentialByName(connectionConfig.getApiKeyName(), credential ->
+                    getView().getApiKeySelectionBox().setValue(credential), this);
+        } else {
+            getView().getApiKeySelectionBox().setValue(null);
+        }
+
+        httpClientConfiguration = connectionConfig.getHttpClientConfiguration();
+        if (httpClientConfiguration == null) {
+            restFactory
+                    .create(ELASTIC_CLUSTER_RESOURCE)
+                    .method(ElasticClusterResource::getDefaultHttpClientConfig)
+                    .onSuccess(result -> httpClientConfiguration = result)
+                    .taskMonitorFactory(this)
+                    .exec();
         }
     }
 
@@ -99,12 +143,10 @@ public class ElasticClusterSettingsPresenter
     protected ElasticClusterDoc onWrite(final ElasticClusterDoc cluster) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
-        connectionConfig.setCaCertificate(getView().getCaCertificate());
-        connectionConfig.setUseAuthentication(getView().getUseAuthentication());
-        connectionConfig.setApiKeyId(getView().getApiKeyId());
-        connectionConfig.setApiKeySecret(getView().getApiKeySecret());
-        connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
-        connectionConfig.setResponseTimeoutMillis(getView().getResponseTimeoutMillis());
+        connectionConfig.setApiKeyName(NullSafe.get(
+                getView().getApiKeySelectionBox().getValue(),
+                Credential::getName));
+        connectionConfig.setHttpClientConfiguration(httpClientConfiguration);
 
         return cluster.copy().connection(connectionConfig).build();
     }
@@ -116,28 +158,6 @@ public class ElasticClusterSettingsPresenter
 
         void setConnectionUrls(List<String> connectionUrls);
 
-        String getCaCertificate();
-
-        void setCaCertificate(String caCertificate);
-
-        boolean getUseAuthentication();
-
-        void setUseAuthentication(boolean useAuthentication);
-
-        String getApiKeyId();
-
-        void setApiKeyId(String apiKeyId);
-
-        String getApiKeySecret();
-
-        void setApiKeySecret(String apiKeySecret);
-
-        int getConnectionTimeoutMillis();
-
-        void setConnectionTimeoutMillis(int connectionTimeoutMillis);
-
-        int getResponseTimeoutMillis();
-
-        void setResponseTimeoutMillis(int responseTimeoutMillis);
+        SelectionBox<Credential> getApiKeySelectionBox();
     }
 }

@@ -406,6 +406,8 @@ public final class ScreenHarness {
         content.setStyleName(CONTENT_STYLE);
         content.getElement().getStyle().setProperty("position", "relative");
         content.getElement().getStyle().setProperty("width", "100%");
+        // The page's height within the story's padding, so that the page doesn't scroll and the
+        // bottom of the screen shows
         content.getElement().getStyle().setProperty("height", StroomThemeDecorator.CANVAS_HEIGHT);
         final Widget widget = presenter.getWidget();
         widget.getElement().getStyle().setProperty("position", "absolute");

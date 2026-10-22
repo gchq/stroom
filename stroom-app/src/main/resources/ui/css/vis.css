@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+   What every visualisation's frame shares: the theme's custom properties, its fonts and the focus
+   ring of vis.js's data points. Asset-based visualisations (an index.html asset, which loads this
+   file) style themselves with their own BEM classes. The unscoped rules older, script-based
+   visualisations rely on are in vis-legacy.css, which only vis.html loads.
+*/
+
+/* The colour palette the theme's custom properties refer to, e.g. --focus-border: var(--blue-300) */
+@import url("material_design_colors.css");
 @import url("theme.css");
 @import url("font.css");
 @import url("webkit-scrollbar.css");
@@ -28,69 +37,31 @@ html, body {
 	font-weight: 400;
 }
 
+/* The visualisation's element, which Stroom gives the theme's class. It has the dashboard panel's
+   background, which a frame otherwise shows through from the page, so that the colours it draws
+   are on a known background, e.g. when contrast is checked */
 .vis {
 	margin: 0;
 	padding: 0;
 	width: 100%;
 	height: 100%;
+	background-color: var(--vis__background-color);
 }
 
-.vis-text {
-	shape-rendering: crispEdges;
+/* A data point made reachable from the keyboard by vis.js's stroom.points */
+.vis-point:focus {
+    outline: none;
 }
 
-.vis-line {
-	stroke-width: 0.5px;
+.vis-point:focus-visible {
+    outline: 2px solid var(--focus-border);
+    outline-offset: 1px;
 }
 
-.vis-area {
-}
-
-.vis-axis {
-}
-
-.vis-axis path,line {
-	fill: none;
-	stroke: #000;
-	shape-rendering: crispEdges;
-}
-
-.vis-axis text {
-	shape-rendering: crispEdges;
-}
-
-.vis-series {
-}
-
-.vis-series path {
-	fill: none;
-}
-
-.vis-marker {
-    position: absolute;
-    stroke: #000;
-    stroke-width: 1.5px;
-}
-
-.vis-label {
-    position: absolute;
-    left: 0;
-    top: 0;
-}
-
-.vis-seriesLabel {
-    position: absolute;
-    left: 0;
-    top: 0;
-    background-color: rgba(255,255,255,0.8);
-    white-space: nowrap;
-}
-
-.vis-glass {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	pointer-events: all;
+/* With a high contrast theme (forced colours), the browser leaves an SVG point's outline in the
+   theme's focus colour, so it is given the high contrast theme's */
+@media (forced-colors: active) {
+    .vis-point:focus-visible {
+        outline-color: Highlight;
+    }
 }

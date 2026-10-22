@@ -33,6 +33,13 @@
                         screenReaderText="Small, Medium or Large.">
             <item:SelectionBox ui:field="fontSize" addStyleNames="w-100"/>
         </form:FormGroup>
+        <!-- Visualisation Colours -->
+        <form:FormGroup identity="userPreferencesVisualisationPalette"
+                        label="Visualisation Colours"
+                        helpText="The colours dashboards' charts give their series and categories: Vivid, or Colour-blind safe, whose colours stay distinct for the common kinds of colour blindness. Default is Vivid."
+                        screenReaderText="Vivid or Colour-blind safe.">
+            <item:SelectionBox ui:field="visualisationPalette" addStyleNames="w-100"/>
+        </form:FormGroup>
         <form:FormGroup identity="userPreferencesEnableTransparency"
                         helpText="Tick to give dialogs and popups a translucent background that blurs the page behind them. Default is ticked unless an administrator has changed the defaults."
                         screenReaderText="Gives dialogs and popups a translucent, blurred background.">

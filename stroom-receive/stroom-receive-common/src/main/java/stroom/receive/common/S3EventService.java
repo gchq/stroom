@@ -391,8 +391,7 @@ public class S3EventService {
                     message.messageAttributes());
 
             putMessageAttribute(msgAttributesCopy, "OriginalMessageId", message.messageId());
-            NullSafe.consumeNonBlankString(cause.getMessage(), msg ->
-                    putMessageAttribute(msgAttributesCopy, "ErrorMessage", msg));
+            putMessageAttribute(msgAttributesCopy, "ErrorMessage", cause.getMessage());
 
             if (cause instanceof final StroomStreamException sse) {
                 final StroomStatusCode statusCode = NullSafe.get(
@@ -437,16 +436,22 @@ public class S3EventService {
     private static void putMessageAttribute(final Map<String, MessageAttributeValue> msgAttributes,
                                             final String key,
                                             final String value) {
-        if (msgAttributes.size() < MAX_MESSAGE_ATTRIBUTES) {
-            msgAttributes.put(
-                    key,
-                    MessageAttributeValue.builder()
-                            .stringValue(value)
-                            .build());
-        } else {
-            LOGGER.warn("putMessageAttribute() - Max attributes {} reached, messageAttributes: {}, " +
-                        "omitting key: {}, value: {}",
-                    MAX_MESSAGE_ATTRIBUTES, msgAttributes, key, value);
+        LOGGER.debug("putMessageAttribute() - key: {}, value: '{}', messageAttributes: {}",
+                key, value, msgAttributes);
+        Objects.requireNonNull(msgAttributes);
+        NullSafe.requireNonBlankString(key, () -> "key should not be blank");
+
+        // No point adding an attribute if the value is blank
+        if (NullSafe.isNonBlankString(value)) {
+            if (msgAttributes.size() < MAX_MESSAGE_ATTRIBUTES) {
+                msgAttributes.put(key, MessageAttributeValue.builder()
+                        .stringValue(value)
+                        .build());
+            } else {
+                LOGGER.warn("putMessageAttribute() - Max attributes {} reached, messageAttributes: {}, " +
+                            "omitting key: {}, value: {}",
+                        MAX_MESSAGE_ATTRIBUTES, msgAttributes, key, value);
+            }
         }
     }
 

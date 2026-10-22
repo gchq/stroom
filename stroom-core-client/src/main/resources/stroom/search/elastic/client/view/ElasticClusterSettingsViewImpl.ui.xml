@@ -2,8 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:t="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs"
@@ -11,35 +10,14 @@
                         screenReaderText="One URL per line, e.g. https://host:9200.">
             <g:TextArea ui:field="connectionUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate (PEM format)"
-                        helpText="CA certificate used to verify the TLS certificates of the Elasticsearch nodes, in PEM format. Only used when a connection URL uses https. If left blank, the Java default trust store is used."
-                        screenReaderText="PEM text. Only used for https URLs.">
-            <g:TextArea ui:field="caCertificate" width="400px"/>
+        <form:FormGroup identity="elasticClusterSettingsAPIKey"
+                        label="API Key (optional)"
+                        helpText="The stored access token credential to send as the cluster's API key. It must hold the base64 encoded key, the 'encoded' value Elasticsearch gives when the key is created. Leave blank if the cluster does not need authentication."
+                        screenReaderText="Access token credential holding the encoded key. Leave blank if not needed.">
+            <l:SelectionBox ui:field="apiKey"/>
         </form:FormGroup>
-        <form:FormGroup helpText="Whether to sign in to Elasticsearch with the API key below. Untick for a cluster that doesn't need authentication."
-                        screenReaderText="Uses the API key below.">
-            <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID"
-                        helpText="ID of the Elasticsearch API key used to authenticate. Only used when 'Use authentication' is ticked and a secret is also set."
-                        screenReaderText="Used with the API key secret when authentication is on.">
-            <g:TextBox ui:field="apiKeyId" width="400px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret"
-                        helpText="Secret of the Elasticsearch API key used to authenticate. Only used when 'Use authentication' is ticked and an API key ID is also set."
-                        screenReaderText="Used with the API key ID when authentication is on.">
-            <form:PasswordBox ui:field="apiKeySecret" width="400px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)"
-                        helpText="Time in milliseconds to wait for a connection to Elasticsearch. Default is 3000 (3 seconds)."
-                        screenReaderText="Milliseconds. Default is 3000.">
-            <v:ValueSpinner ui:field="connectionTimeoutMillis" width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)"
-                        helpText="Time in milliseconds to wait for a response from Elasticsearch once a request has been sent. 0 means no limit. Default is 0."
-                        screenReaderText="Milliseconds. 0 means no limit. Default is 0.">
-            <v:ValueSpinner ui:field="responseTimeoutMillis" width="200px"/>
-        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set HTTP Client Config" width="200px"
+                  addStyleNames="allow-focus"/>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>
