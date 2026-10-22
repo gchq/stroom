@@ -20,9 +20,10 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -95,7 +96,7 @@ class IndexingInputs {
             if (!"Events".equals(type)) {
                 throw new ToolRefusal("Stream " + streamId + " is " + (type == null
                         ? "None"
-                        : PythonRepr.repr(type)) + ", not Events: the source's own data, whatever its XML or "
+                        : PyText.repr(type)) + ", not Events: the source's own data, whatever its XML or "
                                       + "records look like. An index holds the Events an events pipeline writes: "
                                       + "process the sample through it (create_processor_filter, "
                                       + "wait_for_processing) and give those Events streams (stage 1 first).");

@@ -21,14 +21,15 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -378,7 +379,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         if (errorsOnly) {
             return errors.isEmpty()
                     ? List.of()
-                    : List.of("Stream " + raw + " produced Error stream(s) " + PythonText.numbers(errors)
+                    : List.of("Stream " + raw + " produced Error stream(s) " + PyText.repr(errors)
                               + ": summarise_streams (kind=errors) " + raw);
         }
         if (events.isEmpty()) {
@@ -403,7 +404,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         }
         if (idle) {
             return "Every task of the pipeline's filters has ended, but none for stream(s) "
-                   + PythonText.numbers(pending) + ": waiting again won't change that. processing_status shows "
+                   + PyText.repr(pending) + ": waiting again won't change that. processing_status shows "
                    + "what each filter's tracker matched.";
         }
         if (deadline.bySessionLimit() != null) {

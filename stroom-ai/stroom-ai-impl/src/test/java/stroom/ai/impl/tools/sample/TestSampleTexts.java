@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -51,7 +53,7 @@ class TestSampleTexts {
         // JSON mentioning a path is data.
         assertThat(SampleTexts.whyNotData("{\"path\": \"c:\\\\x\\\\y.json\"}", "sample")).isNull();
         assertThatThrownBy(() -> SampleTexts.asNamedSamples(named("fortios", PATHS), null))
-                .isInstanceOf(SampleRefusal.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("cannot read the client")
                 .hasMessageContaining("read the file and pass its text");
         assertThat(SampleTexts.asNamedSamples(List.of(FORTIOS, FORTIOS), null).keySet())
@@ -68,7 +70,7 @@ class TestSampleTexts {
         broken.put("FW-EDGE-01,TRAFFIC,INFO,192.0.2.10\\n2026-10-01T09", "01:05+10:00");
 
         assertThatThrownBy(() -> SampleTexts.asNamedSamples(List.of(broken), null))
-                .isInstanceOf(SampleRefusal.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("samples arrived broken")
                 .hasMessageContaining("list of strings");
     }

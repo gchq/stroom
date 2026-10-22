@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -128,7 +130,7 @@ final class ReadIdioms {
                 // A key of several words ('Source IP') is named in snake case, as the generator reads it back.
                 final String name = WORD_KEY.matcher(key).matches()
                         ? key
-                        : PyStr.strip(NOT_ALPHANUMERIC.matcher(key).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
+                        : PyText.strip(NOT_ALPHANUMERIC.matcher(key).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
                 return extraction(source, keyed.before() + key + keyed.after(), keyed.flags(), List.of(name))
                         .getFirst();
             }
@@ -142,7 +144,7 @@ final class ReadIdioms {
                     final String flags = "group, flags".equals(shape)
                             ? match.string(2)
                             : null;
-                    String base = PyStr.strip(NOT_WORD.matcher(source).replaceAll("_"), "_");
+                    String base = PyText.strip(NOT_WORD.matcher(source).replaceAll("_"), "_");
                     if (base.isEmpty()) {
                         base = "text";
                     }

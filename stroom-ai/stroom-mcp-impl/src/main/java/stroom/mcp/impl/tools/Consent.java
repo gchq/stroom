@@ -17,8 +17,10 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -368,7 +370,7 @@ public class Consent {
         final Map<String, Object> content = NullSafe.map(answer.content());
         final boolean accepted = answer.action() == ElicitResult.Action.ACCEPT;
         // With a value to edit, accepting the form is the confirmation; otherwise its yes or no is.
-        final boolean agreed = accepted && (!request.editable().isEmpty() || truthy(content.get("value")));
+        final boolean agreed = accepted && (!request.editable().isEmpty() || isTrue(content.get("value")));
         final boolean unanswered = answer.action() == ElicitResult.Action.CANCEL;
         final Map<String, String> edits = settled(request.editable(), content);
         final Map<String, String> changed = new LinkedHashMap<>();
@@ -526,34 +528,21 @@ public class Consent {
         return kind.substring(0, Math.min(4, kind.length()));
     }
 
-    private static boolean truthy(final Object value) {
+    private static boolean isTrue(final Object value) {
         return Boolean.TRUE.equals(value) || "true".equalsIgnoreCase(String.valueOf(value));
     }
 
     private static String shortDetail(final Object value) {
         final String raw;
         if (value instanceof final Collection<?> collection) {
-            raw = String.join(", ", collection.stream().map(Consent::pythonStr).toList());
+            raw = String.join(", ", collection.stream().map(PyText::str).toList());
         } else {
-            raw = pythonStr(value);
+            raw = PyText.str(value);
         }
         final String text = String.join(" ", raw.strip().split("\\s+"));
         return text.length() <= DETAIL_LIMIT
                 ? text
                 : cutAtWord(text, DETAIL_LIMIT) + "…";
-    }
-
-    // A value as Python's str gives it, for the few that differ from Java's.
-    private static String pythonStr(final Object value) {
-        if (value == null) {
-            return "None";
-        }
-        if (value instanceof final Boolean bool) {
-            return bool
-                    ? "True"
-                    : "False";
-        }
-        return String.valueOf(value);
     }
 
     // The text cut at the last word break before the limit, without a trailing ',', ';' or ':'.

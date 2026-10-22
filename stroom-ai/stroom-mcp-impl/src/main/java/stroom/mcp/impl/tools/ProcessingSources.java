@@ -16,10 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
-import stroom.ai.impl.tools.validation.PythonText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -141,7 +142,7 @@ class ProcessingSources {
             if (!types.equals(Set.of(ProcessorFilters.EVENTS))) {
                 final Set<String> sorted = new TreeSet<>();
                 types.forEach(type -> sorted.add(NullSafe.nonBlankStringElse(type, "?")));
-                throw new ToolRefusal("Mixed stream types " + PythonText.list(sorted) + ": process Events streams "
+                throw new ToolRefusal("Mixed stream types " + PyText.list(sorted) + ": process Events streams "
                                       + "on their own");
             }
         } else if (!ProcessorFilters.EVENTS.equals(streamType)) {
@@ -231,9 +232,9 @@ class ProcessingSources {
         final String told = String.join("; ", ids.stream()
                 .map(id -> id + " -> " + (NullSafe.isEmptyCollection(current.get(id))
                         ? "none yet"
-                        : PythonText.numbers(current.get(id))))
+                        : PyText.repr(current.get(id))))
                 .toList());
-        throw new ToolRefusal("Events stream(s) " + PythonText.numbers(ids) + " were superseded: their raw streams "
+        throw new ToolRefusal("Events stream(s) " + PyText.repr(ids) + " were superseded: their raw streams "
                               + "were processed again (the events pipeline was updated), and Stroom marked them "
                               + "deleted. The Events now in their place: " + told + ". Use those ids; 'none yet' "
                               + "means processing hasn't finished (wait_for_processing on the events pipeline "
@@ -293,7 +294,7 @@ class ProcessingSources {
             }
         }
         if (!outside.isEmpty()) {
-            throw new ToolRefusal("Feed(s) " + PythonText.list(outside) + " are not in this build. A translation "
+            throw new ToolRefusal("Feed(s) " + PyText.list(outside) + " are not in this build. A translation "
                                   + "pipeline writes its Events into the input's feed, so it only processes the "
                                   + "build's own feeds, or the existing feeds the build works from: start_build "
                                   + "build=<this build> feeds=[the feed] makes it work from that feed, and its "
@@ -321,10 +322,10 @@ class ProcessingSources {
         }
         final List<Long> ids = new ArrayList<>(foreign.stream().map(Meta::getId).sorted().toList());
         ids.addAll(missing);
-        return "Stream(s) " + PythonText.numbers(ids) + " were not produced by '" + source.getName() + "'"
+        return "Stream(s) " + PyText.repr(ids) + " were not produced by '" + source.getName() + "'"
                + (missing.isEmpty()
                 ? ""
-                : " (" + PythonText.numbers(missing) + " not found)")
+                : " (" + PyText.repr(missing) + " not found)")
                + (names.isEmpty()
                 ? ""
                 : "; they were produced by " + String.join(", ", names) + ": if the events pipeline was updated as "

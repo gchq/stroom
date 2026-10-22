@@ -20,6 +20,7 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;

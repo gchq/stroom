@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -354,11 +355,11 @@ class TestXsltReader extends XsltRuns {
 
     @Test
     void anXsltWithNoStartTemplateHasNothingToRead() {
-        final String code = "<xsl:stylesheet xmlns:xsl=\"" + MappingFacts.XSL + "\" version=\"3.0\"/>";
+        final String code = "<xsl:stylesheet xmlns:xsl=\"" + XmlTrees.XSL + "\" version=\"3.0\"/>";
         assertThatThrownBy(() -> XsltReader.read(code))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("nothing to read");
-        final String noRecords = "<xsl:stylesheet xmlns:xsl=\"" + MappingFacts.XSL + "\" version=\"3.0\">"
+        final String noRecords = "<xsl:stylesheet xmlns:xsl=\"" + XmlTrees.XSL + "\" version=\"3.0\">"
                                  + "<xsl:template match=\"/\"/></xsl:stylesheet>";
         assertThat(XsltReader.read(noRecords).notes()).containsExactly("no record template: nothing to read");
     }

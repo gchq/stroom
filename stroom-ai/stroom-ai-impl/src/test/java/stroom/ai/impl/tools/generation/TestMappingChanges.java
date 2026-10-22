@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.PyJson;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -61,7 +62,7 @@ class TestMappingChanges {
         final boolean plan = "plan".equals(c.get("kind"));
         if (c.containsKey("error")) {
             assertThatThrownBy(() -> apply(plan, base, c.get("changes")))
-                    .isInstanceOf(MappingChangeException.class)
+                    .isInstanceOf(ToolRefusal.class)
                     .hasMessage((String) c.get("error"));
         } else {
             final MappingChanges.Applied applied = apply(plan, base, c.get("changes"));
@@ -108,7 +109,7 @@ class TestMappingChanges {
     void changesThatCannotApplyAreRefused(final String changes, final String message) {
         final Map<String, Object> base = GenerationFixtures.json(BASE_JSON);
         assertThatThrownBy(() -> MappingChanges.applyChanges(base, GenerationFixtures.json(changes)))
-                .isInstanceOf(MappingChangeException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining(message);
     }
 

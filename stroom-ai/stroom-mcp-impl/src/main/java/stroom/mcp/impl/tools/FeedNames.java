@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.docref.DocRef;
@@ -138,6 +139,12 @@ class FeedNames {
                + "for another document to use instead, and don't create one.";
     }
 
+    /// @param name A feed's name, as given.
+    /// @return The refusal of a feed name that is no feed's here ([#notFound(String)]).
+    static ToolRefusal noFeedNamed(final String name) {
+        return new ToolRefusal(notFound("No feed named '" + name + "'"));
+    }
+
     /// @param name  The name given.
     /// @param names The names there are.
     /// @param count How many to give at most.
@@ -147,7 +154,7 @@ class FeedNames {
         final Map<String, Double> scores = new LinkedHashMap<>();
         for (final String other : new TreeSet<>(names.stream().filter(NullSafe::isNonEmptyString).toList())) {
             final String low = other.toLowerCase(Locale.ROOT);
-            scores.put(other, ratio(want, low) + (want.contains(low) || low.contains(want)
+            scores.put(other, CloseMatches.ratio(want, low) + (want.contains(low) || low.contains(want)
                     ? 0.5
                     : 0));
         }
@@ -158,15 +165,6 @@ class FeedNames {
                 .map(Map.Entry::getKey)
                 .limit(count)
                 .toList();
-    }
-
-    /// How alike two strings are, as Python's `difflib.SequenceMatcher.ratio()` measures it ([CloseMatches]).
-    ///
-    /// @param a A string.
-    /// @param b Another.
-    /// @return From 0 (nothing alike) to 1 (the same).
-    static double ratio(final String a, final String b) {
-        return CloseMatches.ratio(a, b);
     }
 
     private List<DocRef> docFinder(final String name) {

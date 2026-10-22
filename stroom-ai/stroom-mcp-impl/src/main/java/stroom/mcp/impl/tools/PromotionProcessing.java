@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.StroomLinks;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionItem;
@@ -190,7 +191,7 @@ class PromotionProcessing {
             if (entry.feed() != null) {
                 children.add(filterWrites.feedTerm(entry.feed()));
             }
-            children.add(ProcessorFilterWrites.term(ProcessorFilters.TYPE, entry.streamType()));
+            children.add(ProcessorFilterWrites.term(MetaFields.FIELD_TYPE, entry.streamType()));
             children.addAll(entry.extraTerms());
             final ProcessorFilter created = filterWrites.createFilter(entry.pipeline(),
                     ProcessorFilterWrites.allOf(children), ProcessorFilterWrites.DEFAULT_PRIORITY,

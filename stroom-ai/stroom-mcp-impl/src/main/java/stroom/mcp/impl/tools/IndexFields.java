@@ -18,6 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -349,9 +351,9 @@ class IndexFields {
         final EcsSchema ecs = plans.ecs();
         final List<String> said = new ArrayList<>();
         for (final String name : missing) {
-            final String path = strip(name.replace('.', '/'));
+            final String path = PyText.strip(name.replace('.', '/'), "/");
             final String became = planned.stream()
-                    .filter(field -> FieldPlans.sourceMatches(strip(field.source()), path))
+                    .filter(field -> FieldPlans.sourceMatches(PyText.strip(field.source(), "/"), path))
                     .map(PlannedField::name)
                     .findFirst()
                     .orElse(null);
@@ -492,18 +494,6 @@ class IndexFields {
             Thread.currentThread().interrupt();
             throw new ToolTimeoutException();
         }
-    }
-
-    private static String strip(final String path) {
-        int start = 0;
-        int end = path.length();
-        while (start < end && path.charAt(start) == '/') {
-            start++;
-        }
-        while (end > start && path.charAt(end - 1) == '/') {
-            end--;
-        }
-        return path.substring(start, end);
     }
 
     @SuppressWarnings("unchecked")

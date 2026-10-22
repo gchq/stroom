@@ -668,12 +668,6 @@ public class StreamReader {
                           Long totalItems,
                           List<String> availableChildTypes,
                           List<String> errors) {
-
-        /// @return True if Stroom couldn't show the stream as text, as some of its bytes aren't in its feed's
-        /// character set.
-        public boolean undecodable() {
-            return errors.stream().anyMatch(error -> NullSafe.string(error).contains(UNDECODABLE));
-        }
     }
 
     /// Records read.

@@ -156,8 +156,6 @@ class TestRecordSplitter {
         assertThat(chunk.records()).hasSize(3);
         assertThat(chunk.parsed().getFirst()).containsEntry("EventID", "4624");
         assertThat((String) chunk.parsed().getFirst().get("TimeCreated@SystemTime")).startsWith("2026-10-01");
-        assertThat(RecordSplitter.sampleText(chunk, chunk.records().subList(0, 2))).contains("<Event>")
-                .satisfies(text -> assertThat(text.split("<Event>", -1)).hasSize(3));
         // The cut-off last fragment is dropped.
         assertThat(RecordSplitter.split(sample.substring(0, sample.length() - 40), 5000, true).records()).hasSize(2);
     }
@@ -208,18 +206,11 @@ class TestRecordSplitter {
     }
 
     @Test
-    void samplesKeepTheFormatOfTheirStream() {
-        final RecordSplitter.Chunk csv = RecordSplitter.split("time,user,action\n2026-09-28 08:00:00,u1,login\n"
-                                                              + "2026-09-28 08:01:00,u2,logout\n");
-        assertThat(RecordSplitter.sampleText(csv, csv.records().subList(1, 2)))
-                .isEqualTo("time,user,action\n2026-09-28 08:01:00,u2,logout\n");
-        final RecordSplitter.Chunk json = RecordSplitter.split("[{\"a\": 1}, {\"a\": 2}]");
-        assertThat(PyJson.loads(RecordSplitter.sampleText(json, json.records())))
-                .isEqualTo(List.of(Map.of("a", 1L), Map.of("a", 2L)));
+    void anXmlDocumentsRecordsKeepTheirRootApart() {
         final RecordSplitter.Chunk xml = RecordSplitter.split("<audit xmlns=\"urn:x\"><entry><op>read</op></entry>"
                                                               + "</audit>");
         assertThat(xml.records().getFirst()).doesNotContain("xmlns");
-        assertThat(RecordSplitter.sampleText(xml, xml.records())).startsWith("<audit xmlns=\"urn:x\">\n<entry>");
+        assertThat(xml.root()).startsWith("<audit xmlns=\"urn:x\">");
     }
 
     static List<String> allSamples() {

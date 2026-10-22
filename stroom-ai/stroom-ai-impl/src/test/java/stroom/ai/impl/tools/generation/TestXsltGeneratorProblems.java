@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -161,10 +163,10 @@ class TestXsltGeneratorProblems extends XsltRuns {
         final XsltGenerator.Generated result = generate(m);
         assertThat(result.problems()).isEmpty();
         final java.util.regex.Pattern read = java.util.regex.Pattern.compile("\\$([\\w.-]+)");
-        for (final XmlElement template : sheet(result.xslt()).iterElements(MappingFacts.XSL, "template")) {
+        for (final XmlElement template : sheet(result.xslt()).iterElements(XmlTrees.XSL, "template")) {
             final java.util.Set<String> declared = new java.util.HashSet<>();
             template.iterElements().stream()
-                    .filter(el -> el.is(MappingFacts.XSL, "variable") || el.is(MappingFacts.XSL, "param"))
+                    .filter(el -> el.is(XmlTrees.XSL, "variable") || el.is(XmlTrees.XSL, "param"))
                     .forEach(el -> declared.add(el.get("name")));
             final java.util.Set<String> reads = new java.util.HashSet<>();
             for (final XmlElement el : template.iterElements()) {

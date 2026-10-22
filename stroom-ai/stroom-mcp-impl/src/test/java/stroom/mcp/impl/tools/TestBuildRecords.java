@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -127,7 +128,7 @@ class TestBuildRecords {
         for (int n = 0; n < 8; n++) {
             records.recordPassed(P, BuildRecords.STEPPED, Map.of("translationFilter", "draft " + n), null);
         }
-        assertThat(BuildRecords.stringList(records.entry(BUILD, "p").get("stepped"))).hasSize(2);
+        assertThat(JsonValues.strings(records.entry(BUILD, "p").get("stepped"))).hasSize(2);
         assertThat(records.steppedClean(P)).isTrue();
         assertThat(records.entry(BUILD, "p").get("stepped_streams")).isEqualTo(List.of(7));
         // The last draft saved: recorded, as stepped before it was saved.
@@ -256,8 +257,8 @@ class TestBuildRecords {
     private record BuildWorldReader(BuildWorld world) {
 
         BuildRecords records() {
-            return new BuildRecords(world::guard, world.documentAccess, () -> world.explorerService,
-                    world.pipelineShapes);
+            return new BuildRecords(world::guard, world.documentAccess, new DocumentWrites(world.documentAccess),
+                    () -> world.explorerService, world.pipelineShapes);
         }
     }
 }

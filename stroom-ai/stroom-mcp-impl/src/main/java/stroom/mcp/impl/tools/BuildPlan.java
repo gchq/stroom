@@ -16,8 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
@@ -273,7 +275,7 @@ public class BuildPlan {
             return Optional.empty();
         }
         try {
-            return Optional.ofNullable(asMap(status(build, made).get("next")));
+            return Optional.ofNullable(JsonValues.map(status(build, made).get("next")));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "No next step for build " + build + ": " + e.getMessage(), e);
             return Optional.empty();
@@ -337,9 +339,9 @@ public class BuildPlan {
                 : null;
         nextStep(build, made).ifPresent(next -> {
             final Map<String, Object> shown = new LinkedHashMap<>(next);
-            final Object tool = asMap(next.get("call")) == null
+            final Object tool = JsonValues.map(next.get("call")) == null
                     ? null
-                    : asMap(next.get("call")).get("tool");
+                    : JsonValues.map(next.get("call")).get("tool");
             if (tool != null) {
                 // Seen: create_pipeline hidden in a VS Code tool group; the agent wrote a handoff note and stopped.
                 // Seen (Qwen3 Coder Next): 360 calls to activate_* names it made up, each refused as not existing.
@@ -419,7 +421,8 @@ public class BuildPlan {
         final Map<String, Object> survey = surveyed && existing
                 ? facts.surveyState(surveys).orElse(null)
                 : null;
-        if (survey != null && fmt == null && (truthy(survey.get("sample")) || truthy(survey.get("format")))) {
+        if (survey != null && fmt == null && (JsonValues.truthy(survey.get("sample"))
+                                              || JsonValues.truthy(survey.get("format")))) {
             fmt = formatFromSurvey(survey);
         }
         // Which stages the build does: on existing data, those it has the pipelines (or survey, or index doc) for. A
@@ -466,7 +469,7 @@ public class BuildPlan {
         done.put("samples", !raw.isEmpty());
         // Not needed either once the events pipeline reads the raw data with a JSON or XML parser: its clean step is
         // what proves the format (seen in testing: a JSON-lines feed's working pipeline, and step 1 still to do).
-        done.put("converter", fmt != null && truthy(fmt.get("needs_text_converter"))
+        done.put("converter", fmt != null && JsonValues.truthy(fmt.get("needs_text_converter"))
                               && translation.stream().noneMatch(p -> p.get("parser") != null
                                                                     && NO_CONVERTER.contains(p.get("parser")))
                 ? (Boolean) !of(byType, TextConverterDoc.TYPE).isEmpty()
@@ -480,7 +483,7 @@ public class BuildPlan {
         // Not recorded (not needed) unless the build surveys an existing feed.
         done.put("covered", survey == null
                 ? null
-                : (Boolean) truthy(survey.get("saturated")));
+                : (Boolean) JsonValues.truthy(survey.get("saturated")));
         done.put("processed", !events.isEmpty());
         done.put("validated", !translation.isEmpty() && translation.stream().allMatch(facts::validated));
         done.put("documented", !translation.isEmpty() && allNamed(translation, documented) && !stale);
@@ -583,7 +586,7 @@ public class BuildPlan {
             // back.
             processing = "edited";
             edited = facts.keptXsltUuid(uuid(translation.getFirst())).orElse(null);
-        } else if ("stepped".equals(nextStep) && survey != null && truthy(survey.get("locations"))) {
+        } else if ("stepped".equals(nextStep) && survey != null && JsonValues.truthy(survey.get("locations"))) {
             // The survey's locations, when there are few enough to give: else step_sample over its streams, as the
             // plan says (seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a
             // placeholder).
@@ -600,7 +603,7 @@ public class BuildPlan {
                 indexing.isEmpty()
                         ? null
                         : uuid(indexing.getFirst()), processing, index, sources, discovery,
-                survey != null && truthy(survey.get("locations"))
+                survey != null && JsonValues.truthy(survey.get("locations"))
                         ? survey.get("locations")
                         : "<every location survey_feed gave>",
                 forwarding.isEmpty()
@@ -755,7 +758,7 @@ public class BuildPlan {
                     "<the cluster the pipeline writes to>", "time_field", "@timestamp"),
                     "then verify_index through it");
             case "indexed:finished" -> {
-                final List<String> columns = BuildRecords.stringList(index.get("columns"));
+                final List<String> columns = JsonValues.strings(index.get("columns"));
                 yield call("verify_index", args("build", build,
                         "index_uuid", Objects.requireNonNullElse(index.get("uuid"), "<the index doc uuid>"),
                         "backend", Objects.requireNonNullElse(index.get("backend"), "<lucene or elasticsearch>"),
@@ -824,7 +827,7 @@ public class BuildPlan {
     public static Map<String, Object> textFormat(final Map<String, Object> profiled) {
         final String format = String.valueOf(profiled.get("format"));
         final Map<String, Object> result = new LinkedHashMap<>();
-        if (truthy(profiled.get("malformed_lines")) && "json lines".equals(format)) {
+        if (JsonValues.truthy(profiled.get("malformed_lines")) && "json lines".equals(format)) {
             // Lines that aren't JSON: the Data Splitter route (one record a line, the JSON parsed in the XSLT), as the
             // JSONParser would stop at the first of them.
             result.put("format", "json lines (some not JSON)");
@@ -873,7 +876,7 @@ public class BuildPlan {
     // profile, the format the survey split the streams by (read from whole text).
     private Map<String, Object> formatFromSurvey(final Map<String, Object> survey) {
         Map<String, Object> fmt = null;
-        if (truthy(survey.get("sample"))) {
+        if (JsonValues.truthy(survey.get("sample"))) {
             try {
                 fmt = textFormat(facts.profile(String.valueOf(survey.get("sample"))));
             } catch (final ToolRefusal e) {
@@ -889,7 +892,7 @@ public class BuildPlan {
             fmt.put("suggested_parser", PARSER_FOR_FORMAT.getOrDefault(format, List.of("DSParser")).getFirst());
             fmt.put("needs_text_converter", TEXT_FORMATS.contains(format) || "xml fragments".equals(format));
         }
-        final List<Long> streams = BuildRecords.stringList(survey.get("streams")).stream()
+        final List<Long> streams = JsonValues.strings(survey.get("streams")).stream()
                 .map(Long::parseLong)
                 .toList();
         if ("xml".equals(survey.get("format")) && !"xml".equals(fmt.get("format")) && !streams.isEmpty()) {
@@ -919,7 +922,7 @@ public class BuildPlan {
             xslt.put("mapping", kept.map(KeptMapping.Kept::kind).orElse(null));
             // A discovery plan: raw records indexed as they are, whatever parser reads them (XML too).
             xslt.put("discovery", kept.filter(found -> "index".equals(found.kind()))
-                    .map(found -> truthy(found.payload().get("discovery")))
+                    .map(found -> JsonValues.truthy(found.payload().get("discovery")))
                     .orElse(false));
             xslts.add(xslt);
         }
@@ -1084,7 +1087,7 @@ public class BuildPlan {
     }
 
     private static boolean hasMissing(final Map<String, Object> pipeline) {
-        return truthy(pipeline.get("missing"));
+        return JsonValues.truthy(pipeline.get("missing"));
     }
 
     private static boolean allNamed(final List<Map<String, Object>> pipelines, final Set<String> documented) {
@@ -1143,30 +1146,9 @@ public class BuildPlan {
 
     // Python's `value or other`: an empty (or absent) list, string or map gives other.
     private static Object orElse(final Object value, final Object other) {
-        return truthy(value)
+        return JsonValues.truthy(value)
                 ? value
                 : other;
-    }
-
-    /// @param value A value.
-    /// @return Whether Python counts it as true: not null, false, zero, or an empty string, list or map.
-    static boolean truthy(final Object value) {
-        if (value == null || Boolean.FALSE.equals(value)) {
-            return false;
-        }
-        if (value instanceof final String text) {
-            return !text.isEmpty();
-        }
-        if (value instanceof final Collection<?> collection) {
-            return !collection.isEmpty();
-        }
-        if (value instanceof final Map<?, ?> map) {
-            return !map.isEmpty();
-        }
-        if (value instanceof final Number number) {
-            return number.doubleValue() != 0;
-        }
-        return true;
     }
 
     // A value as Python writes it into text: a list as [1, 2], anything else as it is.
@@ -1185,13 +1167,6 @@ public class BuildPlan {
         } catch (final NumberFormatException e) {
             return 0;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> asMap(final Object value) {
-        return value instanceof final Map<?, ?> map
-                ? (Map<String, Object>) map
-                : null;
     }
 
     private static Map<String, List<String>> parsers() {
@@ -1301,21 +1276,6 @@ public class BuildPlan {
                                   final String indexing) {
             return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
                     null, null, null);
-        }
-
-        /// @param processing How processing stands.
-        /// @param index      The index doc, or null.
-        /// @return These, with processing and the index doc.
-        public CallArgs withProcessing(final String processing, final Map<String, Object> index) {
-            return new CallArgs(build, feeds, raw, events, translation, indexing, processing, index, sources,
-                    discovery, locations, cef, editedXslt);
-        }
-
-        /// @param discovery True for a discovery build.
-        /// @return These, for a discovery build or not.
-        public CallArgs withDiscovery(final boolean discovery) {
-            return new CallArgs(build, feeds, raw, events, translation, indexing, processing, index, sources,
-                    discovery, locations, cef, editedXslt);
         }
     }
 }

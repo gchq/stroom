@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -243,7 +244,7 @@ class TestLocalCheck extends DraftFixtures {
         final Map<String, Object> plain = new LinkedHashMap<>((Map<String, Object>) batches.get("mapping"));
         plain.put("unmatched", "skip");
         final List<Map<String, Object>> common = new ArrayList<>();
-        PyValues.maps(plain.get("common")).forEach(e -> {
+        JsonValues.maps(plain.get("common")).forEach(e -> {
             final Map<String, Object> entry = new LinkedHashMap<>(e);
             entry.remove("time_format");
             common.add(entry);

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
 import stroom.ai.impl.tools.sample.PyJson;
@@ -97,7 +98,7 @@ class TestFieldPlan {
     void anElasticPlanRendersANestedTemplateAndAJsonXmlXslt() {
         final FieldPlan plan = FieldPlan.of("elasticsearch", "stroom-acme-v1", "@timestamp", FIELDS);
         assertThat(plan.required()).isEmpty();
-        final Map<String, Object> body = PyValues.map(plan.elasticTemplate("stroom-acme-v1", ECS).get("body"));
+        final Map<String, Object> body = JsonValues.map(plan.elasticTemplate("stroom-acme-v1", ECS).get("body"));
         assertThat(body.get("index_patterns")).isEqualTo(List.of("stroom-acme-v1*"));
         final Map<String, Object> types = new java.util.LinkedHashMap<>();
         TemplateMappings.readMappingFields(body).forEach((path, spec) -> {
@@ -146,7 +147,7 @@ class TestFieldPlan {
                 false, null, Map.of("stroom.feed", "Feed"), List.of("token"), true, 1024, 2000));
         assertThat(plan.required()).isEmpty();
         assertThat(plan.fields()).extracting(PlannedField::name).containsExactly("StreamId", "EventId", "@timestamp");
-        final Map<String, Object> body = PyValues.map(plan.elasticTemplate("stroom-discovery-acme-v1", ECS)
+        final Map<String, Object> body = JsonValues.map(plan.elasticTemplate("stroom-discovery-acme-v1", ECS)
                 .get("body"));
         final Map<String, Object> mappings = TemplateMappings.mappingsOf(body);
         assertThat(mappings.get("dynamic")).isEqualTo(true);
@@ -156,7 +157,7 @@ class TestFieldPlan {
                 + "1024}}}]");
         assertThat(PyJson.dumps(mappings.get("properties"))).isEqualTo("{\"StreamId\": {\"type\": \"long\"}, "
                 + "\"EventId\": {\"type\": \"long\"}, \"@timestamp\": {\"type\": \"date\"}}");
-        assertThat(PyJson.dumps(PyValues.map(PyValues.mapAt(PyValues.mapAt(body, "template"), "settings")
+        assertThat(PyJson.dumps(JsonValues.map(JsonValues.mapAt(JsonValues.mapAt(body, "template"), "settings")
                 .get("index")).get("mapping")))
                 .isEqualTo("{\"total_fields\": {\"limit\": 2000}, \"ignore_malformed\": true}");
         final String output = IndexingFixtures.compact(runRaw(plan.xslt(), RAW));
@@ -191,7 +192,7 @@ class TestFieldPlan {
                  "settings": {"index": {"number_of_shards": 3, "mapping": {"total_fields": {"limit": 500}}}},
                  "mappings": {"dynamic": "strict", "properties": {"User": {"properties": {"Id": {"type":
                   "keyword"}}}, "@timestamp": {"type": "date", "format": "epoch_millis"}}}}}""");
-        final Built built = ExampleTemplates.fromExample(PyValues.map(plan.elasticTemplate("x", ECS).get("body")),
+        final Built built = ExampleTemplates.fromExample(JsonValues.map(plan.elasticTemplate("x", ECS).get("body")),
                 example, Map.of("base", IndexingFixtures.json("{\"template\": {\"mappings\": {\"properties\": "
                                                               + "{\"StreamId\": {\"type\": \"long\"}}}}}")), true,
                 List.of(), List.of(), false, ECS);
@@ -201,7 +202,7 @@ class TestFieldPlan {
         // The example maps @timestamp itself: its definition is kept, as in any template built from an example.
         assertThat(PyJson.dumps(mappings.get("properties"))).isEqualTo("{\"EventId\": {\"type\": \"long\"}, "
                 + "\"@timestamp\": {\"type\": \"date\", \"format\": \"epoch_millis\"}}");
-        assertThat(PyJson.dumps(PyValues.mapAt(PyValues.mapAt(built.body(), "template"), "settings").get("index")))
+        assertThat(PyJson.dumps(JsonValues.mapAt(JsonValues.mapAt(built.body(), "template"), "settings").get("index")))
                 .isEqualTo("{\"number_of_shards\": 3, \"mapping\": {\"total_fields\": {\"limit\": 2000}, "
                            + "\"ignore_malformed\": true}}");
         assertThat(built.notes()).anyMatch(n -> n.startsWith("a discovery index"))
@@ -211,7 +212,8 @@ class TestFieldPlan {
     @Test
     void documentsAreNestedWhateverSubobjectsSaysAndAValueCannotAlsoBeAnObject() {
         final List<PlannedField> fields = FIELDS.subList(0, 4);
-        final FieldPlan flat = FieldPlan.of("elasticsearch", "x", "@timestamp", fields).withSubobjects(false);
+        final FieldPlan flat = IndexingFixtures.withSubobjects(FieldPlan.of("elasticsearch", "x", "@timestamp", fields),
+                false);
         assertThat(IndexingFixtures.compact(IndexingFixtures.transform(flat.xslt(), EVENTS)))
                 .contains("<map key=\"user\"><string key=\"name\">alice</string></map>");
         final List<PlannedField> clashing = new ArrayList<>(fields);
@@ -249,7 +251,7 @@ class TestFieldPlan {
     void aDelimitedDiscoveryPlanIndexesEachColumnByItsHeader() {
         final FieldPlan plan = FieldPlan.forDiscovery("d", new Discovery("delimited", null, "time", false, null,
                 Map.of(), List.of("secret"), true, 1024, 2000));
-        assertThat(TemplateMappings.mappingsOf(PyValues.map(plan.elasticTemplate("d", ECS).get("body")))
+        assertThat(TemplateMappings.mappingsOf(JsonValues.map(plan.elasticTemplate("d", ECS).get("body")))
                 .get("numeric_detection")).isEqualTo(true);
         final String raw = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"2026-10-01T09:00:00Z\"/>"
                            + "<data name=\"user\" value=\"alice\"/><data name=\"secret\" value=\"x\"/><data "
@@ -347,8 +349,8 @@ class TestFieldPlan {
         final FieldPlan es = FieldPlan.of("elasticsearch", "x", "@timestamp", fields)
                 .withConvention("ecs", List.of("acme"));
         final String written = IndexingFixtures.compact(IndexingFixtures.transform(es.xslt(), REPEATED));
-        final String lucene = IndexingFixtures.compact(IndexingFixtures.transform(es.withBackend("lucene").xslt(),
-                REPEATED));
+        final String lucene = IndexingFixtures.compact(IndexingFixtures.transform(
+                IndexingFixtures.withBackend(es, "lucene").xslt(), REPEATED));
         assertThat(written).contains("<array key=\"port\"><number>80</number><number>443</number></array>")
                 // One value; none, nothing.
                 .contains("<string key=\"tag\">a</string>").doesNotContain("none")

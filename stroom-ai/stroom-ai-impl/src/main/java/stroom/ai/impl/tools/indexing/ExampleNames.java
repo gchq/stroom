@@ -16,7 +16,8 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.generation.PythonRepr;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,7 +136,7 @@ public final class ExampleNames {
     }
 
     private static String squash(final String text) {
-        return NOT_ALNUM.matcher(PyValues.lower(text)).replaceAll("");
+        return NOT_ALNUM.matcher(PyText.lower(text)).replaceAll("");
     }
 
     // An event-logging path's element names below the root, e.g. EventSource/User/Id -> [User, Id].
@@ -178,7 +179,7 @@ public final class ExampleNames {
                 continue;
             }
             final String hit = bySquash.get(squash(String.join("", run)));
-            if (PyValues.truthy(hit)) {
+            if (JsonValues.truthy(hit)) {
                 return hit;
             }
         }
@@ -198,7 +199,7 @@ public final class ExampleNames {
     }
 
     private static String camel(final List<String> words) {
-        final StringBuilder sb = new StringBuilder(PyValues.lower(words.getFirst()));
+        final StringBuilder sb = new StringBuilder(PyText.lower(words.getFirst()));
         for (final String word : words.subList(1, words.size())) {
             sb.append(capitalised(word));
         }
@@ -212,7 +213,7 @@ public final class ExampleNames {
         }
         final int first = word.offsetByCodePoints(0, 1);
         return word.substring(0, first).toUpperCase(java.util.Locale.ROOT)
-               + PyValues.lower(word.substring(first));
+               + PyText.lower(word.substring(first));
     }
 
     // p[:1].upper() + p[1:]
@@ -225,7 +226,7 @@ public final class ExampleNames {
     }
 
     private static String snakeWords(final String part) {
-        return String.join("_", words(part).stream().map(PyValues::lower).toList());
+        return String.join("_", words(part).stream().map(PyText::lower).toList());
     }
 
     /// A name in the example's style for a path it has no field for, from the path's last elements:
@@ -286,7 +287,7 @@ public final class ExampleNames {
     /// @return Its group and the rest, or null if it has none.
     public static FieldGroup fieldGroup(final String source) {
         final List<String> parts = segments(source);
-        if (parts.isEmpty() || !PyValues.strip(source, "/").startsWith("EventDetail/") || parts.size() < 2) {
+        if (parts.isEmpty() || !PyText.strip(source, "/").startsWith("EventDetail/") || parts.size() < 2) {
             return null;
         }
         final String group;
@@ -310,7 +311,7 @@ public final class ExampleNames {
         if (grouped == null) {
             return null;
         }
-        return PyValues.strip(source, "/").startsWith("EventDetail/Network/")
+        return PyText.strip(source, "/").startsWith("EventDetail/Network/")
                 ? "Network"
                 : grouped.group();
     }
@@ -359,7 +360,7 @@ public final class ExampleNames {
         final Map<String, Integer> groups = new LinkedHashMap<>();
         for (final Map<String, Object> field : fields) {
             final String group = together(source(field));
-            if (PyValues.truthy(group)) {
+            if (JsonValues.truthy(group)) {
                 groups.merge(group, 1, Integer::sum);
             }
         }
@@ -382,7 +383,7 @@ public final class ExampleNames {
             }
             String hit = match(source, unused(example, used), conventionNames.getOrDefault(source, Set.of()));
             final String last = lastSegment(source);
-            if (PyValues.truthy(hit) && squash(hit).equals(squash(last))
+            if (JsonValues.truthy(hit) && squash(hit).equals(squash(last))
                 && fields.stream().filter(f -> lastSegment(source(f)).equals(last)).count() > 1) {
                 // The example's IpAddress names an address, but which? Seen: it took the source's of two, and the
                 // destination's was named apart. Both are named in the example's style instead.
@@ -392,9 +393,9 @@ public final class ExampleNames {
             inUse.addAll(used);
             final String group = together(source);
             String newName;
-            if (PyValues.truthy(hit)) {
+            if (JsonValues.truthy(hit)) {
                 newName = hit;
-            } else if (style != null && nests && PyValues.truthy(group) && groups.getOrDefault(group, 0) > 1
+            } else if (style != null && nests && JsonValues.truthy(group) && groups.getOrDefault(group, 0) > 1
                        && !inUse.contains(nestedName(source, style))) {
                 newName = nestedName(source, style);
                 derived.add(name + " -> " + newName);
@@ -408,7 +409,7 @@ public final class ExampleNames {
                 newName = conventional.isEmpty()
                         ? derive(source, style, dotted, inUse)
                         : conventional.getFirst();
-                if (PyValues.truthy(newName)) {
+                if (JsonValues.truthy(newName)) {
                     derived.add(name + " -> " + newName);
                 } else {
                     unlike.add(name);
@@ -417,7 +418,7 @@ public final class ExampleNames {
             } else {
                 newName = name;
             }
-            if (PyValues.truthy(hit) && !hit.equals(name)) {
+            if (JsonValues.truthy(hit) && !hit.equals(name)) {
                 renamed.add(name + " -> " + hit);
             }
             used.add(newName);
@@ -437,10 +438,10 @@ public final class ExampleNames {
                 continue;
             }
             final String hit = match(path, unused(example, used), conventionNames.getOrDefault(path, Set.of()));
-            if (PyValues.truthy(hit)) {
+            if (JsonValues.truthy(hit)) {
                 final Map<String, Object> field = new LinkedHashMap<>();
                 field.put("name", hit);
-                field.put("type", PLAN_TYPE.getOrDefault(PyValues.str(example.get(hit).get("type")), "keyword"));
+                field.put("type", PLAN_TYPE.getOrDefault(PyText.str(example.get(hit).get("type")), "keyword"));
                 field.put("source", path);
                 out.add(field);
                 used.add(hit);
@@ -448,18 +449,18 @@ public final class ExampleNames {
             }
         }
         if (!renamed.isEmpty()) {
-            notes.add("named as the example names them: " + PythonRepr.list(renamed));
+            notes.add("named as the example names them: " + PyText.list(renamed));
         }
         if (!derived.isEmpty()) {
             notes.add("not in the example, named in its style (" + STYLE_NAMES.get(style) + "): "
-                      + PythonRepr.list(derived));
+                      + PyText.list(derived));
         }
         if (!added.isEmpty()) {
-            notes.add("in the sample and mapped by the example, so added: " + PythonRepr.list(added));
+            notes.add("in the sample and mapped by the example, so added: " + PyText.list(added));
         }
         if (!unlike.isEmpty()) {
             notes.add("named unlike the example (" + STYLE_NAMES.getOrDefault(style, style) + "), with no name "
-                      + "derived: " + PythonRepr.list(unlike) + "; agree names with the user and give them as "
+                      + "derived: " + PyText.list(unlike) + "; agree names with the user and give them as "
                       + "extra_fields");
         }
         final List<String> left = example.entrySet().stream()
@@ -470,7 +471,7 @@ public final class ExampleNames {
                 .toList();
         if (!left.isEmpty()) {
             notes.add("in the example but not in this source's sample, so not in this plan: "
-                      + PythonRepr.list(left.subList(0, Math.min(15, left.size())))
+                      + PyText.list(left.subList(0, Math.min(15, left.size())))
                       + (left.size() > 15
                     ? " (+" + (left.size() - 15) + ")"
                     : ""));

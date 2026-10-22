@@ -19,10 +19,12 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.cef.CefField;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.cef.CefLines;
@@ -74,7 +76,7 @@ class FieldMappingSections {
     private final DraftCefMappingTool cef;
     private final PipelineShapes pipelineShapes;
     private final EventVersions eventVersions;
-    private final MappingDrift mappingDrift;
+    private final GeneratedDrift mappingDrift;
     private final StreamReader streamReader;
     private final StreamSummaries streamSummaries;
 
@@ -90,7 +92,7 @@ class FieldMappingSections {
                          final DraftCefMappingTool cef,
                          final PipelineShapes pipelineShapes,
                          final EventVersions eventVersions,
-                         final MappingDrift mappingDrift,
+                         final GeneratedDrift mappingDrift,
                          final StreamReader streamReader,
                          final StreamSummaries streamSummaries) {
         this.stepping = stepping;
@@ -339,7 +341,7 @@ class FieldMappingSections {
         final EventSchema schema = eventVersions.eventSchema(version);
         final XsltGenerator.Generated marked = XsltGenerator.generate(mapping, schema, version, true);
         if (!marked.ok()) {
-            throw new ToolRefusal("The mapping kept with the XSLT no longer generates: " + SampleArguments.pythonList(
+            throw new ToolRefusal("The mapping kept with the XSLT no longer generates: " + PyText.list(
                     marked.problems().subList(0, Math.min(3, marked.problems().size()))));
         }
         final SteppedPipeline loaded = load(pipeline.getUuid());
@@ -425,7 +427,7 @@ class FieldMappingSections {
                             .map(meta -> id + " (" + meta.getFeedName() + ", " + meta.getTypeName() + ")")
                             .orElse(id + " (None, None)"))
                     .toList();
-            throw new ToolRefusal("Field mapping not written: streams " + SampleArguments.pythonList(kinds) + " hold "
+            throw new ToolRefusal("Field mapping not written: streams " + PyText.list(kinds) + " hold "
                                   + "no events to document. An indexing pipeline's stream_ids are the Events streams "
                                   + "it indexes (wait_for_processing on the events pipeline lists them).");
         }

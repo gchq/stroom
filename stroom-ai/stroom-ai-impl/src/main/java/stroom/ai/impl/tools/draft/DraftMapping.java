@@ -16,10 +16,11 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.sample.PyText;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -109,11 +110,11 @@ public final class DraftMapping {
     }
 
     private static Map<String, Object> dict(final Object... keysAndValues) {
-        return PyValues.dict(keysAndValues);
+        return JsonValues.dict(keysAndValues);
     }
 
     private static Pattern ignoringCase(final String regex) {
-        return PyValues.ignoringCase(regex);
+        return PyText.ignoringCase(regex);
     }
 
     /// A valid mapping to edit, and what is left to decide.
@@ -172,7 +173,7 @@ public final class DraftMapping {
                     }
                 }
                 case JSON_ARRAY, JSON_LINES -> {
-                    final boolean badLines = JSON_LINES.equals(fmt) && PyValues.truthy(info.get("malformed_lines"));
+                    final boolean badLines = JSON_LINES.equals(fmt) && JsonValues.truthy(info.get("malformed_lines"));
                     // With lines that aren't JSON, the lines are read by a Data Splitter and their keys through
                     // json_fields: json.<key>.
                     final String prefix = badLines
@@ -204,7 +205,7 @@ public final class DraftMapping {
 
     private static Map<String, Object> asText(final Map<String, Object> flat, final String prefix) {
         final Map<String, Object> out = new LinkedHashMap<>();
-        flat.forEach((key, value) -> out.put(prefix + key, PyValues.jsonText(value)));
+        flat.forEach((key, value) -> out.put(prefix + key, JsonValues.jsonText(value)));
         return out;
     }
 
@@ -217,7 +218,7 @@ public final class DraftMapping {
         final List<Object> values = new ArrayList<>();
         for (final String line : PyText.splitlines(stripped)) {
             final Object value = jsonOrNull(line);
-            if (PyValues.truthy(value)) {
+            if (JsonValues.truthy(value)) {
                 values.add(value);
             }
         }
@@ -293,7 +294,7 @@ public final class DraftMapping {
                     n++;
                 }
                 used.add(name);
-                final String mostCommon = PyValues.mostCommon(style.getValue()).getFirst();
+                final String mostCommon = JsonValues.mostCommon(style.getValue()).getFirst();
                 extracts.add(dict(FIELD, field, "regex", Pairs.pairRegex(mostCommon, style.getKey()), NAMES,
                         new ArrayList<>(List.of(name))));
             });
@@ -333,7 +334,7 @@ public final class DraftMapping {
         for (final Map<String, Object> record : records) {
             for (int i = 0; i < extracts.size(); i++) {
                 final Map<String, Object> ex = extracts.get(i);
-                final Matcher found = patterns.get(i).matcher(PyValues.text(record.get((String) ex.get(FIELD))));
+                final Matcher found = patterns.get(i).matcher(JsonValues.text(record.get((String) ex.get(FIELD))));
                 if (found.find() && found.group(1) != null && !PyText.isBlank(found.group(1))) {
                     record.put(((List<String>) ex.get(NAMES)).getFirst(), found.group(1));
                 }
@@ -375,7 +376,7 @@ public final class DraftMapping {
     // destination_key under Destination, a source_zone under Source); otherwise the action element itself.
     private static String dataHome(final String element, final String field) {
         if (element.startsWith("EventDetail/Network/")) {
-            final String name = PyValues.lastPart(field, '.');
+            final String name = PyText.lastPart(field, '.');
             if (PyText.match(SOURCE_SIDE, name)) {
                 return element + "/Source";
             }
@@ -503,7 +504,7 @@ public final class DraftMapping {
             List<String> rest = kinds.rest();
             Map<String, Object> applied = null;
             if (sourceNotes != null && !sourceNotes.isEmpty()
-                && (PyValues.truthy(sourceNotes.get(FIELDS)) || PyValues.truthy(sourceNotes.get(EVENTS)))) {
+                && (JsonValues.truthy(sourceNotes.get(FIELDS)) || JsonValues.truthy(sourceNotes.get(EVENTS)))) {
                 // The user's documentation says where fields belong and what each event is: it wins over guesses
                 // from names.
                 applied = SourceNotes.applyToDraft(mapping, names, values, sourceNotes, detailCheck);
@@ -527,12 +528,12 @@ public final class DraftMapping {
         }
 
         private void input() {
-            if (JSON_LINES.equals(fmt) && PyValues.truthy(info.get("malformed_lines"))) {
+            if (JSON_LINES.equals(fmt) && JsonValues.truthy(info.get("malformed_lines"))) {
                 // Some lines aren't JSON: Stroom's JSONParser would stop at the first, so a Data Splitter reads one
                 // record a line and the mapping parses each (a line that isn't JSON gives no fields and is logged).
                 mapping.put("input", DATA_SPLITTER);
                 mapping.put("json_fields", new ArrayList<>(List.of("json")));
-                notes.add(PyValues.truthy(info.get("note"))
+                notes.add(JsonValues.truthy(info.get("note"))
                         ? (String) info.get("note")
                         : "");
             } else if (JSON_ARRAY.equals(fmt) || JSON_LINES.equals(fmt)) {
@@ -548,13 +549,13 @@ public final class DraftMapping {
                 mapping.put("input", "xml");
                 mapping.put("root", info.get("root"));
                 mapping.put("record", info.get("record_element"));
-                mapping.put("xml_namespace", PyValues.truthy(info.get("namespace"))
+                mapping.put("xml_namespace", JsonValues.truthy(info.get("namespace"))
                         ? info.get("namespace")
                         : "");
             } else if (SampleProfiler.XML_FRAGMENTS.equals(fmt)) {
                 mapping.put("input", "xml_fragments");
                 mapping.put("record", info.get("record_element"));
-                mapping.put("xml_namespace", PyValues.truthy(info.get("namespace"))
+                mapping.put("xml_namespace", JsonValues.truthy(info.get("namespace"))
                         ? info.get("namespace")
                         : "records:2");
             } else {
@@ -586,7 +587,7 @@ public final class DraftMapping {
                 held.forEach(v -> counted.merge(SampleProfiler.valueType(v), 1, Integer::sum));
                 types.put(name, held.isEmpty()
                         ? "empty"
-                        : PyValues.mostCommon(counted).getFirst());
+                        : JsonValues.mostCommon(counted).getFirst());
             }
         }
 
@@ -682,20 +683,20 @@ public final class DraftMapping {
         private List<String> covering(final String first, final Predicate<String> fits) {
             final List<String> chosen = new ArrayList<>(List.of(first));
             List<Map<String, Object>> lacking = records.stream()
-                    .filter(r -> !PyValues.truthy(r.get(first)))
+                    .filter(r -> !JsonValues.truthy(r.get(first)))
                     .toList();
             while (!lacking.isEmpty()) {
                 final List<Map<String, Object>> without = lacking;
                 final String more = names.stream()
                         .filter(n -> !taken.contains(n) && !chosen.contains(n) && fits.test(n)
-                                     && without.stream().anyMatch(r -> PyValues.truthy(r.get(n))))
+                                     && without.stream().anyMatch(r -> JsonValues.truthy(r.get(n))))
                         .findFirst()
                         .orElse(null);
                 if (more == null) {
                     break;
                 }
                 chosen.add(more);
-                lacking = lacking.stream().filter(r -> !PyValues.truthy(r.get(more))).toList();
+                lacking = lacking.stream().filter(r -> !JsonValues.truthy(r.get(more))).toList();
             }
             return chosen;
         }
@@ -918,7 +919,7 @@ public final class DraftMapping {
         private Object commonSource(final String path) {
             return common.stream()
                     .filter(e -> path.equals(e.get(PATH)))
-                    .map(e -> PyValues.truthy(e.get(FIELD))
+                    .map(e -> JsonValues.truthy(e.get(FIELD))
                             ? e.get(FIELD)
                             : e.get(ANY_OF))
                     .findFirst()
@@ -949,12 +950,12 @@ public final class DraftMapping {
                 final List<String> earlier = namings.subList(0, i);
                 final List<String> own = new ArrayList<>();
                 for (final Map<String, Object> record : records) {
-                    if (PyValues.truthy(record.get(n))
-                        && earlier.stream().noneMatch(m -> PyValues.truthy(record.get(m)))) {
+                    if (JsonValues.truthy(record.get(n))
+                        && earlier.stream().noneMatch(m -> JsonValues.truthy(record.get(m)))) {
                         own.add((String) record.get(n));
                     }
                 }
-                PyValues.mostCommon(PyValues.counted(own)).stream().limit(MAX_RULES)
+                JsonValues.mostCommon(JsonValues.counted(own)).stream().limit(MAX_RULES)
                         .forEach(v -> pairs.add(new String[]{n, v}));
             }
             final List<String> kinds = pairs.stream().map(pair -> pair[1]).toList();
@@ -1011,7 +1012,7 @@ public final class DraftMapping {
                             ? "true"
                             : "false"));
                 }
-                if (PyValues.truthy(user)) {
+                if (JsonValues.truthy(user)) {
                     final Map<String, Object> entry = dict(PATH, "EventDetail/Authenticate/User/Id");
                     entry.putAll(ActionRules.read(user));
                     fields.add(entry);
@@ -1113,7 +1114,7 @@ public final class DraftMapping {
 
         private void shapesNote(final int shapes, final List<String> namings) {
             final List<String> shared = common.stream()
-                    .filter(e -> PyValues.truthy(e.get(ANY_OF)))
+                    .filter(e -> JsonValues.truthy(e.get(ANY_OF)))
                     .map(e -> e.get(PATH) + " from " + String.join(" or ", anyOf(e)))
                     .toList();
             if (shapes > 1 && namings.size() + shared.size() > 0 && (namings.size() > 1 || !shared.isEmpty())) {
@@ -1130,7 +1131,7 @@ public final class DraftMapping {
 
         private void kindsNote(final Kinds kinds, final String naming, final String command) {
             final boolean unknownKinds = kinds.rules().stream()
-                    .anyMatch(r -> PyValues.truthy(r.get("when")) && PyValues.maps(r.get(FIELDS)).stream()
+                    .anyMatch(r -> JsonValues.truthy(r.get("when")) && JsonValues.maps(r.get(FIELDS)).stream()
                             .anyMatch(f -> ((String) f.get(PATH)).startsWith("EventDetail/Unknown")));
             final String values = String.join(", ", kinds.kinds());
             if (!kinds.kinds().isEmpty() && !unknownKinds) {
@@ -1166,7 +1167,7 @@ public final class DraftMapping {
             }
             List<String> left = rest;
             if (!appliedFields.isEmpty() || !appliedEvents.isEmpty()) {
-                final List<Map<String, Object>> drafted = PyValues.maps(mapping.get("common"));
+                final List<Map<String, Object>> drafted = JsonValues.maps(mapping.get("common"));
                 left = rest.stream().filter(n -> drafted.stream().noneMatch(e -> n.equals(e.get(FIELD)))).toList();
                 final List<String> said = new ArrayList<>(appliedFields);
                 said.addAll(appliedEvents);
@@ -1215,12 +1216,12 @@ public final class DraftMapping {
                     doubled.add(k);
                 }
             }));
-            final List<Map<String, Object>> entries = new ArrayList<>(PyValues.maps(mapping.get("common")));
-            PyValues.maps(mapping.get(EVENTS)).forEach(rule -> entries.addAll(
+            final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
+            JsonValues.maps(mapping.get(EVENTS)).forEach(rule -> entries.addAll(
                     (List<Map<String, Object>>) rule.get(FIELDS)));
             for (final Map<String, Object> entry : entries) {
-                if (doubled.contains(entry.get(FIELD)) && !PyValues.truthy(entry.get("transform"))
-                    && !PyValues.truthy(entry.get("time_format"))) {
+                if (doubled.contains(entry.get(FIELD)) && !JsonValues.truthy(entry.get("transform"))
+                    && !JsonValues.truthy(entry.get("time_format"))) {
                     entry.put("transform", "unescape_quotes");
                 }
             }

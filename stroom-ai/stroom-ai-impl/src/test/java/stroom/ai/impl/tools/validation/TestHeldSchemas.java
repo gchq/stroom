@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.ToolRefusal;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -68,7 +70,7 @@ class TestHeldSchemas {
     @Test
     void testValidatingADocumentThatNamesItSaysWhatToWrite() {
         assertThatThrownBy(() -> held.source("file:///event-logging-v4.1.0.xsd"))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("write 'file://event-logging-v4.1.0.xsd' (file: and two slashes)");
     }
 
@@ -109,7 +111,7 @@ class TestHeldSchemas {
                 .hold("file://records-v2.0.xsd", "records:2", "")
                 .heldSchemas();
         assertThatThrownBy(() -> versions.source("file://event-logging-v3.5.2.xsd"))
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("newest first: 4.1.0, 3.4.2 (all in namespace event-logging:3");
     }
 
@@ -118,9 +120,9 @@ class TestHeldSchemas {
         final HeldSchemas none = new HeldSchemasWorld().heldSchemas();
         assertThat(none.heldEventVersions()).isEmpty();
         assertThatThrownBy(none::eventVersions)
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("holds no event-logging XML schema");
-        assertThatThrownBy(() -> none.chosenOrLatest(null)).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> none.chosenOrLatest(null)).isInstanceOf(ToolRefusal.class);
     }
 
     @Test
@@ -160,7 +162,7 @@ class TestHeldSchemas {
         final EventSchema first = held.eventSchema("4.1.0");
         assertThat(held.eventSchema("4.1.0")).isSameAs(first);
         assertThat(first.version()).isEqualTo("4.1.0");
-        assertThatThrownBy(() -> held.eventSchema("9.9.9")).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> held.eventSchema("9.9.9")).isInstanceOf(ToolRefusal.class);
     }
 
     @Test

@@ -22,10 +22,12 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.cef.CefDraft;
@@ -40,7 +42,6 @@ import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.validation.EventStreams;
-import stroom.ai.impl.tools.validation.ValidationException;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -217,13 +218,13 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                     continueFrom(call),
                     maxStreams(call),
                     StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG),
-                    !argsMap(call).containsKey(FOLLOW_ON_ARG) || CreateProcessorFilterTool.flag(call, FOLLOW_ON_ARG),
+                    !argsMap(call).containsKey(FOLLOW_ON_ARG) || ToolArgs.flag(call, FOLLOW_ON_ARG),
                     stringArg(call, CHANGED_PIPELINE_UUID_ARG),
                     StartOnboardingTool.streamIds(call, RAW_STREAM_IDS_ARG));
             return JsonResults.of(PipelineStepping.withinTimeLimit(context, () -> review(context, request)));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
-        } catch (final ValidationException | StreamReader.StreamReadException | PipelineUnreadableException e) {
+        } catch (final StreamReader.StreamReadException | PipelineUnreadableException e) {
             return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(CANCELLED);

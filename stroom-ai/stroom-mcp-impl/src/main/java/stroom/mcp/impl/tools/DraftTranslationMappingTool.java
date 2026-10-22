@@ -17,10 +17,12 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.draft.DraftMapping;
@@ -28,7 +30,7 @@ import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.SampleRefusal;
+import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.PatternTimeoutException;
@@ -126,7 +128,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                         .addProperty(SAMPLES_ARG, stringArraySchema("Only for samples that are not files (pasted "
                                                                     + "text): their text, by name or as a list, to "
                                                                     + "tell the format and fields from: "
-                                                                    + SampleArguments.SAMPLE_GUIDE + ". Uploaded "
+                                                                    + SampleTexts.SAMPLE_GUIDE + ". Uploaded "
                                                                     + "samples are read from their streams "
                                                                     + "(stream_ids)."))
                         .addStringProperty(SOURCE_NAME_ARG, "The source, e.g. 'Acme door controller': names the "
@@ -165,7 +167,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     }
 
     private Map<String, Object> draft(final ToolCall call, final ToolCallContext context) {
-        final Object given = TranslationArgs.value(call, SAMPLES_ARG);
+        final Object given = ToolArgs.raw(call, SAMPLES_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         final String build = stringArg(call, BUILD_ARG);
         if (given == null && streamIds.isEmpty()) {
@@ -180,7 +182,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final String version = target.version();
         final Map<String, String> samples = given == null
                 ? sampleStreamTexts.read(streamIds).texts()
-                : SampleArguments.namedSamples(given);
+                : SampleTexts.asNamedSamples(given, null);
         if (samples.isEmpty()) {
             throw new ToolRefusal("Give the samples' text, or stream_ids of the uploaded sample streams");
         }
@@ -221,15 +223,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                         final ToolCall call,
                                         final Map<String, Object> sourceNotes,
                                         final Function<String, String> detailCheck) {
-        final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(TranslationArgs.value(call,
+        final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call,
                 SPLITTER_ARG));
-        try {
-            return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
-                    stringArg(call, SYSTEM_NAME_ARG), stringArg(call, ENVIRONMENT_ARG), sourceNotes, detailCheck,
-                    splitter));
-        } catch (final SampleRefusal e) {
-            throw new ToolRefusal(e.getMessage());
-        }
+        return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
+                stringArg(call, SYSTEM_NAME_ARG), stringArg(call, ENVIRONMENT_ARG), sourceNotes, detailCheck,
+                splitter));
     }
 
     // Why a catalogued event can't be its action element; the notes are followed unchecked rather than not at all

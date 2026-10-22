@@ -22,15 +22,16 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.shared.XsltDoc;
@@ -243,7 +244,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         final Map<String, TranslationDoc> docs = translationDocs(pipeline, request.pipelineUuid());
         if (!docs.containsKey(element)) {
             throw new ToolRefusal("Element '" + element + "' has no XSLT or text converter; elements with code: "
-                                  + PythonText.list(new TreeSet<>(docs.keySet())));
+                                  + PyText.list(new TreeSet<>(docs.keySet())));
         }
         final TranslationDoc target = docs.get(element);
         final String saved = code(target);
@@ -413,13 +414,13 @@ class SummariseFixTool extends AbstractBuiltInTool {
             problems.add("The draft changes no output on these records: it does not reach the reported case");
         }
         if (!unexpected.isEmpty()) {
-            problems.add("Fields outside expected_paths change too: " + PythonText.list(unexpected));
+            problems.add("Fields outside expected_paths change too: " + PyText.list(unexpected));
         }
         if (!introduced.isEmpty()) {
             problems.add("Stepping with the draft has blocking errors the saved code does not: "
                          + introduced.stream()
-                                 .map(g -> "(" + PythonText.repr(stringOrNull(g.get("element"))) + ", "
-                                           + PythonText.repr(cut(exampleMessage(g), 150)) + ")")
+                                 .map(g -> "(" + PyText.repr(stringOrNull(g.get("element"))) + ", "
+                                           + PyText.repr(cut(exampleMessage(g), 150)) + ")")
                                  .collect(Collectors.joining(", ", "[", "]")));
         }
         return problems;
@@ -442,7 +443,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
                    + ") in Stroom.");
         manual.add("Apply the change in 'diff' below (or paste the complete fixed code), then save.");
         manual.add("Open pipeline '" + pipeline.name() + "', enter stepping on raw stream(s) "
-                   + PythonText.numbers(streams) + " and check the reported record now gives the expected output "
+                   + PyText.repr(streams) + " and check the reported record now gives the expected output "
                    + "with no errors.");
         manual.add("Reprocess the affected streams yourself if you want existing events corrected; new data picks up "
                    + "the fix automatically.");
@@ -481,7 +482,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         if (element != null) {
             if (!copy.containsKey(element)) {
                 throw new ToolRefusal("The copy has no XSLT or text converter on '" + element + "'; it has: "
-                                      + PythonText.list(new TreeSet<>(copy.keySet())));
+                                      + PyText.list(new TreeSet<>(copy.keySet())));
             }
             return Map.entry(element, copy.get(element));
         }
@@ -491,7 +492,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         if (differing.size() != 1) {
             throw new ToolRefusal(differing.isEmpty()
                     ? "The copy's code is the same as the pipeline's: nothing to prove"
-                    : "Give element: the copy's code differs from the pipeline's on " + PythonText.list(differing));
+                    : "Give element: the copy's code differs from the pipeline's on " + PyText.list(differing));
         }
         return Map.entry(differing.getFirst(), copy.get(differing.getFirst()));
     }

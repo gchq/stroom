@@ -20,8 +20,10 @@ import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules.FieldMappingLayout;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
@@ -327,7 +329,7 @@ class BuildDocumentation {
     /// @return The round.
     static Map<String, Object> needsDescriptions(final Descriptions described, final Map<String, Object> ids) {
         final List<Map<String, Object>> fields = new ArrayList<>(described.wanted().values());
-        final boolean shared = fields.stream().anyMatch(field -> BuildPlan.truthy(field.get("under")));
+        final boolean shared = fields.stream().anyMatch(field -> JsonValues.truthy(field.get("under")));
         final Map<String, Object> round = new LinkedHashMap<>();
         round.put("status", "needs_descriptions");
         round.put("fields", fields);

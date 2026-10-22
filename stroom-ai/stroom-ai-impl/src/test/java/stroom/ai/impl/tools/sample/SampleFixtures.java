@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
+import stroom.ai.impl.tools.PyText;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;

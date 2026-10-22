@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
+import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ import java.util.regex.Pattern;
 final class MappingRebuild {
 
     private static final Pattern EVENT_TYPE = Pattern.compile("^event[_-]type[_-]");
-    private static final String XSL = MappingFacts.XSL;
+    private static final String XSL = XmlTrees.XSL;
     private static final String EVT = XsltGenerator.EVT;
 
     private final String code;
@@ -296,10 +298,10 @@ final class MappingRebuild {
         if (kept != null) {
             final Map<List<String>, Integer> position = new LinkedHashMap<>();
             for (final FieldMapping entry : kept.common()) {
-                position.put(Arrays.asList(PyStr.strip(entry.path(), "/"), entry.dataName()), position.size());
+                position.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), position.size());
             }
             common.sort(Comparator.comparingInt(entry -> position.getOrDefault(Arrays.asList(
-                    PyStr.strip((String) entry.get("path"), "/"), (String) entry.get("data_name")), position.size())));
+                    PyText.strip((String) entry.get("path"), "/"), (String) entry.get("data_name")), position.size())));
         }
         for (int i = 0; i < rulesOut.size(); i++) {
             if (!Boolean.TRUE.equals(rulesOut.get(i).get("drop"))) {
@@ -314,7 +316,7 @@ final class MappingRebuild {
 
     private static Set<List<String>> commonKeysOf(final TranslationMapping mapping) {
         final Set<List<String>> out = new HashSet<>();
-        mapping.common().forEach(entry -> out.add(Arrays.asList(PyStr.strip(entry.path(), "/"), entry.dataName())));
+        mapping.common().forEach(entry -> out.add(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName())));
         return out;
     }
 
@@ -469,10 +471,10 @@ final class MappingRebuild {
         for (final EventRule rule : mapping.events()) {
             final Map<List<String>, FieldMapping> fields = new LinkedHashMap<>();
             for (final FieldMapping entry : mapping.common()) {
-                fields.put(Arrays.asList(PyStr.strip(entry.path(), "/"), entry.dataName()), entry);
+                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), entry);
             }
             for (final FieldMapping entry : rule.fields()) {
-                fields.put(Arrays.asList(PyStr.strip(entry.path(), "/"), entry.dataName()), entry);
+                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), entry);
             }
             out.add(fields);
         }

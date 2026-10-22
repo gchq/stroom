@@ -208,7 +208,8 @@ class TestUploadSampleTool {
         assertThat(call("{\"feed\": \"PROD-FEED\", \"sample\": \"a=1\"}").text())
                 .contains("was not created by this server");
         assertThat(call("{\"feed\": \"NO-SUCH-FEED\", \"sample\": \"a=1\"}").text())
-                .isEqualTo("No feed named 'NO-SUCH-FEED'");
+                .startsWith("No feed named 'NO-SUCH-FEED' in this Stroom. If the user named it, they may mean a "
+                            + "different Stroom cluster");
         assertThat(sent).isEmpty();
     }
 
