@@ -19,6 +19,7 @@ package stroom.lmdb2;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbLibrary;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -123,7 +124,9 @@ public class LmdbEnvDirFactory {
             final Path envDir;
             final boolean isDedicatedDir;
             if (subDir != null && !subDir.isBlank()) {
-                envDir = localDir.resolve(subDir);
+                // The sub dir may contain request-supplied values (e.g. a search component ID), so clean it
+                // to a single path segment so it cannot escape the local dir.
+                envDir = localDir.resolve(PathSegmentUtil.cleanSegment(subDir));
                 isDedicatedDir = true;
 
                 LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());

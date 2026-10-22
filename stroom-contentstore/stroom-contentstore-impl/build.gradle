@@ -34,5 +34,6 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.jakarta.servlet.api
 
+    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
