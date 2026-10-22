@@ -92,6 +92,24 @@ class TestFindInContentTool {
     }
 
     @Test
+    void credentialsAreRedactedFromTheMatchingLines() {
+        // An outside client searching for a credential's field gets the field, not the secret.
+        xslt("cluster", "Cluster", """
+                {
+                  "connection" : {
+                    "apiKeyId" : "stroom",
+                    "apiKeySecret" : "s3cr3t"
+                  }
+                }""", true);
+
+        final String result = run("{\"pattern\":\"apiKey\",\"uuids\":[\"cluster\"]}");
+
+        assertThat(result)
+                .contains("\"apiKeySecret\" : \"<redacted>\"")
+                .doesNotContain("s3cr3t");
+    }
+
+    @Test
     void documentsInFoldersAnAgentsDocIgnoresAreLeftOutUnlessAskedFor() {
         // Users XSLT is in /Lookups/Archive, which the AGENTS doc in /Lookups ignores.
         fixture.folders.put("users", List.of("Lookups", "Archive"));
@@ -189,10 +207,18 @@ class TestFindInContentTool {
     }
 
     @Test
+    void withoutUuidsOrTypesEveryTypeIsSearched() {
+        // As the Stroom MCP server's find_documents with content did: its types were optional.
+        Mockito.when(contentIndex.isReady()).thenReturn(false);
+
+        assertThat(run("{\"pattern\":\"host_to_ip\"}"))
+                .startsWith("1 document(s) matched 'host_to_ip'.")
+                .contains("- XSLT 'Hosts XSLT' (hosts) in /Lookups:");
+        Mockito.verify(dictionaries).listDocuments();
+    }
+
+    @Test
     void badArgumentsAreRefused() {
-        assertThatThrownBy(() -> run("{\"pattern\":\"x\"}"))
-                .isInstanceOf(WorkspaceException.class)
-                .hasMessageContaining("Give uuids or types");
         assertThatThrownBy(() -> run("{\"pattern\":\"x\",\"types\":[\"Nonsense\"]}"))
                 .isInstanceOf(WorkspaceException.class)
                 .hasMessageContaining("The types are: Dictionary, XSLT");

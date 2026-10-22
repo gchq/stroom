@@ -16,35 +16,49 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.AgentInstructions.DocTarget;
 import stroom.ai.impl.tools.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.AgentInstructions.Targets;
+import stroom.ai.impl.tools.AgentInstructions.UnreadableDoc;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.shared.AiToolCategory;
-import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-/// `get_instructions` - the standing instructions (AGENTS docs) that apply to some folders or documents, as the
-/// Stroom MCP server's tool of the same name gives them: most general first, with their text. They may say how XSLT
-/// is written, how fields are mapped, how things are named, or which folders to leave out. Read as the user.
+/// `get_instructions` - the standing instructions (AGENTS docs) that apply to some folders, feeds or documents,
+/// as the Stroom MCP server's tool of the same name gives them: most general first, with their text. They may say
+/// how XSLT is written, how fields are mapped, how things are named, or which folders to leave out. Read as the
+/// user. The result's structured content is the MCP server's JSON ([AgentInstructions#applicableInstructions]).
+///
+/// It also gives the working guides bundled with Stroom ([AgentKnowledge]), which MCP clients can read as
+/// resources too, so that the chat can read them.
 class GetInstructionsTool extends AbstractBuiltInTool {
 
     static final String NAME = "get_instructions";
     static final String FOLDERS_ARG = "folders";
     static final String UUIDS_ARG = "uuids";
+    static final String FEEDS_ARG = "feeds";
+    static final String DOCS_ARG = "docs";
+    static final String GUIDE_ARG = "guide";
+    /// The guide name that lists the guides.
+    static final String GUIDES = "guides";
 
     private final AgentInstructions agentInstructions;
-    private final DocumentAccess documentAccess;
+    private final Optional<AgentKnowledge> knowledge;
 
     @Inject
-    GetInstructionsTool(final AgentInstructions agentInstructions, final DocumentAccess documentAccess) {
+    GetInstructionsTool(final AgentInstructions agentInstructions, final Optional<AgentKnowledge> knowledge) {
         this.agentInstructions = agentInstructions;
-        this.documentAccess = documentAccess;
+        this.knowledge = knowledge;
     }
 
     @Override
@@ -64,41 +78,52 @@ class GetInstructionsTool extends AbstractBuiltInTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description("Gives the standing instructions (Documentation docs named " + AgentInstructions.DOC_NAME
-                             + ") that apply to some folders or documents: a doc applies to its folder and below, "
-                             + "and one at the top of the tree everywhere. They can say how XSLT is written, how "
-                             + "fields are mapped, how things are named, or which folders searches leave out. Call "
-                             + "it before proposing code or names for documents in a folder, and follow what it "
-                             + "says; the user's own request takes precedence.")
+                             + ") that apply to some folders, feeds or documents: a doc applies to its folder and "
+                             + "below, and one at the top of the tree everywhere. Most general first, with their "
+                             + "text. They can say how XSLT is written, how fields are mapped, how things are "
+                             + "named, or which folders searches leave out. Call it before proposing code or names "
+                             + "for documents in a folder, and follow what it says, the most specific last; the "
+                             + "user's own request takes precedence, and no instruction lifts an approval. Other "
+                             + AgentInstructions.DOC_NAME + " docs are listed by folder so you know they exist. "
+                             + "Give guide to read one of the working guides bundled with Stroom instead (how to "
+                             + "write event-logging XSLT, a Data Splitter, reference data, an index, and so on).")
                 .parameters(ObjectSchema.builder()
                         .addProperty(FOLDERS_ARG, stringArraySchema("Folders the work touches, by UUID or Explorer "
-                                                                      + "path, e.g. '/Feeds/Events'."))
-                        .addProperty(UUIDS_ARG, stringArraySchema("Documents the work touches, e.g. an XSLT or a "
-                                                                    + "pipeline; their folders are used."))
+                                                                      + "path, e.g. '/Feeds/Events/Acme' (where the "
+                                                                      + "feed or pipeline lives, or where it will be "
+                                                                      + "promoted to)."))
+                        .addProperty(UUIDS_ARG, stringArraySchema("Documents the work touches, by UUID, e.g. an "
+                                                                    + "XSLT or a pipeline; their folders are used."))
+                        .addProperty(FEEDS_ARG, stringArraySchema("Feed names the work touches; their folders are "
+                                                                    + "used."))
+                        .addProperty(DOCS_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
+                                        .addStringProperty("type", "The document's type, e.g. 'Pipeline'.")
+                                        .addStringProperty("name", "The document's name.")
+                                        .addStringProperty("uuid", "Optional. The document's UUID.")
+                                        .build())
+                                .description("Documents the work touches, each {type, name, uuid?}, e.g. a "
+                                             + "pipeline being updated.")
+                                .build())
+                        .addStringProperty(GUIDE_ARG, "Optional. A working guide to read instead, by name, e.g. "
+                                                      + "'xslt', 'event-logging', 'indexing'; '" + GUIDES
+                                                      + "' lists them.")
                         .build())
                 .build();
     }
 
     @Override
     public ToolResult execute(final ToolCall request, final ToolCallContext context) {
-        final List<String> paths = new ArrayList<>();
-        final List<String> notFound = new ArrayList<>();
-        for (final String folder : stringListArg(request, FOLDERS_ARG)) {
-            documentAccess.findFolder(folder).ifPresentOrElse(
-                    docRef -> paths.add(folderPath(docRef)),
-                    () -> notFound.add(folder));
+        final String guide = stringArg(request, GUIDE_ARG);
+        if (guide != null) {
+            return ToolResult.text(guide(guide));
         }
-        for (final String uuid : stringListArg(request, UUIDS_ARG)) {
-            documentAccess.findDocRef(uuid).ifPresentOrElse(
-                    docRef -> paths.add(documentAccess.path(docRef)),
-                    () -> notFound.add(uuid));
-        }
-        if (paths.isEmpty() && notFound.isEmpty()) {
-            // Only those that apply everywhere.
-            paths.add("/");
-        }
+        final Targets targets = agentInstructions.targets(stringListArg(request, FOLDERS_ARG),
+                stringListArg(request, UUIDS_ARG), stringListArg(request, FEEDS_ARG), docTargets(request));
+        final List<String> paths = targets.paths();
 
-        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
-                                                                 + " tool");
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the "
+                                                                            + NAME + " tool");
         final List<InstructionDoc> applying = standing.applyingTo(paths);
         final StringBuilder sb = new StringBuilder();
         if (applying.isEmpty()) {
@@ -117,19 +142,64 @@ class GetInstructionsTool extends AbstractBuiltInTool {
             sb.append("\n\nOther ").append(AgentInstructions.DOC_NAME).append(" docs, which don't apply there: in ")
                     .append(String.join(", ", elsewhere)).append('.');
         }
-        if (!notFound.isEmpty()) {
-            sb.append("\n\nNot found, or you don't have permission to view them: ")
-                    .append(String.join(", ", notFound)).append('.');
+        if (!standing.unreadable().isEmpty()) {
+            sb.append("\n\nThese ").append(AgentInstructions.DOC_NAME).append(" docs couldn't be read, so they "
+                                                                             + "aren't followed: ");
+            final List<String> unreadable = new ArrayList<>();
+            for (final UnreadableDoc doc : standing.unreadable()) {
+                unreadable.add("the doc in " + doc.folder() + " (uuid " + doc.docRef().getUuid() + "): "
+                               + doc.reason());
+            }
+            sb.append(String.join("; ", unreadable)).append('.');
         }
-        return ToolResult.text(sb.toString().strip());
+        if (!targets.notFound().isEmpty()) {
+            sb.append("\n\nNot found, or you don't have permission to view them: ")
+                    .append(String.join(", ", targets.notFound())).append('.');
+        }
+        if (!applying.isEmpty()) {
+            sb.append("\n\n").append(AgentInstructions.HINT_APPLYING);
+        }
+        return ToolResult.text(sb.toString().strip())
+                .withStructuredContent(standing.asJson(paths));
     }
 
-    // The path of a folder itself (not of the folder it is in), or `/` for the top of the tree.
-    private String folderPath(final DocRef folder) {
-        if (ExplorerConstants.SYSTEM_DOC_REF.equals(folder)) {
-            return "/";
+    // A guide's text, or the list of them.
+    private String guide(final String name) {
+        if (knowledge.isEmpty() || knowledge.get().guideNames().isEmpty()) {
+            return "Error: no working guides are bundled with this Stroom.";
         }
-        return AgentInstructions.normalise(documentAccess.path(folder) + "/" + folder.getName());
+        final AgentKnowledge guides = knowledge.get();
+        if (GUIDES.equalsIgnoreCase(name)) {
+            final StringBuilder sb = new StringBuilder("# Guides\n");
+            for (final String guide : guides.guideNames()) {
+                sb.append("\n- ").append(guide).append(": ").append(guides.guideTitle(guide).orElse(""));
+            }
+            return sb.append("\n\nRead one with ").append(NAME).append(' ').append(GUIDE_ARG)
+                    .append("='<name>'.").toString();
+        }
+        return guides.guide(name)
+                .orElseGet(() -> "Error: No guide '" + name + "'. Guides: " + String.join(", ", guides.guideNames()));
+    }
+
+    // The documents the work touches, each {type, name, uuid?}; one given alone, not in a list, is taken too.
+    private static List<DocTarget> docTargets(final ToolCall request) {
+        final Object value = argsMap(request).get(DOCS_ARG);
+        final List<?> items = value instanceof final List<?> list
+                ? list
+                : NullSafe.singletonList(value);
+        final List<DocTarget> docs = new ArrayList<>();
+        for (final Object item : items) {
+            if (item instanceof final Map<?, ?> map) {
+                docs.add(new DocTarget(string(map.get("type")), string(map.get("name")), string(map.get("uuid"))));
+            }
+        }
+        return docs;
+    }
+
+    private static String string(final Object value) {
+        return value == null
+                ? null
+                : String.valueOf(value).strip();
     }
 
     @Override

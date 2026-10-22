@@ -56,8 +56,15 @@ public class BuiltInTools {
 
     /// @param tools    The tools, as bound in [BuiltInToolsModule].
     /// @param contexts Makes the context of a call in a chat.
-    @Inject
     BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts) {
+        this(tools, contexts, new ToolCallGuard());
+    }
+
+    /// @param tools    The tools, as bound in [BuiltInToolsModule].
+    /// @param contexts Makes the context of a call in a chat.
+    /// @param guard    What every call goes through (see [ToolCallGuard]).
+    @Inject
+    BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts, final ToolCallGuard guard) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
         final Set<String> readOnly = new HashSet<>();
         final Set<String> readOnlyCalls = new HashSet<>();
@@ -85,7 +92,7 @@ public class BuiltInTools {
             categoriesByName.put(specification.name(), Objects.requireNonNull(tool.category(),
                     () -> "Tool '" + specification.name() + "' has no category"));
             // langchain4j gives the executor the chat's id as its memory id.
-            map.put(specification, LangChain4jTools.executor(tool, contexts::forMemoryId));
+            map.put(specification, LangChain4jTools.executor(tool, contexts::forMemoryId, guard));
         }
         toolMap = Map.copyOf(map);
         readOnlyToolNames = Set.copyOf(readOnly);

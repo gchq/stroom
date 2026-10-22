@@ -26,6 +26,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -128,8 +129,7 @@ class TestAgentInstructions {
 
     @Test
     void getInstructionsGivesThoseThatApplyAndNamesTheOthers() {
-        final GetInstructionsTool tool = new GetInstructionsTool(fixture.agentInstructions(),
-                fixture.documentAccess());
+        final GetInstructionsTool tool = new GetInstructionsTool(fixture.agentInstructions(), Optional.empty());
 
         // With nothing given, those that apply everywhere.
         assertThat(tool.execute(ToolTestFixture.request(GetInstructionsTool.NAME, "{}"), ToolCalls.inChat(1,

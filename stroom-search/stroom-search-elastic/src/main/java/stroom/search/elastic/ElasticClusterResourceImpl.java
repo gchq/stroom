@@ -30,8 +30,6 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.http.HttpClientConfig;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.InfoResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -100,29 +98,8 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     }
 
     private ElasticClusterTestResponse testConnection(final ResolvedElasticConnection connection) {
-        final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
-        try (final ElasticsearchClient elasticClient = elasticClientFactoryProvider.get()
-                .create(connection, elasticClientConfig)) {
-
-            final InfoResponse response = elasticClient.info();
-
-            final StringBuilder sb = new StringBuilder()
-                    .append("Cluster URLs: ")
-                    .append(connection.connectionUrls())
-                    .append("\nCluster name: ")
-                    .append(response.clusterName())
-                    .append("\nCluster UUID: ")
-                    .append(response.clusterUuid())
-                    .append("\nNode name: ")
-                    .append(response.name())
-                    .append("\nVersion: ")
-                    .append(response.version().number());
-
-            return new ElasticClusterTestResponse(true, sb.toString());
-
-        } catch (final Exception e) {
-            return new ElasticClusterTestResponse(false, e.getMessage());
-        }
+        return ElasticClusterConnectionTest.test(connection, elasticClientFactoryProvider.get(),
+                elasticConfigProvider.get().getClientConfig());
     }
 
     @Override
