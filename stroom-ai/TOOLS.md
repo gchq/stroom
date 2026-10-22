@@ -332,6 +332,43 @@ Where they differ from the MCP server:
   value is not checked. A pipeline with neither an XSLT step nor a parser is refused (`... has no XSLT step and no
   parser, so there is no output of it to look at`), where the MCP server failed with an index error.
 
+## summarise_fix
+
+Ported as a tool of its own (`SummariseFixTool`, `stroom-mcp-impl`, category processing) from the MCP server's
+`tools/diagnosis.py`, next to `locate_event`. It is made of the stepping tools rather than stepping itself:
+`EventLocations.eventLocations` finds the indexed events' records once, `CompareOutputsTool.compareLocated` (the
+MCP server's `compare` with `locations`) diffs the outputs, and `StepSampleTool.stepSample` and
+`StepRecordsTool.stepRecords` give the verdicts with the fix and with the saved code (`_stepped`). The pipeline's
+XSLTs and text converters are `MergedPipeline.translationDocs`; their saved code is read with `DocumentAccess` (View
+checked); the code diff is `LineDiff`'s unified diff.
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `summarise_fix` | yes | yes | no | yes |
+
+Where it differs from the MCP server:
+
+* **Read-only**, as the MCP server said: it saves nothing. A clean verdict of step_sample or step_records it runs is
+  recorded in the build record of the pipeline stepped, as those tools record it (see above).
+* **Time limits**: the whole proof runs within the session's time limit for a long call, as the stepping tools'
+  steps do, the tools it calls keeping that sooner limit. If the time runs out part way (the comparison, or a
+  verdict, stops early, or a step finding the events' records outlasts it) nothing more is stepped, and a short
+  result is given: `issue`, `pipeline`, `element`, `doc`, `ready` false, `stopped_early` true and the hint
+  `Stopped while proving the fix before this session's time limit for a call (X s) ran out. ... The fix is not
+  proven: give fewer stream_ids or events to prove it on.` The MCP server had no time limit of its own here.
+* **Cancelling**: it stops at once when its thread is interrupted, saying `Stepping was stopped: the call was
+  cancelled.`, as the stepping tools do.
+* **Progress**: it says when it starts each part (finding the events' records, comparing, stepping with the fix,
+  stepping with the saved code); the tools it calls say their own progress as they do. The MCP server's said
+  nothing of its own.
+* **Wording**: `events` (and the refusal for no streams or events) name `search_events with an index`, where the
+  MCP server named `find_events`, merged into `search_events` here. A missing `pipeline_uuid` is refused in words.
+  An XSLT or text converter the user can't read is refused saying so, where the MCP server failed with the REST
+  error.
+* **The code diff** has the MCP server's `--- <name> (saved)` / `+++ <name> (fixed)` header and hunks of three
+  lines' context, from `LineDiff`, whose lines are split on any line ending: a draft differing from the saved code
+  only in its line endings shows no changed lines (the MCP server's `difflib` showed every line changed).
+
 ## MCP server tools with no built-in counterpart
 
 What would move in with each. These all need the MCP server's workspace folder and write guard (tags
