@@ -82,6 +82,18 @@ class TestIndexSearches {
     }
 
     @Test
+    void aSearchGivenAShorterWaitIsNeverHeldPastIt() {
+        // survey_index's sample searches wait a few seconds in all.
+        Mockito.when(dashboardService.search(Mockito.any())).thenReturn(response(true, "1"));
+
+        indexSearches.search(ToolCalls.inChat(1), probe, 10, null, Duration.ofSeconds(2));
+
+        final ArgumentCaptor<DashboardSearchRequest> sent = ArgumentCaptor.forClass(DashboardSearchRequest.class);
+        Mockito.verify(dashboardService).search(sent.capture());
+        assertThat(sent.getValue().getTimeout()).isBetween(1900L, 2000L);
+    }
+
+    @Test
     void aSearchIsMadeAsAnUnsavedDashboardMakesItAndKeepsNoHistory() {
         Mockito.when(dashboardService.search(Mockito.any())).thenReturn(response(true, "1"));
 
