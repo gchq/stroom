@@ -72,12 +72,17 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
 
+        // The settings are set for every column, even one with no format, as one presenter serves
+        // all a table's columns and would otherwise show the last column's settings
         final Format format = column.getFormat();
+        final FormatSettings settings = format != null
+                ? format.getSettings()
+                : null;
+        setNumberSettings(settings);
+        setDateTimeSettings(settings);
         if (format == null || format.getType() == null) {
             setType(Type.GENERAL);
         } else {
-            setNumberSettings(format.getSettings());
-            setDateTimeSettings(format.getSettings());
             setType(format.getType());
         }
 

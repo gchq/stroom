@@ -69,7 +69,7 @@
         </form:FormGroup>
         <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-attributes">
             <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after the Stroom nodes serving the user interface are restarted.">
-                <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh"/>
+                <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Node Restart"/>
             </form:FormGroup>
             <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after every Stroom node in the cluster is restarted.">
                 <tickbox:CustomCheckBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>

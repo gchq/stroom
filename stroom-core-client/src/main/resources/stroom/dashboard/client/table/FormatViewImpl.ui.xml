@@ -19,13 +19,13 @@
                                        addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatUseSeparator"
-                        helpText="Groups the digits of large numbers with a comma every three digits, e.g. 1,234,567.">
+                        helpText="Groups the digits of large numbers with a comma every three digits, e.g. 1,234,567. Default is not ticked.">
             <v:CustomCheckBox ui:field="separate" identity="formatUseSeparator" label="Use Separator (,)"/>
         </form:FormGroup>
 
         <!-- Date time settings -->
         <form:FormGroup ui:field="formatUsePreferences"
-                        helpText="Shows dates using the date and time format and time zone from your user preferences. Untick to choose them here with Format, Custom Format and Time Zone.">
+                        helpText="Shows dates using the date and time format and time zone from your user preferences. Untick to choose them here with Format, Custom Format and Time Zone. Default is ticked.">
             <v:CustomCheckBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format"

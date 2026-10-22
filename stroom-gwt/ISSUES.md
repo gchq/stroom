@@ -178,18 +178,6 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   (`DurationSetting`); only cosmetic, as the model always supplies a value.
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
-* HTTP TLS settings: Verify Host Name defaults to true in `HttpTlsConfig`, but with no TLS config
-  yet `HttpTlsConfigPresenter.read()` skips the null and never sets the tick box, so it shows
-  unticked and OK saves `verifyHostname=false`.
-* Column format: one `FormatPresenter` serves all a table's columns, and for a column with no
-  format `show()` doesn't set the date or number settings, so Use Preferences and Use Separator
-  show whatever the last column left (unticked on first use) rather than their defaults.
-* Table settings: ticking Use Default Extraction Pipeline only disables Extraction Pipeline; the
-  default pipeline is copied in only when the query's data source changes
-  (`TablePresenter`), so an existing table keeps using the pipeline it had.
-* Table settings: the Maximum String Field Length spinner has no minimum and a maximum of
-  `Long.MAX_VALUE`, but is read with `getIntValue()`, so a large value could overflow
-  (`BasicTableSettingsPresenter`).
 
 ### The Pathways editor can't create a pathway or add a constraint
 
@@ -1163,8 +1151,6 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 * `VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
   fileyou wish to create" (missing space).
 * `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser.".
-* `AnnotationTagEditPresenter`: a blank name's error always says "annotation group", whatever the
-  tag's type.
 * `AccountServiceImpl`: a comment says a user ID can't change after the account is created, but the
   field can be edited and the DAO updates it.
 
@@ -1205,10 +1191,6 @@ works and its cells are covered by stories; these are the next steps, none urgen
 ## Smaller oddities
 
 **Reported.**
-
-* Global property editor: "Requires UI Refresh" means the property needs a restart of the nodes
-  serving the UI (`RestartScope.UI`), not a browser refresh, so the label misleads; e.g.
-  "Requires UI Node Restart" would say what it means.
 
 * In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
@@ -1261,6 +1243,23 @@ works and its cells are covered by stories; these are the next steps, none urgen
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Found while adding help to the fields that had none** (2026-10-22):
+  * HTTP TLS settings: with no TLS config yet, the dialog left Verify Host Name unticked and OK
+    saved it as false, though it defaults to true. It now shows the defaults
+    (`TestHttpTlsConfigPresenter`).
+  * Column format: one `FormatPresenter` serves all a table's columns, and a column with no format
+    showed the last column's number and date settings. It now shows the defaults
+    (`TestFormatPresenter`).
+  * Table settings: ticking Use Default Extraction Pipeline only disabled Extraction Pipeline, so
+    the table kept its old pipeline until its query's data source changed. It now puts the data
+    source's default pipeline in (`TestBasicTableSettingsPresenter`).
+  * Table settings: the Maximum String Field Length spinner allowed up to `Long.MAX_VALUE` but was
+    read as an int; it is now 1 to `Integer.MAX_VALUE`.
+  * Annotation tags: a blank name's error always said "annotation group"; it now names the tag's
+    type, as the create dialog does (`TestAnnotationTagEditPresenter`).
+  * Global property editor: "Requires UI Refresh" is now "Requires UI Node Restart", which is what
+    it means (`RestartScope.UI`).
 
 * **Controls that looked like links but were mouse only** (no role, no tab stop; WCAG 2.1.1,
   4.1.2), now buttons or links:
