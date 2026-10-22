@@ -44,7 +44,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.ExpressionTerm.Condition;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
@@ -479,7 +478,7 @@ class TestWaitForProcessingTool {
         final ProcessingStatusTool status = new ProcessingStatusTool(processorFilterAccess, world.documentAccess,
                 feedAccess, () -> taskService, pipelineFeeds);
         final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
-                new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)),
+                new Consent(() -> Mockito.mock(AiAuditLog.class)),
                 new BuildMemory());
         final StreamProcessing streamProcessing = new StreamProcessing(streamReader, feedAccess, () -> taskService);
         final IndexingRuns indexingRuns = new IndexingRuns(world.pipelineShapes, new PipelineDocs(world.documentAccess),

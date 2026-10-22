@@ -51,7 +51,6 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
     static final String SHAPES_ARG = "shapes";
     static final String HANDLING_ARG = "handling";
     static final String REASON_ARG = "reason";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String DROP = "drop";
     static final String TRANSLATE = "translate";
 
@@ -113,7 +112,6 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
                                                                                  + "records; translate: undo that.")
                         .addStringProperty(REASON_ARG, "Why, in the user's words, e.g. 'cluster housekeeping, no "
                                                        + "security value'.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(BUILD_ARG, FEED_ARG, SHAPES_ARG, HANDLING_ARG)
                         .build())
                 .build();
@@ -165,12 +163,8 @@ class SetShapeHandlingTool extends AbstractBuiltInTool {
         final String verb = DROP.equals(handling)
                 ? "Leave untranslated (no Events)"
                 : "Translate again";
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                verb + ": " + signatures.size() + " kind(s) of event in feed '" + feed + "'", details,
-                stringArg(call, CONFIRMATION_ID_ARG)));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                verb + ": " + signatures.size() + " kind(s) of event in feed '" + feed + "'", details));
         SurveyDoc.setHandling(state, signatures, handling, reason.strip(), SurveyDoc.at(Instant.now()));
         surveyDocuments.write(context.session(), record.get(), SurveyDoc.render(state));
         final List<Map<String, Object>> left = new ArrayList<>();

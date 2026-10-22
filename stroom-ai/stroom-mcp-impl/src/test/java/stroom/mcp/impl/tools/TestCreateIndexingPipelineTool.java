@@ -287,19 +287,6 @@ class TestCreateIndexingPipelineTool {
     }
 
     @Test
-    void aConfirmationRoundIsReturnedAsItIs() {
-        template("elasticsearch", List.of(slot("xsltFilter", "XSLTFilter", "xslt"),
-                slot("elasticIndexingFilter", "ElasticIndexingFilter", "indexName")), List.of());
-        Mockito.when(pipelines.fromTemplate(any(), any(), any())).thenReturn(Map.of("status", "needs_confirmation",
-                "confirmation_id", "abc"));
-
-        final Map<String, Object> asked = json(call("\"index_name\": \"acme-v1\", \"confirmation_id\": \"old\""));
-
-        assertThat(asked).isEqualTo(Map.of("status", "needs_confirmation", "confirmation_id", "abc"));
-        assertThat(lastRequest().confirmationId()).isEqualTo("old");
-    }
-
-    @Test
     void anXmlDiscoveryPipelineNeedsNoEventsThoughItsTemplateLooksLikeIndexing() {
         // XMLParser, XSLT, indexing filter: the same shape as indexing Events. The plan kept with the XSLT tells them
         // apart.
@@ -365,7 +352,7 @@ class TestCreateIndexingPipelineTool {
         assertThat(tool.definition().parameters().required()).containsExactly("build", "name", "template_uuid",
                 "xslt_uuid");
         assertThat(tool.definition().parameters().properties()).containsOnlyKeys("build", "name", "template_uuid",
-                "xslt_uuid", "index_uuid", "index_name", "cluster_uuid", "events_stream_ids", "confirmation_id");
+                "xslt_uuid", "index_uuid", "index_name", "cluster_uuid", "events_stream_ids");
     }
 
     @Test
@@ -396,21 +383,23 @@ class TestCreateIndexingPipelineTool {
         Mockito.when(world.feeds.streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).typeName("Events").build());
         final String arguments = "{\"build\": \"acme-v1\", \"name\": \"ACME-INDEX - Indexing\", \"template_uuid\": \""
                                  + PipelineWorld.TEMPLATE_UUID + "\", \"xslt_uuid\": \"x-1\", \"index_uuid\": \"i-1\", "
-                                 + "\"events_stream_ids\": [7]";
-        final ToolCallContext context = PortedToolCalls.context();
+                                 + "\"events_stream_ids\": [7]}";
 
-        final Map<String, Object> asked = PipelineWorld.json(made.execute(PortedToolCalls.call(
-                CreateIndexingPipelineTool.NAME, arguments + "}"), context));
+        // Without a form the user can't confirm it: nothing is made.
+        final ToolResult refused = made.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, arguments),
+                PortedToolCalls.context());
 
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Create pipeline 'ACME-INDEX - Indexing' from template "
-                                                   + "'Indexing'");
+        assertThat(refused.text()).startsWith("Not done: Create pipeline 'ACME-INDEX - Indexing' from template "
+                                              + "'Indexing'.");
         assertThat(world.pipelineNamed("ACME-INDEX - Indexing")).isNull();
         assertThat(have).isEmpty();
 
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
         final Map<String, Object> result = PipelineWorld.json(made.execute(PortedToolCalls.call(
-                CreateIndexingPipelineTool.NAME, arguments + ", \"confirmation_id\": \"" + asked.get("confirmation_id")
-                                                 + "\"}"), context));
+                CreateIndexingPipelineTool.NAME, arguments), user.context()));
+
+        assertThat(user.shown()).singleElement().asString()
+                .startsWith("Create pipeline 'ACME-INDEX - Indexing' from template 'Indexing'");
 
         final PipelineDoc doc = world.pipelineNamed("ACME-INDEX - Indexing");
         assertThat(PipelineDocs.addedProperties(doc)).containsExactly(

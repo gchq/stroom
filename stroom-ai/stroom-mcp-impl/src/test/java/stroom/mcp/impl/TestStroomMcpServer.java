@@ -38,6 +38,7 @@ import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
 import stroom.config.common.UriFactory;
+import stroom.mcp.impl.tools.FormsRequired;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
@@ -140,6 +141,7 @@ class TestStroomMcpServer {
                 tool("read_thing", AiToolCategory.CORE, true, false, false),
                 tool("write_thing", AiToolCategory.CORE, false, false, false),
                 confirming(tool("confirmed_write", AiToolCategory.CORE, false, false, false)),
+                dryRunning(tool("dry_write", AiToolCategory.CORE, false, false, false)),
                 tool("chat_thing", AiToolCategory.CORE, true, true, false),
                 tool("search_thing", AiToolCategory.SEARCH, true, false, true),
                 tool("search_write", AiToolCategory.SEARCH, false, false, false),
@@ -159,7 +161,7 @@ class TestStroomMcpServer {
 
         final McpForms forms = new McpForms(AiConfig::new);
         final McpTools mcpTools = new McpTools(() -> builtInTools, () -> policies,
-                new McpApprovals(forms, AiConfig::new), forms, workspaces, () -> chatWorkspace,
+                new McpApprovals(forms), forms, workspaces, () -> chatWorkspace,
                 () -> runManager, () -> auditLog, () -> uriFactory, new ToolCallGuard());
         // Notifications are sent at once, on the thread given them, unless held.
         final Executor notifier = task -> {
@@ -205,15 +207,17 @@ class TestStroomMcpServer {
     void theToolsListedAreThoseTheUsersPoliciesGrant() {
         try (final McpSyncClient client = client(false, null)) {
             // Core is read and write, Search read-only, Administration not granted, and the chat's own tool is
-            // never offered. A client without forms is offered approve_call, as it is offered a tool that writes.
+            // never offered. A client without forms is offered the tools that write too (their calls that write
+            // are refused, saying why), and no tool to approve a call with an id: there are no approval ids.
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing",
-                            "slow_thing", "asking_search", "approve_call");
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "dry_write",
+                            "search_thing", "slow_thing", "asking_search")
+                    .doesNotContain("approve_call");
         }
         try (final McpSyncClient client = client(true, request -> new ElicitResult(Action.ACCEPT, Map.of()))) {
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "search_thing",
-                            "slow_thing", "asking_search");
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "dry_write",
+                            "search_thing", "slow_thing", "asking_search");
             final Tool write = client.listTools().tools().stream()
                     .filter(tool -> tool.name().equals("write_thing"))
                     .findFirst()
@@ -242,31 +246,56 @@ class TestStroomMcpServer {
     }
 
     @Test
-    void aCallThatChangesSomethingWaitsForTheUsersApprovalId() {
+    void aCallThatChangesSomethingIsRefusedForAClientThatCantShowForms() {
         try (final McpSyncClient client = client(false, null)) {
-            final String reply = text(client.callTool(new CallToolRequest("write_thing", Map.of("q", "1"))));
+            final CallToolResult reply = client.callTool(new CallToolRequest("write_thing", Map.of("q", "1")));
 
-            assertThat(reply).startsWith("Not run yet: this call changes something in Stroom");
+            assertThat(text(reply)).isEqualTo(FormsRequired.noForms("write_thing"))
+                    .contains("needs the user's agreement in a form", "MCP elicitation", "nothing was changed",
+                            "The read-only tools still work")
+                    .doesNotContain("approval_id", "approve_call");
             assertThat(ran).isEmpty();
-            final String approvalId = reply.replaceAll(".*approval_id='([^']+)'.*", "$1");
+            Mockito.verify(auditLog).toolCall(Mockito.any(), Mockito.eq("write_thing"), Mockito.eq("{\"q\":\"1\"}"),
+                    Mockito.eq("Refused: the client can't show forms"), Mockito.eq(false), Mockito.eq(false));
+            // There is no tool to approve a call with: approve_call is gone.
+            assertThat(text(client.callTool(new CallToolRequest("approve_call", Map.of("approval_id", "x")))))
+                    .startsWith("Error: there is no tool 'approve_call'");
+            assertThat(ran).isEmpty();
+        }
+    }
 
-            final CallToolResult approved = client.callTool(new CallToolRequest("approve_call",
-                    Map.of("approval_id", approvalId)));
-            assertThat(text(approved)).isEqualTo("ran write_thing {\"q\":\"1\"}");
-            // An approval id can be used once.
-            final CallToolResult again = client.callTool(new CallToolRequest("approve_call",
-                    Map.of("approval_id", approvalId)));
-            assertThat(again.isError()).isTrue();
-            assertThat(ran).containsExactly("write_thing");
+    @Test
+    void aToolThatConfirmsEachChangeItselfIsRefusedTooForAClientThatCantShowForms() {
+        try (final McpSyncClient client = client(false, null)) {
+            // It would ask the user in its own form, which this client can't show.
+            assertThat(text(client.callTool(new CallToolRequest("confirmed_write", Map.of()))))
+                    .isEqualTo(FormsRequired.noForms("confirmed_write"));
+            assertThat(ran).isEmpty();
+        }
+    }
+
+    @Test
+    void aCallThatOnlyReadsOfAToolThatWritesIsMadeForAClientThatCantShowForms() {
+        try (final McpSyncClient client = client(false, null)) {
+            assertThat(text(client.callTool(new CallToolRequest("dry_write", Map.of("q", "dry")))))
+                    .isEqualTo("ran dry_write {\"q\":\"dry\"}");
+            assertThat(text(client.callTool(new CallToolRequest("dry_write", Map.of("q", "real")))))
+                    .isEqualTo(FormsRequired.noForms("dry_write"));
+            assertThat(ran).containsExactly("dry_write");
         }
     }
 
     @Test
     void aToolThatConfirmsEachChangeItselfIsNotApprovedAsAWholeFirst() {
-        try (final McpSyncClient client = client(false, null)) {
-            // It asks the user in its own form (or gives its own confirmation id), so the user is asked once.
+        final List<String> asked = Collections.synchronizedList(new ArrayList<>());
+        try (final McpSyncClient client = client(true, request -> {
+            asked.add(request.message());
+            return new ElicitResult(Action.ACCEPT, Map.of());
+        })) {
+            // It asks the user in its own form, so the user is asked once.
             assertThat(text(client.callTool(new CallToolRequest("confirmed_write", Map.of()))))
                     .isEqualTo("ran confirmed_write {}");
+            assertThat(asked).isEmpty();
             assertThat(ran).containsExactly("confirmed_write");
         }
     }
@@ -399,7 +428,7 @@ class TestStroomMcpServer {
     @Test
     void aUsersOldestIdleSessionIsEndedToMakeRoom() {
         aiConfig = Mockito.mock(AiConfig.class);
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null,
                 null, 2));
         final TransportSessions transportSessions = new TransportSessions(server.transport());
         try (final McpSyncClient first = client(false, null)) {
@@ -424,7 +453,7 @@ class TestStroomMcpServer {
     @Test
     void aNewSessionIsRefusedWhenEachOfTheUsersSessionsHasACallRunning() throws Exception {
         aiConfig = Mockito.mock(AiConfig.class);
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, null,
                 null, 1));
         final CountDownLatch started = new CountDownLatch(1);
         final CountDownLatch finish = new CountDownLatch(1);
@@ -592,7 +621,8 @@ class TestStroomMcpServer {
                 }
                 return !told.isEmpty();
             });
-            assertThat(told.getLast()).extracting(Tool::name).containsExactly("read_thing", "slow_thing");
+            assertThat(told.getLast()).extracting(Tool::name).containsExactly("read_thing", "dry_write",
+                    "slow_thing");
         }
     }
 
@@ -801,6 +831,41 @@ class TestStroomMcpServer {
 
             @Override
             public boolean confirmsItself() {
+                return true;
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                return tool.execute(call, context);
+            }
+        };
+    }
+
+    // A tool that writes, whose calls with q=dry only read.
+    private static StroomTool dryRunning(final StroomTool tool) {
+        return new StroomTool() {
+            @Override
+            public ToolDefinition definition() {
+                return tool.definition();
+            }
+
+            @Override
+            public AiToolCategory category() {
+                return tool.category();
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return false;
+            }
+
+            @Override
+            public boolean isReadOnly(final ToolCall call) {
+                return call.arguments().contains("\"dry\"");
+            }
+
+            @Override
+            public boolean hasReadOnlyCalls() {
                 return true;
             }
 

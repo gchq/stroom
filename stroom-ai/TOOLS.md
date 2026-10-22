@@ -86,7 +86,8 @@ runs. `read_document` and `xslt_lookups` also read the attached tab's unsaved co
 
 The MCP server calls Stroom's REST API with the user's forwarded token, so Stroom checks the user's permissions; it
 checks no app permissions itself. Its writes are limited to a workspace folder (`WriteGuard`) and need a
-confirmation or approval (an elicitation form, or a pending id the user confirms). The built-in tools call Stroom's
+confirmation or approval (an elicitation form, or a pending id the user confirms; Stroom's port asks only in a
+form, see `Consent` below). The built-in tools call Stroom's
 services directly as the user, and those listed here only read.
 
 An MCP tool merged into a built-in one is no longer a tool, so the hints, notes, refusals, `next` calls, guides and
@@ -199,7 +200,8 @@ MCP tool into the built-in one (its name gone); the others are still proposals.
   differently: MCP puts the verb first (`find_*`, `describe_*`, `read_*`), most built-ins the noun first
   (`document_info`, `stream_meta`, `processor_tasks`).
 * Consent: map MCP's `confirmation_id`/`approval_id`/`reviewed` onto one consent model with the chat's approval
-  forms (the roadmap's "one consent model").
+  forms (the roadmap's "one consent model"). Done in part: the ported tools ask only in a form (the chat's, or an
+  MCP client's), and take no `confirmation_id` or `approval_id`.
 
 ## The validation core (`stroom.ai.impl.tools.validation`)
 
@@ -545,14 +547,14 @@ that builds something stands on (the MCP server's `security/guard.py`, `security
   records a clean step (`STEPPED`), a passed verification (`VERIFIED`) or Events that passed check_events
   (`VALIDATED`) for the pipeline's code; `steppedClean`, `verified` and `validated` say whether its saved code has.
   `update(build, ref, change)` changes a document's entry (`copy_of`, `version_of`, `stepped_streams`, ...).
-* **`Consent`**: before a write, `consent.require(call, context, Request.confirmation(action, summary, details,
-  token))` (or `Request.approval(...)`, with `.withEditable(key, title, proposed)` for a value the user may correct,
-  and `.keepingId()` when a later gate in the same call may still stop it). Empty means the user agreed: go on, and
-  read any correction with `consent.edited(context, key, proposed)`. Otherwise return the round it gives (a
-  `needs_confirmation` or `needs_approval` result) as the tool's result. A refusal (declined, or a form closed
-  unanswered) is a `ToolRefusal`. Where the session can ask, the user answers a form: in the chat the run stops
-  while it waits and the same call is made again with the answer, so a tool must be safe to re-run up to its
-  question. `consent.choose(...)` asks the user to pick one of some options.
+* **`Consent`**: before a write, `consent.require(call, context, Request.confirmation(action, summary, details))`
+  (or `Request.approval(...)`, with `.withEditable(key, title, proposed)` for a value the user may correct). It
+  returns once the user has agreed in a form: go on, and read any correction with `consent.edited(context, key,
+  proposed)`. A refusal (declined, a form closed unanswered, or a session that can't show a form now: an MCP
+  client without elicitation, or a chat the user is away from, see `FormsRequired`) is a `ToolRefusal`, and
+  nothing is to be done. In the chat the run stops while the form waits and the same call is made again with the
+  answer, so a tool must be safe to re-run up to its question. `consent.choose(...)` asks the user to pick one of
+  some options.
 * **`BuildPlan`**: end every write tool's result with `plan.withNext(context, build, result)`, or
   `plan.nextFor(context, ref, result)` for a document whose build the call didn't name: it adds `next` (the plan's
   next step and the one call that does it), `done: false` until promotion, and what the user changed in the call's
@@ -566,10 +568,15 @@ Where the port differs from the MCP server:
 * **The guard works in-process**: Stroom's explorer tree is read directly, so the MCP server's waits and second
   looks for a folder or document its REST reads didn't show yet (and its search of the explorer index as a fallback)
   are not needed, and not ported. Only one folder of a name is made at a time on a node, as in the MCP server.
-* **Consent ids** are not the MCP server's signed request-state tokens: an id is random, kept by this node for the
-  session it was given in, bound to the action, the exact details and the user, single use, for an hour. Over
-  `/mcp`, a session's calls go to one node (see the affinity notes). The MCP server's renewal of an answer when the
-  user's access token ran out during a form (`needs_retry`) is not ported.
+* **No consent ids**: the MCP server answered a session that couldn't show a form with a `needs_confirmation` or
+  `needs_approval` round holding a `confirmation_id` or `approval_id`, which the agent passed back once the user
+  agreed. Stroom's tools never do: a model holding such an id could approve its own call. Without a form the call is
+  refused instead (`FormsRequired`), and over `/mcp` a call that changes something is refused before it runs for a
+  client without elicitation. The tools take no `confirmation_id`, `approval_id`, `source_confirmation_id` or
+  `template_confirmation_id`. write_documentation for an existing index, made again with the field descriptions
+  after a `needs_descriptions` round, asks the user again (the Python tool reissued a confirmation id to skip it).
+  The MCP server's renewal of an answer when the user's access token ran out during a form (`needs_retry`) is not
+  ported.
 * **The remembered build** (`remember_build`) is kept per session (a chat, or an MCP session) in this node's memory,
   rather than per user: a call it can't help is told to name the build.
 * **What the build tools share** is injected directly: whether an XSLT is still what its mapping generates
@@ -677,7 +684,7 @@ Where they differ from the Python server:
   and one outside 1 to 100 is refused, as pydantic refused it. `created_after` without an offset is taken as UTC
   (Python's naive time was the server's local time).
 * **Consent actions** are the MCP server's (`index_events_from_other_pipeline` for the source confirmation, the tool's
-  own name for the template confirmation), so a round's hint names that action, as the Python one did.
+  own name for the template confirmation), as the audit log records them; a refusal names the tool called.
 
 ## The feed tools: `create_feed`, `upload_sample` and `record_source_notes`
 
@@ -1134,7 +1141,8 @@ Ported as a tool of its own (`CreateIndexingPipelineTool`, `stroom-mcp-impl`, ca
 `IndexFields` (`indexFields`, and `addLuceneFields` for `set_index_fields`), `KeptMapping.readMapping`,
 `IndexingHelpers.writesToIndex` (`_writes`) and create_pipeline's own path: `CreatePipelineTool.fromTemplate`, which
 `create_pipeline` now calls too, takes the arguments as a `CreatePipelineTool.FromTemplate` (the Python's
-`create_pipeline(ctx, name, template_uuid, props, build=, confirmation_id=, accept_parser_mismatch=True)`).
+`create_pipeline(ctx, name, template_uuid, props, build=, confirmation_id=, accept_parser_mismatch=True)`, without
+its `confirmation_id`: see `Consent`).
 
 | Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
 |------|-----------|---------------------|-----------------|----------|

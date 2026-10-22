@@ -27,7 +27,6 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -66,7 +65,7 @@ class TestCheckEventsTool {
     private final EventStreams eventStreams = Mockito.mock(EventStreams.class);
     private final StreamReader streamReader = Mockito.mock(StreamReader.class);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
-            new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+            new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
     private final CheckEventsTool tool = new CheckEventsTool(eventChecks, eventStreams, streamReader,
             world.documentAccess, world.records(), plan);
 

@@ -229,14 +229,19 @@ class TestBuildTranslationXsltTool {
                                   + "`status` matches**\n\n- 2 of the 4 sample records\n- What they hold:\n  - ")
                 .contains("  - action: status\n")
                 .endsWith("- Reason given: status lines carry no activity\n");
-        final Map<String, Object> asked = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
+        // Without a form the user can't agree: nothing is saved, and no id is given to pass back.
+        final Map<String, Object> refused = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
                 "sample", SAMPLE, "reviewed", reviewId));
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Translate the records shown in the chat as Unknown events");
-        assertThat(map(asked.get("details"))).containsEntry("rule 'status'", "2 of 4 sample records")
-                .containsKey("as shown in the chat");
+        assertThat(refused.get("error")).asString()
+                .startsWith("Not done: Translate the records shown in the chat as Unknown events.")
+                .doesNotContain("confirmation_id");
+        world.forms = true;
+        world.answers.put("Translate the records", "yes");
         final Map<String, Object> done = world.call(tool, Map.of("mapping", kept, "build", "acme-v1", "name", "N",
-                "sample", SAMPLE, "reviewed", reviewId, "confirmation_id", asked.get("confirmation_id")));
+                "sample", SAMPLE, "reviewed", reviewId));
+        assertThat(world.shown).singleElement().asString()
+                .startsWith("Translate the records shown in the chat as Unknown events")
+                .contains("- rule 'status': 2 of 4 sample records", "- as shown in the chat: ");
         assertThat(done).as(String.valueOf(done)).containsKey("saved");
         final String uuid = String.valueOf(map(done.get("saved")).get("uuid"));
         assertThat(world.xslt(uuid)).isNotNull();

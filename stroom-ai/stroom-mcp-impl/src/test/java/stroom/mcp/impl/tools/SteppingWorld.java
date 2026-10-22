@@ -93,7 +93,7 @@ final class SteppingWorld {
     final BuildRecords buildRecords = Mockito.mock(BuildRecords.class);
     final BuildPlan plan = Mockito.mock(BuildPlan.class);
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
-    final Consent consent = new Consent(securityContext, () -> auditLog);
+    final Consent consent = new Consent(() -> auditLog);
     final LookupAgreements lookups = new LookupAgreements(consent);
     final List<String> said = new ArrayList<>();
     /// Each walk opened: the stream, and the code it was opened with.

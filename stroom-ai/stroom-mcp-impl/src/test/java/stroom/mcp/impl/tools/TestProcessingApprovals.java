@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.pipeline.shared.PipelineDoc;
 
 import org.junit.jupiter.api.Test;
@@ -48,16 +49,20 @@ class TestProcessingApprovals {
         final ToolCallContext context = ProcessingWorld.context();
 
         assertThatThrownBy(() -> w.approvals.committed(call, context, doc, destination,
-                CreateProcessorFilterTool.NAME, false, null))
+                CreateProcessorFilterTool.NAME, false))
                 .hasMessageContaining("template_committed_by_user=true");
-        final ProcessingApprovals.Committed asked = w.approvals.committed(call, context, doc, destination,
-                CreateProcessorFilterTool.NAME, true, null);
-        assertThat(asked.round().get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.round().get("details").toString()).contains("not checked");
+        // Without a form, the user can't be asked: nothing is kept, and no id is given to pass back.
+        assertThatThrownBy(() -> w.approvals.committed(call, context, doc, destination,
+                CreateProcessorFilterTool.NAME, true))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageStartingWith("Not done: Index into Elasticsearch index 'ecs-acme-v1' with your own index "
+                                        + "template")
+                .hasMessageNotContaining("confirmation_id");
         assertThat(w.pipelineDoc("p1").getDescription()).isEqualTo("Indexes Acme.");
 
-        final ProcessingApprovals.Committed said = w.approvals.committed(call, context, doc, destination,
-                CreateProcessorFilterTool.NAME, true, String.valueOf(asked.round().get("confirmation_id")));
+        final ToolCallContext agreeing = PortedToolCalls.answering(Map.of("value", true));
+        final ProcessingApprovals.Committed said = w.approvals.committed(call, agreeing, doc, destination,
+                CreateProcessorFilterTool.NAME, true);
 
         final Map<String, Object> kept = KeptMapping.readAgreedTemplate(w.pipelineDoc("p1").getDescription())
                 .orElseThrow();
@@ -68,6 +73,6 @@ class TestProcessingApprovals {
         assertThat(w.pipelineDoc("p1").getDescription()).startsWith("Indexes Acme.");
         // Kept: the approval that follows, and later calls, aren't stopped again.
         assertThat(w.approvals.committed(call, context, said.pipeline(), destination, ReprocessStreamsTool.NAME,
-                false, null).text()).contains("the user's own");
+                false).text()).contains("the user's own");
     }
 }

@@ -23,7 +23,6 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
-import stroom.security.api.SecurityContext;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.Test;
@@ -48,8 +47,7 @@ class TestLookupAgreements {
     private static final String BOTH = SHEET.replace("{BODY}", "<xsl:value-of select=\"stroom:host-name(.), "
                                                                + "stroom:host-address(.)\"/>");
 
-    private final LookupAgreements lookups = new LookupAgreements(new Consent(Mockito.mock(SecurityContext.class),
-            () -> Mockito.mock(AiAuditLog.class)));
+    private final LookupAgreements lookups = new LookupAgreements(new Consent(() -> Mockito.mock(AiAuditLog.class)));
     private final List<String> asked = new ArrayList<>();
     private boolean agree = true;
 

@@ -35,7 +35,6 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
 
     static final StroomDuration DEFAULT_FORM_TIMEOUT = StroomDuration.ofMinutes(10);
     static final int DEFAULT_MAX_FORMS_PER_NODE = 50;
-    static final StroomDuration DEFAULT_APPROVAL_TIMEOUT = StroomDuration.ofMinutes(10);
     static final StroomDuration DEFAULT_KEEP_ALIVE_INTERVAL = StroomDuration.ofSeconds(20);
     static final StroomDuration DEFAULT_SESSION_RETENTION = StroomDuration.ofDays(1);
     static final int DEFAULT_MAX_SESSIONS_PER_USER = 20;
@@ -43,7 +42,6 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     private final boolean enabled;
     private final StroomDuration formTimeout;
     private final int maxFormsPerNode;
-    private final StroomDuration approvalTimeout;
     private final StroomDuration keepAliveInterval;
     private final StroomDuration sessionRetention;
     private final int maxSessionsPerUser;
@@ -52,7 +50,6 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
         enabled = true;
         formTimeout = DEFAULT_FORM_TIMEOUT;
         maxFormsPerNode = DEFAULT_MAX_FORMS_PER_NODE;
-        approvalTimeout = DEFAULT_APPROVAL_TIMEOUT;
         keepAliveInterval = DEFAULT_KEEP_ALIVE_INTERVAL;
         sessionRetention = DEFAULT_SESSION_RETENTION;
         maxSessionsPerUser = DEFAULT_MAX_SESSIONS_PER_USER;
@@ -62,14 +59,12 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     public McpEndpointConfig(@JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("formTimeout") final StroomDuration formTimeout,
                              @JsonProperty("maxFormsPerNode") final Integer maxFormsPerNode,
-                             @JsonProperty("approvalTimeout") final StroomDuration approvalTimeout,
                              @JsonProperty("keepAliveInterval") final StroomDuration keepAliveInterval,
                              @JsonProperty("sessionRetention") final StroomDuration sessionRetention,
                              @JsonProperty("maxSessionsPerUser") final Integer maxSessionsPerUser) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.formTimeout = Objects.requireNonNullElse(formTimeout, DEFAULT_FORM_TIMEOUT);
         this.maxFormsPerNode = Math.max(0, Objects.requireNonNullElse(maxFormsPerNode, DEFAULT_MAX_FORMS_PER_NODE));
-        this.approvalTimeout = Objects.requireNonNullElse(approvalTimeout, DEFAULT_APPROVAL_TIMEOUT);
         this.keepAliveInterval = Objects.requireNonNullElse(keepAliveInterval, DEFAULT_KEEP_ALIVE_INTERVAL);
         this.sessionRetention = Objects.requireNonNullElse(sessionRetention, DEFAULT_SESSION_RETENTION);
         this.maxSessionsPerUser = Math.max(1, Objects.requireNonNullElse(maxSessionsPerUser,
@@ -101,15 +96,6 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
     @JsonProperty("maxFormsPerNode")
     public int getMaxFormsPerNode() {
         return maxFormsPerNode;
-    }
-
-    /// @return How long an approval id given to an MCP client that can't show forms may be used.
-    @JsonPropertyDescription("How long an approval id may be used: one is given to an MCP client that can't show "
-                             + "forms, for a call that changes something, for the client to confirm with its user "
-                             + "and pass back.")
-    @JsonProperty("approvalTimeout")
-    public StroomDuration getApprovalTimeout() {
-        return approvalTimeout;
     }
 
     /// @return How often an idle MCP session's open stream is sent a ping. Read once, when the endpoint starts.
@@ -147,7 +133,6 @@ public class McpEndpointConfig extends AbstractConfig implements IsStroomConfig 
                "enabled=" + enabled +
                ", formTimeout=" + formTimeout +
                ", maxFormsPerNode=" + maxFormsPerNode +
-               ", approvalTimeout=" + approvalTimeout +
                ", keepAliveInterval=" + keepAliveInterval +
                ", sessionRetention=" + sessionRetention +
                ", maxSessionsPerUser=" + maxSessionsPerUser +

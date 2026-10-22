@@ -108,7 +108,7 @@ class IndexDocumentation {
     /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
     /// @param request What to document.
-    /// @return The result, or the round to return (`needs_confirmation`, `needs_descriptions`).
+    /// @return The result, or the round to return (`needs_descriptions`).
     /// @throws ToolRefusal if it can't be documented, saying why.
     Map<String, Object> documentIndex(final ToolCall call, final ToolCallContext context, final Request request) {
         final DocRef ref = indexDoc(request.indexUuid());
@@ -140,14 +140,10 @@ class IndexDocumentation {
         asked.put("promoted (once you agree)", beside != null
                 ? "written back into the existing Documentation '" + ref.getName() + "' beside it, after a backup"
                 : "beside the index doc, in " + folder + ", unless you choose another folder");
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
+        consent.require(call, context, Consent.Request.confirmation(
                 WriteDocumentationTool.NAME, "Document the existing " + (ElasticIndexDoc.TYPE.equals(ref.getType())
                         ? "Elastic Index"
-                        : "Lucene Index") + " doc '" + ref.getName() + "' (" + folder + ")", asked,
-                request.confirmationId()));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+                        : "Lucene Index") + " doc '" + ref.getName() + "' (" + folder + ")", asked));
         Map<String, Object> survey = indexSurveys.surveyIndex(context, ref, 100, true);
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
         final Map<String, List<String>> expected = new LinkedHashMap<>();
@@ -195,9 +191,9 @@ class IndexDocumentation {
         // Not in the index: as the user chose.
         String section = IndexFieldDocs.existingIndexMarkdown(survey, planned, schema, layout, described);
         if (!described.wanted().isEmpty()) {
-            // The user agreed in this call: the call repeated with the descriptions isn't theirs to agree again.
-            return BuildDocumentation.needsDescriptions(described, Map.of("confirmation_id", consent.reissue(context,
-                    Consent.Kind.CONFIRMATION, WriteDocumentationTool.NAME, asked)));
+            // Nothing is written yet: the call made again with the descriptions asks the user again, as no id that
+            // would let it skip the form is given to the agent.
+            return BuildDocumentation.needsDescriptions(described);
         }
         if (!described.given().isEmpty()) {
             section = section.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
@@ -328,7 +324,6 @@ class IndexDocumentation {
     /// @param indexUuid             The Elastic Index or Lucene Index doc.
     /// @param body                  The documentation, without its version control.
     /// @param change                What changed, for its version control.
-    /// @param confirmationId        From an earlier needs_confirmation reply, or null.
     /// @param layout                The Field mapping layout asked for, or null.
     /// @param documentMissingFields True to document fields a feeding pipeline writes that the index lacks.
     /// @param fieldDescriptions     The field descriptions given.
@@ -337,7 +332,6 @@ class IndexDocumentation {
                    String indexUuid,
                    String body,
                    String change,
-                   String confirmationId,
                    String layout,
                    boolean documentMissingFields,
                    Map<String, String> fieldDescriptions,
