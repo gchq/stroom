@@ -56,6 +56,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                                         final PagerView view,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
         super(eventBus, view);
+        own(statisticsFieldEditPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Statistics Fields");

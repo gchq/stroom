@@ -171,6 +171,10 @@ public class QueryResultTablePresenter
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
+        own(downloadPresenter);
+        own(formatPresenter);
+        own(columnFilterPresenter);
+        own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;

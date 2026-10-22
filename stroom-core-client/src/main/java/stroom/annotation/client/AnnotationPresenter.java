@@ -67,6 +67,10 @@ public class AnnotationPresenter
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(annotationEditPresenter);
+        own(linkTo);
+        own(linkFrom);
+        own(linkedEventPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationEditPresenter = annotationEditPresenter;
         annotationEditPresenter.setParent(this);

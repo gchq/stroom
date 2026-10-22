@@ -86,6 +86,8 @@ public class RuleSetSettingsPresenter
                                     final Provider<RulePresenter> editRulePresenterProvider,
                                     final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(listPresenter);
+        own(expressionPresenter);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;

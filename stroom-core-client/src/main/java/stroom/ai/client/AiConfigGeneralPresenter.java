@@ -45,6 +45,7 @@ public class AiConfigGeneralPresenter
                                     final AiConfigGeneralView view,
                                     final DocSelectionBoxPresenter docSelectionBoxPresenter) {
         super(eventBus, view);
+        own(docSelectionBoxPresenter);
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
 
         view.setUiHandlers(this);

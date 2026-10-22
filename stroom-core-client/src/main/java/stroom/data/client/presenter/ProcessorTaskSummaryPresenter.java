@@ -74,6 +74,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                                          final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter) {
         super(eventBus, view);
+        own(tooltipPresenter);
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
 

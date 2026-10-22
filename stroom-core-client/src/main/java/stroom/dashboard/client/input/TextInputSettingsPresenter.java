@@ -28,6 +28,7 @@ public class TextInputSettingsPresenter extends SettingsPresenter {
     public TextInputSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                       final BasicTextInputSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         addTab("Basic", basicSettingsPresenter);

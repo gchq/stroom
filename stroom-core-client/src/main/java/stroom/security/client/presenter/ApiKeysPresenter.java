@@ -67,6 +67,7 @@ public class ApiKeysPresenter
                             final UiConfigCache uiConfigCache,
                             final Provider<EditApiKeyPresenter> editApiKeyPresenterProvider) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
         this.editApiKeyPresenterProvider = editApiKeyPresenterProvider;

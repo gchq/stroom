@@ -48,6 +48,7 @@ public class CredentialsManagerDialogPresenter
                                              final MarkdownConverter markdownConverter,
                                              final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
+        own(credentialsListPresenter);
         this.markdownConverter = markdownConverter;
         credentialsListPresenter.setDefaultSelection(false);
         view.setCredentialsList(credentialsListPresenter);

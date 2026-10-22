@@ -74,6 +74,7 @@ public class FsVolumeGroupEditPresenter
                                       final Provider<FsVolumeEditPresenter> editProvider,
                                       final RestFactory restFactory) {
         super(eventBus, view);
+        own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;

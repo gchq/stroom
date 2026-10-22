@@ -46,6 +46,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
                          final TextView view,
                          final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        own(editorPresenter);
         this.editorPresenter = editorPresenter;
 
         editorPresenter.getIndicatorsOption().setAvailable(false);

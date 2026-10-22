@@ -67,6 +67,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                               final FieldEditPresenter fieldEditPresenter,
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(fieldEditPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Fields");

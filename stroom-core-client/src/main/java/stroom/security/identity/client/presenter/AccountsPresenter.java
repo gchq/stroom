@@ -40,6 +40,7 @@ public class AccountsPresenter
                              final AccountsListPresenter listPresenter,
                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         view.setList(listPresenter.getWidget());
     }

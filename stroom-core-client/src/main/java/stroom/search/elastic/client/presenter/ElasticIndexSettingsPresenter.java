@@ -63,6 +63,10 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
             final RestFactory restFactory,
             final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        own(clusterPresenter);
+        own(vectorGenerationModelPresenter);
+        own(rerankModelPresenter);
+        own(pipelinePresenter);
 
         this.clusterPresenter = clusterPresenter;
         this.vectorGenerationModelPresenter = vectorGenerationModelPresenter;

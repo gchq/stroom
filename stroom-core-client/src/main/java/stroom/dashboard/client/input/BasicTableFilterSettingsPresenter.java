@@ -53,6 +53,7 @@ public class BasicTableFilterSettingsPresenter
                                              final BasicTableFilterSettingsView view,
                                              final ColumnSelectionPresenter columnSelectionPresenter) {
         super(eventBus, view);
+        own(columnSelectionPresenter);
         this.columnSelectionPresenter = columnSelectionPresenter;
         view.setColumnList(columnSelectionPresenter.getView());
         view.setUiHandlers(this);

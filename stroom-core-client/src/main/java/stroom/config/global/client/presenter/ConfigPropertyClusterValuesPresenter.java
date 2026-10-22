@@ -46,6 +46,7 @@ public class ConfigPropertyClusterValuesPresenter
                                                 final ConfigPropertyClusterValuesView view,
                                                 final ConfigPropertyClusterValuesListPresenter listPresenter) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         view.setList(listPresenter.getWidget());
         view.setUiHandlers(this);

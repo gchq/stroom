@@ -147,6 +147,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                                      final FloorMapTimelineSettingsPresenter settingsPresenter,
                                      final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(settingsPresenter);
         this.settingsPresenter = settingsPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
 

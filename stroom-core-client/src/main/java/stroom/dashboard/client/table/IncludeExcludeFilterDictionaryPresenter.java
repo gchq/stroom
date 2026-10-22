@@ -51,6 +51,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
                                                    final DocRefListPresenter docRefListPresenter,
                                                    final Provider<DocSelectionPopup> dictionarySelection) {
         super(eventBus, view);
+        own(docRefListPresenter);
         this.docRefListPresenter = docRefListPresenter;
         this.dictionarySelection = dictionarySelection;
 

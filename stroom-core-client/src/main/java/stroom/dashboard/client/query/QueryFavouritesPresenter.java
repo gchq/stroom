@@ -66,6 +66,8 @@ public class QueryFavouritesPresenter
                                     final NamePresenter namePresenter,
                                     final RestFactory restFactory) {
         super(eventBus, view);
+        own(expressionPresenter);
+        own(namePresenter);
         this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;
         this.namePresenter = namePresenter;

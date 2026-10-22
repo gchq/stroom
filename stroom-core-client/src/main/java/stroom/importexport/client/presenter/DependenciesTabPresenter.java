@@ -51,6 +51,7 @@ public class DependenciesTabPresenter
                                     final UiConfigCache uiConfigCache,
                                     final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(dependenciesPresenter);
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
         setInSlot(LIST, dependenciesPresenter);

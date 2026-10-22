@@ -41,6 +41,7 @@ public class BrowseAnnotationPresenter
                                      final FindView view,
                                      final FindAnnotationListPresenter findResultListPresenter) {
         super(eventBus, view);
+        own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
         // To browse, users only need view permission.
         findResultListPresenter.setPermission(DocumentPermission.VIEW);

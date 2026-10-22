@@ -72,6 +72,7 @@ public class DataRetentionPresenter
                                   final DataRetentionPolicyPresenter retentionPolicyPresenter,
                                   final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider) {
         super(eventBus, view);
+        own(retentionPolicyPresenter);
         this.retentionPolicyPresenter = retentionPolicyPresenter;
         this.retentionPolicyPresenter.setParentPresenter(this);
         this.dataRetentionImpactPresenterProvider = dataRetentionImpactPresenterProvider;

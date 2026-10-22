@@ -75,6 +75,7 @@ public class ConstraintListPresenter
 //                                   final DateTimeFormatter dateTimeFormatter,
                                    final ConstraintEditPresenter constraintEditPresenter) {
         super(eventBus, view);
+        own(constraintEditPresenter);
         this.pagerView = view;
         this.restFactory = restFactory;
 //        this.dateTimeFormatter = dateTimeFormatter;

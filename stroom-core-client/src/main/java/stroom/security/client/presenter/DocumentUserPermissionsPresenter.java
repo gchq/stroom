@@ -67,6 +67,7 @@ public class DocumentUserPermissionsPresenter
             final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
 
         super(eventBus, view);
+        own(documentUserPermissionsListPresenter);
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.docPermissionClient = docPermissionClient;

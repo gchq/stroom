@@ -53,6 +53,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
             final ProcessorProfileClient processorProfileClient) {
 
         super(eventBus, view);
+        own(processorProfileListPresenter);
         this.processorProfileListPresenter = processorProfileListPresenter;
         this.editProvider = editProvider;
         this.processorProfileClient = processorProfileClient;

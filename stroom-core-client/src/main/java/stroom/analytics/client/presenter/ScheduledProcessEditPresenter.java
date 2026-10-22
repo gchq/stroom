@@ -83,6 +83,8 @@ public class ScheduledProcessEditPresenter
                                          final UiConfigCache uiConfigCache,
                                          final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
+        own(errorFeedPresenter);
+        own(userRefSelectionBoxPresenter);
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.uiConfigCache = uiConfigCache;

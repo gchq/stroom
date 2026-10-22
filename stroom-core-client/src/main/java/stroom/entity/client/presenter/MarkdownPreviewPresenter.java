@@ -63,6 +63,8 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
                                     final UserPreferencesManager userPreferencesManager,
                                     final MarkdownConverter markdownConverter) {
         super(eventBus, view);
+        own(editorPresenter);
+        own(iFramePresenter);
         this.codePresenter = editorPresenter;
         this.iFramePresenter = iFramePresenter;
         this.uiConfigCache = uiConfigCache;

@@ -74,6 +74,7 @@ public final class KeyBindingPreferencesPresenter
                                           final PagerView pagerView,
                                           final KeyShortcutRecorderPresenter keyShortcutRecorderPresenter) {
         super(eventBus, view);
+        own(keyShortcutRecorderPresenter);
         this.keyShortcutRecorderPresenter = keyShortcutRecorderPresenter;
         view.setUiHandlers(this);
 

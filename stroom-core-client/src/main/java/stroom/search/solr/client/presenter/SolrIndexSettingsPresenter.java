@@ -64,6 +64,8 @@ public class SolrIndexSettingsPresenter
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        own(editExpressionPresenter);
+        own(pipelinePresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;

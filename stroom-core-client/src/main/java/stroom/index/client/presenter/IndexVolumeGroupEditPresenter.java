@@ -81,6 +81,7 @@ public class IndexVolumeGroupEditPresenter
                                          final RestFactory restFactory,
                                          final NodeClient nodeClient) {
         super(eventBus, view);
+        own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;

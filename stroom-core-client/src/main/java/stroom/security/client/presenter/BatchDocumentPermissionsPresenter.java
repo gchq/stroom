@@ -75,6 +75,7 @@ public class BatchDocumentPermissionsPresenter
                                                      batchDocumentPermissionsEditPresenterProvider,
                                              final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(documentListPresenter);
         getView().setAccessibleName("Filter documents");
         this.documentListPresenter = documentListPresenter;
         // A rejected filter comes back as an empty page like any other, so surface the reason on

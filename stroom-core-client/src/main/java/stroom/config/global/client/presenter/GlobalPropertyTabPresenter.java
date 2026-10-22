@@ -59,6 +59,7 @@ public class GlobalPropertyTabPresenter
                                       final UiConfigCache uiConfigCache,
                                       final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         view.setUiHandlers(this);

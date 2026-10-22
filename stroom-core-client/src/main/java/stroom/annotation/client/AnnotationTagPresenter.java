@@ -58,6 +58,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
             final AnnotationResourceClient annotationResourceClient) {
 
         super(eventBus, view);
+        own(annotationTagListPresenter);
         this.annotationTagListPresenter = annotationTagListPresenter;
         this.createProvider = createProvider;
         this.editProvider = editProvider;

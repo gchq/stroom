@@ -155,6 +155,7 @@ public class DashboardPresenter
                               final UrlParameters urlParameters,
                               final Provider<DocSelectionPopup> dashboardSelection) {
         super(eventBus, view);
+        own(queryToolbarPresenter);
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
         this.components = components;

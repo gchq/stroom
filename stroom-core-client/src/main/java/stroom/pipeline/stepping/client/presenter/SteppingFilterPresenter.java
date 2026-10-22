@@ -82,6 +82,8 @@ public class SteppingFilterPresenter extends
                                    final XPathFilterPresenter xPathFilterProvider,
                                    final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
+        own(xPathListPresenter);
+        own(xPathFilterProvider);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
 

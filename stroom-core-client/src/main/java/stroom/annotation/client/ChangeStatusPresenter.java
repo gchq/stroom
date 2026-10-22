@@ -57,6 +57,7 @@ public class ChangeStatusPresenter
                                  final AnnotationResourceClient annotationResourceClient,
                                  final ChooserPresenter<AnnotationTag> annotationStatusPresenter) {
         super(eventBus, view);
+        own(annotationStatusPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationStatusPresenter = annotationStatusPresenter;
         this.annotationStatusPresenter.setDataSupplier((filter, consumer) -> {

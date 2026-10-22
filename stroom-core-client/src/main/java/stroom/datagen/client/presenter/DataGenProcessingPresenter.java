@@ -44,6 +44,7 @@ public class DataGenProcessingPresenter
                                       final DataGenProcessingView view,
                                       final ScheduledProcessingPresenter scheduledProcessingPresenter) {
         super(eventBus, view);
+        own(scheduledProcessingPresenter);
         this.scheduledProcessingPresenter = scheduledProcessingPresenter;
         view.setProcessSettings(scheduledProcessingPresenter.getView());
     }

@@ -32,6 +32,9 @@ public class TableSettingsPresenter extends SettingsPresenter {
                                   final RulesPresenter rulesPresenter,
                                   final SelectionHandlersPresenter selectionFilterPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
+        own(rulesPresenter);
+        own(selectionFilterPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         selectionFilterPresenter.setUseForFilter(true);

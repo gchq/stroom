@@ -96,6 +96,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final PipelineModelFactory pipelineModelFactory) {
         super(eventBus, view);
+        own(processorPresenter);
         this.processorPresenter = processorPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.pipelineModelFactory = pipelineModelFactory;

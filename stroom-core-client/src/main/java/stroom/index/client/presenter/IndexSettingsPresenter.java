@@ -67,6 +67,7 @@ public class IndexSettingsPresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(pipelinePickerPresenter);
         this.pipelinePresenter = pipelinePickerPresenter;
         this.restFactory = restFactory;
 

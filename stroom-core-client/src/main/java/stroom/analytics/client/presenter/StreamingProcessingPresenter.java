@@ -45,6 +45,7 @@ public class StreamingProcessingPresenter
                                         final ProcessorPresenter processorPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view);
+        own(processorPresenter);
         this.processorPresenter = processorPresenter;
         this.restFactory = restFactory;
         getView().setProcessorsView(processorPresenter.getView());

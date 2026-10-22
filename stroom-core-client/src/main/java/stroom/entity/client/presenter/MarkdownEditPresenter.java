@@ -80,6 +80,9 @@ public class MarkdownEditPresenter
                                  final UserPreferencesManager userPreferencesManager,
                                  final MarkdownConverter markdownConverter) {
         super(eventBus, view);
+        own(markdownPreviewPresenter);
+        own(editorPresenter);
+        own(iFramePresenter);
         this.markdownPreviewPresenter = markdownPreviewPresenter;
         this.iFramePresenter = iFramePresenter;
         this.uiConfigCache = uiConfigCache;

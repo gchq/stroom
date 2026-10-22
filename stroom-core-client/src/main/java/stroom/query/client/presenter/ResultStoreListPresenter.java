@@ -65,6 +65,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                                     final ResultStoreSettingsPresenter resultStoreSettingsPresenter,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
+        own(resultStoreSettingsPresenter);
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 

@@ -43,6 +43,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
             final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider) {
 
         super(eventBus, view);
+        own(progressPresenter);
         this.progressPresenter = progressPresenter;
         this.characterRangeSelectionPresenterProvider = characterRangeSelectionPresenterProvider;
 

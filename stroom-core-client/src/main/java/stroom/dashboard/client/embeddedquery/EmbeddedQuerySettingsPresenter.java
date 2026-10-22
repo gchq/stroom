@@ -50,6 +50,10 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
                                           final SelectionHandlersPresenter selectionFilterPresenter,
                                           final RestFactory restFactory) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
+        own(rulesPresenter);
+        own(selectionQueryPresenter);
+        own(selectionFilterPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         final Consumer<Consumer<DocRef>> dataSourceRefConsumer = consumer -> {

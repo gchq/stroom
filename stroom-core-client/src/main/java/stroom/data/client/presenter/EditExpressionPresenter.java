@@ -65,6 +65,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                                    final EditExpressionView view,
                                    final ExpressionTreePresenter expressionPresenter) {
         super(eventBus, view);
+        own(expressionPresenter);
         this.expressionPresenter = expressionPresenter;
         this.selectionModel = expressionPresenter.getSelectionModel();
 

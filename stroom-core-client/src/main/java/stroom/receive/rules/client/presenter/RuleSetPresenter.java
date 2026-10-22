@@ -101,6 +101,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                             final UiConfigCache uiConfigCache) {
 
         super(eventBus, view);
+        own(ruleSetSettingsPresenter);
         this.ruleSetSettingsPresenter = ruleSetSettingsPresenter;
         registerHandler(this.ruleSetSettingsPresenter.addDirtyHandler(event -> {
 //            GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());

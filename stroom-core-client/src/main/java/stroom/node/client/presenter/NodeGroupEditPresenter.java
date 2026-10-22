@@ -64,6 +64,7 @@ public class NodeGroupEditPresenter
                                   final NodeClient nodeClient,
                                   final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
+        own(nodeGroupStateListPresenter);
         this.nodeGroupStateListPresenter = nodeGroupStateListPresenter;
         this.nodeClient = nodeClient;
         this.nodeGroupClient = nodeGroupClient;

@@ -45,6 +45,7 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
+        own(editExpressionPresenter);
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());

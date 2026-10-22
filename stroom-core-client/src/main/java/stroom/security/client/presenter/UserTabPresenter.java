@@ -97,6 +97,7 @@ public class UserTabPresenter
                             final Provider<AppPermissionsEditPresenter> appPermissionsEditPresenterProvider,
                             final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
         super(eventBus, view);
+        own(userInfoPresenter);
         this.userInfoPresenter = userInfoPresenter;
         this.userPermsReportPresenterLazyValue = new LazyValue<>(
                 userPermsReportPresenterProvider,

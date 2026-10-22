@@ -41,6 +41,8 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
                                   final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter,
                                   final ProcessorTaskListPresenter processorTaskListPresenter) {
         super(eventBus, view);
+        own(processorTaskSummaryPresenter);
+        own(processorTaskListPresenter);
         this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
         this.processorTaskListPresenter = processorTaskListPresenter;
 

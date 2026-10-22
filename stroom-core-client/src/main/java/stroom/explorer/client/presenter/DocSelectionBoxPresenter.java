@@ -65,6 +65,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                                     final ExplorerPopupPresenter explorerPopupPresenter,
                                     final RestFactory restFactory) {
         super(eventBus, view);
+        own(explorerPopupPresenter);
         this.restFactory = restFactory;
         this.explorerPopupPresenter = explorerPopupPresenter;
         view.setUiHandlers(this);

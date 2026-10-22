@@ -55,6 +55,7 @@ public class QueryDocPresenter
                              final DocumentUserPermissionsTabProvider<QueryDoc>
                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(queryDocEditPresenter);
         this.queryDocEditPresenter = queryDocEditPresenter;
 
         queryDocEditPresenter.setTaskMonitorFactory(this);

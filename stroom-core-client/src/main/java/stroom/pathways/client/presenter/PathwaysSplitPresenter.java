@@ -37,6 +37,8 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
                                   final PathwayListPresenter pathwayListPresenter,
                                   final PathwayTreePresenter pathwayTreePresenter) {
         super(eventBus, view);
+        own(pathwayListPresenter);
+        own(pathwayTreePresenter);
         this.pathwayListPresenter = pathwayListPresenter;
         this.pathwayTreePresenter = pathwayTreePresenter;
         view.setTable(pathwayListPresenter.getView());

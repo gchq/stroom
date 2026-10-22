@@ -44,6 +44,7 @@ public class ExpressionPresenter
                                final EditExpressionPresenter editExpressionPresenter,
                                final RestFactory restFactory) {
         super(eventBus, view);
+        own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         view.setExpressionView(editExpressionPresenter.getView());

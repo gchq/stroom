@@ -53,6 +53,7 @@ public class TaskManagerPresenter
                                 final UiConfigCache uiConfigCache,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         view.setUiHandlers(this);
         view.setList(listPresenter.getWidget());

@@ -62,6 +62,7 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
                                final RestFactory restFactory,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;

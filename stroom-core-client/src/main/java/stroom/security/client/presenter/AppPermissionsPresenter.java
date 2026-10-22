@@ -49,6 +49,8 @@ public class AppPermissionsPresenter
             final AppPermissionsEditPresenter appPermissionsEditPresenter) {
 
         super(eventBus, view);
+        own(appUserPermissionsListPresenter);
+        own(appPermissionsEditPresenter);
         this.appUserPermissionsListPresenter = appUserPermissionsListPresenter;
         this.appPermissionsEditPresenter = appPermissionsEditPresenter;
         view.setAppUserPermissionListView(appUserPermissionsListPresenter.getView());

@@ -100,6 +100,7 @@ public class IndexShardPresenter
                                final ClientSecurityContext securityContext,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(tooltipPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Index Shards");

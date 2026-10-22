@@ -54,6 +54,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
                                          final ScriptListPresenter scriptListPresenter,
                                          final DocSelectionPopup explorerDropDownTreePresenter) {
         super(eventBus, view);
+        own(scriptListPresenter);
+        own(explorerDropDownTreePresenter);
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
 

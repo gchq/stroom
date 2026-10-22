@@ -119,6 +119,9 @@ public class ExecutionScheduleManager
                                     final Provider<ExpressionPresenter> expressionPresenterProvider,
                                     final ExpressionValidator expressionValidator) {
         super(eventBus, view);
+        own(scheduledProcessEditPresenter);
+        own(batchExecutionScheduleEditPresenter);
+        own(executionScheduleRunNowPresenter);
         this.restFactory = restFactory;
 
         this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;

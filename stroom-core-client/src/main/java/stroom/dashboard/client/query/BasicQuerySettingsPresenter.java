@@ -46,6 +46,7 @@ public class BasicQuerySettingsPresenter
     public BasicQuerySettingsPresenter(final EventBus eventBus, final BasicQuerySettingsView view,
                                        final DocSelectionBoxPresenter dataSourceSelectionPresenter) {
         super(eventBus, view);
+        own(dataSourceSelectionPresenter);
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
 
         view.setDataSourceSelectionView(dataSourceSelectionPresenter.getView());

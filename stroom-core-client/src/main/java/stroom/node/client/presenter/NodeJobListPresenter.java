@@ -83,6 +83,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
+        own(schedulePresenter);
         this.nodeClient = nodeClient;
         this.dataGrid = new MyDataGrid<>(this);
         this.dataGrid.setTableName("Node Jobs");

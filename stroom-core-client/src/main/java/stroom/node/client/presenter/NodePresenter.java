@@ -46,6 +46,8 @@ public class NodePresenter
                          final NodeStatusListPresenter nodeStatusListPresenter,
                          final NodeJobListPresenter nodeJobListPresenter) {
         super(eventBus, view);
+        own(nodeStatusListPresenter);
+        own(nodeJobListPresenter);
         this.nodeStatusListPresenter = nodeStatusListPresenter;
         this.nodeJobListPresenter = nodeJobListPresenter;
 

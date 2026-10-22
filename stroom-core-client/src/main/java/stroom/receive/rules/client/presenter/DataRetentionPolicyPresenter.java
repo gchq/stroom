@@ -95,6 +95,8 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                         final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
                                         final RestFactory restFactory) {
         super(eventBus, view);
+        own(listPresenter);
+        own(expressionPresenter);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;

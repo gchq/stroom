@@ -40,6 +40,7 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
                                   final AnalyticNotificationView view,
                                   final AbstractNotificationListPresenter<D> notificationList) {
         super(eventBus, view);
+        own(notificationList);
         this.notificationList = notificationList;
         getView().setTable(notificationList.getView());
     }

@@ -70,6 +70,8 @@ public class BatchExecutionScheduleEditPresenter
                                                final Provider<DateTimePopup> dateTimePopupProvider,
                                                final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter) {
         super(eventBus, view);
+        own(errorFeedPresenter);
+        own(userRefSelectionBoxPresenter);
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.errorFeedPresenter = errorFeedPresenter;
 

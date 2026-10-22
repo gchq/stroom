@@ -54,6 +54,7 @@ public abstract class AbstractQueryDataPresenter<V extends QueryDataView, D>
                                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                                       final ResultStoreModel resultStoreModel) {
         super(eventBus, view);
+        own(tablePresenter);
         this.tablePresenter = tablePresenter;
         this.restFactory = restFactory;
 

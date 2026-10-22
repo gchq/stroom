@@ -57,6 +57,7 @@ public class BatchProcessorFilterEditPresenter
                                              final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                              final RestFactory restFactory) {
         super(eventBus, view);
+        own(userRefSelectionBoxPresenter);
         this.restFactory = restFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         getView().setUserRefSelection(userRefSelectionBoxPresenter.getView());

@@ -48,6 +48,7 @@ public class RulePresenter
                          final EditExpressionPresenter editExpressionPresenter,
                          final Provider<CustomRowStylePresenter> customRowStylePresenterProvider) {
         super(eventBus, view);
+        own(editExpressionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.customRowStylePresenterProvider = customRowStylePresenterProvider;
         view.setExpressionView(editExpressionPresenter.getView());

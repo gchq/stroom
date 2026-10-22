@@ -53,6 +53,7 @@ public class BasicTextSettingsPresenter
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
                                       final DocSelectionBoxPresenter pipelinePresenter) {
         super(eventBus, view);
+        own(pipelinePresenter);
         this.pipelinePresenter = pipelinePresenter;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);

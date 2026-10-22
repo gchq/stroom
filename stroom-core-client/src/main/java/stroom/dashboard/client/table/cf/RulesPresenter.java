@@ -77,6 +77,7 @@ public class RulesPresenter
                           final RuleListPresenter listPresenter,
                           final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
 

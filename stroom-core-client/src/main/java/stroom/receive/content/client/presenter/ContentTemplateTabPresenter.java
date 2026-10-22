@@ -108,6 +108,8 @@ public class ContentTemplateTabPresenter
                                        final Provider<ContentTemplateEditPresenter> editPresenterProvider,
                                        final RestFactory restFactory) {
         super(eventBus, view);
+        own(listPresenter);
+        own(expressionPresenter);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editPresenterProvider = editPresenterProvider;

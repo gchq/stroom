@@ -70,6 +70,10 @@ public final class UserPreferencesPresenter
             final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        own(themePreferencesPresenter);
+        own(editorPreferencesPresenter);
+        own(timePreferencesPresenter);
+        own(keyBindingPreferencesPresenter);
         this.userPreferencesManager = userPreferencesManager;
         this.themePreferencesPresenter = themePreferencesPresenter;
         this.editorPreferencesPresenter = editorPreferencesPresenter;

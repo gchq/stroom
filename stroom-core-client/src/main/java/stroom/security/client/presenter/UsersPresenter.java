@@ -59,6 +59,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
                           final CreateUserPresenter createUserPresenter,
                           final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider) {
         super(eventBus, view);
+        own(userList);
+        own(createUserPresenter);
         this.userList = userList;
         this.restFactory = restFactory;
         this.createUserPresenter = createUserPresenter;

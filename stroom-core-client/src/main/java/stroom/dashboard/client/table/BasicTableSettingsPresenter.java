@@ -53,6 +53,7 @@ public class BasicTableSettingsPresenter
                                        final DocSelectionBoxPresenter pipelinePresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(pipelinePresenter);
         this.pipelinePresenter = pipelinePresenter;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);

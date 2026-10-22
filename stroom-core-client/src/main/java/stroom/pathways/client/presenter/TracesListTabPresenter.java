@@ -68,6 +68,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                                   final DefaultResources resources,
                                   final RestFactory restFactory) {
         super(eventBus, view);
+        own(listPresenter);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
         traceOverviewWidget = new TraceOverviewWidget(this, resources);

@@ -59,6 +59,7 @@ public class EditFeedDependencyPresenter
                                        final RestFactory restFactory,
                                        final FeedClient feedClient) {
         super(eventBus, view);
+        own(feedPresenter);
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
         this.feedClient = feedClient;

@@ -58,6 +58,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
             final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider) {
 
         super(eventBus, view);
+        own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;

@@ -99,6 +99,7 @@ public class GitRepoSettingsPresenter
                                     final CredentialClient credentialClient,
                                     final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
         super(eventBus, view);
+        own(commitDialog);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
         this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;

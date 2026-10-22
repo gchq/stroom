@@ -149,6 +149,10 @@ public class QueryPresenter
                           final ResultStoreModel resultStoreModel,
                           final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view, settingsPresenterProvider);
+        own(expressionPresenter);
+        own(historyPresenter);
+        own(favouritesPresenter);
+        own(processorLimitsPresenter);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;

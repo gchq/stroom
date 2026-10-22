@@ -59,6 +59,7 @@ public class BasicEmbeddedQuerySettingsPresenter
                                                final Provider<DocSelectionPopup> docSelectionPopupProvider,
                                                final QueryClient queryClient) {
         super(eventBus, view);
+        own(querySelectionPresenter);
         this.querySelectionPresenter = querySelectionPresenter;
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.queryClient = queryClient;

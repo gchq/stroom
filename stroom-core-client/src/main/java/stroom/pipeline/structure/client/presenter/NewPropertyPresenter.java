@@ -86,6 +86,7 @@ public class NewPropertyPresenter
                                 final DocSelectionBoxPresenter entityDropDownPresenter,
                                 final RestFactory restFactory) {
         super(eventBus, view);
+        own(entityDropDownPresenter);
         this.entityDropDownPresenter = entityDropDownPresenter;
         this.restFactory = restFactory;
         view.setUiHandlers(this);

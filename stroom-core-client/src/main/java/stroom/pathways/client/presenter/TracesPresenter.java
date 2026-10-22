@@ -52,6 +52,7 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                            final DocumentUserPermissionsTabProvider<TracesDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(tracesListTabPresenter);
         this.tracesListTabPresenter = tracesListTabPresenter;
 
         addTab(TRACES, new DocTabProvider<>(() -> tracesListTabPresenter));

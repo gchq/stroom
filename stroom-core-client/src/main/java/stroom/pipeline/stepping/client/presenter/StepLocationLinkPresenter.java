@@ -42,6 +42,7 @@ public class StepLocationLinkPresenter
                                      final StepLocationLinkView view,
                                      final StepLocationPresenter stepLocationPresenter) {
         super(eventBus, view);
+        own(stepLocationPresenter);
         this.stepLocationPresenter = stepLocationPresenter;
         setStepLocation(new StepLocation(0L, 0L, 0L));
     }

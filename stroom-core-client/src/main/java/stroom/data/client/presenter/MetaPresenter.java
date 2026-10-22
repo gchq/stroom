@@ -114,6 +114,9 @@ public class MetaPresenter
                          final DateTimeSettingsFactory dateTimeSettingsFactory,
                          final ExpressionValidator expressionValidator) {
         super(eventBus, view);
+        own(metaListPresenter);
+        own(metaRelationListPresenter);
+        own(dataPresenter);
         this.metaListPresenter = metaListPresenter;
         this.metaRelationListPresenter = metaRelationListPresenter;
         this.streamListFilterPresenter = streamListFilterPresenter;

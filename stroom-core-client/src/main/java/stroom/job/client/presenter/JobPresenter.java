@@ -44,6 +44,8 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
                         final JobListPresenter jobListPresenter,
                         final JobNodeListPresenter jobNodeListPresenter) {
         super(eventBus, view);
+        own(jobListPresenter);
+        own(jobNodeListPresenter);
         this.jobListPresenter = jobListPresenter;
         this.jobNodeListPresenter = jobNodeListPresenter;
 

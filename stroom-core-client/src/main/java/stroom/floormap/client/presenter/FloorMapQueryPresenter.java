@@ -81,6 +81,7 @@ public class FloorMapQueryPresenter
                                   final FloorMapQueryView view,
                                   final QueryEditPresenter queryEditPresenter) {
         super(eventBus, view);
+        own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
         view.setQueryEditView(queryEditPresenter.getView());
     }

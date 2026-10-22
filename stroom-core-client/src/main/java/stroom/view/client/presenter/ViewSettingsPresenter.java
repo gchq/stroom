@@ -54,6 +54,9 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
                                  final EditExpressionPresenter expressionPresenter,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(dataSourceSelectionPresenter);
+        own(pipelineSelectionPresenter);
+        own(expressionPresenter);
         this.restFactory = restFactory;
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;

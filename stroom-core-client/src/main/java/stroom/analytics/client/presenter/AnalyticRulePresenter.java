@@ -64,6 +64,7 @@ public class AnalyticRulePresenter
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(analyticQueryEditPresenter);
         this.analyticQueryEditPresenter = analyticQueryEditPresenter;
 
         // Created up front rather than by the tab provider, as the notifications tab has to be told when the

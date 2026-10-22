@@ -59,6 +59,7 @@ public class DashboardSuperPresenter
                                    final DocumentUserPermissionsTabProvider<DashboardDoc>
                                            documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(dashboardPresenter);
         this.dashboardPresenter = dashboardPresenter;
 
         addTab(DASHBOARD, new DocTabProvider<>(() -> dashboardPresenter));

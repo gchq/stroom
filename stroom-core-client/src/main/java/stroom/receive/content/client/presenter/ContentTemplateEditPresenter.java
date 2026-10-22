@@ -59,6 +59,8 @@ public class ContentTemplateEditPresenter
                                         final EditExpressionPresenter editExpressionPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view);
+        own(pipelineSelectionPresenter);
+        own(editExpressionPresenter);
         this.fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;

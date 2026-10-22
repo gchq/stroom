@@ -112,6 +112,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                   final RestFactory restFactory,
                                   final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
+        own(tooltipPresenter);
         this.securityContext = securityContext;
 
         this.dataGrid = new MyDataGrid<>(this);

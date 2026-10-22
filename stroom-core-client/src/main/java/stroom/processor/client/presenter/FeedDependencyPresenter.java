@@ -43,6 +43,7 @@ public class FeedDependencyPresenter
                                    final FeedDependencyView view,
                                    final FeedDependencyListPresenter feedDependencyListPresenter) {
         super(eventBus, view);
+        own(feedDependencyListPresenter);
         this.feedDependencyListPresenter = feedDependencyListPresenter;
         view.setFeedDependencyList(feedDependencyListPresenter.getView());
     }

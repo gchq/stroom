@@ -57,6 +57,8 @@ public class AnalyticNotificationEditPresenter
                                              final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
                                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(analyticStreamDestinationPresenter);
+        own(analyticEmailDestinationPresenter);
         this.uiConfigCache = uiConfigCache;
         view.setUiHandlers(this);
         this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;

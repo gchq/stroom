@@ -39,6 +39,8 @@ public class DictionarySettingsPresenter extends DocPresenter<DictionarySettings
                                        final DictionaryListPresenter dictionaryListPresenter,
                                        final WordListPresenter wordListPresenter) {
         super(eventBus, view);
+        own(dictionaryListPresenter);
+        own(wordListPresenter);
         this.dictionaryListPresenter = dictionaryListPresenter;
         this.wordListPresenter = wordListPresenter;
         getView().setImportList(dictionaryListPresenter.getView());

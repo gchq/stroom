@@ -60,6 +60,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final Provider<NewFsVolumeGroupPresenter> newFsVolumeGroupPresenterProvider) {
 
         super(eventBus, view);
+        own(volumeStatusListPresenter);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;

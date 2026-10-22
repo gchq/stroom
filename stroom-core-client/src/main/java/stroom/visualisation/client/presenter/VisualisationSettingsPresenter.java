@@ -45,6 +45,8 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
                                           final DocSelectionBoxPresenter scriptPresenter,
                                           final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        own(scriptPresenter);
+        own(editorPresenter);
         this.scriptPresenter = scriptPresenter;
         this.editorPresenter = editorPresenter;
 

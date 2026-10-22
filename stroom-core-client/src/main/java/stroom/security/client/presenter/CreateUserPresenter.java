@@ -51,6 +51,9 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                                final CreateMultipleUsersPresenter createMultipleUsersPresenter,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(createNewGroupPresenter);
+        own(createNewUserPresenter);
+        own(createMultipleUsersPresenter);
         this.createNewGroupPresenter = createNewGroupPresenter;
         this.createNewUserPresenter = createNewUserPresenter;
         this.createMultipleUsersPresenter = createMultipleUsersPresenter;

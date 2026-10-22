@@ -63,6 +63,9 @@ public class AnalyticDataShardsPresenter
                                        final RestFactory restFactory,
                                        final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view);
+        own(queryToolbarPresenter);
+        own(analyticDataShardListPresenter);
+        own(tablePresenter);
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.analyticDataShardListPresenter = analyticDataShardListPresenter;
         this.tablePresenter = tablePresenter;

@@ -75,6 +75,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
                                        final DocumentAssetDropDownPresenter assetDropDownPresenter,
                                        final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider) {
         super(eventBus, view);
+        own(assetDropDownPresenter);
         this.assetDropDownPresenter = assetDropDownPresenter;
         this.quickUploadProvider = quickUploadProvider;
 

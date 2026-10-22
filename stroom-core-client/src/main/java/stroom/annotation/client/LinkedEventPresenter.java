@@ -71,6 +71,8 @@ public class LinkedEventPresenter
                                 final DataPresenter dataPresenter,
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
+        own(dataPresenter);
+        own(addEventLinkPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Linked Events");

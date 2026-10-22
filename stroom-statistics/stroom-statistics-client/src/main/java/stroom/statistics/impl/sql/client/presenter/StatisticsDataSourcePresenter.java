@@ -62,6 +62,8 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<StatisticStoreDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(statisticsFieldListPresenter);
+        own(statisticsCustomMaskListPresenter);
 
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other

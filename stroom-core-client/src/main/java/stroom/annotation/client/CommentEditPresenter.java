@@ -34,6 +34,7 @@ public class CommentEditPresenter
                                 final CommentEditView view,
                                 final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        own(editorPresenter);
         this.editorPresenter = editorPresenter;
         view.setContent(editorPresenter.getView());
     }

@@ -39,6 +39,8 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
                           final CacheListPresenter cacheListPresenter,
                           final CacheNodeListPresenter cacheNodeListPresenter) {
         super(eventBus, view);
+        own(cacheListPresenter);
+        own(cacheNodeListPresenter);
         this.cacheListPresenter = cacheListPresenter;
         this.cacheNodeListPresenter = cacheNodeListPresenter;
 

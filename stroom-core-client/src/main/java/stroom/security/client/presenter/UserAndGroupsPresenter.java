@@ -82,6 +82,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final UiConfigCache uiConfigCache,
                                   final RestFactory restFactory) {
         super(eventBus, view);
+        own(createUserPresenter);
         this.userList = userListPresenterProvider.get();
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");

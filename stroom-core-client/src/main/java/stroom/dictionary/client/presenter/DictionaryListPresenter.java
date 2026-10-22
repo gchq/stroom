@@ -63,6 +63,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
                                    final DocRefListPresenter docRefListPresenter,
                                    final Provider<DocSelectionPopup> dictionarySelection) {
         super(eventBus, view);
+        own(docRefListPresenter);
         this.docRefListPresenter = docRefListPresenter;
         this.dictionarySelection = dictionarySelection;
 

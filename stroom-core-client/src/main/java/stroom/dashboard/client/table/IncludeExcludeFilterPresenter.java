@@ -36,6 +36,8 @@ public class IncludeExcludeFilterPresenter extends MyPresenterWidget<IncludeExcl
                                          final IncludeExcludeFilterDictionaryPresenter excludeFilterDictionaryPresenter
     ) {
         super(eventBus, view);
+        own(includeFilterDictionaryPresenter);
+        own(excludeFilterDictionaryPresenter);
 
         this.includeFilterDictionaryPresenter = includeFilterDictionaryPresenter;
         this.excludeFilterDictionaryPresenter = excludeFilterDictionaryPresenter;

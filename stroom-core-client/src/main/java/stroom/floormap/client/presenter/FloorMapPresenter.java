@@ -93,6 +93,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                              final DocumentUserPermissionsTabProvider<FloorMapDoc> documentUserPermissionsTabProvider,
                              final DocumentAssetPresenter<FloorMapDoc> documentAssetPresenter) {
         super(eventBus, view);
+        own(documentAssetPresenter);
         this.documentAssetPresenter = documentAssetPresenter;
 
         addTab(MAP, new DocTabProvider<>(() -> {

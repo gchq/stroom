@@ -73,6 +73,19 @@ class TestMyPresenterWidget {
     }
 
     @Test
+    void owningAMockDoesNothing() {
+        // As a test does, giving a presenter a mock of the presenter it owns
+        final TestPresenter parent = new TestPresenter("parent");
+        final TestPresenter mock = Mockito.mock(TestPresenter.class);
+
+        parent.ownChild(mock);
+        parent.dispose();
+
+        assertThat(parent.getComponentNode().childCount()).isZero();
+        assertThat(events).containsExactly("parent disposed");
+    }
+
+    @Test
     void handlersAddedWithItAsSourceAreRemovedOutsideAScope() {
         final TestPresenter presenter = new TestPresenter("presenter");
         presenter.addTestHandler(() -> events.add("heard"));

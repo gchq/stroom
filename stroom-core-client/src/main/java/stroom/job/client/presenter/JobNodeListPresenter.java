@@ -93,6 +93,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
+        own(schedulePresenter);
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 

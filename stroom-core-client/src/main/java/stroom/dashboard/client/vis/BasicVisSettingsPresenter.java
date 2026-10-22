@@ -68,6 +68,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                                      final DocSelectionBoxPresenter visualisationPresenter,
                                      final RestFactory restFactory) {
         super(eventBus, view);
+        own(visualisationPresenter);
         this.visualisationPresenter = visualisationPresenter;
         this.restFactory = restFactory;
         view.setUiHandlers(this);

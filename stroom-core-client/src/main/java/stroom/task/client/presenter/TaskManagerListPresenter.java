@@ -153,6 +153,7 @@ public class TaskManagerListPresenter
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
+        own(tooltipPresenter);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;

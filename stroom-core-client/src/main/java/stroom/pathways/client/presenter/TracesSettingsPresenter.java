@@ -50,6 +50,7 @@ public class TracesSettingsPresenter
                                    final TracesSettingsView view,
                                    final PlanBSettingsPresenter planBSettingsPresenter) {
         super(eventBus, view);
+        own(planBSettingsPresenter);
         this.planBSettingsPresenter = planBSettingsPresenter;
         planBSettingsPresenter.setStateTypeLocked(true);
         view.setSettingsView(planBSettingsPresenter.getView());

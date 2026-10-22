@@ -59,6 +59,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
                                  final ContentStoreContentPackListPresenter contentPackListPresenter,
                                  final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter) {
         super(eventBus, view);
+        own(contentPackListPresenter);
         this.contentPackListPresenter = contentPackListPresenter;
         this.contentPackListPresenter.setContentStorePresenter(this);
         this.contentPackDetailsPresenter = contentPackDetailsPresenter;

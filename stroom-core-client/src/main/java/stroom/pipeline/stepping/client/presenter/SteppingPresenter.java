@@ -169,6 +169,11 @@ public class SteppingPresenter
                              final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
                              final ExpressionValidator expressionValidator) {
         super(eventBus, view);
+        own(pipelinePathPresenter);
+        own(sourcePresenter);
+        own(stepLocationLinkPresenter);
+        own(stepControlPresenter);
+        own(steppingFilterPresenter);
         this.restFactory = restFactory;
 
         this.pipelinePathPresenter = pipelinePathPresenter;

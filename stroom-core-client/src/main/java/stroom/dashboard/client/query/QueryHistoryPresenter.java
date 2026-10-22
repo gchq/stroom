@@ -57,6 +57,7 @@ public class QueryHistoryPresenter
                                  final ExpressionTreePresenter expressionPresenter,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+        own(expressionPresenter);
 
         this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;

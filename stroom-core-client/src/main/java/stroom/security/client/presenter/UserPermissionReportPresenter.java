@@ -80,6 +80,7 @@ public class UserPermissionReportPresenter
                                                  batchDocumentPermissionsEditPresenterProvider,
                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(documentPermissionsListPresenter);
         this.documentPermissionsListPresenter = documentPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;

@@ -57,6 +57,7 @@ public class AnnotationLinkPresenter
                                    final AnnotationResourceClient annotationResourceClient,
                                    final FindAnnotationListPresenter listPresenter) {
         super(eventBus, view);
+        own(listPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.listPresenter = listPresenter;
 

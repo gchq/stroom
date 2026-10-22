@@ -46,6 +46,7 @@ public class DataGenSettingsPresenter
                                     final DocSelectionBoxPresenter destinationFeedPresenter,
                                     final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
+        own(destinationFeedPresenter);
         this.destinationFeedPresenter = destinationFeedPresenter;
         this.templatePresenter = editorPresenterProvider.get();
 

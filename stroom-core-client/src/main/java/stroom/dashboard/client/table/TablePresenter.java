@@ -213,6 +213,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                           final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
+        own(formatPresenter);
+        own(tableFilterPresenter);
+        own(downloadPresenter);
+        own(columnValuesFilterPresenter);
         this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;

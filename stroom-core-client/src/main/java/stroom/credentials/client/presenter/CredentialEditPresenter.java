@@ -99,6 +99,8 @@ public class CredentialEditPresenter
                                    final DocumentUserPermissionsPresenter permissionsPresenter,
                                    final CredentialClient credentialClient) {
         super(eventBus, view);
+        own(credentialSettingsPresenter);
+        own(permissionsPresenter);
         this.credentialSettingsPresenter = credentialSettingsPresenter;
         this.permissionsPresenter = permissionsPresenter;
         this.credentialClient = credentialClient;

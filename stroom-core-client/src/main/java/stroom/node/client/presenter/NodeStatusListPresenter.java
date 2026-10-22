@@ -106,6 +106,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                                    final DateTimeFormatter dateTimeFormatter,
                                    final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(tooltipPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Nodes");

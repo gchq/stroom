@@ -52,6 +52,7 @@ public abstract class AbstractSettingsPresenter<V extends SettingsView, D extend
                               final UiConfigCache uiConfigCache,
                               final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
+        own(errorFeedPresenter);
         this.errorFeedPresenter = errorFeedPresenter;
         this.uiConfigCache = uiConfigCache;
         this.configDefaultSetter = configDefaultSetter;

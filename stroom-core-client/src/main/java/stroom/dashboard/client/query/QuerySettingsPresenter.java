@@ -29,6 +29,8 @@ public class QuerySettingsPresenter extends SettingsPresenter {
                                   final BasicQuerySettingsPresenter basicSettingsPresenter,
                                   final SelectionHandlersPresenter selectionQueryPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
+        own(selectionQueryPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         selectionQueryPresenter.setDataSourceRefConsumer(consumer ->

@@ -63,6 +63,7 @@ public class FsVolumeEditPresenter
                                  final EditorPresenter editorPresenter,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+        own(editorPresenter);
         this.editorPresenter = editorPresenter;
         this.restFactory = restFactory;
 

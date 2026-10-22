@@ -44,6 +44,8 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
                                      final DocSelectionBoxPresenter traceStorePresenter,
                                      final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
+        own(traceStorePresenter);
+        own(feedPresenter);
         this.traceStorePresenter = traceStorePresenter;
         this.feedPresenter = feedPresenter;
         view.setUiHandlers(this);

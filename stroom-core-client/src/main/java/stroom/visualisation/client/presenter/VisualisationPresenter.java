@@ -54,6 +54,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(documentAssetPresenter);
         this.documentAssetPresenter = documentAssetPresenter;
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));

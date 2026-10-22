@@ -54,6 +54,9 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(scheduledProcessingPresenter);
+        own(tableBuilderProcessingPresenter);
+        own(streamingProcessingPresenter);
         this.uiConfigCache = uiConfigCache;
         this.scheduledProcessingPresenter = scheduledProcessingPresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;

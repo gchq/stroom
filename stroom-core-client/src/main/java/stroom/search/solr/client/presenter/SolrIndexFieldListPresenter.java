@@ -76,6 +76,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(indexFieldEditPresenter);
         this.pagerView = pagerView;
         this.indexFieldEditPresenter = indexFieldEditPresenter;
         this.restFactory = restFactory;

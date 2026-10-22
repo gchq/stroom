@@ -44,6 +44,7 @@ public class BasicListInputSettingsPresenter
                                            final BasicListInputSettingsView view,
                                            final DocSelectionBoxPresenter dictionaryPresenter) {
         super(eventBus, view);
+        own(dictionaryPresenter);
         this.dictionaryPresenter = dictionaryPresenter;
 
         dictionaryPresenter.setIncludedTypes(DictionaryDoc.TYPE);

@@ -58,6 +58,7 @@ public class ReportPresenter
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        own(reportQueryEditPresenter);
         this.reportQueryEditPresenter = reportQueryEditPresenter;
 
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();

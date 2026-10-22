@@ -58,6 +58,9 @@ public class ScheduledProcessingPresenter
                                         final ScheduledProcessHistoryListPresenter scheduledProcessHistoryListPresenter,
                                         final ScheduledProcessEditPresenter scheduledProcessEditPresenter) {
         super(eventBus, view);
+        own(scheduledProcessListPresenter);
+        own(scheduledProcessHistoryListPresenter);
+        own(scheduledProcessEditPresenter);
         this.restFactory = restFactory;
         this.scheduledProcessListPresenter = scheduledProcessListPresenter;
         this.scheduledProcessHistoryListPresenter = scheduledProcessHistoryListPresenter;

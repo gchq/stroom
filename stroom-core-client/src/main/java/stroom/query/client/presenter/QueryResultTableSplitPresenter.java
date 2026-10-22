@@ -58,6 +58,8 @@ public class QueryResultTableSplitPresenter
                                           final QueryResultTablePresenter tablePresenter,
                                           final TextPresenter textPresenter) {
         super(eventBus, view);
+        own(tablePresenter);
+        own(textPresenter);
         this.tablePresenter = tablePresenter;
         this.textPresenter = textPresenter;
 

@@ -58,6 +58,7 @@ public class ProcessorProfileEditPresenter
                                          final NodeGroupClient nodeGroupClient,
                                          final ProfilePeriodListPresenter profilePeriodListPresenter) {
         super(eventBus, view);
+        own(profilePeriodListPresenter);
         this.processorProfileClient = processorProfileClient;
         this.nodeGroupClient = nodeGroupClient;
         this.profilePeriodListPresenter = profilePeriodListPresenter;

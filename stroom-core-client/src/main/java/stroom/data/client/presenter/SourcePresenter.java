@@ -104,6 +104,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        own(progressPresenter);
+        own(textPresenter);
+        own(characterNavigatorPresenter);
         this.classificationWrapperView = classificationWrapperView;
         this.progressPresenter = progressPresenter;
         this.textPresenter = textPresenter;

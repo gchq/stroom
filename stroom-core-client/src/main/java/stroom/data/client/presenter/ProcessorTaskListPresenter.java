@@ -87,6 +87,7 @@ public class ProcessorTaskListPresenter
                                       final TooltipPresenter tooltipPresenter,
                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(tooltipPresenter);
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);

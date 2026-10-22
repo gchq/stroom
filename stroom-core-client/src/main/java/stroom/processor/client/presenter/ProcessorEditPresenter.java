@@ -90,6 +90,8 @@ public class ProcessorEditPresenter
                                   final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
                                   final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
+        own(editExpressionPresenter);
+        own(userRefSelectionBoxPresenter);
         view.setUiHandlers(this);
 
         this.editExpressionPresenter = editExpressionPresenter;

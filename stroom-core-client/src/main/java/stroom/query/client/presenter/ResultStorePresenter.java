@@ -50,6 +50,7 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
                                 final ResultStoreListPresenter resultStoreListPresenter,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        own(resultStoreListPresenter);
         this.resultStoreListPresenter = resultStoreListPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
 

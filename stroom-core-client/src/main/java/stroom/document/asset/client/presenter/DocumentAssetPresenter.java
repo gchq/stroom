@@ -197,6 +197,9 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                         final DocumentAssetEditAssetDialogPresenter editAssetDialog,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
+        own(uploadFileDialog);
+        own(addItemDialog);
+        own(editAssetDialog);
         addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;

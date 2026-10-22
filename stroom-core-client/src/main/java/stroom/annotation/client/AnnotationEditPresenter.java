@@ -194,6 +194,12 @@ public class AnnotationEditPresenter
                                    final DurationLabel durationLabel,
                                    final Provider<CommentEditPresenter> commentEditPresenterProvider) {
         super(eventBus, view);
+        own(annotationStatusPresenter);
+        own(assignedToPresenter);
+        own(annotationLabelPresenter);
+        own(annotationCollectionPresenter);
+        own(commentPresenter);
+        own(retentionDurationProvider);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationStatusPresenter = annotationStatusPresenter;
         this.assignedToPresenter = assignedToPresenter;

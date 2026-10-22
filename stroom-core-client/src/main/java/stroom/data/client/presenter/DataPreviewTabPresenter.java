@@ -37,6 +37,7 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
                                    final DataPresenter dataPresenter,
                                    final DataPreviewTabView view) {
         super(eventBus, view);
+        own(dataPresenter);
         this.dataPresenter = dataPresenter;
         this.dataPresenter.setDisplayMode(DisplayMode.STROOM_TAB);
         getView().setContentView(dataPresenter.getView());

@@ -196,6 +196,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
                                        final FloorMapObjectEditView view,
                                        final DocumentAssetDropDownPresenter documentAssetDropDownPresenter) {
         super(eventBus, view);
+        own(documentAssetDropDownPresenter);
         this.documentAssetDropDownPresenter = documentAssetDropDownPresenter;
     }
 

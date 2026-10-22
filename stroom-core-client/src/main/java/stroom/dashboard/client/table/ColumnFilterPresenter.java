@@ -41,6 +41,7 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
                                  final ColumnFilterView view,
                                  final EditorPresenter editorPresenter) {
         super(eventBus, view);
+        own(editorPresenter);
         this.editorPresenter = editorPresenter;
         view.setEditor(editorPresenter.getView());
     }

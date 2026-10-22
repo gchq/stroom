@@ -28,6 +28,7 @@ public class ListInputSettingsPresenter extends SettingsPresenter {
     public ListInputSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                       final BasicListInputSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         addTab("Basic", basicSettingsPresenter);

@@ -66,6 +66,8 @@ public class AnalyticEmailDestinationPresenter
                                              final EditorPresenter bodyEditorPresenter,
                                              final RestFactory restFactory) {
         super(eventBus, view);
+        own(subjectEditorPresenter);
+        own(bodyEditorPresenter);
         this.subjectEditorPresenter = subjectEditorPresenter;
         this.bodyEditorPresenter = bodyEditorPresenter;
         this.restFactory = restFactory;

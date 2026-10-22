@@ -73,6 +73,8 @@ public class ColumnFunctionEditorPresenter
                                          final EditorPresenter editorPresenter,
                                          final QueryHelpPresenter queryHelpPresenter) {
         super(eventBus, view);
+        own(editorPresenter);
+        own(queryHelpPresenter);
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.queryHelpPresenter = queryHelpPresenter;

@@ -109,6 +109,8 @@ public class ProcessorPresenter
                               final Provider<BatchProcessorFilterEditPresenter>
                                       batchProcessorFilterEditPresenterProvider) {
         super(eventBus, view);
+        own(processorListPresenter);
+        own(expressionPresenter);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;

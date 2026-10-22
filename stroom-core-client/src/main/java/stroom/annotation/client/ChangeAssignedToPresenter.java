@@ -57,6 +57,7 @@ public class ChangeAssignedToPresenter
                                      final UserRefPopupPresenter assignedToPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        own(assignedToPresenter);
         this.annotationResourceClient = annotationResourceClient;
         this.assignedToPresenter = assignedToPresenter;
         this.clientSecurityContext = clientSecurityContext;

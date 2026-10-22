@@ -169,6 +169,11 @@ public class DataPresenter
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, classificationWrapperView);
+        own(htmlPresenter);
+        own(itemNavigatorPresenter);
+        own(textPresenter);
+        own(progressPresenter);
+        own(markerListPresenter);
         classificationWrapperView.setContent(dataView);
         this.dataView = dataView;
         this.classificationWrapperView = classificationWrapperView;

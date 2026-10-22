@@ -50,6 +50,7 @@ public class AnalyticStreamDestinationPresenter
                                               final DocSelectionBoxPresenter feedPresenter,
                                               final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view);
+        own(feedPresenter);
         view.setUiHandlers(this);
         this.feedPresenter = feedPresenter;
         this.configDefaultSetter = configDefaultSetter;

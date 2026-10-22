@@ -47,6 +47,8 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
                                 final PathwayTreePresenter pathwayTreePresenter,
                                 final ConstraintListPresenter constraintListPresenter) {
         super(eventBus, view);
+        own(pathwayTreePresenter);
+        own(constraintListPresenter);
         this.pathwayTreePresenter = pathwayTreePresenter;
         this.constraintListPresenter = constraintListPresenter;
         view.setTree(pathwayTreePresenter.getView());

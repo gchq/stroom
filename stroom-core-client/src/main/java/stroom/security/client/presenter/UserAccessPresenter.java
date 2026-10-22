@@ -69,6 +69,8 @@ public class UserAccessPresenter
                                final RestFactory restFactory,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(listPresenter);
+        own(sessionsListPresenter);
         this.listPresenter = listPresenter;
         this.sessionsListPresenter = sessionsListPresenter;
         this.restFactory = restFactory;

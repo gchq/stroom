@@ -109,6 +109,10 @@ public class QueryEditPresenter
                               final QueryResultTabsView linkTabsLayoutView,
                               final QueryInfo queryInfo) {
         super(eventBus, view);
+        own(queryHelpPresenter);
+        own(queryToolbarPresenter);
+        own(editorPresenter);
+        own(queryResultPresenter);
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.queryResultPresenter = queryResultPresenter;

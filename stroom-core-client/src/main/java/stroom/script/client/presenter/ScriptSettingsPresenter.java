@@ -34,6 +34,7 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
                                    final ScriptSettingsView view,
                                    final ScriptDependencyListPresenter scriptDependencyListPresenter) {
         super(eventBus, view);
+        own(scriptDependencyListPresenter);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
         view.setDependencyList(scriptDependencyListPresenter.getView());
     }

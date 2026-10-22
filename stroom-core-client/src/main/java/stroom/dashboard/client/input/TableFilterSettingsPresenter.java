@@ -30,6 +30,8 @@ public class TableFilterSettingsPresenter extends SettingsPresenter {
                                         final BasicTableFilterSettingsPresenter basicSettingsPresenter,
                                         final MultiRulesPresenter multiRulesPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
+        own(multiRulesPresenter);
 
         basicSettingsPresenter.setMultiRulesPresenter(multiRulesPresenter);
 

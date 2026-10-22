@@ -51,6 +51,7 @@ public class IndexFieldEditPresenter
                                    final IndexFieldEditView view,
                                    final DenseVectorFieldPresenter denseVectorFieldPresenter) {
         super(eventBus, view);
+        own(denseVectorFieldPresenter);
         this.denseVectorFieldPresenter = denseVectorFieldPresenter;
         view.setDenseVectorOptions(denseVectorFieldPresenter.getView());
         view.setUiHandlers(this);

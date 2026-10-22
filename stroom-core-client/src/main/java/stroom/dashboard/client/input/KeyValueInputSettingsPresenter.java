@@ -28,6 +28,7 @@ public class KeyValueInputSettingsPresenter extends SettingsPresenter {
     public KeyValueInputSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                           final BasicKeyValueInputSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
+        own(basicSettingsPresenter);
         getView().asWidget().addStyleName("settingsPresenter");
 
         addTab("Basic", basicSettingsPresenter);

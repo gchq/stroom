@@ -47,6 +47,7 @@ public class ReportSettingsPresenter
                                    final UiConfigCache uiConfigCache,
                                    final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view, errorFeedPresenter, uiConfigCache, configDefaultSetter);
+        own(aiSummaryModelPresenter);
         this.aiSummaryModelPresenter = aiSummaryModelPresenter;
 
         view.setAiSummaryModelView(aiSummaryModelPresenter.getView());

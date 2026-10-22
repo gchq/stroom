@@ -64,6 +64,8 @@ public class NewPipelineReferencePresenter
                                          final RestFactory restFactory,
                                          final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        own(pipelinePresenter);
+        own(feedPresenter);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;

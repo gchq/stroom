@@ -44,6 +44,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
                                                 final DuplicateManagementListPresenter
                                                         duplicateManagementListPresenter) {
         super(eventBus, view);
+        own(duplicateManagementListPresenter);
         view.setUiHandlers(this);
         this.duplicateManagementListPresenter = duplicateManagementListPresenter;
         view.setListView(duplicateManagementListPresenter.getView());

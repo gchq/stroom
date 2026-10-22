@@ -54,6 +54,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
             final Provider<NewNodeGroupPresenter> newNodeGroupPresenterProvider) {
 
         super(eventBus, view);
+        own(nodeGroupListPresenter);
         this.nodeGroupListPresenter = nodeGroupListPresenter;
         this.editProvider = editProvider;
         this.nodeGroupClient = nodeGroupClient;

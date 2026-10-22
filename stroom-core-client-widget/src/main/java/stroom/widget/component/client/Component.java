@@ -118,7 +118,11 @@ public abstract class Component implements IsWidget, HasComponentNode {
     /// @param <C>   Its type.
     /// @return The component, so it can be owned as it is made: `own(editorProvider.get())`.
     protected final <C extends HasComponentNode> C own(final C child) {
-        node.adopt(child.getComponentNode());
+        final ComponentNode childNode = child.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test), which has no node to own
+        if (childNode != null) {
+            node.adopt(childNode);
+        }
         return child;
     }
 

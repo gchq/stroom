@@ -108,6 +108,11 @@ public class PipelineStructurePresenter
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
                                       final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
+        own(pipelineTreePresenter);
+        own(pipelinePresenter);
+        own(newElementPresenter);
+        own(propertyListPresenter);
+        own(pipelineReferenceListPresenter);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;

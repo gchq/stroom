@@ -44,6 +44,7 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
                                         final DropDownView view,
                                         final UserRefPopupPresenter userRefPopupPresenter) {
         super(eventBus, view);
+        own(userRefPopupPresenter);
         view.setUiHandlers(this);
         this.userRefPopupPresenter = userRefPopupPresenter;
         userRefPopupPresenter.setSelectionChangeConsumer(this::changeSelection);

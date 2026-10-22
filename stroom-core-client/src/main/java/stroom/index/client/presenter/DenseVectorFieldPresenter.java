@@ -45,6 +45,8 @@ public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFiel
                                      final DocSelectionBoxPresenter embeddingModelPresenter,
                                      final DocSelectionBoxPresenter rerankModelPresenter) {
         super(eventBus, view);
+        own(embeddingModelPresenter);
+        own(rerankModelPresenter);
         this.embeddingModelPresenter = embeddingModelPresenter;
         this.rerankModelPresenter = rerankModelPresenter;
 

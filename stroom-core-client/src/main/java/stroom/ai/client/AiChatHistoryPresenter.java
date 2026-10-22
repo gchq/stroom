@@ -55,6 +55,7 @@ public class AiChatHistoryPresenter
                          final AiChatHistoryResultListPresenter findResultListPresenter,
                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        own(findResultListPresenter);
         this.findResultListPresenter = findResultListPresenter;
 
         // Ensure list has a border in the popup view.

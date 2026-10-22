@@ -63,6 +63,8 @@ public class AskStroomAiConfigPresenter
                                       final AiConfigGeneralPresenter generalPresenter,
                                       final AiConfigTableAnalysisPresenter tableAnalysisPresenter) {
         super(eventBus, view);
+        own(generalPresenter);
+        own(tableAnalysisPresenter);
         this.askStroomAiClient = askStroomAiClient;
         this.clientSecurityContext = clientSecurityContext;
         this.generalPresenter = generalPresenter;

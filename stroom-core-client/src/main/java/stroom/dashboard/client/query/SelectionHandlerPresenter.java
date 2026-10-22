@@ -46,6 +46,8 @@ public class SelectionHandlerPresenter
                                      final EditExpressionPresenter editExpressionPresenter,
                                      final CurrentSelectionPresenter currentSelectionPresenter) {
         super(eventBus, view);
+        own(editExpressionPresenter);
+        own(currentSelectionPresenter);
         this.editExpressionPresenter = editExpressionPresenter;
         this.currentSelectionPresenter = currentSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());

@@ -70,6 +70,7 @@ public class EditApiKeyPresenter
                                final UiConfigCache uiConfigCache,
                                final UserRefSelectionBoxPresenter ownerPresenter) {
         super(eventBus, view);
+        own(ownerPresenter);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.uiConfigCache = uiConfigCache;

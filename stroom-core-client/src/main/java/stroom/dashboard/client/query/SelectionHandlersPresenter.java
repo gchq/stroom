@@ -96,6 +96,7 @@ public class SelectionHandlersPresenter
                                       final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
                                       final DynamicFieldSelectionListModel dynamicFieldSelectionListModel) {
         super(eventBus, view);
+        own(listPresenter);
         this.dynamicFieldSelectionListModel = dynamicFieldSelectionListModel;
         this.listPresenter = listPresenter;
 //        this.expressionPresenter = expressionPresenter;

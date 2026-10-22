@@ -37,6 +37,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                               final SourcePresenter sourcePresenter,
                               final SourceTabView view) {
         super(eventBus, view);
+        own(sourcePresenter);
         this.sourcePresenter = sourcePresenter;
 
         getView().setSourceView(sourcePresenter.getView());

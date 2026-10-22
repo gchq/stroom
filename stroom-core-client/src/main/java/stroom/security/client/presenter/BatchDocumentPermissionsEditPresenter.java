@@ -71,6 +71,8 @@ public class BatchDocumentPermissionsEditPresenter
                                                  final RestFactory restFactory,
                                                  final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
+        own(docSelectionBoxPresenter);
+        own(userRefSelectionBoxPresenter);
         this.restFactory = restFactory;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
