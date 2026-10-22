@@ -33,6 +33,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
@@ -56,6 +57,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jackson.dataformat.yaml
     implementation libs.jackson.jq
     implementation libs.jackson2.databind
     implementation libs.jakarta.servlet.api

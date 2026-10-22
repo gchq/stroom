@@ -46,6 +46,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.store.api.AttributeMapFactory;
+import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -58,8 +59,10 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -251,6 +254,7 @@ final class ModelEvaluationWorld {
                 bind(SecurityContext.class).toInstance(securityContext);
                 bind(StroomEventLoggingService.class).toInstance(Mockito.mock(StroomEventLoggingService.class));
                 bind(ExplorerNodeService.class).toInstance(explorerNodeService);
+                bind(ExplorerService.class).toInstance(Mockito.mock(ExplorerService.class));
                 bind(DocDependencyService.class).toInstance(dependencyService());
                 bind(DocFinder.class).toInstance(docFinder());
                 bind(ProcessorFilterService.class).toInstance(processorFilterService());
@@ -275,6 +279,8 @@ final class ModelEvaluationWorld {
                 bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
                 bind(ElasticIndexTemplates.class).toInstance(Mockito.mock(ElasticIndexTemplates.class));
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
+                bind(DataService.class).toInstance(Mockito.mock(DataService.class));
+                bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
                 bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
                 Multibinder.newSetBinder(binder(), ContentIndexable.class);
                 @SuppressWarnings("rawtypes") final MapBinder<DocumentTypeName, DocumentActionHandler> handlers =

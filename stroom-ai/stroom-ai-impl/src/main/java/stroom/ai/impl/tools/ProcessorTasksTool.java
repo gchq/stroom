@@ -151,7 +151,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     /// The most task rows read when counting by processor filter, or finding FAILED tasks.
     static final int MAX_SCAN_ROWS = 10_000;
     /// The most task rows read at a time.
-    static final int PAGE_SIZE = 1_000;
+    static final int PAGE_SIZE = ProcessorTaskFinder.PAGE_SIZE;
     /// The most stuck-looking tasks read.
     static final int MAX_STUCK_ROWS = 1_000;
     /// The most pipelines whose Error streams are looked for, each with its own query.
@@ -695,38 +695,9 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                         final int maxRows,
                         final int maxVisible,
                         final Visibility visibility) {
-        final List<ProcessorTask> visible = new ArrayList<>();
-        int read = 0;
-        boolean moreRows = false;
-        boolean moreVisible = false;
-        reading:
-        while (read < maxRows) {
-            ToolDeadline.check();
-            final int length = Math.min(PAGE_SIZE, maxRows - read);
-            final ExpressionCriteria criteria = new ExpressionCriteria(expression);
-            // One more than the page, to tell if there are more.
-            criteria.setPageRequest(new PageRequest(read, length + 1));
-            criteria.setSort(ProcessorTaskFields.FIELD_ID, true, false);
-            final List<ProcessorTask> page = NullSafe.list(NullSafe.get(
-                    processorTaskServiceProvider.get().find(criteria), ResultPage::getValues));
-            final List<ProcessorTask> rows = page.subList(0, Math.min(page.size(), length));
-            read += rows.size();
-            for (final ProcessorTask task : rows) {
-                if (visibility.canSee(task)) {
-                    if (visible.size() >= maxVisible) {
-                        // Only a task the user may see makes "more".
-                        moreVisible = true;
-                        break reading;
-                    }
-                    visible.add(task);
-                }
-            }
-            moreRows = page.size() > length;
-            if (!moreRows) {
-                break;
-            }
-        }
-        return new Tasks(visible, moreRows && !moreVisible && read >= maxRows, moreVisible);
+        final ProcessorTaskFinder.Tasks found = ProcessorTaskFinder.find(processorTaskServiceProvider.get(),
+                expression, maxRows, maxVisible, visibility::canSee);
+        return new Tasks(found.visible(), found.capped(), found.more());
     }
 
     // --------------------------------------------------------------------------------
@@ -1596,32 +1567,10 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     /// @return The start of an Error stream's text, up to [#MAX_BYTES_PER_STREAM], or null if it couldn't be
     /// read.
     private ReadText readErrorStream(final long id) {
-        try (final Source source = storeProvider.get().openSource(id)) {
-            final long parts = source.count();
-            final StringBuilder text = new StringBuilder();
-            int remaining = MAX_BYTES_PER_STREAM;
-            boolean truncated = false;
-            for (long part = 0; part < parts; part++) {
-                if (remaining <= 0) {
-                    truncated = true;
-                    break;
-                }
-                try (final InputStreamProvider provider = source.get(part);
-                        final SegmentInputStream in = provider.get()) {
-                    in.includeAll();
-                    final byte[] bytes = in.readNBytes(remaining + 1);
-                    final int length = Math.min(bytes.length, remaining);
-                    if (bytes.length > remaining) {
-                        truncated = true;
-                    }
-                    text.append(new String(bytes, 0, length, StandardCharsets.UTF_8));
-                    if (!text.isEmpty() && text.charAt(text.length() - 1) != '\n' && !truncated) {
-                        text.append('\n');
-                    }
-                    remaining -= length;
-                }
-            }
-            return new ReadText(text.toString(), truncated);
+        try {
+            final StreamReader.RawText text = StreamReader.errorStreamText(storeProvider.get(), id,
+                    MAX_BYTES_PER_STREAM);
+            return new ReadText(text.text(), text.truncated());
         } catch (final ToolTimeoutException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {

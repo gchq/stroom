@@ -42,6 +42,7 @@ import io.modelcontextprotocol.spec.McpSchema.Implementation;
 import io.modelcontextprotocol.spec.McpSchema.InitializeRequest;
 import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
 import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpStreamableServerSession;
 import io.modelcontextprotocol.spec.McpStreamableServerSession.McpStreamableServerSessionInit;
@@ -76,16 +77,21 @@ class StroomMcpServer {
     static final String SERVER_NAME = "Stroom";
     /// How often, at most, idle sessions are looked for.
     static final Duration EVICTION_INTERVAL = Duration.ofMinutes(1);
-    /// What a client is told about Stroom's tools when it connects.
+    /// What a client is told about Stroom's tools when it connects: how they run here, then the Stroom MCP
+    /// server's instructions (sent to every client at connection, so the rules hold whichever client runs the
+    /// model and whether or not it uses the prompts), as they apply to Stroom.
     static final String INSTRUCTIONS = """
             These are Stroom's own tools. Each runs as the signed-in user, with their permissions, and only those \
             their tool policies allow are listed. A call that changes something in Stroom asks the user first. A \
             large result is saved to this session's workspace (a path under /outputs/), which the workspace tools \
-            (read_file, grep, jq, table and others) read; the workspace lasts as long as the session.""";
+            (read_file, grep, jq, table and others) read; the workspace lasts as long as the session.
+
+            """ + BundledKnowledge.serverInstructions();
 
     private final SecurityContext securityContext;
     private final HttpServletRequestHolder requestHolder;
     private final McpTools tools;
+    private final McpResources resources;
     private final McpWorkspaces workspaces;
     private final Provider<AiConfig> aiConfigProvider;
     private final Provider<BuildInfo> buildInfoProvider;
@@ -98,6 +104,7 @@ class StroomMcpServer {
     StroomMcpServer(final SecurityContext securityContext,
                     final HttpServletRequestHolder requestHolder,
                     final McpTools tools,
+                    final McpResources resources,
                     final McpWorkspaces workspaces,
                     final Provider<AiConfig> aiConfigProvider,
                     final Provider<BuildInfo> buildInfoProvider,
@@ -105,6 +112,7 @@ class StroomMcpServer {
         this.securityContext = securityContext;
         this.requestHolder = requestHolder;
         this.tools = tools;
+        this.resources = resources;
         this.workspaces = workspaces;
         this.aiConfigProvider = aiConfigProvider;
         this.buildInfoProvider = buildInfoProvider;
@@ -196,7 +204,10 @@ class StroomMcpServer {
                     : versions.getLast();
             return new InitializeResult(
                     version,
-                    ServerCapabilities.builder().tools(true).build(),
+                    ServerCapabilities.builder()
+                            .tools(true)
+                            .resources(false, false)
+                            .build(),
                     new Implementation(SERVER_NAME, NullSafe.nonBlankStringElse(
                             NullSafe.get(buildInfoProvider.get(), BuildInfo::getBuildVersion), "unknown")),
                     INSTRUCTIONS,
@@ -210,7 +221,15 @@ class StroomMcpServer {
                 McpSchema.METHOD_TOOLS_LIST, (exchange, params) -> asUser(exchange, session ->
                         new ListToolsResult(tools.list(session), null, null)),
                 McpSchema.METHOD_TOOLS_CALL, (exchange, params) -> asUser(exchange, session ->
-                        tools.call(session, exchange, toCallToolRequest(params))));
+                        tools.call(session, exchange, toCallToolRequest(params))),
+                // The guides and convention profiles bundled for agents, the same for every user.
+                McpSchema.METHOD_RESOURCES_LIST, (exchange, params) -> asUser(exchange, session ->
+                        resources.list()),
+                McpSchema.METHOD_RESOURCES_TEMPLATES_LIST, (exchange, params) -> asUser(exchange, session ->
+                        resources.templates()),
+                McpSchema.METHOD_RESOURCES_READ, (exchange, params) -> asUser(exchange, session ->
+                        resources.read(McpJsonDefaults.getMapper()
+                                .convertValue(params, ReadResourceRequest.class).uri())));
     }
 
     private static Map<String, McpNotificationHandler> notificationHandlers() {

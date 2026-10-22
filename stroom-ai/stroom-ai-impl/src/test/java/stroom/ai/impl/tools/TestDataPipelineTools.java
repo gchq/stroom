@@ -471,7 +471,7 @@ class TestDataPipelineTools {
         return new PipelineTool(workspace, new GrepTool(workspace), new JqTool(workspace), new XPathTool(workspace),
                 new TableTool(workspace, summariser),
                 new FetchEventsTool(workspace, () -> Mockito.mock(Store.class), () -> injectorSecurityContext,
-                        Mockito.mock(AiAuditLog.class)),
+                        Mockito.mock(AiAuditLog.class), Mockito.mock(StreamReader.class)),
                 new SearchEventsTool(workspace), currentResultsTool);
     }
 

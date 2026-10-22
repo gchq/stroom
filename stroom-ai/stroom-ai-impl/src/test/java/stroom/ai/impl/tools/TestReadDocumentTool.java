@@ -29,10 +29,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -43,6 +45,8 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -405,6 +409,144 @@ class TestReadDocumentTool {
                 .contains("It has 3001 word(s) in all")
                 .contains("/documents/top-uuid/words.md")
                 .contains("table tool");
+    }
+
+    @Test
+    void aClustersCredentialsAreRedacted() {
+        // As the Stroom MCP server redacted them: credentials in cluster documents are never given to the model.
+        final DocRef cluster = new DocRef("ElasticCluster", "cluster-uuid", "ES_PROD");
+        node(cluster);
+        viewable.add(cluster.getUuid());
+        indexable(cluster, Map.of("meta", """
+                {"name": "ES_PROD", "connection": {"connectionUrls": ["https://es:9200"],
+                 "apiKeySecret": "s3cret", "caCertificate": "-----BEGIN"}}"""), null);
+
+        final String result = run("{\"uuid\":\"cluster-uuid\"}");
+
+        assertThat(result)
+                .contains("https://es:9200")
+                .contains("\"apiKeySecret\" : \"<redacted>\"")
+                .contains("\"caCertificate\" : \"<redacted>\"")
+                .doesNotContain("s3cret")
+                .doesNotContain("-----BEGIN");
+    }
+
+    @Test
+    void anXsltsKeptMappingIsSummarisedAndTakenOutOfItsDescription() {
+        // Seen with the Stroom MCP server: the whole kept mapping (1,400 lines) was spilled by the client to a
+        // file, which the agent read in parts and then sent back whole to regenerate the XSLT.
+        viewable.add(XSLT.getUuid());
+        final String description = TestKeptMapping.described("Acme VPN events");
+        indexable(XSLT, Map.of("xsl", "<xsl:stylesheet/>", "meta", JsonUtil.writeValueAsString(Map.of(
+                        "name", XSLT.getName(), "description", description), true)),
+                XsltDoc.builder().uuid(XSLT.getUuid()).name(XSLT.getName()).description(description).build());
+
+        final String summary = run("{\"uuid\":\"xslt-uuid\"}");
+        final String whole = run("{\"uuid\":\"xslt-uuid\",\"mapping\":true}");
+
+        assertThat(summary)
+                .contains("## Part 'xsl'\n<xsl:stylesheet/>")
+                .contains("\"description\" : \"Acme VPN events\"")
+                .contains("## Pending changes\n- Created")
+                .contains("## Kept mapping")
+                .contains("logon: Authenticate (`action` = login)")
+                .contains("never send it back whole")
+                .doesNotContain("<!-- stroom-mcp")
+                .doesNotContain("EventSource/Generator");
+        assertThat(whole)
+                .contains("## Kept mapping")
+                .contains("EventSource/Generator")
+                .doesNotContain("<!-- stroom-mcp");
+    }
+
+    @Test
+    void aDocumentationDocIsReadAPassageAtATime() {
+        final DocRef manual = new DocRef(DocumentationDoc.TYPE, "manual-uuid", "Acme reference - events");
+        node(manual);
+        viewable.add(manual.getUuid());
+        final String text = "# Events\nline\nEvent 4625: an account failed to log on (0xC000006A)\nline";
+        indexable(manual, Map.of("txt", text), DocumentationDoc.builder().uuid(manual.getUuid())
+                .name(manual.getName()).data(text).build());
+
+        final String found = run("{\"uuid\":\"manual-uuid\",\"find\":\"0xc000006a\",\"contextLines\":0}");
+
+        assertThat(JsonUtil.readValue(found, Map.class))
+                .containsEntry("name", "Acme reference - events")
+                .containsEntry("matches", 1)
+                .containsEntry("passages", List.of(Map.of("lines", "3-3",
+                        "text", "Event 4625: an account failed to log on (0xC000006A)")));
+    }
+
+    @Test
+    void aLongDocumentationDocIsGivenWithItsOutline() {
+        final DocRef manual = new DocRef(DocumentationDoc.TYPE, "manual-uuid", "Acme reference - events");
+        node(manual);
+        viewable.add(manual.getUuid());
+        final StringBuilder text = new StringBuilder();
+        for (int n = 0; n < 2_000; n++) {
+            text.append(n % 100 == 0
+                    ? "## Event " + n
+                    : "line " + n + " " + "x".repeat(20)).append('\n');
+        }
+        indexable(manual, Map.of("txt", text.toString()), null);
+
+        assertThat(run("{\"uuid\":\"manual-uuid\"}"))
+                .contains("too large to show in full")
+                .contains("Its outline:\n## Event 0\n## Event 100\n")
+                .contains("Read the parts you need with find (an event id, a field name, a heading from the "
+                          + "outline).");
+    }
+
+    @Test
+    void aTypeThatDoesntMatchIsRefused() {
+        viewable.add(XSLT.getUuid());
+        xsltContent("<xsl:stylesheet/>");
+
+        assertThat(run("{\"uuid\":\"xslt-uuid\",\"type\":\"Pipeline\"}"))
+                .isEqualTo("Error: xslt-uuid is a XSLT, not a Pipeline.");
+        assertThat(run("{\"uuid\":\"xslt-uuid\",\"type\":\"xslt\"}")).contains("## Part 'xsl'");
+    }
+
+    @Test
+    void aPipelineIsGivenWithWhatItProcesses() {
+        // Seen with the Stroom MCP server: asked which feeds a pipeline acts on, an agent found its filters
+        // unreadable and searched by keyword.
+        node(PIPELINE);
+        viewable.add(PIPELINE.getUuid());
+        indexable(PIPELINE, Map.of("json", "{\"elements\": {}}"), null);
+
+        assertThat(run("{\"uuid\":\"pipe-uuid\"}"))
+                .contains("## Processing\nIts processor filters (what it processes) need the Manage Processors "
+                          + "permission");
+
+        canManageProcessors();
+        Mockito.when(processorFilterService.find(PIPELINE)).thenReturn(ResultPage.createUnboundedList(List.of()));
+        assertThat(run("{\"uuid\":\"pipe-uuid\"}"))
+                .contains("## Processing\nNo processor filters: this pipeline processes nothing on its own");
+
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, FEED)
+                .build();
+        Mockito.when(processorFilterService.find(PIPELINE)).thenReturn(ResultPage.createUnboundedList(List.of(
+                filter().enabled(true).priority(10).queryData(QueryData.builder().expression(expression).build())
+                        .build())));
+        assertThat(run("{\"uuid\":\"pipe-uuid\"}"))
+                .contains("## Processing\n- Filter 7 (uuid filter-uuid): selects streams where Feed")
+                .contains("FIREWALL-EVENTS")
+                .contains("; enabled, priority 10");
+    }
+
+    private void node(final DocRef docRef) {
+        Mockito.when(explorerNodeService.getNodeByUuid(docRef.getUuid()))
+                .thenReturn(Optional.of(ExplorerNode.builder().docRef(docRef).build()));
+    }
+
+    private void indexable(final DocRef docRef, final Map<String, String> parts, final Object document) {
+        final DocumentActionHandler<?> handler = Mockito.mock(DocumentActionHandler.class,
+                Mockito.withSettings().extraInterfaces(ContentIndexable.class));
+        Mockito.when(((ContentIndexable) handler).getIndexableData(docRef)).thenReturn(parts);
+        Mockito.doReturn(document).when(handler).readDocument(docRef);
+        handlers.put(new DocumentTypeName(docRef.getType()), handler);
     }
 
     private void canManageProcessors() {

@@ -24,8 +24,12 @@ import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.explorer.shared.FindResult;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -47,6 +51,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.date.DateUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -60,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -69,7 +75,9 @@ import java.util.TreeMap;
 
 /// `folder_contents` - what is in an Explorer folder, as the folder's own tabs show it: the documents in it (and
 /// optionally the folders below it), the streams of its feeds and pipelines (the Data tab), the processor filters
-/// of its pipelines and analytic rules (the Processors tab), and their tasks (the Active Tasks tab).
+/// of its pipelines and analytic rules (the Processors tab), and their tasks (the Active Tasks tab). Given a name,
+/// it finds documents by name and type in the folder and below instead, as the Stroom MCP server's
+/// `find_documents` did, through the Explorer's quick filter (`ExplorerService.find`).
 ///
 /// Read as the user. A folder the user can't view is refused without saying whether it exists, and only the
 /// documents in it they can view are listed, without looking inside folders they can't view. Streams are found
@@ -87,6 +95,8 @@ class FolderContentsTool extends AbstractBuiltInTool {
     static final String DEPTH_ARG = "depth";
     static final String TYPES_ARG = "types";
     static final String INCLUDE_IGNORED_ARG = "includeIgnored";
+    static final String NAME_ARG = "name";
+    static final String LIMIT_ARG = "limit";
 
     static final String DOCUMENTS = "documents";
     static final String STREAMS = "streams";
@@ -104,6 +114,14 @@ class FolderContentsTool extends AbstractBuiltInTool {
     static final int MAX_FILTERS = 100;
     /// The most rows of task counts read.
     static final int MAX_TASK_ROWS = 500;
+    /// The most documents found by name returned, by default.
+    static final int DEFAULT_FIND_LIMIT = 100;
+    /// The most documents found by name returned.
+    static final int MAX_FIND_LIMIT = 500;
+    /// The most documents the explorer search is asked for, before they are filtered.
+    static final int MAX_FIND_RESULTS = 5_000;
+    /// What the caller is told when more documents match than are returned.
+    static final String MORE_MATCH = "More documents match; narrow the name or types, or raise the limit.";
 
     private final DocumentAccess documentAccess;
     private final ProcessorFilterAccess processorFilterAccess;
@@ -113,6 +131,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
     private final FeedAccess feedAccess;
     private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
+    private final Provider<ExplorerService> explorerServiceProvider;
 
     @Inject
     FolderContentsTool(final DocumentAccess documentAccess,
@@ -122,7 +141,8 @@ class FolderContentsTool extends AbstractBuiltInTool {
                        final Provider<ProcessorTaskService> processorTaskServiceProvider,
                        final Provider<DocFinder> docFinderProvider,
                        final AgentInstructions agentInstructions,
-                       final AiAuditLog auditLog) {
+                       final AiAuditLog auditLog,
+                       final Provider<ExplorerService> explorerServiceProvider) {
         this.documentAccess = documentAccess;
         this.processorFilterAccess = processorFilterAccess;
         this.metaServiceProvider = metaServiceProvider;
@@ -131,6 +151,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
         this.feedAccess = new FeedAccess(docFinderProvider, documentAccess);
         this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
+        this.explorerServiceProvider = explorerServiceProvider;
     }
 
     @Override
@@ -162,7 +183,14 @@ class FolderContentsTool extends AbstractBuiltInTool {
                                  + "processing tasks by status). Ask for the streams, processors or tasks when the "
                                  + "user mentions data, processing or tasks. Folders an AGENTS doc says to ignore "
                                  + "(e.g. an Archive) are shown but not looked in, and the AGENTS docs that apply to "
-                                 + "the folder are given.")
+                                 + "the folder are given. Give name to find documents by name (and types) in the "
+                                 + "folder and every folder below it, the whole tree when no folder is given, as the "
+                                 + "Explorer's quick filter does: each one's type, UUID, name and folder path "
+                                 + "(/Feeds/Events/Acme, the System root left out, as the folder argument takes it). "
+                                 + "Start there to locate feeds, pipelines, XSLTs, template pipelines or existing "
+                                 + "Elastic indices")
+                        .chatOnly("; find_in_content finds documents by text in their content")
+                        .general(".")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(FOLDER_ARG, "The folder's UUID, or its Explorer path, e.g. "
@@ -179,6 +207,12 @@ class FolderContentsTool extends AbstractBuiltInTool {
                                                                   + "still followed."))
                         .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to look in ignored folders too, "
                                                                  + "only when the user asks for them.")
+                        .addStringProperty(NAME_ARG, "Optional. Name to match, as in the Stroom explorer quick "
+                                                     + "filter, e.g. 'Acme'. Use '*' to match everything of the "
+                                                     + "given types. Finds documents rather than listing the "
+                                                     + "folder.")
+                        .addIntegerProperty(LIMIT_ARG, "With name, the most documents to return (default "
+                                                       + DEFAULT_FIND_LIMIT + ", at most " + MAX_FIND_LIMIT + ").")
                         .build())
                 .build();
     }
@@ -210,6 +244,10 @@ class FolderContentsTool extends AbstractBuiltInTool {
         final Listing listing = new Listing();
         final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
                                                                  + " tool");
+        final String name = stringArg(request, NAME_ARG);
+        if (name != null) {
+            return findDocuments(request, context, name, types, path, standing);
+        }
         final Optional<Ignored> folderIgnored = standing.ignored(path);
         // A folder the user asks about is listed in full, even if an AGENTS doc says to ignore it.
         final Scan scan = new Scan(standing, "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG))
@@ -253,6 +291,90 @@ class FolderContentsTool extends AbstractBuiltInTool {
                     Map.of(), "Folder streams listed by the " + NAME + " tool");
         }
         return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    /// Finds documents by name (and types) in the folder and below, as the Stroom MCP server's `find_documents`
+    /// does, through the Explorer's quick filter, which only finds what the user can view. Each is checked for View
+    /// again, and those in folders an AGENTS doc says to ignore are left out unless asked for.
+    ///
+    /// @return The MCP server's JSON: `total`, `returned`, `documents` (each `type`, `uuid`, `name`, `path`), and a
+    /// `hint` when more match than are returned.
+    private ToolResult findDocuments(final ToolCall request,
+                                     final ToolCallContext context,
+                                     final String name,
+                                     final Set<String> types,
+                                     final String folderPath,
+                                     final Standing standing) {
+        final Integer limitArg = intArg(request, LIMIT_ARG);
+        final int limit = limitArg == null
+                ? DEFAULT_FIND_LIMIT
+                : Math.max(1, Math.min(limitArg, MAX_FIND_LIMIT));
+        final boolean includeIgnored = "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG));
+        final ExplorerTreeFilter filter = new ExplorerTreeFilter(types.isEmpty()
+                ? null
+                : types, null, null, null, Set.of(DocumentPermission.VIEW), name, false, null);
+        final List<FindResult> found;
+        try {
+            final DocumentFindRequest findRequest = new DocumentFindRequest(new PageRequest(0, MAX_FIND_RESULTS),
+                    null, filter);
+            found = NullSafe.list(NullSafe.get(explorerServiceProvider.get().find(findRequest),
+                    ResultPage::getValues));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find documents named '" + name + "'", e);
+            return ToolResult.text("Error: the documents couldn't be searched: "
+                                   + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+        }
+        final List<Map<String, Object>> documents = new ArrayList<>();
+        final List<DocRef> docRefs = new ArrayList<>();
+        final Set<String> ignoredBy = new LinkedHashSet<>();
+        int ignored = 0;
+        int total = 0;
+        for (final FindResult result : found) {
+            final DocRef docRef = result.getDocRef();
+            final String path = AgentInstructions.normalise(DocumentAccess.withoutSystemRoot(result.getPath()));
+            // Stroom also returns the folders that contain a match; keep only what was asked for.
+            if (docRef == null || (!types.isEmpty() && !types.contains(docRef.getType()))
+                || !AgentInstructions.isWithin(path, folderPath) || !documentAccess.canView(docRef)) {
+                continue;
+            }
+            final Optional<Ignored> ignoring = includeIgnored
+                    ? Optional.empty()
+                    : standing.ignored(joinPath(path, docRef.getName()));
+            if (ignoring.isPresent()) {
+                ignored++;
+                ignoredBy.add(ignoring.get().describe());
+                continue;
+            }
+            total++;
+            if (documents.size() < limit) {
+                final Map<String, Object> document = new LinkedHashMap<>();
+                document.put("type", docRef.getType());
+                document.put("uuid", docRef.getUuid());
+                document.put("name", docRef.getName());
+                document.put("path", path);
+                documents.add(document);
+                docRefs.add(docRef);
+            }
+        }
+        final Map<String, Object> json = new LinkedHashMap<>();
+        json.put("total", total);
+        json.put("returned", documents.size());
+        json.put("documents", documents);
+        if (total > documents.size()) {
+            json.put("hint", MORE_MATCH);
+        }
+        if (ignored > 0) {
+            json.put("left_out", ignored + " document(s) in folders an " + AgentInstructions.DOC_NAME + " doc says "
+                                 + "to ignore: " + String.join(", ", ignoredBy) + "; pass " + INCLUDE_IGNORED_ARG
+                                 + " only if the user asks for them.");
+        }
+        final Map<String, String> data = new LinkedHashMap<>();
+        data.put("Found", String.valueOf(total));
+        auditLog.documentsSearched(context.session(), "documents named '" + name + "'" + (types.isEmpty()
+                        ? ""
+                        : " of type " + String.join(", ", types.stream().sorted().toList())) + " in " + folderPath,
+                docRefs, data, "Documents found by name by the " + NAME + " tool");
+        return ToolResult.text(JsonUtil.writeValueAsString(json, false)).withStructuredContent(json);
     }
 
     private static List<String> show(final ToolCall request) {

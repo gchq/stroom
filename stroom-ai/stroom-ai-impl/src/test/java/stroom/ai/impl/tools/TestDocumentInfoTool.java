@@ -124,6 +124,29 @@ class TestDocumentInfoTool {
     }
 
     @Test
+    void aDocumentIsFoundByItsPath() {
+        // As the Stroom MCP server's find_documents gave paths: from the System root, or without it.
+        viewable.add(DICTIONARY);
+        final ExplorerNode lookups = ExplorerNode.builder().type(ExplorerConstants.FOLDER_TYPE).uuid("f")
+                .name("Lookups").build();
+        viewable.add(lookups.getDocRef());
+        Mockito.when(explorerNodeService.getNodesByName(ExplorerConstants.SYSTEM_NODE, "Lookups"))
+                .thenReturn(List.of(lookups));
+        Mockito.when(explorerNodeService.getNodesByName(lookups, DICTIONARY.getName()))
+                .thenReturn(List.of(ExplorerNode.builder().docRef(DICTIONARY).build()));
+
+        assertThat(run("{\"path\":\"System / Lookups / Malicious IPs\"}"))
+                .startsWith("Dictionary 'Malicious IPs'\nUUID: dict-uuid\n");
+        assertThat(run("{\"path\":\"/Lookups/Malicious IPs\",\"type\":\"Dictionary\"}"))
+                .startsWith("Dictionary 'Malicious IPs'");
+        assertThat(run("{\"path\":\"/Lookups/Malicious IPs\",\"type\":\"Feed\"}"))
+                .isEqualTo(DocumentAccess.NO_PERMISSION);
+        assertThat(run("{\"uuid\":\"dict-uuid\",\"type\":\"Feed\"}"))
+                .isEqualTo("Error: dict-uuid is a Dictionary, not a Feed.");
+        assertThat(run("{}")).isEqualTo("Error: give the document's uuid, or its path.");
+    }
+
+    @Test
     void aDocumentTheUserCantViewIsRefusedWithoutSayingIfItExists() {
         // It exists, but the user can't view it.
         assertThat(run()).isEqualTo(DocumentAccess.NO_PERMISSION);
@@ -188,7 +211,11 @@ class TestDocumentInfoTool {
     }
 
     private String run() {
-        return tool.execute(request("{\"uuid\":\"dict-uuid\"}"), ToolCalls.inChat(1)).text();
+        return run("{\"uuid\":\"dict-uuid\"}");
+    }
+
+    private String run(final String arguments) {
+        return tool.execute(request(arguments), ToolCalls.inChat(1)).text();
     }
 
     private static ToolCall request(final String arguments) {

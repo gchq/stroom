@@ -38,7 +38,6 @@ import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 /// The one place Stroom's tool contract ([StroomTool], [ToolDefinition], [ToolSchema], [ToolCall]) meets
@@ -104,7 +103,20 @@ public final class LangChain4jTools {
     /// [StroomToolExecutor#result] gives the whole [ToolResult], and langchain4j's `execute` only its text.
     public static StroomToolExecutor executor(final StroomTool tool,
                                               final Function<Object, ToolCallContext> contexts) {
-        return new StroomToolExecutor(tool, contexts);
+        return executor(tool, contexts, new ToolCallGuard());
+    }
+
+    /// Makes the langchain4j executor of a tool, for the chat, with its calls going through a guard.
+    ///
+    /// @param tool     The tool.
+    /// @param contexts Makes the context of a call from its memory id, or gives null if the memory id isn't a
+    ///                 chat's.
+    /// @param guard    What every call goes through (see [ToolCallGuard]).
+    /// @return An executor that runs the tool, and gives a failure as text rather than throwing.
+    public static StroomToolExecutor executor(final StroomTool tool,
+                                              final Function<Object, ToolCallContext> contexts,
+                                              final ToolCallGuard guard) {
+        return new StroomToolExecutor(tool, contexts, guard);
     }
 
     private static JsonObjectSchema objectSchema(final ObjectSchema schema) {
@@ -124,10 +136,14 @@ public final class LangChain4jTools {
 
         private final StroomTool tool;
         private final Function<Object, ToolCallContext> contexts;
+        private final ToolCallGuard guard;
 
-        private StroomToolExecutor(final StroomTool tool, final Function<Object, ToolCallContext> contexts) {
+        private StroomToolExecutor(final StroomTool tool,
+                                   final Function<Object, ToolCallContext> contexts,
+                                   final ToolCallGuard guard) {
             this.tool = tool;
             this.contexts = contexts;
+            this.guard = guard;
         }
 
         /// Runs the tool.
@@ -142,8 +158,7 @@ public final class LangChain4jTools {
                 if (context == null) {
                     return ToolResult.error("Error: " + name + " can only be used in a chat.");
                 }
-                return Objects.requireNonNullElseGet(tool.execute(toolCall(request), context),
-                        () -> ToolResult.text(""));
+                return guard.run(tool, toolCall(request), context, tool::execute);
             } catch (final ToolSessionException e) {
                 // The tool needs something the session doesn't have, e.g. a chat's history.
                 return ToolResult.error("Error: " + e.getMessage());

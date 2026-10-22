@@ -142,7 +142,7 @@ class TestTabSnapshots {
     void partsOverTheLimitAreCutWithANote() {
         viewable.add(XSLT.getUuid());
         config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, true, 10L, null);
+                null, null, null, null, true, 10L, null, null, null);
 
         final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, xslt("<xsl:stylesheet/>", true, "h1"));
 
@@ -168,7 +168,7 @@ class TestTabSnapshots {
     void noTabIsSharedWhenAnAdministratorHasTurnedItOff() {
         viewable.add(XSLT.getUuid());
         config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, false, null, null);
+                null, null, null, null, false, null, null, null, null);
 
         assertThat(tabSnapshots.store(CHAT, xslt("<a/>", true, "h1"))).isEqualTo(TabSnapshots.Stored.NONE);
         assertThat(files.paths()).isEmpty();
@@ -324,7 +324,7 @@ class TestTabSnapshots {
         final String structure = SteppingDescriptions.structure(PIPELINE.getName(), stepping);
         // Room for the structure and the code, but not the input.
         config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, true, (long) structure.length() + 20, null);
+                null, null, null, null, true, (long) structure.length() + 20, null, null, null);
         final AiTabSnapshot tab = new AiTabSnapshot(PIPELINE, "Acme-Events", "Stepping", false, List.of(
                 new AiTabSnapshotPart(AiTabSnapshotPart.STEP_CODE, "application/xml", "<code/>"),
                 new AiTabSnapshotPart(AiTabSnapshotPart.STEP_INPUT, "application/xml", "<input>" + "x".repeat(100)

@@ -19,8 +19,11 @@ package stroom.ai.impl.tools;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.FindResult;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -44,6 +47,8 @@ import stroom.processor.shared.TaskStatus;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
@@ -83,6 +88,7 @@ class TestFolderContentsTool {
     private final MetaService metaService = Mockito.mock(MetaService.class);
     private final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
     private final ProcessorTaskService processorTaskService = Mockito.mock(ProcessorTaskService.class);
+    private final ExplorerService explorerService = Mockito.mock(ExplorerService.class);
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final Map<String, List<DocRef>> children = new HashMap<>();
 
@@ -373,6 +379,86 @@ class TestFolderContentsTool {
                 .isEqualTo("Error: can't show 'secrets'. Show any of: documents, streams, processors, tasks.");
     }
 
+    @Test
+    void documentsAreFoundByNameAndTypeWithTheirPaths() {
+        // As the Stroom MCP server's find_documents gave them: the folder Stroom also returns is left out, the
+        // path is as the folder tools take it, and a hint says when more match than are returned.
+        findResults(
+                new FindResult(FIREWALLS, "System / Security"),
+                new FindResult(PIPELINE, "System / Security / Firewalls"),
+                new FindResult(FEED, "System / Security / Firewalls"));
+
+        final ToolResult result = tool().execute(ToolTestFixture.request(FolderContentsTool.NAME,
+                "{\"name\":\"Firewall\",\"types\":[\"Pipeline\"],\"limit\":1}"), ToolCalls.inChat(1,
+                fixture.workspace));
+
+        assertThat(result.structuredContent())
+                .containsEntry("total", 1)
+                .containsEntry("returned", 1)
+                .containsEntry("documents", List.of(Map.of("type", "Pipeline", "uuid", "pipe-uuid",
+                        "name", "Firewall pipeline", "path", "/Security/Firewalls")))
+                .doesNotContainKey("hint");
+        assertThat(JsonUtil.readValue(result.text(), Map.class)).isEqualTo(result.structuredContent());
+
+        final Map<String, Object> all = tool().execute(ToolTestFixture.request(FolderContentsTool.NAME,
+                "{\"name\":\"Firewall\",\"limit\":1}"), ToolCalls.inChat(1, fixture.workspace))
+                .structuredContent();
+        // Without types, every type, folders too.
+        assertThat(all).containsEntry("total", 3).containsEntry("returned", 1)
+                .containsEntry("hint", FolderContentsTool.MORE_MATCH);
+    }
+
+    @Test
+    void theSearchIsForWhatTheUserCanViewByName() {
+        findResults();
+
+        run("{\"name\":\"Acme\",\"types\":[\"Pipeline\",\"XSLT\"]}");
+
+        final ArgumentCaptor<DocumentFindRequest> request = ArgumentCaptor.forClass(DocumentFindRequest.class);
+        Mockito.verify(explorerService).find(request.capture());
+        assertThat(request.getValue().getFilter().getRequiredPermissions()).containsExactly(DocumentPermission.VIEW);
+        assertThat(request.getValue().getFilter().getNameFilter()).isEqualTo("Acme");
+        assertThat(request.getValue().getFilter().getIncludedTypes()).containsExactlyInAnyOrder("Pipeline", "XSLT");
+    }
+
+    @Test
+    void documentsFoundByNameAreKeptToTheFolderAndWhatTheUserCanView() {
+        findResults(
+                new FindResult(PIPELINE, "System / Security / Firewalls"),
+                new FindResult(SECRET_PIPELINE, "System / Security / Firewalls"),
+                new FindResult(XSLT, "System / Elsewhere"));
+
+        final Map<String, Object> found = tool().execute(ToolTestFixture.request(FolderContentsTool.NAME,
+                "{\"folder\":\"/Security\",\"name\":\"*\"}"), ToolCalls.inChat(1, fixture.workspace))
+                .structuredContent();
+
+        assertThat(found).containsEntry("total", 1);
+        assertThat(found.get("documents").toString()).contains("pipe-uuid").doesNotContain("secret-pipe-uuid",
+                "xslt-uuid");
+    }
+
+    @Test
+    void documentsFoundByNameInAnIgnoredFolderAreLeftOutUnlessAskedFor() {
+        fixture.addInstructions("agents", "## Ignore\n- folders: Firewalls\n", true, "Security");
+        findResults(new FindResult(PIPELINE, "System / Security / Firewalls"));
+
+        final Map<String, Object> found = tool().execute(ToolTestFixture.request(FolderContentsTool.NAME,
+                "{\"name\":\"Firewall\"}"), ToolCalls.inChat(1, fixture.workspace)).structuredContent();
+        final Map<String, Object> included = tool().execute(ToolTestFixture.request(FolderContentsTool.NAME,
+                "{\"name\":\"Firewall\",\"includeIgnored\":true}"), ToolCalls.inChat(1, fixture.workspace))
+                .structuredContent();
+
+        assertThat(found).containsEntry("total", 0);
+        assertThat(found.get("left_out")).asString()
+                .startsWith("1 document(s) in folders an AGENTS doc says to ignore: /Security/Firewalls");
+        assertThat(included).containsEntry("total", 1).doesNotContainKey("left_out");
+    }
+
+    private void findResults(final FindResult... results) {
+        Mockito.when(explorerService.find(Mockito.any())).thenReturn(ResultPage.createUnboundedList(
+                List.of(results)));
+    }
+
     private String run(final String arguments) {
         return tool().execute(ToolTestFixture.request(FolderContentsTool.NAME, arguments), ToolCalls.inChat(1,
                 fixture.workspace)).text();
@@ -382,7 +468,7 @@ class TestFolderContentsTool {
         return new FolderContentsTool(fixture.documentAccess(), fixture.processorFilterAccess(processorFilterService),
                 () -> metaService,
                 () -> processorFilterService, () -> processorTaskService, () -> docFinder,
-                fixture.agentInstructions(), fixture.auditLog());
+                fixture.agentInstructions(), fixture.auditLog(), () -> explorerService);
     }
 
     private static DocRef folder(final String uuid, final String name) {

@@ -1,0 +1,401 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools;
+
+import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.ErrorTriageConfig;
+import stroom.ai.impl.tools.StreamReader.RawText;
+import stroom.ai.impl.tools.StreamReader.StreamReadException;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.Store;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.StoredError;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+/// Summaries of streams, as the user: the error markers of Error streams (or the Error children of raw or Events
+/// streams), grouped and triaged as blocking, review or benign (see [ErrorTriage]); and what Events streams hold,
+/// by EventDetail type, TypeId and Action, and how often each event-logging path is populated.
+///
+/// Callers check the user may view data first. Streams are found through [MetaService] and read through the
+/// stream store, which only reach streams of feeds the user may view.
+public class StreamSummaries {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamSummaries.class);
+
+    /// The event-logging schema's namespace.
+    public static final String EVT = "event-logging:3";
+    /// The most Error children of a stream summarised.
+    static final int MAX_ERROR_STREAMS = 20;
+    /// The most markers read from one Error stream.
+    static final int MAX_MARKERS_PER_STREAM = 1_000;
+    /// The most bytes of one Error stream read.
+    static final int MAX_ERROR_STREAM_BYTES = 4 * 1024 * 1024;
+    /// The character budget for reading Events records: in effect, none.
+    static final int EVENTS_BUDGET = 50_000_000;
+    static final int MAX_COUNTED = 50;
+
+    private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
+
+    private final StreamReader streamReader;
+    private final Provider<Store> storeProvider;
+    private final DocumentAccess documentAccess;
+    private final AcceptedErrors acceptedErrors;
+    private final Provider<AiConfig> aiConfigProvider;
+
+    @Inject
+    public StreamSummaries(final StreamReader streamReader,
+                           final Provider<Store> storeProvider,
+                           final DocumentAccess documentAccess,
+                           final AcceptedErrors acceptedErrors,
+                           final Provider<AiConfig> aiConfigProvider) {
+        this.streamReader = streamReader;
+        this.storeProvider = storeProvider;
+        this.documentAccess = documentAccess;
+        this.acceptedErrors = acceptedErrors;
+        this.aiConfigProvider = aiConfigProvider;
+    }
+
+    /// @return Error triage by the environment's rules and then Stroom's own.
+    /// @throws IllegalArgumentException if one of the environment's rules can't be read.
+    public ErrorTriage errorTriage() {
+        return ErrorTriage.withEnvironmentRules(NullSafe.getOrElse(aiConfigProvider.get(),
+                AiConfig::getErrorTriage, ErrorTriageConfig::getRules, List.of()));
+    }
+
+    // --------------------------------------------------------------------------------
+    // Errors.
+    // --------------------------------------------------------------------------------
+
+    /// Summarises error markers: grouped by severity, element and message, each group classified as blocking
+    /// (must fix), review (may be caused by the pipeline's own content) or benign (report only). Elements the
+    /// pipeline sets itself are distinguished from ones inherited from its template.
+    ///
+    /// @param streamId An Error stream, or a Raw Events/Events stream whose Error children to summarise.
+    /// @return `stream_id`, `error_streams`, the triage (`verdict`, `groups_by_class`, `groups`) and any `unread`,
+    /// as the Stroom MCP server gave them.
+    /// @throws StreamReadException if there is no such stream.
+    public Map<String, Object> summariseErrors(final long streamId) {
+        final ErrorTriage triage = errorTriage();
+        final Meta meta = streamReader.meta(streamId);
+        final List<Meta> errorStreams;
+        if (StreamTypeNames.ERROR.equals(meta.getTypeName())) {
+            errorStreams = List.of(meta);
+        } else {
+            final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, streamId)
+                    .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                    .build();
+            errorStreams = NullSafe.list(NullSafe.get(streamReader.find(expression, MAX_ERROR_STREAMS, true),
+                            ResultPage::getValues)).stream()
+                    .map(MetaRow::getMeta)
+                    .toList();
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("stream_id", streamId);
+        if (errorStreams.isEmpty()) {
+            result.put("error_streams", List.of());
+            result.putAll(triage.triage(List.of(), Set.of()));
+            return result;
+        }
+
+        final List<ErrorTriage.Marker> markers = new ArrayList<>();
+        final Set<String> own = new HashSet<>();
+        final List<AcceptedErrors.Entry> accepted = new ArrayList<>();
+        final List<String> unread = new ArrayList<>();
+        final Set<String> pipelinesRead = new HashSet<>();
+        for (final Meta errorStream : errorStreams) {
+            // Production streams: an Error stream Stroom can't read (its volume gone), or written by a pipeline it
+            // can no longer load (deleted, or a property its element type lost), is said; the rest are still
+            // summarised.
+            try {
+                markers.addAll(markers(errorStream.getId()));
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.debug(() -> "Unable to read Error stream " + errorStream.getId(), e);
+                unread.add("Error stream " + errorStream.getId() + ": " + reason(e));
+                continue;
+            }
+            final String pipelineUuid = errorStream.getPipelineUuid();
+            if (pipelineUuid != null && pipelinesRead.add(pipelineUuid)) {
+                // Its elements unknown: none of its errors is told apart as the pipeline's own.
+                PipelineLayers.load(documentAccess, pipelineUuid)
+                        .ifPresent(layers -> own.addAll(layers.ownElements()));
+                accepted.addAll(acceptedErrors.acceptedFor(pipelineUuid));
+            }
+        }
+        result.put("error_streams", errorStreams.stream().map(Meta::getId).toList());
+        result.putAll(triage.triage(markers, own, null, 3, accepted));
+        if (!unread.isEmpty()) {
+            result.put("unread", unread);
+        }
+        return result;
+    }
+
+    private List<ErrorTriage.Marker> markers(final long errorStreamId) throws IOException {
+        final RawText text = StreamReader.errorStreamText(storeProvider.get(), errorStreamId,
+                MAX_ERROR_STREAM_BYTES);
+        final List<StoredError> stored = ErrorStreamMarkers.parse(text.text(), text.truncated()).markers();
+        return stored.subList(0, Math.min(stored.size(), MAX_MARKERS_PER_STREAM)).stream()
+                .map(ErrorTriage::fromStoredError)
+                .toList();
+    }
+
+    /// @param e A failure.
+    /// @return Its reason, for the agent.
+    public static String reason(final Exception e) {
+        final String message = NullSafe.isBlankString(e.getMessage())
+                ? e.getClass().getSimpleName()
+                : e.getMessage().strip();
+        return message.length() > 300
+                ? message.substring(0, 300)
+                : message;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Events.
+    // --------------------------------------------------------------------------------
+
+    /// Profiles Events streams: how many events of each EventDetail type, TypeId and Action there are, and how
+    /// often each event-logging path is populated.
+    ///
+    /// @param streamIds The Events streams.
+    /// @param maxEvents The most events to read.
+    /// @return `events`, `event_types`, `type_ids`, `actions`, `path_population`, `data_names` and `hint`, as the
+    /// Stroom MCP server gave them.
+    /// @throws StreamReadException if a stream can't be read.
+    public Map<String, Object> summariseEvents(final List<Long> streamIds, final int maxEvents) {
+        final Map<String, Integer> types = new LinkedHashMap<>();
+        final Map<String, Integer> typeIds = new LinkedHashMap<>();
+        final Map<String, Integer> actions = new LinkedHashMap<>();
+        final Map<String, Integer> populated = new TreeMap<>();
+        final Map<List<String>, Integer> dataNames = new LinkedHashMap<>();
+        int count = 0;
+        final DocumentBuilder builder = documentBuilder();
+        for (final long streamId : streamIds) {
+            final List<String> records = streamReader.readRecords(streamId, 0, maxEvents - count, null,
+                    EVENTS_BUDGET).records();
+            for (final String record : records) {
+                final Document document;
+                try {
+                    document = builder.parse(new InputSource(new StringReader(record)));
+                } catch (final Exception e) {
+                    // One record that isn't XML (a truncated or hand-edited stream): passed over.
+                    continue;
+                }
+                final NodeList events = document.getElementsByTagNameNS(EVT, "Event");
+                for (int i = 0; i < events.getLength(); i++) {
+                    final Element event = (Element) events.item(i);
+                    count++;
+                    final Element detail = child(event, "EventDetail");
+                    final Element action = detail == null
+                            ? null
+                            : childElements(detail).stream()
+                                    .filter(c -> !DETAIL_META.contains(c.getLocalName()))
+                                    .findFirst()
+                                    .orElse(null);
+                    final String kind = action == null
+                            ? "(none)"
+                            : action.getLocalName();
+                    types.merge(kind, 1, Integer::sum);
+                    final Element typeId = detail == null
+                            ? null
+                            : child(detail, "TypeId");
+                    typeIds.merge(orNone(typeId), 1, Integer::sum);
+                    if (action != null) {
+                        actions.merge(kind + "/" + orNone(child(action, "Action")), 1, Integer::sum);
+                    }
+                    leafPaths(event).forEach(path -> populated.merge(path, 1, Integer::sum));
+                    dataNames(event).forEach(name -> dataNames.merge(name, 1, Integer::sum));
+                }
+            }
+            if (count >= maxEvents) {
+                break;
+            }
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("events", count);
+        result.put("event_types", mostCommon(types, Integer.MAX_VALUE));
+        result.put("type_ids", mostCommon(typeIds, MAX_COUNTED));
+        result.put("actions", mostCommon(actions, MAX_COUNTED));
+        final Map<String, Double> population = new LinkedHashMap<>();
+        final Map<String, Map<String, Double>> names = new LinkedHashMap<>();
+        if (count > 0) {
+            final int events = count;
+            populated.forEach((path, n) -> population.put(path, percent(n, events)));
+            // Which Data elements each Data path holds, by Name (each as a percentage of events): the path alone
+            // doesn't say, and an index plan maps them one by one.
+            final Map<String, Map<String, Integer>> byPath = new TreeMap<>();
+            dataNames.forEach((key, n) -> byPath.computeIfAbsent(key.get(0), k -> new TreeMap<>())
+                    .put(key.get(1), n));
+            byPath.forEach((path, byName) -> {
+                final Map<String, Double> shares = new LinkedHashMap<>();
+                byName.forEach((name, n) -> shares.put(name, percent(n, events)));
+                names.put(path, shares);
+            });
+        }
+        result.put("path_population", population);
+        result.put("data_names", names);
+        result.put("hint", count >= maxEvents
+                ? "Percentages are of events sampled; raise max_events for a fuller picture."
+                : null);
+        return result;
+    }
+
+    private static double percent(final int n, final int of) {
+        return Math.round(1000.0 * n / of) / 10.0;
+    }
+
+    private static Map<String, Integer> mostCommon(final Map<String, Integer> counts, final int limit) {
+        final List<Map.Entry<String, Integer>> entries = new ArrayList<>(counts.entrySet());
+        // Stable: equal counts keep the order they were first seen in.
+        entries.sort(Collections.reverseOrder(Map.Entry.comparingByValue()));
+        final Map<String, Integer> result = new LinkedHashMap<>();
+        entries.stream().limit(limit).forEach(entry -> result.put(entry.getKey(), entry.getValue()));
+        return result;
+    }
+
+    private static String orNone(final Element element) {
+        final String text = element == null
+                ? ""
+                : element.getTextContent();
+        return NullSafe.isBlankString(text)
+                ? "(none)"
+                : text.strip();
+    }
+
+    // Paths (from Event) of elements that carry a value or attributes, ignoring repeats.
+    private static Set<String> leafPaths(final Element event) {
+        final Set<String> paths = new LinkedHashSet<>();
+        final NodeList all = event.getElementsByTagName("*");
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element node = (Element) all.item(i);
+            if (!leadingText(node).isBlank() || node.getAttributes().getLength() > 0) {
+                paths.add(path(node, event));
+            }
+        }
+        return paths;
+    }
+
+    // (path of the Data element, its Name) for each Data element with a value, ignoring repeats.
+    private static Set<List<String>> dataNames(final Element event) {
+        final Set<List<String>> names = new LinkedHashSet<>();
+        final NodeList data = event.getElementsByTagNameNS(EVT, "Data");
+        for (int i = 0; i < data.getLength(); i++) {
+            final Element element = (Element) data.item(i);
+            if (NullSafe.isNonEmptyString(element.getAttribute("Name"))
+                && !element.getAttribute("Value").isBlank()) {
+                names.add(List.of(path(element, event), element.getAttribute("Name")));
+            }
+        }
+        return names;
+    }
+
+    private static String path(final Element node, final Element event) {
+        final List<String> parts = new ArrayList<>();
+        Node current = node;
+        while (current != null && current != event) {
+            parts.addFirst(localName(current));
+            current = current.getParentNode();
+        }
+        return String.join("/", parts);
+    }
+
+    private static String localName(final Node node) {
+        return node.getLocalName() == null
+                ? node.getNodeName()
+                : node.getLocalName();
+    }
+
+    // The text before an element's first child element, as lxml's text is.
+    private static String leadingText(final Element element) {
+        final StringBuilder sb = new StringBuilder();
+        for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                break;
+            }
+            if (child.getNodeType() == Node.TEXT_NODE || child.getNodeType() == Node.CDATA_SECTION_NODE) {
+                sb.append(child.getNodeValue());
+            }
+        }
+        return sb.toString();
+    }
+
+    private static Element child(final Element parent, final String localName) {
+        return childElements(parent).stream()
+                .filter(c -> localName.equals(c.getLocalName()) && EVT.equals(c.getNamespaceURI()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static List<Element> childElements(final Element parent) {
+        final List<Element> children = new ArrayList<>();
+        for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof final Element element) {
+                children.add(element);
+            }
+        }
+        return children;
+    }
+
+    /// @return A namespace-aware parser that reads no DTDs or external entities.
+    public static DocumentBuilder documentBuilder() {
+        try {
+            final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setExpandEntityReferences(false);
+            final DocumentBuilder builder = factory.newDocumentBuilder();
+            // Errors are failures to parse, not messages on standard error.
+            builder.setErrorHandler(null);
+            return builder;
+        } catch (final ParserConfigurationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}

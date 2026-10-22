@@ -33,6 +33,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,9 +105,7 @@ public class DocumentAccess {
     /// no such folder, or the user can't view it or a folder above it on the path, with no difference between the
     /// cases.
     public Optional<DocRef> findFolder(final String folder) {
-        final String value = folder == null
-                ? ""
-                : folder.strip();
+        final String value = withoutSystemRoot(folder);
         if (value.isEmpty() || "/".equals(value) || ExplorerConstants.SYSTEM_DOC_REF.getUuid().equals(value)) {
             return Optional.of(ExplorerConstants.SYSTEM_DOC_REF);
         }
@@ -134,6 +133,62 @@ public class DocumentAccess {
             LOGGER.debug(() -> "Unable to find the folder " + folder, e);
             return Optional.empty();
         }
+    }
+
+    /// Finds a document by its Explorer path, following only folders the user can view.
+    ///
+    /// @param path The document's path, e.g. `/Feeds/Events/ACME-EVENTS` (or `System / Feeds / Events /
+    ///             ACME-EVENTS`, as Stroom's explorer search gives paths).
+    /// @param type The document's type, e.g. `Feed`, or null for any; it tells apart documents of one name.
+    /// @return The document, if it exists and the user can view it and the folders above it. Empty otherwise, with
+    /// no difference between the cases.
+    public Optional<ExplorerNode> findByPath(final String path, final String type) {
+        final String value = withoutSystemRoot(path);
+        if (!value.startsWith("/")) {
+            return Optional.empty();
+        }
+        final List<String> names = Arrays.stream(value.substring(1).split("/"))
+                .map(String::strip)
+                .filter(name -> !name.isEmpty())
+                .toList();
+        if (names.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            ExplorerNode current = ExplorerConstants.SYSTEM_NODE;
+            for (int i = 0; i < names.size() && current != null; i++) {
+                final boolean last = i == names.size() - 1;
+                current = explorerNodeServiceProvider.get().getNodesByName(current, names.get(i)).stream()
+                        .filter(node -> node.getDocRef() != null)
+                        .filter(node -> last
+                                ? type == null || type.equalsIgnoreCase(node.getDocRef().getType())
+                                : ExplorerConstants.isFolder(node))
+                        .filter(node -> canView(node.getDocRef()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            return Optional.ofNullable(current);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the document " + path, e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param path An Explorer path or UUID as a caller gave it, e.g. `System / Feeds / Events`, `System/Feeds` or
+    ///             `/Feeds`.
+    /// @return It stripped, with the System root written as `/`, as the tools take paths, e.g. `/Feeds/Events`:
+    /// Stroom's explorer search gives paths from `System`, and an agent passes them on (seen: a folder tool refused
+    /// `System / Feeds / Events` and took `/Feeds/Events`). Anything else (a UUID, a path from `/`) as it was.
+    static String withoutSystemRoot(final String path) {
+        final String value = NullSafe.string(path).strip();
+        if ("system".equalsIgnoreCase(value)) {
+            return "/";
+        }
+        if (value.regionMatches(true, 0, "System", 0, "System".length())
+            && value.substring("System".length()).stripLeading().startsWith("/")) {
+            return "/" + value.substring("System".length()).stripLeading().substring(1).strip();
+        }
+        return value;
     }
 
     /// @param docRef A document.

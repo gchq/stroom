@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
@@ -34,10 +35,13 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -56,10 +60,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /// Fetches the source events behind the rows of a table, e.g. an attached dashboard table, into one XML file in the
-/// workspace (see [EventsFile]), for search_events to search by XPath or text.
+/// workspace (see [EventsFile]), for search_events to search by XPath or text; or reads records from one stream
+/// (raw input, Events XML, or a child part such as the receipt headers), as the Stroom MCP server's read_stream
+/// did, whole records within a limit of characters, with where to read on.
 ///
 /// Events are read as the user: only streams of feeds they may see are read, and they need permission to view data.
 /// What is read is data from anywhere, so the run counts as having read untrusted content.
@@ -72,20 +79,34 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     static final String STREAM_ID_COLUMN = "StreamId";
     static final String EVENT_ID_COLUMN = "EventId";
     static final String DEFAULT_OUT = "/outputs/events.xml";
+    static final String STREAM_ID_ARG = "streamId";
+    static final String FIRST_RECORD_ARG = "firstRecord";
+    static final String RECORD_COUNT_ARG = "recordCount";
+    static final String CHILD_TYPE_ARG = "childType";
+    static final String MAX_CHARS_ARG = "maxChars";
+    static final int DEFAULT_RECORD_COUNT = 5;
+    static final int MAX_RECORD_COUNT = 100;
+    /// Characters of record data returned by default.
+    static final int DEFAULT_MAX_CHARS = 60_000;
+    static final int MIN_MAX_CHARS = 1_000;
+    static final int MAX_MAX_CHARS = 200_000;
 
     private final Provider<Store> storeProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final AiAuditLog auditLog;
+    private final StreamReader streamReader;
 
     @Inject
     FetchEventsTool(final ChatWorkspace workspace,
                     final Provider<Store> storeProvider,
                     final Provider<SecurityContext> securityContextProvider,
-                    final AiAuditLog auditLog) {
+                    final AiAuditLog auditLog,
+                    final StreamReader streamReader) {
         super(workspace);
         this.storeProvider = storeProvider;
         this.securityContextProvider = securityContextProvider;
         this.auditLog = auditLog;
+        this.streamReader = streamReader;
     }
 
     @Override
@@ -120,7 +141,11 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                         .chatOnly(" Then use search_events to get values from each event by XPath, or find text "
                                   + "in them, as a table.")
                         .general(" Only events the user may see are fetched, up to a limit an administrator sets; "
-                                 + "the result says if any were left out.")
+                                 + "the result says if any were left out. Or give streamId instead to read records "
+                                 + "from a stream: raw input, Events XML, or a child part such as the receipt "
+                                 + "headers (childType 'Meta Data'). Whole records within a limit of characters, "
+                                 + "not of records: when fewer fit than asked, next_first_record says where to read "
+                                 + "on.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, ToolDescription.builder()
@@ -129,11 +154,25 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                 .general(".")
                                 .build())
                         .addIntegerProperty(LIMIT_ARG, "The most events to fetch, from the first rows.")
+                        .addProperty(STREAM_ID_ARG, new IntegerSchema(ToolDescription.builder()
+                                .general("Stream (meta) id to read records from")
+                                .chatOnly(", e.g. from stream_meta")
+                                .general(", in place of a table.")
+                                .build()))
+                        .addIntegerProperty(FIRST_RECORD_ARG, "With streamId: zero-based index of the first "
+                                                              + "record (default 0).")
+                        .addIntegerProperty(RECORD_COUNT_ARG, "With streamId: how many records (default "
+                                                              + DEFAULT_RECORD_COUNT + ", at most "
+                                                              + MAX_RECORD_COUNT + ").")
+                        .addStringProperty(CHILD_TYPE_ARG, "With streamId: read a child part instead, e.g. 'Meta "
+                                                           + "Data' (receipt headers) or 'Context'.")
+                        .addIntegerProperty(MAX_CHARS_ARG, "With streamId: characters of record data to return: "
+                                                           + "leave the default (60,000) unless the user asks for "
+                                                           + "more, for long records; up to 200,000.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("The file in /outputs/ to write the events to (default " + DEFAULT_OUT
                                           + ").")
                                 .build())
-                        .required(PATH_ARG)
                         .build())
                 .build();
     }
@@ -146,6 +185,13 @@ class FetchEventsTool extends AbstractWorkspaceTool {
 
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        if (stringArg(request, STREAM_ID_ARG) != null) {
+            return readStream(request, context);
+        }
+        if (stringArg(request, PATH_ARG) == null) {
+            throw new WorkspaceException("Give path (a table with StreamId and EventId columns), or streamId to "
+                                         + "read records from one stream.");
+        }
         final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath requestedOut = outArg(request);
@@ -185,6 +231,121 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         final String coverage = CurrentResultsTool.coverage(workspace, path, ids.count() + ids.skipped())
                 .orElse(null);
         return ToolResult.text(summary(out, ids, counts, coverage));
+    }
+
+    // --------------------------------------------------------------------------------
+    // Reading one stream.
+    // --------------------------------------------------------------------------------
+
+    /// Reads records from one stream, as the Stroom MCP server's read_stream did.
+    private ToolResult readStream(final ToolCall request, final ToolCallContext context) {
+        final long streamId = longArg(request, STREAM_ID_ARG);
+        if (!canViewData()) {
+            throw new WorkspaceException("You don't have permission to view data, so stream " + streamId
+                                         + " can't be read.");
+        }
+        final int firstRecord = Math.max(0, Objects.requireNonNullElse(intArg(request, FIRST_RECORD_ARG), 0));
+        final int recordCount = Math.max(1, Math.min(MAX_RECORD_COUNT,
+                Objects.requireNonNullElse(intArg(request, RECORD_COUNT_ARG), DEFAULT_RECORD_COUNT)));
+        final String childType = stringArg(request, CHILD_TYPE_ARG);
+        final Integer maxChars = intArg(request, MAX_CHARS_ARG);
+        final int limit = maxChars == null
+                ? DEFAULT_MAX_CHARS
+                : Math.max(MIN_MAX_CHARS, Math.min(MAX_MAX_CHARS, maxChars));
+        final Map<String, Object> result;
+        try {
+            result = readRecords(streamId, firstRecord, recordCount, childType, limit);
+        } catch (final StreamReader.StreamReadException e) {
+            throw new WorkspaceException(e.getMessage());
+        } finally {
+            auditLog.streamsViewed(context.session(), List.of(streamId), "Read records of stream " + streamId
+                                                                         + " with the " + NAME + " tool");
+        }
+        return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+    }
+
+    /// @return The records, with where to read on, as read_stream gave them.
+    Map<String, Object> readRecords(final long streamId,
+                                    final int firstRecord,
+                                    final int recordCount,
+                                    final String childType,
+                                    final int limit) {
+        List<String> records;
+        StreamReader.Fetched first;
+        try {
+            final StreamReader.Records read = streamReader.readRecords(streamId, firstRecord, recordCount,
+                    childType, limit);
+            records = read.records();
+            first = read.first();
+        } catch (final StreamReader.StreamReadException e) {
+            if (childType != null || !NullSafe.string(e.getMessage()).contains(StreamReader.UNDECODABLE)) {
+                throw e;
+            }
+            // Bytes its feed's character set can't decode: Stroom won't show the text. Read as a pipeline reads
+            // it, through the bytes, each such byte replaced (StreamCharsets); the records are split from that
+            // text below.
+            final String text = streamReader.cachedRawText(streamId, StreamReader.MAX_SAMPLE_CHARS).text();
+            final Meta meta = streamReader.meta(streamId);
+            records = List.of(text.substring(0, Math.min(text.length(), limit)));
+            first = new StreamReader.Fetched(meta.getFeedName(), meta.getTypeName(), null, false, 1L, null,
+                    List.of());
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("stream_id", streamId);
+        result.put("feed", first.feedName());
+        result.put("type", first.streamTypeName());
+        result.put("first_record", firstRecord);
+        result.put("total_records", first.totalItems());
+        result.put("available_child_types", first.availableChildTypes());
+        result.put("records", records);
+        final Map<String, Object> report = childType == null
+                ? streamReader.charsetReport(streamId)
+                : null;
+        if (report != null) {
+            result.put("undecodable_bytes", report);
+        }
+        if (childType == null && !first.segmented() && Objects.requireNonNullElse(first.totalItems(), 1L) <= 1) {
+            final Map<String, Object> split = streamReader.splitRaw(streamId, firstRecord, recordCount, limit);
+            if (split != null) {
+                result.putAll(split);
+                records = castList(split.get("records"));
+                if (records.isEmpty()) {
+                    return result;
+                }
+            }
+        }
+        final long total = result.get("total_records") instanceof final Number number
+                ? number.longValue()
+                : 0;
+        if (records.stream().mapToInt(String::length).sum() >= limit) {
+            result.put("truncated", true);
+            result.put("hint", "Record data was trimmed at " + StreamReader.thousands(limit) + " characters: read "
+                               + "fewer records at a time, or, if the user asks for more, maxChars (up to "
+                               + "200,000).");
+        } else if (records.size() < recordCount && firstRecord + records.size() < total) {
+            // The size limit was reached before the next whole record: the rest from where this stops.
+            final int next = firstRecord + records.size();
+            result.put("next_first_record", next);
+            result.put("hint", records.size() + " whole records fit in " + StreamReader.thousands(limit)
+                               + " characters (a limit of characters, not of records); read on with firstRecord="
+                               + next + ". survey_feed reads a stream's records without this limit.");
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> castList(final Object value) {
+        return (List<String>) value;
+    }
+
+    private long longArg(final ToolCall request, final String name) {
+        final String value = stringArg(request, name);
+        try {
+            return Long.parseLong(value.replace(",", ""));
+        } catch (final NumberFormatException e) {
+            throw new WorkspaceException("'" + value + "' isn't a stream id: give a whole number, e.g. from "
+                                         + "stream_meta.");
+        }
     }
 
     /// Records in the audit log the streams events were read from.

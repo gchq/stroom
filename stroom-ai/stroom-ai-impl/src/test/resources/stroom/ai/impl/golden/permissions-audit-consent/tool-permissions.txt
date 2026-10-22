@@ -29,7 +29,7 @@ Needs: View Data
 Needs: View Data
 - everything: runs: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read).
 - without View Data: REFUSED or limited: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read). The headers each part was received with are only in the stream store, which you don't have permission to view data from, so there is a row per stream instead.
-- nothing: REFUSED or limited: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read). The headers each part was received with are only in the stream store, which you don't have permission to view data from, so there is a row per stream instead.
+- nothing: REFUSED or limited: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read). The headers each part was received with are only in the stream store, which you don't have permission to view data from, so there is a row per stream instead. No feed named 'TEST-FEED' was found here (or you can't view it): ask the user for the feed's exact name, and whether this Stroom is the cluster they mean. Don't go on until they say.
 - admin: runs (the same as with everything)
 
 ## processor_tasks {"mode":"list"}

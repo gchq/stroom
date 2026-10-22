@@ -28,10 +28,12 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.AppPermission;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Data;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 class TestStreamMetaTool {
@@ -66,6 +69,7 @@ class TestStreamMetaTool {
     private final MetaService metaService = Mockito.mock(MetaService.class);
     private final AttributeMapFactory attributeMapFactory = Mockito.mock(AttributeMapFactory.class);
     private final Store store = Mockito.mock(Store.class);
+    private final StreamReader streamReader = Mockito.mock(StreamReader.class);
     private final List<MetaRow> rows = new ArrayList<>();
     private final Map<Long, Map<String, String>> storeAttributes = new HashMap<>();
     private final Map<Long, List<Map<String, String>>> storeParts = new HashMap<>();
@@ -280,6 +284,101 @@ class TestStreamMetaTool {
         assertThat(StreamMetaTool.time("PT1H", "from")).isBetween(now - 3_700_000L, now - 3_500_000L);
     }
 
+    @Test
+    void theStreamsProducedFromAStreamAreFoundNewestFirst() {
+        run("{\"parentId\":5}");
+
+        final ArgumentCaptor<FindMetaCriteria> criteria = ArgumentCaptor.forClass(FindMetaCriteria.class);
+        Mockito.verify(metaService).findRows(criteria.capture());
+        assertThat(criteria.getValue().getExpression().toString()).contains("Parent Id = 5");
+        assertThat(criteria.getValue().getSortList())
+                .singleElement()
+                .satisfies(sort -> {
+                    assertThat(sort.getId()).isEqualTo(MetaFields.FIELD_ID);
+                    assertThat(sort.isDesc()).isTrue();
+                });
+    }
+
+    @Test
+    void aTypeAloneFindsStreams() {
+        run("{\"type\":\"Error\"}");
+
+        final ArgumentCaptor<FindMetaCriteria> criteria = ArgumentCaptor.forClass(FindMetaCriteria.class);
+        Mockito.verify(metaService).findRows(criteria.capture());
+        assertThat(criteria.getValue().getExpression().toString()).contains("Type = Error");
+    }
+
+    @Test
+    void aFeedNotHereStopsTheWorkRatherThanReadingAsOneWithNoStreams() {
+        rows.clear();
+
+        // A feed of another cluster, perhaps.
+        assertThat(run("{\"feeds\":[\"OTHER-CLUSTER-FEED\"]}"))
+                .contains("No feed named 'OTHER-CLUSTER-FEED' was found here")
+                .contains("Don't go on until they say");
+        // A feed that is here, with no streams yet, is just that.
+        assertThat(run("{\"feeds\":[\"WINDOWS-EVENTS\"]}")).doesNotContain("No feed named");
+    }
+
+    @Test
+    void aStreamIsDescribedWithItsFamilyAttributesAndProcessingCounts() {
+        final StreamWorld world = new StreamWorld();
+        world.addRaw(5, "a\n");
+        world.headers.put(5L, "Feed:ACME-EVENTS\nRemoteAddress:10.0.0.1\n");
+        world.addSegmented(6, "Events", 5L, "pipeline-uuid", List.of("<Events/>"));
+        world.add(7, "Error", 5L, "pipeline-uuid", Map.of());
+        world.add(8, "Events", 6L, "pipeline-uuid", Map.of("Read Count", "12", "Write Count", "10",
+                "Error Count", "0", "Fatal Error Count", "", "Warning Count", "2"));
+
+        final Map<String, Object> raw = tool(world).describe(5);
+
+        assertThat(raw.get("children_by_type")).isEqualTo(Map.of("Events", 1, "Error", 1));
+        assertThat(raw.get("attributes")).isEqualTo(Map.of("Feed", "ACME-EVENTS", "RemoteAddress", "10.0.0.1"));
+        assertThat(raw).doesNotContainKey("processing");
+        // How many events a large stream produced is known without reading it.
+        assertThat(tool(world).describe(8).get("processing")).isEqualTo(Map.of("records_read", 12L,
+                "records_written", 10L, "errors", 0L, "warnings", 2L));
+    }
+
+    @Test
+    void aStreamWithoutReceiptHeadersHasANoteInstead() {
+        final StreamWorld world = new StreamWorld();
+        world.addSegmented(6, "Events", null, "pipeline-uuid", List.of("<Events/>"));
+        Mockito.doThrow(new IllegalStateException("no headers")).when(world.dataService).fetch(Mockito.any());
+
+        final Map<String, Object> result = tool(world).describe(6);
+
+        assertThat(result.get("attributes_note")).isEqualTo("no headers");
+        assertThat(result.get("children_by_type")).isEqualTo(Map.of());
+    }
+
+    @Test
+    void withoutViewDataAStreamsHeadersAreNotRead() {
+        Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(false);
+        final StreamWorld world = new StreamWorld();
+        world.addRaw(5, "a\n");
+
+        final Map<String, Object> result = tool(world).describe(5);
+
+        assertThat((String) result.get("attributes_note")).contains("don't have permission to view data");
+        Mockito.verifyNoInteractions(world.dataService);
+    }
+
+    @Test
+    void aStreamIsDescribedAsJsonOrSaidNotToBeThere() {
+        final StreamWorld world = new StreamWorld();
+        final StreamMetaTool tool = tool(world);
+
+        assertThatThrownBy(() -> tool.run(ToolTestFixture.request(StreamMetaTool.NAME, "{\"streamId\":99}"),
+                ToolCalls.inChat(1, fixture.workspace)))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessage("No stream with id 99");
+        world.addRaw(5, "a\n");
+        final String described = tool.run(ToolTestFixture.request(StreamMetaTool.NAME, "{\"streamId\":5}"),
+                ToolCalls.inChat(1, fixture.workspace)).text();
+        assertThat(JsonUtil.readValue(described, Map.class)).containsEntry("stream_id", 5);
+    }
+
     private String run(final String arguments) {
         return tool().run(ToolTestFixture.request(StreamMetaTool.NAME, arguments), ToolCalls.inChat(1,
                 fixture.workspace)).text();
@@ -294,9 +393,15 @@ class TestStreamMetaTool {
         }
     }
 
+    private StreamMetaTool tool(final StreamWorld world) {
+        return new StreamMetaTool(fixture.workspace, () -> world.metaService, () -> attributeMapFactory,
+                () -> world.store, fixture.documentAccess(), fixture.auditLog(), world.streamReader(),
+                fixture.feedAccess());
+    }
+
     private StreamMetaTool tool() {
         return new StreamMetaTool(fixture.workspace, () -> metaService, () -> attributeMapFactory, () -> store,
-                fixture.documentAccess(), fixture.auditLog());
+                fixture.documentAccess(), fixture.auditLog(), streamReader, fixture.feedAccess());
     }
 
     private static MetaRow row(final long id, final long createMs, final Map<String, String> attributes) {

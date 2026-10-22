@@ -105,16 +105,24 @@ services directly as the user, and those listed here only read.
 * **`stream_meta` and `find_streams`, `describe_stream`**: MCP finds streams by `feed`, `stream_type`, `parent_id`
   or `pipeline_uuid` (`limit` up to 200, newest first) and describes one stream's family, attributes and processing.
   The built-in takes `feeds`, `pipeline`, `folder`, `type`, `from`/`to`, `status`, `attributes`, `parts`, `groupBy`
-  and `aggregates`, writes a table to the workspace, and needs View Data for attributes from the stream store. It
-  has no `parent_id` or child-stream view.
+  and `aggregates`, writes a table to the workspace, and needs View Data for attributes from the stream store. The
+  two are merged into `stream_meta`: it also takes `parentId` (the streams produced from a stream) or a `type`
+  alone, finds newest first, and, given `streamId` alone, describes that stream as `describe_stream` did (its
+  children with a count per type, its receipt headers and its processing counts, as JSON).
 * **`fetch_events` and `read_stream`, `locate_event`**: MCP reads records by position (`stream_id`, `first_record`,
   `record_count`, `child_type`) and traces an event back to its raw record and steps it. The built-in fetches the
   stored events behind StreamId/EventId rows into one XML file for `search_events`, and requires View Data.
+  `read_stream` is merged into `fetch_events`: given `streamId` (with `firstRecord`, `recordCount`, `childType`
+  and `maxChars`) it reads that stream's records as JSON, splitting a raw stream held as one record into its
+  records. `locate_event` is ported as a tool of its own (`stroom-mcp-impl`).
 * **`processor_tasks` and `processing_status`, `summarise_streams`**: MCP's `processing_status` covers one pipeline's
   filters (what each selects, tracker and task counts, whether finished); `summarise_streams kind=errors` triages
   Error-stream markers with `error_rules.yaml`. The built-in covers the whole cluster with modes `failures`, `list`
   and `summary` and filters by pipeline, feed, node, filter, stream, status and time, groups Error-stream messages
-  into failure modes (`FailureModes`), and requires Manage Processors.
+  into failure modes (`FailureModes`), and requires Manage Processors. `processing_status` and `summarise_streams`
+  are ported as tools of their own (`stroom-mcp-impl`): `processing_status` reads each filter's tasks with the paged
+  reader `processor_tasks` uses (`ProcessorTaskFinder`), and `summarise_streams` triages with `ErrorTriage` (the
+  bundled `error_rules.yaml`, after any the `stroom.ai.errorTriage.rules` property gives).
 * **`xslt_lookups` and `find_reference_data`**: MCP lists every reference map in the environment, with no arguments;
   the built-in starts from given XSLTs or pipelines (`uuids`, `map`, `loaders`) and analyses their lookups.
 * **`run_stroomql` and `find_events`**: MCP searches one index with structured terms (`where: [{field, value}]`,

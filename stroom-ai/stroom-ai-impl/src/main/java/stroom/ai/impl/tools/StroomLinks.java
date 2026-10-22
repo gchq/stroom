@@ -58,8 +58,15 @@ public final class StroomLinks {
         final String name = NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid())
                 .replace("[", "(")
                 .replace("]", ")");
-        return "[" + name + "](" + base + "action=open-doc&docType=" + docRef.getType() + "&docUuid="
-               + docRef.getUuid() + ")";
+        return "[" + name + "](" + documentTarget(docRef) + ")";
+    }
+
+    /// @param docRef A document.
+    /// @return The target of a link that opens the document, without a name, e.g.
+    /// `?action=open-doc&docType=Feed&docUuid=…` (on Stroom's URL for [#absolute(String)] links), for a result
+    /// that gives the link as a value of its own.
+    public String documentTarget(final DocRef docRef) {
+        return base + "action=open-doc&docType=" + docRef.getType() + "&docUuid=" + docRef.getUuid();
     }
 
     /// @param id A stream's id, or null.

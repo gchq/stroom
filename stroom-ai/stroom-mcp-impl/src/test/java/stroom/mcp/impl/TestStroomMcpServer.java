@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolCallGuard;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
@@ -49,7 +50,13 @@ import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
+import io.modelcontextprotocol.spec.McpSchema.InitializeResult;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
+import io.modelcontextprotocol.spec.McpSchema.Resource;
+import io.modelcontextprotocol.spec.McpSchema.ResourceTemplate;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
@@ -127,9 +134,9 @@ class TestStroomMcpServer {
         final McpForms forms = new McpForms(AiConfig::new);
         final McpTools mcpTools = new McpTools(() -> builtInTools, () -> policies,
                 new McpApprovals(forms, AiConfig::new), forms, workspaces, () -> chatWorkspace,
-                () -> runManager, () -> auditLog, () -> uriFactory);
-        server = new StroomMcpServer(securityContext, new HttpServletRequestHolder(), mcpTools, workspaces,
-                AiConfig::new, () -> null, policies);
+                () -> runManager, () -> auditLog, () -> uriFactory, new ToolCallGuard());
+        server = new StroomMcpServer(securityContext, new HttpServletRequestHolder(), mcpTools,
+                new McpResources(new BundledKnowledge()), workspaces, AiConfig::new, () -> null, policies);
 
         jetty = new Server();
         final ServerConnector connector = new ServerConnector(jetty);
@@ -188,7 +195,7 @@ class TestStroomMcpServer {
     @Test
     void aCallThatChangesSomethingWaitsForTheUsersApprovalId() {
         try (McpSyncClient client = client(false, null)) {
-            final String reply = text(client.callTool(new CallToolRequest("write_thing", Map.of("v", 1))));
+            final String reply = text(client.callTool(new CallToolRequest("write_thing", Map.of("q", "1"))));
 
             assertThat(reply).startsWith("Not run yet: this call changes something in Stroom");
             assertThat(ran).isEmpty();
@@ -196,7 +203,7 @@ class TestStroomMcpServer {
 
             final CallToolResult approved = client.callTool(new CallToolRequest("approve_call",
                     Map.of("approval_id", approvalId)));
-            assertThat(text(approved)).isEqualTo("ran write_thing {\"v\":1}");
+            assertThat(text(approved)).isEqualTo("ran write_thing {\"q\":\"1\"}");
             // An approval id can be used once.
             final CallToolResult again = client.callTool(new CallToolRequest("approve_call",
                     Map.of("approval_id", approvalId)));
@@ -295,6 +302,101 @@ class TestStroomMcpServer {
             waitUntil(() -> !told.isEmpty());
             assertThat(told.getLast()).extracting(Tool::name).containsExactly("read_thing");
         }
+    }
+
+    @Test
+    void theGuidesAndConventionsAreServedAsResources() {
+        try (McpSyncClient client = client(false, null)) {
+            assertThat(client.getServerCapabilities().resources()).isNotNull();
+            assertThat(client.listResources().resources()).extracting(Resource::uri)
+                    .contains("stroom://guides", "stroom://guide/xslt", "stroom://guide/agent-instructions",
+                            "stroom://conventions/ecs", "stroom://conventions/stroom-flat");
+            assertThat(client.listResourceTemplates().resourceTemplates()).extracting(ResourceTemplate::uriTemplate)
+                    .containsExactly("stroom://guide/{name}", "stroom://conventions/{name}");
+
+            final TextResourceContents xslt = text(client.readResource(new ReadResourceRequest(
+                    "stroom://guide/xslt")));
+            assertThat(xslt.mimeType()).isEqualTo("text/markdown");
+            assertThat(xslt.text()).startsWith("#");
+            assertThat(text(client.readResource(new ReadResourceRequest("stroom://conventions/ecs"))).mimeType())
+                    .isEqualTo("text/yaml");
+            assertThat(text(client.readResource(new ReadResourceRequest("stroom://guides"))).text())
+                    .startsWith("# Guides\n\n- `stroom://guide/agent-instructions`: ")
+                    .contains("- `stroom://guide/xslt`: ");
+        }
+    }
+
+    @Test
+    void anUnknownResourceSaysWhatThereIs() {
+        try (McpSyncClient client = client(false, null)) {
+            assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://guide/nope")))
+                    .hasMessageContaining("No guide 'nope'. Guides: agent-instructions, cef, data-splitter");
+            assertThatThrownBy(() -> client.readResource(new ReadResourceRequest("stroom://conventions/nope")))
+                    .hasMessageContaining("No convention 'nope'");
+        }
+    }
+
+    @Test
+    void theResourcesOfASessionAreOnlyForItsUser() {
+        try (McpSyncClient client = client(false, null)) {
+            currentUser = BOB;
+
+            assertThatThrownBy(client::listResources).hasMessageContaining("belongs to another user");
+        }
+    }
+
+    @Test
+    void theGuideTemplateNamesEveryGuide() {
+        // As the Stroom MCP server's test of its guide index: a guide added without its name in the description
+        // fails here.
+        final String listed = McpResources.GUIDE_DESCRIPTION.replaceFirst("^Working guides: ", "")
+                .replaceFirst("\\.$", "");
+        assertThat(List.of(listed.split(", "))).containsExactlyInAnyOrderElementsOf(BundledKnowledge.GUIDES);
+    }
+
+    @Test
+    void theInstructionsKeepATaskListAndGoOnBetweenStages() {
+        // Seen in testing: Stroom AI's agent kept no task list and stopped at the end of each stage to report.
+        final String text = String.join(" ", StroomMcpServer.INSTRUCTIONS.split("\\s+"));
+        assertThat(text)
+                .contains("With a task-list tool (Stroom AI: task_list), write the plan's steps into it")
+                .contains("A stage's end is no place to stop: don't end your turn to report it, go on to `next`");
+        try (McpSyncClient client = McpClient.sync(transport()).requestTimeout(Duration.ofSeconds(10)).build()) {
+            final InitializeResult initialized = client.initialize();
+            assertThat(initialized.instructions()).isEqualTo(StroomMcpServer.INSTRUCTIONS);
+        }
+    }
+
+    @Test
+    void theInstructionsSendTheUsersDecisionsToTheClientsQuestionTool() {
+        // Asked for by the user: Stroom AI's agent has ask_user, but ended its answer with a "Questions for you"
+        // list, following the server's "ask the user" wording.
+        final String text = String.join(" ", StroomMcpServer.INSTRUCTIONS.split("\\s+"));
+        assertThat(text)
+                .contains("a tool for asking the user questions (Stroom AI: ask_user), ask them with it, all in one "
+                          + "call")
+                .contains("Without such a tool, ask in your answer")
+                // Results that fix the options or say to recommend none, forms of the server's and pastes keep
+                // their own way.
+                .contains("or says to recommend none, keep to it")
+                .contains("not what a form from this server will ask")
+                .contains("A request to paste something (an index template, a sample) is not such a question");
+    }
+
+    @Test
+    void theInstructionsNameNoToolMergedIntoAnother() {
+        // find_documents and describe_document became folder_contents, find_in_content, document_info,
+        // read_document and document_links.
+        assertThat(StroomMcpServer.INSTRUCTIONS).doesNotContain("find_documents", "describe_document");
+        for (final String guide : BundledKnowledge.GUIDES) {
+            assertThat(new BundledKnowledge().guide(guide)).hasValueSatisfying(text ->
+                    assertThat(text).as(guide).doesNotContain("find_documents", "describe_document",
+                            "STROOM_MCP_"));
+        }
+    }
+
+    private static TextResourceContents text(final ReadResourceResult result) {
+        return (TextResourceContents) result.contents().getFirst();
     }
 
     private McpSyncClient client(final boolean forms, final Function<ElicitFormRequest, ElicitResult> answer) {

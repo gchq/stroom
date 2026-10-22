@@ -28,10 +28,12 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.List;
 import java.util.Optional;
 
 /// How the chat tools find and describe processor filters, as the user, as the Processors tab shows them.
@@ -40,7 +42,7 @@ import java.util.Optional;
 /// only to a user with the Manage Processors permission ([ProcessorFilterService] refuses anyone else), and the
 /// Processors tab only for a pipeline (or analytic rule) the user can view. [#find(String)] needs both, and so do
 /// the tools before they say what a filter selects. Every check fails closed.
-class ProcessorFilterAccess {
+public class ProcessorFilterAccess {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterAccess.class);
 
@@ -66,7 +68,7 @@ class ProcessorFilterAccess {
 
     /// @return True if the user may manage processors, as the Processors and Active Tasks tabs need. False if they
     /// may not, or if checking fails (failing closed).
-    boolean canManageProcessors() {
+    public boolean canManageProcessors() {
         try {
             return securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION);
         } catch (final RuntimeException e) {
@@ -88,6 +90,34 @@ class ProcessorFilterAccess {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to find processor filter " + uuid, e);
             return Optional.empty();
+        }
+    }
+
+    /// The processor filters of a pipeline (not deleted), as the Processors tab lists them. Asked of Stroom by
+    /// pipeline: otherwise every filter on an instance (2,000 on a test stack) was read on each call.
+    ///
+    /// @param pipeline A pipeline (or analytic rule).
+    /// @return Its filters, or why they can't be listed: the user needs the Manage Processors permission and View
+    /// on the pipeline.
+    public Filters filtersOf(final DocRef pipeline) {
+        if (!canManageProcessors()) {
+            return new Filters(List.of(), "You need the Manage Processors permission to list them, as the "
+                                          + "Processors tab does");
+        }
+        if (pipeline == null || !documentAccess.canView(pipeline)) {
+            return new Filters(List.of(), "No pipeline was found with that UUID, or you don't have permission to "
+                                          + "view it");
+        }
+        try {
+            final List<ProcessorFilter> filters = NullSafe.list(NullSafe.get(
+                            processorFilterServiceProvider.get().find(pipeline), ResultPage::getValues)).stream()
+                    .filter(filter -> pipeline.getUuid().equals(filter.getPipelineUuid()) && !filter.isDeleted())
+                    .toList();
+            return new Filters(filters, null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to list the processor filters of " + pipeline, e);
+            return new Filters(List.of(), NullSafe.nonBlankStringElse(e.getMessage(),
+                    e.getClass().getSimpleName()));
         }
     }
 
@@ -152,5 +182,17 @@ class ProcessorFilterAccess {
             sb.append(", runs as ").append(filter.getRunAsUser().toDisplayString());
         }
         return sb.toString();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A pipeline's processor filters, or why they couldn't be listed.
+    ///
+    /// @param filters The filters, in the order Stroom gives them; empty if they couldn't be listed.
+    /// @param refused Why they couldn't be listed, or null if they were.
+    public record Filters(List<ProcessorFilter> filters, String refused) {
+
     }
 }

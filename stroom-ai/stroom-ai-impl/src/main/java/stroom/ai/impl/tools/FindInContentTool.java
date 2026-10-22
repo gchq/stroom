@@ -64,9 +64,10 @@ import java.util.stream.Collectors;
 /// dictionaries), as the user, returning each matching document with its matching lines.
 ///
 /// - Given UUIDs (e.g. those document_links found), it reads just those documents.
-/// - Given types, it searches Find in Content's index if it is ready. The index is built in full the first time
-///   it is needed, which can take minutes, so if it isn't ready the tool reads the documents of those types
-///   directly, and starts building the index in the background for later searches.
+/// - Given types (or neither UUIDs nor types, for every type with content, as the Stroom MCP server's
+///   `find_documents` with `content` did), it searches Find in Content's index if it is ready. The index is built
+///   in full the first time it is needed, which can take minutes, so if it isn't ready the tool reads the
+///   documents of those types directly, and starts building the index in the background for later searches.
 ///
 /// Every document is checked for View before it is read, as reading a document without View silently gives
 /// nothing. Matches are always confirmed against the document's own text with the ReDoS-safe patterns the
@@ -146,9 +147,12 @@ class FindInContentTool extends AbstractWorkspaceTool {
                                  + "UUID and folder with its matching lines. Give uuids to search just those "
                                  + "documents (quickest")
                         .chatOnly(", e.g. those document_links found")
-                        .general("), or types to search every document of those types you can view. Says how it "
-                                 + "searched and how many documents it read. Documents in folders an AGENTS doc says "
-                                 + "to ignore (e.g. an Archive) are left out.")
+                        .general("), or types to search every document of those types you can view (neither, for "
+                                 + "every type). Use it to find documents by text their content must contain, e.g. a "
+                                 + "vendor name, a source field or an event id in XSLTs: it finds existing "
+                                 + "translations of similar sources to learn from. Says how it searched and how many "
+                                 + "documents it read. Documents in folders an AGENTS doc says to ignore (e.g. an "
+                                 + "Archive) are left out.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PATTERN_ARG, "The text to find.")
@@ -157,7 +161,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
                         .addProperty(UUIDS_ARG, stringArraySchema("The documents to search."))
                         .addProperty(TYPES_ARG, stringArraySchema("The document types to search, e.g. "
                                                                      + "['XSLT', 'TextConverter'], if no uuids "
-                                                                     + "are given."))
+                                                                     + "are given. All types when omitted."))
                         .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to search ignored folders too, "
                                                                  + "only when the user asks for them.")
                         .addIntegerProperty(LIMIT_ARG, "The most matching documents to return (default "
@@ -181,9 +185,6 @@ class FindInContentTool extends AbstractWorkspaceTool {
         final SafePattern pattern = SafePattern.of(text, regex, !matchCase);
         final List<String> uuids = stringListArg(request, UUIDS_ARG);
         final List<String> types = stringListArg(request, TYPES_ARG);
-        if (uuids.isEmpty() && types.isEmpty()) {
-            throw new WorkspaceException("Give uuids or types to search.");
-        }
         final Integer limitArg = intArg(request, LIMIT_ARG);
         final int limit = limitArg == null
                 ? DEFAULT_LIMIT
@@ -210,7 +211,9 @@ class FindInContentTool extends AbstractWorkspaceTool {
                 }
             }
         } else {
-            final List<ContentIndexable> typeIndexables = typeIndexables(types, indexables);
+            final List<ContentIndexable> typeIndexables = types.isEmpty()
+                    ? List.copyOf(indexables.values())
+                    : typeIndexables(types, indexables);
             how = searchTypes(text, regex, matchCase, typeIndexables, search);
         }
 
@@ -363,9 +366,14 @@ class FindInContentTool extends AbstractWorkspaceTool {
         final List<DocRef> found = search.matches.stream()
                 .map(Match::docRef)
                 .toList();
-        final String scope = uuids.isEmpty()
-                ? "documents of type " + String.join(", ", types)
-                : uuids.size() + " document(s) given";
+        final String scope;
+        if (!uuids.isEmpty()) {
+            scope = uuids.size() + " document(s) given";
+        } else if (types.isEmpty()) {
+            scope = "documents of every type";
+        } else {
+            scope = "documents of type " + String.join(", ", types);
+        }
         final Map<String, String> data = new LinkedHashMap<>();
         data.put("DocumentsRead", String.valueOf(search.read));
         data.put("How", how);
@@ -510,8 +518,10 @@ class FindInContentTool extends AbstractWorkspaceTool {
                 if (indexable == null) {
                     return parts;
                 }
+                // Credentials (e.g. a cluster's API key secret) are redacted, as read_document redacts them, so a
+                // search for them doesn't give them away.
                 new TreeMap<>(NullSafe.map(indexable.getIndexableData(docRef))).forEach((part, text) ->
-                        parts.put(part, NullSafe.string(text).lines().toList()));
+                        parts.put(part, SecretRedactor.redactJson(NullSafe.string(text)).lines().toList()));
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Unable to read " + docRef + ": " + e.getMessage(), e);
             }

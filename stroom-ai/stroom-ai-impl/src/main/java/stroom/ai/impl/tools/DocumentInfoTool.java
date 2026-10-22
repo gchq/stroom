@@ -46,10 +46,16 @@ import java.util.function.Predicate;
 /// and last changed it and when, and the documents it depends on and that depend on it. Read as the user: a
 /// document they can't view is refused without saying whether it exists, and each document at either end of a
 /// dependency is checked for View again, leaving out any that can't be checked.
+///
+/// A document can be given by its Explorer path rather than its UUID (as the Stroom MCP server's `find_documents`
+/// gave paths, with or without the System root), and its type checked, so a client that found documents there can
+/// look them up here.
 class DocumentInfoTool extends AbstractBuiltInTool {
 
     static final String NAME = "document_info";
     static final String UUID_ARG = "uuid";
+    static final String PATH_ARG = "path";
+    static final String TYPE_ARG = "type";
     /// The most dependencies, and the most dependants, listed.
     static final int MAX_LINKS = 50;
 
@@ -85,13 +91,21 @@ class DocumentInfoTool extends AbstractBuiltInTool {
                         .general("Describes a Stroom document (e.g. a feed, pipeline, XSLT, dictionary, index or "
                                  + "dashboard) given its UUID: its type, name, Explorer path, tags, who created and "
                                  + "last changed it and when, its version, and the documents it depends on and that "
-                                 + "depend on it, each as a link.")
+                                 + "depend on it, each as a link. Give its Explorer path instead of its UUID to look "
+                                 + "it up by where it is, e.g. '/Feeds/Events/Acme/ACME-EVENTS'.")
                         .chatOnly(" Use read_document for its content and document_documentation for its "
-                                  + "documentation.")
+                                  + "documentation, and folder_contents with name to find documents by name and "
+                                  + "type.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The document's UUID.")
-                        .required(UUID_ARG)
+                        .addStringProperty(PATH_ARG, "Instead of the uuid, the document's Explorer path: its "
+                                                     + "folder's path and its name, e.g. "
+                                                     + "'/Feeds/Events/Acme/ACME-EVENTS' (with or without the "
+                                                     + "System root).")
+                        .addStringProperty(TYPE_ARG, "Optional. The document's type, e.g. 'Feed' or 'Pipeline': "
+                                                     + "with path, it tells apart documents of one name in a "
+                                                     + "folder; with uuid, it is checked.")
                         .build())
                 .build();
     }
@@ -99,14 +113,22 @@ class DocumentInfoTool extends AbstractBuiltInTool {
     @Override
     public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final String uuid = stringArg(request, UUID_ARG);
-        if (uuid == null) {
-            return ToolResult.text("Error: give the document's uuid.");
+        final String path = stringArg(request, PATH_ARG);
+        final String type = stringArg(request, TYPE_ARG);
+        if (uuid == null && path == null) {
+            return ToolResult.text("Error: give the document's uuid, or its path.");
         }
-        final ExplorerNode node = documentAccess.find(uuid).orElse(null);
+        final ExplorerNode node = (uuid != null
+                ? documentAccess.find(uuid)
+                : documentAccess.findByPath(path, type)).orElse(null);
         if (node == null) {
             return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         final DocRef docRef = node.getDocRef();
+        if (type != null && !type.equalsIgnoreCase(docRef.getType())) {
+            return ToolResult.text("Error: " + docRef.getUuid() + " is a " + docRef.getType() + ", not a " + type
+                                   + ".");
+        }
         documentAccess.logView(context.session(), docRef, "Described by the " + NAME + " tool");
 
         final StringBuilder sb = new StringBuilder();
