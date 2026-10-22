@@ -47,8 +47,8 @@ class TestBuildPlanOnExistingData {
         final Map<String, Object> result = status();
         assertThat(next(result).get("step")).isEqualTo("existing data");
         assertThat(result.get("works_from")).isEqualTo(List.of("ACME"));
-        assertThat(next(result).get("call")).isEqualTo(Map.of("tool", "find_streams", "arguments",
-                Map.of("feed", "ACME")));
+        assertThat(next(result).get("call")).isEqualTo(Map.of("tool", "stream_meta", "arguments",
+                Map.of("feeds", List.of("ACME"))));
         assertThat(String.valueOf(next(result).get("then"))).contains("create no feed and upload nothing");
         assertThat(state(result, "feed")).isEqualTo("not needed");
         assertThat(state(result, "samples")).isEqualTo("not needed");
@@ -76,7 +76,8 @@ class TestBuildPlanOnExistingData {
         final Map<String, Object> result = status();
         assertThat(next(result).get("step")).isEqualTo("stepped");
         assertThat(call(result).get("tool")).isEqualTo("step_sample");
-        assertThat(arguments(result).get("stream_ids")).isEqualTo("<recent raw streams of ACME (find_streams)>");
+        assertThat(arguments(result).get("stream_ids"))
+                .isEqualTo("<recent raw streams of ACME (stream_meta feeds=['ACME'])>");
         // Stepped clean: documented next, then promotion; nothing about processing a feed of its own or indexing.
         facts.stepped = true;
         final Map<String, Object> done = status();

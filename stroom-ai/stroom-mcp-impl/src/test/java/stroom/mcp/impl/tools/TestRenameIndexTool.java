@@ -90,8 +90,8 @@ class TestRenameIndexTool {
     @Test
     void aDocThatIsNotAnElasticIndexIsRefused() {
         assertThat(refused("acme-v1", "nope")).isEqualTo("nope is not an Elastic Index doc: give the build's "
-                                                         + "(find_documents type ElasticIndex). A Lucene index is "
-                                                         + "named by its doc: nothing to rename.");
+                                                         + "(folder_contents name='*' types=['ElasticIndex']). A "
+                                                         + "Lucene index is named by its doc: nothing to rename.");
     }
 
     private void setUp(final String docIndex, final String pipelineIndex, final String description) {

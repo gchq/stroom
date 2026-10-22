@@ -198,8 +198,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                         .addStringProperty(INDEX_UUID_ARG, "Instead of a pipeline, an existing index to document: its "
                                                            + "Elastic Index or Lucene Index doc, confirmed with the "
                                                            + "user. The Field mapping section is generated from a "
-                                                           + "survey of the index through Stroom (describe_document "
-                                                           + "shows it), and the doc is named after the index doc.")
+                                                           + "survey of the index through Stroom (read_document of "
+                                                           + "the index doc shows it), and the doc is named after "
+                                                           + "the index doc.")
                         .addBooleanProperty(INDEX_ITSELF_ARG, "With index_uuid of an index this build made: document "
                                                               + "the index doc itself too. Only when the user asks "
                                                               + "for it: by default its documentation is its "
@@ -396,7 +397,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 }
                 throw new ToolRefusal("An events pipeline's documentation needs a '## Field mapping' section. Its "
                                       + "XSLT keeps no mapping (it was not saved by build_translation_xslt), so "
-                                      + "write the section from describe_document and a stepped sample, or save the "
+                                      + "write the section from read_document and a stepped sample, or save the "
                                       + "XSLT again from its mapping (build_translation_xslt uuid=...) and the "
                                       + "section is generated here");
             }

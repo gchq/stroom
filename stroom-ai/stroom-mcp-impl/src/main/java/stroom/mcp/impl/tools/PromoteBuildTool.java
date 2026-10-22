@@ -184,13 +184,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         .addProperty(DESTINATIONS_ARG, TranslationArgs.object(
                                 "Destination folder per document type or per document UUID, e.g. {'Feed': "
                                 + "'/Feeds/Events/Acme', 'Pipeline': '/Feeds/Events/Acme', 'XSLT': ...}: an "
-                                + "explorer path, with or without the root System ('System / Feeds / Events', as "
-                                + "find_documents once gave it, works too). Working copies ignore this: they are "
-                                + "written back over their originals. A new version of a production document "
-                                + "(copy_pipeline) goes in a version subfolder beside it unless given here. 'keep' "
-                                + "for a document UUID leaves it in the build's workspace folder, not promoted (a "
-                                + "test feed made while fixing, say). Documents with no destination are named all "
-                                + "at once."))
+                                + "explorer path, with or without the root System ('System / Feeds / Events' works "
+                                + "too). Working copies ignore this: they are written back over their originals. A "
+                                + "new version of a production document (copy_pipeline) goes in a version subfolder "
+                                + "beside it unless given here. 'keep' for a document UUID leaves it in the build's "
+                                + "workspace folder, not promoted (a test feed made while fixing, say). Documents "
+                                + "with no destination are named all at once."))
                         .addStringProperty(REVIEWED_ARG, "The review_id of the needs_review reply, once the user has "
                                                          + "been shown its layout in the chat and confirmed it: they "
                                                          + "then approve it in a short form. Not true: a layout "
