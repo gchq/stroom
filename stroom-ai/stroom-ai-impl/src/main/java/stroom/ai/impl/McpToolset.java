@@ -266,7 +266,8 @@ public final class McpToolset implements AutoCloseable {
                     toolInfos.put(name, toolInfo(connection, tool, name, filter.policyFor(tool.name())));
                     NullSafe.consume(declaredGroup(tool), group -> declaredGroups.put(name, group));
                     categories.put(name, categoryOf(declaredGroup(tool),
-                            NullSafe.get(connection.config(), McpToolServerConfig::getToolCategory)));
+                            NullSafe.get(connection.config(), McpToolServerConfig::getToolCategory),
+                            NullSafe.getOrElse(connection.config(), McpToolServerConfig::isTrusted, false)));
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -311,16 +312,21 @@ public final class McpToolset implements AutoCloseable {
 
     /// @param toolName The name of a tool offered by [#tools()].
     /// @return The category of tool policy that grants it: the category its server names (see
-    /// [#categoryOf(String, AiToolCategory)]), and Core for the resource tools.
+    /// [#categoryOf(String, AiToolCategory, boolean)]), and Core for the resource tools.
     public AiToolCategory category(final String toolName) {
         return categories.getOrDefault(toolName, AiToolCategory.CORE);
     }
 
     /// @param declaredGroup  The group a tool's server puts it in (as `_meta.group`), or null.
     /// @param serverCategory The category an administrator set for the server's tools, or null.
-    /// @return The group if it names a category (e.g. `search`), else the server's category, else Core.
-    static AiToolCategory categoryOf(final String declaredGroup, final AiToolCategory serverCategory) {
-        if (declaredGroup != null) {
+    /// @param trusted        Whether an administrator trusts the server. An untrusted server's group is only a
+    ///                       hint, as it could name any category (e.g. one its users' policies grant for writing).
+    /// @return For a trusted server, the group if it names a category (e.g. `search`); else the server's
+    /// category, else Core.
+    static AiToolCategory categoryOf(final String declaredGroup,
+                                     final AiToolCategory serverCategory,
+                                     final boolean trusted) {
+        if (declaredGroup != null && trusted) {
             for (final AiToolCategory category : AiToolCategory.values()) {
                 if (category.name().equalsIgnoreCase(declaredGroup)
                     || category.getDisplayValue().equalsIgnoreCase(declaredGroup)) {

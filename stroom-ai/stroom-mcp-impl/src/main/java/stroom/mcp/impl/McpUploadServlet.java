@@ -40,11 +40,13 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /// `POST /mcp/upload/<id>?file=<name>`: a sample file from the user's machine, posted by a command upload_sample
 /// gave (ported from the Stroom MCP server's `utils/uploads.py` `handle_upload`), stored in the feed the command was
@@ -54,12 +56,20 @@ import java.util.Set;
 /// `Authorization` header gives it), so it needs no upload ticket: the post must match a file upload_sample gave
 /// this user a command for, which hasn't run out or been posted already ([SampleUploads]). As at `/mcp`, the user
 /// needs the Use MCP Tools permission, and nothing is served while the MCP endpoint is turned off.
+///
+/// The file's name is read from the query string itself, never as a request parameter: curl's `--data-binary`
+/// sends the body as a form (`application/x-www-form-urlencoded`) unless told otherwise, and reading a parameter
+/// would have the servlet container parse the file as one (and refuse one over its form size limit).
 public class McpUploadServlet extends HttpServlet implements IsServlet {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpUploadServlet.class);
 
     /// The file's name, as the command gives it.
     static final String FILE_PARAMETER = "file";
+    /// The most characters of a client-supplied value written to the log.
+    static final int MAX_LOGGED_CHARS = 300;
+
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cntrl}");
 
     private final Provider<SampleUploads> sampleUploadsProvider;
     private final Provider<FeedUploads> feedUploadsProvider;
@@ -104,15 +114,15 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
 
     private void upload(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         final String id = NullSafe.string(request.getPathInfo()).replace("/", "");
-        final String file = NullSafe.string(request.getParameter(FILE_PARAMETER));
+        final String file = queryParameter(request, FILE_PARAMETER);
         final String user = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
         final SampleUploads uploads = sampleUploadsProvider.get();
         final Optional<SampleUploads.Pending> claimed = user == null
                 ? Optional.empty()
                 : uploads.claim(id, user, file);
         if (claimed.isEmpty()) {
-            LOGGER.info(() -> LogUtil.message("Refused an upload of '{}' by {}: no upload waits for it", file,
-                    securityContext.getUserIdentityForAudit()));
+            LOGGER.info(() -> LogUtil.message("Refused an upload of '{}' by {}: no upload waits for it",
+                    forLog(file), securityContext.getUserIdentityForAudit()));
             error(response, HttpServletResponse.SC_FORBIDDEN, "No upload waits for this file: the command was not "
                                                               + "copied exactly as the agent was given it, it ran "
                                                               + "out (the commands last minutes), the file was sent "
@@ -126,28 +136,78 @@ public class McpUploadServlet extends HttpServlet implements IsServlet {
         final Map<String, String> receipt = new LinkedHashMap<>();
         receipt.put(StandardHeaderArguments.TYPE, pending.streamType());
         receipt.putAll(pending.headers());
+        // Released unless the file is stored, whatever goes wrong, so it can be posted again.
+        boolean stored = false;
         try (final InputStream data = request.getInputStream()) {
             final FeedUploads.Sent sent = feedUploadsProvider.get().send(pending.feed(), pending.streamType(),
                     receipt, file, data, limit);
+            stored = true;
             LOGGER.info(() -> LogUtil.message("{} uploaded '{}' to feed {}: stream {}, {} bytes",
-                    securityContext.getUserIdentityForAudit(), file, pending.feed(), sent.streamId(), sent.bytes()));
+                    securityContext.getUserIdentityForAudit(), forLog(file), pending.feed(), sent.streamId(),
+                    sent.bytes()));
             final Map<String, Object> result = new LinkedHashMap<>();
             result.put("feed", pending.feed());
             result.put("file", file);
             result.putAll(sent.toMap());
             write(response, HttpServletResponse.SC_OK, result);
         } catch (final FeedUploads.TooLarge e) {
-            uploads.release(pending, file);
             error(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, e.getMessage());
         } catch (final FeedUploads.NoData e) {
-            uploads.release(pending, file);
             error(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (final ToolRefusal e) {
-            uploads.release(pending, file);
-            LOGGER.info(() -> LogUtil.message("Upload of '{}' to feed {} failed: {}", file, pending.feed(),
+            LOGGER.info(() -> LogUtil.message("Upload of '{}' to feed {} failed: {}", forLog(file), pending.feed(),
                     e.getMessage()));
             error(response, HttpServletResponse.SC_BAD_GATEWAY, e.getMessage());
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Upload of '{}' to feed {} failed", forLog(file), pending.feed()), e);
+            error(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Stroom couldn't store the file: "
+                                                                          + NullSafe.nonBlankStringElse(
+                                                                                  e.getMessage(),
+                                                                                  e.getClass().getSimpleName())
+                                                                          + ". Run the command again.");
+        } finally {
+            if (!stored) {
+                uploads.release(pending, file);
+            }
         }
+    }
+
+    /// @param request A request.
+    /// @param name    A parameter's name.
+    /// @return The parameter's first value in the request's query string (decoded as UTF-8), or "" if it has
+    /// none. The body is never read for it.
+    static String queryParameter(final HttpServletRequest request, final String name) {
+        for (final String pair : NullSafe.string(request.getQueryString()).split("&")) {
+            final int equals = pair.indexOf('=');
+            final String key = equals < 0
+                    ? pair
+                    : pair.substring(0, equals);
+            if (decode(key).equals(name)) {
+                return equals < 0
+                        ? ""
+                        : decode(pair.substring(equals + 1));
+            }
+        }
+        return "";
+    }
+
+    private static String decode(final String text) {
+        try {
+            return URLDecoder.decode(text, StandardCharsets.UTF_8);
+        } catch (final IllegalArgumentException e) {
+            // A malformed escape: taken as it is, so it matches no upload.
+            return text;
+        }
+    }
+
+    /// @param value A value the client gave.
+    /// @return It, as it may be written to the log: control characters (e.g. line breaks, which could forge log
+    /// lines) as `?`, and cut at [#MAX_LOGGED_CHARS].
+    static String forLog(final String value) {
+        final String text = CONTROL_CHARACTERS.matcher(NullSafe.string(value)).replaceAll("?");
+        return text.length() > MAX_LOGGED_CHARS
+                ? text.substring(0, MAX_LOGGED_CHARS) + "…"
+                : text;
     }
 
     private static void error(final HttpServletResponse response, final int status, final String message)

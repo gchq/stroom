@@ -141,26 +141,56 @@ public class FeedUploads {
 
     /// The command for each file, for a POSIX shell and for PowerShell (where curl alone is Invoke-WebRequest): it
     /// posts the file from the user's disk, whole, as them, with their Stroom API key (or token) from
-    /// [#KEY_VARIABLE]; the file's name is in the URL, so there is one quoted argument besides it.
+    /// [#KEY_VARIABLE]; the file's name is in the URL, so there is one quoted argument besides it. The body is sent
+    /// as `application/octet-stream`, so nothing on the way reads it as a form.
+    ///
+    /// The path and URL are single-quoted, so neither shell expands anything in them (`$(...)`, backticks,
+    /// variables): only the credential's variable, in the header, is expanded.
     ///
     /// @param url   Where the files go, e.g. `https://stroom.example/mcp/upload/Xk3f9QpL2mWa`.
     /// @param files The files' paths, as the user's terminal sees them.
     /// @return Each file's `file`, `bash` and `powershell` commands.
+    /// @throws ToolRefusal if a path has a line break or another control character (see [#checkPaths(List)]).
     public static List<Map<String, String>> commands(final String url, final List<String> files) {
+        checkPaths(files);
         final List<Map<String, String>> out = new ArrayList<>();
         for (final String name : files) {
-            final String quoted = name.replace("\"", "\\\"");
             final String target = url + "?file=" + URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20");
-            final String args = "--data-binary \"@" + quoted + "\" \"" + target + "\"";
             final Map<String, String> command = new LinkedHashMap<>();
             command.put("file", name);
             command.put("bash", "curl -sS --fail-with-body -H \"Authorization: Bearer $" + KEY_VARIABLE + "\" "
-                                + args);
+                                + "-H 'Content-Type: application/octet-stream' --data-binary "
+                                + bashQuoted("@" + name) + " " + bashQuoted(target));
             command.put("powershell", "curl.exe -sS --fail-with-body -H \"Authorization: Bearer $env:" + KEY_VARIABLE
-                                      + "\" " + args);
+                                      + "\" -H 'Content-Type: application/octet-stream' --data-binary "
+                                      + powerShellQuoted("@" + name) + " " + powerShellQuoted(target));
             out.add(command);
         }
         return out;
+    }
+
+    /// Refuses file paths no command can quote safely for a terminal.
+    ///
+    /// @param files The files' paths, as the agent gave them.
+    /// @throws ToolRefusal if a path has a line break or another control character.
+    public static void checkPaths(final List<String> files) {
+        for (final String name : NullSafe.list(files)) {
+            if (NullSafe.string(name).chars().anyMatch(Character::isISOControl)) {
+                throw new ToolRefusal("A file's path has a line break or another control character, which a "
+                                      + "terminal command can't carry safely: give the path as the user's terminal "
+                                      + "shows it, on one line.");
+            }
+        }
+    }
+
+    // In single quotes, bash expands nothing; a single quote is ended, escaped and begun again.
+    private static String bashQuoted(final String text) {
+        return "'" + text.replace("'", "'\\''") + "'";
+    }
+
+    // In single quotes, PowerShell expands nothing; a single quote is doubled.
+    private static String powerShellQuoted(final String text) {
+        return "'" + text.replace("'", "''") + "'";
     }
 
     // Stroom's receipt checks, as for data posted to the datafeed: the feed's status or the receipt policy.

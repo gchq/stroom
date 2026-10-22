@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The files upload_sample gave commands for, waiting to be posted (in place of the Stroom MCP server's upload
 /// tickets, `utils/uploads.py` `UploadTickets`, and its tests in `tests/test_uploads.py`).
@@ -74,6 +75,32 @@ class TestSampleUploads {
         uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null, List.of("c.json"));
         uploads.release(pending, "b.json");
         assertThat(uploads.claim(pending.id(), "alice", "b.json")).isEmpty();
+    }
+
+    @Test
+    void aUserCanHaveOnlySoManySetsOfCommandsWaiting() {
+        // Each set is kept in this node's memory until it runs out: one user can't fill it.
+        final AiConfig aiConfig = new AiConfig();
+        final int max = aiConfig.getSampleUploads().getMaxPendingPerUser();
+        SampleUploads.Pending first = null;
+        for (int i = 0; i < max; i++) {
+            final SampleUploads.Pending pending = uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                    List.of("a.json"));
+            first = first == null
+                    ? pending
+                    : first;
+        }
+
+        assertThatThrownBy(() -> uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null,
+                List.of("a.json")))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("You have " + max + " sets of upload commands waiting");
+        // Others have their own.
+        assertThat(uploads.issue("bob", "F", "f1", "Raw Events", Map.of(), null, List.of("a.json"))).isNotNull();
+        // Once a set's files are posted, it no longer counts.
+        assertThat(uploads.claim(first.id(), "alice", "a.json")).isPresent();
+        assertThat(uploads.issue("alice", "F", "f1", "Raw Events", Map.of(), null, List.of("a.json")))
+                .isNotNull();
     }
 
     @Test

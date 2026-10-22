@@ -20,17 +20,22 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.McpEndpointConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.shared.UserRef;
 
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMcpServlet {
+
+    private static final UserRef ALICE = UserRef.builder().uuid("alice").subjectId("alice").build();
 
     private final StroomMcpServer server = Mockito.mock(StroomMcpServer.class);
     private final HttpServletStreamableServerTransportProvider transport =
@@ -46,24 +51,41 @@ class TestMcpServlet {
         Mockito.when(server.transport()).thenReturn(transport);
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig());
         Mockito.when(securityContext.hasAppPermission(AppPermission.USE_MCP_TOOLS)).thenReturn(true);
+        Mockito.when(securityContext.getUserRef()).thenReturn(ALICE);
     }
 
     @Test
     void aRequestIsServedByTheTransport() throws Exception {
         servlet.service(request, response);
 
-        Mockito.verify(server).endIdleSessions(Mockito.anyLong());
-        Mockito.verify(transport).service(request, response);
+        // Wrapped, so the work on it knows when it ends; idle sessions are ended by a job, not in requests.
+        Mockito.verify(transport).service(Mockito.argThat(served -> served != request), Mockito.eq(response));
+        Mockito.verify(request).setAttribute(Mockito.eq(McpRequestEnd.ATTRIBUTE), Mockito.any(McpRequestEnd.class));
+        Mockito.verify(server, Mockito.never()).endIdleSessions(Mockito.anyLong());
     }
 
     @Test
     void aRequestForAnOpenSessionIsServed() throws Exception {
         Mockito.when(request.getHeader("Mcp-Session-Id")).thenReturn("s1");
-        Mockito.when(server.isOpen("s1")).thenReturn(true);
+        Mockito.when(server.isOpenFor("s1", ALICE)).thenReturn(true);
 
         servlet.service(request, response);
 
-        Mockito.verify(transport).service(request, response);
+        Mockito.verify(transport).service(Mockito.any(), Mockito.eq(response));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "GET", "DELETE"})
+    void anyRequestForAnotherUsersSessionIsNotFound(final String method) throws Exception {
+        // A call, an answer to a form, the listening stream, or ending it: none reaches a session that isn't theirs.
+        Mockito.when(request.getMethod()).thenReturn(method);
+        Mockito.when(request.getHeader("Mcp-Session-Id")).thenReturn("s1");
+        Mockito.when(server.isOpenFor("s1", ALICE)).thenReturn(false);
+
+        servlet.service(request, response);
+
+        Mockito.verify(response).sendError(Mockito.eq(HttpServletResponse.SC_NOT_FOUND), Mockito.anyString());
+        Mockito.verifyNoInteractions(transport);
     }
 
     @Test
@@ -91,7 +113,7 @@ class TestMcpServlet {
     @Test
     void whenTurnedOffThereIsNoEndpoint() throws Exception {
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
-                null));
+                null, null));
 
         servlet.service(request, response);
 

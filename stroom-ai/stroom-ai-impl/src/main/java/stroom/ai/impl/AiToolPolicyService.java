@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -72,6 +73,8 @@ public class AiToolPolicyService implements CurrentToolGrants {
     private final Provider<UserGroupsService> userGroupsServiceProvider;
     private final Provider<BuiltInTools> builtInToolsProvider;
     private final AtomicReference<Cached> cached = new AtomicReference<>();
+    // Counts the changes made on this node, so that policies read before a change aren't kept as current.
+    private final AtomicLong generation = new AtomicLong();
     private final List<Runnable> changeListeners = new CopyOnWriteArrayList<>();
 
     @Inject
@@ -206,16 +209,22 @@ public class AiToolPolicyService implements CurrentToolGrants {
 
     private List<AiToolPolicy> policies() {
         final long now = System.currentTimeMillis();
+        final long readGeneration = generation.get();
         final Cached current = cached.get();
-        if (current != null && now - current.readTimeMs() < REFRESH_AFTER.toMillis()) {
+        if (current != null
+            && current.generation() == readGeneration
+            && now - current.readTimeMs() < REFRESH_AFTER.toMillis()) {
             return current.policies();
         }
         final List<AiToolPolicy> policies = dao.list();
-        cached.set(new Cached(policies, now));
+        // Kept with the generation it was read at: if a change was made while it was read, it is read again next
+        // time, rather than kept for REFRESH_AFTER.
+        cached.set(new Cached(policies, now, readGeneration));
         return policies;
     }
 
     private void changed() {
+        generation.incrementAndGet();
         cached.set(null);
         for (final Runnable listener : changeListeners) {
             try {
@@ -286,7 +295,7 @@ public class AiToolPolicyService implements CurrentToolGrants {
         return securityContext.secureResult(AppPermission.MANAGE_MCP_TOOL_POLICIES, supplier);
     }
 
-    private record Cached(List<AiToolPolicy> policies, long readTimeMs) {
+    private record Cached(List<AiToolPolicy> policies, long readTimeMs, long generation) {
 
     }
 }
