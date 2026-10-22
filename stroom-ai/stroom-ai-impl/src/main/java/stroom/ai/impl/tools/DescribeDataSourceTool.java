@@ -102,7 +102,7 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String given = stringArg(request, DATA_SOURCE_ARG);
         if (given == null) {
             throw new WorkspaceException("Give the data source's name or uuid.");

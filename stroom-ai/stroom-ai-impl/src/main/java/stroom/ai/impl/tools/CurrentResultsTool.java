@@ -207,7 +207,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         return ToolResult.text(outcome(request, context).text());
     }
 

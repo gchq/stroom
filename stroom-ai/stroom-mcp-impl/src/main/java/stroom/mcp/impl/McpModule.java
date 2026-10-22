@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl;
 
+import stroom.mcp.impl.tools.PortedToolsModule;
 import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
@@ -25,6 +26,8 @@ public class McpModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new PortedToolsModule());
+
         ServletBinder.create(binder())
                 .bind(McpServlet.class)
                 .bind(McpProtectedResourceServlet.class);

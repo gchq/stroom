@@ -139,7 +139,7 @@ class PipelineTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final List<Step> steps = steps(request);
         final WorkspacePath out = outArg(request);

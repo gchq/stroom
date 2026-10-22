@@ -171,7 +171,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final SessionWorkspace workspace = sessionWorkspace(context);
         final long startNanos = System.nanoTime();
         final WorkspacePath out = outArg(request);

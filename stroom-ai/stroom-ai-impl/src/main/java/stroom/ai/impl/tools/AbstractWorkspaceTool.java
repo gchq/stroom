@@ -32,14 +32,14 @@ import java.util.Locale;
  * bounded by the session's limits (see {@link ToolCallContext#limits()}), and returns problems (bad paths, missing
  * files, limits) to the model as an error it can act on.
  */
-abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
+public abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
 
-    static final String PATH_ARG = "path";
-    static final String OUT_ARG = "out";
+    public static final String PATH_ARG = "path";
+    public static final String OUT_ARG = "out";
     /**
      * Lines longer than this are cut short when shown.
      */
-    static final int MAX_LINE_CHARS = 2_000;
+    public static final int MAX_LINE_CHARS = 2_000;
 
     // The workspaces of all sessions, to run a call within its time limit and check where it may write. A call
     // reaches its own session's files, and its limits, through its context.
@@ -104,7 +104,7 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
      * @return The result for the model, with any files the call wrote and any user actions it offers.
      * @throws WorkspaceException for a problem the model can act on.
      */
-    abstract ToolResult run(ToolCall request, ToolCallContext context);
+    protected abstract ToolResult run(ToolCall request, ToolCallContext context);
 
     @Override
     public boolean boundsItsOutput() {
@@ -176,14 +176,14 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     /**
      * @return A line cut short if it is very long.
      */
-    static String shortenLine(final String line) {
+    public static String shortenLine(final String line) {
         return shortenLine(line, MAX_LINE_CHARS);
     }
 
     /**
      * @return A line cut short if it is longer than the given number of characters.
      */
-    static String shortenLine(final String line, final int maxChars) {
+    public static String shortenLine(final String line, final int maxChars) {
         return line.length() > maxChars
                 ? line.substring(0, maxChars) + "… (" + (line.length() - maxChars) + " more characters)"
                 : line;
@@ -192,7 +192,7 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     /**
      * @return A size in bytes, for people.
      */
-    static String size(final long bytes) {
+    public static String size(final long bytes) {
         if (bytes < 1024) {
             return bytes + " B";
         } else if (bytes < 1024 * 1024) {

@@ -121,7 +121,7 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String given = rawArg(request, QUERY_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (given == null || given.isBlank()) {

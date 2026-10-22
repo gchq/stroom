@@ -110,7 +110,7 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String filter = NullSafe.get(stringArg(request, FILTER_ARG), text -> text.toLowerCase(Locale.ROOT));
         final boolean includeIgnored = booleanArg(request, INCLUDE_IGNORED_ARG, false);
         final List<DocRef> found = dataSourceAccess.listUsable().stream()

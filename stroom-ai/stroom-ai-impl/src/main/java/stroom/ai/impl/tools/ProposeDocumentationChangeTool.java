@@ -143,7 +143,7 @@ class ProposeDocumentationChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    ToolResult run(final ToolCall request, final ToolCallContext context) {
+    protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String uuid = stringArg(request, UUID_ARG);
         final String given = rawArg(request, MARKDOWN_ARG);
         final Object edits = argsMap(request).get(EDITS_ARG);
