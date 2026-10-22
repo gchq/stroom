@@ -1,0 +1,65 @@
+{
+ "test": "crafted",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "disc-@@INDEX@@-v1",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "stroom:stream-id()",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "stroom:record-no()",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "header.time",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": {
+   "input": "xml",
+   "record": "rec",
+   "timestamp_field": "header.time",
+   "timestamp_chosen_by_user": false,
+   "timestamp_format": "yyyy",
+   "meta": {},
+   "drop": [],
+   "unpack_json": true,
+   "ignore_above": 256,
+   "total_fields_limit": 500
+  },
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.mcp.impl.tools;
+package stroom.ai.impl.tools;
 
 import org.junit.jupiter.api.Test;
 

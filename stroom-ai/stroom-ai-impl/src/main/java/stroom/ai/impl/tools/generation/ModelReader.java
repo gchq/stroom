@@ -29,7 +29,7 @@ import java.util.Set;
 /// lax mode reads them in the Stroom MCP server, collecting every [MappingError] with pydantic's wording: a string
 /// must be a string; a boolean may be given as 0 or 1 or a word such as `yes` or `off`; an integer as a whole
 /// number, or a string or float holding one; keys a model doesn't have are ignored.
-final class ModelReader {
+public final class ModelReader {
 
     private static final Set<String> TRUE_WORDS = Set.of("1", "on", "t", "true", "y", "yes");
     private static final Set<String> FALSE_WORDS = Set.of("0", "off", "f", "false", "n", "no");
@@ -37,7 +37,7 @@ final class ModelReader {
     private final List<MappingError> errors = new ArrayList<>();
 
     /// @return The errors found so far.
-    List<MappingError> errors() {
+    public List<MappingError> errors() {
         return errors;
     }
 
@@ -46,7 +46,7 @@ final class ModelReader {
     /// @param <T>    The model.
     /// @return The result.
     /// @throws MappingValidationException if anything didn't validate.
-    <T> T orThrow(final String model, final T result) {
+    public <T> T orThrow(final String model, final T result) {
         if (!errors.isEmpty() || result == null) {
             throw new MappingValidationException(model, errors);
         }
@@ -59,12 +59,12 @@ final class ModelReader {
     /// @param type    pydantic's error type.
     /// @param message pydantic's message.
     /// @param input   The value given.
-    void error(final List<Object> loc, final String type, final String message, final Object input) {
+    public void error(final List<Object> loc, final String type, final String message, final Object input) {
         errors.add(new MappingError(List.copyOf(loc), type, message, input));
     }
 
     /// A model's own check failing, as a ValueError raised in a pydantic validator.
-    void valueError(final List<Object> loc, final String message, final Object input) {
+    public void valueError(final List<Object> loc, final String message, final Object input) {
         error(loc, "value_error", "Value error, " + message, input);
     }
 
@@ -73,7 +73,7 @@ final class ModelReader {
     /// @param model The model's name.
     /// @return The value as a map of its fields, or null (with an error) if it isn't one.
     @SuppressWarnings("unchecked")
-    Fields fields(final Object input, final List<Object> loc, final String model) {
+    public Fields fields(final Object input, final List<Object> loc, final String model) {
         if (input instanceof final Map<?, ?> map) {
             return new Fields((Map<String, Object>) map, loc);
         }
@@ -84,7 +84,7 @@ final class ModelReader {
     /// @param loc  A place.
     /// @param part A key or list position in it.
     /// @return The place below it.
-    static List<Object> at(final List<Object> loc, final Object part) {
+    public static List<Object> at(final List<Object> loc, final Object part) {
         final List<Object> out = new ArrayList<>(loc);
         out.add(part);
         return out;
@@ -95,7 +95,7 @@ final class ModelReader {
     /// @param value A value.
     /// @param loc   Where it is.
     /// @return It as a string, or null (with an error) if it isn't one.
-    String string(final Object value, final List<Object> loc) {
+    public String string(final Object value, final List<Object> loc) {
         if (value instanceof final String string) {
             return string;
         }
@@ -106,7 +106,7 @@ final class ModelReader {
     /// @param value A value.
     /// @param loc   Where it is.
     /// @return It as a boolean (as pydantic reads 0, 1, yes, off, ...), or null (with an error).
-    Boolean bool(final Object value, final List<Object> loc) {
+    public Boolean bool(final Object value, final List<Object> loc) {
         switch (value) {
             case final Boolean bool -> {
                 return bool;
@@ -148,7 +148,7 @@ final class ModelReader {
     /// @param loc   Where it is.
     /// @param least The least it may be.
     /// @return It as a whole number, or null (with an error).
-    Long integer(final Object value, final List<Object> loc, final int least) {
+    public Long integer(final Object value, final List<Object> loc, final int least) {
         final Long number = integer(value, loc);
         if (number != null && number < least) {
             error(loc, "greater_than_equal", "Input should be greater than or equal to " + least, value);
@@ -212,7 +212,7 @@ final class ModelReader {
     /// @param loc     Where it is.
     /// @param choices The values it may be.
     /// @return It, or null (with an error) if it isn't one of them.
-    String literal(final Object value, final List<Object> loc, final List<String> choices) {
+    public String literal(final Object value, final List<Object> loc, final List<String> choices) {
         if (value instanceof final String string && choices.contains(string)) {
             return string;
         }
@@ -236,7 +236,7 @@ final class ModelReader {
     /// @param <T>       What the items are.
     /// @return It as a list of items read, or null (with errors).
     @SuppressWarnings("unchecked")
-    <T> List<T> list(final Object value,
+    public <T> List<T> list(final Object value,
                      final List<Object> loc,
                      final ItemReader<T> items,
                      final int minLength) {
@@ -270,7 +270,7 @@ final class ModelReader {
     /// @param value A value.
     /// @param loc   Where it is.
     /// @return It as a map of strings, or null (with errors).
-    Map<String, String> stringMap(final Object value, final List<Object> loc) {
+    public Map<String, String> stringMap(final Object value, final List<Object> loc) {
         if (!(value instanceof final Map<?, ?> given)) {
             error(loc, "dict_type", "Input should be a valid dictionary", value);
             return null;
@@ -299,7 +299,7 @@ final class ModelReader {
     ///
     /// @param <T> What it reads.
     @FunctionalInterface
-    interface ItemReader<T> {
+    public interface ItemReader<T> {
 
         /// @param value The item given.
         /// @param loc   Where it is.
@@ -312,7 +312,7 @@ final class ModelReader {
 
 
     /// One model's fields, read in turn: a key not given takes its default, or is a `missing` error if it has none.
-    final class Fields {
+    public final class Fields {
 
         private final Map<String, Object> data;
         private final List<Object> loc;
@@ -325,23 +325,23 @@ final class ModelReader {
         }
 
         /// @return The input, as given.
-        Map<String, Object> input() {
+        public Map<String, Object> input() {
             return data;
         }
 
         /// @return Where the model is.
-        List<Object> loc() {
+        public List<Object> loc() {
             return loc;
         }
 
         /// @return True if no field had an error, so the model's own checks run.
-        boolean ok() {
+        public boolean ok() {
             return errors.size() == before;
         }
 
         /// @param key A field.
         /// @return True if it is given.
-        boolean has(final String key) {
+        public boolean has(final String key) {
             return data.containsKey(key);
         }
 
@@ -355,7 +355,7 @@ final class ModelReader {
 
         /// @param key A required string field.
         /// @return Its value, or null (with an error).
-        String requiredString(final String key) {
+        public String requiredString(final String key) {
             return missing(key)
                     ? null
                     : ModelReader.this.string(data.get(key), at(loc, key));
@@ -363,7 +363,7 @@ final class ModelReader {
 
         /// @param key An optional string field.
         /// @return Its value, or null.
-        String optionalString(final String key) {
+        public String optionalString(final String key) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -373,7 +373,7 @@ final class ModelReader {
         /// @param key          A string field.
         /// @param defaultValue Its default.
         /// @return Its value.
-        String string(final String key, final String defaultValue) {
+        public String string(final String key, final String defaultValue) {
             return data.containsKey(key)
                     ? ModelReader.this.string(data.get(key), at(loc, key))
                     : defaultValue;
@@ -382,7 +382,7 @@ final class ModelReader {
         /// @param key     A required field of fixed values.
         /// @param choices The values.
         /// @return Its value, or null (with an error).
-        String requiredLiteral(final String key, final List<String> choices) {
+        public String requiredLiteral(final String key, final List<String> choices) {
             return missing(key)
                     ? null
                     : ModelReader.this.literal(data.get(key), at(loc, key), choices);
@@ -392,7 +392,7 @@ final class ModelReader {
         /// @param defaultValue Its default.
         /// @param choices      The values.
         /// @return Its value.
-        String literal(final String key, final String defaultValue, final List<String> choices) {
+        public String literal(final String key, final String defaultValue, final List<String> choices) {
             return data.containsKey(key)
                     ? ModelReader.this.literal(data.get(key), at(loc, key), choices)
                     : defaultValue;
@@ -401,7 +401,7 @@ final class ModelReader {
         /// @param key     An optional field of fixed values.
         /// @param choices The values.
         /// @return Its value, or null.
-        String optionalLiteral(final String key, final List<String> choices) {
+        public String optionalLiteral(final String key, final List<String> choices) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -411,7 +411,7 @@ final class ModelReader {
         /// @param key          A boolean field.
         /// @param defaultValue Its default.
         /// @return Its value.
-        boolean bool(final String key, final boolean defaultValue) {
+        public boolean bool(final String key, final boolean defaultValue) {
             if (!data.containsKey(key)) {
                 return defaultValue;
             }
@@ -423,7 +423,7 @@ final class ModelReader {
 
         /// @param key An optional boolean field.
         /// @return Its value, or null.
-        Boolean optionalBool(final String key) {
+        public Boolean optionalBool(final String key) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -434,7 +434,7 @@ final class ModelReader {
         /// @param defaultValue Its default.
         /// @param least        The least it may be.
         /// @return Its value.
-        long integer(final String key, final long defaultValue, final int least) {
+        public long integer(final String key, final long defaultValue, final int least) {
             if (!data.containsKey(key)) {
                 return defaultValue;
             }
@@ -446,14 +446,14 @@ final class ModelReader {
 
         /// @param key A field holding a list of strings (empty by default).
         /// @return Its value.
-        List<String> strings(final String key) {
+        public List<String> strings(final String key) {
             return strings(key, 0);
         }
 
         /// @param key       A field holding a list of strings (empty by default).
         /// @param minLength The fewest it may hold.
         /// @return Its value.
-        List<String> strings(final String key, final int minLength) {
+        public List<String> strings(final String key, final int minLength) {
             if (!data.containsKey(key)) {
                 return List.of();
             }
@@ -463,7 +463,7 @@ final class ModelReader {
         /// @param key       A required field holding a list of strings.
         /// @param minLength The fewest it may hold.
         /// @return Its value.
-        List<String> requiredStrings(final String key, final int minLength) {
+        public List<String> requiredStrings(final String key, final int minLength) {
             return missing(key)
                     ? List.of()
                     : orEmpty(list(data.get(key), at(loc, key), ModelReader.this::string, minLength));
@@ -471,7 +471,7 @@ final class ModelReader {
 
         /// @param key An optional field holding a list of strings.
         /// @return Its value, or null.
-        List<String> optionalStrings(final String key) {
+        public List<String> optionalStrings(final String key) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -480,7 +480,7 @@ final class ModelReader {
 
         /// @param key A field holding a map of strings (empty by default).
         /// @return Its value.
-        Map<String, String> stringMap(final String key) {
+        public Map<String, String> stringMap(final String key) {
             if (!data.containsKey(key)) {
                 return Map.of();
             }
@@ -492,7 +492,7 @@ final class ModelReader {
 
         /// @param key An optional field holding a map of strings.
         /// @return Its value, or null.
-        Map<String, String> optionalStringMap(final String key) {
+        public Map<String, String> optionalStringMap(final String key) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -503,7 +503,7 @@ final class ModelReader {
         /// @param reader How the model is read.
         /// @param <T>    The model.
         /// @return Its value, or null.
-        <T> T optionalModel(final String key, final ItemReader<T> reader) {
+        public <T> T optionalModel(final String key, final ItemReader<T> reader) {
             final Object value = data.get(key);
             return value == null
                     ? null
@@ -515,7 +515,7 @@ final class ModelReader {
         /// @param defaultValue Its default.
         /// @param <T>          The model.
         /// @return Its value.
-        <T> T model(final String key, final ItemReader<T> reader, final T defaultValue) {
+        public <T> T model(final String key, final ItemReader<T> reader, final T defaultValue) {
             if (!data.containsKey(key)) {
                 return defaultValue;
             }
@@ -529,7 +529,7 @@ final class ModelReader {
         /// @param reader How each is read.
         /// @param <T>    The model.
         /// @return Its value.
-        <T> List<T> models(final String key, final ItemReader<T> reader) {
+        public <T> List<T> models(final String key, final ItemReader<T> reader) {
             if (!data.containsKey(key)) {
                 return List.of();
             }
@@ -541,14 +541,14 @@ final class ModelReader {
         /// @param minLength The fewest it may hold.
         /// @param <T>       The model.
         /// @return Its value.
-        <T> List<T> requiredModels(final String key, final ItemReader<T> reader, final int minLength) {
+        public <T> List<T> requiredModels(final String key, final ItemReader<T> reader, final int minLength) {
             return missing(key)
                     ? List.of()
                     : orEmpty(list(data.get(key), at(loc, key), reader, minLength));
         }
 
         /// The model's own check failing, at the model's place.
-        void valueError(final String message) {
+        public void valueError(final String message) {
             ModelReader.this.valueError(loc, message, data);
         }
 

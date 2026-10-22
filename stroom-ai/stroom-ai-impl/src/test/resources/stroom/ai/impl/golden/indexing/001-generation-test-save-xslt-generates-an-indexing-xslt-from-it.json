@@ -1,0 +1,46 @@
+{
+ "test": "tests/test_generation.py::test_save_xslt_generates_an_indexing_xslt_from_its_plan_and_takes_no_mapping",
+ "plan": {
+  "backend": "lucene",
+  "index_name": "acme",
+  "time_field": "EventTime",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventTime",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

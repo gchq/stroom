@@ -51,4 +51,14 @@ public interface AgentKnowledge {
     /// @param name A convention profile's name, e.g. `ecs`.
     /// @return Its text (YAML), or empty if there is no profile of that name.
     Optional<String> convention(String name);
+
+    /// The other files bundled beside the convention profiles, such as the Elastic Common Schema as Elastic
+    /// publishes it (`ecs_fields.json`) and what Elasticsearch's `ecs@mappings` component template maps otherwise
+    /// (`ecs_component.json`), which the indexing tools read ([stroom.ai.impl.tools.indexing.EcsSchema]).
+    ///
+    /// @param fileName A file's name in the conventions folder, e.g. `ecs_fields.json`.
+    /// @return Its text, or empty if there is no such file (none, unless the bundling module has them).
+    default Optional<String> conventionsFile(final String fileName) {
+        return Optional.empty();
+    }
 }

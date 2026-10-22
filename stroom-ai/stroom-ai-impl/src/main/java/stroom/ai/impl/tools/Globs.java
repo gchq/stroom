@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.mcp.impl.tools;
+package stroom.ai.impl.tools;
 
 import java.util.regex.Pattern;
 
 /// Glob patterns as the Stroom MCP server matched them (Python's `fnmatch.fnmatchcase`): `*` for any characters,
 /// `?` for one, `[abc]` for one of a set and `[!abc]` for one not in it, case-sensitive.
-final class Globs {
+public final class Globs {
 
     private Globs() {
     }
@@ -28,7 +28,7 @@ final class Globs {
     /// @param text    The text, e.g. a pipeline's name.
     /// @param pattern The glob pattern, e.g. `Event Data (*)`.
     /// @return True if the whole text matches the pattern.
-    static boolean matches(final String text, final String pattern) {
+    public static boolean matches(final String text, final String pattern) {
         if (text == null || pattern == null) {
             return false;
         }

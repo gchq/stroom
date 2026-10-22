@@ -51,7 +51,7 @@ public record SharedTemplate(@JsonProperty("href") String href,
     /// @param input  The value given.
     /// @param loc    Where it is.
     /// @return It, or null (with the errors noted) if it doesn't validate.
-    static SharedTemplate read(final ModelReader reader, final Object input, final List<Object> loc) {
+    public static SharedTemplate read(final ModelReader reader, final Object input, final List<Object> loc) {
         final ModelReader.Fields fields = reader.fields(input, loc, "SharedTemplate");
         if (fields == null) {
             return null;
