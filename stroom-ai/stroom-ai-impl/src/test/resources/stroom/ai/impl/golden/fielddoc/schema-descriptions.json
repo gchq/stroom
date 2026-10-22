@@ -1,0 +1,19 @@
+{
+ "EventDetail/Send/Data[@Name='subject']/@Value": "The `subject` value recorded in a Data element of Send.",
+ "EventTime/TimeCreated": "Time the event was created.",
+ "EventSource": "Where the event came from, i.e. what generator created the event and on what device.",
+ "@StreamId": "The id of the Events stream the event came from.",
+ "@EventId": "The event's number in its stream; with StreamId, it identifies the event.",
+ "EventSource/User/Id": "An identifier for the user.",
+ "EventSource/Device/IPAddress": "The network IP address of the device, e.g. 192.168.0.3.",
+ "EventDetail/Network/*/Source/Device/IPAddress": "The network IP address of the device, e.g. 192.168.0.3.",
+ "EventSource/System/Name": "The name of the system.",
+ "EventDetail/Authenticate/Outcome/Success": "If the outcome of an event was successful then 'true', 'false' otherwise.",
+ "EventDetail/View/Object/Id": "An identifier for the object, e.g a document ID in a document management system.",
+ "EventDetail/Authenticate/User/Id": "An identifier for the user.",
+ "EventSource/Device/@Foo": "The `Foo` attribute of Device: A description of the event source that the event generator is hosted upon.",
+ "Nowhere/At/All": "",
+ "Data[@Name='x']/@Value": "The `x` value recorded in a Data element of Data.",
+ "EventDetail/Process/Command": "The name of the process.",
+ "EventDetail/Unknown/Data": "Any other event data that does not fit into a schema element but may be useful for the purpose of audit."
+}
