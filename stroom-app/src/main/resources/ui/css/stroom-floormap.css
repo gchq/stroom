@@ -519,13 +519,6 @@
     border-top: 1px solid var(--border-color);
 }
 
-.stroom-floormap-timeline-settings-show-all-button {
-    font-size: 0.85em;
-    padding: 3px 14px;
-    height: 26px;
-    white-space: nowrap;
-}
-
 /* -----------------------------------------------------------------------
    Canvas keyboard focus
 
