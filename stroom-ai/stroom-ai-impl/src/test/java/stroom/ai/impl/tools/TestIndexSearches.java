@@ -25,12 +25,17 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableResult;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
@@ -43,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The searches search_events makes of an index, as a dashboard makes them, ported from the Stroom MCP server's
 /// tests of `_search` and `_count` (`tests/test_fielddoc.py`, `tests/test_token_time.py`).
@@ -67,6 +73,42 @@ class TestIndexSearches {
         assertThat(found.rows()).isEqualTo(List.of(Map.of("documents", "12")));
         assertThat(found.complete()).isFalse();
         Mockito.verify(agentSearches).destroy(KEY);
+    }
+
+    @Test
+    void aSearchWhoseFirstRequestFailsIsDestroyedByItsOwner() {
+        // Before, a first request that failed after Stroom started the search left it running: its key was never
+        // read. It is found by the owner made up for it alone.
+        Mockito.when(dashboardService.search(Mockito.any())).thenThrow(new IllegalStateException("Search failed"));
+
+        assertThatThrownBy(() -> indexSearches.search(ToolCalls.inChat(1), probe, 10, null))
+                .hasMessage("Search failed");
+
+        final ArgumentCaptor<DashboardSearchRequest> sent = ArgumentCaptor.forClass(DashboardSearchRequest.class);
+        Mockito.verify(dashboardService).search(sent.capture());
+        Mockito.verify(agentSearches).destroyOwnedBy(sent.getValue().getSearchRequestSource().getOwnerDocRef()
+                .getUuid());
+        Mockito.verify(agentSearches, Mockito.never()).destroy(Mockito.any());
+    }
+
+    @Test
+    void anAgentsSearchesAreFoundByTheirOwnerAndDestroyed() {
+        final ResultStoreManager manager = Mockito.mock(ResultStoreManager.class);
+        final QueryKey mine = new QueryKey("mine");
+        final ResultStoreInfo agents = Mockito.mock(ResultStoreInfo.class);
+        Mockito.when(agents.getSearchRequestSource()).thenReturn(SearchRequestSource.builder()
+                .ownerDocRef(new DocRef("Dashboard", "made-up")).build());
+        Mockito.when(agents.getQueryKey()).thenReturn(mine);
+        final ResultStoreInfo users = Mockito.mock(ResultStoreInfo.class);
+        Mockito.when(users.getSearchRequestSource()).thenReturn(SearchRequestSource.builder()
+                .ownerDocRef(new DocRef("Dashboard", "a-real-dashboard")).build());
+        Mockito.when(users.getQueryKey()).thenReturn(KEY);
+        Mockito.when(manager.find(Mockito.any())).thenReturn(new ResultPage<>(List.of(agents, users)));
+
+        new AgentSearches(() -> manager).destroyOwnedBy("made-up");
+
+        Mockito.verify(manager).destroy(mine, DestroyReason.NO_LONGER_NEEDED);
+        Mockito.verify(manager, Mockito.never()).destroy(Mockito.eq(KEY), Mockito.any());
     }
 
     @Test
@@ -177,7 +219,9 @@ class TestIndexSearches {
 
         assertThat(found.rows()).isEmpty();
         assertThat(found.errors()).containsExactly("Stroom's dashboard search gave no response");
-        Mockito.verify(agentSearches).destroy(null);
+        // No key was given: any search Stroom started is found by its owner.
+        Mockito.verify(agentSearches).destroyOwnedBy(Mockito.anyString());
+        Mockito.verify(agentSearches, Mockito.never()).destroy(Mockito.any());
     }
 
     private static DashboardSearchResponse response(final boolean complete, final String... values) {

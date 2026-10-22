@@ -36,6 +36,7 @@ import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.util.shared.Count;
 import stroom.util.shared.ResultPage;
 
@@ -83,6 +84,8 @@ final class StreamWorld {
     int viewerPage = 1_000;
 
     StreamWorld() {
+        // The user may view data, as reading a stream's text needs; a test takes it away to see the refusal.
+        Mockito.when(securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(true);
         Mockito.when(metaService.findRows(Mockito.any())).thenAnswer(invocation -> {
             final FindMetaCriteria criteria = invocation.getArgument(0);
             final List<MetaRow> found = metas.values().stream()

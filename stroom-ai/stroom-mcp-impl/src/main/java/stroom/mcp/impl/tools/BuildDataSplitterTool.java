@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleRefusal;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -149,6 +150,9 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
             return JsonResults.of(build(call, context));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
+        } catch (final PatternTimeoutException e) {
+            // A pattern of the agent's took too long on the sample: saying so is the answer, not a fault.
+            return JsonResults.refused(e.getMessage());
         }
     }
 

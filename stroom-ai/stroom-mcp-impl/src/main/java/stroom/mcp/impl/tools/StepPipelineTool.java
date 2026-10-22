@@ -162,7 +162,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
                              final Map<String, String> draftCode,
                              final List<String> show) {
         stepping.checkCanStep();
-        stepping.checkDrafts(draftCode);
+        stepping.checkDrafts(pipelineUuid, draftCode);
         final SteppedPipeline pipeline = stepping.load(pipelineUuid);
         pipeline.refuseMistyped();
         CallProgress.of(context).say("Stepping record " + record.said() + " of stream " + streamId + " through "
