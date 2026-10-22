@@ -1,0 +1,964 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "^(\\S+) (\\S+)",
+    "names": [
+     "kind",
+     "verb"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " user=(?:\"([^\"]*)\"|(\\S+))",
+    "names": [
+     "user_quoted",
+     "user_plain"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " src=(\\S+)",
+    "names": [
+     "src"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " method=(\\S+)",
+    "names": [
+     "method"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " reason=\"([^\"]*)\"",
+    "names": [
+     "reason"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " duration=(\\d+)s",
+    "names": [
+     "duration"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " peer=(\\S+)",
+    "names": [
+     "peer"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": " name=(\\S+)",
+    "names": [
+     "tunnel"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Remote Access VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpn"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "kind"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   }
+  ],
+  "events": [
+   {
+    "name": "auth",
+    "when": [
+     {
+      "field": "kind",
+      "equals": "AUTH"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ]
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ]
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "verb",
+      "map": {
+       "ok": "true",
+       "fail": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Description",
+      "field": "reason"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "method",
+      "data_name": "method"
+     }
+    ]
+   },
+   {
+    "name": "session end",
+    "when": [
+     {
+      "field": "kind",
+      "equals": "SESSION"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ]
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ]
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "duration",
+      "data_name": "duration_seconds"
+     }
+    ]
+   },
+   {
+    "name": "tunnel",
+    "when": [
+     {
+      "field": "kind",
+      "equals": "TUNNEL"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Network"
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "verb",
+      "map": {
+       "down": "Major",
+       "up": "Info"
+      }
+     },
+     {
+      "path": "EventDetail/Alert/Network/Source/Device/HostName",
+      "field": "host"
+     },
+     {
+      "path": "EventDetail/Alert/Network/Destination/Device/IPAddress",
+      "field": "peer"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "tunnel",
+      "data_name": "tunnel"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "severity",
+      "data_name": "severity"
+     }
+    ],
+    "allow_unknown": "free text with no recognised layout, kept with its text as the request asks"
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[auth] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[session end] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[tunnel] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Alert/Network/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from kind, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "auth",
+    "when": [
+     "kind = 'AUTH'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[method]",
+     "EventDetail/Authenticate/Outcome/Description",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "session end",
+    "when": [
+     "kind = 'SESSION'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[duration_seconds]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "tunnel",
+    "when": [
+     "kind = 'TUNNEL'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Data[tunnel]",
+     "EventDetail/Alert/Network/Destination/Device/IPAddress",
+     "EventDetail/Alert/Network/Source/Device/HostName",
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[severity]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ },
+ "full": {
+  "input": "json",
+  "root": null,
+  "record": null,
+  "xml_namespace": "",
+  "json_layout": "lines",
+  "json_fields": [],
+  "xml_fields": [],
+  "pairs": [],
+  "extract": [
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": "^(\\S+) (\\S+)",
+    "names": [
+     "kind",
+     "verb"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " user=(?:\"([^\"]*)\"|(\\S+))",
+    "names": [
+     "user_quoted",
+     "user_plain"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " src=(\\S+)",
+    "names": [
+     "src"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " method=(\\S+)",
+    "names": [
+     "method"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " reason=\"([^\"]*)\"",
+    "names": [
+     "reason"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " duration=(\\d+)s",
+    "names": [
+     "duration"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " peer=(\\S+)",
+    "names": [
+     "peer"
+    ],
+    "flags": "",
+    "scope": null
+   },
+   {
+    "field": "message",
+    "xpath": null,
+    "regex": " name=(\\S+)",
+    "names": [
+     "tunnel"
+    ],
+    "flags": "",
+    "scope": null
+   }
+  ],
+  "for_each": null,
+  "nil_values": [],
+  "drop_when": [],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX",
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Name",
+    "field": null,
+    "any_of": null,
+    "value": "Remote Access VPN",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "field": null,
+    "any_of": null,
+    "value": "Eval",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": null,
+    "any_of": null,
+    "value": "vpn",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "kind",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   }
+  ],
+  "events": [
+   {
+    "name": "auth",
+    "when": [
+     {
+      "field": "kind",
+      "xpath": null,
+      "equals": "AUTH",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": null,
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ],
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "field": null,
+      "any_of": null,
+      "value": "Logon",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": null,
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ],
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "verb",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": {
+       "ok": "true",
+       "fail": "false"
+      },
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Description",
+      "field": "reason",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "method",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "method"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "session end",
+    "when": [
+     {
+      "field": "kind",
+      "xpath": null,
+      "equals": "SESSION",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventSource/User/Id",
+      "field": null,
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ],
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "field": null,
+      "any_of": null,
+      "value": "Logoff",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": null,
+      "any_of": [
+       "user_quoted",
+       "user_plain"
+      ],
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "duration",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "duration_seconds"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "tunnel",
+    "when": [
+     {
+      "field": "kind",
+      "xpath": null,
+      "equals": "TUNNEL",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "field": null,
+      "any_of": null,
+      "value": "Network",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "verb",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": {
+       "down": "Major",
+       "up": "Info"
+      },
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Alert/Network/Source/Device/HostName",
+      "field": "host",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Alert/Network/Destination/Device/IPAddress",
+      "field": "peer",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "tunnel",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "tunnel"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "other",
+    "when": [],
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "severity",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "severity"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": "free text with no recognised layout, kept with its text as the request asks",
+    "keep_unknown": false,
+    "data": []
+   }
+  ],
+  "unmatched": "warn",
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "imports": [],
+  "shared": [],
+  "functions": []
+ }
+}

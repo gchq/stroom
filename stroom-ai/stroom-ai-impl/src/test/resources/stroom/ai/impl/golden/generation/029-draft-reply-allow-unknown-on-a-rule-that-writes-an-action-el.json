@@ -1,0 +1,109 @@
+{
+ "source": "draft-reply-allow-unknown-on-a-rule-that-writes-an-action-el",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FW"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "FW"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   }
+  ],
+  "events": [
+   {
+    "name": "system_alert",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "SYSTEM"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Other"
+     }
+    ],
+    "allow_unknown": "System events"
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ],
+    "allow_unknown": "anything else"
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[system_alert] TypeId is read from action, which its records may lack: those get TypeId 'system_alert', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[system_alert] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[system_alert] allow_unknown is ignored: the rule writes Alert, not Unknown. Remove it.",
+   "[system_alert] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from action, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "system_alert",
+    "when": [
+     "data[@name='event_type']/@value = 'SYSTEM'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

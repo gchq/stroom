@@ -1,0 +1,117 @@
+{
+ "source": "xsltgen-an-xpath-reading-an-extracts-name-as-a-variable-is-a",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "msg",
+    "regex": "^(.*)$",
+    "names": [
+     "kv"
+    ]
+   },
+   {
+    "xpath": "$kv",
+    "regex": "src=(\\S+)",
+    "names": [
+     "src"
+    ]
+   },
+   {
+    "xpath": "for $kv in tokenize(., \" \") return $kv",
+    "regex": "(x)",
+    "names": [
+     "x"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "src",
+      "data_name": "src"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "x",
+      "data_name": "x"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": false,
+  "problems": [
+   "xpath '$kv' reads $kv: an extract's names are fields, not variables, and the XSLT declares none by that name, so it wouldn't compile. Read one with field: 'kv' (an extraction takes an earlier extraction's name as its field too); to change the text first, put the change in the xpath that reads the source itself.",
+   "[logon] Event/EventDetail/Authenticate needs one of ['User', 'Device', 'Group']. Already mapped elsewhere in the event: EventSource/Device/HostName (field 'host'), EventSource/User/Id (field 'user'). If the action is about one of them, map the same input here as well (EventDetail/Authenticate/Device/HostName or EventDetail/Authenticate/User/Id), and keep the existing mapping: it says something different"
+  ],
+  "warnings": [
+   "[logon] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon] Data 'src' looks like EventSource/Client/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[src]",
+     "EventDetail/Authenticate/Data[x]",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

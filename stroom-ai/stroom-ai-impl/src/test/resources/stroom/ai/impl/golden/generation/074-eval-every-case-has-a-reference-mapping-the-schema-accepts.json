@@ -1,0 +1,209 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "json_fields": [
+   "json"
+  ],
+  "drop_when": [
+   {
+    "when": [
+     {
+      "field": "json.time",
+      "present": false
+     }
+    ],
+    "reason": "damaged lines (not JSON)"
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "json.time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Auth App"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "auth-app"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "auth01"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "json.user"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "json.ip"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "json.action"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "field": "json.action",
+      "equals": "login"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "json.user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "json.result",
+      "map": {
+       "success": "true",
+       "failure": "false"
+      }
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "field": "json.action",
+      "equals": "logout"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "json.user"
+     }
+    ]
+   },
+   {
+    "name": "password",
+    "when": [
+     {
+      "field": "json.action",
+      "equals": "password_change"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "ChangePassword"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "json.user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "json.result",
+      "map": {
+       "success": "true",
+       "failure": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[password] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "drop: damaged lines (not JSON)",
+    "when": [
+     "not(exists(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]))"
+    ],
+    "dropped": true
+   },
+   {
+    "event": "logon",
+    "when": [
+     "mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'] = 'login'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'] = 'logout'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "password",
+    "when": [
+     "mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'] = 'password_change'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

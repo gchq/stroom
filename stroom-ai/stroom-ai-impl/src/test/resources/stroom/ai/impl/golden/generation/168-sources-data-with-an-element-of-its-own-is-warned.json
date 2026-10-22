@@ -1,0 +1,485 @@
+{
+ "source": "sources-data-with-an-element-of-its-own-is-warned",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "A"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "D"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "g"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "any_of": [
+     "hostname",
+     "host"
+    ],
+    "transform": "lower"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "transform": "strip_domain"
+   },
+   {
+    "path": "EventSource/User/Domain",
+    "field": "user",
+    "transform": "domain"
+   },
+   {
+    "path": "EventSource/User/UserDetails/Organisation",
+    "lookup": {
+     "map": "USER_TO_ORG",
+     "field": "user",
+     "path": "org"
+    }
+   },
+   {
+    "path": "EventSource/User/Name",
+    "field": "user",
+    "dictionary": "User names",
+    "default": "unknown"
+   }
+  ],
+  "events": [
+   {
+    "name": "vip",
+    "when": [
+     {
+      "field": "user",
+      "in_dictionary": "VIP users"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "vip"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "data_name": "u"
+     }
+    ],
+    "allow_unknown": "a VIP list match has no action of its own"
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "x"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "data_name": "u"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "data_name": "source_ip"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[vip] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] Data 'source_ip' looks like EventSource/Client/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",
+   "Lookups read reference map(s) ['USER_TO_ORG']: the pipeline needs the feed that loads each as a pipeline reference (create_pipeline references, or update_pipeline (references=...)); find_reference_data lists the maps and their feeds."
+  ],
+  "events": [
+   {
+    "event": "vip",
+    "when": [
+     "data[@name='user']/@value in dictionary 'VIP users'"
+    ],
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[u]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Domain",
+     "EventSource/User/Id",
+     "EventSource/User/Name",
+     "EventSource/User/UserDetails/Organisation",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[source_ip]",
+     "EventDetail/Unknown/Data[u]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Domain",
+     "EventSource/User/Id",
+     "EventSource/User/Name",
+     "EventSource/User/UserDetails/Organisation",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [
+   "USER_TO_ORG"
+  ],
+  "dictionaries": [
+   "User names",
+   "VIP users"
+  ]
+ },
+ "full": {
+  "input": "data_splitter",
+  "root": null,
+  "record": null,
+  "xml_namespace": "",
+  "json_layout": "array",
+  "json_fields": [],
+  "xml_fields": [],
+  "pairs": [],
+  "extract": [],
+  "for_each": null,
+  "nil_values": [],
+  "drop_when": [],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Name",
+    "field": null,
+    "any_of": null,
+    "value": "A",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "field": null,
+    "any_of": null,
+    "value": "D",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": null,
+    "any_of": null,
+    "value": "g",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": null,
+    "any_of": [
+     "hostname",
+     "host"
+    ],
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": "lower",
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": "strip_domain",
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Domain",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": "domain",
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/UserDetails/Organisation",
+    "field": null,
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": {
+     "map": "USER_TO_ORG",
+     "field": "user",
+     "xpath": null,
+     "path": "org"
+    },
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Name",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": "User names",
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": "unknown",
+    "data_name": null
+   }
+  ],
+  "events": [
+   {
+    "name": "vip",
+    "when": [
+     {
+      "field": "user",
+      "xpath": null,
+      "equals": null,
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": "VIP users",
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "vip",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "u"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": "a VIP list match has no action of its own",
+    "keep_unknown": false,
+    "data": []
+   },
+   {
+    "name": "other",
+    "when": [],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "x",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "u"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": "source_ip"
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   }
+  ],
+  "unmatched": "skip",
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "imports": [],
+  "shared": [],
+  "functions": []
+ }
+}

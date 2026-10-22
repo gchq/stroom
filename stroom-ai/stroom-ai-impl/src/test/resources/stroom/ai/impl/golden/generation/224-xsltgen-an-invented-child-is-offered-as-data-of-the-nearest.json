@@ -1,0 +1,310 @@
+{
+ "source": "xsltgen-an-invented-child-is-offered-as-data-of-the-nearest",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "c",
+    "when": [
+     {
+      "field": "action",
+      "equals": "connect"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Connect"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Source/Device/IPAddress",
+      "field": "ip"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Key",
+      "field": "result"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": false,
+  "problems": [
+   "[c] EventDetail/Network/Connect/Destination/Key: 'Event/EventDetail/Network/Connect/Destination' has no child 'Key'. Allowed here: ['Device', 'Application', 'TransportProtocol', 'ICMPType', 'HTTPMethod', 'ApplicationProtocol', 'Port', 'Data'] If no element means this value, carry it as Data of the action element instead: {\"path\": \"EventDetail/Network/Connect/Destination/Data\", \"data_name\": \"result\", \"field\": \"result\"} (Name and Value in the event, searchable as they are). A value with no element of its own is no reason to leave the event Unknown."
+  ],
+  "warnings": [
+   "[c] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[c] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "c",
+    "when": [
+     "data[@name='action']/@value = 'connect'"
+    ],
+    "fields": [
+     "EventDetail/Network/Connect/Destination/Key",
+     "EventDetail/Network/Connect/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ },
+ "full": {
+  "input": "data_splitter",
+  "root": null,
+  "record": null,
+  "xml_namespace": "",
+  "json_layout": "array",
+  "json_fields": [],
+  "xml_fields": [],
+  "pairs": [],
+  "extract": [],
+  "for_each": null,
+  "nil_values": [],
+  "drop_when": [],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Name",
+    "field": null,
+    "any_of": null,
+    "value": "Acme VPN",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "field": null,
+    "any_of": null,
+    "value": "Dev",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": null,
+    "any_of": null,
+    "value": "vpnd",
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": "unknown",
+    "data_name": null
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user",
+    "any_of": null,
+    "value": null,
+    "xpath": null,
+    "meta": null,
+    "lookup": null,
+    "dictionary": null,
+    "transform": null,
+    "repeat": false,
+    "scope": null,
+    "time_format": null,
+    "timezone": null,
+    "map": null,
+    "default": null,
+    "data_name": null
+   }
+  ],
+  "events": [
+   {
+    "name": "c",
+    "when": [
+     {
+      "field": "action",
+      "xpath": null,
+      "equals": "connect",
+      "one_of": null,
+      "matches": null,
+      "present": null,
+      "in_dictionary": null,
+      "scope": null
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "field": null,
+      "any_of": null,
+      "value": "Connect",
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Connect/Source/Device/IPAddress",
+      "field": "ip",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Key",
+      "field": "result",
+      "any_of": null,
+      "value": null,
+      "xpath": null,
+      "meta": null,
+      "lookup": null,
+      "dictionary": null,
+      "transform": null,
+      "repeat": false,
+      "scope": null,
+      "time_format": null,
+      "timezone": null,
+      "map": null,
+      "default": null,
+      "data_name": null
+     }
+    ],
+    "drop": false,
+    "allow_unknown": null,
+    "keep_unknown": false,
+    "data": []
+   }
+  ],
+  "unmatched": "skip",
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "imports": [],
+  "shared": [],
+  "functions": []
+ }
+}
