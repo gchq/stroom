@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
@@ -194,13 +195,16 @@ class SummariseFixTool extends AbstractBuiltInTool {
                     NullSafe.string(stringArg(call, ISSUE_ARG)),
                     CompareOutputsTool.events(call),
                     stringArg(call, FIXED_PIPELINE_UUID_ARG));
-            return JsonResults.of(summariseFix(context, request));
+            return JsonResults.of(summariseFix(call, context, request));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         } catch (final EventLocations.LocateException e) {
             return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -212,12 +216,13 @@ class SummariseFixTool extends AbstractBuiltInTool {
     /// `diff`, `draft`, `manual_steps` and `hint`. When the call's time ran out first, a shorter result that isn't
     /// ready, with `stopped_early` and a hint.
     ///
+    /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
     /// @param request The fix to prove.
     /// @return The fix, proven and packaged.
     /// @throws ToolRefusal if the fix can't be proven as asked, saying why.
     /// @throws ToolTimeoutException if the call is cancelled.
-    Map<String, Object> summariseFix(final ToolCallContext context, final Request request) {
+    Map<String, Object> summariseFix(final ToolCall call, final ToolCallContext context, final Request request) {
         final String element;
         final String draft;
         if (request.fixedPipelineUuid() != null) {
@@ -253,7 +258,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         }
         final String diff = diff(saved, draft, target.doc().getName());
         final Map<String, String> code = Map.of(element, draft);
-        final Proof proof = PipelineStepping.withinTimeLimit(context, () -> prove(context, request, element,
+        final Proof proof = PipelineStepping.withinTimeLimit(context, () -> prove(call, context, request, element,
                 target, code));
         if (proof.stopped()) {
             return stoppedEarly(context, request, pipeline, element, target);
@@ -262,7 +267,8 @@ class SummariseFixTool extends AbstractBuiltInTool {
     }
 
     // The fix compared with the saved code, then stepped with each, until the call's time is up.
-    private Proof prove(final ToolCallContext context,
+    private Proof prove(final ToolCall call,
+                        final ToolCallContext context,
                         final Request request,
                         final String element,
                         final TranslationDoc target,
@@ -283,7 +289,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
             }
         }
         progress.say("Proving the fix: comparing outputs with the saved code's");
-        final Map<String, Object> comparison = compareOutputs.compareLocated(context,
+        final Map<String, Object> comparison = compareOutputs.compareLocated(call, context,
                 new CompareOutputsTool.Request(request.pipelineUuid(), request.streamIds(), code, null,
                         XsltDoc.TYPE.equals(target.doc().getType())
                                 ? element
@@ -294,14 +300,14 @@ class SummariseFixTool extends AbstractBuiltInTool {
             return Proof.STOPPED;
         }
         progress.say("Proving the fix: stepping with the fix");
-        final Stepped stepped = stepped(context, request.pipelineUuid(), request.streamIds(), located, code);
+        final Stepped stepped = stepped(call, context, request.pipelineUuid(), request.streamIds(), located, code);
         if (stepped.stopped()) {
             return Proof.STOPPED;
         }
         // The saved code stepped too: blocking errors it already has are not the fix's doing, and must not stop a
         // fix for something else (a pipeline can have more than one problem); errors only the draft has are.
         progress.say("Proving the fix: stepping with the saved code");
-        final Stepped before = stepped(context, request.pipelineUuid(), request.streamIds(), located, null);
+        final Stepped before = stepped(call, context, request.pipelineUuid(), request.streamIds(), located, null);
         if (before.stopped()) {
             return Proof.STOPPED;
         }
@@ -311,21 +317,22 @@ class SummariseFixTool extends AbstractBuiltInTool {
     /// One verdict over the streams (step_sample) and the located events' records (step_records).
     ///
     /// @param code Draft code by element, or null for the saved code.
-    private Stepped stepped(final ToolCallContext context,
+    private Stepped stepped(final ToolCall call,
+                            final ToolCallContext context,
                             final String pipelineUuid,
                             final List<Long> streamIds,
                             final List<Map<String, Object>> located,
                             final Map<String, String> code) {
         final List<Map<String, Object>> parts = new ArrayList<>();
         if (!streamIds.isEmpty()) {
-            parts.add(stepSample.stepSample(context, pipelineUuid, streamIds, code, null, null));
+            parts.add(stepSample.stepSample(call, context, pipelineUuid, streamIds, code, null, null));
         }
         if (!located.isEmpty()) {
             final List<StepRecordsTool.Location> locations = located.stream()
                     .map(loc -> new StepRecordsTool.Location(whole(loc.get("raw")), whole(loc.get("part")),
                             whole(loc.get("record")), null, StepRecordsTool.EXPECT_EVENT))
                     .toList();
-            parts.add(stepRecords.stepRecords(context, pipelineUuid, locations, code));
+            parts.add(stepRecords.stepRecords(call, context, pipelineUuid, locations, code));
         }
         return combined(parts);
     }

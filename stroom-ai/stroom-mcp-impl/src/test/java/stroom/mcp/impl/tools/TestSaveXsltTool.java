@@ -19,8 +19,10 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.validation.XsltSafety;
 import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.Test;
@@ -170,6 +172,101 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aDnsLookupIsSavedOnceTheUserAgreesInAForm() {
+        // Asked for by the user: an agent's XSLT may call stroom:host-name() once they agree, as the lookup carries
+        // a record's data to the DNS server.
+        world.forms = true;
+        world.answers.put("Save XSLT 'n'", "yes");
+
+        final Map<String, Object> made = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name", "n",
+                "code", lookingUp("stroom:host-name(@ip)")));
+
+        assertThat(made).containsKey("uuid");
+        assertThat(world.asked).singleElement().asString()
+                .startsWith("Save XSLT 'n', which calls stroom:host-name(): it " + XsltSafety.LOOKUP_EFFECT)
+                .contains("used in: stroom:host-name() in template match='record' (line 3)");
+        // Saved again with it: the XSLT it replaces already calls it, so the user isn't asked again.
+        final Map<String, Object> again = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name", "n",
+                "code", lookingUp("stroom:host-name(.)"), "uuid", made.get("uuid")));
+        assertThat(again).containsEntry("uuid", made.get("uuid"));
+        assertThat(world.asked).hasSize(1);
+    }
+
+    @Test
+    void aDnsLookupTheUserDeclinesIsNotSaved() {
+        world.forms = true;
+        world.answers.put("Save XSLT 'n'", "no");
+
+        final Map<String, Object> refused = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name", "n",
+                "code", lookingUp("stroom:host-address(@host)")));
+
+        assertThat(String.valueOf(refused.get("error")))
+                .startsWith("XSLT not saved: the user declined stroom:host-address() (it "
+                            + XsltSafety.LOOKUP_EFFECT + ")");
+        assertThat(world.world.nodes.values()).noneMatch(node -> "n".equals(node.name));
+    }
+
+    @Test
+    void aDnsLookupIsNotSavedWhereTheSessionCannotShowAForm() {
+        // The agent never holds the answer: no form, no agreement.
+        final Map<String, Object> refused = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name", "n",
+                "code", lookingUp("stroom:host-name(@ip)")));
+
+        assertThat(String.valueOf(refused.get("error")))
+                .startsWith("XSLT not saved: it calls stroom:host-name(), which " + XsltSafety.LOOKUP_EFFECT)
+                .contains("this session can't show one now");
+        assertThat(world.asked).isEmpty();
+    }
+
+    @Test
+    void aDnsLookupTheXsltReplacedAlreadyCallsIsSavedWithoutAsking() {
+        // A working copy of a production XSLT whose author put the lookup there.
+        final String uuid = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-Events").getUuid();
+        world.editByHand(uuid, ignored -> lookingUp("stroom:host-name(@ip)"));
+
+        final Map<String, Object> saved = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name",
+                "ACME-Events", "code", lookingUp("stroom:host-name(@ip)").replace("(A4)", "(A3)"), "uuid", uuid,
+                "discard_hand_edit", true));
+
+        assertThat(saved).containsEntry("uuid", uuid);
+        assertThat(world.asked).isEmpty();
+    }
+
+    @Test
+    void aStroomFunctionRefusedOutrightStaysRefusedWhateverTheUserWouldAgree() {
+        world.forms = true;
+        world.answers.put("Save XSLT", "yes");
+
+        final Map<String, Object> refused = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name", "n",
+                "code", lookingUp("stroom:host-name(@ip), stroom:http-call('https://x.example.com', '', "
+                                  + "'text/plain', string(.), '')")));
+
+        assertThat(String.valueOf(refused.get("error")))
+                .startsWith("XSLT not saved: ")
+                .contains("calls stroom:http-call(), which reaches outside Stroom");
+        // Refused before anything is asked.
+        assertThat(world.asked).isEmpty();
+    }
+
+    @Test
+    void anAgreementGivenForAStepCoversSavingTheSameXsltOverTheDocument() {
+        // step_pipeline agreed to the draft for the element's saved XSLT: saving the draft over it isn't asked again.
+        final String uuid = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-Events").getUuid();
+        final String code = lookingUp("stroom:host-name(@ip)");
+        world.forms = true;
+        world.answers.put("Step draft XSLT", "yes");
+        world.lookups.require(new ToolCall("1", StepPipelineTool.NAME, "{}"), world.context(), uuid,
+                "Step draft XSLT for element 'translationFilter'", "not stepped", code, null);
+        assertThat(world.asked).hasSize(1);
+
+        final Map<String, Object> saved = world.call(world.saveXsltTool(), Map.of("build", BUILD, "name",
+                "ACME-Events", "code", code, "uuid", uuid));
+
+        assertThat(saved).containsEntry("uuid", uuid);
+        assertThat(world.asked).hasSize(1);
+    }
+
+    @Test
     void anXsltIsFiledByWhatItWrites() {
         assertThat(XsltSaves.xsltRole("<Events xmlns=\"event-logging:3\"/>")).isEqualTo("Events");
         assertThat(XsltSaves.xsltRole("<xsl:stylesheet xpath-default-namespace=\"event-logging:3\"><records "
@@ -185,6 +282,12 @@ class TestSaveXsltTool {
                 .findFirst()
                 .orElseThrow()
                 .role()).isNull();
+    }
+
+    // The hand-written XSLT, with the stroom namespace, writing the expression's value in its template.
+    private static String lookingUp(final String expression) {
+        return HAND.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">")
+                .replace("{BODY}", "<xsl:value-of select=\"" + expression + "\"/>");
     }
 
     private static ToolRefusal refusal(final Runnable run) {

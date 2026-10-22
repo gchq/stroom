@@ -65,9 +65,9 @@ class TestSummariseFixTool {
     TestSummariseFixTool() {
         Mockito.when(world.documentAccess.read(any(DocRef.class), Mockito.eq(HasData.class))).thenAnswer(inv ->
                 Optional.ofNullable(code.get(((DocRef) inv.getArgument(0)).getUuid())).map(TestSummariseFixTool::doc));
-        Mockito.when(compareOutputs.compareLocated(any(), any(), anyList()))
+        Mockito.when(compareOutputs.compareLocated(any(), any(), any(), anyList()))
                 .thenReturn(compared(6, 2, "Event/EventDetail/X"));
-        Mockito.when(stepSample.stepSample(any(), any(), anyList(), any(), any(), any()))
+        Mockito.when(stepSample.stepSample(any(), any(), any(), anyList(), any(), any(), any()))
                 .thenReturn(verdict(List.of()));
     }
 
@@ -114,7 +114,7 @@ class TestSummariseFixTool {
         // The copy's code, on the pipeline.
         final ArgumentCaptor<CompareOutputsTool.Request> compared = ArgumentCaptor.forClass(
                 CompareOutputsTool.Request.class);
-        Mockito.verify(compareOutputs).compareLocated(any(), compared.capture(), anyList());
+        Mockito.verify(compareOutputs).compareLocated(any(), any(), compared.capture(), anyList());
         assertThat(compared.getValue().pipelineUuid()).isEqualTo("p-1");
         assertThat(compared.getValue().draftCode()).isEqualTo(Map.of("translationFilter", "<new/>"));
         assertThat(compared.getValue().element()).isEqualTo("translationFilter");
@@ -147,13 +147,13 @@ class TestSummariseFixTool {
 
     @Test
     void aFixThatChangesNothingOrMoreThanExpectedIsNotReady() {
-        Mockito.when(compareOutputs.compareLocated(any(), any(), anyList())).thenReturn(compared(6, 0));
+        Mockito.when(compareOutputs.compareLocated(any(), any(), any(), anyList())).thenReturn(compared(6, 0));
         final Map<String, Object> nothing = summarise(draftCall("[\"Event/EventDetail/X\"]"));
         assertThat(nothing.get("ready")).isEqualTo(false);
         assertThat(problems(nothing)).containsExactly("The draft changes no output on these records: it does not "
                                                       + "reach the reported case");
 
-        Mockito.when(compareOutputs.compareLocated(any(), any(), anyList()))
+        Mockito.when(compareOutputs.compareLocated(any(), any(), any(), anyList()))
                 .thenReturn(compared(6, 2, "Event/EventDetail/X", "Event/EventDetail/Description"));
         final Map<String, Object> more = summarise(draftCall("[\"Event/EventDetail/X\"]"));
         assertThat(more.get("ready")).isEqualTo(false);
@@ -187,9 +187,9 @@ class TestSummariseFixTool {
                 + "the fix automatically."));
         assertThat(result.get("hint")).asString().startsWith("Show the user the diff and the fields changed");
         // Stepped with the fix, then with the saved code.
-        Mockito.verify(stepSample).stepSample(any(), Mockito.eq("p-1"), Mockito.eq(List.of(9L, 7L)),
+        Mockito.verify(stepSample).stepSample(any(), any(), Mockito.eq("p-1"), Mockito.eq(List.of(9L, 7L)),
                 Mockito.eq(Map.of("translationFilter", "<new/>")), isNull(), isNull());
-        Mockito.verify(stepSample).stepSample(any(), Mockito.eq("p-1"), Mockito.eq(List.of(9L, 7L)), isNull(),
+        Mockito.verify(stepSample).stepSample(any(), any(), Mockito.eq("p-1"), Mockito.eq(List.of(9L, 7L)), isNull(),
                 isNull(), isNull());
         // Told what it is doing.
         assertThat(world.said).contains("Proving the fix: comparing outputs with the saved code's",
@@ -206,7 +206,7 @@ class TestSummariseFixTool {
         located.put("part", 0L);
         located.put("record", 12L);
         Mockito.when(eventLocations.eventLocations(anyList())).thenReturn(List.of(located));
-        Mockito.when(stepRecords.stepRecords(any(), any(), anyList(), any())).thenReturn(verdict(List.of()));
+        Mockito.when(stepRecords.stepRecords(any(), any(), any(), anyList(), any())).thenReturn(verdict(List.of()));
 
         final Map<String, Object> result = summarise("{\"pipeline_uuid\": \"p-1\", \"element\": "
                                                      + "\"translationFilter\", \"draft\": \"<new/>\", \"events\": "
@@ -215,12 +215,12 @@ class TestSummariseFixTool {
 
         assertThat(result.get("ready")).isEqualTo(true);
         Mockito.verify(eventLocations).eventLocations(List.of(new EventLocations.EventRef(8, 3)));
-        Mockito.verify(compareOutputs).compareLocated(any(), any(), Mockito.eq(List.of(located)));
+        Mockito.verify(compareOutputs).compareLocated(any(), any(), any(), Mockito.eq(List.of(located)));
         final List<StepRecordsTool.Location> where = List.of(new StepRecordsTool.Location(6, 0, 12, null,
                 StepRecordsTool.EXPECT_EVENT));
-        Mockito.verify(stepRecords).stepRecords(any(), Mockito.eq("p-1"), Mockito.eq(where),
+        Mockito.verify(stepRecords).stepRecords(any(), any(), Mockito.eq("p-1"), Mockito.eq(where),
                 Mockito.eq(Map.of("translationFilter", "<new/>")));
-        Mockito.verify(stepRecords).stepRecords(any(), Mockito.eq("p-1"), Mockito.eq(where), isNull());
+        Mockito.verify(stepRecords).stepRecords(any(), any(), Mockito.eq("p-1"), Mockito.eq(where), isNull());
         // No streams were given, so none were stepped whole.
         Mockito.verifyNoInteractions(stepSample);
         assertThat(String.valueOf(((List<?>) result.get("manual_steps")).get(2))).contains("raw stream(s) [6]");
@@ -249,7 +249,7 @@ class TestSummariseFixTool {
         // A text converter's output is compared at the pipeline's own XSLT step.
         final ArgumentCaptor<CompareOutputsTool.Request> compared = ArgumentCaptor.forClass(
                 CompareOutputsTool.Request.class);
-        Mockito.verify(compareOutputs).compareLocated(any(), compared.capture(), anyList());
+        Mockito.verify(compareOutputs).compareLocated(any(), any(), compared.capture(), anyList());
         assertThat(compared.getValue().element()).isNull();
     }
 
@@ -285,7 +285,7 @@ class TestSummariseFixTool {
     void aProofCutShortByTheCallsTimeIsNotReadyAndStepsNoMore() {
         final Map<String, Object> stopped = compared(3, 1, "Event/EventDetail/X");
         stopped.put("stopped_early", true);
-        Mockito.when(compareOutputs.compareLocated(any(), any(), anyList())).thenReturn(stopped);
+        Mockito.when(compareOutputs.compareLocated(any(), any(), any(), anyList())).thenReturn(stopped);
 
         final Map<String, Object> result = summarise(draftCall("[\"Event/EventDetail/X\"]"));
 
@@ -299,7 +299,7 @@ class TestSummariseFixTool {
 
     @Test
     void aCancelledCallStopsAtOnce() {
-        Mockito.when(stepSample.stepSample(any(), any(), anyList(), any(), any(), any()))
+        Mockito.when(stepSample.stepSample(any(), any(), any(), anyList(), any(), any(), any()))
                 .thenThrow(new ToolTimeoutException());
 
         assertThat(refused(draftCall("[\"Event/EventDetail/X\"]"))).isEqualTo(PipelineStepping.CANCELLED);
@@ -322,7 +322,7 @@ class TestSummariseFixTool {
     // summarise_fix with the draft giving these blocking groups, and the saved code those.
     private Map<String, Object> run(final List<Map<String, Object>> draftGroups,
                                     final List<Map<String, Object>> savedGroups) {
-        Mockito.when(stepSample.stepSample(any(), any(), anyList(), any(), any(), any()))
+        Mockito.when(stepSample.stepSample(any(), any(), any(), anyList(), any(), any(), any()))
                 .thenReturn(verdict(draftGroups), verdict(savedGroups));
         return summarise(draftCall("[\"Event/EventDetail/X\"]"));
     }

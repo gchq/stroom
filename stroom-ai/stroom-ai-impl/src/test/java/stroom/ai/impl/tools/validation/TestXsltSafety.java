@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.validation.XsltSafety.Lookup;
 import stroom.ai.impl.tools.validation.XsltSafety.Unsafe;
 
 import org.junit.jupiter.api.Test;
@@ -187,9 +188,6 @@ class TestXsltSafety {
                 Arguments.of("<xsl:copy-of select=\"stroom:fetch-json(concat('https://x/', .), '')\"/>",
                         "stroom:fetch-json()"),
                 Arguments.of("<xsl:value-of select=\"stroom:ask-ai('model', .)\"/>", "stroom:ask-ai()"),
-                Arguments.of("<Data Name=\"h\" Value=\"{stroom:host-name(@ip)}\"/>", "stroom:host-name()"),
-                Arguments.of("<xsl:value-of select=\"s:host-address(concat(., '.example.com'))\" "
-                             + "xmlns:s=\"stroom\"/>", "stroom:host-address()"),
                 Arguments.of("<xsl:value-of select=\"Q{stroom}http-call#5\"/>", "stroom:http-call()"));
     }
 
@@ -207,9 +205,9 @@ class TestXsltSafety {
                 "<xsl:value-of select=\"stroom:http-call('https://x', '', 'text/plain', ., '')\"/>")))
                 .extracting(Unsafe::why)
                 .containsExactly("xsl:value-of/@select calls stroom:http-call(), which reaches outside Stroom (a "
-                                 + "URL, a chat model or a DNS lookup) with what it is given: Stroom would run it on "
-                                 + "its nodes for every record, so the tools don't save it unless the XSLT it "
-                                 + "replaces already calls it");
+                                 + "URL or a chat model) with what it is given: Stroom would run it on its nodes "
+                                 + "for every record, so the tools don't save it unless the XSLT it replaces "
+                                 + "already calls it");
         // Stroom's other functions, and one of the same name in another namespace, are the XSLT's business.
         assertThat(XsltSafety.unsafeInXslt(sheet.replace("{BODY}",
                 "<xsl:value-of select=\"stroom:lookup('m', .), stroom:format-date(., 'x'), geo:host-name(.), "
@@ -229,6 +227,59 @@ class TestXsltSafety {
         assertThat(XsltSafety.keptBy(code, previous)).containsExactly(unsafe.getFirst().why());
         assertThat(XsltSafety.keptBy(code, null)).isEmpty();
         assertThat(XsltSafety.keptBy(code, "")).isEmpty();
+    }
+
+    @Test
+    void testADnsLookupIsNotRefusedButFoundWithItsTemplateAndLine() {
+        // Asked for by the user: host-name() and host-address() may be saved once the user agrees, so they are
+        // not among what is refused outright.
+        final String code = """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:stroom="stroom" \
+                xmlns:s="stroom" xpath-default-namespace="records:2" version="3.0">
+                  <xsl:variable name="self" select="stroom:host-address('localhost')"/>
+                  <xsl:template match="record">
+                    <Event>
+                      <Data Name="h" Value="{stroom:host-name(@ip)}"/>
+                      <xsl:value-of select="s:host-address(.), stroom:host-name(.)"/>
+                    </Event>
+                  </xsl:template>
+                  <xsl:template name="named">
+                    <xsl:value-of select="stroom:host-name(.)"/>
+                  </xsl:template>
+                </xsl:stylesheet>""";
+
+        assertThat(XsltSafety.unsafeInXslt(code)).isEmpty();
+        assertThat(XsltSafety.lookupsInXslt(code)).containsExactly(
+                new Lookup("stroom:host-address()", "top-level xsl:variable name='self'", 2),
+                new Lookup("stroom:host-name()", "template match='record'", 5),
+                new Lookup("stroom:host-address()", "template match='record'", 6),
+                new Lookup("stroom:host-name()", "template name='named'", 10));
+        assertThat(XsltSafety.lookupsInXslt(code).get(1).said()).isEqualTo("template match='record' (line 5)");
+        assertThat(new Lookup("stroom:host-name()", "the stylesheet", -1).said()).isEqualTo("the stylesheet");
+        assertThat(XsltSafety.lookupsCalled("stroom:host-name(.), stroom:host-address(.), stroom:host-name(.)",
+                Map.of("stroom", "stroom"))).containsExactly("host-name", "host-address");
+    }
+
+    @Test
+    void testALookupOfTheSameNameInAnotherNamespaceIsNotOne() {
+        final String sheet = XSLT.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">");
+        assertThat(XsltSafety.lookupsInXslt(sheet.replace("{BODY}", "<xsl:value-of select=\"geo:host-name(.), "
+                + "'stroom:host-name(.)', host-name\" xmlns:geo=\"" + GEO + "\"/>"))).isEmpty();
+        assertThat(XsltSafety.lookupsInXslt("<xsl:stylesheet")).isEmpty();
+    }
+
+    @Test
+    void testOnlyLookupsTheXsltReplacedDoesNotCallAreNew() {
+        final String sheet = XSLT.replace("version=\"3.0\">", "version=\"3.0\" xmlns:stroom=\"stroom\">");
+        final String previous = sheet.replace("{BODY}", "<xsl:value-of select=\"stroom:host-name(.)\"/>");
+        final String code = sheet.replace("{BODY}", "<Data Value=\"{stroom:host-name(@ip)}\"/>"
+                                                    + "<xsl:value-of select=\"stroom:host-address(.)\"/>");
+
+        assertThat(XsltSafety.newLookups(code, previous)).extracting(Lookup::function)
+                .containsExactly("stroom:host-address()");
+        assertThat(XsltSafety.newLookups(code, null)).extracting(Lookup::function)
+                .containsExactly("stroom:host-name()", "stroom:host-address()");
+        assertThat(XsltSafety.newLookups(code, code)).isEmpty();
     }
 
     @Test

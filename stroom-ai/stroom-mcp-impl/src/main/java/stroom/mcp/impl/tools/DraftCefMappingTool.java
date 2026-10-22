@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.CallProgress;
@@ -283,6 +284,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
             return JsonResults.refused(e.getMessage());
         } catch (final ToolTimeoutException e) {
             return JsonResults.refused(PipelineStepping.CANCELLED);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            // A form waits for the user: the call is made again with the answer.
+            throw e;
         } catch (final RuntimeException e) {
             return JsonResults.refused(StreamSummaries.reason(e));
         }
@@ -471,7 +475,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> saved = target != null
                 ? saves.update(call, context, target, toSave.xslt(), null, source, change, request.discardHandEdit(),
                 request.handEditChoices())
-                : saves.create(context, request.build(), request.name(), toSave.xslt(), source, change);
+                : saves.create(call, context, request.build(), request.name(), toSave.xslt(), source, change);
         if (!(saved.get("uuid") instanceof final String uuid)) {
             // Asked about fields edited by hand.
             final Map<String, Object> out = new LinkedHashMap<>(result);
