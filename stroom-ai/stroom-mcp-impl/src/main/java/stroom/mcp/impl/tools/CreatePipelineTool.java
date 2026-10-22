@@ -222,8 +222,32 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             }
             return standaloneKafka(call, context, build, proposed, description, given, reuse);
         }
-        final String replaceParser = stringArg(call, REPLACE_PARSER_ARG);
-        final String templateUuid = writes.templateUuid(templateGiven);
+        return fromTemplate(call, context, new FromTemplate(build, proposed, templateGiven, given, description,
+                stringArg(call, REPLACE_PARSER_ARG),
+                ReferenceRequest.listOf(argsMap(call).get(REFERENCES_ARG), REFERENCES_ARG), reuse,
+                PipelineArguments.flag(argsMap(call).get(ACCEPT_PARSER_MISMATCH_ARG)),
+                stringArg(call, CONFIRMATION_ID_ARG)));
+    }
+
+    /// Creates a pipeline as a child of a template, setting only what the child supplies: create_pipeline's path,
+    /// for a tool that gives its arguments itself (create_indexing_pipeline). The user confirms the template and
+    /// name (or corrects the name) first.
+    ///
+    /// @param call    The call asking, whose id tells its forms apart in a chat.
+    /// @param context The call's context.
+    /// @param request What the pipeline is made from.
+    /// @return create_pipeline's result: the pipeline made, with `next`; or the confirmation round to return.
+    /// @throws ToolRefusal if the template, its properties or the user's answer don't allow it.
+    /// @throws PipelineUnreadableException if Stroom can't load the template.
+    Map<String, Object> fromTemplate(final ToolCall call,
+                                     final ToolCallContext context,
+                                     final FromTemplate request) {
+        final String build = request.build();
+        final String proposed = request.name();
+        final List<PropertyValue> given = request.properties();
+        final String description = request.description();
+        final String replaceParser = request.replaceParser();
+        final String templateUuid = writes.templateUuid(request.template());
         final PipelineDoc template = pipelineDocs.read(templateUuid);
         final Layout merged = writes.layout(templateUuid);
         final Set<String> elements = new LinkedHashSet<>(merged.elements().keySet());
@@ -250,8 +274,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         // The parser first: a template whose parser can't read the sample is the wrong one, whatever else it lacks
         // (seen: an XML source refused the Data Splitter template for want of a text converter, not for its
         // parser).
-        writes.parserReadsSample(build, merged, replaceParser,
-                PipelineArguments.flag(argsMap(call).get(ACCEPT_PARSER_MISMATCH_ARG)));
+        writes.parserReadsSample(build, merged, replaceParser, request.acceptParserMismatch());
         final Filled slots = writes.fillOpenSlots(build, merged, replaceParser, typed.properties());
         final List<PropertyValue> properties = new ArrayList<>(slots.properties());
         final List<String> filled = new ArrayList<>(slots.filled());
@@ -262,9 +285,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             filled.add(property.element() + ".addRootObject = false (the sample is a JSON array: each item is a "
                        + "record)");
         });
-        writes.ownDocuments(build, properties, reuse);
-        final List<PipelineReference> references = writes.referenceEntries(merged,
-                ReferenceRequest.listOf(argsMap(call).get(REFERENCES_ARG), REFERENCES_ARG));
+        writes.ownDocuments(build, properties, request.reuseExistingDocs());
+        final List<PipelineReference> references = writes.referenceEntries(merged, request.references());
         final List<String> sets = properties.stream().map(PropertyValue::dotted).toList();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
@@ -285,7 +307,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         }
         final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
                         "Create pipeline '" + proposed + "' from template '" + template.getName() + "'", details,
-                        stringArg(call, CONFIRMATION_ID_ARG))
+                        request.confirmationId())
                 .withEditable(NAME_ARG, "Pipeline name", proposed));
         if (gate.isPresent()) {
             return gate.get();
@@ -472,5 +494,30 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         .required("feed")
                         .build())
                 .build();
+    }
+
+    /// What a pipeline is made from a template with: create_pipeline's arguments, read.
+    ///
+    /// @param build                The build it belongs to.
+    /// @param name                 The name proposed for it.
+    /// @param template             The template's UUID or exact name.
+    /// @param properties           What the child supplies.
+    /// @param description          What it does, or empty.
+    /// @param replaceParser        The parser type to use instead of the template's, or null.
+    /// @param references           The reference data its translation looks up.
+    /// @param reuseExistingDocs    Whether documents from outside the build may be used.
+    /// @param acceptParserMismatch Whether a template whose parser can't read the build's sample may be used.
+    /// @param confirmationId       From an earlier needs_confirmation reply, or null.
+    record FromTemplate(String build,
+                        String name,
+                        String template,
+                        List<PropertyValue> properties,
+                        String description,
+                        String replaceParser,
+                        List<ReferenceRequest> references,
+                        boolean reuseExistingDocs,
+                        boolean acceptParserMismatch,
+                        String confirmationId) {
+
     }
 }

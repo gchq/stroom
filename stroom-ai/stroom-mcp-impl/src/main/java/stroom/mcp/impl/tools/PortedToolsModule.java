@@ -70,6 +70,7 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(GetFieldConventionsTool.class)
                 .addBinding(DraftIndexMappingTool.class)
                 .addBinding(CreateIndexDocTool.class)
+                .addBinding(CreateIndexingPipelineTool.class)
                 .addBinding(RenameIndexTool.class)
                 .addBinding(ProposeIndexTemplateTool.class)
                 .addBinding(CheckIndexTemplateTool.class)

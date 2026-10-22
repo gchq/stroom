@@ -197,6 +197,7 @@ final class PipelineWorld {
                 "schemaValidation", "boolean"));
         declared.put("StandardKafkaProducer", Map.of("kafkaConfig", "KafkaConfig"));
         declared.put("ElasticIndexingFilter", Map.of("indexName", "String", "cluster", "ElasticCluster"));
+        declared.put("IndexingFilter", Map.of("index", "Index"));
         return declared;
     }
 }
