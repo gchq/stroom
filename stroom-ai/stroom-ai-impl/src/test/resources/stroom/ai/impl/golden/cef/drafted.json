@@ -1,0 +1,319 @@
+{
+ "plan": {
+  "output": "kafka",
+  "topic": "arcsight-cef",
+  "kafka_key": null,
+  "custom_keys": false,
+  "vendor": {
+   "value": null,
+   "source": "EventSource/System/Organisation",
+   "map": {},
+   "default": null
+  },
+  "product": {
+   "value": null,
+   "source": "EventSource/System/Name",
+   "map": {},
+   "default": null
+  },
+  "version": {
+   "value": null,
+   "source": "EventSource/System/Version",
+   "map": {},
+   "default": null
+  },
+  "signature": {
+   "value": null,
+   "source": "(EventDetail/TypeId, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "name": {
+   "value": null,
+   "source": "(EventDetail/Description, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]",
+   "map": {},
+   "default": null
+  },
+  "severity": {
+   "value": "3",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "common": [
+   {
+    "path": "EventSource/Device/HostName",
+    "key": "dvchost",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "label": null,
+    "transform": "epoch_ms"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "key": "cs1",
+    "label": "Client IPAddress",
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "key": "suser",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "key": "dvc",
+    "label": null,
+    "transform": "text"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "key": "cs2",
+    "label": "System Environment",
+    "transform": "text"
+   }
+  ],
+  "events": {
+   "Authenticate": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+     "key": "cs3",
+     "label": "note",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+     "key": "cn1",
+     "label": "session_id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Success",
+     "key": "outcome",
+     "label": null,
+     "transform": "outcome"
+    },
+    {
+     "path": "EventDetail/Authenticate/User/Id",
+     "key": "duser",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "Network": [
+    {
+     "path": "local-name(EventDetail/Network/*[1])",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "key": "dst",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Port",
+     "key": "dpt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Device/IPAddress",
+     "key": "src",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Port",
+     "key": "spt",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Network/*/TransportProtocol",
+     "key": "proto",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "View": [
+    {
+     "path": "'View'",
+     "key": "act",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Id",
+     "key": "cn1",
+     "label": "View Resource Id",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Name",
+     "key": "cs3",
+     "label": "View Resource Name",
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/View/Resource/Type",
+     "key": "cs4",
+     "label": "View Resource Type",
+     "transform": "text"
+    }
+   ]
+  },
+  "not_sent": [],
+  "imports": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "compact": {
+  "topic": "arcsight-cef",
+  "vendor": {
+   "source": "EventSource/System/Organisation"
+  },
+  "product": {
+   "source": "EventSource/System/Name"
+  },
+  "version": {
+   "source": "EventSource/System/Version"
+  },
+  "signature": {
+   "source": "(EventDetail/TypeId, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]"
+  },
+  "name": {
+   "source": "(EventDetail/Description, string-join((local-name(EventDetail/*[not(self::TypeId or self::Description or self::Classification or self::Purpose or self::Data)][1]), EventDetail/*/Action), ' '))[normalize-space(.) != ''][1]"
+  },
+  "common": [
+   {
+    "path": "EventSource/Device/HostName",
+    "key": "dvchost"
+   },
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "transform": "epoch_ms"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "key": "cs1",
+    "label": "Client IPAddress"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "key": "suser"
+   },
+   {
+    "path": "EventSource/Device/IPAddress",
+    "key": "dvc"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "key": "cs2",
+    "label": "System Environment"
+   }
+  ],
+  "events": {
+   "Authenticate": [
+    {
+     "path": "EventDetail/Authenticate/Action",
+     "key": "act"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+     "key": "cs3",
+     "label": "note"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+     "key": "cn1",
+     "label": "session_id"
+    },
+    {
+     "path": "EventDetail/Authenticate/Outcome/Success",
+     "key": "outcome",
+     "transform": "outcome"
+    },
+    {
+     "path": "EventDetail/Authenticate/User/Id",
+     "key": "duser"
+    }
+   ],
+   "Network": [
+    {
+     "path": "local-name(EventDetail/Network/*[1])",
+     "key": "act"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+     "key": "dst"
+    },
+    {
+     "path": "EventDetail/Network/*/Destination/Port",
+     "key": "dpt"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Device/IPAddress",
+     "key": "src"
+    },
+    {
+     "path": "EventDetail/Network/*/Source/Port",
+     "key": "spt"
+    },
+    {
+     "path": "EventDetail/Network/*/TransportProtocol",
+     "key": "proto"
+    }
+   ],
+   "View": [
+    {
+     "path": "'View'",
+     "key": "act"
+    },
+    {
+     "path": "EventDetail/View/Resource/Id",
+     "key": "cn1",
+     "label": "View Resource Id"
+    },
+    {
+     "path": "EventDetail/View/Resource/Name",
+     "key": "cs3",
+     "label": "View Resource Name"
+    },
+    {
+     "path": "EventDetail/View/Resource/Type",
+     "key": "cs4",
+     "label": "View Resource Type"
+    }
+   ]
+  }
+ },
+ "notes": [
+  "[every event] EventSource/Client/IPAddress: values like ['192.0.2.45', 'ss-client.domain.com'] don't fit src (ip), so it goes to a custom slot"
+ ],
+ "problems": []
+}

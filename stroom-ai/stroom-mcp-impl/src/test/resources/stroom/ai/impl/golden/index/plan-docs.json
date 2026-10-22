@@ -1,0 +1,46 @@
+{
+ "population": {
+  "EventDetail/Send/Source/User/Id": 30.0,
+  "EventDetail/Receive/Source/User/Id": 20.0,
+  "EventDetail/Network/Deny/Source/Device/IPAddress": 12.5,
+  "EventDetail/Network/Permit/Source/Device/IPAddress": 66.66666,
+  "EventSource/User/Id": 100.0
+ },
+ "documents": [
+  {
+   "StreamId": [
+    "7"
+   ],
+   "user.id": [
+    "alice",
+    "bob"
+   ],
+   "host.ip": [
+    "10.0.0.1"
+   ],
+   "email.from": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   ]
+  },
+  {
+   "StreamId": [
+    "7"
+   ],
+   "user.id": [
+    "carol"
+   ],
+   "net.src": [
+    "1.2.3.4"
+   ]
+  },
+  {
+   "StreamId": [
+    "8"
+   ],
+   "user.id": [
+    "dave",
+    "erin"
+   ]
+  }
+ ]
+}

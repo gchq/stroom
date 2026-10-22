@@ -1,0 +1,150 @@
+{
+ "added": [
+  {
+   "path": "'View'",
+   "key": "act",
+   "event_type": "View"
+  },
+  {
+   "path": "EventDetail/View/Resource/Name",
+   "key": "cs3",
+   "event_type": "View",
+   "label": "View Resource Name"
+  },
+  {
+   "path": "EventDetail/View/Resource/Type",
+   "key": "cs2",
+   "event_type": "View",
+   "label": "View Resource Type"
+  }
+ ],
+ "notes": [],
+ "added_all": [
+  {
+   "path": "EventSource/Device/HostName",
+   "key": "dvchost"
+  },
+  {
+   "path": "EventSource/System/Name",
+   "key": "cs1",
+   "label": "System Name"
+  },
+  {
+   "path": "EventSource/System/Organisation",
+   "key": "cs2",
+   "label": "System Organisation"
+  },
+  {
+   "path": "EventTime/TimeCreated",
+   "key": "rt"
+  },
+  {
+   "path": "EventSource/Client/IPAddress",
+   "key": "cs3",
+   "label": "Client IPAddress"
+  },
+  {
+   "path": "EventSource/System/Version",
+   "key": "cfp1",
+   "label": "System Version"
+  },
+  {
+   "path": "EventDetail/Description",
+   "key": "cs4",
+   "label": "Description"
+  },
+  {
+   "path": "EventSource/Device/IPAddress",
+   "key": "dvc"
+  },
+  {
+   "path": "EventSource/System/Environment",
+   "key": "cs5",
+   "label": "System Environment"
+  },
+  {
+   "path": "EventDetail/Authenticate/Action",
+   "key": "act",
+   "event_type": "Authenticate"
+  },
+  {
+   "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+   "key": "cs6",
+   "event_type": "Authenticate",
+   "label": "note"
+  },
+  {
+   "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+   "key": "cn1",
+   "event_type": "Authenticate",
+   "label": "session_id"
+  },
+  {
+   "path": "EventDetail/Authenticate/Outcome/Success",
+   "key": "outcome",
+   "event_type": "Authenticate"
+  },
+  {
+   "path": "EventDetail/Authenticate/User/Id",
+   "key": "duser",
+   "event_type": "Authenticate"
+  },
+  {
+   "path": "local-name(EventDetail/Network/*[1])",
+   "key": "act",
+   "event_type": "Network"
+  },
+  {
+   "path": "EventDetail/Network/*/Destination/Device/IPAddress",
+   "key": "dst",
+   "event_type": "Network"
+  },
+  {
+   "path": "EventDetail/Network/*/Destination/Port",
+   "key": "dpt",
+   "event_type": "Network"
+  },
+  {
+   "path": "EventDetail/Network/*/Source/Device/IPAddress",
+   "key": "src",
+   "event_type": "Network"
+  },
+  {
+   "path": "EventDetail/Network/*/Source/Port",
+   "key": "spt",
+   "event_type": "Network"
+  },
+  {
+   "path": "EventDetail/Network/*/TransportProtocol",
+   "key": "proto",
+   "event_type": "Network"
+  },
+  {
+   "path": "'View'",
+   "key": "act",
+   "event_type": "View"
+  },
+  {
+   "path": "EventDetail/View/Resource/Id",
+   "key": "cn1",
+   "event_type": "View",
+   "label": "View Resource Id"
+  },
+  {
+   "path": "EventDetail/View/Resource/Name",
+   "key": "cs6",
+   "event_type": "View",
+   "label": "View Resource Name"
+  },
+  {
+   "path": "EventDetail/View/Resource/Type",
+   "key": "flexString1",
+   "event_type": "View",
+   "label": "View Resource Type"
+  }
+ ],
+ "notes_all": [
+  "Authenticate events: a kind the CEF plan has no fields for (only the common ones are sent)",
+  "Network events: a kind the CEF plan has no fields for (only the common ones are sent)"
+ ]
+}

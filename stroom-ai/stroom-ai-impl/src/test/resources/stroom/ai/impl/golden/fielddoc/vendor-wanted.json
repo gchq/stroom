@@ -1,0 +1,127 @@
+{
+ "EventTime/TimeCreated": {
+  "field": "EventTime/TimeCreated",
+  "from": "`time`",
+  "values": [
+   "2026-09-28T10:00:00.000Z",
+   "2026-09-28T10:01:00.000Z"
+  ],
+  "schemas_say": {
+   "event-logging": "Time the event was created."
+  }
+ },
+ "EventSource/System/Name": {
+  "field": "EventSource/System/Name",
+  "from": "\"Acme VPN\"",
+  "values": [
+   "Acme VPN"
+  ],
+  "schemas_say": {
+   "event-logging": "The name of the system."
+  }
+ },
+ "EventSource/System/Environment": {
+  "field": "EventSource/System/Environment",
+  "from": "\"Dev\"",
+  "values": [
+   "Dev"
+  ],
+  "schemas_say": {
+   "event-logging": "The environment describes a specific instance of a system."
+  }
+ },
+ "EventSource/Generator": {
+  "field": "EventSource/Generator",
+  "from": "\"vpnd\"",
+  "values": [
+   "vpnd"
+  ],
+  "schemas_say": {
+   "event-logging": "The thing that generated the event."
+  }
+ },
+ "EventSource/Device/HostName": {
+  "field": "EventSource/Device/HostName",
+  "from": "`host`, or \"unknown\" when empty",
+  "values": [
+   "unknown",
+   "ws01"
+  ],
+  "schemas_say": {
+   "event-logging": "The network host name of the device, e.g. someserver.somenet.org.uk."
+  }
+ },
+ "EventSource/User/Id": {
+  "field": "EventSource/User/Id",
+  "from": "`user`",
+  "values": [
+   "o'neil"
+  ],
+  "schemas_say": {
+   "vendor documentation": "Login of the account that signed in.",
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "EventDetail/TypeId": {
+  "field": "EventDetail/TypeId",
+  "from": "\"Logon\"",
+  "values": [
+   "Logon"
+  ],
+  "schemas_say": {
+   "event-logging": "A name/code/ID to uniquely identify the logical event type within the service providing the events."
+  }
+ },
+ "EventDetail/Authenticate/Action": {
+  "field": "EventDetail/Authenticate/Action",
+  "from": "\"Logon\"",
+  "values": [
+   "Logon"
+  ],
+  "schemas_say": {
+   "event-logging": "The authentication action that was performed, e.g. Logon, Logoff."
+  }
+ },
+ "EventDetail/Authenticate/User/Id": {
+  "field": "EventDetail/Authenticate/User/Id",
+  "from": "`user`",
+  "values": [
+   "o'neil"
+  ],
+  "schemas_say": {
+   "vendor documentation": "Login of the account that signed in.",
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "EventDetail/Authenticate/Outcome/Success": {
+  "field": "EventDetail/Authenticate/Outcome/Success",
+  "from": "`result`: ok -> true, fail -> false",
+  "values": [
+   "false"
+  ],
+  "schemas_say": {
+   "event-logging": "If the outcome of an event was successful then 'true', 'false' otherwise."
+  }
+ },
+ "EventDetail/Authenticate/Data[@Name='session']/@Value": {
+  "field": "EventDetail/Authenticate/Data[@Name='session']/@Value",
+  "from": "`sid`",
+  "values": [
+   "s1"
+  ],
+  "schemas_say": {
+   "vendor documentation": "VPN session. Codes: s1: first session.",
+   "event-logging": "The `session` value recorded in a Data element of Authenticate."
+  }
+ },
+ "EventDetail/Unknown/Data[@Name='action']/@Value": {
+  "field": "EventDetail/Unknown/Data[@Name='action']/@Value",
+  "from": "`action`",
+  "values": [
+   "keepalive"
+  ],
+  "schemas_say": {
+   "event-logging": "The `action` value recorded in a Data element of Unknown."
+  }
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "documents": [
+  {
+   "@timestamp": [
+    "2026-10-01T10:00:00.000Z"
+   ],
+   "StreamId": [
+    "7"
+   ],
+   "user": [],
+   "user.name": [
+    "alice"
+   ],
+   "user.b": [
+    "true"
+   ],
+   "body_json": [],
+   "body_json.k": [
+    "v"
+   ],
+   "items": [],
+   "items.sku": [
+    "a"
+   ],
+   "items.qty": [
+    "2"
+   ],
+   "feed": [
+    "F"
+   ]
+  },
+  {
+   "UserId": [
+    "bob",
+    "carol"
+   ]
+  },
+  {}
+ ],
+ "arrays": [
+  "items"
+ ]
+}

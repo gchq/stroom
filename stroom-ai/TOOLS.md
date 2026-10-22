@@ -747,3 +747,49 @@ Where they differ from the Python server:
 * `DraftMapping.records` refuses no samples with an `IllegalArgumentException`; the Python server failed with a
   `StopIteration`.
 
+## The field-mapping documentation and the CEF mapping (`fielddoc`, `cef`)
+
+Ported from the MCP server's `utils/fielddoc.py` and `utils/cef.py` (stroom-ai-impl), for `write_documentation`,
+`draft_cef_mapping` and the coverage tools when they are ported; no tool uses them yet. They build on the
+translation generator (`stroom.ai.impl.tools.generation`: its mapping records, `XsltComments`, `StyledXslt`,
+`MappingFacts`, the XML tree) and `KeptMapping.readable` / `conditionText`, which already were `fielddoc`'s.
+
+* `stroom.ai.impl.tools.fielddoc`: `FieldDocs` (the layouts `BY_EVENT_TYPE` / `COMPACT`, `sourceText`,
+  `conditionText`, `anyActionPath`, `similarGroups`, `combinedPath`, `dataKey`, `readDescriptions`,
+  `descriptionsBlock`, `schemaDescription`, `fieldDescription`, `actionOf`), `Descriptions` (the agent's field
+  descriptions, and those to ask for: `wanted`), `EventFieldDocs` (`field_mapping_markdown` with `eventValues`,
+  `ruleOf`, `sampledEvents`), `IndexFieldDocs` (`index_documents`, `object_arrays`, `written_fields_markdown`,
+  `index_field_mapping_markdown`, `index_tables`, `grouped_fields`, `existing_index_summary`,
+  `existing_index_markdown`, `not_listed`, `discovery_field_markdown`, `shown_type`, `ecs_says`),
+  `DocumentationText` (`titled`, `section_levels` and `_below_section` of `tools/builds.py`), and `PythonStrings`
+  (the Python string and number behaviours the text depends on: `str.strip`, `splitlines`, `{:g}`, `{:.0f}`,
+  truthiness, `json.dumps(indent=1, ensure_ascii=False)`).
+* `stroom.ai.impl.tools.cef`: `CefKeys` (ArcSight's dictionary, slots, header, `NOT_ACTION`, `HOMES`), the plan's
+  records `CefPlan`, `CefValue`, `CefField`, `CefOverride` (JSON as the pydantic models: `fromJson`, with pydantic's
+  errors as `MappingValidationException`, and `toJson(DumpMode)`: `ALL` is `model_dump()`, `COMPACT` the
+  `model_dump(exclude_defaults=True)` a plan is kept in), `CefEvents` (`event_kind`, `event_values`, `events_of`,
+  the types' checks), `CefDraft` (`draft`, `extend`, `label_for`), `CefXslt` (`render_xslt`, `FUNCTIONS`),
+  `CefLines` (`lines_in`, `parse`, `review`, `examples_from`), `CefDocs` (`plan_markdown`, `description_key`) and
+  `CefInstructions` (`from_instructions`).
+
+Their outputs are checked against the Python's (golden files written by `utils/cef.py` and `utils/fielddoc.py`:
+the drafted plans' JSON and notes, every XSLT's text, the reviews, every documentation table). The index tests are
+in stroom-mcp-impl, beside the bundled ECS conventions the descriptions fall back on.
+
+Where they differ from the MCP server:
+
+* **Stand-ins**: what they use of `utils/fieldplan.py`, `utils/templatecheck.py` and `utils/ecs.py` (`ELASTIC`,
+  `population_of`, `source_matches`, `any_action`, `json_xml_documents`, `flatten_document`, `FieldPlan`,
+  `PlannedField`, `Discovery`, `FieldPlan.written_by`, ECS's `short`) is stood in for by
+  `stroom.ai.impl.tools.indexing.IndexingStandIns`, to be replaced by the indexing core port.
+  `IndexingStandIns.ecsShort` reads `conventions/ecs_fields.json` from the class path (stroom-mcp-impl's
+  resources), and is "" without it.
+* `CefPlan.unsafe()` says why an expression is refused in `XsltSafety.refused`'s words ("the tools don't run or save
+  it"), not the server's ("the server doesn't ...").
+* A time with no offset is read in the server's time zone when a review matches it to milliseconds, as Python's
+  `datetime.timestamp()` does; `datetime.fromisoformat` is approximated (the extended, basic and week dates, any
+  separator, a fraction of up to six digits used, an offset).
+* `parse` scans a CEF extension rather than matching the server's regular expression (the same pairs: a value runs
+  to the next ` key=`), so a long value can't overflow Java's regex stack.
+* A field mapping with neither a field, a lookup nor an xpath (a `meta` one) is documented as an empty xpath; the
+  Python raised on it.
