@@ -142,7 +142,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                         .addProperty(REFERENCES_ARG, stringArraySchema("Titles or links of the documents used."))
                         .addProperty(DOCUMENTS_ARG, list("The user's documents themselves, kept verbatim in Stroom "
                                                          + "as Documentation docs '<source> reference - <title>', "
-                                                         + "to read and search later (find_documents content=an "
+                                                         + "to read and search later (find_in_content pattern=an "
                                                          + "event id).", referenceDocument()))
                         .required(BUILD_ARG, SOURCE_ARG, SUMMARY_ARG)
                         .build())

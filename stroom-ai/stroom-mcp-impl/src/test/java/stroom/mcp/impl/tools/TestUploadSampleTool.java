@@ -102,7 +102,7 @@ class TestUploadSampleTool {
         // A null stream_id is left out, as every ported tool's JSON leaves nulls out.
         assertThat(result).containsEntry("receipt_id", "receipt-1").doesNotContainKey("stream_id")
                 .doesNotContainKey("bytes");
-        assertThat(String.valueOf(result.get("hint"))).contains("check find_streams shortly");
+        assertThat(String.valueOf(result.get("hint"))).contains("check stream_meta feeds=['ACME-EVENTS'] shortly");
     }
 
     @Test
@@ -249,7 +249,7 @@ class TestUploadSampleTool {
         // times.
         assertThat(said).doesNotContain("curl").doesNotContain("Bearer")
                 .contains("Never send files to Stroom's datafeed yourself")
-                .contains("docType=Feed&docUuid=f1").contains("find_streams feed=FORTIOS-EVENTS-V1.0");
+                .contains("docType=Feed&docUuid=f1").contains("stream_meta feeds=['FORTIOS-EVENTS-V1.0']");
     }
 
     @Test
