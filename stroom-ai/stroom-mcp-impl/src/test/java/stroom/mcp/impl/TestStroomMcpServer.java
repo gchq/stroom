@@ -403,12 +403,14 @@ class TestStroomMcpServer {
     @Test
     void theInstructionsNameNoToolMergedIntoAnother() {
         // find_documents and describe_document became folder_contents, find_in_content, document_info,
-        // read_document and document_links.
-        assertThat(StroomMcpServer.INSTRUCTIONS).doesNotContain("find_documents", "describe_document");
+        // read_document and document_links; find_streams and describe_stream stream_meta; read_stream
+        // fetch_events; find_events search_events.
+        final String[] merged = {"find_documents", "describe_document", "find_streams", "describe_stream",
+                "read_stream", "find_events"};
+        assertThat(StroomMcpServer.INSTRUCTIONS).doesNotContain(merged);
         for (final String guide : BundledKnowledge.GUIDES) {
             assertThat(new BundledKnowledge().guide(guide)).hasValueSatisfying(text ->
-                    assertThat(text).as(guide).doesNotContain("find_documents", "describe_document",
-                            "STROOM_MCP_"));
+                    assertThat(text).as(guide).doesNotContain(merged).doesNotContain("STROOM_MCP_"));
         }
     }
 

@@ -569,12 +569,12 @@ public class BuildPlan {
                 survey == null
                         ? null
                         : survey.get("streams")), existing
-                ? "<recent raw streams of " + named + " (find_streams)>"
+                ? "<recent raw streams of " + named + " (" + streamMetaCall(sources, null) + ")>"
                 : List.of());
         Object eventsIds = orElse(discovery
                 ? rawIds
                 : events.subList(0, Math.min(20, events.size())), existing
-                ? "<recent Events streams from " + named + " (find_streams stream_type=Events)>"
+                ? "<recent Events streams from " + named + " (" + streamMetaCall(sources, "Events") + ")>"
                 : List.of());
         String edited = null;
         if ("documented".equals(nextStep) && !translation.isEmpty()
@@ -591,7 +591,7 @@ public class BuildPlan {
         }
         if (cefOnly || (cefBuild && raw.isEmpty())) {
             eventsIds = orElse(eventsIds, "<recent Events streams from " + named
-                                          + " (find_streams stream_type=Events)>");
+                                          + " (" + streamMetaCall(sources, "Events") + ")>");
         }
         final CallArgs args = new CallArgs(build, names(of(byType, FeedDoc.TYPE)), rawIds, eventsIds,
                 translation.isEmpty()
@@ -953,10 +953,10 @@ public class BuildPlan {
 
     private Map<String, Object> existingDataStart(final List<String> sources, final String named) {
         final Map<String, Object> call = new LinkedHashMap<>();
-        call.put("tool", "find_streams");
-        call.put("arguments", args("feed", sources.isEmpty()
+        call.put("tool", "stream_meta");
+        call.put("arguments", args("feeds", List.of(sources.isEmpty()
                 ? "<the feed>"
-                : sources.getFirst()));
+                : sources.getFirst())));
         String then = "this build works from data already in Stroom: create no feed and upload nothing. Then, for "
                       + "what the user asked: an events pipeline for the feed, survey_feed build=... (its kinds of "
                       + "event); a production pipeline's new version or working copy, copy_pipeline; indexing its "
@@ -1119,6 +1119,17 @@ public class BuildPlan {
         call.put("tool", tool);
         call.put("arguments", arguments);
         return new NextCall(call, then);
+    }
+
+    // The stream_meta call that finds a build's recent streams (of a type, or of any when null), as a
+    // placeholder for the stream ids it gives, e.g. `stream_meta feeds=['ACME'] type='Events'`.
+    private static String streamMetaCall(final List<String> sources, final String type) {
+        final String feeds = sources.isEmpty()
+                ? "'<the feed>'"
+                : sources.stream().map(source -> "'" + source + "'").collect(Collectors.joining(", "));
+        return "stream_meta feeds=[" + feeds + "]" + (type == null
+                ? ""
+                : " type='" + type + "'");
     }
 
     // Arguments in the order given, as name, value, name, value, ...

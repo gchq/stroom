@@ -149,8 +149,8 @@ class RenameIndexTool extends AbstractBuiltInTool {
         final ElasticIndexDoc doc = documentAccess.read(new DocRef(ElasticIndexDoc.TYPE, indexUuid),
                         ElasticIndexDoc.class)
                 .orElseThrow(() -> new ToolRefusal(indexUuid + " is not an Elastic Index doc: give the build's "
-                                                   + "(find_documents type ElasticIndex). A Lucene index is named by "
-                                                   + "its doc: nothing to rename."));
+                                                   + "(folder_contents name='*' types=['ElasticIndex']). A Lucene "
+                                                   + "index is named by its doc: nothing to rename."));
         final String build = guard.checkInBuild(context.session(), new DocRef(ElasticIndexDoc.TYPE, indexUuid,
                 doc.getName()));
         final String newName = wanted.strip();

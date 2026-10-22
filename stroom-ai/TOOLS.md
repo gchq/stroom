@@ -37,12 +37,12 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `delete_file` | Deletes a file in the workspace's `/outputs/` | Agent | no | | | | yes (workspace) | |
 | `describe_data_source` | A data source's fields, conditions, documentation and AGENTS docs, and the searches of an index that would mislead | all | yes | | | View, Use | workspace | `describe_feed`, `find_events` (part) |
 | `document_documentation` | A document's Documentation tab | all | yes | | | View | workspace | `describe_document` (type Documentation) |
-| `document_info` | A document's type, path, tags, history, version and dependencies | all | yes | | | View | no | `describe_document` (part) |
+| `document_info` | A document's type, path, tags, history, version and dependencies | all | yes | | | View | no | `describe_document` (part), `find_documents` (by path) |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | all | yes | | Manage Processors | View | workspace | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster, each by name with its JSON body | all | yes | | | View | no | none (`check_index_template` and `propose_index_template` take templates the user gives) |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file | all | yes | View Data | | | yes (workspace) | `read_stream`, `locate_event` (part) |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries) | all | yes | | | View | workspace | `find_documents` (with `content`) |
-| `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts | all | yes | | Manage Processors | View | no | `processing_status` (part) |
+| `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | all | yes | | Manage Processors | View | no | `find_documents`, `processing_status` (part) |
 | `get_current_date` | Today's date in UTC | all | yes | | | | no | |
 | `get_current_datetime` | The current date and time in UTC | all | yes | | | | no | |
 | `get_current_time` | The current time of day in UTC | all | yes | | | | no | |
@@ -61,7 +61,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | all | yes | | | View | yes (button) | `write_documentation` (part: it writes a pipeline's or an index's) |
 | `propose_query` | Offers a button to create a StroomQL Query document | all | yes | | | Use | yes (button) | |
 | `propose_query_change` | Offers a button to change the query in the attached tab | all | yes | | | View, Use | yes (attached tab, button) | |
-| `read_document` | A document's content, or what a processor filter selects | all | yes | | Manage Processors | View | workspace | `describe_document` |
+| `read_document` | A document's content, or what a processor filter selects; a pipeline as Stroom runs it, an index's survey | all | yes | | Manage Processors | View | workspace | `describe_document` |
 | `read_file` | Reads lines of a workspace file | all | yes | | | | yes (workspace) | |
 | `read_turn` | Reads a whole earlier turn of the chat | all | yes | | | | yes (history) | |
 | `run_stroomql` | Runs a StroomQL query into a workspace table, refusing one on an index whose answer would mislead | all | yes | | | | workspace | `find_events` (part) |
@@ -89,14 +89,24 @@ checks no app permissions itself. Its writes are limited to a workspace folder (
 confirmation or approval (an elicitation form, or a pending id the user confirms). The built-in tools call Stroom's
 services directly as the user, and those listed here only read.
 
+An MCP tool merged into a built-in one is no longer a tool, so the hints, notes, refusals, `next` calls, guides and
+server instructions that named it name the built-in that does it now, with the built-in's own arguments (e.g.
+`stream_meta feeds=['ACME'] type='Events'` for `find_streams stream_type=Events`, `folder_contents name='*'
+types=['ElasticIndex']` for `find_documents`, `find_in_content pattern=` for `find_documents content=`).
+`TestBundledKnowledge` (`stroom-mcp-impl`), as the MCP server's `test_knowledge.py`, fails if a guide, the server
+instructions or any tool's description names a tool that doesn't exist.
+
 * **`get_instructions`**: same name and purpose, and the same answer in substance (the docs that apply, most general
   first, then where the others are). MCP takes `folders`, `feeds` and `docs` (`{type, name, uuid?}`); the built-in
   takes `folders` (UUID or path) and `uuids`, and has no `feeds`. MCP's doc name is configurable
   (`instructions_doc_name`); the built-in's is always `AGENTS`.
-* **`find_in_content` and `find_documents`**: MCP's `find_documents` finds by name (the Explorer quick filter) or,
-  with `content`, by text in content (case-insensitive contains, `types` filtered after the search). The built-in
-  takes `pattern`, `regex`, `matchCase`, `uuids` and `types`, and leaves out folders the AGENTS docs say to ignore.
-  No built-in finds documents by name across Stroom.
+* **`folder_contents`, `find_in_content` and `find_documents`**: MCP's `find_documents` finds by name (the Explorer
+  quick filter) or, with `content`, by text in content (case-insensitive contains, `types` filtered after the
+  search). It is merged into three built-ins: by name, `folder_contents` given `name` (with `types` and `limit`)
+  finds documents as the quick filter does, in the folder given and every folder below it, or across the whole tree
+  with no `folder`, each with its type, UUID, name and folder path; by content, `find_in_content` (`pattern`,
+  `regex`, `matchCase`, `uuids` and `types`, leaving out folders the AGENTS docs say to ignore); and a document
+  given by its Explorer path rather than its UUID, `document_info` `path`.
 * **`read_document`, `document_info`, `document_documentation` and `describe_document`**: MCP has one tool, keyed by
   `type` (required) and `uuid`, which adds analysis: a pipeline's effective properties per layer, where each XSLT
   output element comes from, an index survey, Documentation passages matching `find`, and what an event-logging
@@ -108,6 +118,19 @@ services directly as the user, and those listed here only read.
   `uuid` optional when `type` is `XMLSchema`. Unlike `describe_document`, an event-logging XMLSchema read without
   `element` is still its XSD (as before, saved to the workspace when large) rather than EventDetail's description,
   and with no `uuid` the version is always the newest held (no build's chosen version yet).
+  It has also taken in the rest: a pipeline is given as Stroom runs it (`describe_pipeline`, as a `## Pipeline`
+  section of JSON: `pipeline`, `template_chain`, `chain`, `elements`, `links`, `properties` with the layer that set
+  each as `from`, `references`, `removed_by_this_pipeline`, and also `own_elements` and `translation_docs`, from
+  `MergedPipeline.description()`); an Elastic Index or Lucene Index doc is given with a survey of what the index
+  holds (`survey_index` without the index's totals, its sampled documents left out and each feeding pipeline's
+  `plan` a boolean, as a `## Survey` section, or `Could not survey the index through Stroom: ...` when it can't
+  be); and an XSLT saved with a mapping that no longer reads says why (`lost_mapping`, as a `## Kept mapping`
+  section `{"lost": ...}`). The pipeline, translation and survey sections are left out when `part` is given, and
+  any section too large to show is saved to the workspace. The survey and the lost mapping come from the ported
+  helpers (`IndexSurveys`, `XsltSaves`) through `DocumentAnalyses`, an interface in `stroom-ai-impl` that
+  `stroom-mcp-impl` binds (`DocumentAnalysesImpl`); without that module `read_document` gives neither. Where
+  `describe_document` gave a pipeline's `processing` as the feeds its filters read (`pipeline_feeds`),
+  `read_document` lists its processor filters and what each selects (`document_links` follows them to the feeds).
 * **`stream_meta` and `find_streams`, `describe_stream`**: MCP finds streams by `feed`, `stream_type`, `parent_id`
   or `pipeline_uuid` (`limit` up to 200, newest first) and describes one stream's family, attributes and processing.
   The built-in takes `feeds`, `pipeline`, `folder`, `type`, `from`/`to`, `status`, `attributes`, `parts`, `groupBy`
@@ -156,18 +179,19 @@ services directly as the user, and those listed here only read.
 
 ## Rename and alignment candidates
 
-Proposals only: nothing has been renamed.
+Proposals made before the MCP server's tools were brought into Stroom. Those marked done were made by merging the
+MCP tool into the built-in one (its name gone); the others are still proposals.
 
 * `get_instructions`: let both take `folders`, `feeds` and `uuids` (MCP's `docs` could become, or also accept,
   `uuids`).
 * MCP's `propose_index_template` could become `draft_index_template` or `build_index_template`, so that `propose_*`
   keeps its built-in meaning: offer the user an action.
-* Keep `find_documents` for finding by name and type (which the built-ins lack), and move content search to
-  `find_in_content`.
-* Make `describe_document`'s `type` optional, as the built-ins need only a UUID, or split it along the built-ins'
-  lines (`read_document`, `document_info`, `document_documentation`) with its analysis as extra parts.
-* Fold `find_streams` and `describe_stream` into `stream_meta` (adding `parent_id` and a child-stream view), and
-  `processing_status` into `processor_tasks mode=summary`. Share one error triage between `summarise_streams` and
+* Done: `find_documents` merged, finding by name and type into `folder_contents` (`name`, `types`) and content
+  search into `find_in_content`.
+* Done: `describe_document` split along the built-ins' lines (`read_document`, `document_info`,
+  `document_documentation`) with its analysis as extra parts of `read_document`.
+* Done: `find_streams` and `describe_stream` folded into `stream_meta` (with `parentId` and, given `streamId`
+  alone, a child-stream view). Still a proposal: `processing_status` into `processor_tasks mode=summary`. Share one error triage between `summarise_streams` and
   `processor_tasks` (`error_rules.yaml` against `ErrorMessageNormaliser` and `FailureModes`).
 * One reference data tool with two entry points: every map (`find_reference_data`) or given XSLTs (`xslt_lookups`).
 * Align argument names: `pipeline_uuid` against `pipeline`/`pipelines`, `stream_id(s)` against `streams`,
@@ -1026,8 +1050,8 @@ is ported as helpers, named for the ports still to come (`create_indexing_pipeli
   `_template_summary`, `_asking`, `_not_theirs` and `_commit_action`.
 * **`IndexChecks`** and **`IndexSurveys`**: verify_index's searches (`run_test_searches`, `_completeness`,
   `_traced`, `_trace_checks`, `_same_value`, `dashboard_config`, `window_start`, `SearchCheck`, `_as_searched`,
-  `_searchable`), and `survey_index`, `index_profile` and `feeding_pipelines` (for describe_document's and
-  write_documentation's ports).
+  `_searchable`), and `survey_index`, `index_profile` and `feeding_pipelines` (for read_document's survey of an
+  index doc, describe_document's, and for write_documentation).
 * **`IndexingArgs`**: the arguments read as `utils/params.py`'s `ONE_OR_MORE` read them, and the plan, fields,
   discovery and shared templates validated as pydantic validated them. `SharedXslt.jsonValues` is
   `utils/sharedxslt.py`'s `json_values`; `ExampleNames.derive` (`_derive`) is now public.
@@ -1090,7 +1114,8 @@ Where they differ from the MCP server:
   for the dashboard's window (the MCP server used its local zone). The dashboard is made through
   `WriteGuard.createFilled` (role Indexing) and written through Stroom's Dashboard store; the searches go through
   `IndexSearches` (unsorted), which gained an overload with an explicit wait for survey_index's sample.
-* **survey_index** (`IndexSurveys`, used by write_documentation's index documentation) reads its further groups of columns one after another (the MCP
+* **survey_index** (`IndexSurveys`, used by write_documentation's index documentation and read_document's survey
+  of an index doc) reads its further groups of columns one after another (the MCP
   server ran them at once); `feeding_pipelines` finds the pipelines with `PipelineIndex.containing` and a feed's
   description with `FeedNames.exact`.
 

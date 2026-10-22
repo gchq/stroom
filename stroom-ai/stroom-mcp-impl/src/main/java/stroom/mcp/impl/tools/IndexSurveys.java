@@ -57,8 +57,8 @@ import java.util.regex.Pattern;
 /// What an existing index holds, surveyed through Stroom (the Stroom MCP server's `tools/indexing.py`
 /// `survey_index`, `index_profile`, `feeding_pipelines` and `_path_of`): the fields Stroom has for the index doc, a
 /// sample of its documents read through dashboard searches that are never saved, the pipelines that feed it, and
-/// the whole index's totals and sources. For the ports of describe_document's index survey and of
-/// write_documentation's documentation of an existing index; no tool uses it yet.
+/// the whole index's totals and sources. Used for read_document's survey of an index doc (the Stroom MCP server's
+/// describe_document's, through [DocumentAnalysesImpl]) and write_documentation's documentation of an index.
 class IndexSurveys {
 
     /// Fields read per survey; more are listed as not surveyed.

@@ -80,5 +80,7 @@ public class BuiltInToolsModule extends AbstractModule {
 
         // The guides and conventions bundled for agents, bound by the module that bundles them (stroom-mcp-impl).
         OptionalBinder.newOptionalBinder(binder(), AgentKnowledge.class);
+        // What read_document says of an index or an XSLT beyond its content, bound by stroom-mcp-impl.
+        OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class);
     }
 }

@@ -37,6 +37,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLink;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -44,6 +47,7 @@ import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -76,6 +80,7 @@ class TestReadDocumentTool {
     private static final DocRef SECRET = new DocRef(DictionaryDoc.TYPE, "secret-uuid", "Secret IPs");
     private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "pipe-uuid", "Firewall pipeline");
     private static final DocRef FEED = new DocRef("Feed", "feed-uuid", "FIREWALL-EVENTS");
+    private static final DocRef INDEX = new DocRef(ElasticIndexDoc.TYPE, "index-uuid", "Firewall index");
 
     private final ExplorerNodeService explorerNodeService = Mockito.mock(ExplorerNodeService.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
@@ -612,6 +617,108 @@ class TestReadDocumentTool {
                 .contains("## Processing\n- Filter 7 (uuid filter-uuid): selects streams where Feed")
                 .contains("FIREWALL-EVENTS")
                 .contains("; enabled, priority 10");
+    }
+
+    @Test
+    void thePartsOfDescribeDocumentAreGivenForEachTypeOfDocument() {
+        // As the Stroom MCP server's describe_document combined them: a pipeline as Stroom runs it and an index's
+        // survey, neither for another type (an XSLT's translation is tested above).
+        final DocumentAnalyses analyses = Mockito.mock(DocumentAnalyses.class);
+        Mockito.when(analyses.surveyIndex(Mockito.any(), Mockito.eq(INDEX)))
+                .thenReturn(Map.of("fields", List.of(Map.of("name", "StreamId"))));
+        tool = toolWith(analyses);
+        node(PIPELINE);
+        node(FEED);
+        node(INDEX);
+        viewable.addAll(List.of(PIPELINE.getUuid(), FEED.getUuid(), INDEX.getUuid(), XSLT.getUuid()));
+        indexable(PIPELINE, Map.of("json", "{}"), PipelineDoc.builder().uuid(PIPELINE.getUuid())
+                .name(PIPELINE.getName())
+                .pipelineData(new PipelineDataBuilder()
+                        .addElement(new PipelineElement("jsonParser", "JSONParser"))
+                        .addElement(new PipelineElement("translationFilter", "XSLTFilter"))
+                        .addLink(new PipelineLink("jsonParser", "translationFilter"))
+                        .build())
+                .build());
+        indexable(FEED, Map.of("json", "{}"), null);
+        indexable(INDEX, Map.of("json", "{\"indexName\": \"firewall\"}"), null);
+        xsltContent("<xsl:stylesheet/>");
+
+        assertThat(run("{\"uuid\":\"pipe-uuid\"}"))
+                .contains("## Pipeline\nHow Stroom runs it (template chain, root first;")
+                .contains("\"template_chain\"")
+                .contains("\"removed_by_this_pipeline\"")
+                .containsPattern("\"chain\" : \\[ \"jsonParser\", \"translationFilter\" \\]");
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}")).doesNotContain("## Pipeline").doesNotContain("## Survey");
+        assertThat(run("{\"uuid\":\"index-uuid\"}"))
+                .contains("## Part 'json'\n{\"indexName\": \"firewall\"}")
+                .contains("## Survey\nWhat the index holds, read through Stroom")
+                .contains("\"StreamId\"");
+        assertThat(run("{\"uuid\":\"feed-uuid\"}"))
+                .doesNotContain("## Pipeline").doesNotContain("## Survey").doesNotContain("## Translation");
+        // Only the part asked for.
+        assertThat(run("{\"uuid\":\"pipe-uuid\",\"part\":\"json\"}")).doesNotContain("## Pipeline");
+        assertThat(run("{\"uuid\":\"index-uuid\",\"part\":\"json\"}")).doesNotContain("## Survey");
+    }
+
+    @Test
+    void aPipelineThatCantBeMergedSaysSo() {
+        node(PIPELINE);
+        viewable.add(PIPELINE.getUuid());
+        indexable(PIPELINE, Map.of("json", "{}"), null);
+
+        assertThat(run("{\"uuid\":\"pipe-uuid\"}"))
+                .contains("## Pipeline\nHow Stroom runs it couldn't be worked out");
+    }
+
+    @Test
+    void anIndexThatCantBeSurveyedIsStillRead() {
+        // The cluster may be unreachable: the doc itself is still worth having (e.g. to copy its settings).
+        final DocumentAnalyses analyses = Mockito.mock(DocumentAnalyses.class);
+        Mockito.when(analyses.surveyIndex(Mockito.any(), Mockito.any()))
+                .thenThrow(new RuntimeException("the cluster is unreachable"));
+        tool = toolWith(analyses);
+        node(INDEX);
+        viewable.add(INDEX.getUuid());
+        indexable(INDEX, Map.of("json", "{\"indexName\": \"firewall\"}"), null);
+
+        assertThat(run("{\"uuid\":\"index-uuid\"}"))
+                .contains("## Part 'json'")
+                .contains("## Survey\nCould not survey the index through Stroom: the cluster is unreachable");
+    }
+
+    @Test
+    void anIndexIsNotSurveyedWithoutTheAnalyses() {
+        node(INDEX);
+        viewable.add(INDEX.getUuid());
+        indexable(INDEX, Map.of("json", "{}"), null);
+
+        assertThat(run("{\"uuid\":\"index-uuid\"}")).contains("## Part 'json'").doesNotContain("## Survey");
+    }
+
+    @Test
+    void anXsltWhoseKeptMappingIsGoneSaysWhy() {
+        // As the Stroom MCP server's describe_document gave it: saved with a mapping, none reads now.
+        final DocumentAnalyses analyses = Mockito.mock(DocumentAnalyses.class);
+        Mockito.when(analyses.lostMapping(Mockito.eq(XSLT), Mockito.any()))
+                .thenReturn(Optional.of("Its mapping is gone. To recover: rebuild_mapping"));
+        tool = toolWith(analyses);
+        viewable.add(XSLT.getUuid());
+        xsltContent("<xsl:stylesheet/>");
+
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}"))
+                .contains("## Kept mapping\n")
+                .contains("\"lost\" : \"Its mapping is gone. To recover: rebuild_mapping\"");
+
+        Mockito.when(analyses.lostMapping(Mockito.any(), Mockito.any())).thenReturn(Optional.empty());
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}")).doesNotContain("## Kept mapping");
+    }
+
+    private ReadDocumentTool toolWith(final DocumentAnalyses analyses) {
+        final DocumentAccess documentAccess = new DocumentAccess(() -> explorerNodeService, securityContext,
+                () -> handlers, auditLog);
+        return new ReadDocumentTool(workspace, documentAccess, new ProcessorFilterAccess(securityContext,
+                () -> processorFilterService, documentAccess), () -> wordListProvider, tabSnapshots, () -> null,
+                Optional.of(analyses));
     }
 
     private ReadDocumentTool toolWithSchemas() {
