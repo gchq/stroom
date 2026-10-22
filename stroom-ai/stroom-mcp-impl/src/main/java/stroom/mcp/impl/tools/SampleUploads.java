@@ -79,6 +79,8 @@ public class SampleUploads {
     /// @param build      The feed's build, or null.
     /// @param files      The files, by the names the commands give.
     /// @return What is waiting, with its id for the commands' URL and when it runs out.
+    /// @throws ToolRefusal if the user has as many sets of commands waiting as they may
+    ///                     (`stroom.ai.sampleUploads.maxPendingPerUser`).
     public synchronized Pending issue(final String user,
                                       final String feed,
                                       final String feedUuid,
@@ -87,6 +89,15 @@ public class SampleUploads {
                                       final String build,
                                       final List<String> files) {
         sweep();
+        final int max = maxPendingPerUser();
+        final long waitingForUser = waiting.values().stream()
+                .filter(found -> found.pending().user().equals(user) && !found.files().isEmpty())
+                .count();
+        if (waitingForUser >= max) {
+            throw new ToolRefusal("You have " + waitingForUser + " sets of upload commands waiting to be run "
+                                  + "already, as many as you may. Run those (or let them run out, in "
+                                  + lasts().getDuration().toMinutes() + " minutes at most) before asking for more.");
+        }
         final byte[] bytes = new byte[9];
         RANDOM.nextBytes(bytes);
         // 12 characters, nothing to quote.
@@ -135,6 +146,12 @@ public class SampleUploads {
     public int maxMb() {
         return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getSampleUploads,
                 AiSampleUploadsConfig::getMaxUploadMb, new AiSampleUploadsConfig().getMaxUploadMb());
+    }
+
+    /// @return The most sets of commands one user may have waiting at once.
+    public int maxPendingPerUser() {
+        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getSampleUploads,
+                AiSampleUploadsConfig::getMaxPendingPerUser, new AiSampleUploadsConfig().getMaxPendingPerUser());
     }
 
     /// @return How long commands last.

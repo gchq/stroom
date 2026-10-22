@@ -66,21 +66,46 @@ class TestMcpApprovals {
     }
 
     @Test
-    void longArgumentsAreShortenedWhenShown() {
-        final McpApprovals approvals = approvals(StroomDuration.ofMinutes(1));
+    void longArgumentsAreShortenedWhenShownSayingSo() {
         final String arguments = "x".repeat(McpApprovals.MAX_SHOWN_ARGUMENTS + 100);
 
-        final String reply = approvals.approve(session("s1"), exchange, "write_thing", arguments).orElseThrow();
+        final String shown = McpApprovals.shown(arguments);
 
-        assertThat(reply).contains("x".repeat(McpApprovals.MAX_SHOWN_ARGUMENTS) + "…")
+        assertThat(shown).contains("x".repeat(McpApprovals.MAX_SHOWN_ARGUMENTS) + "…")
                 .doesNotContain("x".repeat(McpApprovals.MAX_SHOWN_ARGUMENTS + 1))
-                .contains("within 1 minute.");
+                .endsWith("(cut: only the first 1500 of their 1600 characters are shown)");
+    }
+
+    @Test
+    void whatTheCallActsOnIsShownFirst() {
+        // Seen in review: the target's uuid came after a long XSLT, past the cut, so the user never saw it.
+        final String arguments = "{\"xslt\":\"" + "<x/>".repeat(500) + "\",\"pipeline_uuid\":\"p-1\","
+                                 + "\"build\":\"fortios\",\"options\":{\"name\":\"nested\"}}";
+
+        final String shown = McpApprovals.shown(arguments);
+
+        assertThat(shown).startsWith("pipeline_uuid=p-1, build=fortios; all arguments: {\"xslt\":")
+                .contains("(cut: only the first 1500 of their");
+    }
+
+    @Test
+    void aCallWhoseArgumentsAreCutGetsNoApprovalId() {
+        // Without a form, the user would approve what they couldn't see.
+        final McpApprovals approvals = approvals(StroomDuration.ofMinutes(1));
+        final McpSession session = session("s1");
+        final String arguments = "{\"name\":\"" + "x".repeat(McpApprovals.MAX_SHOWN_ARGUMENTS) + "\"}";
+
+        final String reply = approvals.approve(session, exchange, "write_thing", arguments).orElseThrow();
+
+        assertThat(reply).startsWith("Not run: this call's arguments are 1511 characters long, more than the 1500")
+                .doesNotContain("approval_id");
+        assertThat(session.pendingCalls()).isEmpty();
     }
 
     private McpApprovals approvals(final StroomDuration timeout) {
         final AiConfig aiConfig = Mockito.mock(AiConfig.class);
         Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, null, timeout, null,
-                null));
+                null, null));
         return new McpApprovals(new McpForms(() -> aiConfig), () -> aiConfig);
     }
 

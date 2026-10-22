@@ -18,6 +18,7 @@ package stroom.mcp.impl;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.McpEndpointConfig;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
@@ -27,7 +28,12 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /// The user's approval of a tool call, made over MCP, that changes something in Stroom. Every such call asks: a
@@ -37,6 +43,10 @@ import java.util.UUID;
 /// approval id for the call: it shows its user what the call will do, and, if they agree, calls [#APPROVE_TOOL]
 /// with the id, which makes the call as it was first made. An id can be used once, only in its own session, and
 /// only for a while.
+///
+/// What is shown leads with the arguments that say what the call acts on (a target's uuid or name, the build, the
+/// tool), then the arguments, cut at [#MAX_SHOWN_ARGUMENTS] characters, saying so when they are. A call whose
+/// arguments are cut gets no approval id: the user couldn't see all of what they would approve.
 @Singleton
 class McpApprovals {
 
@@ -46,6 +56,11 @@ class McpApprovals {
     static final String APPROVAL_ID_ARG = "approval_id";
     /// The most characters of a call's arguments a form or approval request shows.
     static final int MAX_SHOWN_ARGUMENTS = 1_500;
+    /// The most characters of one argument shown among the arguments that say what the call acts on.
+    static final int MAX_SHOWN_KEY_VALUE = 200;
+    // The arguments that say what a call acts on, shown first: those named so, or ending so (e.g. pipeline_uuid).
+    private static final Set<String> KEY_NAMES = Set.of("build", "tool", "target", "feed", "pipeline", "index");
+    private static final List<String> KEY_ENDINGS = List.of("uuid", "name");
 
     private final McpForms forms;
     private final Provider<AiConfig> aiConfigProvider;
@@ -78,6 +93,12 @@ class McpApprovals {
                             : "Not run: the user was asked to allow this call, as it changes something in Stroom, "
                               + "but did not answer.");
         }
+        if (isCut(arguments)) {
+            return Optional.of("Not run: this call's arguments are " + NullSafe.trim(arguments).length()
+                               + " characters long, more than the " + MAX_SHOWN_ARGUMENTS + " an approval request "
+                               + "shows, so the user couldn't see all of what they would approve. Make the change "
+                               + "in smaller calls, or use an MCP client that can show forms.");
+        }
         final String approvalId = UUID.randomUUID().toString();
         final Duration timeout = config().getApprovalTimeout().getDuration();
         session.pendingCalls().values().removeIf(pending -> pending.expiresMs() < System.currentTimeMillis());
@@ -106,11 +127,52 @@ class McpApprovals {
                + "Stroom, as you, with " + shown(arguments) + ". Allow it?";
     }
 
-    private static String shown(final String arguments) {
+    /// @param arguments A call's arguments, as JSON.
+    /// @return How they are shown to the user: the arguments that say what the call acts on, then all of them,
+    /// cut at [#MAX_SHOWN_ARGUMENTS] characters, saying so if they are.
+    static String shown(final String arguments) {
         final String text = NullSafe.nonBlankStringElse(arguments, "no arguments").strip();
-        return text.length() > MAX_SHOWN_ARGUMENTS
-                ? text.substring(0, MAX_SHOWN_ARGUMENTS) + "…"
-                : text;
+        final String keys = keyArguments(text);
+        final String prefix = keys.isEmpty()
+                ? ""
+                : keys + "; all arguments: ";
+        return isCut(text)
+                ? prefix + text.substring(0, MAX_SHOWN_ARGUMENTS) + "… (cut: only the first " + MAX_SHOWN_ARGUMENTS
+                  + " of their " + text.length() + " characters are shown)"
+                : prefix + text;
+    }
+
+    private static boolean isCut(final String arguments) {
+        return NullSafe.trim(arguments).length() > MAX_SHOWN_ARGUMENTS;
+    }
+
+    // The arguments that say what the call acts on, e.g. "pipeline_uuid=..., build=...", or "" if none.
+    private static String keyArguments(final String arguments) {
+        final Map<?, ?> parsed;
+        try {
+            parsed = JsonUtil.readValue(arguments, Map.class);
+        } catch (final RuntimeException e) {
+            return "";
+        }
+        final List<String> keys = new ArrayList<>();
+        NullSafe.map(parsed).forEach((name, value) -> {
+            if (isKeyName(String.valueOf(name)) && isScalar(value)) {
+                final String shownValue = String.valueOf(value);
+                keys.add(name + "=" + (shownValue.length() > MAX_SHOWN_KEY_VALUE
+                        ? shownValue.substring(0, MAX_SHOWN_KEY_VALUE) + "…"
+                        : shownValue));
+            }
+        });
+        return String.join(", ", keys);
+    }
+
+    private static boolean isKeyName(final String name) {
+        final String lower = name.toLowerCase(Locale.ROOT);
+        return KEY_NAMES.contains(lower) || KEY_ENDINGS.stream().anyMatch(lower::endsWith);
+    }
+
+    private static boolean isScalar(final Object value) {
+        return value instanceof String || value instanceof Number || value instanceof Boolean;
     }
 
     private static String minutes(final Duration duration) {

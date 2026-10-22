@@ -18,8 +18,8 @@ package stroom.mcp.impl;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
-import stroom.ai.impl.AiChatRunManager.RunSlot;
 import stroom.ai.impl.AiToolPolicyService;
+import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.ToolGrants;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.SessionLimits;
@@ -32,11 +32,13 @@ import stroom.ai.impl.tools.ToolProgress;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.config.common.UriFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.StroomDuration;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -49,12 +51,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /// The tools Stroom's MCP endpoint offers a session, and the calls of them: Stroom's own tools, as the chat has
 /// them, under the session's user's tool policies.
@@ -62,7 +67,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /// A call is made as the session's user. It is refused if the tool isn't one the user's policies grant (or is
 /// only for the chat), or the call changes something and the tool's category is granted only for reading. A call
 /// that changes something asks the user first (see [McpApprovals]), and a heavy one takes one of the user's run
-/// slots (see [StroomTool#usesRunSlot()]). Every call is audited.
+/// slots (see [StroomTool#usesRunSlot()]), given back while it waits for the user. A call runs within the longer of
+/// the session's tool and query time limits (see [ToolDeadline]), less any time it waits for the user. Every call
+/// is audited.
 @Singleton
 class McpTools {
 
@@ -185,18 +192,24 @@ class McpTools {
                 return text(notApproved.get());
             }
         }
-        final Optional<RunSlot> slot = tool.usesRunSlot()
-                ? runManagerProvider.get().takeToolCallSlot(session.owner().getUuid())
-                : Optional.of(() -> {
-                });
+        final Optional<McpCallSlot> slot = tool.usesRunSlot()
+                ? McpCallSlot.take(() -> runManagerProvider.get().takeToolCallSlot(session.owner().getUuid()))
+                : Optional.of(McpCallSlot.none());
         if (slot.isEmpty()) {
             audit(session, name, arguments, "No free run slot", false);
             return text("Not run: you already have as many chat runs and heavy tool calls working as you may. Try "
                         + "again when one has finished.");
         }
-        try (final RunSlot ignored = slot.get()) {
+        try (final McpCallSlot held = slot.get()) {
+            final ChatWorkspace chatWorkspace = chatWorkspaceProvider.get();
+            final ToolCallContext context = context(session, exchange, request, held, chatWorkspace);
             // As in the chat: arguments read leniently, and calls that keep failing stopped (see ToolCallGuard).
-            final ToolResult result = guard.run(tool, toolCall, context(session, exchange, request), tool::execute);
+            final Duration limit = callTimeLimit(chatWorkspace.limits());
+            final Supplier<ToolResult> work = () -> guard.run(tool, toolCall, context, tool::execute);
+            // A limit of zero is taken as none.
+            final ToolResult result = limit.isPositive()
+                    ? ToolDeadline.run(limit, work)
+                    : work.get();
             final String text = NullSafe.string(result.text());
             final boolean error = result.isError() || text.startsWith("Error");
             audit(session, name, arguments, error
@@ -211,20 +224,36 @@ class McpTools {
             }
             return builder.build();
         } catch (final RuntimeException e) {
-            LOGGER.warn(() -> "Tool '" + name + "' failed in MCP session " + session.id(), e);
+            LOGGER.warn(() -> "Tool '" + name + "' failed in an MCP session of " + session.owner().toDisplayString(),
+                    e);
             audit(session, name, arguments, "Failed", false);
             return error("Error running tool '" + name + "': "
                          + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
     }
 
+    /// @param limits The session's limits.
+    /// @return How long a call may take in all: the longer of the tool and query time limits, as tools that run
+    /// queries have the query time limit (and keep to it themselves).
+    static Duration callTimeLimit(final AiWorkspaceConfig limits) {
+        final AiWorkspaceConfig config = Objects.requireNonNullElseGet(limits, AiWorkspaceConfig::new);
+        final Duration tool = NullSafe.getOrElse(config.getToolTimeLimit(), StroomDuration::getDuration,
+                Duration.ZERO);
+        final Duration query = NullSafe.getOrElse(config.getQueryTimeLimit(), StroomDuration::getDuration,
+                Duration.ZERO);
+        return tool.compareTo(query) >= 0
+                ? tool
+                : query;
+    }
+
     private ToolCallContext context(final McpSession session,
                                     final McpAsyncServerExchange exchange,
-                                    final CallToolRequest request) {
-        final ChatWorkspace chatWorkspace = chatWorkspaceProvider.get();
+                                    final CallToolRequest request,
+                                    final McpCallSlot slot,
+                                    final ChatWorkspace chatWorkspace) {
         return ToolCallContext.builder(session.toolSession())
                 .workspace(new SessionWorkspace(chatWorkspace, workspaces.chatIdFor(session)))
-                .userQuestions(new McpUserQuestions(session, exchange, forms))
+                .userQuestions(new McpUserQuestions(session, exchange, forms, slot))
                 .progress(progress(exchange, request.progressToken()))
                 .limits(SessionLimits.lookedUp(chatWorkspace::limits))
                 .links(StroomLinks.absolute(uriFactoryProvider.get().uiUri("").toString()))

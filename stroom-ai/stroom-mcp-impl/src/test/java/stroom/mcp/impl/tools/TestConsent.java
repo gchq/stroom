@@ -34,6 +34,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +76,39 @@ class TestConsent {
         assertThatThrownBy(() -> consent.require(CALL, textOnly(), Consent.Request.approval("promote_build",
                 "Promote", Map.of("plan", List.of("a")), fresh)))
                 .hasMessage("This approval id was already used; request the approval again");
+    }
+
+    @Test
+    void anIdPassedBackByCallsMadeAtOnceIsGrantedOnce() throws Exception {
+        // Two calls with the same single-use id, made at once, must not both go ahead.
+        final ExecutorService executor = Executors.newFixedThreadPool(8);
+        try {
+            for (int round = 0; round < 200; round++) {
+                final String id = String.valueOf(consent.require(CALL, textOnly(), confirmation(null))
+                        .orElseThrow().get("confirmation_id"));
+                final CyclicBarrier start = new CyclicBarrier(8);
+                final List<Future<Boolean>> granted = new ArrayList<>();
+                for (int i = 0; i < 8; i++) {
+                    granted.add(executor.submit(() -> {
+                        start.await();
+                        try {
+                            return consent.require(CALL, textOnly(), confirmation(id)).isEmpty();
+                        } catch (final ToolRefusal e) {
+                            return false;
+                        }
+                    }));
+                }
+                int grants = 0;
+                for (final Future<Boolean> future : granted) {
+                    grants += future.get()
+                            ? 1
+                            : 0;
+                }
+                assertThat(grants).as("round " + round).isEqualTo(1);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test

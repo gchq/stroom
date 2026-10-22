@@ -271,8 +271,13 @@ public class AiChatRunManager {
                             : count);
                     toolCallsOnNode.decrementAndGet();
                 }
-                // A slot has come free.
-                startQueued();
+                // A slot has come free. The call's result is made already, so a failure to start a queued run
+                // (which marks that run as failed) is logged rather than thrown from here.
+                try {
+                    startQueued();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(() -> "Unable to start a queued run once a tool call's run slot came free", e);
+                }
             }
         });
     }

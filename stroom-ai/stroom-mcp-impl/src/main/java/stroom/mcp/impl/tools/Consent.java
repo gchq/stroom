@@ -46,6 +46,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongSupplier;
 
 /// Confirmations (key details) and approvals (risky actions) before a write tool acts, and choices the user makes
@@ -226,7 +227,7 @@ public class Consent {
         }
         final Pending found = sessionIds(context.session()).get(normalise(token));
         if (found != null) {
-            found.spent = true;
+            found.spent.set(true);
         }
     }
 
@@ -343,14 +344,14 @@ public class Consent {
             throw new ToolRefusal("This " + kind + " id was issued for a different request; request the " + kind
                                   + " again");
         }
-        if (found.spent) {
+        // Spent in one step, so two calls made at once with the same id can't both be granted.
+        final boolean alreadySpent = request.keep()
+                ? found.spent.get()
+                : !found.spent.compareAndSet(false, true);
+        if (alreadySpent) {
             throw new ToolRefusal("This " + kind + " id was already used; request the " + kind + " again");
         }
-        if (!request.keep()) {
-            found.spent = true;
-        }
-        if (!found.granted) {
-            found.granted = true;
+        if (found.granted.compareAndSet(false, true)) {
             audit(context.session(), kind, request, "granted via id", true);
         }
     }
@@ -692,8 +693,8 @@ public class Consent {
 
         private final String binding;
         private final long expiresMs;
-        private volatile boolean spent;
-        private volatile boolean granted;
+        private final AtomicBoolean spent = new AtomicBoolean();
+        private final AtomicBoolean granted = new AtomicBoolean();
 
         private Pending(final String binding, final long expiresMs) {
             this.binding = binding;
