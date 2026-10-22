@@ -1000,12 +1000,11 @@ their cells have no name, and the quick filter's help button is 22px (under WCAG
 
 ### Menu buttons don't say they open a menu
 
-**Reported.** Most buttons that open menus now say so and whether the menu is open (see Fixed):
-`ShowMenuEvent.Builder.opener` with a button marked by `ToolbarButton.setOpensMenu` or
-`MenuOpener.mark`. Left: the "..." action button in grid rows (`ActionMenuCell`) and the hover
-action menus (`HoverActionMenuCell`), which are cells with no role that open on a mouse press only
-(the grids session), and the row action menus of the data retention rules
-(`DataRetentionPolicyListPresenter`) and content templates (`ContentTemplateListPresenter`).
+**Fixed**: buttons that open menus say so and whether the menu is open (`ShowMenuEvent.Builder.opener`
+with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a grid row,
+`RowActions.menuButton`). Left: the hover action menus (`HoverActionMenuCell`, unused), and the row
+action menus of the data retention rules (`DataRetentionPolicyListPresenter`) and content templates
+(`ContentTemplateListPresenter`), whose `showActionMenu` is never called (dead code).
 
 ### Controls with no accessible name
 
@@ -1014,13 +1013,8 @@ action menus (`HoverActionMenuCell`), which are cells with no role that open on 
 
 ### Missing roles and states
 
-**Confirmed** (checked in the code; found by the workbench's plays).
+**Fixed**: all those listed here (see Fixed).
 
-* The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
-  its messages and no `autocomplete` hints on its fields.
-* The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
-  (`ChangePasswordViewImpl`).
-* The maintenance banner has no `role="alert"`, so it isn't announced (`MainViewImpl.setBanner`).
 
 ### GWT widgets and raw controls used where a Stroom component should be
 
@@ -1224,6 +1218,12 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Roles and states (batch 3 of `A11Y.md`): the sign-in page has a `main` landmark, an `<h1>` for
+    screen readers and `autocomplete` hints; the password strength meter is a `meter` and the
+    policy message describes the field; the maintenance banner is an alert; a grid row's "..."
+    says it opens a menu. Idle spinners, small and on buttons, are hidden and stop spinning (#5299);
+    the spinners are one BEM block, `busy-spinner`, and the password meter, length badge and
+    button spinner no longer use Bootstrap's classes.
   * Names (batch 2 of `A11Y.md`): the explorer's logo is out of the tab order and hidden from
     screen readers (the Main Menu button beside it does the same); Ask Stroom AI's decorative icon
     buttons are spans; a grid is named by its table name when it has no name of its own; a grid's

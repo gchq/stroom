@@ -73,9 +73,14 @@ public final class ActionMenuCellStories {
                 })
                 .withPlay(play -> {
                     final Play body = play.screen();
-                    play.click(play.getByTitle("Actions..."));
+                    // The button says it opens a menu, and whether the menu is open
+                    final Query button = play.getByTitle("Actions...");
+                    play.expect(button).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(button).toHaveAttribute("aria-expanded", "false");
+                    play.click(button);
                     play.waitFor(() -> play.expect(body.getByText("Duplicate Rule")).toBeVisible());
                     play.expect(body.getByRole("menu", "Actions for row 1")).toBeInTheDocument();
+                    play.expect(button).toHaveAttribute("aria-expanded", "true");
                     play.expect(body.getByText("Add Rule Above")).toBeVisible();
 
                     play.click(body.getByText("Duplicate Rule"));

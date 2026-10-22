@@ -261,6 +261,24 @@ General button styles
   opacity: 1;
 }
 
+/* The busy spinner's ring (Stroom's own, not Bootstrap's spinner-border). It spins only while the
+   button is loading or its spinner is shrinking away (Button--spinning), so an idle button's hidden
+   spinner costs nothing. */
+.Button__spinner-ring {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: text-bottom;
+  border: 0.2em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.Button--spinning .Button__spinner-ring {
+  animation: busy-spinner-spin .75s linear infinite;
+}
+
 .Button__content {
   position: absolute;
   top: 0;

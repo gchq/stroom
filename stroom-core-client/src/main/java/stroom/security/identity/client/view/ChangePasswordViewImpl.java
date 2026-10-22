@@ -24,6 +24,7 @@ import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -31,6 +32,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -56,6 +58,12 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     @UiField
     Label confirmPasswordFeedback;
 
+    // The strength meter's bar and the length badge (BEM blocks, ChangePassword.css)
+    private static final String STRENGTH_BAR = "password-strength__bar";
+    private static final String LENGTH_BLOCK = "password-length";
+    // The strength meter's values, 0 (nothing typed) to 5, as a screen reader says them
+    private static final String[] STRENGTH_NAMES = {"None", "Very weak", "Weak", "Fair", "Good", "Strong"};
+
     // The new password's length, in its box, coloured by whether it meets the policy
     private final SimplePanel passwordLengthBadge = new SimplePanel();
     private InternalIdpPasswordPolicyConfig passwordPolicyConfig;
@@ -66,8 +74,23 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
         password.setPlaceholder("Enter Password");
         confirmPassword.setPlaceholder("Confirm Password");
-        passwordLengthBadge.setStyleName("badge badge-pill badge-danger");
+        // The length is shown as a picture only: the strength meter says how good the password is
+        passwordLengthBadge.setStyleName(LENGTH_BLOCK + " " + LENGTH_BLOCK + "--short");
+        passwordLengthBadge.getElement().setAttribute("aria-hidden", "true");
         password.setBadge(passwordLengthBadge);
+
+        // The strength meter is a meter to screen readers, from none (0) to strong (5)
+        final Element meter = strengthMeter.getElement();
+        meter.setAttribute("role", "meter");
+        meter.setAttribute("aria-label", "Password strength");
+        meter.setAttribute("aria-valuemin", "0");
+        meter.setAttribute("aria-valuemax", String.valueOf(STRENGTH_NAMES.length - 1));
+        setMeterValue(0);
+
+        // The policy describes the password field, so that it is read with it
+        final Element policy = passwordPolicyMessage.getElement();
+        policy.setId(DOM.createUniqueId());
+        FieldValidity.addDescribedBy(password.getInput().getElement(), policy.getId(), false);
     }
 
     @Override
@@ -173,7 +196,8 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
             strength = Math.min(passwordStrength + 1, 5);
         }
 //        strengthMeter.setVisible(passwordLength > 0);
-        strengthMeterBar.setStyleName("strength-meter-bar strength-meter-" + strength);
+        strengthMeterBar.setStyleName(STRENGTH_BAR + " " + STRENGTH_BAR + "--" + strength);
+        setMeterValue(strength);
 
 //        for (int i = 0; i < 5; i++) {
 //            final SimplePanel segment = new SimplePanel();
@@ -192,14 +216,20 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
         passwordLengthBadge.getElement().setInnerText(text);
         passwordLengthBadge.setVisible(passwordLength > 0);
 
-        // Dynamically set the password length counter class
-        final String badgeColorClass = passwordLength > passwordPolicyConfig.getMinimumPasswordLength()
+        // The length badge's colour: too short, long enough but weak, or both met
+        final String lengthModifier = passwordLength > passwordPolicyConfig.getMinimumPasswordLength()
                 ? passwordStrength >= passwordPolicyConfig.getMinimumPasswordStrength()
-                ? "badge-success"
-                : "badge-warning"
-                : "badge-danger";
-        final String badgeClass = "badge badge-pill " + badgeColorClass;
-        passwordLengthBadge.setStyleName(badgeClass);
+                ? "--ok"
+                : "--weak"
+                : "--short";
+        passwordLengthBadge.setStyleName(LENGTH_BLOCK + " " + LENGTH_BLOCK + lengthModifier);
+    }
+
+    // The meter's value, and the word a screen reader says for it
+    private void setMeterValue(final int strength) {
+        final Element meter = strengthMeter.getElement();
+        meter.setAttribute("aria-valuenow", String.valueOf(strength));
+        meter.setAttribute("aria-valuetext", STRENGTH_NAMES[strength]);
     }
 
     public interface Binder extends UiBinder<Widget, ChangePasswordViewImpl> {

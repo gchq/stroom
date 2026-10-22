@@ -14,26 +14,42 @@
  * limitations under the License.
  */
 
- /*
-     SMALL SPINNER
- */
-.SpinnerSmall {
+/*
+   Busy spinners, named BEM style (block, block__element, block--modifier), all in the block
+   busy-spinner (not spinner, the value spinner's class):
+
+   * busy-spinner--small (SpinnerSmall): shown while tasks run, e.g. on a tab or the explorer's bar.
+     It fades in and out (--active). Once faded out it is hidden, so screen readers skip it: its
+     visibility changes when the fade has finished (delayed by the fade's length), but at once when
+     it is shown. It spins only while SpinnerSmall says so (--spinning), until it has faded out, so
+     an idle one costs nothing (#5299).
+   * busy-spinner--large (SpinnerLarge): a ring that spins while a dialog or pane loads. It fades in
+     (--active), slower when soft (--soft), and may be centred over what is loading (--centred).
+   * busy-spinner--page: the ring shown while the app itself loads (app.html).
+*/
+@keyframes busy-spinner-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.busy-spinner--small {
     position: relative;
     width: 22px;
     height: 22px;
     opacity: 0;
-    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -webkit-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -moz-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
-    -o-transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    visibility: hidden;
+    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
     color: var(--navigation-icon-button__color);
 }
 
-.SpinnerSmall.refreshing {
+.busy-spinner--small.busy-spinner--active {
     opacity: 1;
+    visibility: visible;
+    transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out, visibility 0s;
 }
 
-.SpinnerSmall .spinning-outer {
+.busy-spinner__outer {
     position: absolute;
     top: 0;
     left: 0;
@@ -45,54 +61,44 @@
     align-items: center;
 }
 
-.SpinnerSmall .spinning-inner {
+.busy-spinner__inner {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-.SpinnerSmall .spinning-inner svg {
+.busy-spinner__inner svg {
     width: 18px;
     height: 18px;
-    -webkit-animation: spinner-border .75s linear infinite;
-    animation: spinner-border .75s linear infinite;
 }
 
-@keyframes spinner-border {
-  to { transform: rotate(360deg); }
+.busy-spinner--spinning .busy-spinner__inner svg {
+    animation: busy-spinner-spin .75s linear infinite;
 }
 
-
- /*
-     LARGE SPINNER
- */
-.SpinnerLarge {
-
-}
-
-.SpinnerLarge .spinner-border {
+.busy-spinner__ring {
     display: inline-block;
+    box-sizing: border-box;
     width: 22px;
     height: 22px;
     vertical-align: text-bottom;
     border: 3px solid var(--navigation-icon-button__color);
     border-right-color: transparent;
     border-radius: 50%;
-    -webkit-animation: spinner-border .75s linear infinite;
-    animation: spinner-border .75s linear infinite;
+    animation: busy-spinner-spin .75s linear infinite;
     opacity: 0;
-
     transition: opacity 0.5s ease;
-    -webkit-transition: opacity 0.5s ease;
-    -moz-transition: opacity 0.5s ease;
-    -o-transition: opacity 0.5s ease;
 }
 
-.SpinnerLarge.spinner__visible .spinner-border {
+.busy-spinner--large.busy-spinner--active .busy-spinner__ring {
     opacity: 1;
 }
 
-.SpinnerLarge.spinner-center {
+.busy-spinner--large.busy-spinner--soft .busy-spinner__ring {
+    transition: opacity 1s ease-in-out;
+}
+
+.busy-spinner--centred {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -102,18 +108,9 @@
     z-index: 10;
 }
 
-.SpinnerLarge.soft .spinner-border {
-    transition: opacity 1s ease-in-out;
-    -webkit-transition: opacity 1s ease-in-out;
-    -moz-transition: opacity 1s ease-in-out;
-    -o-transition:opacity 1s ease-in-out;
-}
-
-/*
-    MAIN LOADING SPINNER
-*/
-.spinner-blue {
+.busy-spinner--page {
     display: inline-block;
+    box-sizing: border-box;
     width: 22px;
     height: 22px;
     min-width: 22px;
@@ -122,8 +119,7 @@
     border: 3px solid #2196f3;
     border-right-color: transparent;
     border-radius: 50%;
-    -webkit-animation: spinner-border .75s linear infinite;
-    animation: spinner-border .75s linear infinite;
+    animation: busy-spinner-spin .75s linear infinite;
 }
 
 /* Text for screen readers only, so it must not be display: none (which hides it from them too) */

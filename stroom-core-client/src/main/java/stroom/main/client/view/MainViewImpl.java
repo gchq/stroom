@@ -75,6 +75,9 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
         this.widget = binder.createAndBindUi(this);
         this.eventBus = eventBus;
         banner.setVisible(false);
+        // An alert, so that a screen reader says the maintenance message when it is shown. The role
+        // is set before any text is, as a live region must exist before what it announces
+        banner.getElement().setAttribute("role", "alert");
         widget.sinkEvents(Event.KEYEVENTS);
     }
 

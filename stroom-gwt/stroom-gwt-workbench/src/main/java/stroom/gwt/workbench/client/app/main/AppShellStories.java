@@ -445,9 +445,11 @@ public final class AppShellStories {
                 }, builder -> builder.uiConfig(QueryFixtures.uiConfigWith("\"maintenanceMessage\": "
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
-                    // GWT's banner has no 'alert' role
+                    // The banner is an alert, so a screen reader says it when it is shown
                     play.waitFor(() -> play.expect(play.querySelector(".mainViewImpl-banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
+                    play.expect(play.getByRole("alert")).toHaveTextContent(
+                            TextMatch.containingIgnoreCase("system maintenance"));
                     expectNoProblems(play);
                 })
                 // The current activity below the tree opens the chooser; choosing one updates it

@@ -61,6 +61,21 @@ public final class RowActions {
         return template.button(className, name, icon);
     }
 
+    /// As [#button(String, String, SafeHtml)], for a button that opens a menu: it says so
+    /// (`aria-haspopup="menu"`) and whether the menu is open (`aria-expanded`, which the menu keeps up
+    /// to date for the button it is opened from), as the ARIA menu button pattern asks.
+    ///
+    /// @param className The button's classes.
+    /// @param name      The button's name, its title.
+    /// @param icon      The button's icon.
+    /// @return The button's HTML.
+    public static SafeHtml menuButton(final String className, final String name, final SafeHtml icon) {
+        if (template == null) {
+            template = GWT.create(Template.class);
+        }
+        return template.menuButton(className, name, icon);
+    }
+
     /// @param element An element, or null.
     /// @return Whether the element is a row action.
     public static boolean isRowAction(final Element element) {
@@ -123,5 +138,9 @@ public final class RowActions {
         @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\">{2}</button>")
         SafeHtml button(String className, String name, SafeHtml icon);
+
+        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+                  + "data-row-action=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\">{2}</button>")
+        SafeHtml menuButton(String className, String name, SafeHtml icon);
     }
 }

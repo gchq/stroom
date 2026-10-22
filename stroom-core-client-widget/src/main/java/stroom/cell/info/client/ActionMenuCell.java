@@ -175,8 +175,9 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                     func -> func.apply(row),
                     "Actions...");
 
-            // A button the grid's keyboard reaches (a row action), named by its title
-            sb.append(RowActions.button(
+            // A button the grid's keyboard reaches (a row action), named by its title, that says it
+            // opens a menu
+            sb.append(RowActions.menuButton(
                     "svgCell-button " + ACTION_MENU_CELL_CLASS_NAME,
                     tooltipText,
                     SvgImageUtil.toSafeHtml(ICON.getIcon(), "svgCell-icon")));
