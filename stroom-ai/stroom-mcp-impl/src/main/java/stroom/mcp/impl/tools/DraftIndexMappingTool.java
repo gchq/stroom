@@ -177,7 +177,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Draft the index for the build: a field plan (name, type and source path per field) "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Draft the index for the build: a field plan (name, type and source path per field) "
                              + "from the chosen convention, limited to paths the sample events actually populate, "
                              + "plus StreamId and EventId. With the user's example Elasticsearch index template, "
                              + "fields take the example's names for the same data (User.Id, TypeId...), others are "
