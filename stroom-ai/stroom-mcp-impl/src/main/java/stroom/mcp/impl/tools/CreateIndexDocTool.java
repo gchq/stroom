@@ -133,7 +133,8 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Create the build's index doc: a Lucene Index in a volume group with the plan's fields, "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Create the build's index doc: a Lucene Index in a volume group with the plan's fields, "
                              + "or an Elastic Index doc on an existing Elastic Cluster doc pointing at the index or "
                              + "data stream, tested against the cluster. The user confirms the backend, name and "
                              + "target.")

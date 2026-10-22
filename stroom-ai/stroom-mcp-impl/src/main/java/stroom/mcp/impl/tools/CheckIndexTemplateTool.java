@@ -125,7 +125,8 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Check a user's Elasticsearch index template (not a Stroom pipeline template), with the "
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Check a user's Elasticsearch index template (not a Stroom pipeline template), with the "
                              + "component templates it is composed of, against the candidate indexing pipeline: does "
                              + "it apply to the pipeline's index, and can it take every field the pipeline writes "
                              + "(types, date formats, dynamic setting, object clashes, renamed or dropped fields)? "
