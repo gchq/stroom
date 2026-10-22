@@ -62,7 +62,8 @@ import java.util.stream.Collectors;
 /// It stops waiting at once when nothing will process the streams (no filter, none selecting them, or only disabled
 /// ones, for the user to enable), and before the session's time limit for a long call (its query time limit) runs
 /// out, saying to call again. It says where processing is now and then while it waits, and stops when its thread is
-/// interrupted (the client gave up on the call) or the chat's run is stopped.
+/// interrupted (the client gave up on the call) or the chat's run is stopped. Once indexing passes, the build's
+/// Elasticsearch indexing pipeline's development batch size is taken off again ([IndexingRuns#developmentBatch]).
 ///
 /// Read as the user: the filters and their tasks need the Manage Processors permission and View on the pipeline,
 /// and only streams of feeds the user may view are seen.
@@ -92,6 +93,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final BuildPlan plan;
+    private final IndexingRuns indexingRuns;
     private final LongSupplier clockMs;
     private final Pause pause;
 
@@ -103,9 +105,11 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                           final PipelineOutputs pipelineOutputs,
                           final WriteGuard guard,
                           final BuildRecords buildRecords,
-                          final BuildPlan plan) {
+                          final BuildPlan plan,
+                          final IndexingRuns indexingRuns) {
         this(documentAccess, processorFilterAccess, processingStatus, streamProcessing, pipelineOutputs, guard,
-                buildRecords, plan, System::currentTimeMillis, duration -> Thread.sleep(duration.toMillis()));
+                buildRecords, plan, indexingRuns, System::currentTimeMillis,
+                duration -> Thread.sleep(duration.toMillis()));
     }
 
     /// As the injected constructor, with the clock and the pause between looks given, for tests.
@@ -117,6 +121,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                           final WriteGuard guard,
                           final BuildRecords buildRecords,
                           final BuildPlan plan,
+                          final IndexingRuns indexingRuns,
                           final LongSupplier clockMs,
                           final Pause pause) {
         this.documentAccess = documentAccess;
@@ -127,6 +132,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         this.guard = guard;
         this.buildRecords = buildRecords;
         this.plan = plan;
+        this.indexingRuns = indexingRuns;
         this.clockMs = clockMs;
         this.pause = pause;
     }
@@ -166,6 +172,16 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
     @Override
     public AiToolCategory category() {
         return AiToolCategory.PROCESSING;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        // Read-only, though once indexing passes it takes the development batch size off the build's own
+        // Elasticsearch indexing pipeline (the Stroom MCP server's said readOnlyHint false for that): it only undoes
+        // what create_processor_filter and reprocess_streams set, on a pipeline tagged as the tools' own in a build,
+        // never on a document a person wrote. As a write, every wait would need approving over MCP, and none could
+        // be made while the user is away.
+        return true;
     }
 
     @Override
@@ -334,7 +350,23 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                 : "fail");
         result.put("problems", problems);
         result.put("hint", hint(finished, idle, pending, deadline));
+        if ("pass".equals(result.get("gate")) && restoredBatch(request.pipelineUuid())) {
+            // Indexing completed without errors: the small development batch was only to see Elasticsearch's
+            // responses.
+            result.put("batch_size", "restored to the template's default, now that indexing completed without "
+                                     + "errors");
+        }
         return result;
+    }
+
+    // Whether the build's Elasticsearch indexing pipeline's development batch size was taken off again.
+    private boolean restoredBatch(final String pipelineUuid) {
+        try {
+            return indexingRuns.developmentBatch(pipelineUuid, false);
+        } catch (final RuntimeException e) {
+            // Housekeeping: never a reason for the wait to fail.
+            return false;
+        }
     }
 
     // The problems with one input stream's outputs.
