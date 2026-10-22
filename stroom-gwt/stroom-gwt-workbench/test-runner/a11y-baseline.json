@@ -187,18 +187,6 @@
   "app-main-appshell--toolbar-tab-stops": [
     "button-name"
   ],
-  "app-main-contentstorescreen--content-store": [
-    "image-alt"
-  ],
-  "app-main-contentstorescreen--install": [
-    "image-alt"
-  ],
-  "app-main-contentstorescreen--links": [
-    "image-alt"
-  ],
-  "app-main-contentstorescreen--upgrade-check-promotes-row": [
-    "image-alt"
-  ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
   ],
