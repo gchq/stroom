@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestSteppingWalks {
 
@@ -76,6 +78,40 @@ class TestSteppingWalks {
         final ArgumentCaptor<PipelineStepRequest> ended = ArgumentCaptor.forClass(PipelineStepRequest.class);
         Mockito.verify(steppingService).terminateStepping(ended.capture());
         assertThat(ended.getValue().getSessionUuid()).isEqualTo("s1");
+    }
+
+    @Test
+    void theLastRecordIsSteppedWithItsOwnStepType() {
+        // step_pipeline record='last'.
+        Mockito.when(steppingService.step(Mockito.any())).thenReturn(result("s1", true, "<out/>"));
+
+        try (final SteppingWalks.Walk walk = walks.open(pipeline, 7, Map.of(), Duration.ofSeconds(10))) {
+            walk.last();
+        }
+
+        final ArgumentCaptor<PipelineStepRequest> requests = ArgumentCaptor.forClass(PipelineStepRequest.class);
+        Mockito.verify(steppingService).step(requests.capture());
+        assertThat(requests.getValue().getStepType()).isEqualTo(StepType.LAST);
+    }
+
+    @Test
+    void anUnfinishedStepStopsAtOnceWhenTheCallIsCancelled() {
+        // The MCP endpoint interrupts the thread of a call its client cancels: the walk stops asking for the
+        // step, and still ends its session.
+        Mockito.when(steppingService.step(Mockito.any())).thenAnswer(inv -> {
+            Thread.currentThread().interrupt();
+            return result("s1", false, null);
+        });
+
+        try (final SteppingWalks.Walk walk = walks.open(pipeline, 7, Map.of(), Duration.ofSeconds(10))) {
+            assertThatThrownBy(walk::first).isInstanceOf(ToolTimeoutException.class);
+        } finally {
+            // Cleared, as the thread is the test's.
+            assertThat(Thread.interrupted()).isTrue();
+        }
+
+        Mockito.verify(steppingService, Mockito.times(1)).step(Mockito.any());
+        Mockito.verify(steppingService).terminateStepping(Mockito.any());
     }
 
     @Test
