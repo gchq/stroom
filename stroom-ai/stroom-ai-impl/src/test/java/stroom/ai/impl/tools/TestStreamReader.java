@@ -68,6 +68,19 @@ class TestStreamReader {
     }
 
     @Test
+    void aStreamWhoseChildTypesHoldANullIsRead() {
+        // Seen in an integration test: Stroom's data viewer gave a processed Events stream's child types with a
+        // null among them, and check_events failed on every Events stream.
+        world.addSegmented(7, StreamTypeNames.EVENTS, null, null, List.of(EVENT));
+        world.childTypes.add(null);
+
+        final StreamReader.Fetched fetched = reader.fetch(7, 0, null);
+
+        assertThat(fetched.availableChildTypes()).containsExactly(StreamTypeNames.META);
+        assertThat(reader.readRecords(7, 0, 1, null, 100_000).records()).containsExactly(EVENT);
+    }
+
+    @Test
     void rawDataIsReturnedAsItIs() {
         world.addRaw(8, "a,b\n1,2\n</Events>");
 

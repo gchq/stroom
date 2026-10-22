@@ -16,12 +16,16 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +69,26 @@ class TestStroomBuildFacts {
         assertThat(StroomBuildFacts.combine(List.of(state(true, null, 5, 61))).orElseThrow().get("locations"))
                 .isNull();
         assertThat(StroomBuildFacts.combine(List.of())).isEmpty();
+    }
+
+    @Test
+    void theSourceFeedsOfABuildWhoseDocsAreNoCopiesAreFound() {
+        // Seen in an integration test: every upload_sample to a build's feed failed, as no doc in the build was a
+        // working copy or a version, and requireNonNullElse refused the two nulls.
+        final BuildRecords buildRecords = Mockito.mock(BuildRecords.class);
+        Mockito.when(buildRecords.load("b")).thenReturn(Map.of("docs", Map.of(),
+                BuildRecords.SOURCE_FEEDS, List.of("UPSTREAM", "ACME")));
+        final ProcessorFilterAccess processorFilterAccess = Mockito.mock(ProcessorFilterAccess.class);
+        final StroomBuildFacts facts = new StroomBuildFacts(null, buildRecords, null, null, null, null, null, null,
+                processorFilterAccess, null, null, null, null);
+
+        final List<String> feeds = facts.sourceFeeds("b", List.of(
+                Map.of("type", FeedDoc.TYPE, "name", "ACME", "uuid", "f"),
+                Map.of("type", PipelineDoc.TYPE, "name", "ACME-Events", "uuid", "p")));
+
+        // The build's own feed isn't a source of it.
+        assertThat(feeds).containsExactly("UPSTREAM");
+        Mockito.verifyNoInteractions(processorFilterAccess);
     }
 
     @Test
