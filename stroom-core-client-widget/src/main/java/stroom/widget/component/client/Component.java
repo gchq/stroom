@@ -16,6 +16,8 @@
 
 package stroom.widget.component.client;
 
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.Event;
@@ -37,7 +39,10 @@ import java.util.function.Consumer;
 /// A component builds its widget once, in its constructor, and gives it to [#initWidget(Widget)].
 /// [#onAttach()] and [#onDetach()] are called as the widget enters and leaves the page, e.g. as its
 /// tab is shown and hidden; being hidden doesn't dispose it.
-public abstract class Component implements IsWidget, HasComponentNode {
+///
+/// A component made with the event bus can be the source of app-wide requests, as a presenter
+/// can: `AlertEvent.fireWarn(this, ...)`, `ConfirmEvent.fire(this, ...)`.
+public abstract class Component implements IsWidget, HasComponentNode, HasHandlers {
 
     private final ComponentNode node;
     private final EventBus eventBus;
@@ -78,6 +83,19 @@ public abstract class Component implements IsWidget, HasComponentNode {
             throw new IllegalStateException(node.getName() + " has no widget: call initWidget()");
         }
         return widget;
+    }
+
+    /// Fires an app-wide event, e.g. a request to show an alert, on the event bus, from this
+    /// component.
+    ///
+    /// @param event The event.
+    /// @throws IllegalStateException If this component was made without an event bus.
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        if (eventBus == null) {
+            throw new IllegalStateException(node.getName() + " was made without an event bus");
+        }
+        eventBus.fireEventFromSource(event, this);
     }
 
     /// Disposes this component and everything it owns. Only the owners of roots call this; a

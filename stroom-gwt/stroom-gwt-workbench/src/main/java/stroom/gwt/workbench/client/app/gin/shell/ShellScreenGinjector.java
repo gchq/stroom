@@ -53,7 +53,6 @@ import stroom.folder.client.FolderFavouritesPlugin;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderRootPlugin;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
-import stroom.gwt.workbench.client.app.gin.DictionaryScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
@@ -77,7 +76,6 @@ import stroom.gwt.workbench.client.app.gin.content.PlanBScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ResultStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.StreamStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
-import stroom.gwt.workbench.client.app.gin.editors.FolderScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.AnalyticsScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.PolicyScreenModule;
 import stroom.gwt.workbench.client.app.gin.security.IdentityScreenModule;
@@ -133,7 +131,6 @@ import com.google.gwt.inject.client.GinModules;
         ScreenViewsModule.class,
         QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
-        DictionaryScreenModule.class,
         EntityScreenModule.class,
         ExplorerScreenModule.class,
         MonitoringScreenModule.class,
@@ -154,7 +151,6 @@ import com.google.gwt.inject.client.GinModules;
         PathwaysScreenModule.class,
         PlanBScreenModule.class,
         ContentTemplateScreenModule.class,
-        FolderScreenModule.class,
         AnalyticsScreenModule.class,
         PolicyScreenModule.class,
         IdentityScreenModule.class,

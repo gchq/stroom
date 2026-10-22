@@ -158,6 +158,36 @@ Stroom expects Java 25 (Eclipse Temurin)
 * Tests that require mocks should use only Mockito.
 
 
+### GWT UI components
+
+New GWT screens, dialogs and tabs are components (`stroom.widget.component.client.Component`), not GWTP presenters.
+The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md`; the receive rules (`stroom.receive.rules.client.component`), the Dictionary editor and `FolderTabs` are worked examples.
+
+* **Make one.** Extend `Component`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
+  A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
+
+* **Own what you show.** Whoever shows a component or presenter owns it: `own(child)` for one injected or made with `provider.get()`, `release(child)` for one replaced early.
+  Disposing an owner disposes everything it owns, depth first; never call `dispose()` yourself except on a root.
+  Unowned components are counted in development builds, and the workbench leak check names them.
+
+* **Inputs and outputs.** Data comes in through methods named for what they do (`read(rules)`, `setFields(...)`), results go out through a callback its owner sets (`setOnChange(Runnable)`), or one passed to the call that starts it (`editor.edit(this, field, updated -> ...)`).
+  A child never fires a bus event to reach its owner; use `listen(type, handler)` only for app-wide events, and `AlertEvent.fire...(this, ...)`, as a presenter does, for app-wide requests.
+
+* **Context, not arguments.** Read-only, the task monitor and the document come from whatever owns the component: `watch(Contexts.READ_ONLY, readOnly -> ...)`, `context(Contexts.TASK_MONITOR)`.
+  Don't take or pass on a `readOnly` argument.
+
+* **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the component is disposed before the reply.
+
+* **A dialog.** Make it for one use and show it with `ComponentDialog.showOnce(opener, dialog)`, which returns GWTP's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
+  Give the dialog a method that shows it and takes a callback for its result (see `FieldEditor.edit`).
+
+* **A tab body.** Show a component in a `LayerContainer` with `new ComponentLayer(component)`, or add it to a `TabbedComponent` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
+
+* **A document.** Extend `DocumentEditor<D>` (Save, Save As, read-only status and dirty state), add its tabs, and have its plugin's `createEditor()` return `new DocumentEditorHost<>(eventBus, editorProvider.get(), TYPE)`.
+
+* **Test it.** Unit test what runs without a browser with JUnit (see `TestComponent`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+
+
 ## Generated and third party files
 
 The following code is generated and should not be edited directly:

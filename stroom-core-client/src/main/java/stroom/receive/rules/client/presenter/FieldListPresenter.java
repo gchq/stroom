@@ -22,6 +22,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
+import stroom.receive.rules.client.component.FieldEditor;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
@@ -35,6 +36,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
     private final MyDataGrid<QueryField> dataGrid;
     private final MultiSelectionModelImpl<QueryField> selectionModel;
-    private final FieldEditPresenter fieldEditPresenter;
+    private final Provider<FieldEditor> fieldEditorProvider;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -64,17 +66,16 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
     @Inject
     public FieldListPresenter(final EventBus eventBus,
                               final PagerView view,
-                              final FieldEditPresenter fieldEditPresenter,
+                              final Provider<FieldEditor> fieldEditorProvider,
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        own(fieldEditPresenter);
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        this.fieldEditPresenter = fieldEditPresenter;
+        this.fieldEditorProvider = fieldEditorProvider;
 
         getView().getToolbar().setName("Field actions");
         newButton = getView().getToolbar().button(SvgImage.ADD, "New Field", this::onAddClicked);
@@ -221,21 +222,10 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                 .map(CIKey::of)
                 .collect(Collectors.toSet());
 
-        fieldEditPresenter.read(QueryField.createText(""), otherNames);
-        fieldEditPresenter.show("New Field", e -> {
-            if (e.isOk()) {
-                final QueryField newField = fieldEditPresenter.write();
-                if (newField != null) {
-                    fields.add(newField);
-                    refresh();
-                    e.hide();
-                    onChange();
-                } else {
-                    e.reset();
-                }
-            } else {
-                e.hide();
-            }
+        fieldEditorProvider.get().edit(this, "New Field", QueryField.createText(""), otherNames, newField -> {
+            fields.add(newField);
+            refresh();
+            onChange();
         });
     }
 
@@ -249,24 +239,10 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
             otherNames.remove(CIKey.of(field.getFldName()));
 
-            fieldEditPresenter.read(field, otherNames);
-            fieldEditPresenter.show("Edit Field", e -> {
-                if (e.isOk()) {
-                    final QueryField newField = fieldEditPresenter.write();
-                    if (newField != null) {
-                        final int index = fields.indexOf(field);
-                        fields.remove(index);
-                        fields.add(index, newField);
-
-                        refresh();
-                        e.hide();
-                        onChange();
-                    } else {
-                        e.reset();
-                    }
-                } else {
-                    e.hide();
-                }
+            fieldEditorProvider.get().edit(this, "Edit Field", field, otherNames, newField -> {
+                fields.set(fields.indexOf(field), newField);
+                refresh();
+                onChange();
             });
         }
     }

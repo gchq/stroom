@@ -18,11 +18,12 @@
 package stroom.gwt.workbench.client.app.dictionary;
 
 import stroom.dictionary.client.component.DictionaryEditor;
-import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -50,25 +51,25 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.BiFunction;
 
-/// The `App/Dictionary/DictionaryEditor` stories, showing Stroom's real [DictionaryPresenter] (a
+/// The `App/Dictionary/DictionaryEditor` stories, showing Stroom's real [DictionaryEditor] (a
 /// Dictionary's editor tab: Words, Imports, Effective Words, Documentation and Permissions, with
-/// Save, Save As and Download) with fake REST replies.
+/// Save, Save As and Download) in a [DocumentEditorHost], as `DictionaryPlugin` opens it, with fake
+/// REST replies.
 ///
 /// `DictionaryPlugin` fetches the document (`GET /dictionary/v1/{uuid}`), checks the user may edit
-/// it and reads it into the editor, which the story does as the plugin does. The effective words
+/// it and reads it into the host, which the story does as the plugin does. The effective words
 /// are `GET /wordList/v1/{uuid}`, the Permissions tab asks
 /// `POST /permission/doc/v1/fetchDocumentUserPermissions` and `getDocUserPermissionsReport`, the
 /// explorer tree `POST /explorer/v2/fetchExplorerNodes` ([ExplorerFixture]), and a spy records
-/// `OpenDocumentEvent`. The presenter comes from GIN.
+/// `OpenDocumentEvent`. The editor comes from GIN.
 ///
-/// Save is enabled by Stroom's own `DocTabPresenter` as the words change; saving goes through
-/// Stroom's `DocumentPluginEventManager`, which the stories don't have, and no story saves.
+/// Saving goes through Stroom's `DocumentPluginEventManager`, which the stories don't have: a spy
+/// records the `SaveDocumentEvent` the host fires.
 ///
-/// `App/Dictionary/DictionaryEditorComponent` runs the same stories against the component model's
-/// pilot, [DictionaryEditor], a component copy of the editor owned by the story's root
-/// ([ScreenHarness#addComponent]), and adds stories only it has: the document locked and unlocked
-/// while open, Save asking the owner to save, and closing the editor while a request is answered
-/// late (see `stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Phase 0).
+/// `App/Dictionary/DictionaryEditorComponent` runs the same stories against the editor alone,
+/// owned by the story's root ([ScreenHarness#addComponent]) as its owner, and adds stories only it
+/// has: the document locked and unlocked while open, Save asking the owner to save, and closing the
+/// editor while a request is answered late (see `stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Phase 0).
 public final class DictionaryEditorStories {
 
     /// The name of the spy recording the documents opened.
@@ -162,8 +163,9 @@ public final class DictionaryEditorStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        addSharedStories(registry.component("App/Dictionary/DictionaryEditor", DictionaryEditorStories.class),
-                DictionaryEditorStories::render);
+        addHostStories(addSharedStories(
+                registry.component("App/Dictionary/DictionaryEditor", DictionaryEditorStories.class),
+                DictionaryEditorStories::render));
         addComponentStories(addSharedStories(
                 registry.component("App/Dictionary/DictionaryEditorComponent", DictionaryEditorStories.class),
                 DictionaryEditorStories::renderComponent));
@@ -280,6 +282,57 @@ public final class DictionaryEditorStories {
     }
 
     // The stories only the component copy has: what its owner does, and closing it
+    private static void addHostStories(final ComponentStories stories) {
+        stories
+                // The document is read again locked and unlocked, as DocumentPlugin does when its
+                // lock changes: the host tells the editor, and every tab follows
+                .story("LockChangeWhileOpen", context -> render(context, false))
+                .withPlay(play -> {
+                    openTab(play, "Imports");
+                    final Query addButton = play.findByRole("button", "Add Imported Dictionary");
+                    play.expect(addButton).not().toHaveAttribute("aria-disabled");
+
+                    play.run("lock the document", () -> readAgain(true));
+                    play.expect(play.findByRole("button", "Save (read only)")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Add Imported Dictionary (dictionary is read only)"))
+                            .toHaveAttribute("aria-disabled", "true");
+
+                    play.run("unlock the document", () -> readAgain(false));
+                    play.expect(play.findByRole("button", "Save")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "Add Imported Dictionary"))
+                            .not().toHaveAttribute("aria-disabled");
+                    expectNoProblems(play);
+                })
+                // A change marks the tab's label, and Save asks Stroom to save the document
+                // (SaveDocumentEvent, which DocumentPluginEventManager handles)
+                .story("SaveAsksStroomToSave", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Imports");
+                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    play.waitFor(() -> play.expect(grid.getByText("Cities")).toBeInTheDocument());
+                    play.expect("the tab's label", () -> host().getLabel()).toBe("Countries");
+                    play.click(play.getByRole("button", "Remove Imported Dictionary"));
+                    play.click(screen.findByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect("the tab's label", () -> host().getLabel())
+                            .toBe("* Countries"));
+                    play.click(play.getByRole("button", "Save"));
+                    play.expect(play.spy(SAVE)).toHaveBeenCalledWith("Countries, imports: 0");
+                    expectNoProblems(play);
+                });
+    }
+
+    // The host the story shows, for plays that act as DocumentPlugin does
+    private static DocumentEditorHost<DictionaryDoc> host() {
+        return ScreenHarness.shownContent();
+    }
+
+    // Reads the shown document again, as DocumentPlugin does, read only or not
+    private static void readAgain(final boolean readOnly) {
+        final DocumentEditorHost<DictionaryDoc> host = host();
+        host.read(host.getDocRef(), host.getEntity(), readOnly);
+    }
+
     private static void addComponentStories(final ComponentStories stories) {
         stories
                 // The document is locked and unlocked while it is open: every tab follows, as the
@@ -361,8 +414,9 @@ public final class DictionaryEditorStories {
     private static Widget render(final StoryContext context, final boolean readOnly) {
         final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
         final ScreenHarness harness = createHarness(context, readOnly, FIXTURES, injector);
+        harness.fn(SAVE);
         // Opened once Stroom has started, as DictionaryPlugin opens a document: load it, check the
-        // user may edit it, read it into the editor and show the tab
+        // user may edit it, read it into the editor's host and show the tab
         harness.afterStartUp(() -> open(harness, injector));
         return harness.asWidget();
     }
@@ -427,7 +481,13 @@ public final class DictionaryEditorStories {
     }
 
     private static void open(final ScreenHarness harness, final AppScreenGinjector injector) {
-        final DictionaryPresenter presenter = injector.getDictionaryPresenter();
+        final DocumentEditorHost<DictionaryDoc> presenter = new DocumentEditorHost<>(
+                harness.getEventBus(), injector.getDictionaryEditor(), DictionaryDoc.TYPE);
+        // As DocumentPluginEventManager is asked to save it. Removed with the story's opening, as
+        // the handler holds the editor
+        harness.addCleanUp(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> harness.spy(SAVE,
+                event.getTabData().getLabel().replace("* ", "")
+                + ", imports: " + NullSafe.size(presenter.write(presenter.getEntity()).getImports())))::removeHandler);
         final DictionaryResource resource = GWT.create(DictionaryResource.class);
         harness.getRestFactory()
                 .create(resource)

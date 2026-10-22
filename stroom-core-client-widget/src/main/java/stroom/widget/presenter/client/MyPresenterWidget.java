@@ -28,7 +28,9 @@ import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -45,7 +47,7 @@ import java.util.function.Consumer;
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
         extends PresenterWidget<V>
-        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode {
+        implements Layer, TaskMonitorFactory, HasTaskMonitorFactory, HasComponentNode, IsWidget {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
@@ -59,6 +61,13 @@ public class MyPresenterWidget<V extends View>
         super(eventBus, view);
         // Run after what it owns is disposed and its registrations are removed
         node.onDispose(this::release);
+    }
+
+    /// @return Its view's widget, so a presenter can go where a component can, e.g. a tab of a
+    /// `TabbedComponent`.
+    @Override
+    public Widget asWidget() {
+        return getWidget();
     }
 
     @Override

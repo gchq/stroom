@@ -34,7 +34,8 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView> implements Refreshable {
+public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPanelView>
+        implements Refreshable, HasCommonTabs {
 
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
 
@@ -70,6 +71,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
      */
     protected abstract TabData getPermissionsTab();
 
+    @Override
     public void selectCommonTab(final OpenDocumentEvent.CommonDocLinkTab commonDocLinkTab) {
         if (commonDocLinkTab != null) {
             final TabData tabData = commonTabsMap.get(commonDocLinkTab);

@@ -53,7 +53,7 @@ import java.util.function.Supplier;
 
 public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         extends DocPresenter<V, D>
-        implements DocumentTabData, Refreshable, HasType, HasSave {
+        implements DocumentTabData, Refreshable, HasType, HasSave, HasCommonTabs {
 
     // Made in the toolbar by createToolbar, so null if a subclass's toolbar has none
     private ToolbarButton saveButton;
@@ -181,6 +181,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         callback.onReady(tabContentProvider.getPresenter(tab));
     }
 
+    @Override
     public void selectCommonTab(final CommonDocLinkTab commonDocLinkTab) {
         if (commonDocLinkTab != null) {
             final TabData tabData = commonTabsMap.get(commonDocLinkTab);

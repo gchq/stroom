@@ -24,8 +24,7 @@ import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
-import stroom.folder.client.FolderPresenter;
-import stroom.folder.client.FolderRootPresenter;
+import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
@@ -79,7 +78,6 @@ import com.google.gwt.inject.client.GinModules;
         ElasticIndexScreenModule.class,
         FeedScreenModule.class,
         FloorMapScreenModule.class,
-        FolderScreenModule.class,
         GitRepoScreenModule.class,
         HttpScreenModule.class,
         IndexScreenModule.class,
@@ -162,11 +160,9 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     // Folders and feeds
 
-    /// @return A folder's tab, as `FolderPlugin` creates it.
-    FolderPresenter getFolderPresenter();
-
-    /// @return The System root folder's tab, as `FolderRootPlugin` creates it.
-    FolderRootPresenter getFolderRootPresenter();
+    /// @return A folder's tabs, or the System root's, which `FolderPlugin` (and
+    /// `FolderRootPlugin`) open in a `DocumentEditorHost`.
+    FolderTabs getFolderTabs();
 
     /// @return A Feed's editor tab, as `FeedPlugin` creates it.
     FeedPresenter getFeedPresenter();

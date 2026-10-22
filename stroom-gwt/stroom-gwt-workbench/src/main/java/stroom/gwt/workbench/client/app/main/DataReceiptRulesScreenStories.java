@@ -31,6 +31,8 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.widget.component.client.ContextValue;
+import stroom.widget.component.client.Contexts;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -190,6 +192,87 @@ public final class DataReceiptRulesScreenStories {
                                     .withBody("a field 'Environment'", DataReceiptRulesScreenStories::hasEnvironment)
                                     .toSpyMatcher()));
                     expectNoProblems(play);
+                })
+                // The field dialog (a component) checks the name on OK and stays open if it is
+                // missing or another field's (ignoring case); Cancel closes it with nothing changed
+                .story("AddFieldChecksTheName", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Reject test feeds");
+                    play.click(play.getByText("Fields", StroomDom.LINK_TAB_LABEL));
+                    play.findByText("System");
+                    play.click(play.getByTitle("New Field"));
+                    final Play dialog = dialog(screen, "New Field");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("WARN: A field must have a name"));
+                    play.expect(screen.getByText("New Field", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.type(dialog.querySelector("#fieldEditName"), "feed");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            "WARN: A field with this name already exists. Field names are case insensitive."));
+                    play.expect(screen.getByText("New Field", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.getByTitle(SAVE)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Cancel on the rule dialog (a component) keeps the rule as it was
+                .story("EditRuleCancel", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Reject test feeds"));
+                    play.click(play.getByTitle("Edit Selected Rule"));
+                    final Play dialog = dialog(screen, "Edit Rule");
+                    play.type(dialog.querySelector("#ruleRuleName"), " (changed)");
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Rule", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.getByText("Reject test feeds")).toBeInTheDocument();
+                    play.expect(play.queryByText(TextMatch.containing("(changed)"))).toBeNull();
+                    play.expect(play.getByTitle(SAVE)).toHaveAttribute("aria-disabled", "true");
+                    expectNoProblems(play);
+                })
+                // Duplicating a rule is a change, so it can be saved (it wasn't, before the Rules
+                // tab was a component)
+                .story("DuplicateRule", context -> render(context, false))
+                .withPlay(play -> {
+                    play.click(play.findByText("Reject test feeds"));
+                    play.click(play.getByTitle("Duplicate Selected Rule"));
+                    play.waitFor(() -> play.expect(play.getAllByText("Reject test feeds")).toHaveLength(2));
+                    play.waitFor(() -> play.expect(play.getByTitle(SAVE)).not().toHaveAttribute("aria-disabled"));
+                    expectNoProblems(play);
+                })
+                // Deleting the one rule selected asks about 'this rule' (it asked about 'the selected
+                // rules'), and leaves nothing selected to edit
+                .story("DeleteRule", context -> render(context, false, true, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Reject test feeds"));
+                    play.click(play.getByTitle("Delete Selected Rules"));
+                    play.click(screen.within(screen.findByText("Are you sure you want to delete this rule?")
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.queryByText("Reject test feeds")).toBeNull());
+                    play.expect(play.getByTitle("Edit Selected Rule")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Delete Selected Rules")).toHaveAttribute("aria-disabled", "true");
+                    play.waitFor(() -> play.expect(play.getByTitle(SAVE)).not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Read only from what shows it (here the story, through context): no rule can be
+                // added, edited or deleted, and double-clicking a rule doesn't open it
+                .story("ReadOnly", context -> render(context, false, false, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query rule = play.findByText("Reject test feeds");
+                    play.expect(play.getByTitle("New Rule")).toHaveAttribute("aria-disabled", "true");
+                    play.click(rule);
+                    play.expect(play.getByTitle("Edit Selected Rule")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Delete Selected Rules")).toHaveAttribute("aria-disabled", "true");
+                    play.dblClick(rule);
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Edit Rule", StroomDom.DIALOG_TITLE)).toBeNull();
+                    expectNoProblems(play);
                 });
     }
 
@@ -269,15 +352,31 @@ public final class DataReceiptRulesScreenStories {
     }
 
     private static Widget render(final StoryContext context, final boolean obfuscateFeed) {
+        // A UI config with obfuscated fields; the confirmation is Stroom's real dialog
+        return render(context, obfuscateFeed, obfuscateFeed, false);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final boolean obfuscateFeed,
+                                 final boolean realAlerts,
+                                 final boolean readOnly) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector);
         if (obfuscateFeed) {
-            // A UI config with obfuscated fields; the confirmation is Stroom's real dialog
-            builder.startup(startup -> startup.extendedUiConfig(OBFUSCATING_UI_CONFIG)).realAlerts();
+            builder.startup(startup -> startup.extendedUiConfig(OBFUSCATING_UI_CONFIG));
+        }
+        if (realAlerts) {
+            builder.realAlerts();
         }
         final ScreenHarness harness = builder.build();
         harness.afterStartUp(() -> {
+            if (readOnly) {
+                // Narrows what the screen provides, as a read-only document would. Here, not
+                // before, so the root is made (and disposed) with each opening, as the leak check
+                // opens and closes the screen
+                harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(true));
+            }
             final RuleSetPresenter presenter = injector.getRuleSetPresenter();
             harness.addContent(presenter);
         });

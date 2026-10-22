@@ -24,7 +24,8 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.LinkTabPanelPresenter;
+import stroom.entity.client.component.DocumentEditorHost;
+import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -43,18 +44,20 @@ import javax.inject.Singleton;
 @Singleton
 public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData {
     private final ContentManager contentManager;
-    private final Provider<FolderRootPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FolderTabs> folderTabsProvider;
     private final ClientSecurityContext securityContext;
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus,
-                            final Provider<FolderRootPresenter> editorProvider,
+                            final Provider<FolderTabs> folderTabsProvider,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager,
                             final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.contentManager = contentManager;
-        this.editorProvider = editorProvider;
+        this.eventBus = eventBus;
+        this.folderTabsProvider = folderTabsProvider;
         this.securityContext = securityContext;
     }
 
@@ -95,13 +98,10 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 //    }
 
     @Override
-    protected FolderRootPresenter createEditor() {
-        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            return editorProvider.get();
-        }
-
-        return null;
+    protected DocumentEditorHost<DocRef> createEditor() {
+        return FolderTabs.canOpen(securityContext)
+                ? new DocumentEditorHost<>(eventBus, folderTabsProvider.get(), ExplorerConstants.SYSTEM_TYPE)
+                : null;
     }
 
     @Override
@@ -132,12 +132,12 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (myPresenterWidget instanceof FolderRootPresenter) {
-            ((FolderRootPresenter) myPresenterWidget).read();
+        if (myPresenterWidget instanceof final DocumentEditorHost<?> host) {
+            FolderPlugin.readFolder(host, ExplorerConstants.SYSTEM_DOC_REF);
         }
 
-        if (selectedTab != null && myPresenterWidget instanceof LinkTabPanelPresenter) {
-            ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
+        if (selectedTab != null && myPresenterWidget instanceof final HasCommonTabs hasCommonTabs) {
+            hasCommonTabs.selectCommonTab(selectedTab);
         }
 
         // Open the tab.

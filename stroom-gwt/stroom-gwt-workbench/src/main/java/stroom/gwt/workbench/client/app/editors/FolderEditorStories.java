@@ -17,18 +17,21 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
+import stroom.entity.client.component.DocumentEditorHost;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.folder.client.FolderPresenter;
-import stroom.folder.client.FolderRootPresenter;
+import stroom.folder.client.FolderTabs;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.security.shared.AppPermission;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -36,12 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// The `App/Editors/FolderEditor` stories, showing Stroom's real [FolderPresenter] (a folder's tab:
-/// Data, Processors, Active Tasks and Permissions) and, for the System root, [FolderRootPresenter],
-/// with fake REST replies.
+/// The `App/Editors/FolderEditor` stories, showing Stroom's real [FolderTabs] (a folder's tab, or
+/// the System root's: Data, Processors, Active Tasks and Permissions) in a [DocumentEditorHost], with
+/// fake REST replies.
 ///
 /// As `FolderPlugin` (and `FolderRootPlugin`) do, the story reads the folder's DocRef into the
-/// presenter and shows it; there is no document to fetch. The Data tab is Stroom's real
+/// host, read only, and shows it; there is no document to fetch. The Data tab is Stroom's real
 /// `MetaPresenter` (`POST /meta/v1/findMetaRow`, no streams), the Processors tab asks
 /// `POST /processorFilter/v1/find` (checked with the request spy), Active Tasks
 /// `POST /processorTask/v1/find` and `summary`, and the Permissions tab has its own routes. The
@@ -92,13 +95,13 @@ public final class FolderEditorStories {
                     play.click(DocEditors.tab(play, "Permissions"));
                     DocEditors.expectNoProblems(play);
                 })
-                // The System root (FolderRootPresenter)
+                // The System root
                 .story("SystemRoot", context -> render(context, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
-                    // Stroom's FolderRootPresenter also shows the Processors and Active Tasks tabs
-                    // to users who may manage processors
+                    // It also shows the Processors and Active Tasks tabs to users who may manage
+                    // processors
                     play.expect(DocEditors.tab(play, "Processors")).toBeInTheDocument();
                     play.expect(DocEditors.tab(play, "Active Tasks")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
@@ -113,6 +116,34 @@ public final class FolderEditorStories {
                                     .withBody("an expression on 'Processor Pipeline' and 'Analytic Rule', "
                                               + "not 'Pipeline'", FolderEditorStories::queriesProcessorPipeline)
                                     .toSpyMatcher()));
+                    DocEditors.expectNoProblems(play);
+                })
+                // A user who may only view data sees a folder's Data tab alone, and the System
+                // root's Data and Permissions, as before the folder tabs were a component
+                .story("ViewDataOnly", context -> render(context, false, AppPermission.VIEW_DATA_PERMISSION))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
+                    play.expect(play.queryByText("Processors", StroomDom.LINK_TAB_LABEL)).toBeNull();
+                    play.expect(play.queryByText("Active Tasks", StroomDom.LINK_TAB_LABEL)).toBeNull();
+                    play.expect(play.queryByText("Permissions", StroomDom.LINK_TAB_LABEL)).toBeNull();
+                    DocEditors.expectNoProblems(play);
+                })
+                .story("SystemRootViewDataOnly", context -> render(context, true, AppPermission.VIEW_DATA_PERMISSION))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
+                    play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
+                    play.expect(play.queryByText("Processors", StroomDom.LINK_TAB_LABEL)).toBeNull();
+                    DocEditors.expectNoProblems(play);
+                })
+                // A link to the folder's permissions (OpenDocumentEvent's Permissions tab) shows
+                // its Permissions tab, as DocumentPlugin asks the open tab
+                .story("PermissionsLink", context -> render(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
+                    play.run("follow a link to the permissions", () -> ScreenHarness.<DocumentEditorHost<DocRef>>
+                            shownContent().selectCommonTab(CommonDocLinkTab.PERMISSIONS));
+                    play.waitFor(() -> play.expect(DocEditors.tab(play, "Permissions").closest("[role=tab]"))
+                            .toHaveAttribute("aria-selected", "true"));
                     DocEditors.expectNoProblems(play);
                 });
     }
@@ -144,17 +175,24 @@ public final class FolderEditorStories {
     }
 
     private static Widget render(final StoryContext context, final boolean systemRoot) {
+        // ADMINISTRATOR implies the rest
+        return render(context, systemRoot, AppPermission.ADMINISTRATOR);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final boolean systemRoot,
+                                 final AppPermission permission) {
         return DocEditors.render(context, FIXTURES, false, (harness, injector) -> {
+            harness.getSecurityContext().setAppPermissions(permission);
             // As FolderPlugin.showDocument (and FolderRootPlugin) do
-            if (systemRoot) {
-                final FolderRootPresenter presenter = injector.getFolderRootPresenter();
-                presenter.read();
-                harness.addContent(presenter);
-            } else {
-                final FolderPresenter presenter = injector.getFolderPresenter();
-                presenter.read(FOLDER);
-                harness.addContent(presenter);
-            }
+            final DocRef folder = systemRoot
+                    ? ExplorerConstants.SYSTEM_DOC_REF
+                    : FOLDER;
+            final DocumentEditorHost<DocRef> host = new DocumentEditorHost<>(harness.getEventBus(),
+                    injector.getFolderTabs(),
+                    folder.getType());
+            host.read(folder, folder, true);
+            harness.addContent(host);
         });
     }
 }

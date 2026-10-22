@@ -34,8 +34,8 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -167,10 +167,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
                 if (selectedLinkTab != null) {
 //                    GWT.log("existing - " + existingTab.getClass().getName());
-                    if (existingTab instanceof DocTabPresenter<?, ?>) {
-                        ((DocTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
-                    } else if (existingTab instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) existingTab).selectCommonTab(selectedLinkTab);
+                    if (existingTab instanceof final HasCommonTabs hasCommonTabs) {
+                        hasCommonTabs.selectCommonTab(selectedLinkTab);
                     }
                 }
             } else if (forceOpen) {
@@ -266,10 +264,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                         null);
             } else {
                 if (selectedCommonTab != null) {
-                    if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
-                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedCommonTab);
-                    } else if (myPresenterWidget instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedCommonTab);
+                    if (myPresenterWidget instanceof final HasCommonTabs hasCommonTabs) {
+                        hasCommonTabs.selectCommonTab(selectedCommonTab);
                     }
                 } else {
                     if (myPresenterWidget instanceof final DocTabPresenter<?, ?> docTabPresenter) {

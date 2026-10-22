@@ -24,7 +24,8 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.LinkTabPanelPresenter;
+import stroom.entity.client.component.DocumentEditorHost;
+import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -41,30 +42,29 @@ import javax.inject.Singleton;
 @Singleton
 public class FolderPlugin extends DocumentPlugin<DocRef> {
 
-    private final Provider<FolderPresenter> editorProvider;
+    private final EventBus eventBus;
+    private final Provider<FolderTabs> folderTabsProvider;
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
 
     @Inject
     public FolderPlugin(final EventBus eventBus,
-                        final Provider<FolderPresenter> editorProvider,
+                        final Provider<FolderTabs> folderTabsProvider,
                         final ContentManager contentManager,
                         final DocumentPluginEventManager entityPluginEventManager,
                         final ClientSecurityContext securityContext) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
-        this.editorProvider = editorProvider;
+        this.eventBus = eventBus;
+        this.folderTabsProvider = folderTabsProvider;
         this.securityContext = securityContext;
         this.contentManager = contentManager;
     }
 
     @Override
     protected MyPresenterWidget<?> createEditor() {
-        if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
-            securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            return editorProvider.get();
-        }
-
-        return null;
+        return FolderTabs.canOpen(securityContext)
+                ? new DocumentEditorHost<>(eventBus, folderTabsProvider.get(), ExplorerConstants.FOLDER_TYPE)
+                : null;
     }
 
     @Override
@@ -94,18 +94,23 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (myPresenterWidget instanceof FolderPresenter) {
-            ((FolderPresenter) myPresenterWidget).read(docRef);
-        } else if (myPresenterWidget instanceof FolderRootPresenter) {
-            ((FolderRootPresenter) myPresenterWidget).read();
+        if (myPresenterWidget instanceof final DocumentEditorHost<?> host) {
+            // Nothing in a folder's tab can be changed
+            readFolder(host, docRef);
         }
 
-        if (selectedTab != null && myPresenterWidget instanceof LinkTabPanelPresenter) {
-            ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
+        if (selectedTab != null && myPresenterWidget instanceof final HasCommonTabs hasCommonTabs) {
+            hasCommonTabs.selectCommonTab(selectedTab);
         }
 
         // Open the tab.
         contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
+    }
+
+    // A folder's document is its reference, as it has nothing to load
+    @SuppressWarnings("unchecked")
+    static void readFolder(final DocumentEditorHost<?> host, final DocRef folder) {
+        ((DocumentEditorHost<DocRef>) host).read(folder, folder, true);
     }
 
     @Override

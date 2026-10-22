@@ -26,8 +26,5 @@ public class DocumentationModule extends PluginModule {
     protected void configure() {
         bindPlugin(DocumentationPlugin.class);
         bind(DocumentationPresenter.class);
-//        bindPresenterWidget(DictionarySettingsPresenter.class,
-//                DictionarySettingsView.class,
-//                DictionarySettingsViewImpl.class);
     }
 }

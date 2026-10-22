@@ -33,7 +33,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -58,8 +57,6 @@ public class EffectiveWordsList extends Component {
     private final RestFactory restFactory;
     private final PagerView pagerView;
     private final MyDataGrid<Word> dataGrid;
-    // Fires app-wide events (alerts, opening a document) on the bus
-    private final HasHandlers bus;
     private WordList wordList = WordList.EMPTY;
     private DocRef docRef;
     private CriteriaFieldSort fieldSort;
@@ -71,9 +68,8 @@ public class EffectiveWordsList extends Component {
         super(eventBus);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
-        this.bus = eventBus::fireEvent;
 
-        dataGrid = new MyDataGrid<>(bus);
+        dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Words");
         dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
@@ -103,7 +99,7 @@ public class EffectiveWordsList extends Component {
                     .create(WORD_LIST_RESOURCE)
                     .method(resource -> resource.getWords(uuid))
                     .onSuccess(this::setWordList)
-                    .onFailure(error -> AlertEvent.fireError(bus, error.getMessage(), null))
+                    .onFailure(error -> AlertEvent.fireError(this, error.getMessage(), null))
                     .owner(this)
                     .taskMonitorFactory(pagerView)
                     .exec();
@@ -232,7 +228,7 @@ public class EffectiveWordsList extends Component {
                 .map(source -> new CommandLink(
                         source.getName(),
                         "Open " + source.getType() + " '" + source.getName() + "'.",
-                        () -> OpenDocumentEvent.fire(bus, source, true)))
+                        () -> OpenDocumentEvent.fire(this, source, true)))
                 .orElse(null);
     }
 

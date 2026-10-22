@@ -28,18 +28,9 @@ import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.receive.rules.client.presenter.FieldEditPresenter;
-import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
-import stroom.receive.rules.client.presenter.RulePresenter;
-import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
-import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter;
-import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.client.view.DataRetentionPolicyViewImpl;
 import stroom.receive.rules.client.view.DataRetentionRuleViewImpl;
 import stroom.receive.rules.client.view.DataRetentionViewImpl;
-import stroom.receive.rules.client.view.FieldEditViewImpl;
-import stroom.receive.rules.client.view.RuleSetSettingsViewImpl;
-import stroom.receive.rules.client.view.RuleViewImpl;
 
 public class PolicyModule extends PluginModule {
 
@@ -48,9 +39,6 @@ public class PolicyModule extends PluginModule {
         bindPlugin(ReceiveDataRuleSetPlugin.class);
         bindPlugin(DataRetentionPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
-        bindPresenterWidget(RulePresenter.class, RuleView.class, RuleViewImpl.class);
-        bindPresenterWidget(RuleSetSettingsPresenter.class, RuleSetSettingsView.class, RuleSetSettingsViewImpl.class);
-        bindPresenterWidget(FieldEditPresenter.class, FieldEditView.class, FieldEditViewImpl.class);
         bindPresenterWidget(DataRetentionPresenter.class, DataRetentionView.class, DataRetentionViewImpl.class);
         bindPresenterWidget(DataRetentionRulePresenter.class,
                 DataRetentionRuleView.class,

@@ -178,10 +178,31 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   (`DurationSetting`); only cosmetic, as the model always supplies a value.
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
+* Folders: a folder's tab only has Permissions for a user who may manage processors, while the
+  System root's always has it (`FolderTabs`, kept as `FolderPresenter` and `FolderRootPresenter`
+  had it); a user who may view data and change a folder's permissions can't do so from its tab.
 * Dictionary Effective Words: sorting by a column never breaks ties by the others, as
   `WordListPresenter.buildComparator` adds `comparator.thenComparing(comparator)` (itself) rather
-  than each `subsequentComparator`, so e.g. words with the same source come in no set order. The
-  component model pilot's copy (`EffectiveWordsList`) breaks ties as intended.
+  than each `subsequentComparator`, so e.g. words with the same source come in no set order.
+  **Fixed (22 October 2026):** the editor is now the component model pilot's copy, whose
+  `EffectiveWordsList` breaks ties as intended, and `WordListPresenter` is deleted.
+
+### Data Receipt Rules' Rules tab
+
+**Fixed (22 October 2026), when the tab and its dialogs became components** (component model,
+Phase 3; see `COMPONENT_MODEL_DESIGN.md`). Each fix has a story in `App/Main/DataReceiptRulesScreen`
+that fails without it.
+
+* Duplicating a rule didn't count as a change, so Save stayed disabled until something else changed
+  (`RuleSetSettingsPresenter.copyRuleButtonClickHandler` didn't call `change()`). Story
+  `DuplicateRule`.
+* Deleting asked about "the selected rules" when one rule was selected, and about "this rule" when
+  several were (the test was the wrong way round). Story `DeleteRule`.
+* With no rule selected (e.g. after deleting the selected one), Edit, Duplicate, Enable/Disable,
+  Delete and the move buttons stayed enabled, as `updateButtons` only set them for one or more
+  selected. Story `DeleteRule`.
+* The Edit Rule dialog put the focus on the rules grid behind it when it opened; it now goes to the
+  expression's Add Term button, in the dialog.
 
 ### The Pathways editor can't create a pathway or add a constraint
 

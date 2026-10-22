@@ -120,6 +120,26 @@ class TestComponent {
     }
 
     @Test
+    void itFiresAppWideRequestsFromItself() {
+        final EventBus eventBus = new SimpleEventBus();
+        final Parent parent = new Parent(eventBus);
+        final List<Object> sources = new ArrayList<>();
+        eventBus.addHandler(TestEvent.TYPE, event -> sources.add(event.getSource()));
+
+        parent.fireEvent(new TestEvent("alert"));
+
+        assertThat(sources).containsExactly(parent);
+    }
+
+    @Test
+    void firingWithoutAnEventBusFails() {
+        final Child child = new Child();
+
+        assertThatThrownBy(() -> child.fireEvent(new TestEvent("alert")))
+                .hasMessageContaining("without an event bus");
+    }
+
+    @Test
     void guardDropsLateResults() {
         final Parent parent = new Parent(null);
         ComponentNode.root("story").adopt(parent.getComponentNode());

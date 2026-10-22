@@ -22,6 +22,7 @@ import stroom.dictionary.shared.DictionaryResource;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditor;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
@@ -115,6 +116,8 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
         addTab(PERMISSIONS,
                 () -> PresenterAdapter.of(permissionsPresenterProvider::get),
                 (permissions, docRef, doc) -> permissions.getPresenter().setDocRef(docRef));
+        setCommonTab(CommonDocLinkTab.DOCUMENTATION, DOCUMENTATION);
+        setCommonTab(CommonDocLinkTab.PERMISSIONS, PERMISSIONS);
         selectTab(WORDS);
     }
 
@@ -130,7 +133,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                 .method(resource -> resource.download(docRef))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(
                         locationManager,
-                        getEventBus()::fireEvent,
+                        this,
                         result))
                 .owner(this)
                 .exec();

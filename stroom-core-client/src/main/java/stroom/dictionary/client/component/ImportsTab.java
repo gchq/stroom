@@ -32,7 +32,6 @@ import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -58,8 +57,6 @@ public class ImportsTab extends Component {
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
     private final ToolbarButton addButton;
     private final ToolbarButton removeButton;
-    // Fires app-wide events (the confirmation) on the bus
-    private final HasHandlers bus;
     // Made when first used, and kept for the next time
     private PresenterAdapter<DocSelectionPopup> docSelectionPopup;
     private List<DocRef> imports = new ArrayList<>();
@@ -79,7 +76,6 @@ public class ImportsTab extends Component {
                       final EffectiveWordsList effectiveWords,
                       final Provider<DocSelectionPopup> docSelectionPopupProvider) {
         super(eventBus);
-        this.bus = eventBus::fireEvent;
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         this.effectiveWords = own(effectiveWords);
         importList = own(PresenterAdapter.of(docRefListPresenterProvider::get));
@@ -164,7 +160,7 @@ public class ImportsTab extends Component {
             final String message = selected.size() > 1
                     ? "Are you sure you want to remove these imported dictionaries?"
                     : "Are you sure you want to remove this imported dictionary?";
-            ConfirmEvent.fire(bus, message, confirmed -> {
+            ConfirmEvent.fire(this, message, confirmed -> {
                 if (confirmed && !isDisposed()) {
                     imports.removeAll(selected);
                     getSelectionModel().clear();

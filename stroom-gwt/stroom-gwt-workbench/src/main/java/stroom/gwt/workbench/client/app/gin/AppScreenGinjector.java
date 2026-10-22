@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.gin;
 
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.dictionary.client.component.DictionaryEditor;
-import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
@@ -53,7 +52,6 @@ import com.google.gwt.inject.client.GinModules;
 @GinModules({
         ScreenViewsModule.class,
         CredentialsScreenModule.class,
-        DictionaryScreenModule.class,
         EntityScreenModule.class,
         ExplorerScreenModule.class,
         MonitoringScreenModule.class,
@@ -100,9 +98,6 @@ public interface AppScreenGinjector extends ScreenGinjector {
 
     // Dictionaries
 
-    /// @return A Dictionary's editor tab, as `DictionaryPlugin` creates it.
-    DictionaryPresenter getDictionaryPresenter();
-
-    /// @return The component copy of a Dictionary's editor (the component model's pilot).
+    /// @return A Dictionary's editor, which `DictionaryPlugin` opens in a `DocumentEditorHost`.
     DictionaryEditor getDictionaryEditor();
 }
