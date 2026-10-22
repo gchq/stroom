@@ -37,6 +37,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/AnnotationEditor`, showing Stroom's real [AnnotationPresenter] (an
@@ -421,6 +422,26 @@ public final class AnnotationEditorStories {
                                             + "\"tag\": {\"name\": \"Closed\"}}}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Each setting's ⋮ is a button, named for what it changes, that the keyboard reaches;
+                // Enter opens its chooser (the status list, which takes the focus), and Escape closes
+                // it, giving the focus back to the button (they were mouse only)
+                .story("SettingsByKeyboard", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByDisplayValue("Investigate alert");
+                    for (final String name : List.of("Change Status", "Change Assigned To", "Change Labels",
+                            "Change Collections", "Change Retention Period")) {
+                        play.expect(play.getByRole("button", name)).toHaveAttribute("aria-haspopup", "dialog");
+                    }
+                    final Query changeStatus = play.getByRole("button", "Change Status");
+                    play.run("focus Change Status", () -> changeStatus.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query list = screen.findByRole("listbox", "Statuses");
+                    play.waitFor(() -> play.expect(screen.within(list).getByRole("option", "Open")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("listbox", "Statuses")).toBeNull());
+                    play.waitFor(() -> play.expect(changeStatus).toHaveFocus());
                 })
                 // The status chooser's list is a listbox of options, the current status selected.
                 // Moving through it chooses nothing; typing goes to the status starting with what is

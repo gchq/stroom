@@ -118,6 +118,8 @@ public class KeyBinding {
         addDefault(Action.LOCATE, "Alt+L");
         addDefault(Action.MAXIMISE_PANE, "Alt+M");
         addDefault(Action.HELP, "F1");
+        addDefault(Action.FOCUS_NEXT_AREA, "F6");
+        addDefault(Action.FOCUS_PREVIOUS_AREA, "Shift+F6");
         addDefault(Action.FOCUS_FILTER, "/");
         addDefault(Action.FOCUS_EXPLORER_FILTER, "Ctrl+/");
 
@@ -691,6 +693,10 @@ public class KeyBinding {
         INFO("Info", null),
         FOCUS_FILTER("Go to quick filter", Category.GENERAL),
         FOCUS_EXPLORER_FILTER("Go to explorer filter", Category.GENERAL),
+        // Moves the focus between the main areas (the main toolbar, the explorer and the open
+        // content), as F6 does in browsers and IDEs, past what lies between them (WCAG 2.4.1)
+        FOCUS_NEXT_AREA("Go to next area", Category.GENERAL),
+        FOCUS_PREVIOUS_AREA("Go to previous area", Category.GENERAL),
         SETTINGS("Settings", null),
 
         // GOTO key sequences

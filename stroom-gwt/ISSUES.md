@@ -597,10 +597,6 @@ last closed dialog for a moment only.
   it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
   once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
   list (or tree, as they nest), which would also let a row be selected without a mouse.
-* Annotation edit: Status, Assigned To, Labels, Collections and Retain are clickable blocks with no
-  tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
-  group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
-  e.g. a separate "Change Status" button beside the value.
 * `HoverActionMenuCell` shows its "..." only on a mouse over and opens its menu only on a mouse
   press. Nothing uses it (`UserListPresenter`'s use is commented out); if anything does again, it
   wants the `ActionMenuCell` treatment (see Fixed: a grid row's action buttons).
@@ -1219,6 +1215,10 @@ works and its cells are covered by stories; these are the next steps, none urgen
 These were found by the review and fixed in the same change:
 
 * **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * The annotation editor's settings (Status, Assigned To, Labels, Collections, Retain) were mouse
+    only: each one's ⋮ is now a button named for what it changes, opening its chooser with Enter or
+    Space. Bypass blocks (#5403): the explorer and content are landmarks, and F6 and Shift+F6
+    (configurable) move between the main toolbar, the explorer's tree and the open document.
   * Keyboard (batch 4 of `A11Y.md`): an alert's detail, the Result Stores dialog's info and the
     traces' operation list scroll but held nothing that takes the focus; each is a named region that
     does. A dialog whose OK disables itself now moves the focus to its next tab stop, rather than

@@ -609,6 +609,18 @@ public final class AppShellStories {
                     play.expect(play.getByTitle(MAIN_MENU)).not().toHaveFocus();
                     expectNoProblems(play);
                 })
+                // #5403: the explorer and the content are landmarks (navigation and main) that screen
+                // readers can go to, and F6 and Shift+F6 move the focus between the main toolbar, the
+                // explorer and the content (the runner's real input check, test-runner/lib/real-input/
+                // areas.mjs, presses them, as a play's F6 has no key code for the key bindings)
+                .story("MovesBetweenAreas", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByRole("navigation", "Explorer")).toBeInTheDocument());
+                    play.expect(play.getByRole("main")).toBeInTheDocument();
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                })
                 // #5405: a document opened from the explorer takes the focus
                 .story("OpenedDocumentTakesFocus", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {

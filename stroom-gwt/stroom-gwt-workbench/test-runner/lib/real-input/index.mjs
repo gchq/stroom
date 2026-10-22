@@ -28,6 +28,7 @@
 // checks belong to one file: a story id in two files is an error.
 
 import { CHECKS as ACE_EDITOR } from './ace-editor.mjs';
+import { CHECKS as AREAS } from './areas.mjs';
 import { CHECKS as BUTTONS } from './buttons.mjs';
 import { CHECKS as DASHBOARD_TABLE } from './dashboard-table.mjs';
 import { CHECKS as DATA_GRID } from './data-grid.mjs';
@@ -42,7 +43,7 @@ import { CHECKS as TABS } from './tabs.mjs';
 import { CHECKS as TOP_BAR } from './top-bar.mjs';
 import { CHECKS as VALUE_SPINNER } from './value-spinner.mjs';
 
-const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'buttons.mjs': BUTTONS,
+const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'areas.mjs': AREAS, 'buttons.mjs': BUTTONS,
   'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
   'date-time.mjs': DATE_TIME, 'help.mjs': HELP,
   'icon-picker.mjs': ICON_PICKER, 'menu.mjs': MENU, 'selection-box.mjs': SELECTION_BOX,
