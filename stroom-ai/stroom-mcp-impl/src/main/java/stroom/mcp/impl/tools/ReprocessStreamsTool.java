@@ -39,7 +39,6 @@ import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /// `reprocess_streams` - processes streams again through a pipeline under development, after changing it, at most
@@ -109,16 +108,10 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                                                                        + "again."))
                         .addStringProperty(CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG,
                                 CreateProcessorFilterTool.SOURCE_PIPELINE_DESCRIPTION)
-                        .addStringProperty(CreateProcessorFilterTool.SOURCE_CONFIRMATION_ID_ARG,
-                                CreateProcessorFilterTool.SOURCE_CONFIRMATION_DESCRIPTION)
                         .addBooleanProperty(CreateProcessorFilterTool.INDEX_DROPPED_ARG,
                                 CreateProcessorFilterTool.INDEX_DROPPED_DESCRIPTION)
                         .addBooleanProperty(CreateProcessorFilterTool.TEMPLATE_COMMITTED_BY_USER_ARG,
                                 CreateProcessorFilterTool.TEMPLATE_COMMITTED_DESCRIPTION)
-                        .addStringProperty(CreateProcessorFilterTool.TEMPLATE_CONFIRMATION_ID_ARG,
-                                CreateProcessorFilterTool.TEMPLATE_CONFIRMATION_DESCRIPTION)
-                        .addStringProperty(CreateProcessorFilterTool.APPROVAL_ID_ARG,
-                                CreateProcessorFilterTool.APPROVAL_ID_DESCRIPTION)
                         .required(PIPELINE_UUID_ARG, STREAM_IDS_ARG)
                         .build())
                 .build();
@@ -185,13 +178,9 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         }
         sources.buildFeedsOnly(ref, streamIds, null);
         sampleStreamTexts.refuseOlderThanFeed(streamIds);
-        final String sourceConfirmationId = stringArg(call, CreateProcessorFilterTool.SOURCE_CONFIRMATION_ID_ARG);
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,
                 stringArg(call, CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG), streamIds,
-                ProcessorFilters.EVENTS, sourceConfirmationId);
-        if (source.round() != null) {
-            return source.round();
-        }
+                ProcessorFilters.EVENTS);
         final int maxTasks = ProcessorFilterWrites.REPROCESS_MAX_TASKS;
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("pipeline", pipeline.getName());
@@ -210,11 +199,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
                     NAME, ToolArgs.flag(call,
-                            CreateProcessorFilterTool.TEMPLATE_COMMITTED_BY_USER_ARG),
-                    stringArg(call, CreateProcessorFilterTool.TEMPLATE_CONFIRMATION_ID_ARG));
-            if (committed.round() != null) {
-                return committed.round();
-            }
+                            CreateProcessorFilterTool.TEMPLATE_COMMITTED_BY_USER_ARG));
             details.put(ProcessingApprovals.INDEX_TEMPLATE, committed.text());
             pipeline = committed.pipeline();
         }
@@ -249,11 +234,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         if (details.containsKey(IndexingRuns.ALREADY_INDEXED)) {
             summary += " Approve only once the index is dropped, as said below.";
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.approval(NAME,
-                summary, details, stringArg(call, CreateProcessorFilterTool.APPROVAL_ID_ARG)));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.approval(NAME, summary, details));
         if (clear) {
             indexingRuns.deleteIndexShards(lucene.getUuid());
         }

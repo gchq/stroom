@@ -72,7 +72,6 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     static final String INDEX_NAME_ARG = "index_name";
     static final String CLUSTER_UUID_ARG = "cluster_uuid";
     static final String EVENTS_STREAM_IDS_ARG = "events_stream_ids";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
 
     // The records:2 data elements an XSLT written by hand writes.
     private static final Pattern DATA_NAME = Pattern.compile("<data\\s+name=\"([^\"{]+)\"");
@@ -161,7 +160,6 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
                                                                               + "existing Events feed's). Needed "
                                                                               + "when the build has no events "
                                                                               + "pipeline of its own."))
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(BUILD_ARG, NAME_ARG, TEMPLATE_UUID_ARG, XSLT_UUID_ARG)
                         .build())
                 .build();
@@ -225,10 +223,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         final Map<String, Object> made = pipelines.fromTemplate(call, context, new FromTemplate(build, name,
                 templateUuid, properties, "", null, List.of(), false,
                 // An indexing pipeline reads Events, not the raw sample.
-                true, stringArg(call, CONFIRMATION_ID_ARG)));
-        if (made.get("uuid") == null) {
-            return made;
-        }
+                true));
         final Map<String, Object> result = new LinkedHashMap<>(made);
         result.put("backend", shape.backend());
         if (lucene && !missing.missing().isEmpty()) {

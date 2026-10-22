@@ -72,7 +72,6 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
     static final String CLUSTER_UUID_ARG = "cluster_uuid";
     static final String VOLUME_GROUP_ARG = "volume_group";
     static final String PLAN_ARG = "plan";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String DEFAULT_VOLUME_GROUP = "Default Volume Group";
 
     private final IndexPlans plans;
@@ -154,7 +153,6 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                                              + "Elasticsearch fields come from the index template. Omitted: the one "
                                              + "drafted for this index in the session.")
                                 .build())
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(BUILD_ARG, BACKEND_ARG, NAME_ARG, TIME_FIELD_ARG)
                         .build())
                 .build();
@@ -227,16 +225,12 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         details.put("time field", timeField);
         details.putAll(target);
         Consent.Request request = Consent.Request.confirmation(NAME, "Create " + backend + " index doc '"
-                                                                     + proposedName + "'", details,
-                        stringArg(call, CONFIRMATION_ID_ARG))
+                                                                     + proposedName + "'", details)
                 .withEditable(NAME_ARG, "Index doc name", proposedName);
         if (elastic) {
             request = request.withEditable(INDEX_NAME_ARG, "Elasticsearch index name", indexName);
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, request);
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, request);
         // The user may have corrected the names in the form.
         final String name = consent.edited(context, NAME_ARG, proposedName);
         final String proposed = indexName;

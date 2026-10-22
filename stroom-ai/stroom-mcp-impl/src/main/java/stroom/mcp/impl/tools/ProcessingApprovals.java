@@ -99,7 +99,7 @@ class ProcessingApprovals {
     /// (kept with the pipeline by propose_index_template or check_index_template) is asked about, and the user
     /// confirms it is committed to the cluster in the approval: the approval's detail, as text. With ownTemplate,
     /// the user says one of their own is committed: they confirm going on without agreeing one here, in a form
-    /// (the confirmation to return, until they have), and it is kept with the pipeline in place of an agreed one.
+    /// before it goes on, and it is kept with the pipeline in place of an agreed one.
     /// Seen in testing: the user had committed their template, and the agreement still stopped indexing, however
     /// they said so.
     ///
@@ -109,8 +109,7 @@ class ProcessingApprovals {
     /// @param destination    Where it writes ([IndexTemplateAgreements#elasticDestination]).
     /// @param action         The tool asking.
     /// @param ownTemplate    True if the user says a template of their own is committed.
-    /// @param confirmationId The id of the user's confirmation of that, or null.
-    /// @return What the approval says of the template, with the pipeline as it now is; or the round to return.
+    /// @return What the approval says of the template, with the pipeline as it now is.
     /// @throws ToolRefusal if no template is agreed for the pipeline's code, and the user said none of their own is
     ///                     committed.
     Committed committed(final ToolCall call,
@@ -118,8 +117,7 @@ class ProcessingApprovals {
                         final PipelineDoc pipeline,
                         final Map<String, Object> destination,
                         final String action,
-                        final boolean ownTemplate,
-                        final String confirmationId) {
+                        final boolean ownTemplate) {
         final Optional<String> problem = agreements.agreementProblem(pipeline, destination);
         if (problem.isPresent() && !ownTemplate) {
             throw new ToolRefusal(problem.get());
@@ -133,12 +131,9 @@ class ProcessingApprovals {
             details.put("you say", "an index template of yours for it is already committed to the cluster");
             details.put("not checked", "that template against the documents the pipeline writes: a field it maps "
                                        + "otherwise is rejected or mis-mapped");
-            final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
+            consent.require(call, context, Consent.Request.confirmation(
                     action, "Index into Elasticsearch index '" + index + "' with your own index template, not one "
-                            + "agreed here", details, confirmationId));
-            if (gate.isPresent()) {
-                return new Committed(null, pipeline, gate.get());
-            }
+                            + "agreed here", details));
             final PipelineDoc doc = pipelineDocs.read(pipeline.getUuid());
             final Map<String, Object> agreed = new LinkedHashMap<>();
             agreed.put("name", "the user's own");
@@ -157,10 +152,10 @@ class ProcessingApprovals {
         if (JsonValues.truthy(agreed.get("by_user"))) {
             return new Committed("the user's own index template for Elasticsearch index '" + index + "' is "
                                  + "committed to cluster " + cluster + " (confirmed by the user, not checked here)",
-                    current, null);
+                    current);
         }
         return new Committed("the agreed index template '" + agreed.get("name") + "' for Elasticsearch index '"
-                             + index + "' is committed to cluster " + cluster, current, null);
+                             + index + "' is committed to cluster " + cluster, current);
     }
 
     /// What the user needs to enable a disabled filter: where, what it will do, and what must be done first; with
@@ -309,12 +304,11 @@ class ProcessingApprovals {
     // --------------------------------------------------------------------------------
 
 
-    /// What the approval says of the index template, or the round to return first.
+    /// What the approval says of the index template.
     ///
     /// @param text     The approval's detail, e.g. `the agreed index template 'x' ... is committed to cluster C`.
     /// @param pipeline The pipeline, with the user's own template kept if they confirmed one now.
-    /// @param round    The confirmation round to return, or null.
-    record Committed(String text, PipelineDoc pipeline, Map<String, Object> round) {
+    record Committed(String text, PipelineDoc pipeline) {
 
     }
 }

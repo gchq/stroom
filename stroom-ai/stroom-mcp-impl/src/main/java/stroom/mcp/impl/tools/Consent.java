@@ -24,20 +24,16 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.PyJson;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.UserRef;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,21 +44,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.LongSupplier;
 
 /// Confirmations (key details) and approvals (risky actions) before a write tool acts, and choices the user makes
 /// in a form (ported from the Stroom MCP server's `utils/consent.py`).
 ///
-/// The user is asked directly, as a form, wherever the session can ask ([UserQuestions#canAsk()]), so the model
-/// never holds the answer: in the chat the run stops while the form waits, and the same call is made again with the
-/// answer (so a tool that asks must be safe to re-run up to its question); over `/mcp` the call waits on the
-/// client's elicitation. Otherwise (a client that can't show forms, a chat the user is away from) the tool returns a
-/// round instead of acting: a pending id with a plain-language summary, which the agent shows the user, and the call
-/// is made again with the id once they agree. An id is bound to the action, the exact details and the user, is used
-/// once, expires within the hour, and is held by the session it was given in (this node's memory: the Stroom MCP
-/// server's signed ids, valid on any replica, are not ported, as Stroom keeps an MCP session on one node).
+/// The user is always asked directly, as a form ([UserQuestions#canAsk()]), so the model never holds the answer:
+/// in the chat the run stops while the form waits, and the same call is made again with the answer (so a tool that
+/// asks must be safe to re-run up to its question); over `/mcp` the call waits on the client's elicitation. Where
+/// the user can't be asked (an MCP client that can't show forms, a chat the user is away from), nothing is done and
+/// the tool is refused, saying why (see [FormsRequired]). Unlike the Stroom MCP server, no pending id is ever handed
+/// to the model to pass back once the user agrees: a model holding one could approve its own call.
 ///
 /// What the user settled on in the call's forms ([#edited], [#changes]) is kept for the call, for the tool and for
 /// [BuildPlan#withNext] to read.
@@ -71,87 +62,42 @@ public class Consent {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Consent.class);
 
-    /// How long a pending id can be used.
-    public static final Duration TTL = Duration.ofHours(1);
     /// The most characters a form's message holds.
     public static final int FORM_MESSAGE_LIMIT = 600;
     // Characters of one detail's value in a form.
     private static final int DETAIL_LIMIT = 160;
     private static final int HEADING_LIMIT = 150;
-    private static final String BASE32 = "abcdefghijklmnopqrstuvwxyz234567";
 
-    private final SecurityContext securityContext;
     private final Provider<AiAuditLog> auditLogProvider;
-    private final LongSupplier clock;
-    private final SecureRandom random = new SecureRandom();
     // What each call's forms settled, kept while the call's context is.
     private final Map<ToolCallContext, CallState> calls = Collections.synchronizedMap(new WeakHashMap<>());
-    // The pending ids given in each session, by id.
-    private final Map<String, Map<String, Pending>> pending = new ConcurrentHashMap<>();
 
-    /// @param securityContext  Says who the user is, whom an id is bound to.
     /// @param auditLogProvider Records each request, grant and refusal.
     @Inject
-    public Consent(final SecurityContext securityContext, final Provider<AiAuditLog> auditLogProvider) {
-        this(securityContext, auditLogProvider, System::currentTimeMillis);
-    }
-
-    /// As the injected constructor, with the clock given, for tests.
-    ///
-    /// @param securityContext  Says who the user is.
-    /// @param auditLogProvider Records each request, grant and refusal.
-    /// @param clock            The time now, in milliseconds.
-    Consent(final SecurityContext securityContext,
-            final Provider<AiAuditLog> auditLogProvider,
-            final LongSupplier clock) {
-        this.securityContext = securityContext;
+    public Consent(final Provider<AiAuditLog> auditLogProvider) {
         this.auditLogProvider = auditLogProvider;
-        this.clock = clock;
     }
 
-    /// Asks the user to agree before the tool acts.
-    ///
-    /// Throws when the user declines, the form closes unanswered, or the id given is not one for this exact
-    /// request. Ids are single use: when a later gate in the same call may still stop it, make the request with
-    /// [Request#keep()] so the id survives the call being made again for that gate, and [#discard] it once the
-    /// action is done. Without a form (an id passed back), the proposal of an editable value stands: a user who
-    /// wants another value says so, and the tool is called again.
+    /// Asks the user, in a form, to agree before the tool acts, and returns once they have.
     ///
     /// @param call    The call asking, whose id tells its forms apart in a chat.
     /// @param context The call's context: how to ask the user, and the session.
     /// @param request What is asked.
-    /// @return Empty when the user has agreed; otherwise the round the tool should return (as its JSON result),
-    /// with `status` `needs_confirmation` or `needs_approval`.
-    /// @throws ToolRefusal if the user did not agree, or the id doesn't fit the request.
+    /// @throws ToolRefusal if the user did not agree, or can't be asked a form now (see [FormsRequired]): nothing
+    ///                     is to be done.
     /// @throws stroom.ai.impl.AiChatRunManager.WaitingForUserException in a chat, while the form waits for the
     ///                                                                 user: the call is made again with the
     ///                                                                 answer.
-    public Optional<Map<String, Object>> require(final ToolCall call,
-                                                 final ToolCallContext context,
-                                                 final Request request) {
+    public void require(final ToolCall call,
+                        final ToolCallContext context,
+                        final Request request) {
         final CallState state = state(context);
         state.edits.clear();
-        final String kind = request.kind().word();
-        final String digest = digest(request.action(), request.details());
-        if (NullSafe.isNonBlankString(request.token())) {
-            useToken(context, request, digest);
-            return Optional.empty();
+        if (!context.userQuestions().canAsk()) {
+            audit(context.session(), request.kind().word(), request, "refused: no form can be shown", false);
+            throw new ToolRefusal(FormsRequired.cannotAsk(context.session(), call.name(), request.summary()));
         }
-        if (context.userQuestions().canAsk()) {
-            ask(call, context, request, digest, state);
-            return Optional.empty();
-        }
-        final String id = issue(context, request.kind(), request.action(), digest);
-        audit(context.session(), kind, request, "requested", false);
-        final Map<String, Object> round = new LinkedHashMap<>();
-        round.put("status", "needs_" + kind);
-        round.put(kind + "_id", id);
-        round.put("summary", request.summary());
-        round.put("details", request.details());
-        round.put("hint", "Show the summary and details to the user. If they agree, call " + request.action()
-                          + " again with the same arguments plus " + kind + "_id='" + id + "'. If they change a "
-                          + "detail, call again with the new values and no id to get a fresh " + kind + ".");
-        return Optional.of(round);
+        ask(call, context, request, digest(request.action(), request.details()), state);
     }
 
     /// The option the user picks in a form. Seen: an agent given the choices asked in the chat, on Gemma and on
@@ -203,35 +149,6 @@ public class Consent {
         return options.contains(chosen)
                 ? Optional.of(chosen)
                 : Optional.empty();
-    }
-
-    /// An id for the same request, once the user has agreed to it in this call ([#require] gave empty): the call
-    /// is made again for a round that isn't theirs (the agent describing fields), and they aren't asked again.
-    ///
-    /// @param context The call's context.
-    /// @param kind    The kind of request.
-    /// @param action  The tool, e.g. `create_feed`.
-    /// @param details The request's details, exactly as agreed.
-    /// @return The id.
-    public String reissue(final ToolCallContext context,
-                          final Kind kind,
-                          final String action,
-                          final Map<String, Object> details) {
-        return issue(context, kind, action, digest(action, details));
-    }
-
-    /// Spends a kept id once the action it covered is done.
-    ///
-    /// @param context The call's context.
-    /// @param token   The id, or null.
-    public void discard(final ToolCallContext context, final String token) {
-        if (NullSafe.isBlankString(token)) {
-            return;
-        }
-        final Pending found = sessionIds(context.session()).get(normalise(token));
-        if (found != null) {
-            found.spent.set(true);
-        }
     }
 
     /// @param context  The call's context.
@@ -332,36 +249,6 @@ public class Consent {
                 : "the one given was for something else, or what is shown has changed since: show this.");
     }
 
-    private void useToken(final ToolCallContext context, final Request request, final String digest) {
-        final String kind = request.kind().word();
-        final String token = normalise(request.token());
-        final Map<String, Pending> ids = sessionIds(context.session());
-        sweep(ids);
-        final Pending found = ids.get(token);
-        if (found == null) {
-            throw new ToolRefusal("This " + kind + " id is not one the server issued: pass it back exactly as it was "
-                                  + "given (46 characters, e.g. " + prefix(kind) + "-…….……), or request the "
-                                  + kind + " again");
-        }
-        if (found.expiresMs <= clock.getAsLong()) {
-            throw new ToolRefusal("This " + kind + " id has expired; request the " + kind + " again");
-        }
-        if (!found.binding.equals(binding(request.kind(), request.action(), digest))) {
-            throw new ToolRefusal("This " + kind + " id was issued for a different request; request the " + kind
-                                  + " again");
-        }
-        // Spent in one step, so two calls made at once with the same id can't both be granted.
-        final boolean alreadySpent = request.keep()
-                ? found.spent.get()
-                : !found.spent.compareAndSet(false, true);
-        if (alreadySpent) {
-            throw new ToolRefusal("This " + kind + " id was already used; request the " + kind + " again");
-        }
-        if (found.granted.compareAndSet(false, true)) {
-            audit(context.session(), kind, request, "granted via id", true);
-        }
-    }
-
     private void ask(final ToolCall call,
                      final ToolCallContext context,
                      final Request request,
@@ -456,59 +343,11 @@ public class Consent {
         return "The user did not agree to: " + summary;
     }
 
-    private synchronized String issue(final ToolCallContext context,
-                                      final Kind kind,
-                                      final String action,
-                                      final String digest) {
-        // Every session's ids that can no longer matter are dropped, and the sessions left with none.
-        pending.values().forEach(this::sweep);
-        pending.values().removeIf(Map::isEmpty);
-        final Map<String, Pending> ids = sessionIds(context.session());
-        final String id = prefix(kind.word()) + "-" + base32(15) + "." + base32(10);
-        ids.put(id, new Pending(binding(kind, action, digest), clock.getAsLong() + TTL.toMillis()));
-        return id;
-    }
-
-    private Map<String, Pending> sessionIds(final ToolSession session) {
-        return pending.computeIfAbsent(session.kind() + ":" + session.id(), key -> new ConcurrentHashMap<>());
-    }
-
-    // Ids are remembered for a while after they expire, to say so.
-    private void sweep(final Map<String, Pending> ids) {
-        final long now = clock.getAsLong();
-        ids.values().removeIf(found -> found.expiresMs + TTL.toMillis() < now);
-    }
-
-    private String binding(final Kind kind, final String action, final String digest) {
-        final String user = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
-        return kind.word() + "\n" + action + "\n" + digest + "\n" + user;
-    }
-
     private static String digest(final String action, final Map<String, Object> details) {
         final List<Object> request = new ArrayList<>();
         request.add(action);
         request.add(NullSafe.map(details));
         return XsltCode.sha256(PyJson.dumpsSortedKeys(request));
-    }
-
-    private String base32(final int bytes) {
-        final byte[] data = new byte[bytes];
-        random.nextBytes(data);
-        final StringBuilder sb = new StringBuilder();
-        int buffer = 0;
-        int bits = 0;
-        for (final byte b : data) {
-            buffer = (buffer << 8) | (b & 0xff);
-            bits += 8;
-            while (bits >= 5) {
-                sb.append(BASE32.charAt((buffer >> (bits - 5)) & 31));
-                bits -= 5;
-            }
-        }
-        if (bits > 0) {
-            sb.append(BASE32.charAt((buffer << (5 - bits)) & 31));
-        }
-        return sb.toString();
     }
 
     private void audit(final ToolSession session,
@@ -522,14 +361,6 @@ public class Consent {
 
     private CallState state(final ToolCallContext context) {
         return calls.computeIfAbsent(context, ignored -> new CallState());
-    }
-
-    private static String normalise(final String token) {
-        return NullSafe.string(token).strip().toLowerCase(Locale.ROOT);
-    }
-
-    private static String prefix(final String kind) {
-        return kind.substring(0, Math.min(4, kind.length()));
     }
 
     private static boolean isTrue(final Object value) {
@@ -579,8 +410,7 @@ public class Consent {
             this.word = word;
         }
 
-        /// @return The kind as the results name it, e.g. `confirmation` (`needs_confirmation`,
-        /// `confirmation_id`).
+        /// @return The kind as the audit log names it, e.g. `confirmation`.
         public String word() {
             return word;
         }
@@ -605,26 +435,20 @@ public class Consent {
     /// What a tool asks the user to agree to.
     ///
     /// @param kind     A confirmation or an approval.
-    /// @param action   The tool, e.g. `create_feed`: the round tells the agent to call it again.
+    /// @param action   The tool, e.g. `create_feed`.
     /// @param summary  What the user agrees to, in a line, e.g. `Create feed 'ACME-VPN-V1.0'`.
-    /// @param details  Its details, e.g. `{"feed name": "ACME-VPN-V1.0"}`; the id is bound to them exactly.
-    /// @param token    The id the call was given back, or null.
-    /// @param keep     True to keep the id usable after this call (a later gate may stop it), until discarded.
+    /// @param details  Its details, e.g. `{"feed name": "ACME-VPN-V1.0"}`.
     /// @param editable The values the user may correct in the form, by key.
     public record Request(Kind kind,
                           String action,
                           String summary,
                           Map<String, Object> details,
-                          String token,
-                          boolean keep,
                           Map<String, Editable> editable) {
 
         /// @param kind     A confirmation or an approval.
         /// @param action   The tool.
         /// @param summary  What the user agrees to.
         /// @param details  Its details.
-        /// @param token    The id the call was given back, or null.
-        /// @param keep     True to keep the id usable after this call.
         /// @param editable The values the user may correct in the form.
         public Request {
             Objects.requireNonNull(kind, "kind");
@@ -637,30 +461,21 @@ public class Consent {
         /// @param action  The tool.
         /// @param summary What the user confirms.
         /// @param details Its details.
-        /// @param token   The `confirmation_id` the call was given back, or null.
         /// @return A confirmation.
         public static Request confirmation(final String action,
                                            final String summary,
-                                           final Map<String, Object> details,
-                                           final String token) {
-            return new Request(Kind.CONFIRMATION, action, summary, details, token, false, Map.of());
+                                           final Map<String, Object> details) {
+            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of());
         }
 
         /// @param action  The tool.
         /// @param summary What the user approves.
         /// @param details Its details.
-        /// @param token   The `approval_id` the call was given back, or null.
         /// @return An approval.
         public static Request approval(final String action,
                                        final String summary,
-                                       final Map<String, Object> details,
-                                       final String token) {
-            return new Request(Kind.APPROVAL, action, summary, details, token, false, Map.of());
-        }
-
-        /// @return This request, with its id kept usable after the call, until [Consent#discard].
-        public Request keepingId() {
-            return new Request(kind, action, summary, details, token, true, editable);
+                                       final Map<String, Object> details) {
+            return new Request(Kind.APPROVAL, action, summary, details, Map.of());
         }
 
         /// @param key      The value's key, e.g. `name`.
@@ -670,7 +485,7 @@ public class Consent {
         public Request withEditable(final String key, final String title, final String proposed) {
             final Map<String, Editable> more = new LinkedHashMap<>(editable);
             more.put(key, new Editable(title, proposed));
-            return new Request(kind, action, summary, details, token, keep, more);
+            return new Request(kind, action, summary, details, more);
         }
     }
 
@@ -679,19 +494,5 @@ public class Consent {
 
         private final Map<String, String> edits = new LinkedHashMap<>();
         private final Map<String, Change> changes = new LinkedHashMap<>();
-    }
-
-    // An id given in a session.
-    private static final class Pending {
-
-        private final String binding;
-        private final long expiresMs;
-        private final AtomicBoolean spent = new AtomicBoolean();
-        private final AtomicBoolean granted = new AtomicBoolean();
-
-        private Pending(final String binding, final long expiresMs) {
-            this.binding = binding;
-            this.expiresMs = expiresMs;
-        }
     }
 }

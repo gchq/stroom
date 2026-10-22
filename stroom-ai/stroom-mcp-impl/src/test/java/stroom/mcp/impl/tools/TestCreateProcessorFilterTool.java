@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -202,8 +203,8 @@ class TestCreateProcessorFilterTool {
         assertThat(buttons.getFirst().get("action")).isEqualTo("elasticsearch_request");
         assertThat(buttons.getFirst().get("request")).isEqualTo(drop.substring(0, drop.length() - 1));
         assertThat(String.valueOf(gated.gates().getFirst().get("hint"))).contains("index_dropped=true");
-        final String said = String.valueOf(details(gated.gates().getLast()).get("already indexed"));
-        assertThat(gated.gates().getFirst().get("already_indexed")).isEqualTo(said);
+        // Said in full in the drop_first reply, shown in the chat: the approval form is kept short.
+        final String said = String.valueOf(gated.gates().getFirst().get("already_indexed"));
         assertThat(said).contains("the cluster admin drops it first, so it starts fresh: " + drop)
                 .doesNotContain("_delete_by_query");
         assertThat(String.valueOf(gated.gates().getLast().get("summary"))).contains("once the index is dropped");
@@ -309,16 +310,18 @@ class TestCreateProcessorFilterTool {
         final Map<String, Object> arguments = new LinkedHashMap<>(Map.of("stream_ids", List.of(6),
                 "source_pipeline_uuid", "ev"));
 
-        final Map<String, Object> first = ProcessingWorld.json(call(arguments));
-        assertThat(first.get("status")).isEqualTo("needs_confirmation");
-        assertThat(String.valueOf(first.get("summary"))).contains("which this server did not build");
-        arguments.put("source_confirmation_id", first.get("confirmation_id"));
-        final Map<String, Object> approve = ProcessingWorld.json(call(arguments));
-        assertThat(approve.get("status")).isEqualTo("needs_approval");
-        arguments.put("approval_id", approve.get("approval_id"));
-        final Map<String, Object> done = ProcessingWorld.json(call(arguments));
+        // Without a form the user can't be asked: nothing is made, and no id is given to pass back.
+        final ToolResult refused = call(arguments);
+        assertThat(refused.text()).startsWith("Not done: Index Events from pipeline 'Acme-Events', which this "
+                                              + "server did not build?")
+                .doesNotContain("confirmation_id");
+        assertThat(w.created).isEmpty();
 
-        assertThat(done.get("events_from_pipeline")).isEqualTo("Acme-Events");
+        final Gated gated = gatedThrough(arguments);
+
+        assertThat(gated.statuses()).containsExactly("needs_confirmation", "needs_approval");
+        assertThat(String.valueOf(gated.gates().getFirst().get("summary"))).contains("which this server did not build");
+        assertThat(gated.result().get("events_from_pipeline")).isEqualTo("Acme-Events");
         assertThat(w.lastExpression().getChildren().get(1)).isEqualTo(PIPELINE_TERM);
     }
 
@@ -586,18 +589,27 @@ class TestCreateProcessorFilterTool {
     }
 
     private ToolResult call(final Map<String, Object> arguments) {
+        return call(arguments, ProcessingWorld.context());
+    }
+
+    private ToolResult call(final Map<String, Object> arguments, final ToolCallContext context) {
         final Map<String, Object> all = new LinkedHashMap<>(arguments);
         all.put("pipeline_uuid", "p1");
         return w.createTool().execute(PortedToolCalls.call(CreateProcessorFilterTool.NAME,
-                JsonUtil.writeValueAsString(all)), ProcessingWorld.context());
+                JsonUtil.writeValueAsString(all)), context);
     }
 
-    // Calls as a user agreeing to every gate: the gates seen, and the final result.
+    // Calls as a user agreeing to every gate: the gates seen (each form, as the round it once was, and each
+    // drop_first), and the final result.
     private Gated gatedThrough(final Map<String, Object> arguments) {
         final Map<String, Object> given = new LinkedHashMap<>(arguments);
         final List<Map<String, Object>> gates = new ArrayList<>();
+        // The user agrees in every form the call shows.
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
         while (true) {
-            final ToolResult called = call(given);
+            final int asked = user.forms().size();
+            final ToolResult called = call(given, user.context());
+            gates.addAll(user.forms().subList(asked, user.forms().size()));
             assertThat(called.isError()).as(called.text()).isFalse();
             final Map<String, Object> result = ProcessingWorld.json(called);
             final String status = String.valueOf(result.get("status"));
@@ -606,14 +618,7 @@ class TestCreateProcessorFilterTool {
                 given.put("index_dropped", true);
                 continue;
             }
-            if (!status.startsWith("needs_")) {
-                return new Gated(gates, result);
-            }
-            gates.add(result);
-            final String key = "needs_confirmation".equals(status)
-                    ? "confirmation_id"
-                    : "approval_id";
-            given.put(key, result.get(key));
+            return new Gated(gates, result);
         }
     }
 

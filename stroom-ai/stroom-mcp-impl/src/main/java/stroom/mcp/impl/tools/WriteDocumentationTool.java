@@ -64,7 +64,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     static final String CHANGE_ARG = "change";
     static final String STREAM_IDS_ARG = "stream_ids";
     static final String ACCEPT_ERRORS_ARG = "accept_errors";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String INDEX_UUID_ARG = "index_uuid";
     static final String INDEX_ITSELF_ARG = "index_itself";
     static final String DOCUMENT_MISSING_FIELDS_ARG = "document_missing_fields";
@@ -198,7 +197,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                              + "then report them as benign, not as problems.")
                                 .items(acceptedError())
                                 .build())
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .addStringProperty(INDEX_UUID_ARG, "Instead of a pipeline, an existing index to document: its "
                                                            + "Elastic Index or Lucene Index doc, confirmed with the "
                                                            + "user. The Field mapping section is generated from a "
@@ -292,7 +290,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             final Map<String, Object> result = new LinkedHashMap<>(indexDocumentation.documentIndex(call, context,
                     new IndexDocumentation.Request(build, indexUuid, body, change.isEmpty()
                             ? "Created"
-                            : change, stringArg(call, CONFIRMATION_ID_ARG), layout,
+                            : change, layout,
                             ToolArgs.flag(call, DOCUMENT_MISSING_FIELDS_ARG), descriptions,
                             ToolArgs.flag(call, INDEX_ITSELF_ARG))));
             if (!streamIds.isEmpty()) {
@@ -363,7 +361,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             generated = sections.fieldMappingSection(context, request.build(), pipeline, kept, streamIds,
                     laid.layout(), described);
             if (!described.wanted().isEmpty()) {
-                return BuildDocumentation.needsDescriptions(described, Map.of());
+                return BuildDocumentation.needsDescriptions(described);
             }
             if (!described.given().isEmpty()) {
                 generated = generated.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
@@ -417,13 +415,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                             ? a.matches()
                             : first(a.example(), 200)) + " -- " + a.reason())
                     .toList());
-            final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(
+            consent.require(call, context, Consent.Request.confirmation(
                     NAME, "Record " + request.accepting().size() + " kind(s) of error as benign for pipeline '"
-                          + pipeline.getName() + "', so they are not raised again", details,
-                    stringArg(call, CONFIRMATION_ID_ARG)));
-            if (gate.isPresent()) {
-                return gate.get();
-            }
+                          + pipeline.getName() + "', so they are not raised again", details));
         }
         final List<AcceptedErrors.Entry> newEntries = request.accepting().stream()
                 .map(a -> AcceptedErrors.entry(a.element(), a.example(), a.reason(), stamp, a.matches()))

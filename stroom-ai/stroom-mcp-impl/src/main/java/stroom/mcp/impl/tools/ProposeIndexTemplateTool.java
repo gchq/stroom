@@ -72,7 +72,6 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
     static final String PRIORITY_ARG = "priority";
     static final String WITHOUT_EXAMPLE_ARG = "without_example";
     static final String REVIEWED_ARG = "reviewed";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     /// The pipeline's argument, as both template tools describe it.
     static final String PIPELINE_UUID_DESCRIPTION = "The candidate Elasticsearch indexing pipeline.";
     /// The reviewed argument, as both template tools describe it.
@@ -208,7 +207,6 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                                                                  + "the template is built from the field plan alone, "
                                                                  + "and they confirm it as shown.")
                         .addStringProperty(REVIEWED_ARG, REVIEWED_DESCRIPTION)
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .required(PIPELINE_UUID_ARG)
                         .build())
                 .build();
@@ -240,7 +238,6 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         final List<String> without = ToolArgs.strings(call, WITHOUT_COMPONENTS_ARG);
         final List<String> nominated = ToolArgs.strings(call, INCLUDE_COMPONENTS_ARG);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
-        final String confirmationId = stringArg(call, CONFIRMATION_ID_ARG);
         final CallProgress progress = CallProgress.of(context);
 
         FieldPlan plan = plans.given(IndexingArgs.plan(call, PLAN_ARG), List.of(), pipelineUuid);
@@ -396,7 +393,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
             return result;
         }
         final Optional<Map<String, Object>> gate = reviews.agree(call, context, NAME, pipelineUuid, destination, name,
-                body, components, confirmationId, reviewed);
+                body, components, reviewed);
         if (gate.isPresent()) {
             return TemplateReviews.asking(gate.get(), result);
         }

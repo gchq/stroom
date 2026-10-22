@@ -78,7 +78,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     static final String DESTINATIONS_ARG = "destinations";
     static final String REVIEWED_ARG = "reviewed";
     static final String ROLE_SUBFOLDERS_ARG = "role_subfolders";
-    static final String APPROVAL_ID_ARG = "approval_id";
     /// What a working copy's write-back takes from it.
     static final List<String> WRITTEN_BACK = List.of("data", "converterType", "documentation", "description");
 
@@ -203,7 +202,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                                                  + "default; false puts each document straight in "
                                                                  + "its destination folder. The user decides when "
                                                                  + "they review the layout.")
-                        .addStringProperty(APPROVAL_ID_ARG, "From an earlier needs_approval reply.")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -228,7 +226,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
         final String roleArg = stringArg(call, ROLE_SUBFOLDERS_ARG);
         final boolean roleSubfolders = roleArg == null || Boolean.parseBoolean(roleArg);
-        final String approvalId = stringArg(call, APPROVAL_ID_ARG);
         final List<Map<String, Object>> docs = facts.buildDocs(build);
         if (docs.isEmpty()) {
             throw new ToolRefusal("Build '" + build + "' has no documents");
@@ -290,7 +287,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final String tree = layout.promotionTree(plan, creating);
         // The question applies: documents of several roles.
         final boolean roles = rolesMoved.size() > 1;
-        if (!Consent.wasReviewed(reviewed, tree) && approvalId == null) {
+        if (!Consent.wasReviewed(reviewed, tree)) {
             return review(build, tree, warnings, processed, roles, reviewed);
         }
         // The form stays short; the approval is bound to the exact layout shown, through its digest.
@@ -312,11 +309,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.approval(NAME,
-                "Promote build '" + build + "' as shown in the chat", shortForm, approvalId));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.approval(NAME,
+                "Promote build '" + build + "' as shown in the chat", shortForm));
         final List<String> done = new ArrayList<>();
         carryOut(build, docs, plan, folders, creating, done);
         // What the record kept about the promoted docs only meant something inside the build; it goes once nothing

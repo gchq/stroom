@@ -19,7 +19,6 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.ToolResult;
-import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ class TestStartOnboardingTool {
     private final BuildWorld world = new BuildWorld();
     private final FakeBuildFacts facts = new FakeBuildFacts();
     private final BuildPlan plan = new BuildPlan(facts, world.guard(),
-            new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+            new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
     private final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
     private final AgentInstructions instructions = Mockito.mock(AgentInstructions.class);
     private final SampleStreamTexts streamTexts = Mockito.mock(SampleStreamTexts.class);

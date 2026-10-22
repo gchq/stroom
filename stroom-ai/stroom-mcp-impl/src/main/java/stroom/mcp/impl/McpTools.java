@@ -34,6 +34,7 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.config.common.UriFactory;
+import stroom.mcp.impl.tools.FormsRequired;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,7 +48,6 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
-import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -55,7 +55,6 @@ import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,7 +66,9 @@ import java.util.function.Supplier;
 ///
 /// A call is made as the session's user. It is refused if the tool isn't one the user's policies grant (or is
 /// only for the chat), or the call changes something and the tool's category is granted only for reading. A call
-/// that changes something asks the user first (see [McpApprovals]), and a heavy one takes one of the user's run
+/// that changes something needs a client that can show forms (MCP elicitation), and is refused otherwise (see
+/// [FormsRequired]); it asks the user first (see [McpApprovals]), unless the tool asks the user itself before each
+/// change ([StroomTool#confirmsItself()]). A heavy call takes one of the user's run
 /// slots (see [StroomTool#usesRunSlot()]), given back while it waits for the user. A call runs within the longer of
 /// the session's tool and query time limits (see [ToolDeadline]), less any time it waits for the user. Every call
 /// is audited.
@@ -110,21 +111,22 @@ class McpTools {
         this.guard = guard;
     }
 
+    /// The tools offered to a session: those its user's policies grant, except the chat's own.
+    ///
+    /// A client that can't show forms is offered the tools that change things too, though their calls that would
+    /// change something are refused: many of them have calls that only read (e.g. a dry run), and a refusal says
+    /// why and what the user can do, where a tool left out would leave the model guessing at another way to make
+    /// the change.
+    ///
     /// @param session A session, whose user is the current user.
-    /// @return The tools offered to it: those its user's policies grant, except the chat's own, and (for a client
-    /// that can't show forms, if it is offered anything that changes things) [McpApprovals#APPROVE_TOOL].
+    /// @return The tools offered to it.
     List<Tool> list(final McpSession session) {
         final ToolGrants grants = policiesProvider.get().grantsFor(session.owner());
         final List<Tool> tools = new ArrayList<>();
-        boolean anyChanges = false;
         for (final StroomTool tool : builtInToolsProvider.get().tools()) {
             if (isOffered(tool, grants)) {
                 tools.add(McpToolSchemas.toMcpTool(tool));
-                anyChanges = anyChanges || !tool.isReadOnly();
             }
-        }
-        if (anyChanges && !session.canShowForms()) {
-            tools.add(approveTool());
         }
         return tools;
     }
@@ -140,35 +142,14 @@ class McpTools {
                         final CallToolRequest request) {
         final String name = request.name();
         final String arguments = JsonUtil.writeValueAsString(NullSafe.map(request.arguments()), false);
-        if (McpApprovals.APPROVE_TOOL.equals(name)) {
-            return approved(session, exchange, request, arguments);
-        }
-        return call(session, exchange, request, name, arguments, false);
-    }
-
-    // Makes a call the user has approved through an approval id.
-    private CallToolResult approved(final McpSession session,
-                                    final McpAsyncServerExchange exchange,
-                                    final CallToolRequest request,
-                                    final String arguments) {
-        final Object approvalId = NullSafe.map(request.arguments()).get(McpApprovals.APPROVAL_ID_ARG);
-        final Optional<McpApprovals.PendingCall> pending = approvals.take(session, approvalId == null
-                ? null
-                : String.valueOf(approvalId));
-        if (pending.isEmpty()) {
-            audit(session, McpApprovals.APPROVE_TOOL, arguments, "No such approval", false);
-            return error("Error: there is no call waiting for approval with that " + McpApprovals.APPROVAL_ID_ARG
-                         + ", or it has expired or been used. Make the call again to get a new one.");
-        }
-        return call(session, exchange, request, pending.get().toolName(), pending.get().arguments(), true);
+        return call(session, exchange, request, name, arguments);
     }
 
     private CallToolResult call(final McpSession session,
                                 final McpAsyncServerExchange exchange,
                                 final CallToolRequest request,
                                 final String name,
-                                final String arguments,
-                                final boolean alreadyApproved) {
+                                final String arguments) {
         final ToolGrants grants = policiesProvider.get().grantsFor(session.owner());
         final StroomTool tool = builtInToolsProvider.get().tool(name)
                 .filter(found -> isOffered(found, grants))
@@ -185,8 +166,14 @@ class McpTools {
                         + " tools and calls that cannot change anything, and this call would change something. "
                         + "Ask an administrator for a policy that grants read and write.");
         }
+        // A change needs the user's agreement in a form: without one, nothing is changed (no id is given to pass
+        // back instead, as the model could approve its own call with it).
+        if (!readOnlyCall && !session.canShowForms()) {
+            audit(session, name, arguments, "Refused: the client can't show forms", false);
+            return text(FormsRequired.noForms(name));
+        }
         // A tool that confirms each change itself asks the user in its own form, which is the approval.
-        if (!readOnlyCall && !alreadyApproved && !tool.confirmsItself()) {
+        if (!readOnlyCall && !tool.confirmsItself()) {
             final Optional<String> notApproved = approvals.approve(session, exchange, name, arguments);
             if (notApproved.isPresent()) {
                 audit(session, name, arguments, "Not approved", false);
@@ -286,23 +273,6 @@ class McpTools {
                        final String outcome,
                        final boolean success) {
         auditLogProvider.get().toolCall(session.toolSession(), name, arguments, outcome, success, false);
-    }
-
-    private static Tool approveTool() {
-        return Tool.builder()
-                .name(McpApprovals.APPROVE_TOOL)
-                .description("Makes a call of one of Stroom's tools that the user has approved. A call that changes "
-                             + "something in Stroom isn't made at once: it gives an approval id, and what to show "
-                             + "the user. Only once they agree, call this with the id. Never approve a call "
-                             + "yourself.")
-                .inputSchema(Map.of(
-                        "type", "object",
-                        "properties", Map.of(McpApprovals.APPROVAL_ID_ARG, Map.of(
-                                "type", "string",
-                                "description", "The approval id the call gave.")),
-                        "required", List.of(McpApprovals.APPROVAL_ID_ARG)))
-                .annotations(new ToolAnnotations(null, false, true, null, false, null))
-                .build();
     }
 
     private static CallToolResult text(final String text) {

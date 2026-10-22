@@ -24,14 +24,12 @@ import stroom.util.shared.UserRef;
 import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /// A session of an MCP client on Stroom's `/mcp` endpoint, as this node holds it: who it belongs to, what the
 /// client says it can do, the hidden chat holding its workspace (made when a tool first needs it), the calls
-/// running in it, and the calls waiting for the user's approval.
+/// running in it.
 final class McpSession {
 
     private final String id;
@@ -42,7 +40,6 @@ final class McpSession {
     private final RunningCalls runningCalls = new RunningCalls();
     private final long startedMs = System.currentTimeMillis();
     private final AtomicLong lastUsedMs = new AtomicLong(startedMs);
-    private final Map<String, McpApprovals.PendingCall> pendingCalls = new ConcurrentHashMap<>();
 
     /// @param id           The session's id, as the client sends it in its `Mcp-Session-Id` header.
     /// @param owner        The user who started it, the only one who may use it.
@@ -108,10 +105,5 @@ final class McpSession {
     /// @return When the session was last used.
     long lastUsedMs() {
         return lastUsedMs.get();
-    }
-
-    /// @return The calls waiting for the user's approval, by approval id.
-    Map<String, McpApprovals.PendingCall> pendingCalls() {
-        return pendingCalls;
     }
 }

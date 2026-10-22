@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.ToolRefusal;
-import stroom.security.api.SecurityContext;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,7 +39,7 @@ class TestBuildPlanOnExistingData {
 
     private final FakeBuildFacts facts = new FakeBuildFacts();
     private final BuildPlan plan = new BuildPlan(facts, new BuildWorld().guard(),
-            new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+            new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
 
     @Test
     void anExistingFeedNeedsNoFeedOrUploadBeforeAnyPipeline() {

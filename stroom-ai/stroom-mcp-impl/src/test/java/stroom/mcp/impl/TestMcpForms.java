@@ -103,7 +103,7 @@ class TestMcpForms {
 
     private static McpForms forms(final int maxPerNode) {
         final AiConfig aiConfig = Mockito.mock(AiConfig.class);
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, maxPerNode, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(null, null, maxPerNode, null,
                 null, null));
         return new McpForms(() -> aiConfig);
     }

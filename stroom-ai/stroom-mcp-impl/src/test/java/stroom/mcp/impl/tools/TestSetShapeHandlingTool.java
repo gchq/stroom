@@ -23,7 +23,6 @@ import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.documentation.shared.DocumentationDoc;
-import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ class TestSetShapeHandlingTool {
 
     private final BuildWorld world = new BuildWorld();
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
-    private final Consent consent = new Consent(Mockito.mock(SecurityContext.class), () -> auditLog);
+    private final Consent consent = new Consent(() -> auditLog);
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(), consent, new BuildMemory());
     private final SetShapeHandlingTool tool = new SetShapeHandlingTool(
             new SurveyDocuments(world.guard(), world.documentAccess, new DocumentWrites(world.documentAccess)), consent,
@@ -55,21 +54,23 @@ class TestSetShapeHandlingTool {
     @Test
     void droppingKindsIsConfirmedThenKeptInTheSurveyDoc() {
         final String uuid = survey();
-        final ToolCallContext context = PortedToolCalls.context();
         final String arguments = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"org.jgroups\"], "
-                                 + "\"handling\": \"drop\", \"reason\": \"cluster housekeeping, no security value\"";
+                                 + "\"handling\": \"drop\", \"reason\": \"cluster housekeeping, no security value\"}";
 
-        final Map<String, Object> asked = json(call(arguments + "}", context));
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(asked.get("summary")).isEqualTo("Leave untranslated (no Events): 1 kind(s) of event in feed "
-                                                   + "'ACME'");
-        assertThat(String.valueOf(((Map<?, ?>) asked.get("details")).get("kinds")))
-                .contains("(2 records seen, 66.7%)");
-        // Nothing written until the user agrees.
+        // Nothing written until the user agrees, which they can't without a form.
+        assertThat(call(arguments, PortedToolCalls.context()).text())
+                .startsWith("Not done: Leave untranslated (no Events): 1 kind(s) of event in feed 'ACME'.");
         assertThat(SurveyDoc.dropped(SurveyDoc.readState(world.body(uuid)))).isEmpty();
 
-        final Map<String, Object> done = json(call(arguments + ", \"confirmation_id\": \""
-                                                   + asked.get("confirmation_id") + "\"}", context));
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final Map<String, Object> done = json(call(arguments, user.context()));
+
+        assertThat(user.forms()).singleElement().satisfies(asked -> {
+            assertThat(asked.get("summary")).isEqualTo("Leave untranslated (no Events): 1 kind(s) of event in feed "
+                                                       + "'ACME'");
+            assertThat(String.valueOf(((Map<?, ?>) asked.get("details")).get("kinds")))
+                    .contains("(2 records seen, 66.7%)");
+        });
 
         assertThat(done.get("handling")).isEqualTo("drop");
         final String signature = String.valueOf(((List<?>) done.get("shapes")).getFirst());
@@ -87,18 +88,15 @@ class TestSetShapeHandlingTool {
     @Test
     void translatingKindsAgainUndoesTheDrop() {
         survey();
-        final ToolCallContext context = PortedToolCalls.context();
-        final String drop = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", "
-                            + "\"handling\": \"drop\", \"reason\": \"noise\"";
-        call(drop + ", \"confirmation_id\": \"" + json(call(drop + "}", context)).get("confirmation_id") + "\"}",
-                context);
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", \"handling\": \"drop\", "
+             + "\"reason\": \"noise\"}", user.context());
         final String translate = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", "
-                                 + "\"handling\": \"translate\"";
+                                 + "\"handling\": \"translate\"}";
 
-        final Map<String, Object> asked = json(call(translate + "}", context));
-        assertThat(String.valueOf(asked.get("summary"))).startsWith("Translate again: 1 kind(s)");
-        final Map<String, Object> done = json(call(translate + ", \"confirmation_id\": \""
-                                                   + asked.get("confirmation_id") + "\"}", context));
+        final Map<String, Object> done = json(call(translate, user.context()));
+
+        assertThat(user.shown()).hasSize(2).last().asString().startsWith("Translate again: 1 kind(s)");
 
         assertThat(done.get("left_untranslated")).isEqualTo(List.of());
         assertThat((List<?>) done.get("locations")).noneMatch(location -> ((Map<?, ?>) location).containsKey(

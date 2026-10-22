@@ -63,10 +63,15 @@ class TestRenameIndexTool {
     @SuppressWarnings("unchecked")
     void theUserConfirmsWhatChangesWithTheName() {
         setUp("acme-v1", "acme-v1", "");
-        final Map<String, Object> asked = rename("acme-prod-v1", IndexingWorld.noForms());
-        assertThat(asked.get("status")).isEqualTo("needs_confirmation");
-        assertThat(((Map<String, Object>) asked.get("details")).get("indexing pipelines changed with it"))
-                .isEqualTo(List.of("ACME-Indexing"));
+        assertThat(refused("acme-prod-v1")).startsWith("Not done: Use index name 'acme-prod-v1' instead of "
+                                                       + "'acme-v1'.");
+        assertThat(((ElasticIndexDoc) world.world.docs.get("i")).getIndexName()).isEqualTo("acme-v1");
+        final ToolResult declined = world.renameTool().execute(PortedToolCalls.call(RenameIndexTool.NAME,
+                PyJson.dumps(Map.of("index_uuid", "i", "index_name", "acme-prod-v1"))),
+                world.forms(question -> Map.of("value", false)));
+        assertThat(declined.text()).startsWith("The user did not agree to:");
+        assertThat(world.asked).singleElement().asString()
+                .containsPattern("- indexing pipelines changed with it: ACME-Indexing(\n|$)");
         assertThat(((ElasticIndexDoc) world.world.docs.get("i")).getIndexName()).isEqualTo("acme-v1");
     }
 

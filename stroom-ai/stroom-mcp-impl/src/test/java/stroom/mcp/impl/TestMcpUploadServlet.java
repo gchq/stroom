@@ -264,7 +264,7 @@ class TestMcpUploadServlet {
     @Test
     void whenTheEndpointIsTurnedOffThereIsNoUpload() throws Exception {
         final String id = waiting("001_1.json");
-        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null, null,
+        Mockito.when(aiConfig.getMcpEndpoint()).thenReturn(new McpEndpointConfig(false, null, null, null,
                 null, null));
 
         assertThat(post(id + "?file=001_1.json", "x").statusCode()).isEqualTo(404);

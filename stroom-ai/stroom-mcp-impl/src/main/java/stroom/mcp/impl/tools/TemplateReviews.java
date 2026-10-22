@@ -98,9 +98,8 @@ class TemplateReviews {
     /// @param name           The template's name.
     /// @param body           Its body.
     /// @param components     The component templates it composes, by name.
-    /// @param confirmationId The confirmation id given, or null.
     /// @param reviewed       The review id given, or null.
-    /// @return The round to return (needs_review, or the confirmation), or empty once agreed.
+    /// @return The round to return (needs_review), or empty once agreed.
     /// @throws ToolRefusal if the pipeline isn't the build's own, or the user declines.
     Optional<Map<String, Object>> agree(final ToolCall call,
                                         final ToolCallContext context,
@@ -110,7 +109,6 @@ class TemplateReviews {
                                         final String name,
                                         final Map<String, Object> body,
                                         final Map<String, ?> components,
-                                        final String confirmationId,
                                         final Object reviewed) {
         final PipelineDoc doc = pipelineDocs.read(pipelineUuid);
         guard.checkInBuild(context.session(), new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()));
@@ -146,13 +144,10 @@ class TemplateReviews {
                               + "it was agreed." + Consent.reviewNote(reviewed));
             return Optional.of(round);
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(action,
+        consent.require(call, context, Consent.Request.confirmation(action,
                 "Use Elasticsearch index template '" + name + "' for index '" + destination.get("index name")
                 + "' (cluster " + destination.get("cluster") + "), as shown in the chat",
-                summary(name, body, devTools), confirmationId));
-        if (gate.isPresent()) {
-            return gate;
-        }
+                summary(name, body, devTools)));
         final Map<String, Object> agreed = new LinkedHashMap<>();
         agreed.put("name", name);
         agreed.put("index", destination.get("index name"));
@@ -215,7 +210,7 @@ class TemplateReviews {
         return details;
     }
 
-    /// The confirmation to return, with what the agent shows alongside it: what to do first, the template after.
+    /// The review to return, with what the agent shows alongside it: what to do first, the template after.
     /// Seen in testing: the review reply ran to 10,000 characters, the client showed it cut short, and the template
     /// was never put to the user. The fields written are in the template.
     ///

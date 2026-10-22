@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -146,7 +147,8 @@ class TestReprocessStreamsTool {
                 .containsExactly("DELETE ecs-acme-v2");
         final Map<String, Object> details = TestCreateProcessorFilterTool.details(gated.gates().getLast());
         assertThat(String.valueOf(details.get("index template"))).contains("index 'ecs-acme-v2'");
-        assertThat(String.valueOf(details.get("already indexed")))
+        // Said in full in the drop_first reply, shown in the chat: the form is kept short.
+        assertThat(String.valueOf(gated.gates().getFirst().get("already_indexed")))
                 .contains("drops it first, so it starts fresh: DELETE ecs-acme-v2.");
         assertThat(String.valueOf(gated.gates().getLast().get("summary"))).contains("once the index is dropped");
         assertThat(w.created.getLast().isEnabled()).isTrue();
@@ -243,18 +245,27 @@ class TestReprocessStreamsTool {
     }
 
     private ToolResult call(final Map<String, Object> arguments) {
+        return call(arguments, ProcessingWorld.context());
+    }
+
+    private ToolResult call(final Map<String, Object> arguments, final ToolCallContext context) {
         final Map<String, Object> all = new LinkedHashMap<>(arguments);
         all.put("pipeline_uuid", "p1");
         return w.reprocessTool().execute(PortedToolCalls.call(ReprocessStreamsTool.NAME,
-                JsonUtil.writeValueAsString(all)), ProcessingWorld.context());
+                JsonUtil.writeValueAsString(all)), context);
     }
 
-    // Calls as a user agreeing to every gate: the gates seen, and the final result.
+    // Calls as a user agreeing to every gate: the gates seen (each form, as the round it once was, and each
+    // drop_first), and the final result.
     private Gated reprocessed(final Map<String, Object> arguments) {
         final Map<String, Object> given = new LinkedHashMap<>(arguments);
         final List<Map<String, Object>> gates = new ArrayList<>();
+        // The user agrees in every form the call shows.
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
         while (true) {
-            final ToolResult called = call(given);
+            final int asked = user.forms().size();
+            final ToolResult called = call(given, user.context());
+            gates.addAll(user.forms().subList(asked, user.forms().size()));
             assertThat(called.isError()).as(called.text()).isFalse();
             final Map<String, Object> result = ProcessingWorld.json(called);
             final String status = String.valueOf(result.get("status"));
@@ -263,14 +274,7 @@ class TestReprocessStreamsTool {
                 given.put("index_dropped", true);
                 continue;
             }
-            if (!status.startsWith("needs_")) {
-                return new Gated(gates, result);
-            }
-            gates.add(result);
-            final String key = "needs_confirmation".equals(status)
-                    ? "confirmation_id"
-                    : "approval_id";
-            given.put(key, result.get(key));
+            return new Gated(gates, result);
         }
     }
 

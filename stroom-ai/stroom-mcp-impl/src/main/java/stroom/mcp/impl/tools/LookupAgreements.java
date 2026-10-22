@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /// The user's agreement to an XSLT the tools save or step calling Stroom's DNS lookup functions
@@ -107,9 +106,8 @@ class LookupAgreements {
         details.put("calls", calls);
         details.put("used in", String.join("; ", asked.stream().map(lookup -> lookup.function() + " in "
                                                                               + lookup.said()).toList()));
-        final Optional<Map<String, Object>> round;
         try {
-            round = consent.require(call, context, Consent.Request.approval(call.name(), summary, details, null));
+            consent.require(call, context, Consent.Request.approval(call.name(), summary, details));
         } catch (final ToolRefusal e) {
             if (Consent.notAgreed(summary, call.name(), false).equals(e.getMessage())) {
                 throw new ToolRefusal(refusal + ": the user declined " + calls + " (it "
@@ -117,10 +115,6 @@ class LookupAgreements {
                                       + "write the record's own values instead.");
             }
             throw new ToolRefusal(refusal + ": " + e.getMessage());
-        }
-        if (round.isPresent()) {
-            // Only a form is an agreement here: an id handed to the agent is not.
-            throw new ToolRefusal(noForm(refusal, calls));
         }
         agreed.compute(key, (ignored, kept) -> {
             final Set<String> now = kept == null

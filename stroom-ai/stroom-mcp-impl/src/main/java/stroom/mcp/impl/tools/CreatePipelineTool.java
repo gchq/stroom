@@ -73,7 +73,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     static final String REFERENCES_ARG = "references";
     static final String REUSE_EXISTING_DOCS_ARG = "reuse_existing_docs";
     static final String ACCEPT_PARSER_MISMATCH_ARG = "accept_parser_mismatch";
-    static final String CONFIRMATION_ID_ARG = "confirmation_id";
     static final String STANDALONE_ARG = "standalone";
     /// The chain of a pipeline of its own sending Events to Kafka: element ids and types, in order.
     static final List<Map.Entry<String, String>> KAFKA_CHAIN = List.of(Map.entry("Source", "Source"),
@@ -176,7 +175,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         .addBooleanProperty(ACCEPT_PARSER_MISMATCH_ARG, "Only when the user says to use this "
                                                                         + "template although the build's sample "
                                                                         + "is not in a format its parser reads.")
-                        .addStringProperty(CONFIRMATION_ID_ARG, "From an earlier needs_confirmation reply.")
                         .addEnumProperty(STANDALONE_ARG, List.of("kafka"), "Only when no forwarding template "
                                                                           + "exists (find_pipeline_templates "
                                                                           + "stage=forwarding, and the standing "
@@ -228,8 +226,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         return fromTemplate(call, context, new FromTemplate(build, proposed, templateGiven, given, description,
                 stringArg(call, REPLACE_PARSER_ARG),
                 ReferenceRequest.listOf(argsMap(call).get(REFERENCES_ARG), REFERENCES_ARG), reuse,
-                ToolArgs.flag(call, ACCEPT_PARSER_MISMATCH_ARG),
-                stringArg(call, CONFIRMATION_ID_ARG)));
+                ToolArgs.flag(call, ACCEPT_PARSER_MISMATCH_ARG)));
     }
 
     /// Creates a pipeline as a child of a template, setting only what the child supplies: create_pipeline's path,
@@ -308,13 +305,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         if (!references.isEmpty()) {
             details.put("reference data", references.stream().map(PipelineWrites::describe).toList());
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                        "Create pipeline '" + proposed + "' from template '" + template.getName() + "'", details,
-                        request.confirmationId())
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                        "Create pipeline '" + proposed + "' from template '" + template.getName() + "'", details)
                 .withEditable(NAME_ARG, "Pipeline name", proposed));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
         // The user may have corrected it in the form.
         final String name = consent.edited(context, NAME_ARG, proposed);
         final String role = pipelineShapes.role(templateUuid);
@@ -419,13 +412,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         details.put("sets", sets);
         details.put("sends", "each Event, once processed, as a Kafka record through the KafkaConfig set here "
                              + "(stepping sends nothing)");
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.confirmation(NAME,
-                        "Create pipeline '" + proposed + "' with no template: " + chain, details,
-                        stringArg(call, CONFIRMATION_ID_ARG))
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                        "Create pipeline '" + proposed + "' with no template: " + chain, details)
                 .withEditable(NAME_ARG, "Pipeline name", proposed));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
         final String name = consent.edited(context, NAME_ARG, proposed);
         final PipelineDataBuilder data = new PipelineDataBuilder();
         String previous = null;
@@ -510,7 +499,6 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     /// @param references           The reference data its translation looks up.
     /// @param reuseExistingDocs    Whether documents from outside the build may be used.
     /// @param acceptParserMismatch Whether a template whose parser can't read the build's sample may be used.
-    /// @param confirmationId       From an earlier needs_confirmation reply, or null.
     record FromTemplate(String build,
                         String name,
                         String template,
@@ -519,8 +507,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         String replaceParser,
                         List<ReferenceRequest> references,
                         boolean reuseExistingDocs,
-                        boolean acceptParserMismatch,
-                        String confirmationId) {
+                        boolean acceptParserMismatch) {
 
     }
 }

@@ -62,36 +62,24 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
     static final String CREATED_AFTER_ARG = "created_after";
     static final String PRIORITY_ARG = "priority";
     static final String SOURCE_PIPELINE_UUID_ARG = "source_pipeline_uuid";
-    static final String SOURCE_CONFIRMATION_ID_ARG = "source_confirmation_id";
     static final String INDEX_DROPPED_ARG = "index_dropped";
     static final String TEMPLATE_COMMITTED_BY_USER_ARG = "template_committed_by_user";
-    static final String TEMPLATE_CONFIRMATION_ID_ARG = "template_confirmation_id";
-    static final String APPROVAL_ID_ARG = "approval_id";
 
     /// The source pipeline's argument, as both processing tools describe it.
     static final String SOURCE_PIPELINE_DESCRIPTION = "Indexing pipelines reading Events: the events pipeline that "
                                                       + "produced them (one this server built, or another with the "
                                                       + "user's confirmation). The filter only selects Events from "
                                                       + "exactly that pipeline.";
-    /// The source confirmation's argument.
-    static final String SOURCE_CONFIRMATION_DESCRIPTION = "From an earlier needs_confirmation reply: the user "
-                                                          + "confirmed indexing Events from a pipeline this server "
-                                                          + "did not build.";
     /// The template-committed argument.
     static final String TEMPLATE_COMMITTED_DESCRIPTION = "Elasticsearch: true only when the user says an index "
                                                          + "template of their own is already committed to the "
                                                          + "cluster for this index, and wants to go on without "
                                                          + "agreeing one here. They confirm it in a form; it is then "
                                                          + "kept with the pipeline in place of an agreed one.";
-    /// The template confirmation's argument.
-    static final String TEMPLATE_CONFIRMATION_DESCRIPTION = "From an earlier needs_confirmation reply for "
-                                                            + "template_committed_by_user.";
     /// The index-dropped argument.
     static final String INDEX_DROPPED_DESCRIPTION = "From an earlier drop_first reply: true once the user says the "
                                                     + "index this pipeline wrote to before has been dropped (or its "
                                                     + "shards deleted).";
-    /// The approval's argument.
-    static final String APPROVAL_ID_DESCRIPTION = "From an earlier needs_approval reply.";
 
     private static final int MIN_PRIORITY = 1;
     private static final int MAX_PRIORITY = 100;
@@ -180,11 +168,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                                           + MAX_PRIORITY + "; default "
                                                           + ProcessorFilterWrites.DEFAULT_PRIORITY + ").")
                         .addStringProperty(SOURCE_PIPELINE_UUID_ARG, SOURCE_PIPELINE_DESCRIPTION)
-                        .addStringProperty(SOURCE_CONFIRMATION_ID_ARG, SOURCE_CONFIRMATION_DESCRIPTION)
                         .addBooleanProperty(INDEX_DROPPED_ARG, INDEX_DROPPED_DESCRIPTION)
                         .addBooleanProperty(TEMPLATE_COMMITTED_BY_USER_ARG, TEMPLATE_COMMITTED_DESCRIPTION)
-                        .addStringProperty(TEMPLATE_CONFIRMATION_ID_ARG, TEMPLATE_CONFIRMATION_DESCRIPTION)
-                        .addStringProperty(APPROVAL_ID_ARG, APPROVAL_ID_DESCRIPTION)
                         .required(PIPELINE_UUID_ARG)
                         .build())
                 .build();
@@ -266,11 +251,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                     : filterWrites.feedStreamType(feed);
         }
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,
-                stringArg(call, SOURCE_PIPELINE_UUID_ARG), streamIds, streamType,
-                stringArg(call, SOURCE_CONFIRMATION_ID_ARG));
-        if (source.round() != null) {
-            return source.round();
-        }
+                stringArg(call, SOURCE_PIPELINE_UUID_ARG), streamIds, streamType);
         final Scope scope = streamIds.isEmpty()
                 ? feedScope(ref, feed, streamType, createdAfter, source.pipeline())
                 : sampleScope(pipeline, streamIds);
@@ -303,11 +284,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
-                    NAME, ToolArgs.flag(call, TEMPLATE_COMMITTED_BY_USER_ARG),
-                    stringArg(call, TEMPLATE_CONFIRMATION_ID_ARG));
-            if (committed.round() != null) {
-                return committed.round();
-            }
+                    NAME, ToolArgs.flag(call, TEMPLATE_COMMITTED_BY_USER_ARG));
             details.put(ProcessingApprovals.INDEX_TEMPLATE, committed.text());
             pipeline = committed.pipeline();
         }
@@ -341,7 +318,6 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final boolean small = destination != null && indexingRuns.developmentBatch(pipelineUuid, true);
         final ProcessorFilter created = filterWrites.createFilter(ref, expression, priority, scope.maxTasks(),
                 scope.minMs(), false);
-        consent.discard(context, stringArg(call, SOURCE_CONFIRMATION_ID_ARG));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", created.getId());
         result.putAll(common);
@@ -374,11 +350,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         if (details.containsKey(ProcessingApprovals.INDEX_TEMPLATE)) {
             summary += " Approve only once the agreed index template is committed to the cluster.";
         }
-        final Optional<Map<String, Object>> gate = consent.require(call, context, Consent.Request.approval(NAME,
-                summary, details, stringArg(call, APPROVAL_ID_ARG)));
-        if (gate.isPresent()) {
-            return gate.get();
-        }
+        consent.require(call, context, Consent.Request.approval(NAME, summary, details));
         if (run.clear()) {
             indexingRuns.deleteIndexShards(run.lucene().getUuid());
         }
@@ -386,7 +358,6 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                               && indexingRuns.developmentBatch(run.ref().getUuid(), true);
         final ProcessorFilter created = filterWrites.createFilter(run.ref(), run.expression(), run.priority(),
                 run.scope().maxTasks(), run.scope().minMs(), true);
-        consent.discard(context, stringArg(call, SOURCE_CONFIRMATION_ID_ARG));
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", created.getId());
         result.putAll(run.common());

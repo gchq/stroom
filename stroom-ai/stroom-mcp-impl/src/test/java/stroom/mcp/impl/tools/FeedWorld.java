@@ -44,7 +44,7 @@ final class FeedWorld {
     final DocFinder docFinder = Mockito.mock(DocFinder.class);
     final StreamReader streamReader = Mockito.mock(StreamReader.class);
     final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
-    final Consent consent = new Consent(securityContext, () -> Mockito.mock(AiAuditLog.class));
+    final Consent consent = new Consent(() -> Mockito.mock(AiAuditLog.class));
     final BuildPlan plan = new BuildPlan(facts, world.guard(), consent, new BuildMemory());
     final FeedNames feedNames = new FeedNames(() -> docFinder, world.documentAccess);
     final BuildFeeds buildFeeds = new BuildFeeds(feedNames, world.guard(), world.records(), plan,
