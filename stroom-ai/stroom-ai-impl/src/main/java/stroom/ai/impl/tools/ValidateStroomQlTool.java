@@ -129,7 +129,8 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
 
     @Override
     public boolean readsUntrustedContent() {
-        // The parser's errors quote the query, which the model wrote.
-        return false;
+        // It names the data source the query reads as Stroom holds it (a document name, written by whoever made
+        // the document), and the parser's errors are not known to quote only what the model wrote.
+        return true;
     }
 }

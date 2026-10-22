@@ -1234,7 +1234,7 @@ While the user is stepping a pipeline, proposes a change to the code (XSLT or te
 ## propose_dashboard
 
 isReadOnly: true
-readsUntrustedContent: false
+readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
@@ -1489,7 +1489,7 @@ Proposes a change to the documentation of a Stroom document given its UUID: the 
 ## propose_query
 
 isReadOnly: true
-readsUntrustedContent: false
+readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }
@@ -2287,7 +2287,7 @@ Keeps a task list for work with several steps, which the user sees as you work. 
 ## validate_stroomql
 
 isReadOnly: true
-readsUntrustedContent: false
+readsUntrustedContent: true
 boundsItsOutput: true
 strict: null
 metadata: { }

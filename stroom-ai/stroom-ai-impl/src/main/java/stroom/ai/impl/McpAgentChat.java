@@ -132,17 +132,6 @@ class McpAgentChat {
                                          + "changes you propose, use it now.]";
 
     /**
-     * Chat messages holding content from tools or Stroom data, which could hold instructions planted by someone
-     * other than the user.
-     */
-    private static final Set<AiMessageType> UNTRUSTED_MESSAGE_TYPES = Set.of(
-            AiMessageType.TOOL_RESULT,
-            AiMessageType.ATTACHMENT,
-            AiMessageType.DASHBOARD_DATA,
-            AiMessageType.QUERY_DATA,
-            AiMessageType.TABLE_DATA);
-
-    /**
      * How many of the latest tool results are kept as they are when the conversation is getting too large.
      */
     static final int RECENT_RESULTS_KEPT = 2;
@@ -270,9 +259,9 @@ class McpAgentChat {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
         // What this run shortens is counted afresh, as it starts from the stored chat.
         usageTracker.resetShortened(chatId);
-        // Anything in the chat that came from tools or Stroom data could hold planted instructions.
-        if (aiService.getMessages(chatId).stream()
-                .anyMatch(m -> UNTRUSTED_MESSAGE_TYPES.contains(m.getMessageType()))) {
+        // Attachments, Stroom data and the results of tools that read untrusted content earlier in the chat could
+        // hold planted instructions. Results of tools that read only trusted content don't count.
+        if (UntrustedChatContent.isIn(aiService.getMessages(chatId), builtInTools::readsUntrustedContent)) {
             runManager.markTainted(chatId);
         }
         // A call to an untrusted MCP server's tool earlier in the chat means its output may hold planted

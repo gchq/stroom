@@ -29,6 +29,8 @@ import stroom.security.api.SecurityContext;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -48,6 +50,7 @@ public final class ScriptedRunTools {
     /// @param queryService    Checks the queries propose_query is given.
     /// @param registry        The data sources.
     /// @param securityContext Says which data sources the user can use.
+    /// @param moreTools       Further tools to register with them (e.g. stand-ins, see [StandInTools]).
     /// @return The tools, registered.
     public static BuiltInTools builtInTools(final AiService aiService,
                                             final McpElicitations elicitations,
@@ -55,15 +58,17 @@ public final class ScriptedRunTools {
                                             final AiMemoryService memoryService,
                                             final QueryService queryService,
                                             final DataSourceProviderRegistry registry,
-                                            final SecurityContext securityContext) {
+                                            final SecurityContext securityContext,
+                                            final StroomTool... moreTools) {
         final DataSourceAccess dataSourceAccess = new DataSourceAccess(() -> registry, securityContext);
         final ChatWorkspace workspace = workspace();
-        return new BuiltInTools(Set.of(
+        final Set<StroomTool> tools = new HashSet<>(Set.of(
                 new ReadTurnTool(aiService),
                 new AskUserTool(),
                 new MemoryTool(memoryService),
-                new ProposeQueryTool(workspace, dataSourceAccess, () -> queryService)),
-                new ChatToolCallContexts(workspace, () -> elicitations, () -> runManager));
+                new ProposeQueryTool(workspace, dataSourceAccess, () -> queryService)));
+        tools.addAll(Arrays.asList(moreTools));
+        return new BuiltInTools(tools, new ChatToolCallContexts(workspace, () -> elicitations, () -> runManager));
     }
 
     // A workspace that runs each call straight away, with the default limits: propose_query only needs its limits.
