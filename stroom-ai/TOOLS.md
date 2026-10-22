@@ -201,7 +201,7 @@ before the tools themselves. Where it differs:
 * **Not ported**: `agent_line` and `client_model` (the save's "by" text comes from the caller's session).
   `check_xslt`'s import lookup and `_record_validated` are ported with the tools themselves (below).
 
-## Sample analysis (ported, tools not yet wired)
+## Sample analysis
 
 The MCP server's sample analysis is ported as plain Java in `stroom-ai-impl`, package `stroom.ai.impl.tools.sample`,
 for `profile_sample`, `survey_feed` and `set_shape_handling` (and `fetch_events`, already) to use: `SampleProfiler`
@@ -227,6 +227,51 @@ Where they differ from the Python server:
   without columns is signed `row:all`.
 * `quoted_csv`'s header sniff can still fail on odd text, as it did in Python (`csv.Error`); `SampleRefusal` is
   thrown where the server raised a `ToolError`.
+
+## The sampling tools: `profile_sample`, `survey_feed` and `set_shape_handling`
+
+Ported as tools of their own (`stroom-mcp-impl`, category processing), on the sample analysis above and the build
+layer below. `profile_sample` shares start_onboarding's reading of samples (`SampleArguments`, `SampleStreamTexts`)
+and its profiling (`SampleProfiling.profileAll`, which gives XML fragments their wrapper:
+`SampleProfiling.withFragmentSetup`, the MCP server's `with_fragment_setup`, with `FragmentWrappers` finding the
+environment's own XML_FRAGMENT converters and the event-logging version through `HeldSchemas`). `survey_feed` picks
+streams with `FeedSampling.pickSpread` (through `StreamReader.find`), reads each part with `StreamReader.readHead`,
+and keeps the survey with `FeedSampling.keep` in the build's survey doc (`SurveyDocuments`, through `WriteGuard`).
+
+| Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
+|------|-----------|---------------------|-----------------|----------|
+| `profile_sample` | yes | yes | no | no |
+| `survey_feed` | no (yes for a call without `build`) | yes | no | yes |
+| `set_shape_handling` | no | no | yes | no |
+
+`survey_feed` asks the user only about reading fewer streams than the default, not before it writes the survey doc,
+so over `/mcp` a call with `build` is approved as a whole; `set_shape_handling` confirms its one change itself.
+
+Where they differ from the Python server:
+
+* **`survey_feed` stops**: between streams (and parts) when its thread is interrupted (the run stopped, or the MCP
+  client gave up), saying `The survey was stopped: the call was cancelled.`; and at the session's time limit for a
+  call it stops reading and returns what it has read, not covered (`NOT COVERED YET: this session's time limit for
+  a call (...) stopped the survey after N of the M streams picked; ...`), the survey doc keeping what was read. The
+  Python tool had no time limit.
+* **Reading a stream** is `StreamReader.readHead` (the stream store), not the data viewer's pages: see the sample
+  analysis above. An unreadable stream's entry says `Stroom couldn't read it: Stroom could not read stream N: ...`.
+* **Permissions**: `survey_feed` refuses a user without View Data, and so do `profile_sample` and start_onboarding
+  for sample streams (`SampleStreamTexts`); the Python server left it to Stroom's data fetch. The survey doc is
+  changed only when the tools made it and it is in the build (`WriteGuard.checkInBuild`), and the streams read are
+  audited.
+* **Arguments out of range** (`max_streams` 1 to 100, `max_chars_per_stream` 1,000 to 5,000,000,
+  `max_parts_per_stream` 1 to 20, `max_records_per_stream` 10 to 10,000, `examples_per_shape` 1 to 10) are refused
+  as `<name> must be a whole number from <min> to <max>, not '<value>'`, in place of pydantic's message.
+* **The agreement to fewer streams** is kept per user and feed in this node's memory (`FewerStreams`), for four
+  hours, as the Python server kept it in its own.
+* **`profile_sample`'s description** says `nothing is saved in Stroom` where the Python one said `locally (nothing is
+  sent to Stroom)`, which is wrong in-process. Its `samples` is declared a list of strings, as start_onboarding's
+  is; a map by file name is still read.
+* **The fragment wrapper**: a wrapper's `path` is Stroom's explorer path (`/Format Handling`), not the find index's
+  (`System / Format Handling`). The version an `<Events>` wrapper is written in is the one passed to
+  `withFragmentSetup(profiled, chosenVersion)`, else the newest held: the build's chosen version is kept by the
+  translation tools, not ported yet, so profile_sample and start_onboarding pass none.
 
 ## MCP server tools with no built-in counterpart
 
@@ -306,10 +351,9 @@ Where the port differs from the MCP server:
   user's access token ran out during a form (`needs_retry`) is not ported.
 * **The remembered build** (`remember_build`) is kept per session (a chat, or an MCP session) in this node's memory,
   rather than per user: a call it can't help is told to name the build.
-* **Parts ported later** are bound with defaults until they are: `SampleProfiler` (sample profiling: until then
-  start_onboarding with sample text refuses, and the plan has no sample format, so its converter step reads as not
-  needed) and `MappingDrift` (whether an XSLT is still what its mapping generates: until then the checks before
-  promotion find no drift). A port binds its own with
+* **Parts ported later** are bound with defaults until they are: `MappingDrift` (whether an XSLT is still what its
+  mapping generates: until then the checks before promotion find no drift). Sample profiling (`SampleProfiling`) is
+  bound to the ported profiler (`SampleProfiling.Profiled`). A port binds its own with
   `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding()`.
 * **Over `/mcp`, a write call is approved** by the endpoint before the tool runs (`McpApprovals`), and a tool's own
   confirmation is then asked as well.
