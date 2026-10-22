@@ -21,7 +21,6 @@ import stroom.ai.impl.ErrorTriageConfig;
 import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -83,19 +82,16 @@ public class StreamSummaries {
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
 
     private final StreamReader streamReader;
-    private final Provider<Store> storeProvider;
     private final DocumentAccess documentAccess;
     private final AcceptedErrors acceptedErrors;
     private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
     public StreamSummaries(final StreamReader streamReader,
-                           final Provider<Store> storeProvider,
                            final DocumentAccess documentAccess,
                            final AcceptedErrors acceptedErrors,
                            final Provider<AiConfig> aiConfigProvider) {
         this.streamReader = streamReader;
-        this.storeProvider = storeProvider;
         this.documentAccess = documentAccess;
         this.acceptedErrors = acceptedErrors;
         this.aiConfigProvider = aiConfigProvider;
@@ -188,7 +184,7 @@ public class StreamSummaries {
     /// @throws IOException      if it can't be read.
     /// @throws RuntimeException if it can't be opened, e.g. it has been deleted or the user may not view its feed.
     public List<ErrorTriage.Marker> errorMarkers(final long errorStreamId, final int max) throws IOException {
-        final RawText text = StreamReader.errorStreamText(storeProvider.get(), errorStreamId,
+        final RawText text = streamReader.errorStreamText(errorStreamId,
                 MAX_ERROR_STREAM_BYTES);
         final List<StoredError> stored = ErrorStreamMarkers.parse(text.text(), text.truncated()).markers();
         return stored.subList(0, Math.min(stored.size(), max)).stream()

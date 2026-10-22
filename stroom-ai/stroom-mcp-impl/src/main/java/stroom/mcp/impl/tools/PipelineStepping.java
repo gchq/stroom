@@ -33,6 +33,8 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.PythonText;
 import stroom.ai.impl.tools.validation.XmlTrees;
+import stroom.ai.impl.tools.validation.XsltChecks;
+import stroom.ai.impl.tools.validation.XsltSafety;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.docref.DocRef;
@@ -41,6 +43,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.factory.ElementRegistry;
 import stroom.pipeline.factory.ElementRegistryFactory;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -67,6 +70,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
@@ -170,22 +174,75 @@ class PipelineStepping {
     /// Refuses draft XSLT that check_xslt rejects, with its reasons. Stepping would otherwise report the symptom
     /// only: an unknown stroom: function as a compile error, or a missing namespace as empty output.
     ///
-    /// @param draftCode Draft code by element, or null.
+    /// A function the element's saved XSLT already calls (e.g. stroom:http-call()) stays allowed, as when the code
+    /// is saved: a person put it there.
+    ///
+    /// @param pipelineUuid The pipeline stepped.
+    /// @param draftCode    Draft code by element, or null.
     /// @throws ToolRefusal if a draft XSLT is rejected.
-    void checkDrafts(final Map<String, String> draftCode) {
+    void checkDrafts(final String pipelineUuid, final Map<String, String> draftCode) {
         NullSafe.map(draftCode).forEach((element, code) -> {
             if (code == null || !code.contains(XmlTrees.XSL)) {
                 return;
             }
             final Map<String, Object> result = checkXslt.check(code, null, null);
             if (!Boolean.TRUE.equals(result.get("ok"))) {
+                final Set<String> allowed = XsltSafety.keptBy(XsltChecks.unescaped(code).text(),
+                        savedXslt(pipelineUuid, element));
                 final List<String> errors = NullSafe.list((List<?>) result.get("errors")).stream()
                         .map(String::valueOf)
+                        .filter(error -> !allowed.contains(error))
                         .toList();
-                throw new ToolRefusal("draft_code[" + PythonText.repr(element)
-                                      + "] is not stepped: " + String.join("; ", errors));
+                if (!errors.isEmpty()) {
+                    throw new ToolRefusal("draft_code[" + PythonText.repr(element)
+                                          + "] is not stepped: " + String.join("; ", errors));
+                }
             }
         });
+    }
+
+    /// Refuses draft XSLT that calls what the tools won't save ([XsltSafety#unsafeInXslt(String)]), unless the
+    /// element's saved XSLT calls it too: stepping runs it with Stroom's access, as processing would.
+    ///
+    /// @param pipelineUuid The pipeline stepped.
+    /// @param draftCode    Draft code by element, or null.
+    /// @throws ToolRefusal if a draft XSLT is refused.
+    void refuseUnsafeDrafts(final String pipelineUuid, final Map<String, String> draftCode) {
+        NullSafe.map(draftCode).forEach((element, code) -> {
+            if (code == null || !code.contains(XmlTrees.XSL)) {
+                return;
+            }
+            final String xslt = XsltChecks.unescaped(code).text();
+            final List<XsltSafety.Unsafe> unsafe = XsltSafety.unsafeInXslt(xslt);
+            if (unsafe.isEmpty()) {
+                return;
+            }
+            final Set<String> allowed = XsltSafety.keptBy(xslt, savedXslt(pipelineUuid, element));
+            final List<String> refused = unsafe.stream()
+                    .map(XsltSafety.Unsafe::why)
+                    .filter(why -> !allowed.contains(why))
+                    .toList();
+            if (!refused.isEmpty()) {
+                throw new ToolRefusal("draft_code[" + PythonText.repr(element) + "] is not stepped: "
+                                      + String.join("; ", refused));
+            }
+        });
+    }
+
+    // The text of the XSLT the pipeline's element runs now, or null if it has none or it can't be read.
+    private String savedXslt(final String pipelineUuid, final String element) {
+        try {
+            return MergedPipeline.load(documentAccess, pipelineUuid).stream()
+                    .flatMap(merged -> merged.translationDocs(pipelineUuid).stream())
+                    .filter(doc -> element.equals(doc.element()) && XsltDoc.TYPE.equals(doc.doc().getType()))
+                    .findFirst()
+                    .flatMap(doc -> documentAccess.read(doc.doc(), XsltDoc.class))
+                    .map(XsltDoc::getData)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the saved XSLT of " + element + ": " + e.getMessage());
+            return null;
+        }
     }
 
     /// @param uuid A pipeline's UUID.

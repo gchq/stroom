@@ -113,7 +113,6 @@ class TestProcessorFilterWrites {
                 .build();
 
         assertThat(ProcessorFilterWrites.selectedIds(expression)).containsExactly(6L);
-        assertThat(ProcessorFilterWrites.filterFeeds(expression)).containsExactly("ACME", "OLD-ACME");
         assertThat(ProcessorFilterWrites.pipelineUuids(ProcessorFilterWrites.pipelineTerms(expression)))
                 .containsExactly("ev");
         assertThat(ProcessorFilterWrites.namesPipeline(expression)).isTrue();

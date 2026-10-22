@@ -183,7 +183,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                     final List<Location> locations,
                                     final Map<String, String> draftCode) {
         stepping.checkCanStep();
-        stepping.checkDrafts(draftCode);
+        stepping.checkDrafts(pipelineUuid, draftCode);
         final List<Location> stepped = locations.subList(0, Math.min(locations.size(), maxSampleRecords));
         final List<Long> streams = new ArrayList<>(new TreeSet<>(locations.stream().map(Location::stream).toList()));
         stepping.refuseOlderThanFeed(streams);

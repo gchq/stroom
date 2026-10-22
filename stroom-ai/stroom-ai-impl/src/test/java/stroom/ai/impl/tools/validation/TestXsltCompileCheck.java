@@ -22,15 +22,23 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
+import net.sf.saxon.lib.Feature;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.value.EmptySequence;
 import net.sf.saxon.value.SequenceType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
@@ -38,6 +46,7 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// An XSLT is compiled as Stroom compiles it: with Stroom's functions and its imports read by name. Ported from
 /// the Stroom MCP server's `tests/test_saxon.py`
@@ -59,6 +68,9 @@ class TestXsltCompileCheck {
                                + "<xsl:template name=\"eventSource\"><xsl:param name=\"ip\"/><b/></xsl:template>"
                                + "</xsl:stylesheet>");
     private static final String IMPORTED = "<xsl:import href=\"GeoIP-V1\"/><xsl:import href=\"Common-Event-V1\"/>";
+
+    @TempDir
+    Path dir;
 
     private final XsltCompileCheck check = new XsltCompileCheck(() -> new Imports(), TestXsltCompileCheck::stroom);
 
@@ -109,6 +121,30 @@ class TestXsltCompileCheck {
         assertThat(compiled.errors()).singleElement().asString()
                 .startsWith("not compiled: ")
                 .contains("environment-variable()");
+    }
+
+    @Test
+    void testItCompilesLockedDownAsTheXPathEvaluationIs() throws IOException, SaxonApiException {
+        // Compiling runs static expressions (use-when), so whatever XsltSafety might miss reads nothing: no system
+        // property, environment variable or file, while Stroom's functions and imports by name still work.
+        final List<Configuration> used = new ArrayList<>();
+        final XsltCompileCheck locked = new XsltCompileCheck(() -> new Imports(), config -> {
+            used.add(config);
+            stroom(config);
+        });
+        assertThat(locked.compile(sheet(IMPORTED, "<xsl:value-of select=\"stroom:record-no(), geo:document(.)\"/>"))
+                .errors()).isEmpty();
+
+        final Configuration config = used.getFirst();
+        assertThat(config.getBooleanProperty(Feature.ALLOW_EXTERNAL_FUNCTIONS)).isFalse();
+        final Path secret = dir.resolve("secret.txt");
+        Files.writeString(secret, "the-secret");
+        final Processor processor = new Processor(config);
+        assertThatThrownBy(() -> processor.newXPathCompiler()
+                .evaluate("unparsed-text('" + secret.toUri() + "')", null))
+                .isInstanceOf(SaxonApiException.class);
+        assertThat(processor.newXPathCompiler().evaluate("string(environment-variable('PATH'))", null)
+                .toString()).isEmpty();
     }
 
     @Test

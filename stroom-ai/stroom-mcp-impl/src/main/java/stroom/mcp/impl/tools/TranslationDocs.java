@@ -46,7 +46,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.w3c.dom.Element;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -383,12 +382,7 @@ public class TranslationDocs {
         }
         List<String> errors = errors(checkXslt.check(xslt, null, inputNamespace));
         if (NullSafe.isNonEmptyString(previous)) {
-            final Set<String> kept = new HashSet<>();
-            XsltSafety.unsafeInXslt(previous).forEach(unsafe -> kept.add(unsafe.what()));
-            final Set<String> allowed = new HashSet<>();
-            XsltSafety.unsafeInXslt(XsltChecks.unescaped(xslt).text()).stream()
-                    .filter(unsafe -> kept.contains(unsafe.what()))
-                    .forEach(unsafe -> allowed.add(unsafe.why()));
+            final Set<String> allowed = XsltSafety.keptBy(XsltChecks.unescaped(xslt).text(), previous);
             errors = errors.stream().filter(error -> !allowed.contains(error)).toList();
         }
         if (!errors.isEmpty()) {

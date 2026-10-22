@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.security.shared.AppPermission;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -205,6 +206,44 @@ class TestStreamReader {
         now.addAndGet(StreamReader.SAMPLE_TTL_MS + 1);
         cached.cachedRawText(7, 100);
         Mockito.verify(world.store, Mockito.times(2)).openSource(7L);
+    }
+
+    @Test
+    void aTextOverTheCacheCapIsNotKeptAndKeepsTheOthers() {
+        // Before, one text over the cap flushed every other and was kept anyway, over the cap.
+        final StreamReader cached = new StreamReader(() -> world.metaService, () -> world.dataService,
+                () -> world.store, () -> world.feedProperties, () -> world.securityContext, () -> 1_000L, 10);
+        world.addRaw(7, "a\nb\n");
+        world.addRaw(8, "0123456789abcdef\n");
+
+        cached.cachedRawText(7, 100);
+        assertThat(cached.cachedRawText(8, 100).text()).isEqualTo("0123456789abcdef\n");
+        cached.cachedRawText(7, 100);
+        cached.cachedRawText(8, 100);
+
+        // 7 is still kept, 8 never was.
+        Mockito.verify(world.store, Mockito.times(1)).openSource(7L);
+        Mockito.verify(world.store, Mockito.times(2)).openSource(8L);
+    }
+
+    @Test
+    void noStreamsTextIsReadWithoutTheViewDataPermission() throws Exception {
+        // Before, the stream store was opened directly: it checks the feed, not View Data, which the data viewer
+        // needs. Seen in review: Error streams and a build's sample head were read without it.
+        world.addRaw(7, "a\nb\n");
+        assertThat(reader.cachedRawText(7, 100).text()).isEqualTo("a\nb\n");
+        Mockito.when(world.securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(false);
+
+        assertThatThrownBy(() -> reader.readHead(7, 0, 100))
+                .isInstanceOf(StreamReader.StreamReadException.class)
+                .hasMessage("Stream 7's text can't be read: you don't have permission to view data (View Data), "
+                            + "which reading a stream's text needs, as the data viewer does.");
+        // Not from the cache either: the permission may have been taken away since.
+        assertThatThrownBy(() -> reader.cachedRawText(7, 100)).isInstanceOf(StreamReader.StreamReadException.class);
+        assertThatThrownBy(() -> reader.errorStreamText(7, 100)).isInstanceOf(StreamReader.StreamReadException.class);
+        assertThatThrownBy(() -> StreamReader.errorStreamText(world.store, () -> false, 7, 100))
+                .isInstanceOf(StreamReader.StreamReadException.class);
+        Mockito.verify(world.store, Mockito.times(1)).openSource(7L);
     }
 
     @Test

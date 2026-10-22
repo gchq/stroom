@@ -152,7 +152,13 @@ public class IndexSearches {
                 pause();
             }
         } finally {
-            agentSearches.destroy(queryKey);
+            if (queryKey != null) {
+                agentSearches.destroy(queryKey);
+            } else {
+                // No response gave the search's key (the first request failed, or was stopped, after Stroom started
+                // the search): found by the owner made up for this search alone.
+                agentSearches.destroyOwnedBy(request.getSearchRequestSource().getOwnerDocRef().getUuid());
+            }
         }
         return found(probe, response);
     }

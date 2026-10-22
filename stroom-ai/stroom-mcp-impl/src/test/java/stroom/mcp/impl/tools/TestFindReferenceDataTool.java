@@ -43,6 +43,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -92,11 +93,14 @@ class TestFindReferenceDataTool {
         Mockito.when(pipelineService.fetchPipelineLayers(new DocRef(PipelineDoc.TYPE, "broken")))
                 .thenThrow(new PipelineModelException("Element type \"StateFilter\" is unknown"));
 
-        Mockito.when(processorFilters.all()).thenReturn(List.of(ProcessorFilter.builder()
+        final List<ProcessorFilter> filters = List.of(ProcessorFilter.builder()
                 .pipelineUuid("loader")
                 .queryData(QueryData.builder().expression(ExpressionOperator.builder()
                         .addTerm("Feed", Condition.EQUALS, "ACME-USERS").build()).build())
-                .build()));
+                .build());
+        Mockito.when(processorFilters.all()).thenReturn(filters);
+        // As PipelineFeeds reads them (see TestProcessorFilters).
+        Mockito.when(processorFilters.feedsByPipeline(filters)).thenReturn(Map.of("loader", Set.of("ACME-USERS")));
         final PipelineShapes shapes = PipelineLayers.shapes(pipelineService, new AiConfig());
         final PipelineTemplates templates = new PipelineTemplates(pipelineIndex, shapes, processorFilters,
                 documentAccess, () -> Mockito.mock(DocFinder.class));

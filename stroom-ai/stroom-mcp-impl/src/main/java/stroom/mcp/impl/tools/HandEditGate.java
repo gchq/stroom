@@ -140,7 +140,8 @@ class HandEditGate {
         // One question first (asked for by the user): overwrite the XSLT with the change, every hand edit dropped,
         // or decide field by field. Answered per field already, it isn't asked.
         String upfront = null;
-        if (!clashes.isEmpty() && !decided.containsKey("*") && !decided.keySet().containsAll(clashes.keySet())) {
+        if (!clashes.isEmpty() && !decided.containsKey("*")
+            && !copied(decided).keySet().containsAll(clashes.keySet())) {
             upfront = upfrontQuestion(doc, by, items, clashes);
             final Optional<String> chosen = consent.choose(call, context, ACTION, upfront,
                     List.of(OVERWRITE_ALL, PER_FIELD), "XSLT '" + doc.getName() + "', edited by hand: overwrite it, "
@@ -186,7 +187,7 @@ class HandEditGate {
         if (!asked.isEmpty()) {
             return Optional.of(guidance(upfront, asked));
         }
-        final List<String> overwritten = decided.entrySet().stream()
+        final List<String> overwritten = copied(decided).entrySet().stream()
                 .filter(entry -> "overwrite".equals(entry.getValue()) && clashes.containsKey(entry.getKey()))
                 .map(Map.Entry::getKey)
                 .toList();
@@ -275,7 +276,7 @@ class HandEditGate {
         final String carry = carry(kept == null
                 ? null
                 : kept.kind(), doc.getUuid());
-        final List<String> keptFields = decided.entrySet().stream()
+        final List<String> keptFields = copied(decided).entrySet().stream()
                 .filter(entry -> "keep".equals(entry.getValue()) && clashes.containsKey(entry.getKey()))
                 .map(Map.Entry::getKey)
                 .toList();
@@ -308,6 +309,14 @@ class HandEditGate {
                 : session.kind() + ":" + session.id()) + "\n" + uuid + "\n"
                            + XsltCode.sha256(current).substring(0, 16);
         return remembered.computeIfAbsent(key, ignored -> Collections.synchronizedMap(new LinkedHashMap<>()));
+    }
+
+    /// @param decided The user's answers for an XSLT (a synchronised map another call may change at once).
+    /// @return A copy, taken under the map's lock, to iterate: iterating it unlocked could fail or miss an answer.
+    static Map<String, String> copied(final Map<String, String> decided) {
+        synchronized (decided) {
+            return new LinkedHashMap<>(decided);
+        }
     }
 
     private static String plural(final int count) {

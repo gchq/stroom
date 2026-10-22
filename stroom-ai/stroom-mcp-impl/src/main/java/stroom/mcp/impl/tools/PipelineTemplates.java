@@ -256,7 +256,7 @@ class PipelineTemplates {
                 .filter(pipeline -> templateUuid.equals(pipeline.parentUuid()))
                 .sorted(Comparator.comparing(pipeline -> NullSafe.string(pipeline.name())))
                 .toList();
-        final Map<String, Set<String>> feedsByPipeline = ProcessorFilters.feedsByPipeline(processorFilters.all());
+        final Map<String, Set<String>> feedsByPipeline = processorFilters.feedsByPipeline(processorFilters.all());
         final List<Map<String, Object>> result = new ArrayList<>();
         for (final Entry kid : kids) {
             final Map<String, Object> entry = new LinkedHashMap<>();
