@@ -177,7 +177,8 @@ class McpTools {
                         + " tools and calls that cannot change anything, and this call would change something. "
                         + "Ask an administrator for a policy that grants read and write.");
         }
-        if (!readOnlyCall && !alreadyApproved) {
+        // A tool that confirms each change itself asks the user in its own form, which is the approval.
+        if (!readOnlyCall && !alreadyApproved && !tool.confirmsItself()) {
             final Optional<String> notApproved = approvals.approve(session, exchange, name, arguments);
             if (notApproved.isPresent()) {
                 audit(session, name, arguments, "Not approved", false);

@@ -202,4 +202,32 @@ class ProcessorFilters {
         }
         return List.copyOf(found.values());
     }
+
+    /// Pipelines whose processor filters read the feed (named, in a dictionary, or through its streams' ids), each
+    /// with whether it reads another pipeline's output (an indexing or CEF pipeline) rather than the raw data.
+    ///
+    /// @param feed A feed's name.
+    /// @return Each such pipeline as `{uuid, name, reads_events}`.
+    List<Map<String, Object>> pipelinesReading(final String feed) {
+        final Map<String, Map<String, Object>> found = new LinkedHashMap<>();
+        final Map<Object, Object> known = new LinkedHashMap<>();
+        for (final ProcessorFilter filter : all()) {
+            final List<ExpressionTerm> terms = terms(filter);
+            if (!feeds(terms, known).contains(feed.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            final boolean events = terms.stream()
+                    .anyMatch(term -> (TYPE.equals(term.getField()) && EVENTS.equals(term.getValue()))
+                                      || PIPELINE.equals(term.getField()));
+            final Map<String, Object> entry = found.computeIfAbsent(filter.getPipelineUuid(), uuid -> {
+                final Map<String, Object> map = new LinkedHashMap<>();
+                map.put("uuid", uuid);
+                map.put("name", filter.getPipelineName());
+                map.put("reads_events", events);
+                return map;
+            });
+            entry.put("reads_events", Boolean.TRUE.equals(entry.get("reads_events")) && events);
+        }
+        return new ArrayList<>(found.values());
+    }
 }

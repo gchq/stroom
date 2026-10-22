@@ -228,3 +228,61 @@ guides, resources and prompts.
 * **CEF, diagnosis and builds**: `draft_cef_mapping`, `review_coverage` (records no rule matched across a feed),
   `write_documentation` (a pipeline's or index's Documentation, with its field mapping), `promote_build` (moving a
   build into place, with approval and backups).
+
+## The build layer, for the ported write tools
+
+`start_onboarding` and `build_status` (`stroom-mcp-impl`, category content) are ported with the layer every tool
+that builds something stands on (the MCP server's `security/guard.py`, `security/record.py`, `utils/consent.py`,
+`utils/progress.py` and `tools/plan.py`). Its classes are in `stroom.mcp.impl.tools`, and injectable:
+
+* **`WriteGuard`**: everything a tool makes lives in the workspace folder (`stroom.ai.builds.workspaceFolder`, by
+  default `MCP Workspace`, below System), in a folder per build, tagged `mcp-managed` and `mcp-generated`.
+  * Make a document with `create(type, name, build, copyOf, false, role)`, or `createFilled(...)` to make it and
+    write its content in one go (deleted again if writing fails). A name the build already has for the type is
+    refused.
+  * Before changing a document, call `checkManaged(session, ref)` (it must be the tools' own) or
+    `checkInBuild(session, ref)` (and in a build folder, which it returns), or `checkBuilt` for one that may have
+    been promoted. Each refusal is a `ToolRefusal` with the MCP server's wording, and is audited.
+  * `buildOf(ref)`, `copyOf(ref)`, `folderContents(build)`, `roleFolder`, `moveToRole`, `resolveFolder(path)` and
+    `removeBuildFolderIfEmpty(build)` are as the MCP server's.
+  * Everything is done through Stroom's explorer and document services as the user, so Stroom's own checks (Create,
+    Edit, Delete) apply too.
+* **`BuildRecords`**: the build's record, the Documentation doc `Build record` in the build folder, in the MCP
+  server's format (a record either one wrote reads in the other). `recordPassed(pipeline, kind, draftCode, extra)`
+  records a clean step (`STEPPED`), a passed verification (`VERIFIED`) or Events that passed check_events
+  (`VALIDATED`) for the pipeline's code; `steppedClean`, `verified` and `validated` say whether its saved code has.
+  `update(build, ref, change)` changes a document's entry (`copy_of`, `version_of`, `stepped_streams`, ...).
+* **`Consent`**: before a write, `consent.require(call, context, Request.confirmation(action, summary, details,
+  token))` (or `Request.approval(...)`, with `.withEditable(key, title, proposed)` for a value the user may correct,
+  and `.keepingId()` when a later gate in the same call may still stop it). Empty means the user agreed: go on, and
+  read any correction with `consent.edited(context, key, proposed)`. Otherwise return the round it gives (a
+  `needs_confirmation` or `needs_approval` result) as the tool's result. A refusal (declined, or a form closed
+  unanswered) is a `ToolRefusal`. Where the session can ask, the user answers a form: in the chat the run stops
+  while it waits and the same call is made again with the answer, so a tool must be safe to re-run up to its
+  question. `consent.choose(...)` asks the user to pick one of some options.
+* **`BuildPlan`**: end every write tool's result with `plan.withNext(context, build, result)`, or
+  `plan.nextFor(context, ref, result)` for a document whose build the call didn't name: it adds `next` (the plan's
+  next step and the one call that does it), `done: false` until promotion, and what the user changed in the call's
+  forms (`changed_by_user`). `plan.resolveBuild(context, build, tool)` gives the build a call names, or the one its
+  session last worked on. `status(build, made)` is build_status's answer.
+* **`CallProgress`** (`stroom-ai-impl`): `CallProgress.of(context).say(message)` for each stage of a long call, and
+  `nowAndThen(message)` in its loops.
+
+Where the port differs from the MCP server:
+
+* **The guard works in-process**: Stroom's explorer tree is read directly, so the MCP server's waits and second
+  looks for a folder or document its REST reads didn't show yet (and its search of the explorer index as a fallback)
+  are not needed, and not ported. Only one folder of a name is made at a time on a node, as in the MCP server.
+* **Consent ids** are not the MCP server's signed request-state tokens: an id is random, kept by this node for the
+  session it was given in, bound to the action, the exact details and the user, single use, for an hour. Over
+  `/mcp`, a session's calls go to one node (see the affinity notes). The MCP server's renewal of an answer when the
+  user's access token ran out during a form (`needs_retry`) is not ported.
+* **The remembered build** (`remember_build`) is kept per session (a chat, or an MCP session) in this node's memory,
+  rather than per user: a call it can't help is told to name the build.
+* **Parts ported later** are bound with defaults until they are: `SampleProfiler` (sample profiling: until then
+  start_onboarding with sample text refuses, and the plan has no sample format, so its converter step reads as not
+  needed) and `MappingDrift` (whether an XSLT is still what its mapping generates: until then the checks before
+  promotion find no drift). A port binds its own with
+  `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding()`.
+* **Over `/mcp`, a write call is approved** by the endpoint before the tool runs (`McpApprovals`), and a tool's own
+  confirmation is then asked as well.
