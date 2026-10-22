@@ -160,7 +160,7 @@ class TestStartOnboardingTool {
     }
 
     // Profiles any text as key=value.
-    private static final class KeyValueProfiler implements SampleProfiler {
+    private static final class KeyValueProfiler implements SampleProfiling {
 
         @Override
         public Map<String, Object> profile(final String sample) {

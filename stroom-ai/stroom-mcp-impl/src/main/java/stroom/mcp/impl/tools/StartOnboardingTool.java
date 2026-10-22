@@ -57,7 +57,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
 
     private final WriteGuard guard;
     private final BuildPlan plan;
-    private final SampleProfiler sampleProfiler;
+    private final SampleProfiling sampleProfiler;
     private final SampleStreamTexts sampleStreamTexts;
     private final PipelineTemplates pipelineTemplates;
     private final AgentInstructions agentInstructions;
@@ -65,7 +65,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
     @Inject
     StartOnboardingTool(final WriteGuard guard,
                         final BuildPlan plan,
-                        final SampleProfiler sampleProfiler,
+                        final SampleProfiling sampleProfiler,
                         final SampleStreamTexts sampleStreamTexts,
                         final PipelineTemplates pipelineTemplates,
                         final AgentInstructions agentInstructions) {

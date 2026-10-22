@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
@@ -224,7 +225,7 @@ public class BuildRecords {
     /// @param prints Each element's code digest, from [#codeFingerprint].
     /// @return The fingerprint's digest, as the record keeps it.
     public static String fingerprintDigest(final Map<String, String> prints) {
-        return XsltCode.sha256(PythonJson.dumps(prints)).substring(0, 16);
+        return XsltCode.sha256(PyJson.dumpsSortedKeys(prints)).substring(0, 16);
     }
 
     /// Records that the pipeline's code (or the draft stepped) passed. Only pipelines the tools manage (in a build)
@@ -393,7 +394,7 @@ public class BuildRecords {
             lines.add("Works from existing feeds: " + String.join(", ", sources) + ".");
         }
         lines.addAll(List.of("", "## Record", "", "Read by the server; do not edit.", "",
-                "```json build-record", PythonJson.dumps(state, 1), "```", ""));
+                "```json build-record", PyJson.dumpsSortedKeys(state, 1), "```", ""));
         return String.join("\n", lines);
     }
 

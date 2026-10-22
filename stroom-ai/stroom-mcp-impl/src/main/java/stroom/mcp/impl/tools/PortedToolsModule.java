@@ -26,9 +26,9 @@ import com.google.inject.multibindings.OptionalBinder;
 /// [stroom.ai.impl.tools.BuiltInToolsModule]): they are offered in the chat and over `/mcp` alike. Add a new
 /// [StroomTool] and a single `.addBinding(...)` line here.
 ///
-/// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]), and the
-/// parts of the build layer ported later, with defaults until they are: [SampleProfiler] (sample profiling) and
-/// [MappingDrift] (whether an XSLT is still what its mapping generates). A port that provides one binds it with
+/// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]): sample
+/// profiling ([SampleProfiling]), and, with a default until the generators are ported, [MappingDrift] (whether
+/// an XSLT is still what its mapping generates). A port that provides one binds it with
 /// `OptionalBinder.newOptionalBinder(binder(), X.class).setBinding().to(...)`.
 public class PortedToolsModule extends AbstractModule {
 
@@ -47,8 +47,8 @@ public class PortedToolsModule extends AbstractModule {
                 .addBinding(BuildStatusTool.class);
 
         bind(BuildFacts.class).to(StroomBuildFacts.class);
-        OptionalBinder.newOptionalBinder(binder(), SampleProfiler.class)
-                .setDefault().to(SampleProfiler.Unavailable.class);
+        OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
+                .setDefault().to(SampleProfiling.Profiled.class);
         OptionalBinder.newOptionalBinder(binder(), MappingDrift.class)
                 .setDefault().toInstance(MappingDrift.NONE);
     }

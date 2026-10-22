@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -480,7 +481,7 @@ public class Consent {
         final List<Object> request = new ArrayList<>();
         request.add(action);
         request.add(NullSafe.map(details));
-        return XsltCode.sha256(PythonJson.dumps(request));
+        return XsltCode.sha256(PyJson.dumpsSortedKeys(request));
     }
 
     private String base32(final int bytes) {

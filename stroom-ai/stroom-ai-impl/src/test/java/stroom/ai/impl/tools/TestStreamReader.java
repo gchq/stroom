@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.xml.sax.InputSource;
 
+import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -142,6 +143,40 @@ class TestStreamReader {
         assertThat(text.text()).contains("latin1 caf�").contains("cp1252 �q�");
         assertThat(text.truncated()).isFalse();
         assertThat(reader.charsetReport(7).get("undecodable_bytes")).isEqualTo(3);
+    }
+
+    @Test
+    void theHeadOfAStreamStroomWontShowAsTextIsReadThroughItsBytesAndCut() {
+        // As the Stroom MCP server's read_head read such a stream through its HEX view: the head is the start of
+        // the stream decoded as a pipeline decodes it, said to be cut, and what was replaced is remembered.
+        world.addRaw(9, "");
+        final ByteArrayOutputStream lines = new ByteArrayOutputStream();
+        for (int i = 0; i < 20; i++) {
+            lines.writeBytes(TestStreamCharsets.MIXED);
+            lines.write('\n');
+        }
+        world.bytes.put(9L, lines.toByteArray());
+
+        final StreamReader.RawHead head = reader.readHead(9, 0, 2_000);
+
+        assertThat(head.truncated()).isTrue();
+        assertThat(head.text()).hasSizeLessThanOrEqualTo(2_000);
+        assertThat(StreamCharsets.decode(lines.toByteArray(), "UTF-8", true).text()).startsWith(head.text());
+        assertThat(head.parts()).isEqualTo(1);
+        assertThat(reader.charsetReport(9)).isNotNull();
+    }
+
+    @Test
+    void eachPartOfAStreamOfSeveralIsReadAsItsOwnHead() {
+        // A stream of several files received at once has a part each: a survey reads each part's head.
+        world.addRaw(11, "");
+        world.parts.put(11L, List.of("first,part\n1,2\n".getBytes(Charset.forName("UTF-8")),
+                "second,part\n3,4\n".getBytes(Charset.forName("UTF-8"))));
+
+        final StreamReader.RawHead second = reader.readHead(11, 1, 1_000);
+
+        assertThat(second).isEqualTo(new StreamReader.RawHead("second,part\n3,4\n", false, 2));
+        assertThat(reader.rawText(11, 1_000).text()).isEqualTo("first,part\n1,2\n");
     }
 
     @Test

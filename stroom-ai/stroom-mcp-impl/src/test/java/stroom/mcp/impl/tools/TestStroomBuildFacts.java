@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -80,13 +81,14 @@ class TestStroomBuildFacts {
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("n", Arrays.asList(1, true, null));
         details.put("feed name", "A");
-        assertThat(PythonJson.dumps(List.of("create_feed", details)))
+        assertThat(PyJson.dumpsSortedKeys(List.of("create_feed", details)))
                 .isEqualTo("[\"create_feed\", {\"feed name\": \"A\", \"n\": [1, true, null]}]");
         // json.dumps({'copy_of': 'prod-é', 'verified': []}, indent=1, sort_keys=True)
         final Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("verified", List.of());
         entry.put("copy_of", "prod-é");
-        assertThat(PythonJson.dumps(entry, 1)).isEqualTo("{\n \"copy_of\": \"prod-\\u00e9\",\n \"verified\": []\n}");
+        assertThat(PyJson.dumpsSortedKeys(entry, 1))
+                .isEqualTo("{\n \"copy_of\": \"prod-\\u00e9\",\n \"verified\": []\n}");
     }
 
     private static Map<String, Object> state(final boolean saturated,
