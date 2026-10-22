@@ -53,6 +53,7 @@ dependencies {
     implementation platform(libs.mcp.bom)
     implementation libs.mcp.core
     implementation libs.mcp.json.jackson3
+    implementation libs.restygwt
 
     testImplementation project(':stroom-proxy:stroom-proxy-remote-api')
     testImplementation project(':stroom-test-common')
