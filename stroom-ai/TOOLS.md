@@ -35,7 +35,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | all | yes | Manage Properties | | | workspace | |
 | `current_results` | Snapshots the results table of the attached query or dashboard tab | all | yes | | | Use | yes (attached tab) | |
 | `delete_file` | Deletes a file in the workspace's `/outputs/` | Agent | no | | | | yes (workspace) | |
-| `describe_data_source` | A data source's fields, conditions, documentation and AGENTS docs | all | yes | | | View, Use | workspace | `describe_feed` |
+| `describe_data_source` | A data source's fields, conditions, documentation and AGENTS docs, and the searches of an index that would mislead | all | yes | | | View, Use | workspace | `describe_feed`, `find_events` (part) |
 | `document_documentation` | A document's Documentation tab | all | yes | | | View | workspace | `describe_document` (type Documentation) |
 | `document_info` | A document's type, path, tags, history, version and dependencies | all | yes | | | View | no | `describe_document` (part) |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | all | yes | | Manage Processors | View | workspace | |
@@ -64,8 +64,8 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `read_document` | A document's content, or what a processor filter selects | all | yes | | Manage Processors | View | workspace | `describe_document` |
 | `read_file` | Reads lines of a workspace file | all | yes | | | | yes (workspace) | |
 | `read_turn` | Reads a whole earlier turn of the chat | all | yes | | | | yes (history) | |
-| `run_stroomql` | Runs a StroomQL query into a workspace table | all | yes | | | | workspace | `find_events` |
-| `search_events` | XPath, text or jq search over fetched events, into a table | all | yes | | | | yes (workspace) | `summarise_streams` (events, part) |
+| `run_stroomql` | Runs a StroomQL query into a workspace table, refusing one on an index whose answer would mislead | all | yes | | | | workspace | `find_events` (part) |
+| `search_events` | XPath, text or jq search over fetched events, into a table; or, given an index, finds events in it as a dashboard would | all | yes | | | Use | workspace | `summarise_streams` (events, part), `find_events` |
 | `search_history` | Searches the chat's history for text | all | yes | | | | yes (history) | |
 | `server_tasks` | The tasks running on every node now (Monitoring > Server Tasks) | all | yes | Manage Tasks | | | workspace | |
 | `str_replace` | Replaces text in a workspace file | Agent | no | | | | yes (workspace) | |
@@ -131,9 +131,11 @@ services directly as the user, and those listed here only read.
   bundled `error_rules.yaml`, after any the `stroom.ai.errorTriage.rules` property gives).
 * **`xslt_lookups` and `find_reference_data`**: MCP lists every reference map in the environment, with no arguments;
   the built-in starts from given XSLTs or pipelines (`uuids`, `map`, `loaders`) and analyses their lookups.
-* **`run_stroomql` and `find_events`**: MCP searches one index with structured terms (`where: [{field, value}]`,
-  `time_from`/`time_to`, `fields`, `limit` up to 20) as a dashboard would, and returns StreamId/EventId hits. The
-  built-in runs any StroomQL `query` into a workspace table.
+* **`search_events`, `run_stroomql`, `describe_data_source` and `find_events`**: MCP's `find_events` searches one
+  index with structured terms as a dashboard would, and returns StreamId/EventId hits; the built-ins search a file
+  of fetched events (`search_events`), run any StroomQL `query` into a workspace table (`run_stroomql`), and
+  describe a data source's fields (`describe_data_source`). `find_events` is merged into the three (see
+  "find_events, merged" below).
 * **`describe_data_source` and `describe_feed`**: MCP describes a feed by name (or one of its fields) from the
   generated documentation and index fields; the built-in describes a data source's fields, conditions,
   documentation and AGENTS docs, and checks View and Use.
@@ -353,7 +355,7 @@ guides, resources and prompts.
   under approval and within limits, and `wait_for_processing`.
 * **Indexing**: `get_field_conventions`, `draft_index_mapping`, `propose_index_template` and
   `check_index_template` (Elasticsearch index templates for an administrator to apply), `create_index_doc`,
-  `create_indexing_pipeline`, `verify_index`, and `find_events` (overlaps `run_stroomql`, above).
+  `create_indexing_pipeline` and `verify_index` (`find_events` is merged into `search_events`, above).
 * **CEF, diagnosis and builds**: `draft_cef_mapping`, `review_coverage` (records no rule matched across a feed),
   `write_documentation` (a pipeline's or index's Documentation, with its field mapping), `promote_build` (moving a
   build into place, with approval and backups).
@@ -507,3 +509,45 @@ Where they differ from the Python server:
   tools' own and in the build (`WriteGuard.checkInBuild`).
 * **apply_to_draft**: `not_in_catalogue` lists the catalogued fields in the catalogue's order (Python iterated a
   set).
+
+## find_events, merged
+
+The MCP server's `find_events` (`tools/indexing.py`, with its helpers `_search`, `_count`, `_column`, `_searchable`,
+`_index_fields` and `_affected`) is merged into the built-in search tools (category search; there is no
+`find_events` tool):
+
+* **`search_events` given `index`** does what `find_events` did (`IndexEvents`): the index's fields are listed,
+  a field it doesn't have is refused with the ones most like it ("Not fields of index ..."), a search whose answer
+  would mislead is refused (`MisleadingSearches`, `_searchable`), IS_NULL and IS_NOT_NULL are searched on
+  Elasticsearch as NOT_EQUALS `*` and EQUALS `*`, and the hits (newest first), the count and the Events streams
+  holding them are found by three searches as an unsaved dashboard makes them (`IndexSearches`: Stroom's
+  `DashboardService`, as the user, history not stored, each search stopped once read). `allStreams` adds
+  `affected` (the raw streams to reprocess, and for Elasticsearch the `_delete_by_query` request). The result is
+  `find_events`' JSON, with the same field names and nesting (`index`, `searched`, `total`, `hits`, `by_stream`,
+  `affected`, `errors`, `next`), and the same refusals and hints.
+* **`run_stroomql`** refuses a query on a Lucene or Elastic index that `find_events` would have refused (from the
+  query's parsed expression: e.g. `is null` on Elasticsearch, a wildcard on an ip field, IN with a space in a
+  value on Lucene, a field that isn't indexed), with the same wording and a note of StroomQL's `=` and `!=`.
+* **`describe_data_source`** says, for a Lucene or Elastic index, which searches through Stroom would mislead
+  and what to search instead (the knowledge `_searchable` refuses with), naming an Elastic index's ip fields.
+
+Where it differs from the MCP server:
+
+* The arguments are camelCase, as the built-in tools' are: `index` (the Elastic Index or Lucene Index doc's UUID,
+  or its name), `where`, `timeFrom`, `timeTo`, `fields`, `limit` (1 to 20, default 10) and `allStreams`. `where` is
+  a list of `{field, condition, value}`, one such object, or the list as JSON text; a condition Stroom's
+  dashboards don't take is refused.
+* The index is one of the data sources the user can Use (`DataSourceAccess`; one they can't is treated as one that
+  doesn't exist), where the MCP server read the doc through the REST API (View). An Elastic Index doc's index name
+  (for the label and the delete request) is read with View; without it, neither is given.
+* The time field is the data source's own (`DataSourceProvider.getTimeField`), as the doc gives it.
+* Each search is polled for up to 60 s as before, or for what the call's time limit (the query time limit) has left
+  less 2 s, whichever is sooner (`ToolDeadline.remaining()`): the MCP server bounded it by the access token's time
+  instead. What it has found by then is the answer.
+* Stroom's search errors are its `errorMessages` (the MCP server read the deprecated `errors`, which Stroom leaves
+  empty). A search Stroom gives no response to has the error "Stroom's dashboard search gave no response".
+* `_searchable`'s `listed` check (a field Stroom doesn't list for an Elasticsearch index, with ECS mapping types)
+  and `lucene_text` (CONTAINS on a keyword field, a range on a text field) are `verify_index`'s, and `find_events`
+  passed neither, so they aren't used here; `MisleadingSearches` ports the `lucene_text` part, not `listed`
+  (it needs the ECS component types), for `verify_index` when it is ported.
+* `search_events` now declares Use (document) for the index; its file search is unchanged.

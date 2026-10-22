@@ -118,7 +118,7 @@ class TestCompareOutputsTool {
         assertThat(refused("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}"))
                 .isEqualTo("Give draft_code or other_pipeline_uuid to compare against");
         assertThat(refused("{\"pipeline_uuid\": \"p-1\", \"draft_code\": {\"translationFilter\": \"x\"}}"))
-                .isEqualTo("Give stream_ids, or events (from find_events), whose records to compare");
+                .isEqualTo("Give stream_ids, or events (from search_events with an index), whose records to compare");
         assertThat(refused("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7], \"other_pipeline_uuid\": \"p-1\", "
                            + "\"max_records\": 501}"))
                 .isEqualTo("max_records must be a whole number from 1 to 500, not '501'");

@@ -17,6 +17,7 @@
 package stroom.ai.impl.workspace;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /// A time limit on a tool call, for work that could otherwise run for a very long time (e.g. a search with a
@@ -65,5 +66,15 @@ public final class ToolDeadline {
         if (Thread.currentThread().isInterrupted()) {
             throw new ToolTimeoutException();
         }
+    }
+
+    /// @return How long the current work has left before its time limit (zero once past it), or empty if it has
+    /// no time limit.
+    public static Optional<Duration> remaining() {
+        final Long deadline = DEADLINE_NANOS.get();
+        if (deadline == null) {
+            return Optional.empty();
+        }
+        return Optional.of(Duration.ofNanos(Math.max(0L, deadline - System.nanoTime())));
     }
 }

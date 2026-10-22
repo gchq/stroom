@@ -34,6 +34,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.List;
+import java.util.Set;
 
 /// `describe_data_source` - a data source's fields, as the query editor's help gives them: each field's type, the
 /// conditions it supports and whether it can be queried, and the data source's time field. QueryService.findFields
@@ -83,13 +84,20 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Gives a data source's fields: each field's type, the conditions it supports and "
-                             + "whether it can be queried, and the data source's time field. Use it to check the "
-                             + "field names in a StroomQL query (from \"<data source name>\" ...). Also gives its "
-                             + "documentation, which says what its fields hold when their names don't (e.g. the "
-                             + "field mapping of the pipeline that feeds it): use it to choose a data source and "
-                             + "its fields. The AGENTS docs that apply where the data source is are given too: "
-                             + "follow what they say about its fields, e.g. which field holds the acting user.")
+                .description(ToolDescription.builder()
+                        .general("Gives a data source's fields: each field's type, the conditions it supports and "
+                                 + "whether it can be queried, and the data source's time field. Use it to check "
+                                 + "the field names in a StroomQL query (from \"<data source name>\" ...) or a "
+                                 + "search of an index. Also gives its documentation, which says what its fields "
+                                 + "hold when their names don't (e.g. the field mapping of the pipeline that feeds "
+                                 + "it): use it to choose a data source and its fields. The AGENTS docs that apply "
+                                 + "where the data source is are given too: follow what they say about its fields, "
+                                 + "e.g. which field holds the acting user. For a Lucene or Elastic index, it says "
+                                 + "which searches through Stroom would mislead (e.g. CONTAINS on Elasticsearch "
+                                 + "finds nothing), and what to search instead.")
+                        .chatOnly(" To find an event the user describes in an index, use search_events with "
+                                  + "index.")
+                        .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(DATA_SOURCE_ARG, ToolDescription.builder()
                                 .general("The data source's name or uuid")
@@ -147,8 +155,38 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         if (values.size() >= MAX_FIELDS) {
             sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
         }
+        MisleadingSearches.backendOf(dataSource).ifPresent(backend -> sb.append(searchingNote(backend, values)));
         sb.append(contextNote(context, dataSource));
         return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    /// What a search of a Lucene or Elastic index through Stroom gets wrong without an error (found against Stroom
+    /// 7.13, and refused by the Stroom MCP server's find_events), so a query or search on it avoids it.
+    ///
+    /// @param backend [MisleadingSearches#ELASTICSEARCH] or [MisleadingSearches#LUCENE].
+    /// @param fields  The index's fields.
+    /// @return The note, on lines of its own.
+    static String searchingNote(final String backend, final List<QueryField> fields) {
+        final StringBuilder sb = new StringBuilder("\nSearching it through Stroom (");
+        if (MisleadingSearches.ELASTICSEARCH.equals(backend)) {
+            sb.append("Elasticsearch): STARTS_WITH and CONTAINS find nothing (use EQUALS with a * wildcard, e.g. "
+                      + "'adm*' or '*err*', or MATCHES_REGEX); IS_NULL and IS_NOT_NULL match every document (use "
+                      + "EQUALS '*' for any value, NOT_EQUALS '*' for none)");
+            final Set<String> ipFields = MisleadingSearches.ipFields(fields);
+            if (!ipFields.isEmpty()) {
+                sb.append("; on an ip field (")
+                        .append(String.join(", ", ipFields))
+                        .append(") a wildcard finds nothing: use a CIDR range, e.g. EQUALS '192.0.2.0/24'");
+            }
+        } else {
+            sb.append("Lucene): STARTS_WITH and ENDS_WITH find nothing (use EQUALS with a * wildcard, e.g. 'ca*' "
+                      + "or '*ol'); CONTAINS finds nothing on a keyword field (use EQUALS '*aro*'), nor a range on "
+                      + "a text field (use EQUALS with a wildcard, an address range as '10.1.*', or IN with the "
+                      + "values); IN finds nothing when a value holds a space (search each such value with "
+                      + "EQUALS)");
+        }
+        return sb.append("; IN takes values separated by commas. A field that is not queryable is found by no "
+                         + "search.\n").toString();
     }
 
     // What the people and builds that look after the data source say about it: its documentation (e.g. that

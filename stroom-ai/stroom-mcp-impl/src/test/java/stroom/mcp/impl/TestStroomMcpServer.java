@@ -309,9 +309,14 @@ class TestStroomMcpServer {
             client.initialize();
             grants = new ToolGrants(Map.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY));
 
-            listener.getValue().run();
-
-            waitUntil(() -> !told.isEmpty());
+            // The client's stream may not be open yet when the first is sent, and a notification sent before then is
+            // lost (the client lists its tools when it connects anyway), so the change is told until it is heard.
+            waitUntil(() -> {
+                if (told.isEmpty()) {
+                    listener.getValue().run();
+                }
+                return !told.isEmpty();
+            });
             assertThat(told.getLast()).extracting(Tool::name).containsExactly("read_thing");
         }
     }
@@ -434,7 +439,7 @@ class TestStroomMcpServer {
         final long deadline = System.currentTimeMillis() + 10_000;
         while (!condition.getAsBoolean()) {
             assertThat(System.currentTimeMillis()).as("waited too long").isLessThan(deadline);
-            Thread.sleep(50);
+            Thread.sleep(200);
         }
     }
 
