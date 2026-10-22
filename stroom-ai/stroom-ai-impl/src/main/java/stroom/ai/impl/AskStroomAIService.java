@@ -93,6 +93,7 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
@@ -209,6 +210,7 @@ public class AskStroomAIService {
     private final Provider<GlobalConfig> globalConfigProvider;
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final TaskContextFactory taskContextFactory;
+    private final HttpServletRequestHolder requestHolder;
     private final TableSummariserImpl tableSummariser;
     private final McpToolServerFactory mcpToolServerFactory;
     private final McpClientCache mcpClientCache;
@@ -270,7 +272,9 @@ public class AskStroomAIService {
                               final AiBackgroundTasks backgroundTasks,
                               final DocumentReferences documentReferences,
                               final TableDownloader tableDownloader,
-                              final TabSnapshots tabSnapshots) {
+                              final TabSnapshots tabSnapshots,
+                              final HttpServletRequestHolder requestHolder) {
+        this.requestHolder = requestHolder;
         this.chatTitler = chatTitler;
         this.tableDownloader = tableDownloader;
         this.tabSnapshots = tabSnapshots;
@@ -1093,6 +1097,9 @@ public class AskStroomAIService {
         final Runnable runnable = taskContextFactory.context(
                 "Download search results for AI analysis",
                 taskContext -> {
+                    // The download serves no HTTP request, though its thread may have inherited a finished one (see
+                    // AiChatRunManager), which its search would fail on.
+                    requestHolder.set(null);
                     // Stopping the chat stops the download.
                     backgroundTasks.started(chatId, taskContext);
                     try {

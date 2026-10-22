@@ -31,6 +31,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
@@ -112,6 +113,7 @@ public class AiChatRunManager {
     private final AiDao aiDao;
     private final UserService userService;
     private final Provider<AiConfig> aiConfigProvider;
+    private final HttpServletRequestHolder requestHolder;
 
     /// The runs being worked on, or queued, by this node, by chat id.
     private final Map<Integer, LocalRun> localRuns = new ConcurrentHashMap<>();
@@ -128,7 +130,8 @@ public class AiChatRunManager {
                      final AiService aiService,
                      final AiDao aiDao,
                      final UserService userService,
-                     final Provider<AiConfig> aiConfigProvider) {
+                     final Provider<AiConfig> aiConfigProvider,
+                     final HttpServletRequestHolder requestHolder) {
         this.runDao = runDao;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
@@ -138,6 +141,7 @@ public class AiChatRunManager {
         this.aiDao = aiDao;
         this.userService = userService;
         this.aiConfigProvider = aiConfigProvider;
+        this.requestHolder = requestHolder;
     }
 
     /// Starts a run in a chat, unless the chat already has one.
@@ -205,6 +209,10 @@ public class AiChatRunManager {
 
         // The task is made now, so that it runs as the user asking, whenever it starts.
         final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
+            // A run serves no HTTP request. Its thread may have been made while one was being served, and inherited
+            // it (see HttpServletRequestHolder): long finished, it fails when read, e.g. by the audit log for the
+            // client's address, or by a search.
+            requestHolder.set(null);
             taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
             execute(run, work, taskContext::isTerminated);
         });

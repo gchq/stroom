@@ -151,7 +151,8 @@ public final class LangChain4jTools {
                 // The run stops until the user answers (e.g. ask_user's questions), and makes the call again then.
                 throw e;
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Built-in tool '" + name + "' failed", e);
+                // Not one of the tool's own errors (which it gives as its result), so a fault to look into.
+                LOGGER.warn(() -> "Built-in tool '" + name + "' failed", e);
                 return ToolResult.error("Error running built-in tool '" + name + "': "
                                         + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
             }
