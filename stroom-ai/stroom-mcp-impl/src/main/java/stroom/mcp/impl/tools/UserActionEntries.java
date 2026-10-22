@@ -24,10 +24,12 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.NullSafe;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /// Steps that are the user's, as entries a client can show as buttons (asked for by the user: Stroom's Ask Stroom
 /// AI shows each on the tool call's card, where a click is the user's consent; the model can neither make nor
@@ -41,6 +43,13 @@ final class UserActionEntries {
 
     /// The key a result gives its user actions under.
     static final String USER_ACTIONS = "user_actions";
+    // The only Elasticsearch requests offered: committing an index template, removing one (the old name's, after
+    // rename_index), dropping one index or data stream. An index name never starts with _ - or + (so not _all),
+    // and a wildcard or comma would name several.
+    private static final Pattern ES_REQUEST = Pattern.compile(
+            "PUT _index_template/[A-Za-z0-9][A-Za-z0-9._-]*\\n\\{.*}"
+            + "|DELETE _index_template/[A-Za-z0-9][A-Za-z0-9._-]*"
+            + "|DELETE (_data_stream/)?[a-z0-9][a-z0-9._-]*", Pattern.DOTALL);
 
     private UserActionEntries() {
         // Static only.
@@ -55,6 +64,20 @@ final class UserActionEntries {
                                             final int filterId,
                                             final DocRef pipeline,
                                             final String what) {
+        return enableFilter(links, filterId, pipeline, what, List.of());
+    }
+
+    /// @param links    How the caller links to Stroom.
+    /// @param filterId A processor filter.
+    /// @param pipeline Its pipeline.
+    /// @param what     What enabling it does, or "".
+    /// @param after    What must come first: the ids of other actions, or conditions in words; none for nothing.
+    /// @return A button that enables the filter, once what comes first is done.
+    static Map<String, Object> enableFilter(final StroomLinks links,
+                                            final int filterId,
+                                            final DocRef pipeline,
+                                            final String what,
+                                            final List<String> after) {
         final Map<String, Object> doc = doc(pipeline, PipelineDoc.TYPE);
         final Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("id", "enable-" + filterId);
@@ -66,6 +89,30 @@ final class UserActionEntries {
                              + (NullSafe.isNonBlankString(what)
                 ? ": " + what
                 : ""));
+        if (!NullSafe.isEmptyCollection(after)) {
+            entry.put("after", new ArrayList<>(after));
+        }
+        return entry;
+    }
+
+    /// An Elasticsearch request for the cluster admin to run, shown for copying: only of the shapes offered (a
+    /// template committed or removed, one index or data stream dropped), so a malformed one is never a button.
+    ///
+    /// @param actionId The action's id, e.g. `drop-ecs-acme-v2`.
+    /// @param request  The Dev Tools request, e.g. `DELETE ecs-acme-v2`.
+    /// @param why      What it does, in words.
+    /// @return The action, or null for a request not of a shape offered.
+    static Map<String, Object> esRequest(final String actionId, final String request, final String why) {
+        final String stripped = NullSafe.string(request).strip();
+        if (!ES_REQUEST.matcher(stripped).matches()) {
+            return null;
+        }
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("id", actionId);
+        entry.put("action", UserActions.ELASTICSEARCH_REQUEST);
+        entry.put("by", "cluster admin");
+        entry.put("request", stripped);
+        entry.put("summary", why);
         return entry;
     }
 

@@ -30,10 +30,14 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.index.shared.IndexResource;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -180,6 +184,28 @@ class TestWaitForProcessingTool {
         assertThat(String.valueOf(result.get("output"))).contains("none expected");
         assertThat(result.get("streams")).isEqualTo(List.of(Map.of("input", 5, "events", List.of(),
                 "errors", List.of())));
+    }
+
+    @Test
+    void indexingThatPassesRestoresTheTemplatesBatchSize() {
+        // Indexing completed without errors: the small development batch was only to see Elasticsearch's responses.
+        inBuildSteppedClean();
+        elements("xsltFilter", "XSLTFilter", "elasticIndexingFilter", "ElasticIndexingFilter");
+        endedTask();
+        world.docs.put(P1.getUuid(), PipelineDoc.builder().uuid(P1.getUuid()).name(P1.getName()).version("v0")
+                .pipelineData(new PipelineDataBuilder()
+                        .addProperty(new PipelineProperty("elasticIndexingFilter", "batchSize",
+                                new PipelinePropertyValue(IndexingRuns.DEV_BATCH_SIZE)))
+                        .build())
+                .build());
+
+        final Map<String, Object> result = call("{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5], "
+                                                + "\"timeout_seconds\": 60}");
+
+        assertThat(result.get("gate")).isEqualTo("pass");
+        assertThat(result.get("batch_size")).isEqualTo("restored to the template's default, now that indexing "
+                                                       + "completed without errors");
+        assertThat(PipelineDocs.addedProperties((PipelineDoc) world.docs.get(P1.getUuid()))).isEmpty();
     }
 
     @Test
@@ -455,10 +481,12 @@ class TestWaitForProcessingTool {
         final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
                 new Consent(Mockito.mock(SecurityContext.class), () -> Mockito.mock(AiAuditLog.class)),
                 new BuildMemory());
-        return new WaitForProcessingTool(world.documentAccess, processorFilterAccess, status,
-                new StreamProcessing(streamReader, feedAccess, () -> taskService),
-                new PipelineOutputs(world.pipelineShapes), world.guard(), world.records(), plan, clock::get,
-                duration -> pause.pause(duration));
+        final StreamProcessing streamProcessing = new StreamProcessing(streamReader, feedAccess, () -> taskService);
+        final IndexingRuns indexingRuns = new IndexingRuns(world.pipelineShapes, new PipelineDocs(world.documentAccess),
+                world.guard(), streamProcessing, () -> Mockito.mock(IndexResource.class), streamId -> "");
+        return new WaitForProcessingTool(world.documentAccess, processorFilterAccess, status, streamProcessing,
+                new PipelineOutputs(world.pipelineShapes), world.guard(), world.records(), plan, indexingRuns,
+                clock::get, duration -> pause.pause(duration));
     }
 
     private ToolCallContext context() {
