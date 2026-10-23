@@ -50,6 +50,70 @@ class TestKeyBinding {
     }
 
     @Test
+    void hasTheDefaultShortcutsForRefreshTabsAndTheShortcutList() {
+        // Alt, as the browser keeps Ctrl+R, F5 and Ctrl+PageUp/PageDown
+        assertThat(KeyBinding.getShortcut(Action.REFRESH)).isEqualTo("Alt+R");
+        assertThat(KeyBinding.getShortcut(Action.NEXT_TAB)).isEqualTo("Alt+PageDown");
+        assertThat(KeyBinding.getShortcut(Action.PREVIOUS_TAB)).isEqualTo("Alt+PageUp");
+        // '?'
+        assertThat(KeyBinding.getShortcut(Action.SHOW_KEY_BINDS)).isEqualTo("Shift+/");
+        assertThat(KeyBinding.getConfigurableActions())
+                .contains(Action.REFRESH, Action.NEXT_TAB, Action.PREVIOUS_TAB, Action.SHOW_KEY_BINDS);
+    }
+
+    @Test
+    void hasTheDefaultShortcutsForExplorerItemsAndClosingSavedTabs() {
+        assertThat(KeyBinding.getShortcut(Action.EXPLORER_RENAME)).isEqualTo("F2");
+        assertThat(KeyBinding.getShortcut(Action.EXPLORER_INFO)).isEqualTo("Alt+Enter");
+        assertThat(KeyBinding.getShortcut(Action.ITEM_CLOSE_SAVED)).isEqualTo("Alt+Shift+S");
+        assertThat(Action.EXPLORER_RENAME.getCategory()).isEqualTo(KeyBinding.Category.EXPLORER);
+        assertThat(Action.EXPLORER_INFO.getCategory()).isEqualTo(KeyBinding.Category.EXPLORER);
+        assertThat(KeyBinding.getConfigurableActions())
+                .contains(Action.EXPLORER_RENAME, Action.EXPLORER_INFO, Action.ITEM_CLOSE_SAVED);
+    }
+
+    @Test
+    void explorerItemsAndClosingSavedTabsClashWithNothing() {
+        final Map<Action, List<KeyShortcut>> bindings = KeyBinding.getDefaultBindings();
+
+        for (final Action action : List.of(Action.EXPLORER_RENAME, Action.EXPLORER_INFO, Action.ITEM_CLOSE_SAVED)) {
+            for (final KeyShortcut shortcut : bindings.get(action)) {
+                assertThat(KeyBinding.findClashes(bindings, action, shortcut)).isEmpty();
+                // Alt+Enter isn't Enter, which opens an item
+                assertThat(KeyBinding.findFixedClash(shortcut)).isNull();
+            }
+        }
+    }
+
+    @Test
+    void showsTheShortcutListWithACharacterKey() {
+        // So it is turned off with the other character key shortcuts, and ignored in a text field
+        assertThat(KeyShortcut.parse("Shift+/").isCharacterKeyShortcut()).isTrue();
+
+        KeyBinding.applyUserBindings(null, false);
+        assertThat(KeyBinding.getShortcut(Action.SHOW_KEY_BINDS)).isNull();
+        assertThat(KeyBinding.getShortcut(Action.REFRESH)).isEqualTo("Alt+R");
+    }
+
+    @Test
+    void givesAnActionsShortcutsAsTheUserHasThem() {
+        assertThat(texts(KeyBinding.getShortcuts(Action.MOVE_UP))).containsExactly("W", "K", "Up");
+        assertThat(KeyBinding.getShortcuts(Action.GOTO_USERS)).isEmpty();
+
+        KeyBinding.applyUserBindings(userBindings(Action.REFRESH, "Alt+Shift+R", "Alt+F5"), true);
+        assertThat(texts(KeyBinding.getShortcuts(Action.REFRESH))).containsExactly("Alt+Shift+R", "Alt+F5");
+    }
+
+    @Test
+    void givesTheAriaFormOfAShortcut() {
+        assertThat(KeyBinding.getAriaShortcut(Action.ITEM_SAVE)).isEqualTo("Ctrl+S");
+        assertThat(KeyBinding.getAriaShortcut(Action.HELP)).isEqualTo("F1");
+        // A key sequence can't be given, as a space separates alternatives
+        assertThat(KeyBinding.getAriaShortcut(Action.GOTO_USER_PREFERENCES)).isNull();
+        assertThat(KeyBinding.getAriaShortcut(Action.GOTO_USERS)).isNull();
+    }
+
+    @Test
     void hasNoDefaultShortcutsThatClash() {
         final Map<Action, List<KeyShortcut>> defaults = KeyBinding.getDefaultBindings();
 

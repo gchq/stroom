@@ -216,6 +216,12 @@ class DataGridKeyboard<R> {
         if (editing) {
             return onEditingKeyDown(event, rowIndex);
         }
+        if (column < 0 && selector != null && selector.onRowKey(item(rowIndex), event)) {
+            // A key the selection manager has a use for on a row, with any modifiers, e.g. the
+            // explorer's F2 to rename its item or Alt+Enter for its info
+            handled(event);
+            return true;
+        }
         if (event.getAltKey() || DataGridDom.isOtherMeta(event)) {
             return false;
         }
@@ -863,6 +869,16 @@ class DataGridKeyboard<R> {
         /// @param item The row's item.
         /// @return Whether the selection manager showed a menu (the key goes no further).
         default boolean onContextMenu(final R item) {
+            return false;
+        }
+
+        /// A key was pressed on a row itself, before the grid acts on it, for a key the selection
+        /// manager has a use for (e.g. the explorer's F2 to rename its item).
+        ///
+        /// @param item  The row's item.
+        /// @param event The `keydown` event.
+        /// @return Whether the selection manager used the key (the key goes no further).
+        default boolean onRowKey(final R item, final NativeEvent event) {
             return false;
         }
 

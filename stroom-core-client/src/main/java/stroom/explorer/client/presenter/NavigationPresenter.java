@@ -279,6 +279,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             delete.setEnabled(enabled);
         }));
         registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(explorerTree.addItemKeyHandler(event -> getEventBus().fireEvent(event)));
 
         registerHandler(activityButton.addClickHandler(event -> currentActivity.showActivityChooser()));
     }

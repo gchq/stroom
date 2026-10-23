@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.explorer.client.event.ExplorerItemKeyEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
@@ -34,6 +35,8 @@ import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -43,6 +46,7 @@ import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -66,8 +70,12 @@ import java.util.function.Consumer;
 /// filter). Moving doesn't choose an item (choosing one opens its document), unless the tree is a
 /// picker's ([#setSelectionFollowsFocus]): Space chooses (Ctrl+Space adds to the choice, Shift and
 /// the arrows extend it, where several can be chosen), Enter opens, as a double click does, and the
-/// context menu key or Shift+F10 shows the item's menu, as a right click does.
+/// context menu key or Shift+F10 shows the item's menu, as a right click does. Keys for some of the
+/// menu's actions (F2 to rename, Alt+Enter for info, which the user can change) act on the item, and
+/// a screen reader is told when they can't.
 public abstract class AbstractExplorerTree extends Composite implements Focus {
+
+    private static final Action[] ITEM_KEY_ACTIONS = {Action.EXPLORER_RENAME, Action.EXPLORER_INFO};
 
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
@@ -77,6 +85,8 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private final String expanderClassName;
     private final ExplorerCell explorerCell;
     private final ExplorerTreeSelectionEventManager selectionEventManager;
+    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
+    private final Element liveRegion;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
@@ -152,6 +162,12 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         flowPanel.setWidth("100%");
         flowPanel.setHeight("100%");
         flowPanel.add(tree);
+
+        liveRegion = Document.get().createDivElement();
+        liveRegion.setClassName("sr-only");
+        liveRegion.setAttribute("role", "status");
+        liveRegion.setAttribute("aria-live", "polite");
+        flowPanel.getElement().appendChild(liveRegion);
 
         initWidget(flowPanel);
     }
@@ -400,20 +416,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         }
 
         if (selectionModel != null && popupPosition != null) {
-            // If the item clicked is already selected then don't change the selection.
-            if (!selectionModel.isSelected(item)) {
-                // Change the selection.
-                doSelect(item,
-                        new SelectionType(false,
-                                true,
-                                false,
-                                nativeEvent != null && nativeEvent.getCtrlKey(),
-                                nativeEvent != null && nativeEvent.getShiftKey()));
-            }
-
-            if (row >= 0) {
-                tree.setKeyboardSelectedRow(row, true);
-            }
+            chooseToActOn(item, row, nativeEvent);
             Scheduler.get().scheduleDeferred(() -> {
                 ShowExplorerMenuEvent.fire(
                         AbstractExplorerTree.this,
@@ -421,6 +424,52 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                         popupPosition);
             });
         }
+    }
+
+    // Chooses the item an action is to act on, as a right click does, unless it is already chosen
+    // (keeping the rest of the choice)
+    private void chooseToActOn(final ExplorerNode item, final int row, final NativeEvent nativeEvent) {
+        if (!selectionModel.isSelected(item)) {
+            doSelect(item,
+                    new SelectionType(false,
+                            true,
+                            false,
+                            nativeEvent != null && nativeEvent.getCtrlKey(),
+                            nativeEvent != null && nativeEvent.getShiftKey()));
+        }
+
+        if (row >= 0) {
+            tree.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    /// Acts on an item with a key for one of its menu's actions, e.g. F2 to rename it.
+    ///
+    /// @param item   The item with the focus.
+    /// @param action The action whose key was pressed.
+    /// @return Whether there is anything to act on the item (the key goes no further).
+    boolean actOnItem(final ExplorerNode item, final Action action) {
+        if (selectionModel == null || getHandlerCount(ExplorerItemKeyEvent.getType()) == 0) {
+            return false;
+        }
+        chooseToActOn(item, tree.getVisibleItems().indexOf(item), null);
+        Scheduler.get().scheduleDeferred(() ->
+                ExplorerItemKeyEvent.fire(AbstractExplorerTree.this, action, this::announce));
+        return true;
+    }
+
+    // Says something to screen reader users, emptying the region first so a repeat is said again
+    private void announce(final String message) {
+        liveRegion.setInnerText("");
+        Scheduler.get().scheduleDeferred(() -> liveRegion.setInnerText(message));
+    }
+
+    /// Adds a handler for the keys for an item's actions (e.g. F2 to rename it).
+    ///
+    /// @param handler The handler.
+    /// @return Its registration.
+    public HandlerRegistration addItemKeyHandler(final ExplorerItemKeyEvent.Handler handler) {
+        return addHandler(handler, ExplorerItemKeyEvent.getType());
     }
 
     void selectAll() {
@@ -478,6 +527,19 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         public boolean onContextMenu(final ExplorerNode item) {
             showMenu(item, null);
             return true;
+        }
+
+        // The keys for an item's actions, e.g. F2 to rename it
+        @Override
+        public boolean onRowKey(final ExplorerNode item, final NativeEvent event) {
+            if (item != null) {
+                for (final Action action : ITEM_KEY_ACTIONS) {
+                    if (KeyBinding.isShortcut(event, action)) {
+                        return actOnItem(item, action);
+                    }
+                }
+            }
+            return false;
         }
 
         @Override
