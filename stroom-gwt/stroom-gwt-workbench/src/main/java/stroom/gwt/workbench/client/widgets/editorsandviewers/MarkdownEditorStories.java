@@ -176,9 +176,7 @@ public final class MarkdownEditorStories {
                 harness.getUiConfigCache(),
                 userPreferencesManager,
                 markdownConverter);
-        // As the presenter's document tab does when it is shown
-        presenter.bind();
-        harness.unbindOnCleanUp(presenter);
+        harness.disposeOnCleanUp(presenter);
 
         final Spy onChange = harness.fn(ON_CHANGE);
         harness.addRegistration(previewPresenter.addValueChangeHandler(event ->

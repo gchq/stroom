@@ -68,7 +68,6 @@ public class PopupManager implements DialogEvent.Handler {
 
             popupMap.put(presenterWidget, popupSupport);
 
-            presenterWidget.bind();
             popupSupport.show(event);
         }
     }
@@ -86,7 +85,6 @@ public class PopupManager implements DialogEvent.Handler {
         if (popupMap != null) {
             final PopupSupport popupSupport = popupMap.remove(event.getPresenterWidget());
             if (popupSupport != null) {
-                event.getPresenterWidget().unbind();
                 popupSupport.hide(event);
             }
         }

@@ -236,7 +236,7 @@ public class VisPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addComponentChangeListener(component -> {
+        own(dashboardContext.addComponentChangeListener(component -> {
             if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(), component.getId())) {
                 updateTableId(component.getId());
             }

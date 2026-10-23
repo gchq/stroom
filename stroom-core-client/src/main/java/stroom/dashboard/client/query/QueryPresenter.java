@@ -263,7 +263,7 @@ public class QueryPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addContextChangeListener(() -> {
+        own(dashboardContext.addContextChangeListener(() -> {
             if (initialised) {
                 final ExpressionOperator selectionQuery = dashboardContext
                         .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())

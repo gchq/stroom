@@ -119,7 +119,7 @@ import java.util.function.Consumer;
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
 /// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers, handlers
 /// and presenters registered with [#addTimer(Timer)], [#addRegistration(HandlerRegistration)] and
-/// [#unbindOnCleanUp(MyPresenterWidget)] are stopped, and the event bus is switched off.
+/// [#disposeOnCleanUp(MyPresenterWidget)] are stopped, and the event bus is switched off.
 public final class ScreenHarness {
 
     /// The name of the spy that records each REST request, as `METHOD /path?query body`.
@@ -491,7 +491,7 @@ public final class ScreenHarness {
             getComponentRoot().adopt(hasComponentNode.getComponentNode());
             return presenter;
         }
-        return unbindOnCleanUp(presenter);
+        return disposeOnCleanUp(presenter);
     }
 
     private void fillWidget(final Widget widget, final Object focusContent, final boolean tab) {
@@ -600,20 +600,18 @@ public final class ScreenHarness {
     }
 
     /// Releases a presenter the story makes when the story renders again (and when the leak
-    /// probe closes the screen), e.g. a dialog it shows or one shown in the story's widget: the
-    /// story's root owns it, so it is disposed with everything it owns, or, if it has no place in
-    /// the ownership tree, it is unbound (popups are unbound when the harness hides them).
+    /// probe closes the screen), e.g. a dialog it shows or one shown in the story's widget: unless
+    /// something already owns it, the story's root owns it, so it is disposed with everything it
+    /// owns.
     ///
     /// @param presenter The presenter.
     /// @param <P>       The presenter type.
     /// @return The presenter.
-    public <P extends MyPresenterWidget<?>> P unbindOnCleanUp(final P presenter) {
+    public <P extends MyPresenterWidget<?>> P disposeOnCleanUp(final P presenter) {
         if (presenter instanceof final HasComponentNode hasComponentNode
             && hasComponentNode.getComponentNode() != null
             && hasComponentNode.getComponentNode().parent() == null) {
             getComponentRoot().adopt(hasComponentNode.getComponentNode());
-        } else {
-            addCleanUp(presenter::unbind);
         }
         return presenter;
     }

@@ -77,7 +77,7 @@ public class ContentTabPanePresenter
         this.recentItems = recentItems;
         view.setUiHandlers(this);
 
-        registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
+        own(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
                 event -> {
                     final TabData selectedTab = getSelectedTab();
                     if (selectedTab instanceof Refreshable) {
@@ -87,7 +87,7 @@ public class ContentTabPanePresenter
                     }
                 }));
 
-        registerHandler(eventBus.addHandler(GetCurrentTabsEvent.getType(),
+        own(eventBus.addHandler(GetCurrentTabsEvent.getType(),
                 event -> {
                     event.getCallback().accept(getTabs());
                 }));
@@ -95,7 +95,7 @@ public class ContentTabPanePresenter
         getView().setRightIndent(32);
 
         // Handle the history
-        registerHandler(History.addValueChangeHandler(event -> {
+        own(History.addValueChangeHandler(event -> {
             if (!ignoreHistory) {
                 ignoreHistory = true;
                 try {

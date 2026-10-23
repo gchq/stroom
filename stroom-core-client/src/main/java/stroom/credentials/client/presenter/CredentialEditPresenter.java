@@ -103,6 +103,15 @@ public class CredentialEditPresenter
         final TabData detailsTab = addTab("Settings", credentialSettingsPresenter);
         changeSelectedTab(detailsTab);
         addTab("Permissions", permissionsPresenter);
+
+        // Handler for the tab bar clicks to select different tabs.
+        own(getView().getTabBar().addSelectionHandler(event -> {
+            final TabData tab = event.getSelectedItem();
+            if (tab != null && tab != selectedTab) {
+                changeSelectedTab(tab);
+            }
+        }));
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     /**
@@ -171,22 +180,6 @@ public class CredentialEditPresenter
         } else {
             getView().getTabBar().focus();
         }
-    }
-
-    /**
-     * Register handlers when added to the UI.
-     */
-    @Override
-    public void onBind() {
-
-        // Handler for the tab bar clicks to select different tabs.
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> {
-            final TabData tab = event.getSelectedItem();
-            if (tab != null && tab != selectedTab) {
-                changeSelectedTab(tab);
-            }
-        }));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     /**

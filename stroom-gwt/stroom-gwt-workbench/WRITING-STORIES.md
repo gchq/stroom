@@ -139,7 +139,7 @@ return harness.asWidget();
 A screen opened by an event is shown by registering the presenter as the event's handler and
 firing the event, as its listener would; a tab's content (not a popup) is added with
 `harness.addContent(presenter)`, which fills the canvas (the full page height, as Stroom's content
-pane does) and unbinds the presenter on re-render.
+pane does) and disposes the presenter on re-render.
 
 Also on the harness, for what Stroom's app does around a screen:
 
@@ -365,9 +365,9 @@ disposed through `StoryContext.addCleanUp`, before the preview removes what is l
    `LocationManager.removeWindowClosingHandler()` removes the window-closing handler the harness's
    `StoryLocationManager` added;
 3. the popups the harness's `PopupManager` opened are hidden with Stroom's `HidePopupEvent`, which
-   unbinds their presenters and restores the focus;
+   restores the focus (a dialog made for one use is then disposed);
 4. the story's clean ups run: `harness.addTimer(timer)`, `harness.addRegistration(registration)`,
-   `harness.unbindOnCleanUp(presenter)` and `harness.addCleanUp(runnable)`. Register anything the
+   `harness.disposeOnCleanUp(presenter)` and `harness.addCleanUp(runnable)`. Register anything the
    story starts that outlives the rendering, e.g. a presenter shown in the canvas;
 5. the event bus stops firing events and the security context reports being logged out, so
    anything else left over does nothing.
@@ -494,9 +494,9 @@ RestFixtures.builder()
   `stroom.widget.tooltip.Tooltip`; stepping needs `stroom.pipeline.Pipeline` as well as
   `PipelineStepping`), and RestyGWT generates code for every method of a resource interface used,
   so the types of all of them must be available.
-* Presenters from GIN are bound (`onBind`) when created, as in Stroom; one made with `new` is not
-  bound until it is revealed (or `bind()` is called), so e.g. `CredentialsListPresenter`'s data
-  provider would still be null when its dialog is set up.
+* A presenter registers its handlers when it is made, whether by GIN or with `new`, and keeps them
+  until it is disposed: give one the story makes to `harness.disposeOnCleanUp(presenter)` (or to
+  whatever owns it).
 * Create the injector in `render` (`GWT.create(AppScreenGinjector.class)`), a new one each time:
   the harness refuses an injector another harness has used.
 * **Package-private or private Stroom methods** (e.g. `NodeGroupEditPresenter.show`, called only by

@@ -56,9 +56,9 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
-        registerHandler(view.addKeyDownHandler(globalKeyHandler::onKeyDown));
-        registerHandler(view.addKeyUpHandler(globalKeyHandler::onKeyUp));
-        registerHandler(eventBus.addHandler(
+        own(view.addKeyDownHandler(globalKeyHandler::onKeyDown));
+        own(view.addKeyUpHandler(globalKeyHandler::onKeyUp));
+        own(eventBus.addHandler(
                 ChangeCurrentPreferencesEvent.getType(),
                 this::handlePreferencesChange));
     }

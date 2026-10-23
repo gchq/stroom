@@ -338,7 +338,7 @@ public class ElementPresenter
                 }
             }
 
-            registerHandler(codePresenter.getView().asWidget().addDomHandler(e -> {
+            own(codePresenter.getView().asWidget().addDomHandler(e -> {
                 if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
                     (e.isShiftKeyDown() || e.isControlKeyDown())) {
                     e.preventDefault();
@@ -548,8 +548,8 @@ public class ElementPresenter
             // dirtiness is recomputed by comparison in refreshDirty(), so a reverted edit returns to
             // clean. Note that element code is not part of the pipeline structure, so this must not
             // touch the pipeline model: rebuilding it on each keypress makes the editor lag.
-            registerHandler(codePresenter.addValueChangeHandler(event -> onCodeChange()));
-            registerHandler(codePresenter.addFormatHandler(event -> onCodeChange()));
+            own(codePresenter.addValueChangeHandler(event -> onCodeChange()));
+            own(codePresenter.addFormatHandler(event -> onCodeChange()));
         }
         return codePresenter;
     }

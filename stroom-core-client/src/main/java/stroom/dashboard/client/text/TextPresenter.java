@@ -319,7 +319,7 @@ public class TextPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addComponentChangeListener(component -> {
+        own(dashboardContext.addComponentChangeListener(component -> {
             if (getTextSettings() != null) {
                 if (getTextSettings().getTableId() == null) {
                     if (component instanceof HasComponentSelection) {

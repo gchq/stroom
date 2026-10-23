@@ -896,10 +896,8 @@ public final class ExpressionBuilderStories {
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
-        harness.unbindOnCleanUp(presenter);
-        harness.unbindOnCleanUp(treePresenter);
-        presenter.bind();
-        treePresenter.bind();
+        harness.disposeOnCleanUp(presenter);
+        harness.disposeOnCleanUp(treePresenter);
         presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, dynamicFields));
         presenter.read(expression);
         final Spy onChange = context.fn(ON_CHANGE);
@@ -911,10 +909,9 @@ public final class ExpressionBuilderStories {
     private static Widget readOnly(final StoryContext context) {
         final ScreenHarness harness = harness(context);
         final ExpressionTreePresenter treePresenter = treePresenter(harness);
-        harness.unbindOnCleanUp(treePresenter);
+        harness.disposeOnCleanUp(treePresenter);
         // As Stroom's read only views of an expression (e.g. ProcessorPresenter) do
         treePresenter.setSelectionModel(null);
-        treePresenter.bind();
         treePresenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
         treePresenter.read(populatedExpression());
         harness.add(frame(treePresenter.getWidget()));
@@ -933,10 +930,8 @@ public final class ExpressionBuilderStories {
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
                 treePresenter);
-        harness.unbindOnCleanUp(presenter);
-        harness.unbindOnCleanUp(treePresenter);
-        presenter.bind();
-        treePresenter.bind();
+        harness.disposeOnCleanUp(presenter);
+        harness.disposeOnCleanUp(treePresenter);
         presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
         presenter.setReadOnly(readOnly);
         presenter.read(populatedExpression());

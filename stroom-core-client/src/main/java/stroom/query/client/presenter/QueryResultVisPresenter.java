@@ -177,7 +177,7 @@ public class QueryResultVisPresenter
 
 //    @Override
     public void onRemove() {
-        onUnbind();
+        releaseVis();
         RootPanel.get().remove(visFrame);
     }
 
@@ -198,6 +198,10 @@ public class QueryResultVisPresenter
     @Override
     protected void onDispose() {
         super.onDispose();
+        releaseVis();
+    }
+
+    private void releaseVis() {
         cleanupSearchModelAssociation();
         if (currentFunction != null) {
             currentFunction.removeStatusHandler(this);

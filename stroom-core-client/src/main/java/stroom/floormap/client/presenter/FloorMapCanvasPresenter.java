@@ -622,7 +622,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Check if we clicked on an object in edit mode.
         // Only react to the primary (left) mouse button — right-click is
         // handled by the contextmenu event handler below.
-        registerHandler(getView().getFocusPanel().addMouseDownHandler(event -> {
+        own(getView().getFocusPanel().addMouseDownHandler(event -> {
             // Ignore right-click (button 2 in the W3C DOM spec).
             // Without this guard the mousedown sets isDragging = true, but
             // the subsequent mouseup lands on the context menu popup (outside
@@ -802,7 +802,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // The pointer can leave the canvas without a final mousemove inside it
         // (straight onto the dock, or off the window), which would strand the
         // tooltip over a canvas the user is no longer pointing at.
-        registerHandler(getView().getFocusPanel().addMouseOutHandler(event -> {
+        own(getView().getFocusPanel().addMouseOutHandler(event -> {
             // mouseout bubbles from every descendant, so it also fires when the
             // pointer merely crosses between elements INSIDE the canvas — the SVG
             // root to a glyph's shape and back. Those are not exits, and treating
@@ -818,7 +818,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             }
         }));
 
-        registerHandler(getView().getMouseMoveHandlers().addMouseMoveHandler(event -> {
+        own(getView().getMouseMoveHandlers().addMouseMoveHandler(event -> {
             // Guard: if no mouse button is actually pressed, cancel any
             // stale drag state. This catches the case where mousedown fired
             // on the canvas but mouseup landed outside (on a toolbar button
@@ -978,7 +978,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }));
 
         //noinspection unused event
-        registerHandler(getView().getMouseUpHandlers().addMouseUpHandler(event -> {
+        own(getView().getMouseUpHandlers().addMouseUpHandler(event -> {
             // Set Scale: the release ends the measurement and hands its map-space
             // length to the handler, which asks what that distance really is.
             if (gesture == Gesture.MEASURING_SCALE) {
@@ -1120,7 +1120,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }));
 
         // Mouse Wheel (Zoom towards cursor)
-        registerHandler(getView().getMouseWheelHandlers().addMouseWheelHandler(event -> {
+        own(getView().getMouseWheelHandlers().addMouseWheelHandler(event -> {
             event.preventDefault();
             // The zoom moves the map out from under the tooltip's anchor, and
             // re-clusters at the new scale, so what it names may not survive.
@@ -1143,7 +1143,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
         // Right-click context menu — suppress the browser default and tell the owner (onContextMenu).
         // Only fires in edit mode; in read-only (Map tab) mode the browser default is allowed.
-        registerHandler(getView().getFocusPanel().addDomHandler(event -> {
+        own(getView().getFocusPanel().addDomHandler(event -> {
             if (!editMode) {
                 return;
             }
@@ -1228,7 +1228,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
         // Escape clears the selection, so you can pan again after selecting the
         // full-canvas background (an unselected background press pans).
-        registerHandler(getView().getFocusPanel().addKeyDownHandler(event -> {
+        own(getView().getFocusPanel().addKeyDownHandler(event -> {
             // While drawing an area: Escape discards the draft, Enter closes
             // the polygon. (No clash with Escape-clears-selection — starting a
             // draw clears the selection.)
@@ -1289,7 +1289,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         // Double-click closes the in-progress area polygon. The dblclick's two
         // component clicks have already appended two near-coincident vertices,
         // so drop the duplicate before closing.
-        registerHandler(getView().getFocusPanel().addDoubleClickHandler(event -> {
+        own(getView().getFocusPanel().addDoubleClickHandler(event -> {
             if (gesture != Gesture.DRAWING_AREA) {
                 return;
             }

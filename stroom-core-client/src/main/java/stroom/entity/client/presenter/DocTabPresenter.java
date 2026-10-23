@@ -88,7 +88,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         readOnlyStatus.getElement().setAttribute("role", "status");
         getView().setTabBarStatus(readOnlyStatus);
 
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+        own(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
         tabContentProvider = new TabContentProvider<>(eventBus, this);
 

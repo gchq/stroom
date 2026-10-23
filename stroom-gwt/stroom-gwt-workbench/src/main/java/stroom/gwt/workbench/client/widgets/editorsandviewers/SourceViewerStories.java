@@ -226,9 +226,7 @@ public final class SourceViewerStories {
         // Stroom's Menu (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
         final DataPresenter presenter = dataPresenter(harness);
-        // As the presenter's tab does when it is shown
-        presenter.bind();
-        harness.unbindOnCleanUp(presenter);
+        harness.disposeOnCleanUp(presenter);
         if (sourceLocation != null) {
             presenter.fetchData(sourceLocation);
         }

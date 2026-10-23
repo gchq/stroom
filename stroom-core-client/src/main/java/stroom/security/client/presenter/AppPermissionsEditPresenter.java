@@ -95,7 +95,7 @@ public class AppPermissionsEditPresenter
         addColumns();
         getView().setUserRef(null);
 
-        registerHandler(getSelectionModel()
+        own(getSelectionModel()
                 .addSelectionHandler(e -> updateDetails()));
 
         pagerView.getRefreshButton().setOnClick(this::refresh);

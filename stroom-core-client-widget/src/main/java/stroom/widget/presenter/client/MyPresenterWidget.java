@@ -30,88 +30,35 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
-/// Stroom's presenter: a [Component] that shows a view, and registers handlers while it is bound
-/// ([#onBind()]). As for any component, the presenters and components it owns
-/// ([#own(HasComponentNode)]), and the registrations made through it ([#listen(Event.Type, Object)],
-/// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]). One made by GIN is
-/// bound once it is made; the popup manager binds one while it shows it as a popup.
+/// Stroom's presenter: a [Component] that shows a view. It registers its handlers when it is made,
+/// and, as for any component, the presenters and components it owns ([#own(HasComponentNode)]),
+/// and the registrations made through it ([#listen(Event.Type, Object)],
+/// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]).
 ///
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
         extends Component
-        implements HandlerContainer, Layer, TaskMonitorFactory {
+        implements Layer, TaskMonitorFactory {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
-    // The registrations made while it is bound, removed when it is unbound
-    private final List<HandlerRegistration> registrations = new ArrayList<>();
     // Set explicitly (e.g. a list's own spinner), or null to use the context's (see createTaskMonitor)
     private TaskMonitorFactory taskMonitorFactory;
     private final V view;
-    private boolean bound;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus);
         this.view = view;
         // Run after what it owns is disposed and its registrations are removed
-        onDispose(this::release);
-    }
-
-    @Override
-    public final void bind() {
-        if (!bound) {
-            onBind();
-            bound = true;
-        }
-    }
-
-    @Override
-    public final boolean isBound() {
-        return bound;
-    }
-
-    @Override
-    public final void unbind() {
-        if (bound) {
-            bound = false;
-            for (final HandlerRegistration registration : registrations) {
-                registration.removeHandler();
-            }
-            registrations.clear();
-            onUnbind();
-        }
-    }
-
-    /// Registers handlers ([#registerHandler(HandlerRegistration)]) when it is bound.
-    protected void onBind() {
-    }
-
-    /// Lets go of anything else when it is unbound, after its registrations are removed.
-    protected void onUnbind() {
-    }
-
-    /// Keeps a registration, removed when this is unbound.
-    ///
-    /// @param registration The registration.
-    protected void registerHandler(final HandlerRegistration registration) {
-        registrations.add(registration);
-    }
-
-    // GIN calls this once it has made and injected one
-    @Inject
-    final void automaticBind() {
-        bind();
+        onDispose(this::onDispose);
     }
 
     /// @return Its view.
@@ -135,16 +82,6 @@ public class MyPresenterWidget<V extends View>
     protected final <H extends EventHandler> HandlerRegistration addHandler(final GwtEvent.Type<H> type,
                                                                             final H handler) {
         return getEventBus().addHandler(type, handler);
-    }
-
-    /// Adds a handler to the event bus until this presenter is unbound.
-    ///
-    /// @param type    The event's type.
-    /// @param handler The handler.
-    /// @param <H>     The handler's type.
-    protected final <H extends EventHandler> void addRegisteredHandler(final GwtEvent.Type<H> type,
-                                                                       final H handler) {
-        registerHandler(addHandler(type, handler));
     }
 
     /// @return Its view's widget, so a presenter can go where a component can, e.g. a tab of a
@@ -206,11 +143,6 @@ public class MyPresenterWidget<V extends View>
                     deferred.accept(dialogNode::dispose)));
         }
         return dialog;
-    }
-
-    private void release() {
-        unbind();
-        onDispose();
     }
 
     /// Releases anything else this presenter holds that would outlive it, e.g. a timer or a

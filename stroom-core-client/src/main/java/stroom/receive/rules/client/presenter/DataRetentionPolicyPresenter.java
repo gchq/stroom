@@ -340,7 +340,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addListSelectionHandler() {
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 expressionPresenter.read(rule.getExpression());

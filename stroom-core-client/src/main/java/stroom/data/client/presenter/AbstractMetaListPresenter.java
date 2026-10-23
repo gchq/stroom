@@ -312,7 +312,7 @@ public abstract class AbstractMetaListPresenter
                 }
             });
 
-            registerHandler(selectionEventManager.addSelectAllHandler(event ->
+            own(selectionEventManager.addSelectAllHandler(event ->
                     setMatchAll(!selection.isMatchAll())));
 
         } else {

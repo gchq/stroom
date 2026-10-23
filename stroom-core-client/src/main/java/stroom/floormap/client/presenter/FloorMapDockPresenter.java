@@ -54,7 +54,7 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
     public FloorMapDockPresenter(final EventBus eventBus,
                                  final FloorMapDockView view) {
         super(eventBus, view);
-        registerHandler(getView().getTabBar()
+        own(getView().getTabBar()
                 .addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 

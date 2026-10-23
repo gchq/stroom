@@ -155,7 +155,7 @@ public final class FindInContentDialogStories {
                 .build();
         harness.afterStartUp(() -> {
             // As the presenter's listener would
-            final FindInContentPresenter presenter = harness.unbindOnCleanUp(injector.getFindInContentPresenter());
+            final FindInContentPresenter presenter = harness.disposeOnCleanUp(injector.getFindInContentPresenter());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
                     presenter::onShow));
             ShowFindInContentEvent.fire(harness.getHasHandlers());

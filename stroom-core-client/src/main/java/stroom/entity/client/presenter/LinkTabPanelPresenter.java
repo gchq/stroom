@@ -44,7 +44,7 @@ public abstract class LinkTabPanelPresenter extends MyPresenterWidget<LinkTabPan
     public LinkTabPanelPresenter(final EventBus eventBus, final LinkTabPanelView view) {
         super(eventBus, view);
 
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+        own(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
         commonTabsMap = new EnumMap<>(CommonDocLinkTab.class);
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);

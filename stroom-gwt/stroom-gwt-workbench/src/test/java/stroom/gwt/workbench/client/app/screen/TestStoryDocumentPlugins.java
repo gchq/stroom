@@ -41,7 +41,7 @@ class TestStoryDocumentPlugins {
         final FakeContainer manager = new FakeContainer();
         final FakeContainer plugin = new FakeContainer();
 
-        StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add, manager, plugin);
+        StoryDocumentPlugins.disposeOnCleanUp(cleanUps::add, manager, plugin);
 
         assertThat(cleanUps).hasSize(2);
         assertThat(manager.isBound()).isTrue();
@@ -57,7 +57,7 @@ class TestStoryDocumentPlugins {
     void testUnbindOnCleanUp_withNoContainersAddsNothing() {
         final List<Runnable> cleanUps = new ArrayList<>();
 
-        StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add);
+        StoryDocumentPlugins.disposeOnCleanUp(cleanUps::add);
 
         assertThat(cleanUps).isEmpty();
     }
@@ -66,7 +66,7 @@ class TestStoryDocumentPlugins {
     void testUnbindOnCleanUp_refusesANullContainer() {
         final List<Runnable> cleanUps = new ArrayList<>();
 
-        assertThatThrownBy(() -> StoryDocumentPlugins.unbindOnCleanUp(cleanUps::add, (HandlerContainer) null))
+        assertThatThrownBy(() -> StoryDocumentPlugins.disposeOnCleanUp(cleanUps::add, (HandlerContainer) null))
                 .isInstanceOf(NullPointerException.class);
     }
 

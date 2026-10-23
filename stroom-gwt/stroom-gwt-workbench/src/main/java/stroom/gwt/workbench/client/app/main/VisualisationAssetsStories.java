@@ -154,7 +154,7 @@ public final class VisualisationAssetsStories {
         harness.add(frame);
         // After start-up, as its editor reads the user's preferences
         harness.afterStartUp(() -> {
-            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.unbindOnCleanUp(
+            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.disposeOnCleanUp(
                     injector.getVisualisationAssetsPresenter());
             for (final Widget toolbar : presenter.getDocumentButtons()) {
                 toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");

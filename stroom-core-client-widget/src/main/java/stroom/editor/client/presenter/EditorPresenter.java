@@ -48,7 +48,7 @@ public class EditorPresenter
         super(eventBus, view, delegatingAceCompleter, currentPreferences, globalKeyHandler);
         this.contextMenu = contextMenu;
 
-        registerHandler(view.addContextMenuHandler(event ->
+        own(view.addContextMenuHandler(event ->
                 contextMenu.show(
                         EditorPresenter.this,
                         event.getPopupPosition())));

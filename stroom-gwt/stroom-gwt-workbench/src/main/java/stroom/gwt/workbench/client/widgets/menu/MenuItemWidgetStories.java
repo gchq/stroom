@@ -94,8 +94,7 @@ public final class MenuItemWidgetStories {
         final StoryPopups popups = StoryPopups.create(context);
         final MenuPresenter presenter = popups.createMenuPresenter();
         presenter.setData(items);
-        presenter.bind();
-        popups.addCleanUp(presenter::unbind);
+        popups.addCleanUp(presenter::dispose);
         return presenter.getWidget();
     }
 }

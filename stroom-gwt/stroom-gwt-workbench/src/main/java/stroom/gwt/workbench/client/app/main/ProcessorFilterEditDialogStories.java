@@ -370,7 +370,7 @@ public final class ProcessorFilterEditDialogStories {
         harness.fn(ON_SAVED);
         final DocRef pipelineRef = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("My Pipeline").build();
         harness.afterStartUp(() -> {
-            final ProcessorEditPresenter presenter = harness.unbindOnCleanUp(injector.getProcessorEditPresenter());
+            final ProcessorEditPresenter presenter = harness.disposeOnCleanUp(injector.getProcessorEditPresenter());
             // As ProcessorPresenter adds or edits a filter
             presenter.show(ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
                     harness.spy(ON_SAVED, result == null

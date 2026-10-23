@@ -55,17 +55,16 @@ class TestPresenterAdapter {
         final ComponentNode root = ComponentNode.root("story");
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
         root.adopt(adapter.getComponentNode());
-        adapter.getPresenter().bind();
 
         root.dispose();
 
-        assertThat(adapter.getPresenter().isBound()).isFalse();
+        assertThat(adapter.getPresenter().isDisposed()).isTrue();
         assertThat(events).containsExactly("editor disposed");
     }
 
     @Test
     void presentersThePresenterOwnsAreDisposedToo() {
-        // A presenter doesn't unbind these when its parent is unbound
+        // Owned by the presenter, not the adapter
         final ComponentNode root = ComponentNode.root("story");
         final PresenterAdapter<ParentPresenter> adapter = PresenterAdapter.of(ParentPresenter::new);
         root.adopt(adapter.getComponentNode());

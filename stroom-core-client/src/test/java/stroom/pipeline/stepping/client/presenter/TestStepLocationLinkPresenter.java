@@ -61,7 +61,6 @@ class TestStepLocationLinkPresenter {
                 eventBus,
                 Mockito.mock(StepLocationView.class));
         presenter = new StepLocationLinkPresenter(eventBus, view, stepLocationPresenter);
-        presenter.bind();
 
         final ArgumentCaptor<ClickHandler> clickHandlerCaptor = ArgumentCaptor.forClass(ClickHandler.class);
         Mockito.verify(button).addClickHandler(clickHandlerCaptor.capture());

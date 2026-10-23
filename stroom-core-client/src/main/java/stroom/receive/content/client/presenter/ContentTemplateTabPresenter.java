@@ -334,7 +334,7 @@ public class ContentTemplateTabPresenter
     }
 
     private void addListSelectionHandler() {
-        registerHandler(getSelectionModel().addSelectionHandler(event -> {
+        own(getSelectionModel().addSelectionHandler(event -> {
             final ContentTemplate contentTemplate = getSelected();
             final String description;
             if (contentTemplate != null) {

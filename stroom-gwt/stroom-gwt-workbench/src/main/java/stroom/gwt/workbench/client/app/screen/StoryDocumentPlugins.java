@@ -67,8 +67,8 @@ public final class StoryDocumentPlugins {
                                                 final DocumentPluginEventManager eventManager,
                                                 final DocumentPlugin<?>... plugins) {
         Objects.requireNonNull(harness);
-        unbindOnCleanUp(harness::addCleanUp, eventManager);
-        unbindOnCleanUp(harness::addCleanUp, plugins);
+        disposeOnCleanUp(harness::addCleanUp, eventManager);
+        disposeOnCleanUp(harness::addCleanUp, plugins);
         return new StoryDocumentPlugins(harness);
     }
 
@@ -101,7 +101,7 @@ public final class StoryDocumentPlugins {
     ///
     /// @param addCleanUp Adds a clean up, e.g. `harness::addCleanUp`.
     /// @param containers The containers.
-    static void unbindOnCleanUp(final Consumer<Runnable> addCleanUp, final HandlerContainer... containers) {
+    static void disposeOnCleanUp(final Consumer<Runnable> addCleanUp, final HandlerContainer... containers) {
         for (final HandlerContainer container : containers) {
             Objects.requireNonNull(container);
             addCleanUp.accept(container::unbind);

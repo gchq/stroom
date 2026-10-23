@@ -222,7 +222,7 @@ public class PipelineStructurePresenter
                 // Every edit ends in a model change event, so this is the only place that needs to
                 // react to one. Anything that edits the pipeline via the model therefore enables the
                 // Save button without having to remember to say so.
-                registerHandler(model.addChangeListener(changed -> onPipelineModelChanged()));
+                own(model.addChangeListener(changed -> onPipelineModelChanged()));
             }
         }
         refreshTree();

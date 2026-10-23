@@ -42,14 +42,12 @@ class TestMyPresenterWidget {
     private final List<String> events = new ArrayList<>();
 
     @Test
-    void disposeUnbindsAndCallsOnDisposeOnce() {
+    void disposeCallsOnDisposeOnce() {
         final TestPresenter presenter = new TestPresenter("presenter");
-        presenter.bind();
 
         presenter.dispose();
         presenter.dispose();
 
-        assertThat(presenter.isBound()).isFalse();
         assertThat(presenter.isDisposed()).isTrue();
         assertThat(events).containsExactly("presenter disposed");
     }
@@ -163,12 +161,10 @@ class TestMyPresenterWidget {
     }
 
     @Test
-    void listenStopsWhenDisposedNotWhenUnbound() {
+    void listenStopsWhenDisposed() {
         final TestPresenter presenter = new TestPresenter("presenter");
         presenter.listenToTest(() -> events.add("heard"));
-        presenter.bind();
 
-        presenter.unbind();
         eventBus.fireEvent(new TestEvent());
         presenter.dispose();
         eventBus.fireEvent(new TestEvent());

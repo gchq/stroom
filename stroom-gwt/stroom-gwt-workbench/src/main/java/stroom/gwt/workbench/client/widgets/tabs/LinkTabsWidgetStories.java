@@ -53,8 +53,7 @@ public final class LinkTabsWidgetStories {
                     final EventBus eventBus = harness.getEventBus();
                     final LinkTabsPresenter presenter = new LinkTabsPresenter(eventBus,
                             new LinkTabsLayoutViewImpl(GWT.create(LinkTabsLayoutViewImpl.Binder.class)));
-                    harness.unbindOnCleanUp(presenter);
-                    presenter.bind();
+                    harness.disposeOnCleanUp(presenter);
 
                     // Each tab has its own content (a layer)
                     final List<String> labels = List.of("Overview", "Settings", "Advanced");

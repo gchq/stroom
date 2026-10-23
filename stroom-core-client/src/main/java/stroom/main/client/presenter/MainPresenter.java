@@ -98,18 +98,18 @@ public class MainPresenter
         // Inspect the keyUp so we can catch stuff like 'shift,shift'
         RootPanel.get().addDomHandler(globalKeyHandler::onKeyUp, KeyUpEvent.getType());
 
-        addRegisteredHandler(TaskStartEvent.getType(), event -> {
+        listen(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
             taskCount++;
             updateSpinnerState();
         });
-        addRegisteredHandler(TaskEndEvent.getType(), event -> {
+        listen(TaskEndEvent.getType(), event -> {
             // DebugPane.debug("taskEnd:" + event.getTaskCount());
             taskCount--;
             updateSpinnerState();
         });
         // Reflect the selected content tab in the browser page title
-        registerHandler(eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), event -> {
+        own(eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), event -> {
             final TabData tabData = event.getTabData();
             selectedTabLabel = tabData != null
                     ? tabData.getLabel()
@@ -117,8 +117,8 @@ public class MainPresenter
             updatePageTitle();
         }));
         // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
-        registerHandler(MenuRequest.relay(this));
-        registerHandler(uiConfigCache.addPropertyChangeListener(
+        own(MenuRequest.relay(this));
+        own(uiConfigCache.addPropertyChangeListener(
                 uiConfig -> {
                     if (uiConfig.getHtmlTitle() != null) {
                         baseTitle = uiConfig.getHtmlTitle();
@@ -132,7 +132,7 @@ public class MainPresenter
                 }
         ));
 
-        registerHandler(view.getMainToolBar().getSpinner().addClickHandler(event -> {
+        own(view.getMainToolBar().getSpinner().addClickHandler(event -> {
             if (click) {
                 click = false;
                 OpenUserTaskManagerEvent.fire(MainPresenter.this);
@@ -154,8 +154,8 @@ public class MainPresenter
                 clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
-        addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
-        addRegisteredHandler(DockEvent.getType(), event -> {
+        listen(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
+        listen(DockEvent.getType(), event -> {
             final DockEvent.DockAction action = event.getAction();
             if (action == DockEvent.DockAction.DOCK) {
                 getView().dock(
@@ -166,7 +166,7 @@ public class MainPresenter
                 getView().undock();
             }
         });
-        registerHandler(eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> {
+        own(eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> {
             showingAi = event.isShow();
             getView().getMainToolBar().getShowAi().setState(showingAi);
         }));

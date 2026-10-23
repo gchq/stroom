@@ -257,7 +257,7 @@ public class NewPropertyPresenter
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000000);
 
-            registerHandler(valueSpinner.addValueChangeHandler(event -> {
+            own(valueSpinner.addValueChangeHandler(event -> {
                 onChange();
                 getView().setSource(Source.LOCAL);
             }));

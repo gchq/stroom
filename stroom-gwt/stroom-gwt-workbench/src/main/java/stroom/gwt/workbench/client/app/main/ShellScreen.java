@@ -177,8 +177,7 @@ final class ShellScreen {
                 keyHandler,
                 navigation,
                 tabPane);
-        main.bind();
-        harness.unbindOnCleanUp(main);
+        harness.disposeOnCleanUp(main);
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
         // As Stroom shows it for ShowMainEvent, once the user has logged in: its listener puts it in the

@@ -190,6 +190,6 @@ public final class AskAiChatPanelStories {
         box.getElement().getStyle().setProperty("display", "flex");
         box.getElement().getStyle().setProperty("border", "1px solid var(--border-color)");
         harness.add(box);
-        harness.unbindOnCleanUp(presenter);
+        harness.disposeOnCleanUp(presenter);
     }
 }

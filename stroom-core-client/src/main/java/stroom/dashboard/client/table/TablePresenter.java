@@ -433,7 +433,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(getDashboardContext().addContextChangeListener(() -> {
+        own(getDashboardContext().addContextChangeListener(() -> {
             if (initialised && updateSelectionFilter()) {
 //                reset();
                 refresh();
@@ -532,7 +532,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 handlerRegistrations.clear();
                 target.focus();
             }));
-            registerHandler(() -> {
+            own((HandlerRegistration) () -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
                 }

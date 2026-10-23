@@ -40,7 +40,7 @@ public class XSDBrowserPresenter
     public void setModel(final XSDModel model) {
         this.model = model;
 
-        registerHandler(model.addDataSelectionHandler(event ->
+        own(model.addDataSelectionHandler(event ->
                 getView().setSelectedNode(event.getSelectedItem(), event.isDoubleSelect())));
 
         getView().setModel(model);

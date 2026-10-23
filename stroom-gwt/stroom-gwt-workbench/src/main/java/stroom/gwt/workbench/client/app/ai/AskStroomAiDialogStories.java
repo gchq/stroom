@@ -251,7 +251,7 @@ public final class AskStroomAiDialogStories {
                                                       final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), presenter));
-        harness.unbindOnCleanUp(presenter);
+        harness.disposeOnCleanUp(presenter);
         return presenter;
     }
 
