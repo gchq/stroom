@@ -232,6 +232,8 @@ public class AskStroomAIService {
     private final Provider<AiConfig> aiConfigProvider;
     private final SecurityContext securityContext;
     private Duration stopWait = STOP_WAIT;
+    // Null where it isn't injected (in tests), and answers are stored as written.
+    private AnswerLinks answerLinks;
     private final McpAgentChat mcpAgentChat;
     private final DocumentReferences documentReferences;
     private final TableDownloader tableDownloader;
@@ -673,6 +675,19 @@ public class AskStroomAIService {
         return contextAssembler.estimateUsage(chatId);
     }
 
+    /// @param answerLinks Links the documents and streams answers mention.
+    @Inject
+    void setAnswerLinks(final AnswerLinks answerLinks) {
+        this.answerLinks = answerLinks;
+    }
+
+    // The answer with the documents and streams it mentions linked, if they can be.
+    private String withLinks(final int chatId, final String answer) {
+        return answerLinks == null
+                ? answer
+                : answerLinks.link(chatId, answer);
+    }
+
     /**
      * Sets how long an edit waits for the chat's run to stop. For testing.
      */
@@ -843,6 +858,7 @@ public class AskStroomAIService {
             responseText = processQuestion(request);
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
+                responseText = withLinks(chatId, responseText);
                 answeredUpTo = aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText).getId();
                 auditLog.answer(ToolSession.chat(chatId), request.getMessage(), responseText,
                         runManager.isUnattended(chatId));
