@@ -302,6 +302,10 @@ run of 22 October 2026 (1,538 stories).
     opened), which they look at; it now checks for leaks last. The same fixed master's
     `AppShell` `KeyboardShortcuts`, `OpenedScreenTakesFocus` and `MovesBetweenAreas` and
     `DashboardEditor` `TableFilterRow`, which fail only with the leak check.
+    Checked before the leak check, `AppShell` `MainMenu` and `MainMenuNoEmptyGroup` are seen with
+    the main menu open, which partly covers the quick filter's help button, and axe counts that as
+    `target-size`; both are in `a11y-baseline.json` for that (the button is big enough once the
+    menu closes).
 * **Fixed** (on master by `3c9ed072be` and `b3e7f34898`, found 23 October 2026, merging master into
   the remove_gwtp branch): the workbench's JVM tests `TestAllStories` and `TestPresenterCoverage`
   failed on master too, as
