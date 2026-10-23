@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Dependency : Uplift docker image base from `eclipse-temurin:25.0.3_9-jdk-alpine-3.23` to `eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24`.
+
+* Bug **#5835** : Stop logging an ERROR on every run of the Table Builder analytic job for each rule with an empty or broken query. A WARN is now only logged if such a rule is preventing an existing store from being deleted.
+
+* Bug **#5819** : Replace the Lucene 8.11.4 `lucene-analyzers-common` dependency with `lucene-analysis-common:10.3.2` so that it matches the version of Lucene core.
+
+* Build : Split up java CI build to reduce memory use and to make checkstyle fail fast.
+
+* Dependency : Add missing jackson annotation dependencies.
+
+* Bug : Fix pooled byte buffer resource closure.
+
+* Bug **#5597** : Fix `TypeError: Cannot read properties of null` error when an embedded query with a visualisation returns no rows.
+
+
 ## [v7.14-beta.8] - 2026-10-16
 
 * Feature : Add `random-integer(upperbound)` XSLT function.
