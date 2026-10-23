@@ -37,10 +37,7 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
         own(scriptDependencyListPresenter);
         this.scriptDependencyListPresenter = scriptDependencyListPresenter;
         view.setDependencyList(scriptDependencyListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
         scriptDependencyListPresenter.setOnChange(this::onChange);
     }
 

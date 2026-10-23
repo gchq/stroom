@@ -152,13 +152,8 @@ public class SteppingFilterPresenter extends
 
         getView().setElementChooser(elementChooser);
         getView().setXPathList(xPathListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
             editXPath.setEnabled(list.size() == 1);
             removeXPath.setEnabled(list.size() > 0);
@@ -169,7 +164,7 @@ public class SteppingFilterPresenter extends
                 }
             }
         }));
-        registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
+        own(elementSelectionModel.addSelectionChangeHandler(e ->
                 update(elementSelectionModel.getSelectedObject())));
         getView().setSkipToErrorsChangeHandler(severity ->
                 updateLocalActiveFilterState());

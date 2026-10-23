@@ -101,12 +101,8 @@ public class UserAccessPresenter
                 isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
             }
         }, this);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getSelectionModel().addSelectionHandler(e -> {
+        own(getSelectionModel().addSelectionHandler(e -> {
             setButtonStates();
             showSessionsForSelectedUser();
         }));

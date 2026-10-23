@@ -63,14 +63,6 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
         this.contentPackDetailsPresenter.setContentStorePresenter(this);
         getView().setContentPackListView(contentPackListPresenter.getView());
         view.getContentPackDetailsPanel().add(contentPackDetailsPresenter);
-    }
-
-    /**
-     * GWT callback.
-     */
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // Add in the handler for the list selection
         contentPackListPresenter.getSelectionModel()

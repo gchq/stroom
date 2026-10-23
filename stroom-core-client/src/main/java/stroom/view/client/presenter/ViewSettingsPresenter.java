@@ -83,10 +83,7 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
                         pipelineSelectionPresenter::setQuickFilter);
             }
         }, this);
-    }
 
-    @Override
-    protected void onBind() {
         registerHandlers();
     }
 

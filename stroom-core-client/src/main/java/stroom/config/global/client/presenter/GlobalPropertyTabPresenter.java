@@ -84,6 +84,16 @@ public class GlobalPropertyTabPresenter
                                 uiConfig.getHelpUrlQuickFilter()));
             }
         }, this);
+
+        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
+                onOpen();
+            }
+        }));
+        listPresenter.setOnErrors(this::setErrors);
+        listPresenter.refresh();
+        getView().focusFilter();
     }
 
     @Override
@@ -94,20 +104,6 @@ public class GlobalPropertyTabPresenter
     @Override
     public SvgImage getIcon() {
         return SvgImage.PROPERTIES;
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                onOpen();
-            }
-        }));
-        listPresenter.setOnErrors(this::setErrors);
-        super.onBind();
-        listPresenter.refresh();
-        getView().focusFilter();
     }
 
     public void setErrors(final String errors) {

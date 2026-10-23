@@ -106,6 +106,20 @@ public class RulesPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+
+        listPresenter.setOnChange(() -> setDirty(true));
+        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+            if (rule != null) {
+//                expressionPresenter.read(rule.getExpression());
+                if (event.getSelectionType().isDoubleSelect()) {
+                    edit(rule);
+                }
+            } else {
+//                expressionPresenter.read(null);
+            }
+            updateButtons();
+        }));
     }
 
     @Override
@@ -193,25 +207,6 @@ public class RulesPresenter
                 setDirty(true);
             }
         }
-    }
-
-    @Override
-    protected void onBind() {
-        listPresenter.setOnChange(() -> setDirty(true));
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-//                expressionPresenter.read(rule.getExpression());
-                if (event.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-//                expressionPresenter.read(null);
-            }
-            updateButtons();
-        }));
-
-        super.onBind();
     }
 
     private void add() {

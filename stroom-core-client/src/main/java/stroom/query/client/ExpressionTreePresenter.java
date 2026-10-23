@@ -68,14 +68,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                 delete();
             }
         });
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+            own(selectionModel.addSelectionChangeHandler(event -> {
                 selectionListeners.fire(selectionModel.getSelectedObject());
                 getView().refresh();
             }));

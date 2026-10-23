@@ -107,21 +107,16 @@ public class ManageActivityPresenter
         deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();
-    }
 
-    @Override
-    protected void onBind() {
         getView().setTooltipContentSupplier(this::getQuickFilterTooltipSupplier);
 
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 hide();
 //                onOpen();
             }
         }));
-
-        super.onBind();
     }
 
     void showInitial(final Consumer<Activity> consumer) {

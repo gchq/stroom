@@ -198,11 +198,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
         super(eventBus, view);
         own(documentAssetDropDownPresenter);
         this.documentAssetDropDownPresenter = documentAssetDropDownPresenter;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         getView().setChooseImgView(documentAssetDropDownPresenter.getView().asWidget());
         // Typing "area" into a fresh Add-Object dialog reveals the area fields.
         getView().setTypeChangedHandler(this::onTypeChanged);

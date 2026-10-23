@@ -163,15 +163,9 @@ public class ExecutionScheduleManager
         createRunAsColumn(securityContext);
 
         refresh();
-    }
 
-
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(selectionModel.addSelectionHandler(event -> {
             setButtonState();
             updateSelectionCountLabel();
             if (event.getSelectionType().isDoubleSelect()) {

@@ -86,11 +86,6 @@ public class FloorMapQueryPresenter
         own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
         view.setQueryEditView(queryEditPresenter.getView());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // A dropdown change has to mark the document dirty, as a query edit does (the mapping was
         // once unsaveable on its own, as only the query editor's changes were told)
@@ -110,7 +105,7 @@ public class FloorMapQueryPresenter
         // query result table's in the application, and needed a source guard)
         final QueryResultTablePresenter tablePresenter =
                 queryEditPresenter.getQueryResultPresenter().getTablePresenter();
-        registerHandler(tablePresenter.addUpdateListener(() -> {
+        own(tablePresenter.addUpdateListener(() -> {
             // The dropdowns track whatever columns the table currently has, so
             // they follow every update, partial result set or not.
             updateColumnSelections();
@@ -129,7 +124,7 @@ public class FloorMapQueryPresenter
         // instantly. The searching-to-idle transition is the only point at which
         // the rows are the answer to the query rather than a snapshot of
         // progress, so that is when the overlay is published.
-        registerHandler(queryEditPresenter.addSearchStateListener(searching -> {
+        own(queryEditPresenter.addSearchStateListener(searching -> {
             // Only the running-to-idle transition, so that the reset at the start
             // of the next run — which also reports "not searching" — does not
             // republish the result set the previous run left behind.

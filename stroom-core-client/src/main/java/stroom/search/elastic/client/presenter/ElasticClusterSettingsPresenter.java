@@ -56,10 +56,7 @@ public class ElasticClusterSettingsPresenter
         this.restFactory = restFactory;
 
         view.setUiHandlers(this);
-    }
 
-    @Override
-    protected void onBind() {
     }
 
     @Override

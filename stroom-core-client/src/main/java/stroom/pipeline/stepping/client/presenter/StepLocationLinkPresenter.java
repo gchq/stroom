@@ -48,11 +48,7 @@ public class StepLocationLinkPresenter
         own(stepLocationPresenter);
         this.stepLocationPresenter = stepLocationPresenter;
         setStepLocation(new StepLocation(0L, 0L, 0L));
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         getView().getButton().addClickHandler(event -> {
             if (!enabled) {
                 return;

@@ -184,18 +184,13 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             setCurrentTime(newTime);
             onTimeChange.accept(newTime);
         });
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // The histogram's bars are painted into a canvas, so they do not re-style
         // themselves when the theme class changes the way the rest of the strip
         // does — they hold the colour they were painted with until something
         // repaints them. Same pattern the dashboard's visualisations use.
         //noinspection unused e
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), e -> {
+        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), e -> {
             getView().redrawHistogram();
             // Every time on the strip is rendered from the user's date/time
             // preference, so a change to it has to be re-applied to the ones
@@ -207,12 +202,12 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
         // Forward date changes from the settings popup back to the timeline.
         //noinspection unused, CodeBlock2Expr
-        registerHandler(settingsPresenter.addStartTimeChangeHandler(e -> {
+        own(settingsPresenter.addStartTimeChangeHandler(e -> {
             applyRange(settingsPresenter.getStartTime(), this.endTime);
         }));
 
         //noinspection unused, CodeBlock2Expr
-        registerHandler(settingsPresenter.addEndTimeChangeHandler(e -> {
+        own(settingsPresenter.addEndTimeChangeHandler(e -> {
             applyRange(this.startTime, settingsPresenter.getEndTime());
         }));
 

@@ -211,6 +211,40 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
             DocumentAssetPresenter.this.onSelectionChange();
         });
         this.getView().setTreeAndEditor(tree, editorPresenter);
+
+        // Hook up the dirty events on the editor
+        editorPresenter.addValueChangeHandler(
+                event -> this.onEditorContentChanged());
+        editorPresenter.addFormatHandler(
+                event -> this.onEditorContentChanged());
+
+        // Ensure editor is disabled by default
+        disableEditor();
+
+        // Create the Add menu
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgImage.FOLDER)
+                .iconColour(IconColour.BLUE)
+                .text("New Folder")
+                .command(() -> this.onCreateNewItem(false))
+                .enabled(true)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgImage.FILE)
+                .text("New File")
+                .command(() -> this.onCreateNewItem(true))
+                .enabled(true)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgImage.FILE)
+                .iconColour(IconColour.BLUE)
+                .text("Upload File")
+                .command(this::onUploadFile)
+                .enabled(true)
+                .build());
     }
 
     @Override
@@ -276,46 +310,6 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         updateState();
 
         return List.of(toolbar);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // Hook up the dirty events on the editor
-        editorPresenter.addValueChangeHandler(
-                event -> this.onEditorContentChanged());
-        editorPresenter.addFormatHandler(
-                event -> this.onEditorContentChanged());
-
-        // Ensure editor is disabled by default
-        disableEditor();
-
-        // Create the Add menu
-        menuItems.add(new IconMenuItem.Builder()
-                .priority(0)
-                .icon(SvgImage.FOLDER)
-                .iconColour(IconColour.BLUE)
-                .text("New Folder")
-                .command(() -> this.onCreateNewItem(false))
-                .enabled(true)
-                .build());
-        menuItems.add(new IconMenuItem.Builder()
-                .priority(1)
-                .icon(SvgImage.FILE)
-                .text("New File")
-                .command(() -> this.onCreateNewItem(true))
-                .enabled(true)
-                .build());
-        menuItems.add(new IconMenuItem.Builder()
-                .priority(2)
-                .icon(SvgImage.FILE)
-                .iconColour(IconColour.BLUE)
-                .text("Upload File")
-                .command(this::onUploadFile)
-                .enabled(true)
-                .build());
-
     }
 
     private void showAddMenu() {

@@ -41,10 +41,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
         this.sourcePresenter = sourcePresenter;
 
         getView().setSourceView(sourcePresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
     }
 
     @Override

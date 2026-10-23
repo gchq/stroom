@@ -89,21 +89,18 @@ public final class UserPreferencesPresenter
         addTab(KEYBOARD_SHORTCUTS, keyBindingPreferencesPresenter);
         view.getTabBar().selectTab(THEME);
         switchTab(THEME);
-    }
 
-    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
-        getView().getTabBar().addTab(tabData);
-//        getView().getLayerContainer().add(presenterWidget.getWidget());
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(getView().getTabBar().addSelectionHandler(e ->
+        own(getView().getTabBar().addSelectionHandler(e ->
                 switchTab(e.getSelectedItem())));
         themePreferencesPresenter.setOnChange(this::onChange);
         editorPreferencesPresenter.setOnChange(this::onChange);
         timePreferencesPresenter.setOnChange(this::onChange);
         keyBindingPreferencesPresenter.setOnChange(this::onChange);
+    }
+
+    private void addTab(final TabData tabData, final MyPresenterWidget<?> presenterWidget) {
+        getView().getTabBar().addTab(tabData);
+//        getView().getLayerContainer().add(presenterWidget.getWidget());
     }
 
     private void switchTab(final TabData tabData) {

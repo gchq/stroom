@@ -247,6 +247,30 @@ public class QueryEditPresenter
 
         queryToolbarPresenter.setEnabled(true);
         queryToolbarPresenter.onSearching(false);
+
+        //noinspection unused event
+        own(editorPresenter.addValueChangeHandler(event -> {
+            final String query = editorPresenter.getText();
+            updateQuery(query);
+            onChange();
+        }));
+        //noinspection unused event
+        own(editorPresenter.addFormatHandler(event -> onChange()));
+        queryToolbarPresenter.setOnStart(this::toggleStart);
+        queryToolbarPresenter.setOnTimeRangeChange(() -> {
+            run();
+            onChange();
+        });
+        queryHelpPresenter.linkToEditor(editorPresenter);
+
+        //noinspection unused event
+        own(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            queryModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
+        own(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
+                selectTab(e.getSelectedItem())));
+        queryResultPresenter.setOnChange(this::onChange);
     }
 
     private void focus() {
@@ -306,34 +330,6 @@ public class QueryEditPresenter
     @Override
     public List<Widget> getToolbars() {
         return Collections.singletonList(queryToolbarPresenter.getWidget());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        //noinspection unused event
-        registerHandler(editorPresenter.addValueChangeHandler(event -> {
-            final String query = editorPresenter.getText();
-            updateQuery(query);
-            onChange();
-        }));
-        //noinspection unused event
-        registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
-        queryToolbarPresenter.setOnStart(this::toggleStart);
-        queryToolbarPresenter.setOnTimeRangeChange(() -> {
-            run();
-            onChange();
-        });
-        queryHelpPresenter.linkToEditor(editorPresenter);
-
-        //noinspection unused event
-        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
-            // If a user is even attempting to close the browser or browser tab then destroy the query.
-            queryModel.reset(DestroyReason.WINDOW_CLOSE);
-        }));
-        registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
-                selectTab(e.getSelectedItem())));
-        queryResultPresenter.setOnChange(this::onChange);
     }
 
     public void updateQuery(final String query) {

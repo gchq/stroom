@@ -77,12 +77,8 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
         // which is driven by the selection — has nothing to say about it.
         revokeAllButton = listPresenter.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
                 this::revokeAll);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getSelectionModel().addSelectionHandler(e -> setButtonStates()));
+        own(getSelectionModel().addSelectionHandler(e -> setButtonStates()));
         setButtonStates();
     }
 

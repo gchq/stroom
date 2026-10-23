@@ -169,6 +169,37 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Define a class for the CSS
         this.getWidget().addStyleName("credentials-list");
+
+        // Avoid permissions issues if the user doesn't have the AppPermission to see the data
+        if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
+            dataProvider = createDataProvider(super.getEventBus(), super.getView());
+            dataProvider.addDataDisplay(dataGrid);
+        }
+
+        own(gridSelectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                // Edit the credentials
+                handleEditButtonClick();
+            }
+        }));
+
+        // Set the state of the UI
+        gridSelectionModel.addSelectionHandler(event -> updateState());
+
+        // Get notified when data has loaded and load up the first item
+        dataGrid.addLoadingStateChangeHandler(event -> {
+            if (event.getLoadingState() == LoadingState.LOADED ||
+                event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
+                if (defaultSelection) {
+                    if (gridSelectionModel.getSelected() == null && dataGrid.getRowCount() > 0) {
+                        final CredentialWithPerms cwp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(cwp);
+                    }
+                }
+            }
+        });
+
+        updateState();
     }
 
     /**
@@ -264,46 +295,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 credentialClient.findCredentialsWithPermissions(request, dataConsumer, restErrorHandler, view);
             }
         };
-    }
-
-    /**
-     * Called when the presenter gets loaded into the UI. Sets up the event handlers.
-     */
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // Avoid permissions issues if the user doesn't have the AppPermission to see the data
-        if (securityContext.hasAppPermission(AppPermission.CREDENTIALS)) {
-            dataProvider = createDataProvider(super.getEventBus(), super.getView());
-            dataProvider.addDataDisplay(dataGrid);
-        }
-
-
-        registerHandler(gridSelectionModel.addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                // Edit the credentials
-                handleEditButtonClick();
-            }
-        }));
-
-        // Set the state of the UI
-        gridSelectionModel.addSelectionHandler(event -> updateState());
-
-        // Get notified when data has loaded and load up the first item
-        dataGrid.addLoadingStateChangeHandler(event -> {
-            if (event.getLoadingState() == LoadingState.LOADED ||
-                event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
-                if (defaultSelection) {
-                    if (gridSelectionModel.getSelected() == null && dataGrid.getRowCount() > 0) {
-                        final CredentialWithPerms cwp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                        gridSelectionModel.setSelected(cwp);
-                    }
-                }
-            }
-        });
-
-        updateState();
     }
 
     /**

@@ -489,11 +489,6 @@ public class FloorMapMapPresenter
                 "factsHistoryTable",
                 "Facts History",
                 this::applyFactsHistoryOutcome);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // This tab's own timeline: the Editor tab has its own, and the tabs must not time-sync
         floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);

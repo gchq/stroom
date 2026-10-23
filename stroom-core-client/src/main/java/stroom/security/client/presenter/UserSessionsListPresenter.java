@@ -81,12 +81,8 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End Selected Session", this::endSelectedSession);
         endSessionButton.setEnabled(false);
         initTableColumns();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(e -> setButtonStates()));
+        own(selectionModel.addSelectionHandler(e -> setButtonStates()));
         setButtonStates();
     }
 

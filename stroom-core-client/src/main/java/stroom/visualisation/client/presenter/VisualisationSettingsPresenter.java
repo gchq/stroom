@@ -60,10 +60,7 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
         view.setSettingsView(editorPresenter.getView());
 
         editorPresenter.setMode(AceEditorMode.JSON);
-    }
 
-    @Override
-    protected void onBind() {
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
@@ -71,10 +68,10 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
                 onChange();
             }
         };
-        registerHandler(getView().getFunctionName().addKeyDownHandler(keyDownHander));
-        registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
-        registerHandler(scriptPresenter.addSelectionListener(event -> onChange()));
-        registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
+        own(getView().getFunctionName().addKeyDownHandler(keyDownHander));
+        own(editorPresenter.addValueChangeHandler(event -> onChange()));
+        own(scriptPresenter.addSelectionListener(event -> onChange()));
+        own(editorPresenter.addFormatHandler(event -> onChange()));
     }
 
     @Override

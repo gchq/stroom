@@ -305,13 +305,6 @@ public class FloorMapEditorPresenter
         floorMapCanvasPresenter.setTextAlternativeId(
                 floorMapFactListPresenter.getGridElementId());
         // Properties are shown as a modal dialog — no slot needed.
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-
 
         // ---- Timeline events ------------------------------------------------
         floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);

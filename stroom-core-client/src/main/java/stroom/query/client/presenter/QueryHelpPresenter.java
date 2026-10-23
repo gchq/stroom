@@ -88,14 +88,10 @@ public class QueryHelpPresenter
                 NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
                         view.registerPopupTextProvider(() ->
                                 QuickFilterTooltipUtil.createTooltip("Field Quick Filter", helpUrl))));
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         final MultiSelectionModel<QueryHelpSelectionItem> selectionModel =
                 getView().getSelectionList().getSelectionModel();
-        registerHandler(selectionModel.addSelectionHandler(e -> {
+        own(selectionModel.addSelectionHandler(e -> {
             if (e.getSelectionType().isDoubleSelect()) {
                 onInsert();
             } else {

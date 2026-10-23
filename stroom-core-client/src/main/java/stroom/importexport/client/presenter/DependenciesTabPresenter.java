@@ -72,10 +72,7 @@ public class DependenciesTabPresenter
                         uiConfig.getHelpUrlQuickFilter()));
             }
         }, this);
-    }
 
-    @Override
-    protected void onBind() {
         getView().focusFilter();
     }
 

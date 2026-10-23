@@ -133,6 +133,18 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         updateButtons();
 
         initialiseRules(restFactory);
+
+        addSaveButtonHandler();
+        addAddButtonHandler();
+        addEditButtonHandler();
+        addCopyButtonHandler();
+        addDeleteButtonHandler();
+        addMoveUpButtonHandler();
+        addMoveDownButtonHandler();
+        addListSelectionHandler();
+        addEnabledClickHandler();
+
+        listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
     }
 
     private void initialiseRules(final RestFactory restFactory) {
@@ -245,23 +257,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             moveRuleDown(rule);
         }
-    }
-
-    @Override
-    protected void onBind() {
-        addSaveButtonHandler();
-        addAddButtonHandler();
-        addEditButtonHandler();
-        addCopyButtonHandler();
-        addDeleteButtonHandler();
-        addMoveUpButtonHandler();
-        addMoveDownButtonHandler();
-        addListSelectionHandler();
-        addEnabledClickHandler();
-
-        listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
-
-        super.onBind();
     }
 
     private List<Item> buildActionMenuItems(final DataRetentionRule rule) {

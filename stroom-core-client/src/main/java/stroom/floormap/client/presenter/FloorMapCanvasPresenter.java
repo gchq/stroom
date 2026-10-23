@@ -455,11 +455,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     public FloorMapCanvasPresenter(final EventBus eventBus,
                                    final FloorMapCanvasView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         handleMouseEvents();
 
         if (getView() != null) {

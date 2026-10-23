@@ -234,6 +234,66 @@ public class SteppingPresenter
                 this::onStreamListFilter);
 
         sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
+
+        own(
+                pipelinePathPresenter.getSelectionModel().addSelectionChangeHandler(event -> {
+                    final PipelineElement selectedElement = getSelectedPipeElement();
+                    onSelect(selectedElement);
+                }));
+        stepLocationLinkPresenter.setOnStepLocation(stepLocation -> {
+            step(StepType.REFRESH, stepLocation);
+            final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
+            steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
+        });
+        // The step controls step from the current location
+        stepControlPresenter.setOnStep(stepType -> step(stepType, null));
+        stepControlPresenter.setOnFilter(this::showChangeFiltersDialog);
+
+        own(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            if (runStepping) {
+                final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
+                if (selectedRow != null) {
+
+                    final Meta selectedMeta = selectedRow.getMeta();
+                    beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0L, 0L),
+                            selectedMeta, null);
+                }
+            } else {
+                runStepping = true;
+            }
+        }));
+
+        steppingMetaListPresenter.setOnResult(resultPage -> {
+            if (resultPage.size() == 1) {
+                final MetaRow metaRow = resultPage.getFirst();
+                steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
+                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
+                // Begin stepping if not already stepping on this stream. This handles the case where the user
+                // changes the filter expression and a single result is auto-selected
+                if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
+                    beginStepping(StepType.REFRESH,
+                            new StepLocation(metaRow.getMeta().getId(), 0L, 0L),
+                            metaRow.getMeta(),
+                            null);
+                }
+            }
+            // Update button state in case the meta list loaded after the last step result arrived
+            updateStepControlButtons();
+        });
+
+        own(pipelinePathPresenter.addContextMenuHandler(event -> {
+            final PipelineElement selectedPipeElement = getSelectedPipeElement();
+            if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
+                final List<Item> menuItems = buildContextMenu();
+                if (NullSafe.hasItems(menuItems)) {
+                    showMenu("Step filters for element '" + selectedPipeElement.getDisplayName() + "'",
+                            menuItems,
+                            event.getPopupPosition());
+                }
+            }
+        }));
+
+//        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
     @Override
@@ -308,70 +368,6 @@ public class SteppingPresenter
                 .onShow(e -> presenter.focus())
                 .onHideRequest(HidePopupRequestEventHandler)
                 .fire();
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(
-                pipelinePathPresenter.getSelectionModel().addSelectionChangeHandler(event -> {
-                    final PipelineElement selectedElement = getSelectedPipeElement();
-                    onSelect(selectedElement);
-                }));
-        stepLocationLinkPresenter.setOnStepLocation(stepLocation -> {
-            step(StepType.REFRESH, stepLocation);
-            final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
-            steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
-        });
-        // The step controls step from the current location
-        stepControlPresenter.setOnStep(stepType -> step(stepType, null));
-        stepControlPresenter.setOnFilter(this::showChangeFiltersDialog);
-
-        registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            if (runStepping) {
-                final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
-                if (selectedRow != null) {
-
-                    final Meta selectedMeta = selectedRow.getMeta();
-                    beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0L, 0L),
-                            selectedMeta, null);
-                }
-            } else {
-                runStepping = true;
-            }
-        }));
-
-        steppingMetaListPresenter.setOnResult(resultPage -> {
-            if (resultPage.size() == 1) {
-                final MetaRow metaRow = resultPage.getFirst();
-                steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
-                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
-                // Begin stepping if not already stepping on this stream. This handles the case where the user
-                // changes the filter expression and a single result is auto-selected
-                if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
-                    beginStepping(StepType.REFRESH,
-                            new StepLocation(metaRow.getMeta().getId(), 0L, 0L),
-                            metaRow.getMeta(),
-                            null);
-                }
-            }
-            // Update button state in case the meta list loaded after the last step result arrived
-            updateStepControlButtons();
-        });
-
-        registerHandler(pipelinePathPresenter.addContextMenuHandler(event -> {
-            final PipelineElement selectedPipeElement = getSelectedPipeElement();
-            if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
-                final List<Item> menuItems = buildContextMenu();
-                if (NullSafe.hasItems(menuItems)) {
-                    showMenu("Step filters for element '" + selectedPipeElement.getDisplayName() + "'",
-                            menuItems,
-                            event.getPopupPosition());
-                }
-            }
-        }));
-
-
-//        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
     public void setExpression(final ExpressionOperator expression) {

@@ -73,20 +73,16 @@ public class AnalyticDataShardsPresenter
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         view.setListView(analyticDataShardListPresenter.getView());
         view.setTable(tablePresenter.getView());
+
+        queryToolbarPresenter.setOnStart(this::update);
+        queryToolbarPresenter.setOnTimeRangeChange(this::update);
+        own(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
+        own(tablePresenter.addRefreshRequestHandler(e -> update()));
     }
 
     @Override
     public List<Widget> getToolbars() {
         return Collections.singletonList(queryToolbarPresenter.getWidget());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        queryToolbarPresenter.setOnStart(this::update);
-        queryToolbarPresenter.setOnTimeRangeChange(this::update);
-        registerHandler(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
-        registerHandler(tablePresenter.addRefreshRequestHandler(e -> update()));
     }
 
     private void update() {

@@ -63,10 +63,7 @@ public class AnalyticNotificationEditPresenter
         view.setUiHandlers(this);
         this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;
         this.analyticEmailDestinationPresenter = analyticEmailDestinationPresenter;
-    }
 
-    @Override
-    protected void onBind() {
         analyticStreamDestinationPresenter.setOnChange(this::onChange);
         analyticEmailDestinationPresenter.setOnChange(this::onChange);
     }

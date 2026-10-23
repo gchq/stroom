@@ -82,32 +82,28 @@ public class FeedSettingsPresenter
 
         view.getDataFormat().addItems(FORMATS);
         view.getContextFormat().addItems(FORMATS);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         // Add listeners for change events.
         final ValueChangeHandler<Boolean> checkHandler = event -> onChange();
-        registerHandler(getView().getClassification().addValueChangeHandler(e -> onChange()));
-        registerHandler(getView().getReference().addValueChangeHandler(checkHandler));
-        registerHandler(getView().getDataEncoding().addValueChangeHandler(event -> {
+        own(getView().getClassification().addValueChangeHandler(e -> onChange()));
+        own(getView().getReference().addValueChangeHandler(checkHandler));
+        own(getView().getDataEncoding().addValueChangeHandler(event -> {
             final String dataEncoding = ensureEncoding(getView().getDataEncoding().getValue());
             getView().getDataEncoding().setValue(dataEncoding);
             onChange();
         }));
-        registerHandler(getView().getContextEncoding().addValueChangeHandler(event -> {
+        own(getView().getContextEncoding().addValueChangeHandler(event -> {
             final String contextEncoding = ensureEncoding(getView().getContextEncoding().getValue());
             getView().getContextEncoding().setValue(contextEncoding);
             onChange();
         }));
-        registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getDataFormat().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getContextFormat().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getSchema().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getSchemaVersion().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getReceivedType().addValueChangeHandler(event -> onChange()));
-        registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> onChange()));
+        own(getView().getFeedStatus().addValueChangeHandler(event -> onChange()));
+        own(getView().getDataFormat().addValueChangeHandler(event -> onChange()));
+        own(getView().getContextFormat().addValueChangeHandler(event -> onChange()));
+        own(getView().getSchema().addValueChangeHandler(event -> onChange()));
+        own(getView().getSchemaVersion().addValueChangeHandler(event -> onChange()));
+        own(getView().getReceivedType().addValueChangeHandler(event -> onChange()));
+        own(getView().getVolumeGroup().addValueChangeHandler(event -> onChange()));
     }
 
     private void updateEncodings() {

@@ -44,13 +44,8 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
         getView().setCacheListView(cacheListPresenter.getView());
         getView().setCacheNodeListView(cacheNodeListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(
+        own(
                 cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
                     final String cacheName = cacheListPresenter.getSelectionModel()
                             .getSelected()

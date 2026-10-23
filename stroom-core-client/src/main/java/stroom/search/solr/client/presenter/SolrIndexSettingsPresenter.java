@@ -81,12 +81,9 @@ public class SolrIndexSettingsPresenter
         view.setUiHandlers(this);
         view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setRetentionExpressionView(editExpressionPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
         editExpressionPresenter.setOnChange(this::onChange);
-        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
+        own(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

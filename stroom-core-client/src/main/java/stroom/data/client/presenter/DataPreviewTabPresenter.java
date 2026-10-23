@@ -44,10 +44,6 @@ public class DataPreviewTabPresenter extends ContentTabPresenter<DataPreviewTabV
     }
 
     @Override
-    protected void onBind() {
-    }
-
-    @Override
     public SvgImage getIcon() {
         return SvgImage.FILE_FORMATTED;
     }

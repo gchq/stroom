@@ -88,6 +88,8 @@ public class QueryDocEditPresenter
         toolbar = new Toolbar("Query actions");
         toolbar.button(SvgImage.DOCUMENT_ANALYTIC_RULE, "Create Analytic Rule", this::createRule);
         toolbar.button(SvgImage.DOCUMENT_REPORT, "Create Report", this::createReport);
+
+        queryEditPresenter.setOnChange(this::onChange);
     }
 
     @Override
@@ -101,12 +103,6 @@ public class QueryDocEditPresenter
     @Override
     public List<Widget> getToolbars() {
         return queryEditPresenter.getToolbars();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        queryEditPresenter.setOnChange(this::onChange);
     }
 
     private void createRule() {

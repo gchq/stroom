@@ -221,6 +221,14 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
 
         steppingModeButton = toolbar.toggle(SvgImage.STEP, "Stepping Mode", this::onSteppingModeToggled);
         steppingModeButton.setVisible(false);
+
+        // Editing an element's code (e.g. XSLT) while stepping does not change the PipelineDoc itself,
+        // so onChange()'s structure comparison won't detect it. The stepping presenter calls its
+        // change callback on each edit; route it directly to onChange() so the pipeline's Save button is
+        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()).
+        // Note that this must not touch the pipeline model: element code is not part of the pipeline
+        // structure, and rebuilding on each keypress makes the tree flash and the editor lag.
+        steppingPresenter.setOnChange(this::onChange);
     }
 
     private void onSteppingModeToggled(final boolean steppingMode) {
@@ -249,19 +257,6 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         if (steppingModeButton != null) {
             steppingModeButton.setVisible(STRUCTURE.equals(tab));
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // Editing an element's code (e.g. XSLT) while stepping does not change the PipelineDoc itself,
-        // so onChange()'s structure comparison won't detect it. The stepping presenter calls its
-        // change callback on each edit; route it directly to onChange() so the pipeline's Save button is
-        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()).
-        // Note that this must not touch the pipeline model: element code is not part of the pipeline
-        // structure, and rebuilding on each keypress makes the tree flash and the editor lag.
-        steppingPresenter.setOnChange(this::onChange);
     }
 
     @Override

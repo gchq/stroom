@@ -226,44 +226,39 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
                 CreateNewDocumentEvent.fire(this, ViewDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_XSLT, () ->
                 CreateNewDocumentEvent.fire(this, XsltDoc.TYPE));
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // track the currently selected doc.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
             locate.setEnabled(selectedDoc != null);
         }));
 
         // Register for refresh events.
-        registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
+        own(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
 
         // Register for changes to the current activity.
-        registerHandler(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary()));
+        own(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary()));
 
         // Register for highlight events.
-        registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
+        own(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
 
         // Register for events to focus the explorer tree filter
-        registerHandler(getEventBus().addHandler(FocusExplorerFilterEvent.getType(), this));
+        own(getEventBus().addHandler(FocusExplorerFilterEvent.getType(), this));
 
-        registerHandler(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
+        own(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
 
         // Deal with task listeners.
         final TaskMonitor taskMonitor = getView().getTaskListener().createTaskMonitor();
-        registerHandler(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
+        own(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
                 taskMonitor.onStart(e.getTask())));
-        registerHandler(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
+        own(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
                 taskMonitor.onEnd(e.getTask())));
 
-        registerHandler(typeFilterPresenter.addSelectionListener(event -> explorerTree.setIncludedTypeSet(
+        own(typeFilterPresenter.addSelectionListener(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
 
         // Fire events from the explorer tree globally.
-        registerHandler(explorerTree.getSelectionModel().addSelectionHandler(event -> {
+        own(explorerTree.getSelectionModel().addSelectionHandler(event -> {
             getEventBus().fireEvent(new ExplorerTreeSelectEvent(
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
@@ -274,9 +269,9 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
             add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
-        registerHandler(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
+        own(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
 
-        registerHandler(activityButton.addClickHandler(event -> currentActivity.showActivityChooser()));
+        own(activityButton.addClickHandler(event -> currentActivity.showActivityChooser()));
     }
 
     private void updateActivitySummary() {

@@ -56,11 +56,6 @@ public class ImportConfigPresenter
         this.restFactory = restFactory;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         getView().getFileUpload()
                 .onSuccess(resourceKey -> restFactory

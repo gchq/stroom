@@ -125,10 +125,7 @@ public final class ManageGlobalPropertyEditPresenter
         this.dataTypeHelpButton.setVisible(true);
 
         view.setUiHandlers(this);
-    }
 
-    @Override
-    protected void onBind() {
     }
 
     private void onOpenClusterValues() {

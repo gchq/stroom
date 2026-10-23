@@ -133,12 +133,8 @@ public class PipelineStructurePresenter
         // Get a map of all available elements and properties.
         setAdvancedMode(true);
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(pipelinePresenter.addSelectionListener(selected -> {
+        own(pipelinePresenter.addSelectionListener(selected -> {
             final DocRef selectedDocRef = selected;
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
                 if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
@@ -158,7 +154,7 @@ public class PipelineStructurePresenter
                 changeParentPipeline(null);
             }
         }));
-        registerHandler(
+        own(
                 pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
                     selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
@@ -177,7 +173,7 @@ public class PipelineStructurePresenter
                 onRemove(null);
             }
         });
-        registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
+        own(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (NullSafe.hasItems(menuItems)) {

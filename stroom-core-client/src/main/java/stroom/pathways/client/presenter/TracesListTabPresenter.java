@@ -78,24 +78,15 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
 
         view.setTopWidget(listPresenter.getView());
         view.setBottomWidget(traceOverviewWidget);
-    }
 
-    @Override
-    public List<Widget> getToolbars() {
-        return List.of(toolbar);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(timeRangeSelector.addValueChangeHandler(e -> {
+        own(timeRangeSelector.addValueChangeHandler(e -> {
             listPresenter.setTimeRange(e.getValue());
             listPresenter.refresh();
         }));
         listPresenter.setHistogramZoomHandler((fromMs, toMs) ->
                 timeRangeSelector.setValue(new TimeRange(
                         null, ClientDateUtil.toISOString(fromMs), ClientDateUtil.toISOString(toMs)), true));
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(listPresenter.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
             if (traceRoot == null) {
                 return;
@@ -109,6 +100,11 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                 loadLargeTrace(traceRoot);
             }
         }));
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return List.of(toolbar);
     }
 
     // A small, rootless trace: served whole because the paged (getSpans) tree walk needs a root and can't

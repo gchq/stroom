@@ -95,6 +95,11 @@ public class MarkdownEditPresenter
 
         registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
+
+        own(markdownPreviewPresenter.addValueChangeHandler(event -> setDirty(true)));
+        own(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));
+
+        setEditMode(false);
     }
 
     @Override
@@ -125,15 +130,6 @@ public class MarkdownEditPresenter
     /// @param addButtonsFirst Given the toolbar, adds the buttons to it.
     public void setAddButtonsFirst(final Consumer<Toolbar> addButtonsFirst) {
         this.addButtonsFirst = addButtonsFirst;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(markdownPreviewPresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));
-
-        setEditMode(false);
     }
 
     private void toggleEditMode() {

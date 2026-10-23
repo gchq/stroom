@@ -38,11 +38,7 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
         super(eventBus, view);
         // Read only as its document is
         watch(Contexts.READ_ONLY, getView()::onReadOnly);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
@@ -50,10 +46,10 @@ public class XMLSchemaSettingsPresenter extends DocPresenter<XMLSchemaSettingsVi
                 onChange();
             }
         };
-        registerHandler(getView().getNamespaceURI().addKeyDownHandler(keyDownHander));
-        registerHandler(getView().getSystemId().addKeyDownHandler(keyDownHander));
-        registerHandler(getView().getSchemaGroup().addKeyDownHandler(keyDownHander));
-        registerHandler(getView().getDeprecated().addValueChangeHandler(event -> onChange()));
+        own(getView().getNamespaceURI().addKeyDownHandler(keyDownHander));
+        own(getView().getSystemId().addKeyDownHandler(keyDownHander));
+        own(getView().getSchemaGroup().addKeyDownHandler(keyDownHander));
+        own(getView().getDeprecated().addValueChangeHandler(event -> onChange()));
     }
 
     @Override
