@@ -385,7 +385,7 @@ public final class DashboardSearchStories {
     private static void expectSearchesComplete(final Play play) {
         play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
                 .toHaveLength(0));
-        play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + "[title='Execute Query']"))
+        play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + "[aria-label='Execute Query']"))
                 .toHaveLength(2);
     }
 

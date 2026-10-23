@@ -940,7 +940,7 @@ public final class PipelineEditorStories {
                     play.keyboard("{Control>}{End}{/Control} EDITED");
                     play.findByText("ORIGINAL XSLT CODE EDITED");
                     // Save with the XSLT dirty: the picker lists both documents
-                    play.click(play.getByTitle("Save"));
+                    play.click(play.getByRole("button", "Save"));
                     final Play picker = dialog(screen, "Save Pipeline: My Pipeline");
                     play.expect(picker.getByText("My Pipeline")).toBeInTheDocument();
                     play.expect(picker.getByText("My XSLT")).toBeInTheDocument();

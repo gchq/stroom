@@ -39,6 +39,7 @@ import { CHECKS as ICON_PICKER } from './icon-picker.mjs';
 import { CHECKS as MENU } from './menu.mjs';
 import { CHECKS as SELECTION_BOX } from './selection-box.mjs';
 import { CHECKS as SELECTION_LIST } from './selection-list.mjs';
+import { CHECKS as SHORTCUTS } from './shortcuts.mjs';
 import { CHECKS as SPLIT_PANE } from './split-pane.mjs';
 import { CHECKS as TABS } from './tabs.mjs';
 import { CHECKS as TEXT_CONTEXT_MENU } from './text-context-menu.mjs';
@@ -49,7 +50,7 @@ const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'areas.mjs': AREAS, 'buttons.mjs':
   'copy-icons.mjs': COPY_ICONS, 'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
   'date-time.mjs': DATE_TIME, 'help.mjs': HELP,
   'icon-picker.mjs': ICON_PICKER, 'menu.mjs': MENU, 'selection-box.mjs': SELECTION_BOX,
-  'selection-list.mjs': SELECTION_LIST, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS,
+  'selection-list.mjs': SELECTION_LIST, 'shortcuts.mjs': SHORTCUTS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS,
   'text-context-menu.mjs': TEXT_CONTEXT_MENU, 'top-bar.mjs': TOP_BAR, 'value-spinner.mjs': VALUE_SPINNER };
 
 // Merges each file's checks, refusing a story id found in two files

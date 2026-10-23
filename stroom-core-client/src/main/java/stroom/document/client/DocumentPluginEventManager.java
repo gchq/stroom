@@ -53,6 +53,7 @@ import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
+import stroom.explorer.client.event.ExplorerItemKeyEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -190,6 +191,8 @@ public class DocumentPluginEventManager extends Plugin {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
         });
+        KeyBinding.addCommand(Action.ITEM_CLOSE_SAVED, () ->
+                RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this));
         KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () ->
                 RequestCloseAllTabsEvent.fire(this));
 
@@ -526,6 +529,25 @@ public class DocumentPluginEventManager extends Plugin {
 
             if (!selectedItems.isEmpty() && !ExplorerConstants.isFavouritesNode(primarySelection)) {
                 showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
+            }
+        }));
+
+        // Handle the keys for an explorer item's actions (e.g. F2 to rename it), which act as the
+        // item's menu would
+        registerHandler(getEventBus().addHandler(ExplorerItemKeyEvent.getType(), event -> {
+            final List<ExplorerNode> selectedItems = getSelectedItems();
+            if (!selectedItems.isEmpty()) {
+                fetchPermissions(selectedItems, documentPermissionMap -> {
+                    final String whyNot = ExplorerItemKeys.whyNot(event.getAction(), selectedItems,
+                            documentPermissionMap);
+                    if (whyNot != null) {
+                        event.announce(whyNot);
+                    } else if (event.getAction() == Action.EXPLORER_INFO) {
+                        showInfo(selectedItems.get(0), explorerListener);
+                    } else {
+                        renameItems(selectedItems);
+                    }
+                }, explorerListener);
             }
         }));
 
@@ -1467,6 +1489,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
                 .text("Close Saved Tabs")
+                .action(Action.ITEM_CLOSE_SAVED)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1623,40 +1646,35 @@ public class DocumentPluginEventManager extends Plugin {
                                         final int priority,
                                         final boolean enabled,
                                         final TaskMonitorFactory taskMonitorFactory) {
-        final Command command;
-        if (enabled && explorerNode != null) {
-            command = () -> {
-                // Should only be one item as info is not supported for multi selection
-                // in the tree
-                restFactory
-                        .create(EXPLORER_RESOURCE)
-                        .method(res -> res.info(explorerNode.getDocRef()))
-                        .onSuccess(explorerNodeInfo -> {
-                            if (explorerNodeInfo == null) {
-                                AlertEvent.fireError(DocumentPluginEventManager.this,
-                                        buildNotFoundMessage(explorerNode.getDocRef()),
-                                        null);
-                            } else {
-                                ShowInfoDocumentDialogEvent.fire(
-                                        DocumentPluginEventManager.this,
-                                        explorerNodeInfo);
-                            }
-                        })
-                        .onFailure(this::handleFailure)
-                        .taskMonitorFactory(taskMonitorFactory)
-                        .exec();
-            };
-        } else {
-            command = null;
-        }
+        // Should only be one item as info is not supported for multi selection in the tree
+        final Command command = enabled && explorerNode != null
+                ? () -> showInfo(explorerNode, taskMonitorFactory)
+                : null;
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
                 .text("Show Info")
+                .action(Action.EXPLORER_INFO)
                 .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
+    }
+
+    private void showInfo(final ExplorerNode explorerNode, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(EXPLORER_RESOURCE)
+                .method(res -> res.info(explorerNode.getDocRef()))
+                .onSuccess(explorerNodeInfo -> {
+                    if (explorerNodeInfo == null) {
+                        AlertEvent.fireError(this, buildNotFoundMessage(explorerNode.getDocRef()), null);
+                    } else {
+                        ShowInfoDocumentDialogEvent.fire(this, explorerNodeInfo);
+                    }
+                })
+                .onFailure(this::handleFailure)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     private void handleFailure(final RestError t) {
@@ -1856,6 +1874,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.EDIT)
                 .text("Rename")
+                .action(Action.EXPLORER_RENAME)
                 .enabled(enabled)
                 .command(command)
                 .build();

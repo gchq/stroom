@@ -59,7 +59,10 @@ public class QueryCell extends AbstractCell<StoredQuery> {
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span><span class=\"{3}\">{4}</span></div>")
+        // The space between the time and the expression takes no room (the time's padding spaces
+        // them), but is there in the text, so a copied row reads "<time> <expression>"
+        @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span><span class=\"queryCell-gap\"> </span>"
+                  + "<span class=\"{3}\">{4}</span></div>")
         SafeHtml historyLayout(String outerClassName, String timeClassName, String time, String expressionClassName,
                                String expression);
 
