@@ -23,6 +23,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * How long a span took, as the widest and narrowest seen so far.
+ *
+ * <p>Either end may be absent, which means nothing is asserted on that side: a duration with no
+ * bottom is any duration up to the top, and one with no top is any duration from the bottom up. An
+ * end goes missing because the pathway document names it — {@code duration.min} or
+ * {@code duration.max} — for a span whose timing swings so widely that learning that end fills the
+ * model with outliers and ends up asserting nothing anyway.
+ */
 @JsonInclude(Include.NON_NULL)
 public final class NanoTimeRange extends AbstractRange<NanoTime> implements ConstraintValue {
 
@@ -34,6 +43,23 @@ public final class NanoTimeRange extends AbstractRange<NanoTime> implements Cons
 
     @Override
     public ConstraintValueType valueType() {
+        if (getMin() == null) {
+            return ConstraintValueType.DURATION_AT_MOST;
+        }
+        if (getMax() == null) {
+            return ConstraintValueType.DURATION_AT_LEAST;
+        }
         return ConstraintValueType.DURATION_RANGE;
+    }
+
+    @Override
+    public String toString() {
+        return end(getMin()) + " -> " + end(getMax());
+    }
+
+    private static String end(final NanoTime bound) {
+        return bound == null
+                ? "any"
+                : bound.toString();
     }
 }

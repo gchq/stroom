@@ -23,4 +23,15 @@ import java.util.function.Supplier;
 public interface MessageReceiver {
 
     void log(Severity severity, Supplier<String> message);
+
+    /**
+     * Names the trace and span every message came from. A report covers many traces and each trace
+     * many spans, so without it there is no way to tell which one a line is about.
+     */
+    static MessageReceiver forSpan(final MessageReceiver messageReceiver,
+                                   final String traceId,
+                                   final String spanId) {
+        final String prefix = "[" + traceId + ":" + spanId + "] ";
+        return (severity, message) -> messageReceiver.log(severity, () -> prefix + message.get());
+    }
 }

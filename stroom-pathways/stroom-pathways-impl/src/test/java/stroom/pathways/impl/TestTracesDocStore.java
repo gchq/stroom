@@ -21,9 +21,11 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.TracesDoc;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.TraceSettings;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 
 import jakarta.inject.Provider;
@@ -56,6 +58,8 @@ class TestTracesDocStore {
     private TracesDocSerialiser serialiser;
     @Mock
     private ClusterLockService clusterLockService;
+    @Mock
+    private SecurityContext securityContext;
 
     private PlanBPaths planBPaths;
     private TracesDocStoreImpl storeImpl;
@@ -64,6 +68,11 @@ class TestTracesDocStore {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         doReturn(store).when(storeFactory).createStore(any(), any(), any(), any(), any());
+        // AbstractDocumentStore asks the store for the type when authorising a write.
+        when(store.getType()).thenReturn(TracesDoc.TYPE);
+        // These tests are about validation and shared data, so the user always holds the permission.
+        // TestTracesDocStorePermissions covers the refusal.
+        when(securityContext.hasDocumentPermission(any(), any())).thenReturn(true);
 
         planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
         final Provider<PlanBPaths> planBPathsProvider = () -> planBPaths;
@@ -71,6 +80,7 @@ class TestTracesDocStore {
 
         storeImpl = new TracesDocStoreImpl(
                 storeFactory,
+                securityContext,
                 serialiser,
                 lockServiceProvider);
     }
@@ -142,7 +152,7 @@ class TestTracesDocStore {
     }
 
     @Test
-    void testWriteDocument_changeShardCount_withSharedData_processing() throws IOException {
+    void testWriteDocument_changeShardCount_withSharedData_queue() throws IOException {
         final Path sharedPath = tempDir.resolve("shared");
         final String uuid = "test-uuid";
 
@@ -161,8 +171,8 @@ class TestTracesDocStore {
                         .build())
                 .build();
 
-        // Create the processing directory for the UUID to simulate that data was written
-        Files.createDirectories(sharedPath.resolve("processing").resolve(uuid));
+        // Create the queue directory for the UUID to simulate that data was written
+        Files.createDirectories(sharedPath.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(uuid));
 
         when(store.readDocument(any())).thenReturn(oldDoc);
 

@@ -37,10 +37,21 @@ public final class NumberUtil {
      * @return the comma-separated string representation
      */
     public static String formatInt(final int value) {
+        return formatLong(value);
+    }
+
+    /**
+     * Formats a long with thousands separators
+     * (e.g. {@code 1000000} → {@code "1,000,000"}).
+     *
+     * @param value the number to format
+     * @return the comma-separated string representation
+     */
+    public static String formatLong(final long value) {
         if (value == 0) {
             return "0";
         }
-        final String raw = Integer.toString(value);
+        final String raw = Long.toString(value);
         if (raw.length() <= 3) {
             return raw;
         }

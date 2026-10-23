@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,312 +16,389 @@
 
 package stroom.pathways.impl;
 
-import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentNotFoundException;
-import stroom.node.api.NodeInfo;
-import stroom.pathways.shared.FindPathwayCriteria;
-import stroom.pathways.shared.PathwayResultPage;
+import stroom.pathways.impl.TraceProcessor.ApplyOutcome;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.pathways.shared.pathway.Pathway;
-import stroom.planb.impl.dao.Count;
-import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
-import stroom.planb.impl.dao.trace.TraceDb;
-import stroom.planb.impl.data.archive.ArchiveShardLocator;
-import stroom.planb.impl.data.archive.ArchiveShardRef;
-import stroom.planb.impl.data.shard.ShardManager;
-import stroom.planb.impl.fs.SharedFileStore;
-import stroom.planb.shared.HasHoldingAreaSettings;
-import stroom.planb.shared.HoldingAreaSettings;
+import stroom.planb.impl.dao.trace.QueueItem;
+import stroom.planb.impl.dao.trace.QueueItemReader;
+import stroom.planb.impl.fs.MergeContext;
+import stroom.planb.impl.fs.MergeResult;
+import stroom.planb.impl.fs.MergeStrategy;
+import stroom.planb.impl.fs.OperationMarker;
+import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
-import stroom.util.concurrent.StripedLock;
-import stroom.util.io.FileUtil;
-import stroom.util.io.PathCreator;
-import stroom.util.io.PathSegmentUtil;
+import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.util.time.SimpleDurationUtil;
+import stroom.util.shared.Severity;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
+/**
+ * Applies the traces a trace store has handed over, several shards at a time.
+ *
+ * <p>Every node runs this. A shard is claimed by taking its cluster lock, so only one node works a
+ * given shard at a time and which node that is does not matter — the queue and the state it builds
+ * both live on the shared filesystem.
+ */
 @Singleton
-public class PathwaysProcessor {
+public class PathwaysProcessor implements MergeStrategy {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysProcessor.class);
 
-    private final PathwaysStore pathwaysStore;
+    /**
+     * How much one lock hold takes on.
+     *
+     * <p>Bounded both ways because either bound alone can be wrong: a few enormous items outlast a
+     * count bound, and a flood of tiny ones outlasts nothing. Kept well under the minute at which
+     * {@code DbClusterLock} warns about a long hold, which also narrows the window in which a lease
+     * lost part way through a hold can matter.
+     *
+     * <p>Both numbers are guesses until a run against real traffic replaces them.
+     */
+    static final int MAX_ITEMS_PER_HOLD = 50;
+    static final Duration MAX_TIME_PER_HOLD = Duration.ofSeconds(30);
+
+
+    /** When each shard was last narrowed, kept beside the shard on the shared file store. */
+    private static final OperationMarker NARROWED_MARKER =
+            new OperationMarker(PlanBConstants.NARROWED_LAST_FILE_NAME);
+
+    private final PathwaysShardStore shardStore;
     private final MessageReceiverFactory messageReceiverFactory;
-    private final ByteBuffers byteBuffers;
-    private final Path dbPath;
-    private final Map<String, Store> pathwaysDbMap = new ConcurrentHashMap<>();
-    // Serialises creation of a given store without holding a lock on the map while we do it.
-    private final StripedLock creationLocks = new StripedLock();
     private final PathwaySerde pathwaySerde;
-    private final ShardManager shardManager;
-    private final NodeInfo nodeInfo;
-    private final ClusterLockService clusterLockService;
-    private final ArchiveShardLocator archiveShardLocator;
+    private final MutationLog mutationLog;
+    private final PathwayNarrower pathwayNarrower;
+    private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
+
+    private final Meter tracesApplied;
+    private final Counter itemsFailed;
+
+    /**
+     * What the last pass saw, so the gauges can report it without listing the shared filesystem
+     * themselves. At most one cycle stale, which is fine for a backlog, and it keeps a metrics scrape
+     * off the shared mount and out of the permission checks that reading a document needs.
+     */
+    private final Map<String, Backlog> backlogByShard = new ConcurrentHashMap<>();
 
     @Inject
-    public PathwaysProcessor(final PathwaysStore pathwaysStore,
+    public PathwaysProcessor(final MutationLog mutationLog,
+                             final PathwaysShardStore shardStore,
                              final MessageReceiverFactory messageReceiverFactory,
-                             final PathCreator pathCreator,
-                             final ByteBuffers byteBuffers,
                              final PathwaySerde pathwaySerde,
-                             final ShardManager shardManager,
-                             final NodeInfo nodeInfo,
-                             final ClusterLockService clusterLockService,
-                             final ArchiveShardLocator archiveShardLocator) {
-        this.pathwaysStore = pathwaysStore;
+                             final PathwayNarrower pathwayNarrower,
+                             final ByteBuffers byteBuffers,
+                             final ByteBufferFactory byteBufferFactory,
+                             final Metrics metrics) {
+        this.mutationLog = mutationLog;
+        this.shardStore = shardStore;
         this.messageReceiverFactory = messageReceiverFactory;
-        this.byteBuffers = byteBuffers;
         this.pathwaySerde = pathwaySerde;
-        this.shardManager = shardManager;
-        this.nodeInfo = nodeInfo;
-        this.clusterLockService = clusterLockService;
-        this.archiveShardLocator = archiveShardLocator;
+        this.pathwayNarrower = pathwayNarrower;
+        this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
 
-        dbPath = pathCreator.toAppPath("${stroom.home}/pathways");
+        this.tracesApplied = metrics.registrationBuilder(getClass())
+                .addNamePart("tracesApplied")
+                .meter()
+                .createAndRegister();
+        this.itemsFailed = metrics.registrationBuilder(getClass())
+                .addNamePart("itemsFailed")
+                .counter()
+                .createAndRegister();
+        metrics.registrationBuilder(getClass())
+                .addNamePart("queueDepth")
+                .addNamePart(Metrics.COUNT)
+                .gauge(() -> backlogByShard.values().stream().mapToLong(Backlog::items).sum())
+                .register();
+        metrics.registrationBuilder(getClass())
+                .addNamePart("oldestItem")
+                .addNamePart(Metrics.AGE_MS)
+                .gauge(() -> backlogByShard.values().stream().mapToLong(Backlog::oldestAgeMs).max().orElse(0))
+                .register();
     }
 
     /**
-     * Scheduled entry point. Delegates to {@link #processCompletedTraces} for each PathwaysDoc
-     * assigned to this node, taking every trace a bucket holds a merge time for.
-     *
-     * <p>No settling delay is applied here. A trace only reaches a bucket once publishing has
-     * waited out the store's {@code Max Wait For Data}, so the wait for a trace's remaining spans
-     * has already happened by the time this can see it, and a bucket is only offered for reading
-     * once its version marker is in place.
+     * Whether this shard's model is due a narrowing — the only work a pathways document has that does
+     * not arrive as an item. A shard that has gone quiet still has to be opened for it, because
+     * narrowing is exactly what a model nobody is exercising any more needs: its paths should be
+     * falling away.
      */
-    public void exec() {
-        // Reclaim stores for docs that have been deleted since the last run.
-        deleteOldStores();
+    @Override
+    public boolean maintenanceDue(final PlanBDocument doc, final int shardIndex) {
+        final PathwaysDoc pathwaysDoc = (PathwaysDoc) doc;
+        final SharedFileStoreSettings settings = pathwaysDoc.getSharedFileStore();
+        return settings != null
+               && NullSafe.isNonBlankString(settings.getSharedPath())
+               && narrowingDue(shardStore.sharedDocDir(pathwaysDoc), shardIndex, Instant.now());
+    }
 
-        // Everything stamped up to now; the ordered scan stops there rather than running to the
-        // end of the index. Anything stamped during this pass is taken on the next one.
-        final long cutoffMs = Instant.now().toEpochMilli();
+    /**
+     * The same lock the screens take when they write to a shard — see {@code PathwaysService} — so
+     * that a reader editing a model and a pass applying traces to it cannot hold one shard at once.
+     */
+    @Override
+    public String lockName(final PlanBDocument doc, final int shardIndex) {
+        return lockName(doc.getUuid(), shardIndex);
+    }
 
-        for (final DocRef docRef : NullSafe.list(pathwaysStore.list())) {
+    /**
+     * Applies this shard's queued traces to its model, narrows the model if that is due, and
+     * publishes it — inside the cluster lock the caller is holding.
+     *
+     * @param queueDirs the traces handed over to this shard, oldest first. Empty where the shard was
+     *                  opened only because its narrowing fell due.
+     * @return what went in, so the caller can delete it now the model holding it is published, and
+     * what failed, so the attempt is counted against it. What is left out is offered again.
+     */
+    @Override
+    public MergeResult mergeShard(final MergeContext ctx, final List<Path> queueDirs) {
+        final PathwaysDoc doc = (PathwaysDoc) ctx.doc();
+        // Asked again once the lock was held, so this is not what was decided before it: on a cluster
+        // another node may have narrowed this shard and stamped the marker since.
+        final boolean narrowNow = ctx.maintenanceDue();
+
+        recordBacklog(doc, ctx.shardIndex(), queueDirs);
+
+        final List<Path> applied = new ArrayList<>();
+        final Map<Path, Exception> failures = new LinkedHashMap<>();
+        try {
+            shardStore.withShard(doc, ctx.shardIndex(),
+                    localDir -> work(doc, queueDirs, narrowNow, localDir, applied, failures));
+        } catch (final IOException e) {
+            // The model could not be taken down or put back, so nothing here was committed. Saying
+            // nothing was applied is the whole point: every item is offered again next cycle rather
+            // than being deleted here.
+            LOGGER.error(() -> LogUtil.message("Could not work shard {} of {}, leaving {} item(s): {}",
+                    ctx.shardIndex(), doc.getName(), queueDirs.size(), e.getMessage()), e);
+            return MergeResult.none();
+        }
+
+        if (narrowNow) {
+            // Stamped after the shard is safely back, and whether or not the narrowing changed
+            // anything — the work was done either way, and a model already as narrow as its window
+            // does not need looking at again today.
+            shardStore.sharedDocDir(doc)
+                    .ifPresent(dir -> NARROWED_MARKER.recordRun(dir, ctx.shardIndex()));
+        }
+        // What went in, so the caller can mark those merged and delete them now the model holding
+        // them is published. What is left out is offered again next cycle.
+        return new MergeResult(applied, failures);
+    }
+
+    // What was waiting for this shard when it was opened, for the gauges. Kept per shard rather than
+    // summed, because a shard another node is working is not reported here at all and its last known
+    // depth is a better answer than nothing.
+    private void recordBacklog(final PathwaysDoc doc, final int shardIndex, final List<Path> queueDirs) {
+        long oldestAgeMs = 0L;
+        if (!queueDirs.isEmpty()) {
             try {
-                final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-                if (doc != null
-                    && doc.getTracesDocRef() != null
-                    && Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
-                    // Held under the store's read lock for the whole of the processing below so it
-                    // can't be closed and deleted while we read from it.
-                    useStore(docRef, true, pathwaysDb -> {
-                        if (pathwaysDb != null) {
-                            processCompletedTraces(doc, cutoffMs, pathwaysDb);
-                        }
-                        return null;
-                    });
-                }
+                oldestAgeMs = System.currentTimeMillis() - QueueItem.orderKeyOf(queueDirs.get(0));
             } catch (final RuntimeException e) {
-                // Keep going: a doc deleted since list() above, or one that fails to process,
-                // must not stop us processing the rest until the next run of this job.
-                LOGGER.error(() -> LogUtil.message("Error processing pathways for '{}': {}",
-                        docRef, e.getMessage()), e);
+                // Something in the folder this pass is about to work is not named like an item.
+                // Worth saying, but not worth giving up the shard for: a gauge is not the work.
+                LOGGER.warn(() -> "Could not read the age of " + queueDirs.get(0) + ": " + e.getMessage());
             }
         }
+        backlogByShard.put(doc.getUuid() + "/" + shardIndex,
+                new Backlog(queueDirs.size(), oldestAgeMs));
+    }
+
+    // Whether this shard has been narrowed today. A shard that never has, or whose marker cannot be
+    // read, is due — which is also how deleting the marker file asks for a narrowing by hand.
+    private boolean narrowingDue(final Optional<Path> docDir, final int shard, final Instant now) {
+        return docDir
+                .map(dir -> PathwayNarrower.narrowingDue(NARROWED_MARKER.lastRun(dir, shard), now))
+                .orElse(false);
+    }
+
+    static String lockName(final String pathwaysDocUuid, final int shard) {
+        return lockPrefix(pathwaysDocUuid) + PlanBConstants.formatShardIndex(shard);
     }
 
     /**
-     * Opens the store for a doc, creating it if needed. Only for tests that need an open
-     * store to exercise the close and delete path.
+     * Every shard lock this document will ever take. Lock rows are created on demand and removed only
+     * by name, so deleting the document has to delete these too or they accumulate in
+     * {@code cluster_lock} for good.
      */
-    void openForTesting(final DocRef docRef) {
-        useStore(docRef, true, pathwaysDb -> null);
+    public static String lockPrefix(final String pathwaysDocUuid) {
+        return "pathways-" + pathwaysDocUuid + "-";
     }
 
-    private Path getPathwaysPath(final DocRef docRef) {
-        return dbPath.resolve("pathways").resolve(PathSegmentUtil.requireSafeSegment(docRef.getUuid()));
+    // Everything this hold does to the shard, in the order it happens: the waiting traces widen the
+    // model, and then the narrowing takes back whatever has fallen outside the window — so a run of
+    // widenings and the narrowing that answers them land in the history in that order.
+    private boolean work(final PathwaysDoc doc,
+                         final List<Path> queueDirs,
+                         final boolean narrowNow,
+                         final Path localDir,
+                         final List<Path> applied,
+                         final Map<Path, Exception> failures) {
+        // A shard opened only because its narrowing is due has nothing waiting, and applying nothing
+        // still opens the document's feed.
+        boolean changed = !queueDirs.isEmpty()
+                          && applyQueuedTraces(doc, queueDirs, localDir, applied, failures);
+        if (narrowNow) {
+            changed = narrow(doc, localDir) || changed;
+        }
+        return changed;
     }
 
-    /**
-     * Runs the supplied function against the doc's store while holding that store's read lock,
-     * so the store cannot be closed and its dir deleted while the function is using it. The
-     * function is passed null if there is no store, which is only possible when
-     * createIfNotExists is false or the store was deleted while we were waiting for the lock.
-     *
-     * @param createIfNotExists Whether to create the store if we don't already have one. Pass
-     *                          false from read only paths so that querying a doc that has
-     *                          never been processed doesn't create a store as a side effect.
-     */
-    private <R> R useStore(final DocRef docRef,
-                           final boolean createIfNotExists,
-                           final Function<PathwaysDb, R> function) {
-        final Store store = getStore(docRef, createIfNotExists);
-        if (store == null) {
-            return function.apply(null);
+    private boolean narrow(final PathwaysDoc doc, final Path localDir) {
+        // Collected rather than written as the narrowing goes: opening the feed opens a stream
+        // whether or not anything is put in it, and a model already as narrow as its window has
+        // nothing to say — which is most models most days.
+        final List<String> lines = new ArrayList<>();
+        final boolean changed = pathwayNarrower.narrow(localDir,
+                PathwayNarrower.oldestDayInWindow(doc, Instant.now()),
+                (severity, message) -> lines.add(message.get()));
+        if (!lines.isEmpty()) {
+            withMessageReceiver(messageReceiverFactory, doc, messages ->
+                    lines.forEach(line -> messages.log(Severity.INFO, () -> line)));
         }
-
-        // Excludes deleteStore() for the duration of the call. Without this the store could be
-        // closed, and its files unlinked, while we are inside a read txn on it, which is
-        // undefined behaviour in LMDB rather than an error we could report.
-        store.lock.readLock().lock();
-        try {
-            if (store.closed) {
-                // Deleted between us taking it from the map and acquiring the lock.
-                return function.apply(null);
-            }
-            return function.apply(store.db);
-        } finally {
-            store.lock.readLock().unlock();
-        }
+        return changed;
     }
 
-    private Store getStore(final DocRef docRef, final boolean createIfNotExists) {
-        final String uuid = docRef.getUuid();
-        final Store existing = pathwaysDbMap.get(uuid);
-        if (existing != null) {
-            return existing;
-        }
+    // Fills `applied` with the items that went in, so the caller can delete exactly those once the
+    // model is safely back on the shared store. Returns whether the local model changed, which is what
+    // decides whether it is worth pushing.
+    private boolean applyQueuedTraces(final PathwaysDoc doc,
+                               final List<Path> queueDirs,
+                               final Path localDir,
+                               final List<Path> applied,
+                               final Map<Path, Exception> failures) {
+        final Instant deadline = Instant.now().plus(MAX_TIME_PER_HOLD);
+        final Counts counts = new Counts();
 
-        // Deliberately not ConcurrentHashMap.computeIfAbsent: the mapping function would run
-        // while holding the lock for the key's bin, so opening the env would block lookups of
-        // unrelated docs that hash to the same bin. Creation is serialised by a striped lock
-        // outside the map instead, so concurrent callers for the same doc wait rather than
-        // both building one. Same reasoning as ShardManager.getOrCreateShard, see gh-5689.
-        final Lock lock = creationLocks.getLockForKey(uuid);
-        lock.lock();
-        try {
-            // Another thread may have created it while we were waiting for the lock.
-            final Store created = pathwaysDbMap.get(uuid);
-            if (created != null) {
-                return created;
-            }
-
-            final Path processingPath = getPathwaysPath(docRef);
-            if (!createIfNotExists && !Files.isDirectory(processingPath)) {
-                return null;
-            }
-
-            try {
-                Files.createDirectories(processingPath);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            final Store store = new Store(PathwaysDb.create(processingPath, byteBuffers, false));
-            pathwaysDbMap.put(uuid, store);
-            return store;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Closes and deletes the stores of any docs that no longer exist. Nothing else reclaims
-     * them, so without this a deleted doc leaves its pathway data on disk, and its env open,
-     * for the life of the process.
-     */
-    private void deleteOldStores() {
-        final Path pathwaysPath = dbPath.resolve("pathways");
-        if (!Files.isDirectory(pathwaysPath)) {
-            return;
-        }
-
-        try (final Stream<Path> stream = Files.list(pathwaysPath)) {
-            stream.filter(Files::isDirectory).forEach(dir -> {
-                final String uuid = dir.getFileName().toString();
-                // Asked per dir rather than diffed against pathwaysStore.list(), so that a
-                // list which is empty for any reason other than there being no docs can't
-                // delete every store. Anything but a definite "not found" is left alone.
-                boolean docDeleted = false;
-                try {
-                    docDeleted = pathwaysStore.readDocument(
-                            DocRef.builder().type(PathwaysDoc.TYPE).uuid(uuid).build()) == null;
-                } catch (final DocumentNotFoundException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    docDeleted = true;
-                } catch (final RuntimeException e) {
-                    LOGGER.error(() -> LogUtil.message(
-                            "Error checking whether pathways doc '{}' still exists, keeping its store: {}",
-                            uuid, e.getMessage()), e);
-                }
-
-                if (docDeleted) {
-                    deleteStore(uuid, dir);
+        try (final PathwaysDb pathwaysDb = PathwaysDb.create(localDir, byteBuffers, false)) {
+            withMessageReceiver(messageReceiverFactory, doc, messageReceiver -> {
+                try (final LmdbWriter writer = pathwaysDb.createWriter()) {
+                    final TraceProcessor traceProcessor = new TraceProcessor(mutationLog, byteBuffers,
+                            pathwaySerde,
+                            new IgnoredAttributes(doc.getIgnoredAttributes()),
+                            new IgnoredSpans(doc.getIgnoredSpanNames()));
+                    for (final Path item : queueDirs) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            // The lock's heartbeat interrupts us when it cannot renew. Carrying on
+                            // regardless is how two nodes end up working one shard, so stop and leave
+                            // the rest for next time.
+                            LOGGER.warn(() -> "Interrupted part way through shard "
+                                              + localDir + ", leaving the rest");
+                            break;
+                        }
+                        if (applied.size() >= MAX_ITEMS_PER_HOLD || Instant.now().isAfter(deadline)) {
+                            break;
+                        }
+                        try {
+                            if (apply(item, pathwaysDb, writer, traceProcessor, doc,
+                                    messageReceiver, counts)) {
+                                applied.add(item);
+                            } else {
+                                // Nothing here applied and deleting is irreversible, so it is handed
+                                // back as a failure: the attempt is counted against it, and once it
+                                // has failed enough times it stops being offered.
+                                itemsFailed.inc();
+                                failures.put(item, new IllegalStateException(
+                                        "The item holds a trace with no root span"));
+                            }
+                        } catch (final Exception e) {
+                            itemsFailed.inc();
+                            failures.put(item, e);
+                        }
+                    }
+                    // Once the hold's traces are in, before the commit that ends it.
+                    traceProcessor.writeHistories(writer, pathwaysDb);
+                    traceProcessor.writeObservedValues(writer, pathwaysDb);
+                    writer.commit();
                 }
             });
-        } catch (final IOException e) {
-            LOGGER.error(() -> LogUtil.message("Error listing pathways dir '{}': {}",
-                    FileUtil.getCanonicalPath(pathwaysPath), e.getMessage()), e);
         }
+
+        tracesApplied.mark(counts.traces);
+
+        final int itemCount = applied.size();
+        final long traceCount = counts.traces;
+        LOGGER.debug(() -> LogUtil.message("Applied {} item(s) holding {} trace(s) into {}",
+                itemCount, traceCount, localDir));
+
+        // Only worth copying the model back up if a trace actually landed in it. Traces
+        // this shard had already seen changes nothing, and pushing then would move the whole file to
+        // say so.
+        return counts.changed;
     }
 
-    private void deleteStore(final String uuid, final Path dir) {
-        // Held for the whole delete, not just the map removal: it stops a concurrent caller
-        // creating a new store on this dir behind us, which we would then delete the files
-        // from. Contention is acceptable as only a deleted doc gets here, and only callers
-        // whose uuid shares one of the 2048 stripes are affected.
-        final Lock lock = creationLocks.getLockForKey(uuid);
-        lock.lock();
-        try {
-            // Single arg remove is safe here because creation takes the same stripe, so no
-            // replacement can have been published since we read it.
-            final Store store = pathwaysDbMap.remove(uuid);
-            boolean closed = true;
-            if (store != null) {
-                // Waits for in-flight users, so the env is never closed under a live txn.
-                // Plain lock() as this must happen even if the job thread is interrupted; it
-                // ignores interrupts and restores the flag once acquired.
-                store.lock.writeLock().lock();
-                try {
-                    store.closed = true;
-                    // Must close the env before deleting the dir it lives in.
-                    store.db.close();
-                } catch (final RuntimeException e) {
-                    closed = false;
-                    LOGGER.error(() -> LogUtil.message("Error closing pathways store '{}': {}",
-                            FileUtil.getCanonicalPath(dir), e.getMessage()), e);
-                } finally {
-                    store.lock.writeLock().unlock();
-                }
-            }
+    /**
+     * @return whether every trace in the item was dealt with, so the item can be deleted once the
+     * model is back on the shared store. False where one could not be, which is the caller's signal to
+     * keep it rather than destroy it.
+     */
+    private boolean apply(final Path item,
+                          final PathwaysDb pathwaysDb,
+                          final LmdbWriter writer,
+                          final TraceProcessor traceProcessor,
+                          final PathwaysDoc doc,
+                          final MessageReceiver messageReceiver,
+                          final Counts counts) {
+        final boolean[] allDealtWith = {true};
+        try (final QueueItemReader reader = new QueueItemReader(item, byteBuffers, byteBufferFactory)) {
+            reader.forEachTrace((root, trace) -> {
+                counts.traces++;
+                // The trace is already in hand, so what the old path fetched from an archive bucket is
+                // supplied directly. One applying path, whichever side the trace came from.
+                final ApplyOutcome outcome = traceProcessor.processTrace(
+                        writer,
+                        pathwaysDb,
+                        HexStringUtil.decode(root.getTraceId()),
+                        traceId -> Optional.of(trace),
+                        doc,
+                        messageReceiver,
+                        reader.getSource());
+                counts.changed |= outcome == ApplyOutcome.APPLIED;
+                allDealtWith[0] &= outcome != ApplyOutcome.NOT_APPLICABLE;
+            });
+        }
+        return allDealtWith[0];
+    }
 
-            if (closed) {
-                LOGGER.info(() -> "Deleting pathways store for deleted doc: " + uuid);
-                if (!FileUtil.deleteDir(dir)) {
-                    LOGGER.error(() -> "Failed to delete all of pathways store " +
-                                       FileUtil.getCanonicalPath(dir));
-                }
-            } else {
-                // Leave the data alone rather than unlink it for an env we could not close.
-                LOGGER.error(() -> "Keeping pathways store " + FileUtil.getCanonicalPath(dir) +
-                                   " as its env could not be closed");
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error deleting pathways store '{}': {}",
-                    FileUtil.getCanonicalPath(dir), e.getMessage()), e);
-        } finally {
-            lock.unlock();
+    // Findings go to the document's info feed, as one stream per run of work. A document with no feed
+    // still learns; it just has nowhere to report what it found, which beats not learning at all.
+    //
+    // Static and shared, because the narrowing reports what it changed to the same feed and by the
+    // same rule. Two copies of the rule would mean a document that reported one and not the other.
+    static void withMessageReceiver(final MessageReceiverFactory messageReceiverFactory,
+                                    final PathwaysDoc doc,
+                                    final Consumer<MessageReceiver> work) {
+        final DocRef infoFeed = doc.getInfoFeed();
+        if (infoFeed == null || infoFeed.getName() == null) {
+            work.accept((severity, message) -> {
+            });
+        } else {
+            messageReceiverFactory.create(infoFeed.getName(), work::accept);
         }
     }
 
@@ -329,181 +406,19 @@ public class PathwaysProcessor {
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * A store and the lock that keeps its use apart from its closure.
-     */
-    private static class Store {
+    /** Mutable across the lambdas that walk the waiting traces. */
+    private static final class Counts {
 
-        private final PathwaysDb db;
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        // Guarded by lock.
-        private boolean closed;
-
-        private Store(final PathwaysDb db) {
-            this.db = db;
-        }
+        private long traces;
+        private boolean changed;
     }
 
-    public PathwayResultPage findPathways(final FindPathwayCriteria criteria) {
-        // Read only, so don't create a store for a doc that has never been processed. Held
-        // under the store's read lock for the whole scan, which can be long as it walks every
-        // entry to count them, so the store can't be closed and deleted underneath it.
-        return useStore(criteria.getDataSourceRef(), false, pathwaysDb -> {
-            if (pathwaysDb == null) {
-                // Nothing has been processed for this doc yet.
-                return new PathwayResultPage(Collections.emptyList(), PageResponse
-                        .builder()
-                        .offset(criteria.getPageRequest().getOffset())
-                        .length(0)
-                        .total(0L)
-                        .exact(true)
-                        .build());
-            }
 
-            return findPathways(criteria, pathwaysDb);
-        });
-    }
+    // --------------------------------------------------------------------------------
 
-    private PathwayResultPage findPathways(final FindPathwayCriteria criteria, final PathwaysDb pathwaysDb) {
-        final Count count = new Count();
-        final List<Pathway> list = new ArrayList<>();
-        final PageRequest pageRequest = criteria.getPageRequest();
-        pathwaysDb.getPathways().iterate((key, val) -> {
-            boolean match = false;
-            if (NullSafe.isNonEmptyString(criteria.getFilter())) {
-                final String string = ByteBufferUtils.byteBufferToString(key);
-                if (string.contains(criteria.getFilter())) {
-                    match = true;
-                }
-            } else {
-                match = true;
-            }
 
-            if (match) {
-                final long pos = count.getAndIncrement();
-                if (pos >= criteria.getPageRequest().getOffset() &&
-                    pos < criteria.getPageRequest().getOffset() + criteria.getPageRequest().getLength()) {
-                    list.add(pathwaySerde.readPathway(val));
-                }
-            }
-        });
+    /** What was waiting for one shard when it was opened. */
+    private record Backlog(long items, long oldestAgeMs) {
 
-        final PageResponse pageResponse = PageResponse
-                .builder()
-                .offset(pageRequest.getOffset())
-                .length(list.size())
-                .total(count.get())
-                .exact(true)
-                .build();
-        return new PathwayResultPage(list, pageResponse);
-    }
-
-    /**
-     * For a single PathwaysDoc, finds all eligible traces across every shard of
-     * the linked TracesDoc and runs pathways processing on each one.
-     *
-     * <p>Takes a per-shard lock so that in a multi-node cluster, different nodes can process
-     * different shards concurrently without blocking each other.
-     */
-    private void processCompletedTraces(final PathwaysDoc doc,
-                                        final long cutoffMs,
-                                        final PathwaysDb pathwaysDb) {
-        if (shardManager.isSnapshotNode()) {
-            // Trace completion runs only on merge (shard-owning) nodes.
-            return;
-        }
-
-        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
-        if (tracesDoc == null) {
-            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
-                    doc.getTracesDocRef().getName(), doc.getName());
-            return;
-        }
-
-        final DocRef infoFeed = doc.getInfoFeed();
-        final long toMs = System.currentTimeMillis();
-        final long fromMs = bucketWindowStartMs(tracesDoc, toMs);
-        for (int i = 0; i < SharedFileStore.shardCountOf(tracesDoc); i++) {
-            final int shardIdx = i;
-            // Per-shard lock: nodes in a cluster can process different shards in parallel.
-            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
-            clusterLockService.tryLock(lockName, () -> {
-                for (final ArchiveShardRef ref :
-                        archiveShardLocator.findRelevantShards(tracesDoc, shardIdx, fromMs, toMs)) {
-                    shardManager.getArchive(tracesDoc, shardIdx, ref, db ->
-                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs));
-                }
-            });
-        }
-    }
-
-    /**
-     * How far back to look for buckets holding traces not yet processed.
-     *
-     * <p>One maximum wait for data, because that is the furthest back a newly published trace can
-     * land. Buckets are labelled by the root's start time, and a trace whose real root never arrived
-     * waits the full time and is then published under a root synthesized from its earliest span — so
-     * its label can be a whole wait old, but no older. Anything earlier was published in a previous
-     * window and has a processed marker already.
-     */
-    private static long bucketWindowStartMs(final PlanBDocument tracesDoc, final long toMs) {
-        final SimpleDuration maxWait = HasHoldingAreaSettings.holdingAreaSettings(tracesDoc.getSettings())
-                .map(HoldingAreaSettings::getMaxWaitForData)
-                .orElse(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
-        return SimpleDurationUtil.minus(Instant.ofEpochMilli(toMs), maxWait).toEpochMilli();
-    }
-
-    /**
-     * Processes eligible completed traces from a single TracesDoc shard into the
-     * PathwaysDb. Must be called while the caller holds the appropriate
-     * {@code pathways-write-*} cluster lock for this shard.
-     */
-    private Void processShardTraces(final Db<?, ?> db,
-                                    final PathwaysDb pathwaysDb,
-                                    final DocRef infoFeed,
-                                    final PathwaysDoc doc,
-                                    final long cutoffMs) {
-        if (!(db instanceof final TraceDb traceDb)) {
-            return null;
-        }
-
-        // Collect the traces this bucket holds a merge time for. iterateRootsMergedBefore stops
-        // early once the time-ordered key exceeds cutoffMs — O(eligible) scan.
-        // TODO: Replace the full scan from the beginning of trace-roots-merge-time with a
-        //  persistent cursor (watermark) stored in PathwaysDb. On each tick the scan would
-        //  start from the last-processed (mergeTimeMs, traceId) key rather than the
-        //  beginning of the index, making the cost O(new eligible) rather than
-        //  O(all eligible since the shard was created). The PathwaysDb processingStatus DBI
-        //  currently provides idempotency but not position tracking.
-        final List<byte[]> eligible = new ArrayList<>();
-        traceDb.iterateRootsMergedBefore(cutoffMs, eligible::add);
-
-        if (eligible.isEmpty()) {
-            LOGGER.debug("No traces ready for pathways completion for doc {}", doc.getName());
-            return null;
-        }
-
-        LOGGER.debug("Processing {} completed trace(s) for pathways doc {}",
-                eligible.size(), doc.getName());
-
-        if (infoFeed != null && infoFeed.getName() != null) {
-            messageReceiverFactory.create(infoFeed.getName(), messageReceiver -> {
-                try (final LmdbWriter writer = pathwaysDb.createWriter()) {
-                    final TraceProcessor traceProcessor =
-                            new TraceProcessor(byteBuffers, pathwaySerde);
-                    for (final byte[] traceId : eligible) {
-                        traceProcessor.processTrace(
-                                writer,
-                                pathwaysDb,
-                                traceId,
-                                traceDb::findTrace,
-                                doc,
-                                messageReceiver);
-                    }
-                    writer.commit();
-                }
-            });
-        }
-        return null;
     }
 }

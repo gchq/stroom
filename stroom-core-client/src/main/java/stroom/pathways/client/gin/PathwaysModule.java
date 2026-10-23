@@ -24,6 +24,7 @@ import stroom.pathways.client.presenter.ConstraintEditPresenter;
 import stroom.pathways.client.presenter.ConstraintEditPresenter.ConstraintEditView;
 import stroom.pathways.client.presenter.PathwayEditPresenter;
 import stroom.pathways.client.presenter.PathwayEditPresenter.PathwayEditView;
+import stroom.pathways.client.presenter.PathwayTabManager;
 import stroom.pathways.client.presenter.PathwayTreePresenter;
 import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
 import stroom.pathways.client.presenter.PathwaysPresenter;
@@ -44,6 +45,8 @@ import stroom.pathways.client.view.PathwaysSplitViewImpl;
 import stroom.pathways.client.view.TracesSettingsViewImpl;
 import stroom.pathways.client.view.TracesViewImpl;
 
+import com.google.inject.Singleton;
+
 public class PathwaysModule extends PluginModule {
 
     @Override
@@ -52,6 +55,9 @@ public class PathwaysModule extends PluginModule {
         bindPlugin(TracesPlugin.class);
         bindPlugin(TracesDocPlugin.class);
         bind(PathwaysPresenter.class);
+        // One for the whole application: a pathway opened as a tab outlives the document it was
+        // opened from, so something that closed with that document could not know it was still there.
+        bind(PathwayTabManager.class).in(Singleton.class);
         bindPresenterWidget(PathwaysSettingsPresenter.class,
                 PathwaysSettingsView.class,
                 PathwaysSettingsViewImpl.class);

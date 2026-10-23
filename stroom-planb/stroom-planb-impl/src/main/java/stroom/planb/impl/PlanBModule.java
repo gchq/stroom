@@ -26,6 +26,7 @@ import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.query.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.query.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.fs.MergeCompletionStrategy;
 import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
@@ -90,11 +91,7 @@ public class PlanBModule extends AbstractModule {
         bind(BatchDestination.class).to(DefaultBatchDestination.class);
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
-        bind(SharedFileStoreMergeProcessor.class);
-        bind(SharedFileStorePublisher.class);
-        // Declared empty here so the map exists even in a build that contributes no strategies;
-        // each store type that lives on the shared file store adds its own binding.
-        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class);
+        bindSharedFileStore();
 
         bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 
@@ -141,7 +138,9 @@ public class PlanBModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PlanBSharedFileStoreMergeRunnable.class, builder -> builder
                         .name("Plan B Shared FS Merge")
-                        .description("Distributed merge of Plan B batches on the shared file store")
+                        .description("Works the shards of every document on a shared file store: "
+                                     + "applies the work waiting in their queues, and does whatever "
+                                     + "each store type needs doing periodically")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(true));
 
@@ -159,6 +158,17 @@ public class PlanBModule extends AbstractModule {
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(CleanerStartup.class);
+    }
+
+
+    // The two points a store type plugs into when its data lives on the shared file store. Both maps are
+    // declared empty so they exist in a build that contributes neither, and each store type adds its own
+    // binding: how its batches reach the buckets queries read, and what it does once a bucket has merged.
+    private void bindSharedFileStore() {
+        bind(SharedFileStoreMergeProcessor.class);
+        bind(SharedFileStorePublisher.class);
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class);
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeCompletionStrategy.class);
     }
 
     private static class StateMergeRunnable extends RunnableWrapper {

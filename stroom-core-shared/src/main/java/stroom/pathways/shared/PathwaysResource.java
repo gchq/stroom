@@ -16,6 +16,8 @@
 
 package stroom.pathways.shared;
 
+import stroom.pathways.shared.pathway.Pathway;
+import stroom.pathways.shared.pathway.PathwayUsage;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -34,6 +36,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
+
 @Tag(name = "Pathways")
 @Path(PathwaysResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -42,6 +46,9 @@ public interface PathwaysResource extends RestResource, DirectRestService, Fetch
 
     String BASE_PATH = "/pathways" + ResourcePaths.V2;
     String FIND_PATHWAYS_SUB_PATH = "/findPathways";
+    String FETCH_PATHWAY_SUB_PATH = "/fetchPathway";
+    String FIND_MUTATIONS_SUB_PATH = "/findMutations";
+    String FIND_USAGE_SUB_PATH = "/findUsage";
 
     @GET
     @Path("/{uuid}")
@@ -65,6 +72,31 @@ public interface PathwaysResource extends RestResource, DirectRestService, Fetch
             operationId = "findPathways")
     PathwayResultPage findPathways(
             @Parameter(description = "criteria", required = true) FindPathwayCriteria criteria);
+
+    @POST
+    @Path(FETCH_PATHWAY_SUB_PATH)
+    @Operation(
+            summary = "Fetch one learnt pathway in full",
+            operationId = "fetchPathway")
+    Pathway fetchPathway(
+            @Parameter(description = "request", required = true) FetchPathwayRequest request);
+
+    @POST
+    @Path(FIND_MUTATIONS_SUB_PATH)
+    @Operation(
+            summary = "Find the changes made to one learnt pathway",
+            operationId = "findPathwayMutations")
+    PathwayMutationResultPage findMutations(
+            @Parameter(description = "criteria", required = true) FindPathwayMutationCriteria criteria);
+
+    @POST
+    @Path(FIND_USAGE_SUB_PATH)
+    @Operation(
+            summary = "Find how much each node of one learnt pathway had been used at each point in "
+                      + "its history",
+            operationId = "findPathwayUsage")
+    List<PathwayUsage> findUsage(
+            @Parameter(description = "criteria", required = true) FindPathwayMutationCriteria criteria);
 
     @POST
     @Path("/addPathway")

@@ -32,6 +32,8 @@ import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
+import stroom.planb.impl.dao.trace.CanonicalSpanOrder;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -62,6 +64,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TraceLoader {
+
+    /** Nothing ignored, which is the default. */
+    private static final IgnoredAttributes NO_IGNORED = new IgnoredAttributes(List.of());
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TraceLoader.class);
     private static final JsonMapper MAPPER = createMapper(true);
@@ -152,9 +157,9 @@ public class TraceLoader {
 
     private Map<PathKey, PathNode> buildPathways(final Collection<Trace> traces,
                                                  final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
+        final CanonicalSpanOrder spanOrder = new CanonicalSpanOrder(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final NodeMutatorImpl traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final NodeMutatorImpl traceProcessor = new NodeMutatorImpl(spanOrder, NO_IGNORED, new IgnoredSpans(List.of()));
         final Map<PathKey, PathNode> pathRoots = new HashMap<>();
         for (final Trace trace : traces) {
             final Span root = trace.root();

@@ -63,11 +63,6 @@ class TestQueryNodeResolverImpl {
             public PlanBDocument get(final String name) {
                 return docs.get(name);
             }
-
-            @Override
-            public void remove(final String name) {
-                // Not exercised: the resolver only reads.
-            }
         };
     }
 

@@ -200,7 +200,8 @@ class TestFindTracesCount {
     private static FindTraceCriteria criteria(final PageRequest pageRequest,
                                               final List<CriteriaFieldSort> sortList,
                                               final TimeRange timeRange) {
-        return new FindTraceCriteria(pageRequest, sortList, null, null, null, SimpleDuration.ZERO, timeRange);
+        return new FindTraceCriteria(pageRequest, sortList, null, null, null, SimpleDuration.ZERO, timeRange,
+                null);
     }
 
     private static TimeRange timeRange(final String from, final String to) {

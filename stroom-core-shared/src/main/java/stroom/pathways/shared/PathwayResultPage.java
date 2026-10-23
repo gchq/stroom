@@ -16,7 +16,6 @@
 
 package stroom.pathways.shared;
 
-import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
@@ -28,10 +27,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class PathwayResultPage extends ResultPage<Pathway> {
+public class PathwayResultPage extends ResultPage<PathwaySummary> {
 
     @JsonCreator
-    public PathwayResultPage(@JsonProperty("values") final List<Pathway> values,
+    public PathwayResultPage(@JsonProperty("values") final List<PathwaySummary> values,
                              @JsonProperty("pageResponse") final PageResponse pageResponse) {
         super(values, pageResponse);
     }

@@ -17,14 +17,15 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
+import stroom.widget.tab.client.view.LinkTabBar;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -36,6 +37,12 @@ public class PathwaysSplitViewImpl
     SimplePanel dataGrid;
     @UiField
     SimplePanel tree;
+    @UiField
+    Label nodePath;
+    @UiField
+    LinkTabBar nodeTabBar;
+    @UiField
+    LayerContainer nodeLayerContainer;
 
     private final Widget widget;
 
@@ -52,6 +59,21 @@ public class PathwaysSplitViewImpl
     @Override
     public void setTree(final View view) {
         tree.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setNodePath(final String path) {
+        nodePath.setText(path);
+    }
+
+    @Override
+    public LinkTabBar getNodeTabBar() {
+        return nodeTabBar;
+    }
+
+    @Override
+    public LayerContainer getNodeLayerContainer() {
+        return nodeLayerContainer;
     }
 
     @Override

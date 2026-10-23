@@ -23,11 +23,15 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
+import stroom.document.client.event.DirtyEvent;
+import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -35,21 +39,24 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ConstraintListPresenter
-        extends MyPresenterWidget<PagerView> {
+        extends MyPresenterWidget<PagerView>
+        implements HasDirtyHandlers {
 
 //    private static final ConstraintsResource PATHWAYS_RESOURCE = GWT.create(ConstraintsResource.class);
 
-    //    private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
     private final MyDataGrid<Constraint> dataGrid;
@@ -61,6 +68,7 @@ public class ConstraintListPresenter
 
 
     private PathNode pathNode;
+    private Set<String> changed = Collections.emptySet();
 
     //    private String filter;
     private boolean readOnly = true;
@@ -69,12 +77,10 @@ public class ConstraintListPresenter
     public ConstraintListPresenter(final EventBus eventBus,
                                    final PagerView view,
                                    final RestFactory restFactory,
-//                                   final DateTimeFormatter dateTimeFormatter,
                                    final ConstraintEditPresenter constraintEditPresenter) {
         super(eventBus, view);
         this.pagerView = view;
         this.restFactory = restFactory;
-//        this.dateTimeFormatter = dateTimeFormatter;
 //        view.setDataView(pagerView);
 //        view.setUiHandlers(this);
 
@@ -90,6 +96,12 @@ public class ConstraintListPresenter
         removeButton = pagerView.addButton(SvgPresets.DELETE);
 
         addColumns();
+        // Which rows are marked changes with the selection rather than with the data, so the style is
+        // asked for at draw time rather than baked into a row.
+        dataGrid.setRowStyles((constraint, index) ->
+                constraint != null && changed.contains(constraint.getName())
+                        ? "constraint-row--changed"
+                        : "");
         enableButtons();
     }
 
@@ -165,8 +177,13 @@ public class ConstraintListPresenter
         addOptionalColumn();
     }
 
+    // How much this constraint has been checked and how often it moved. Uses are counted per span, so
+    // a node one trace reached forty times adds forty; updates are counted per change.
+    //
+    // Wide enough for the longest names a model holds, which are the attributes — the room past that
+    // is worth more to the value beside it, which is a whole sql statement or a set of names.
     private void addNameColumn() {
-        addTextColumn("Name", 300, Constraint::getName);
+        addTextColumn("Name", 220, Constraint::getName);
     }
 
     private void addTextColumn(final String name, final int width, final Function<Constraint, String> function) {
@@ -189,7 +206,7 @@ public class ConstraintListPresenter
     }
 
     private void addValueColumn() {
-        addTextColumn("Type", 400, constraint -> {
+        addTextColumn("Value", 400, constraint -> {
             if (constraint == null || constraint.getValue() == null) {
                 return null;
             }
@@ -230,6 +247,7 @@ public class ConstraintListPresenter
                     pathNode.getConstraints().remove(constraint.getName());
                     pathNode.getConstraints().put(constraint.getName(), constraint);
                     refresh();
+                    DirtyEvent.fire(this, true);
                 }
             } catch (final RuntimeException ex) {
                 AlertEvent.fireErrorFromException(this, "Error", ex, null);
@@ -250,7 +268,7 @@ public class ConstraintListPresenter
                         pathNode.getConstraints().remove(constraint.getName());
                         pathNode.getConstraints().put(constraint.getName(), constraint);
                         refresh();
-
+                        DirtyEvent.fire(this, true);
                     }
                 } catch (final RuntimeException ex) {
                     AlertEvent.fireErrorFromException(this, "Error", ex, null);
@@ -275,15 +293,32 @@ public class ConstraintListPresenter
                         pathNode.getConstraints().remove(constraint.getName());
                     }
                     refresh();
+                    DirtyEvent.fire(this, true);
                 }
             });
         }
     }
 
-    public void setData(final PathNode pathNode,
-                        final boolean readOnly) {
+    /**
+     * Told whenever a constraint is added, changed or removed. The edits are written straight into the
+     * node this was given, so whoever holds that node has to hear about them to know there is
+     * something to save. Registered against this presenter as the source, so one pathway hears only
+     * its own.
+     */
+    @Override
+    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
+        return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    /**
+     * @param changed the constraints the change being looked at moved, which are marked so the reader
+     *                can see which of a node's constraints that change was about. Empty where no
+     *                change is being looked at.
+     */
+    public void setData(final PathNode pathNode, final boolean readOnly, final Set<String> changed) {
         this.pathNode = pathNode;
         this.readOnly = readOnly;
+        this.changed = NullSafe.set(changed);
         refresh();
     }
 

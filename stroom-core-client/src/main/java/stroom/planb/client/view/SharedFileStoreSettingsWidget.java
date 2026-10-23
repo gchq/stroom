@@ -62,7 +62,7 @@ public class SharedFileStoreSettingsWidget
     }
 
     @Override
-    Widget asWidget() {
+    public Widget asWidget() {
         return widget;
     }
 

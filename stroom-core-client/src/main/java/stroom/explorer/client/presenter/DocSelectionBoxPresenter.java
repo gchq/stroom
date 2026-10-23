@@ -31,6 +31,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -53,6 +54,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private final ExplorerPopupPresenter explorerPopupPresenter;
     private final RestFactory restFactory;
     private boolean enabled = true;
+    private boolean allowCreate = false;
     private DocRef value = null;
     private String errorMsg = null;
     private String itemType = null;
@@ -273,17 +275,29 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         explorerPopupPresenter.setAllowFolderSelection(allowFolderSelection);
     }
 
+    /**
+     * Offer a Create button in the picker, so the document being chosen can be made without leaving
+     * the screen that needs it. The new document becomes the selection.
+     *
+     * <p>Only has an effect where exactly one type is included, because the popup has to know what to
+     * create.
+     */
+    public void setAllowCreate(final boolean allowCreate) {
+        this.allowCreate = allowCreate;
+    }
+
     @Override
     public void showPopup() {
         if (enabled) {
             final DocRef oldDocRef = getSelectedEntityReference();
             explorerPopupPresenter.show(selectedDocRef -> {
-//                GWT.log("currentSelectionRef: " + selectedDocRef);
                 if (!Objects.equals(oldDocRef, selectedDocRef)) {
                     setFieldValue(selectedDocRef);
                     DataSelectionEvent.fire(DocSelectionBoxPresenter.this, selectedDocRef, true);
                 }
-            });
+            }, allowCreate
+                    ? PopupType.CREATE_OK_CANCEL_DIALOG
+                    : PopupType.OK_CANCEL_DIALOG);
         }
     }
 

@@ -82,7 +82,11 @@ public class MessageReceiverFactory {
 //                        }
                 }
             }
-        } catch (final IOException | RuntimeException e) {
+        } catch (final IOException e) {
+            // Only the report stream's own failures are absorbed. A report that cannot be written must
+            // not stop the work it was reporting on — but a failure of that work must reach the caller,
+            // which is why RuntimeException is not caught here: the consumer cannot throw a checked
+            // exception, so everything it fails with propagates.
             LOGGER.error(e::getMessage, e);
         }
     }

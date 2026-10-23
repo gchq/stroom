@@ -29,10 +29,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,6 +63,10 @@ class TestTracesDocLoader {
         handlers = new HashMap<>();
         handlers.put(new DocumentTypeName(TracesDoc.TYPE), handler);
         final Provider<Map<DocumentTypeName, DocumentActionHandler>> handlersProvider = () -> handlers;
+        // The loader reads as the processing user, because the handler authorises on VIEW and a trace
+        // query needs only USE. Run the supplier so the read actually happens.
+        when(securityContext.useAsReadResult(Mockito.<Supplier<Object>>any()))
+                .thenAnswer(invocation -> invocation.getArgument(0, Supplier.class).get());
         loader = new TracesDocLoader(handlersProvider, securityContext);
     }
 
@@ -84,7 +90,8 @@ class TestTracesDocLoader {
     @Test
     void nullDocRefReturnsNull() {
         assertThat(loader.getPlanBDoc(null)).isNull();
-        verifyNoInteractions(securityContext, handler);
+        verifyNoInteractions(handler);
+        verify(securityContext, never()).hasDocumentPermission(any(), any());
     }
 
     @Test

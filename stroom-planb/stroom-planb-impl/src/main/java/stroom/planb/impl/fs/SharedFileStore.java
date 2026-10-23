@@ -19,9 +19,15 @@ package stroom.planb.impl.fs;
 import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 /**
@@ -36,6 +42,9 @@ import java.util.Optional;
  * rather than guessing where to write.
  */
 public final class SharedFileStore {
+
+    private static final LambdaLogger LOGGER =
+            LambdaLoggerFactory.getLogger(SharedFileStore.class);
 
     private SharedFileStore() {
     }
@@ -89,5 +98,21 @@ public final class SharedFileStore {
      */
     public static int shardCountOf(final PlanBDocument doc) {
         return settingsOf(doc).map(SharedFileStoreSettings::getShardCount).orElse(0);
+    }
+
+    /**
+     * Renames {@code src} to {@code dst}, falling back to a non-atomic move where the filesystem does
+     * not support an atomic one.
+     *
+     * <p>Some mounts a shared store can sit on do not support {@code ATOMIC_MOVE}, and everything that
+     * publishes here ends with a rename — so without the fallback every write fails on those.
+     */
+    public static void moveWithAtomicFallback(final Path src, final Path dst) throws IOException {
+        try {
+            Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE);
+        } catch (final AtomicMoveNotSupportedException e) {
+            LOGGER.warn("Atomic move not supported, falling back to REPLACE_EXISTING: {} -> {}", src, dst);
+            Files.move(src, dst, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 }

@@ -19,50 +19,63 @@ package stroom.pathways.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.client.presenter.PathwaysSettingsUiHandlers;
+import stroom.planb.client.view.SharedFileStoreSettingsWidget;
+import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class PathwaysSettingsViewImpl
         extends ViewWithUiHandlers<PathwaysSettingsUiHandlers>
         implements PathwaysSettingsView, ReadOnlyChangeHandler {
 
+    private static final SimpleDuration DEFAULT_NARROWING_WINDOW = new SimpleDuration(7L, TimeUnit.DAYS);
+
     private final Widget widget;
+    private final SharedFileStoreSettingsWidget sharedFileStoreWidget;
 
     @UiField
-    SimplePanel traceStore;
+    SimplePanel sharedFileStore;
     @UiField
     SimplePanel infoFeed;
     @UiField
     DurationPicker temporalOrderingTolerance;
     @UiField
-    CustomCheckBox allowPathwayCreation;
+    DurationPicker narrowingWindow;
     @UiField
-    CustomCheckBox allowPathwayMutation;
+    TextArea ignoredSpanNames;
     @UiField
-    CustomCheckBox allowConstraintCreation;
-    @UiField
-    CustomCheckBox allowConstraintMutation;
-    @UiField
-    TextBox processingNode;
+    TextArea ignoredAttributes;
 
     @Inject
-    public PathwaysSettingsViewImpl(final Binder binder) {
+    public PathwaysSettingsViewImpl(final Binder binder,
+                                    final SharedFileStoreSettingsWidget sharedFileStoreWidget) {
         widget = binder.createAndBindUi(this);
+        this.sharedFileStoreWidget = sharedFileStoreWidget;
+        sharedFileStoreWidget.setUiHandlers(this::fireChange);
+        sharedFileStore.setWidget(sharedFileStoreWidget.asWidget());
         temporalOrderingTolerance.smallTimeMode();
         temporalOrderingTolerance.setValue(new SimpleDuration(0L, TimeUnit.NANOSECONDS));
+        // Counted in whole days whatever is typed, so the form offers nothing finer.
+        narrowingWindow.wholeDaysMode();
+        narrowingWindow.setValue(DEFAULT_NARROWING_WINDOW);
     }
 
     @Override
@@ -71,13 +84,30 @@ public class PathwaysSettingsViewImpl
     }
 
     @Override
-    public void setTraceStoreView(final View view) {
-        this.traceStore.setWidget(view.asWidget());
+    public void setInfoFeedView(final View view) {
+        this.infoFeed.setWidget(view.asWidget());
     }
 
     @Override
-    public void setInfoFeedView(final View view) {
-        this.infoFeed.setWidget(view.asWidget());
+    public SimpleDuration getNarrowingWindow() {
+        return narrowingWindow.getValue();
+    }
+
+    @Override
+    public void setNarrowingWindow(final SimpleDuration narrowingWindow) {
+        this.narrowingWindow.setValue(inWholeDays(narrowingWindow));
+    }
+
+    // The picker offers whole days and more, and a window shorter than a day is held to a day when it
+    // is used. A document given something shorter by import or by the API therefore shows the day it
+    // will actually be held to, rather than a unit the picker cannot display.
+    private static SimpleDuration inWholeDays(final SimpleDuration window) {
+        if (window == null || window.getTimeUnit() == null) {
+            return DEFAULT_NARROWING_WINDOW;
+        }
+        return window.getTimeUnit().getPrimitiveValue() < TimeUnit.DAYS.getPrimitiveValue()
+                ? new SimpleDuration(1L, TimeUnit.DAYS)
+                : window;
     }
 
     @Override
@@ -95,58 +125,70 @@ public class PathwaysSettingsViewImpl
     }
 
     @Override
-    public boolean isAllowPathwayCreation() {
-        return allowPathwayCreation.getValue();
+    public List<String> getIgnoredSpanNames() {
+        return textToList(ignoredSpanNames.getValue());
     }
 
     @Override
-    public void setAllowPathwayCreation(final boolean allowPathwayCreation) {
-        this.allowPathwayCreation.setValue(allowPathwayCreation);
+    public void setIgnoredSpanNames(final List<String> names) {
+        ignoredSpanNames.setValue(listToText(names));
     }
 
     @Override
-    public boolean isAllowPathwayMutation() {
-        return allowPathwayMutation.getValue();
+    public List<String> getIgnoredAttributes() {
+        return textToList(ignoredAttributes.getValue());
     }
 
     @Override
-    public void setAllowPathwayMutation(final boolean allowPathwayMutation) {
-        this.allowPathwayMutation.setValue(allowPathwayMutation);
+    public void setIgnoredAttributes(final List<String> names) {
+        ignoredAttributes.setValue(listToText(names));
+    }
+
+    // One name a line, which is how a list of them is read and written by hand. A blank line is not a
+    // name, and a box with nothing in it is no list at all rather than a list of one empty name.
+    private static String listToText(final List<String> list) {
+        return NullSafe.isEmptyCollection(list)
+                ? ""
+                : list.stream().collect(Collectors.joining("\n"));
+    }
+
+    private static List<String> textToList(final String text) {
+        if (NullSafe.isBlankString(text)) {
+            return null;
+        }
+        final List<String> list = new ArrayList<>();
+        for (final String part : text.split("\n")) {
+            if (!NullSafe.isBlankString(part)) {
+                list.add(part.trim());
+            }
+        }
+        return list.isEmpty()
+                ? null
+                : list;
     }
 
     @Override
-    public boolean isAllowConstraintCreation() {
-        return allowConstraintCreation.getValue();
+    public SharedFileStoreSettings getSharedFileStore() {
+        return sharedFileStoreWidget.getSharedFileStore();
     }
 
     @Override
-    public void setAllowConstraintCreation(final boolean allowConstraintCreation) {
-        this.allowConstraintCreation.setValue(allowConstraintCreation);
+    public void setSharedFileStoreLocked(final boolean locked) {
+        sharedFileStoreWidget.setSharedFileStoreLocked(locked);
     }
 
     @Override
-    public boolean isAllowConstraintMutation() {
-        return allowConstraintMutation.getValue();
-    }
-
-    @Override
-    public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
-        this.allowConstraintMutation.setValue(allowConstraintMutation);
+    public void setSharedFileStore(final SharedFileStoreSettings settings) {
+        sharedFileStoreWidget.setSharedFileStore(settings);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         temporalOrderingTolerance.setEnabled(!readOnly);
-    }
-
-    @Override
-    public String getProcessingNode() {
-        return processingNode.getValue();
-    }
-
-    @Override
-    public void setProcessingNode(final String processingNode) {
-        this.processingNode.setValue(processingNode);
+        narrowingWindow.setEnabled(!readOnly);
+        ignoredSpanNames.setEnabled(!readOnly);
+        ignoredAttributes.setEnabled(!readOnly);
+        sharedFileStoreWidget.onReadOnly(readOnly);
     }
 
     @UiHandler("temporalOrderingTolerance")
@@ -154,28 +196,33 @@ public class PathwaysSettingsViewImpl
         fireChange();
     }
 
-    @UiHandler("allowPathwayCreation")
-    public void onAllowPathwayCreation(final ValueChangeEvent<Boolean> e) {
+    @UiHandler("narrowingWindow")
+    public void onNarrowingWindow(final ValueChangeEvent<SimpleDuration> e) {
         fireChange();
     }
 
-    @UiHandler("allowPathwayMutation")
-    public void onAllowPathwayMutation(final ValueChangeEvent<Boolean> e) {
+    // As the reader types, rather than when they leave the box. A text widget only says its value
+    // changed on the browser's own change event, which is the moment it loses focus — so a name typed
+    // and then saved straight away would be saved from a document that did not know it had been
+    // edited. The pair of them covers both typing and a value arriving any other way, such as a paste
+    // made with the mouse.
+    @UiHandler("ignoredSpanNames")
+    public void onIgnoredSpanNamesTyped(final KeyUpEvent e) {
         fireChange();
     }
 
-    @UiHandler("allowConstraintCreation")
-    public void onAllowConstraintCreation(final ValueChangeEvent<Boolean> e) {
+    @UiHandler("ignoredSpanNames")
+    public void onIgnoredSpanNames(final ValueChangeEvent<String> e) {
         fireChange();
     }
 
-    @UiHandler("allowConstraintMutation")
-    public void onAllowConstraintMutation(final ValueChangeEvent<Boolean> e) {
+    @UiHandler("ignoredAttributes")
+    public void onIgnoredAttributesTyped(final KeyUpEvent e) {
         fireChange();
     }
 
-    @UiHandler("processingNode")
-    public void onProcessingNode(final ValueChangeEvent<String> e) {
+    @UiHandler("ignoredAttributes")
+    public void onIgnoredAttributes(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

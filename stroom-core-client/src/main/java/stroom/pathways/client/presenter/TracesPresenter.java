@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pathways.shared.TracesDoc;
-import stroom.pathways.shared.pathway.Pathway;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -76,6 +75,16 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
         selectTab(TRACES);
     }
 
+    /**
+     * Shows one trace, for whoever opened this document in order to look at it. Asked for once the
+     * document is open, because what is being looked for is not part of what the document is — it is
+     * why this reader opened it.
+     */
+    public void showTrace(final String traceId, final long fromMs, final long toMs) {
+        selectTab(TRACES);
+        tracesListTabPresenter.showTrace(traceId, fromMs, toMs);
+    }
+
     @Override
     public String getType() {
         return TracesDoc.TYPE;
@@ -94,21 +103,5 @@ public class TracesPresenter extends DocTabPresenter<LinkTabPanelView, TracesDoc
     @Override
     public void refresh() {
         // Do nothing to prevent auto-refreshing from the global tab refresh event.
-    }
-
-    public void forceRefresh() {
-        tracesListTabPresenter.refresh();
-    }
-
-    public void setDataSourceRef(final DocRef dataSourceRef) {
-        tracesListTabPresenter.setDataSourceRef(dataSourceRef);
-    }
-
-    public void setFilter(final String filter) {
-        tracesListTabPresenter.setFilter(filter);
-    }
-
-    public void setPathway(final Pathway pathway) {
-        tracesListTabPresenter.setPathway(pathway);
     }
 }

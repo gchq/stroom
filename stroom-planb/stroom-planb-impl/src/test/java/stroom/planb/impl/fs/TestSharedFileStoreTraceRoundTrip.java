@@ -307,7 +307,8 @@ class TestSharedFileStoreTraceRoundTrip {
         when(planBDocCache.getAll()).thenReturn(List.of(doc));
 
         final SharedFileStorePublisher publisher =
-                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths);
+                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths,
+                Map.of());
         final MergeStrategy holdingStrategy = new HoldingAreaMergeStrategy(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
@@ -376,11 +377,11 @@ class TestSharedFileStoreTraceRoundTrip {
     }
 
     private Path processingDir(final PlanBDocument doc) {
-        return sharedRootDir.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid());
+        return sharedRootDir.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(doc.getUuid());
     }
 
     private Path holdingDir(final PlanBDocument doc) {
-        return sharedRootDir.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid());
+        return sharedRootDir.resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(doc.getUuid());
     }
 
     private PlanBDoc doc() {

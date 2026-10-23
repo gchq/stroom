@@ -19,10 +19,12 @@ package stroom.pathways.impl;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.pathways.impl.TraceProcessor.ApplyOutcome;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.util.shared.Severity;
 
@@ -49,6 +51,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * leaves the trace unmarked, because the job then picks it up again on every run, once a minute.
  */
 class TestTraceProcessorOrphan {
+
+    /** Nothing ignored, which is the default. */
+    private static final IgnoredAttributes NO_IGNORED = new IgnoredAttributes(List.of());
 
     private static final ByteBufferFactory BYTE_BUFFER_FACTORY = new ByteBufferFactoryImpl();
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(BYTE_BUFFER_FACTORY);
@@ -95,10 +100,47 @@ class TestTraceProcessorOrphan {
         assertThat(orphanTrace().root()).isNull();
     }
 
-    private static void processOrphan(final PathwaysDb pathwaysDb,
-                                      final LmdbWriter writer,
-                                      final List<String> warnings) {
-        new TraceProcessor(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY))
+    @Test
+    void anOrphanIsReportedAsNotApplicable(@TempDir final Path pathwaysDir) {
+        // The caller deletes the only copy of a trace once this returns, so "nothing was written" and
+        // "nothing could be done with it" have to be different answers.
+        try (final PathwaysDb pathwaysDb = PathwaysDb.create(pathwaysDir, BYTE_BUFFERS, false);
+                final LmdbWriter writer = pathwaysDb.createWriter()) {
+            assertThat(processOrphan(pathwaysDb, writer, new ArrayList<>()))
+                    .isEqualTo(ApplyOutcome.NOT_APPLICABLE);
+            writer.commit();
+        }
+    }
+
+    @Test
+    void aFailureToApplyReachesTheCaller(@TempDir final Path pathwaysDir) {
+        // Absorbing this is how a trace gets deleted without ever being applied: the caller reads a
+        // quiet return as "done" and removes the queue item that held it.
+        try (final PathwaysDb pathwaysDb = PathwaysDb.create(pathwaysDir, BYTE_BUFFERS, false);
+                final LmdbWriter writer = pathwaysDb.createWriter()) {
+            assertThatThrownBy(() -> new TraceProcessor(mutationLog(), BYTE_BUFFERS,
+                    new PathwaySerde(BYTE_BUFFER_FACTORY), NO_IGNORED, new IgnoredSpans(List.of()))
+                    .processTrace(writer,
+                            pathwaysDb,
+                            TRACE_ID,
+                            traceId -> {
+                                throw new IllegalStateException("the trace could not be read");
+                            },
+                            PathwaysDoc.builder().uuid(UUID.randomUUID().toString()).build(),
+                            (severity, message) -> {
+                            },
+                            null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("the trace could not be read");
+            writer.commit();
+        }
+    }
+
+    private static ApplyOutcome processOrphan(final PathwaysDb pathwaysDb,
+                                              final LmdbWriter writer,
+                                              final List<String> warnings) {
+        return new TraceProcessor(mutationLog(), BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY), NO_IGNORED,
+                new IgnoredSpans(List.of()))
                 .processTrace(writer,
                         pathwaysDb,
                         TRACE_ID,
@@ -108,7 +150,8 @@ class TestTraceProcessorOrphan {
                             if (severity == Severity.WARNING) {
                                 warnings.add(message.get());
                             }
-                        });
+                        },
+                        null);
     }
 
     private static boolean isMarkedProcessed(final PathwaysDb pathwaysDb) {
@@ -128,4 +171,9 @@ class TestTraceProcessorOrphan {
         final Map<String, List<Span>> byParent = Map.of(child.getParentSpanId(), List.of(child));
         return new Trace("000102030405060708090a0b0c0d0e0f", byParent);
     }
+
+    private static MutationLog mutationLog() {
+        return new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY));
+    }
+
 }

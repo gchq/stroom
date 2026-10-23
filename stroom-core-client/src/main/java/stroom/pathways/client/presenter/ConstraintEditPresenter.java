@@ -251,6 +251,12 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
 //        return hb.toSafeHtml();
 //    }
 
+    // The editor works in whole nanoseconds, which is how a duration is typed in; NanoTime holds
+    // seconds and nanoseconds apart.
+    private static long nanos(final NanoTime nanoTime) {
+        return nanoTime.getNanos() + (nanoTime.getSeconds() * 1000000000);
+    }
+
     public void read(final Constraint constraint) {
         this.constraint = constraint;
         getView().setName(constraint.getName());
@@ -266,11 +272,13 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
             }
             case DURATION_RANGE -> {
                 final NanoTimeRange nanoTimeRange = ((NanoTimeRange) constraint.getValue());
-                getView().setValue((nanoTimeRange.getMin().getNanos() +
-                                    (nanoTimeRange.getMin().getSeconds() * 1000000000)) +
-                                   "," +
-                                   (nanoTimeRange.getMax().getNanos() +
-                                    (nanoTimeRange.getMax().getSeconds() * 1000000000)));
+                getView().setValue(nanos(nanoTimeRange.getMin()) + "," + nanos(nanoTimeRange.getMax()));
+            }
+            case DURATION_AT_LEAST -> {
+                getView().setValue(String.valueOf(nanos(((NanoTimeRange) constraint.getValue()).getMin())));
+            }
+            case DURATION_AT_MOST -> {
+                getView().setValue(String.valueOf(nanos(((NanoTimeRange) constraint.getValue()).getMax())));
             }
             case STRING -> {
                 getView().setValue(constraint.getValue().toString());
@@ -378,6 +386,12 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
                         .map(Long::parseLong)
                         .collect(Collectors.toList());
                 builder.value(new NanoTimeRange(NanoTime.ofNanos(list.get(0)), NanoTime.ofNanos(list.get(1))));
+            }
+            case DURATION_AT_LEAST -> {
+                builder.value(new NanoTimeRange(NanoTime.ofNanos(Long.parseLong(value)), null));
+            }
+            case DURATION_AT_MOST -> {
+                builder.value(new NanoTimeRange(null, NanoTime.ofNanos(Long.parseLong(value))));
             }
             case STRING -> {
                 builder.value(new StringValue(value));

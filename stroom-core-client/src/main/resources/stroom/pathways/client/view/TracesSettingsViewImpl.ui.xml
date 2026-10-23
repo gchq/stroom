@@ -1,8 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:sg="urn:import:stroom.planb.client.view">
     <g:FlowPanel styleName="max form-padding form">
         <g:SimplePanel ui:field="settings"/>
+        <form:FormGroup identity="tracesPathways" label="Pathways"
+                        helpText="The Pathways document this trace store is linked to. Leave empty for none.">
+            <g:SimplePanel ui:field="pathways"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

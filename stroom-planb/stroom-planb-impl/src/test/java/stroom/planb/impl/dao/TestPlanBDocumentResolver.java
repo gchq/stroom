@@ -88,10 +88,6 @@ class TestPlanBDocumentResolver {
             public PlanBDocument get(final String name) {
                 throw failure.get();
             }
-
-            @Override
-            public void remove(final String name) {
-            }
         };
     }
 }

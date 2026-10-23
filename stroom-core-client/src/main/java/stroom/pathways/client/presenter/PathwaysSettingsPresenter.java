@@ -23,8 +23,9 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.pathways.shared.TracesDoc;
+import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -32,25 +33,20 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
+
 public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView, PathwaysDoc>
         implements PathwaysSettingsUiHandlers {
 
-    private final DocSelectionBoxPresenter traceStorePresenter;
     private final DocSelectionBoxPresenter feedPresenter;
 
     @Inject
     public PathwaysSettingsPresenter(final EventBus eventBus,
                                      final PathwaysSettingsView view,
-                                     final DocSelectionBoxPresenter traceStorePresenter,
                                      final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
-        this.traceStorePresenter = traceStorePresenter;
         this.feedPresenter = feedPresenter;
         view.setUiHandlers(this);
-
-        traceStorePresenter.setIncludedTypes(TracesDoc.TYPE);
-        traceStorePresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        view.setTraceStoreView(traceStorePresenter.getView());
 
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
@@ -60,20 +56,21 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(traceStorePresenter.addDataSelectionHandler(e -> onChange()));
         registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final PathwaysDoc doc, final boolean readOnly) {
         getView().setTemporalOrderingTolerance(doc.getTemporalOrderingTolerance());
-        getView().setAllowPathwayCreation(doc.isAllowPathwayCreation());
-        getView().setAllowPathwayMutation(doc.isAllowPathwayMutation());
-        getView().setAllowConstraintCreation(doc.isAllowConstraintCreation());
-        getView().setAllowConstraintMutation(doc.isAllowConstraintMutation());
-        traceStorePresenter.setSelectedEntityReference(doc.getTracesDocRef(), true);
+        getView().setIgnoredSpanNames(doc.getIgnoredSpanNames());
+        getView().setIgnoredAttributes(doc.getIgnoredAttributes());
+        getView().setNarrowingWindow(doc.getNarrowingWindow());
         feedPresenter.setSelectedEntityReference(doc.getInfoFeed(), true);
-        getView().setProcessingNode(doc.getProcessingNode());
+        getView().setSharedFileStore(doc.getSharedFileStore());
+        // Where a pathway already lives is decided by these two, so once anything has been written
+        // under them they stop being editable. The store refuses the change anyway; this is what stops
+        // the user making it.
+        getView().setSharedFileStoreLocked(doc.hasSharedFileStoreData());
     }
 
     @Override
@@ -81,20 +78,26 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
         return doc
                 .copy()
                 .temporalOrderingTolerance(getView().getTemporalOrderingTolerance())
-                .allowPathwayCreation(getView().isAllowPathwayCreation())
-                .allowPathwayMutation(getView().isAllowPathwayMutation())
-                .allowConstraintCreation(getView().isAllowConstraintCreation())
-                .allowConstraintMutation(getView().isAllowConstraintMutation())
-                .tracesDocRef(traceStorePresenter.getSelectedEntityReference())
+                .ignoredSpanNames(getView().getIgnoredSpanNames())
+                .ignoredAttributes(getView().getIgnoredAttributes())
+                .narrowingWindow(getView().getNarrowingWindow())
                 .infoFeed(feedPresenter.getSelectedEntityReference())
-                .processingNode(getView().getProcessingNode())
+                .sharedFileStore(configuredSharedFileStore())
                 .build();
+    }
+
+    // The editor always hands back a settings object, filling an untouched form in as an empty path and
+    // a shard count of one. Storing that would make every document look configured, so a blank path is
+    // written as no shared file store at all, which is what the document's absent state means.
+    private SharedFileStoreSettings configuredSharedFileStore() {
+        final SharedFileStoreSettings settings = getView().getSharedFileStore();
+        return settings == null || NullSafe.isBlankString(settings.getSharedPath())
+                ? null
+                : settings;
     }
 
     public interface PathwaysSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<PathwaysSettingsUiHandlers> {
-
-        void setTraceStoreView(View view);
 
         void setInfoFeedView(View view);
 
@@ -102,24 +105,30 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
 
         void setTemporalOrderingTolerance(SimpleDuration temporalOrderingTolerance);
 
-        boolean isAllowPathwayCreation();
+        List<String> getIgnoredSpanNames();
 
-        void setAllowPathwayCreation(boolean allowPathwayCreation);
+        void setIgnoredSpanNames(List<String> ignoredSpanNames);
 
-        boolean isAllowPathwayMutation();
+        List<String> getIgnoredAttributes();
 
-        void setAllowPathwayMutation(boolean allowPathwayMutation);
+        SimpleDuration getNarrowingWindow();
 
-        boolean isAllowConstraintCreation();
+        void setNarrowingWindow(SimpleDuration narrowingWindow);
 
-        void setAllowConstraintCreation(boolean allowConstraintCreation);
+        void setIgnoredAttributes(List<String> ignoredAttributes);
 
-        boolean isAllowConstraintMutation();
 
-        void setAllowConstraintMutation(boolean allowConstraintMutation);
 
-        String getProcessingNode();
 
-        void setProcessingNode(String processingNode);
+
+
+
+
+
+        SharedFileStoreSettings getSharedFileStore();
+
+        void setSharedFileStore(SharedFileStoreSettings sharedFileStore);
+
+        void setSharedFileStoreLocked(boolean locked);
     }
 }

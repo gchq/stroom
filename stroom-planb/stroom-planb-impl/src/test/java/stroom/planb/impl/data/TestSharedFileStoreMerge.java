@@ -223,7 +223,7 @@ class TestSharedFileStoreMerge {
         }
 
         // Verify that staging directories exist on shared storage
-        final Path sharedProcessingDir = sharedRootDir.resolve("processing").resolve(doc.getUuid());
+        final Path sharedProcessingDir = sharedRootDir.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(doc.getUuid());
         assertThat(sharedProcessingDir).exists();
 
 
@@ -243,7 +243,8 @@ class TestSharedFileStoreMerge {
         );
 
         final SharedFileStorePublisher publisher =
-                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths);
+                new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths,
+                Map.of());
         // This doc is a STATE store given a shared file store, so map the holding strategy onto
         // STATE rather than TRACE.
         final MergeStrategy holdingStrategy = new HoldingAreaMergeStrategy(
@@ -267,21 +268,17 @@ class TestSharedFileStoreMerge {
 
         // 3. Verify files are copied back and cleaned up on shared store
         // The processing folder should now be empty or deleted (each merged batch folder is removed)
-        try (var batchDirs = Files.walk(sharedProcessingDir, 3)) {
-            final boolean hasVersion = batchDirs
+        try (var queueDirs = Files.walk(sharedProcessingDir, 3)) {
+            final boolean hasVersion = queueDirs
                     .filter(p -> p.getFileName().toString().equals(".version"))
                     .anyMatch(Files::exists);
             assertThat(hasVersion).isFalse();
         }
 
-        // The holding folder should now contain the main merged shards
+        // The shards folder should now contain the main merged shards.
         final Path sharedShardDir = sharedRootDir
-                .resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid());
+                .resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(doc.getUuid());
         assertThat(sharedShardDir).exists();
-
-        // Nothing writes to the shared shards/ tree. A call site left pointing at it would fail
-        // silently — an empty holding shard and lost in-flight data — so assert it is never created.
-        assertThat(sharedRootDir.resolve(PlanBConstants.SHARDS_DIR_NAME)).doesNotExist();
 
         // Both shard 0 and shard 1 should exist, with data.mdb and a .version marker
         for (int i = 0; i < 2; i++) {

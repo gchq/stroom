@@ -36,18 +36,21 @@ import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Regex;
 import stroom.pathways.shared.pathway.StringSet;
 import stroom.pathways.shared.pathway.StringValue;
+import stroom.planb.impl.dao.trace.CanonicalSpanOrder;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -56,14 +59,19 @@ import java.util.stream.Collectors;
 
 public class TracePredicate implements Predicate<Trace> {
 
-    private final Comparator<Span> spanComparator;
+    private static final String OCCURRENCES = "occurrences";
+
+    private final CanonicalSpanOrder spanOrder;
+    private final IgnoredSpans ignoredSpans;
     private final PathKeyFactory pathKeyFactory;
     private final Map<PathKey, PathNode> roots;
 
-    public TracePredicate(final Comparator<Span> spanComparator,
+    public TracePredicate(final CanonicalSpanOrder spanOrder,
+                          final IgnoredSpans ignoredSpans,
                           final PathKeyFactory pathKeyFactory,
                           final Map<PathKey, PathNode> roots) {
-        this.spanComparator = spanComparator;
+        this.spanOrder = spanOrder;
+        this.ignoredSpans = ignoredSpans;
         this.pathKeyFactory = pathKeyFactory;
         this.roots = roots;
     }
@@ -82,45 +90,74 @@ public class TracePredicate implements Predicate<Trace> {
         }
     }
 
+    private List<Span> kept(final List<Span> spans) {
+        if (ignoredSpans == null || ignoredSpans.isEmpty()) {
+            return spans;
+        }
+        final List<Span> kept = new ArrayList<>(spans.size());
+        for (final Span span : spans) {
+            if (!ignoredSpans.test(span.getName())) {
+                kept.add(span);
+            }
+        }
+        return kept;
+    }
+
     private boolean walk(final Trace trace,
                          final Span parentSpan,
                          final PathNode parentNode) {
+        // Children are matched by name, first appearance first, the way the model is written. The
+        // same name twice is one child that happened twice, not two children.
+        final Map<String, List<Span>> spansByName = new LinkedHashMap<>();
+        // Left out here for the same reason they were left out as the model was built: the model holds
+        // no node for them, so a trace still carrying them would be judged to have run something the
+        // pathway has never seen and would match nothing.
+        spanOrder.sort(kept(trace.children(parentSpan))).forEach(span -> spansByName
+                .computeIfAbsent(span.getName(), k -> new ArrayList<>())
+                .add(span));
+
         if (!addConstraints(parentNode, parentSpan)) {
             return false;
         }
 
-        final List<Span> childSpans = trace.children(parentSpan);
-        final List<Span> sortedSpans = new ArrayList<>(childSpans);
-        sortedSpans.sort(spanComparator);
-        final PathKey pathKey = pathKeyFactory.create(sortedSpans);
+        final Map<String, PathNode> children = new HashMap<>();
+        NullSafe.list(parentNode.getChildren()).forEach(child -> children.put(child.getName(), child));
 
-        // Load inner map.
-        final Map<PathKey, PathNodeSequence> subMap = parentNode
-                .getTargets()
-                .stream()
-                .collect(Collectors.toMap(PathNodeSequence::getPathKey, Function.identity()));
-
-        // Get current path node list.
-        final PathNodeSequence pathNodeList = subMap.get(pathKey);
-        final List<PathNode> list = NullSafe
-                .getOrElse(pathNodeList, PathNodeSequence::getNodes, Collections.emptyList());
-
-        if (sortedSpans.size() != list.size()) {
+        // A child the model has never seen means this is not the same path.
+        if (!children.keySet().containsAll(spansByName.keySet())) {
             return false;
         }
 
-        // Loop over all child spans.
-        for (int i = 0; i < sortedSpans.size(); i++) {
-            final Span span = sortedSpans.get(i);
-            final PathNode pathNode = list.get(i);
+        for (final Entry<String, PathNode> entry : children.entrySet()) {
+            final PathNode child = entry.getValue();
+            final List<Span> spans = spansByName.get(entry.getKey());
 
-            // Follow the path deeper.
-            if (!walk(trace, span, pathNode)) {
+            // How many times this child ran. A child the model knows about that this trace did not
+            // carry ran no times, which the model accepts only if it has seen that too.
+            if (!checkCount(child, spans == null
+                    ? 0
+                    : spans.size())) {
                 return false;
+            }
+
+            if (spans != null) {
+                for (final Span span : spans) {
+                    if (!walk(trace, span, child)) {
+                        return false;
+                    }
+                }
             }
         }
 
         return true;
+    }
+
+    private boolean checkCount(final PathNode pathNode, final int count) {
+        final Map<String, Constraint> constraints = pathNode.getConstraints();
+        if (constraints == null || !constraints.containsKey(OCCURRENCES)) {
+            return true;
+        }
+        return checkConstraint(constraints, OCCURRENCES, count);
     }
 
     private boolean addConstraints(final PathNode pathNode,
@@ -151,11 +188,15 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Create attribute sets.
-        final Map<String, KeyValue> attributes = span
-                .getAttributes()
+        // Create attribute sets. A span can legitimately carry no attributes at all, and then arrives
+        // with a null list rather than an empty one.
+        // A span may carry the same key twice: the wire format allows it and nothing on the way in
+        // deduplicates. Last one wins, as it does in the OTel SDKs — the alternative, which is what
+        // Collectors.toMap does without a merge function, is to throw and lose the whole trace.
+        final Map<String, KeyValue> attributes = NullSafe.list(span.getAttributes())
                 .stream()
-                .collect(Collectors.toMap(kv -> "attribute." + kv.getKey(), Function.identity()));
+                .collect(Collectors.toMap(kv -> "attribute." + kv.getKey(), Function.identity(),
+                        (first, second) -> second));
 
         final boolean allRequiredAttributesExist = constraints.entrySet().stream().allMatch(entry -> {
             final String key = entry.getKey();
@@ -227,8 +268,11 @@ public class TracePredicate implements Predicate<Trace> {
         return switch (current) {
             case null -> false;
             case final NanoTimeValue nanoTimeValue -> Objects.equals(nanoTimeValue.getValue(), value);
-            case final NanoTimeRange timeRange -> timeRange.getMin().isLessThanEquals(value)
-                                                  && timeRange.getMax().isGreaterThanEquals(value);
+            // An absent end asserts nothing on that side, so anything passes it.
+            case final NanoTimeRange timeRange -> (timeRange.getMin() == null
+                                                   || timeRange.getMin().isLessThanEquals(value))
+                                                  && (timeRange.getMax() == null
+                                                      || timeRange.getMax().isGreaterThanEquals(value));
             default -> current instanceof AnyTypeValue;
         };
     }

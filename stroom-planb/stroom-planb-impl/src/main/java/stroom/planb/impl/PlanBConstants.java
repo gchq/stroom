@@ -25,17 +25,28 @@ public final class PlanBConstants {
     public static final String STAGING_DIR_NAME = "staging";
     public static final String UNZIP_DIR_NAME = "unzip";
     public static final String MERGING_DIR_NAME = "merging";
+    /**
+     * Where a document's live shards are: the local ones this node works, and the ones on a shared
+     * store that every node works in turn. One name because they are one thing — the environment a
+     * document's data is read from and merged into.
+     */
     public static final String SHARDS_DIR_NAME = "shards";
-    public static final String HOLDING_DIR_NAME = "holding";
     public static final String SNAPSHOTS_DIR_NAME = "snapshots";
     public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
     public static final String ARCHIVE_LOCAL_DIR_NAME = "archive_local";
-    public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
     public static final String ARCHIVE_DIR_NAME = "archive";
 
+    /**
+     * Where the work waiting for a document's shards lives on the shared store: what was written from
+     * a stream, or the traces handed over to a pathways document. One name because they are one thing —
+     * a directory holding a store, dropped in a per-document, per-shard folder, consumed under that
+     * shard's lock and deleted once consumed.
+     */
+    public static final String QUEUE_DIR_NAME = "queue";
+
     public static final List<String> STAGE_DIR_NAMES = List.of(
-            HOLDING_DIR_NAME, PROCESSING_DIR_NAME, ARCHIVE_DIR_NAME);
+            SHARDS_DIR_NAME, QUEUE_DIR_NAME, ARCHIVE_DIR_NAME);
 
     public static final String TMP_DIR_SUFFIX = ".tmp";
     public static final String TMP_DIR_PREFIX = ".tmp_";
@@ -46,6 +57,12 @@ public final class PlanBConstants {
     public static final String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
     public static final String DATA_FILE_NAME = "data.mdb";
+    /**
+     * What an archive bucket's data file is called when it holds compressed data. Named apart from
+     * {@link #DATA_FILE_NAME} rather than sharing it, so a reader can tell which of the two it has
+     * without opening it, and a bucket holding the plain form is still readable.
+     */
+    public static final String DATA_ZST_FILE_NAME = "data.mdb.zst";
     public static final String DATA_TMP_FILE_NAME = ".tmp_data.mdb";
     public static final String LOCK_FILE_NAME = "lock.mdb";
     public static final String MERGED_FILE_NAME = ".merged";
@@ -53,6 +70,7 @@ public final class PlanBConstants {
     public static final String FAILED_FILE_NAME = ".failed";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
     public static final String COMPACTION_LAST_FILE_NAME = ".compaction.last";
+    public static final String NARROWED_LAST_FILE_NAME = ".narrowed.last";
 
     private PlanBConstants() {}
 

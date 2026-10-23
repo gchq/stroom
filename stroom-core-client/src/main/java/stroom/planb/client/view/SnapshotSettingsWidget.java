@@ -50,7 +50,7 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
     }
 
     @Override
-    Widget asWidget() {
+    public Widget asWidget() {
         return widget;
     }
 

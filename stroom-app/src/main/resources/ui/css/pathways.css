@@ -1,8 +1,63 @@
+:root {
+    /* How much of a node is on show while a path is being looked at: one the walk has not reached
+       yet, and one the path never ran at all. What is over it is the rest. */
+    --pathway-unwalked: 0.45;
+    --pathway-off-path: 0.22;
+    /* How far off a node the ring that says it has just been reached starts. */
+    --pathway-pulse-start: 2px;
+    /* How long anything takes to go from what one step of a model's history showed to what the next
+       one shows: a node growing, recolouring, moving or fading, and the lines between them with it.
+       One number because they all have to take the same time — a node that moves faster than it
+       grows drifts away from its own circle, and a line that fades faster than the node it points at
+       leaves the node hanging on nothing.
+
+       Playing a history steps every second and a half, so there is room to go slower than this; what
+       it cannot do is reach the next step, or a drawing left part way would be taken somewhere else
+       before it arrived.
+
+       Fading and recolouring are what still read this. Moving does not: where an svg line runs is
+       held in attributes that no rule here can reach, so the renderer has to walk the lines itself —
+       and a node walked by a rule here while the line joining it is walked there is a node and a line
+       on two clocks, whichever of them sets off first arriving first. So the renderer walks the nodes
+       too, and keeps its own copy of this number and of the curve `ease` stands for. Change one and
+       change the other, or a node will fade on a different beat from the one it moves on. */
+    --pathway-step-ease: 0.6s;
+}
+
+/* Which node the constraints under it belong to. Inside the box rather than under the panel's label,
+ * because anything put between a label and the thing it labels pushes that thing down — and this panel
+ * is read beside the drawing, which would then no longer be level with it.
+ *
+ * The path, root first, which ends in the node's own name: one line saying both what it is and where
+ * it sits. Held back, because it is there to say what the table below is about rather than to be read
+ * in itself. */
+.pathway-node-path {
+    padding: 4px 4px 0px;
+    color: var(--text-color--disabled);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* An empty path still makes a line, so the panel under it sits at the same height whether a node is
+   picked out or not. A zero width space rather than a height: the box is border-box here, so a height
+   would have to know what the padding above is and would be wrong the moment that changed. */
+.pathway-node-path:empty::before {
+    content: "\200b";
+}
+
 .pathway {
     position: relative;
     overflow: auto;
     width: 100%;
     height: 100%;
+}
+
+/* Which of the paths and the changes is on show. Held off the table below it so the two read as a
+   bar over a panel rather than as one block. Said here because the rule that used to say it applied
+   only inside a dialog, which is not where this is shown any more. */
+.pathway-tabs {
+    margin-bottom: var(--control__gap--vertical);
 }
 
 .pathway-curves {
@@ -17,6 +72,17 @@
     left: 0;
     top: 0;
     padding: 5px;
+}
+
+/* The run numbers, over everything else. A name is written horizontally and so is many a link, so a
+   badge and a name share a band of the drawing more often than not; the name is there always and the
+   badge for a moment, so the badge is the one that has to be readable while it is up. Nothing in it
+   is there to be clicked, so it is kept out of the way of whatever is underneath. */
+.pathway-badges {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
 }
 
 .pathway-curves svg {
@@ -672,8 +738,34 @@
     background-color: rgba(144, 202, 249, 1);
 }
 
+/* Where the row being looked at falls. A line across the bars rather than a bar painted differently,
+   so it says the moment itself rather than the slice the moment landed in, and so it slides from one
+   row to the next instead of jumping a bar at a time.
+
+   Drawn in the text colour, which means it follows the theme and stands against the blue of the bars
+   either way round. Not in the way of a click on the bars underneath. */
+.histogram-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    /* Half its own width, so it stands on the moment rather than beside it. */
+    margin-left: -1.5px;
+    background-color: currentColor;
+    pointer-events: none;
+    transition: left 0.15s ease;
+}
+
 .histogram-plot--min .histogram-bar {
     cursor: default;
+}
+
+/* Where the bars can be dragged across to walk the model through its history. Said on the strip as a
+   whole so the bars and the gaps between them read the same way — the whole plot is the handle, not
+   just whatever happens to be under the pointer. */
+.trace-histogram--scrub .histogram-plot,
+.trace-histogram--scrub .histogram-bar {
+    cursor: ew-resize;
 }
 
 .histogram-hint {
@@ -684,4 +776,572 @@
     justify-content: center;
     color: #888;
     font-size: 13px;
+}
+
+/* The model drawn as a network, the operation at the centre and what was seen beneath it on rings
+ * around it. Everything positional is worked out by the renderer, because it depends on how many
+ * nodes there are and how deep they go; only the look is set here. */
+
+/* The box is the dot. The name is hung off it rather than laid out beside it, so a long name cannot
+ * push the dot off the point the renderer placed it on. */
+.pathway-graph-node {
+    position: absolute;
+}
+
+/* Size says how much has gone through the node, colour says when it last changed. Both come from the
+ * renderer as inline styles, so neither is set here. Nor is the ring round the dot, which the
+ * renderer draws in a darker shade of the same colour. */
+.pathway-graph-dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    /* So a model stepped through its own history recolours rather than jumping. Not background's job
+       alone: the ring says when the node last changed and moves band by band, so it eases too. The
+       pulse put on a node is an outline rather than a shadow, which is why it does not fight this.
+
+       How far across the dot is, is not here. PathwayGraphRenderer walks that itself, along with
+       where the node sits and where the lines between them run, so that all three move on one clock;
+       a rule here would ease towards every frame it wrote and the dot would crawl after it. */
+    transition: background-color var(--pathway-step-ease) ease,
+                box-shadow var(--pathway-step-ease) ease;
+}
+
+/* Written away from the middle of the diagram — to the right of a node on the right, to the left of
+ * one on the left — so names run outwards into space rather than across whatever is next to them.
+ * Clamped well inside the gap between one ring and the next, so a name stops short of the node it
+ * would otherwise be written across. */
+.pathway-graph-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: calc(100% + 6px);
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.pathway-graph-node--left .pathway-graph-label {
+    left: auto;
+    right: calc(100% + 6px);
+    text-align: right;
+}
+
+/* The drawing is scaled by the view rather than drawn again at a new size. Scaling does not change
+ * what a thing takes up, so the box around it carries the scaled size and the scrollbars follow it. */
+.pathway-graph-canvas {
+    position: relative;
+    transform-origin: 0 0;
+}
+
+/* The two layers have to start from the same origin, and padding does not affect them alike: the svg
+ * is laid out in flow so padding moves it, while the nodes are placed absolutely, which measures from
+ * inside the border and ignores padding. Five pixels of it put every line five pixels off the dots it
+ * joins. The tree keeps its padding — its curve coordinates are worked out with the offset in them. */
+.pathway-graph .pathway-curves,
+.pathway-graph .pathway-badges {
+    padding: 0;
+}
+
+/* The lines and the badges are drawn in svg, which clips to its own width and height. The nodes are
+   html, which does not. So a drawing that comes to more than the box it was laid out in showed the
+   nodes that spilled over it and dropped the lines to them — or drew the half of a line that was
+   still inside, which is where a link half drawn came from.
+
+   A drawing can come to more than its box because a step taken in place keeps the box it already
+   has, so that the corner everything is measured from cannot shift and carry the whole picture with
+   it. The model inside it still moves: nodes the model does not do at that moment give up their
+   share of the arc, so winding back re-slices the angles and can swing a deep branch further out
+   than anything in the model as it stands reaches.
+
+   Both layers now reach past the box, the way the nodes always did, so the three say the same thing.
+   What keeps the drawing inside the panel is the scrolling box around it, which clips there. */
+.pathway-graph .pathway-curves svg,
+.pathway-graph .pathway-badges svg {
+    overflow: visible;
+}
+
+/* A node is placed by its top left corner and drawn from its middle, so growing moves it. Eased over
+   the same time as the growing, or the two would pull apart and the node would drift.
+
+   Opacity eases over the same time because stepping through a history takes nodes in and out: the
+   drawing holds every node the pathway has ever had, and one the model did not have at this point is
+   faded rather than removed. Without this it switches between two opacities in one frame, which reads
+   as the node appearing from nowhere rather than arriving. */
+.pathway-graph .pathway-graph-node {
+    transition: opacity var(--pathway-step-ease) ease;
+}
+
+/* Dragged to move around and scaled with the wheel, the way a map is. Selecting text while dragging
+ * would leave the drawing highlighted blue behind the pointer, so it is turned off over the graph.
+ *
+ * No bars down the side and along the bottom. The box still scrolls — dragging and zooming both work
+ * by scrolling it — but a bar says how far there is to go, and on this there always is: the drawing
+ * is given a view's worth of room to spare on every side so that it can be moved about however far
+ * it is zoomed out. Bars over that measure the room rather than the drawing, and they are not what
+ * anyone reaches for here. */
+.pathway-graph {
+    cursor: grab;
+    user-select: none;
+    scrollbar-width: none;
+}
+
+.pathway-graph::-webkit-scrollbar {
+    display: none;
+}
+
+.pathway-dragging .pathway-graph {
+    cursor: grabbing;
+}
+
+/* The nodes stay pointers: they are there to be clicked. */
+.pathway-graph .pathway-graph-node,
+.pathway-graph .pathway-graph-control {
+    cursor: pointer;
+}
+
+/* What the colours mean, over the bottom left of the panel — behind a button, because it says
+ * something that only needs reading once. Outside the drawing, so scrolling and zooming leave it
+ * where it is. */
+.pathway-graph-key-panel {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.pathway-graph-key {
+    display: none;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--app__background-color, rgba(28, 28, 33, 0.85));
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.pathway-graph-key.pathway-graph-key--shown {
+    display: block;
+}
+
+.pathway-graph-key-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* A row of the key: a dot the size of a small node beside what it means. */
+.pathway-graph-key-scale {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+/* Drawn the way a node is, ring and all, so the key shows what it is standing for. */
+.pathway-graph-key-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: 2px 4px 2px 2px;
+}
+
+.pathway-graph-key-end {
+    opacity: 0.8;
+}
+
+.pathway-graph-key-note {
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+/* The drawing's own buttons: zoom over the bottom right the way a map puts them, and the one that
+ * opens the key over the bottom left. Outside the drawing, so they stay put while it is scrolled and
+ * are not scaled along with it. */
+.pathway-graph-zoom {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
+}
+
+.pathway-graph-controls {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.pathway-graph-control {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 16px;
+    line-height: 1;
+    background-color: var(--app__background-color, rgba(28, 28, 33, 0.85));
+}
+
+.pathway-graph-control:hover {
+    background-color: var(--navigation__background-color--hover, rgba(255, 255, 255, 0.12));
+}
+
+.pathway-graph-control + .pathway-graph-control {
+    border-top: 1px solid var(--border-color);
+}
+
+/* The two ways the model being shown can not do a node: it has not learnt it yet, and it no longer
+   does it. They are drawn alike, because on the picture they are the same thing — work that is not
+   being done at the moment being looked at.
+
+   Kept in the drawing but given no share of the arc, and put on top of the node it hangs off instead.
+   Dropped outright it would be a different set of nodes from one step to the next, and the step would
+   have to be drawn again rather than eased — which is the one thing that makes a replay watchable.
+   Given a share it would hold a wedge of the picture that nothing is drawn in, which is what made a
+   model with much churn look moth-eaten. Holding neither, a node grows out of its parent as the model
+   learns it and folds back into it as the work stops doing it, while its siblings close over the room
+   it leaves — and every part of that eases.
+
+   Taken to nothing rather than hidden outright, so that going and coming back ease at all; pointer
+   events go with it, so nothing can be hovered or clicked that is not there to be read. */
+.pathway-graph-node--absent,
+.pathway-graph-node--retired {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Lines are kept from one step to the next rather than drawn again, so a join arriving or going eases
+   the way the node at its end does. Only what the browser treats as a property can ease, and of a
+   line that is how wide it is and whether it is there at all — which is what these two are. Where it
+   runs is held in attributes instead, and a node can move the width of the drawing in one step, so
+   PathwayGraphRenderer walks the ends of every line itself over the same time and along the same
+   curve. Left to the browser the lines arrive at once and the nodes are seen sliding up to meet
+   them. */
+.pathway-graph .pathway-curves svg line.pathway-graph-edge {
+    transition: opacity var(--pathway-step-ease) ease,
+                stroke-width var(--pathway-step-ease) ease;
+}
+
+/* The join goes with the node, or a line is left running out to nothing. Taken to nothing rather than
+   hidden outright, so it fades with the node it points at instead of vanishing a step ahead of it. */
+.pathway-graph .pathway-curves svg line.pathway-graph-edge--absent,
+.pathway-graph .pathway-curves svg line.pathway-graph-edge--retired {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* What the path being looked at did not run. Faded rather than taken out: where every node sits and
+ * what it joins are worked out from the whole model, so they stay put and one path can be held
+ * against another without the drawing rearranging itself in between. Fading alone, so a node still
+ * looks like itself — its size and its colour go on saying how much it has changed and when.
+ *
+ * A row on the tree fades; a node on the graph is covered instead, for the reason the veil gives. */
+.pathway-node--off-path {
+    opacity: 0.22;
+}
+
+.pathway-graph .pathway-curves svg line.pathway-graph-edge--off-path {
+    opacity: 0.18;
+}
+
+/* The nodes a change being looked at touched, picked out for a few seconds when the change is
+ * selected in the mutation list. It runs a fixed number of times rather than forever: it is there to
+ * be noticed, and something that never stops moving stops being looked at.
+ *
+ * Magenta, which none of the bands that say when a node last changed uses. A node worth pulsing has
+ * just changed, so it is already drawn in the red of the most recent band, and a red ring around a
+ * red node could only be picked out zoomed right in. It opens as a solid ring rather than out of
+ * nothing for the same reason: the drawing is scaled to fit, so a ring that starts at nothing starts
+ * at less than a pixel once it is zoomed out. */
+@keyframes pathway-node-changed {
+    from {
+        box-shadow: 0 0 0 3px rgb(255, 77, 200);
+    }
+    to {
+        box-shadow: 0 0 0 20px rgba(255, 77, 200, 0);
+    }
+}
+
+/* The graph's version, which moves an outline away from the node rather than growing a shadow out of
+ * it. The circle carries a shadow of its own, put there by the renderer to say when the node last
+ * changed, and a pulse that animated the same property would take that ring away for as long as it
+ * ran and hand it back at the end. An outline is a property of its own, and its offset says how far
+ * out to draw, so the pulse can start beyond the ring and leave it alone. */
+@keyframes pathway-node-changed-ring {
+    from {
+        outline-offset: var(--pathway-pulse-start);
+        outline-color: rgb(255, 77, 200);
+    }
+    to {
+        outline-offset: calc(var(--pathway-pulse-start) + 18px);
+        outline-color: rgba(255, 77, 200, 0);
+    }
+}
+
+/* Lifting the veil off a node as the walk reaches it, and leaving it off. What a walk leaves behind
+ * it, so the part of the path already covered is on show rather than held in the reader's head —
+ * without it only the two or three nodes lit at that moment can be seen, and on a large model that is
+ * not enough to follow.
+ *
+ * Brightness rather than a ring round the node. A ring is a couple of pixels and the whole drawing is
+ * scaled to fit, so zoomed out there is nothing left of it — which is the case this is for. A whole
+ * node changing brightness is the same change at any size. */
+@keyframes pathway-node-reached {
+    to {
+        opacity: 0;
+    }
+}
+
+/* Uncovering a line from one end to the other. Both ends are said outright, which is what makes a
+ * walk that runs along the same line twice work: the first run leaves the line drawn and faded out,
+ * and a second run that left either end to be taken from the line as it stands would start from
+ * drawn and only flash. Every line is given a length of one where it is drawn, so one is the whole
+ * of it however long it really is. */
+@keyframes pathway-walk-drawn {
+    from {
+        stroke-dashoffset: 1;
+        opacity: 1;
+    }
+    to {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+
+/* And taking it away again once the node at its far end has been reached, which leaves the line the
+ * model drew showing in its own colour. So a magenta stretch travels along the path rather than the
+ * whole of it staying painted over — what has already been walked is said by the nodes, which stay
+ * lit, and does not need saying twice. */
+@keyframes pathway-walk-cleared {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* The line a walk runs along, laid over the one the model draws so that what joins what, and how busy
+ * the join is, are never taken away while a path plays. Full strength, against the faintness the
+ * lines beneath are held at so they do not compete with the nodes. */
+.pathway-graph .pathway-curves svg line.pathway-graph-walk {
+    stroke: rgb(255, 77, 200);
+    /* Cut off square, like the lines beneath it runs along. Both now end at the middle of the node
+       and are covered from the rim in, so what the end looks like does not show either way. */
+    stroke-linecap: butt;
+    opacity: 1;
+}
+
+/* The number of a run, shown on the line that run starts at while that line is being drawn, and gone
+ * again once it has. Runs of work that happened at the same time are walked one after another so a
+ * reader can follow one before the next begins; without this they would read as one long sequence,
+ * and this is the only thing left saying where one run ends and the next starts. */
+/* On, and later off. Said as two runs rather than one so the badge can stay up for as long as the
+   run it belongs to, however long that is, without the fading stretching to match. */
+@keyframes pathway-walk-badge-shown {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pathway-walk-badge-gone {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Out of sight until its turn, and out of sight again afterwards. Every line into a node the path
+ * ran carries one of these, and most of them are never given a run to say.
+ *
+ * In the badge layer rather than the one holding the lines: these are drawn over the node names, so
+ * they live in a drawing of their own laid on top. Anything written for them has to say that layer or
+ * it reaches nothing, and an svg shape with nothing said about it is painted solid black. */
+.pathway-graph .pathway-badges svg g.pathway-graph-walk-badge {
+    opacity: 0;
+}
+
+/* White against the magenta line it sits on, which is the one colour in the drawing nothing else
+ * uses. Ringed in the same magenta so it reads as part of the walk rather than as a node. */
+.pathway-graph .pathway-badges svg g.pathway-graph-walk-badge rect {
+    fill: rgb(255, 255, 255);
+    stroke: rgb(255, 77, 200);
+    stroke-width: 2;
+}
+
+/* Black on white, which is the plainest thing a number can be, and heavy enough to be read at the
+ * size a whole pathway is looked at. */
+.pathway-graph .pathway-badges svg g.pathway-graph-walk-badge text.pathway-graph-walk-badge-text {
+    fill: rgb(0, 0, 0);
+    font-size: 13px;
+    font-weight: 700;
+    /* The number is said by the drawing, not picked out of it. */
+    pointer-events: none;
+    user-select: none;
+}
+
+.pathway-node--changed {
+    animation: pathway-node-changed 1.1s ease-out 5;
+}
+
+/* Over once. A model being stepped through needs it, because the next step lands before a long run
+   has finished and every node would be caught part way through one. A path needs it too: its nodes
+   are held off one after another to show the walk, so running it again would replay the walk rather
+   than show it. */
+.pathway-node--changed-once {
+    animation: pathway-node-changed 1.1s ease-out 1;
+}
+
+/* A node a walk reaches. What it runs and when is written onto it as the walk is marked, not said
+   here: a node its parent ran, came away from and ran again is reached more than once, and a rule can
+   hold one run of a marking where a walk needs a list of them. */
+
+/* A graph node's box is the circle's bounding square — the name beside it is placed out of the flow —
+   so a half radius makes the outline round rather than square. Drawn clear from the start, and left
+   in place afterwards at no colour, which shows nothing. */
+.pathway-graph-node.pathway-node--changed,
+.pathway-graph-node.pathway-node--changed-once,
+.pathway-graph-node.pathway-node--walk {
+    border-radius: 50%;
+    outline: 3px solid transparent;
+}
+
+/* Over a node the walk has not reached yet, painted in the colour of the panel behind it, so the node
+   is held back without being made see-through — the lines of the drawing end under the nodes, and a
+   node faded out shows them through itself. Lifts as the walk arrives and stays off, which is what
+   says how far the walk has got. Where it starts is written onto it as the walk is marked. */
+.pathway-graph-veil {
+    position: absolute;
+    /* Out over the ring the node wears, which is as much a part of it as the circle. */
+    inset: -2px;
+    border-radius: 50%;
+    background-color: var(--control__background-color);
+    opacity: calc(1 - var(--pathway-unwalked));
+    pointer-events: none;
+    animation: pathway-node-reached 0.25s ease-out 1 forwards;
+}
+
+/* Heavier over a node the path never ran, and never lifted — no walk is coming for it. */
+.pathway-graph-node--off-path .pathway-graph-veil {
+    opacity: calc(1 - var(--pathway-off-path));
+    animation: none;
+}
+
+/* The name beside a node the path never ran. Held back the same amount as the node it names, so the
+   two read as one thing being kept out of the way. Faded rather than covered like the node is: a name
+   is written out beside the drawing rather than on it, so there is nothing under it to show through. */
+.pathway-graph-node--off-path .pathway-graph-label {
+    opacity: var(--pathway-off-path);
+}
+
+/* And the name beside a node the walk has not reached yet, held back the same amount as that node is
+   and let up with it. Where it starts is written onto it as the walk is marked. */
+.pathway-graph-node.pathway-node--walk .pathway-graph-label {
+    opacity: var(--pathway-unwalked);
+    animation: pathway-label-lit 0.25s ease-out 1 forwards;
+}
+
+@keyframes pathway-label-lit {
+    to {
+        opacity: 1;
+    }
+}
+
+.pathway-graph-node.pathway-node--changed {
+    animation: pathway-node-changed-ring 1.1s ease-out 5;
+}
+
+.pathway-graph-node.pathway-node--changed-once {
+    animation: pathway-node-changed-ring 1.1s ease-out 1;
+}
+
+/* Started beyond the white outline a selected node wears, which reaches four pixels out. Said as a
+   value the ring is drawn from rather than as a second set of keyframes: picking a node adds this
+   class and drops it from the node picked before, and changing which animation an element runs is
+   what cancels the one it was running and starts it again — so a node already walked past would pulse
+   again every time the reader clicked somewhere else. */
+.pathway-graph-node.pathway-nodeName--selected {
+    --pathway-pulse-start: 5px;
+}
+
+/* The constraints the change being looked at moved, marked in the red that says a node has just
+   changed. Steady rather than pulsing, because a row is read and text that moves is harder to read
+   than a circle that does. Translucent so the selected row still shows through it. */
+.constraint-row--changed .dataGridCell {
+    background-color: rgba(232, 84, 63, 0.16);
+}
+
+.constraint-row--changed .dataGridCell:first-child {
+    box-shadow: inset 3px 0 0 0 rgb(232, 84, 63);
+}
+
+/* Selecting in the tree fills the name in, which is what a row wants. On a circle the same styling
+ * reads as a box drawn round it, so the marker takes the selection instead: the ring goes outside the
+ * circle rather than on it, leaving the colour that says when the node last changed to be seen. */
+.pathway-graph-node.pathway-nodeName--selected {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* An outline rather than a shadow, so it sits outside the node's own ring instead of replacing it —
+ * the dot is drawn with an inline shadow, and a rule here would have no say over it. A selected node
+ * still says when it last changed. */
+.pathway-graph-node.pathway-nodeName--selected .pathway-graph-dot {
+    outline: 3px solid #ffffff;
+    outline-offset: 1px;
+}
+
+/* Faint, so the shape of the model reads without the joins competing with the nodes. currentColor
+ * rather than a fixed colour: the panel is dark in one theme and light in the other, and a colour
+ * picked for either disappears into the other. */
+/* Neither width nor colour is set here: the renderer gives each line both of its own — how much
+ * traffic reaches what it points at, and when that last happened — and a rule here would override
+ * them. Held back a little so the joins do not compete with the nodes they join. */
+.pathway-graph .pathway-curves svg line {
+    opacity: 0.6;
+    /* A line runs to the middle of each node it joins and is covered from the rim inwards, so neither
+       end is ever on show and the shape of the end cannot be seen. Left round because that is what it
+       would want to be if an end were ever uncovered; nothing here depends on it. */
+    stroke-linecap: round;
+}
+
+/* The drawing and what sits beside it, below the list of pathways. Held off the list above so the two
+   read as separate panels rather than as one that happens to have a line across it. Border box, so
+   the split panel inside still fills what is left rather than overflowing by the size of the gap. */
+.pathways-lower {
+    box-sizing: border-box;
+    padding-top: var(--control__gap--vertical);
+    /* Held off the left edge so the headings below do not start hard against it. The grid above insets
+       its column headings by --row__padding--horizontal, which on its own is too little to read as a
+       margin, so this uses the wider of the two spacings the theme defines. */
+    padding-left: var(--control__gap--horizontal);
+}
+
+/* Wherever the drawing sits beside a panel of its own, the heading over one is a form label and the
+   heading over the other is a tab, and the two leave different amounts of room beneath them. Levelled
+   here so both panels start at the same height — otherwise one reads as sitting slightly lower than
+   the other for no reason. Used by the pathways document and by a pathway opened on its own. */
+.pathway-headings .form-group-label-container,
+.pathway-headings .pathway-tabs {
+    margin-bottom: var(--control__gap--vertical);
+}
+
+/* The difference between the two is exactly the pixel of padding .linkTabBar puts above itself, which
+   the form label has not got. Given to the label rather than taken off the tabs, because that pixel is
+   the tab bar's own business and nothing here should decide it is wrong. */
+.pathway-headings .form-group-label-container {
+    padding-top: 1px;
 }

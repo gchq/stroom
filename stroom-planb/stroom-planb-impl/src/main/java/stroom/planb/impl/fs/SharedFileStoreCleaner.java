@@ -62,7 +62,7 @@ import java.util.stream.Stream;
  * <p>Safe to run concurrently across multiple cluster nodes. If a previous
  * execution is still running on this node the new trigger is skipped.</p>
  *
- * <p>On startup, {@link #startup()} removes orphaned batch directories whose name ends
+ * <p>On startup, {@link #startup()} removes orphaned directories whose name ends
  * {@code .tmp} from the shared {@code processing/} area — the half-written state
  * {@link SharedFileStoreWriter#copyToSharedStore} leaves if the JVM dies before its rename. Only
  * directories older than {@link #ORPHANED_TMP_AGE} are deleted, to avoid racing with a
@@ -84,7 +84,7 @@ public class SharedFileStoreCleaner {
     static final Duration ORPHAN_GRACE_PERIOD = Duration.ofHours(1);
 
     /**
-     * Minimum age of a {@code .tmp}-suffixed batch directory in the shared store's
+     * Minimum age of a {@code .tmp}-suffixed directory in the shared store's
      * {@code processing/} area before it is considered an orphan left by a
      * previous JVM crash and eligible for deletion at startup.
      */
@@ -111,7 +111,7 @@ public class SharedFileStoreCleaner {
     }
 
     /**
-     * Startup lifecycle hook — removes orphaned {@code .tmp}-suffixed batch directories from
+     * Startup lifecycle hook — removes orphaned {@code .tmp}-suffixed directories from
      * the shared filesystem's {@code processing/} area.
      *
      * <p>Only directories older than {@link #ORPHANED_TMP_AGE} are removed.
@@ -123,8 +123,8 @@ public class SharedFileStoreCleaner {
         final Instant cutoff = Instant.now().minus(ORPHANED_TMP_AGE);
 
         // Only the set of roots is used here, not document liveness, so a failed enumeration costs a
-        // boot's worth of cleanup rather than risking data: a .tmp batch dir carries no .version marker,
-        // and SharedFileStoreMergeProcessor.collectBatchDirs skips any batch without one.
+        // boot's worth of cleanup rather than risking data: a directory still carrying the temporary
+        // suffix is skipped by SharedFileStoreMergeProcessor.collectQueueDirs whatever is inside it.
         final Optional<Map<Path, Set<String>>> liveUuidsBySharedPath = collectLiveUuids();
         liveUuidsBySharedPath.ifPresent(map -> map.keySet()
                 .forEach(sharedRoot -> cleanupOrphanedTmpDirs(sharedRoot, cutoff)));
@@ -156,7 +156,7 @@ public class SharedFileStoreCleaner {
     }
 
     private void cleanupOrphanedTmpDirs(final Path sharedRoot, final Instant cutoff) {
-        final Path processingDir = sharedRoot.resolve(PlanBConstants.PROCESSING_DIR_NAME);
+        final Path processingDir = sharedRoot.resolve(PlanBConstants.QUEUE_DIR_NAME);
         if (!Files.isDirectory(processingDir)) {
             return;
         }
@@ -164,8 +164,8 @@ public class SharedFileStoreCleaner {
             docStream.filter(Files::isDirectory).forEach(docDir -> {
                 try (final Stream<Path> shardStream = Files.list(docDir)) {
                     shardStream.filter(Files::isDirectory).forEach(shardDir -> {
-                        try (final Stream<Path> batchStream = Files.list(shardDir)) {
-                            batchStream
+                        try (final Stream<Path> stream = Files.list(shardDir)) {
+                            stream
                                     .filter(p -> p.getFileName().toString()
                                             .endsWith(PlanBConstants.TMP_DIR_SUFFIX))
                                     .filter(p -> isOlderThan(p, cutoff))
@@ -174,7 +174,7 @@ public class SharedFileStoreCleaner {
                                         FileUtil.deleteDir(p);
                                     });
                         } catch (final IOException e) {
-                            LOGGER.warn("Failed to list batch dirs in {}: {}", shardDir, e.getMessage());
+                            LOGGER.warn("Failed to list {}: {}", shardDir, e.getMessage());
                         }
                     });
                 } catch (final IOException e) {

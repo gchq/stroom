@@ -21,15 +21,22 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
+import stroom.pathways.shared.FetchPathwayRequest;
 import stroom.pathways.shared.FindPathwayCriteria;
+import stroom.pathways.shared.FindPathwayMutationCriteria;
+import stroom.pathways.shared.PathwayMutationResultPage;
 import stroom.pathways.shared.PathwayResultPage;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.PathwaysResource;
 import stroom.pathways.shared.UpdatePathway;
+import stroom.pathways.shared.pathway.Pathway;
+import stroom.pathways.shared.pathway.PathwayUsage;
 import stroom.util.shared.EntityServiceException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.List;
 
 @AutoLogged
 class PathwaysResourceImpl implements PathwaysResource {
@@ -46,7 +53,16 @@ class PathwaysResourceImpl implements PathwaysResource {
 
     @Override
     public PathwaysDoc fetch(final String uuid) {
-        return pathwaysStoreProvider.get().readDocument(getDocRef(uuid));
+        final PathwaysDoc doc = pathwaysStoreProvider.get().readDocument(getDocRef(uuid));
+        if (doc == null) {
+            return null;
+        }
+        // Stamp what the document does not hold itself: the flag that locks the shared path and shard
+        // count once pathways have been written under them. Worked out once, when the document is
+        // opened, and carried wherever it goes.
+        return doc.copy()
+                .hasSharedFileStoreData(pathwaysStoreProvider.get().hasSharedFileStoreData(uuid))
+                .build();
     }
 
     @Override
@@ -54,7 +70,15 @@ class PathwaysResourceImpl implements PathwaysResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return pathwaysStoreProvider.get().writeDocument(doc);
+        // Strip what was stamped on before persisting — it is worked out server-side on every read
+        // and must never be written to the document store.
+        final PathwaysDoc updated = pathwaysStoreProvider.get().writeDocument(doc.copy().build());
+        if (updated == null) {
+            return null;
+        }
+        return updated.copy()
+                .hasSharedFileStoreData(pathwaysStoreProvider.get().hasSharedFileStoreData(uuid))
+                .build();
     }
 
     private DocRef getDocRef(final String uuid) {
@@ -68,6 +92,24 @@ class PathwaysResourceImpl implements PathwaysResource {
     @Override
     public PathwayResultPage findPathways(final FindPathwayCriteria criteria) {
         return pathwaysServiceProvider.get().findPathways(criteria);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public PathwayMutationResultPage findMutations(final FindPathwayMutationCriteria criteria) {
+        return pathwaysServiceProvider.get().findMutations(criteria);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public List<PathwayUsage> findUsage(final FindPathwayMutationCriteria criteria) {
+        return pathwaysServiceProvider.get().findUsage(criteria);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Pathway fetchPathway(final FetchPathwayRequest request) {
+        return pathwaysServiceProvider.get().fetchPathway(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)

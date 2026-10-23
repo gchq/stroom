@@ -73,7 +73,7 @@ public class PublishingSettingsWidget
     }
 
     @Override
-    Widget asWidget() {
+    public Widget asWidget() {
         return widget;
     }
 

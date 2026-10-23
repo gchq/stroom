@@ -34,6 +34,7 @@ import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.shared.PlanBDoc;
@@ -46,9 +47,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 
 public class TestPathwayProcessor {
+
+    /** Nothing ignored, which is the default. */
+    private static final IgnoredAttributes NO_IGNORED = new IgnoredAttributes(List.of());
 
     private static final ByteBufferFactory BYTE_BUFFER_FACTORY = new ByteBufferFactoryImpl();
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(BYTE_BUFFER_FACTORY);
@@ -141,14 +146,18 @@ public class TestPathwayProcessor {
 
         try (final LmdbWriter writer = pathwaysDb.createWriter()) {
             final TraceProcessor traceProcessor =
-                    new TraceProcessor(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY));
+                    new TraceProcessor(
+                            new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY)),
+                            BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY), NO_IGNORED,
+                            new IgnoredSpans(List.of()));
             traceDb.iterateTraces((traceId, ignored) ->
                     traceProcessor.processTrace(writer,
                             pathwaysDb,
                             traceId,
                             traceDb::findTrace,
                             PathwaysDoc.builder().uuid(UUID.randomUUID().toString()).build(),
-                            messageReceiver));
+                            messageReceiver,
+                            null));
             writer.commit();
         }
     }

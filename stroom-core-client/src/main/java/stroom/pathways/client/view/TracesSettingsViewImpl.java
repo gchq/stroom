@@ -35,6 +35,8 @@ public class TracesSettingsViewImpl
 
     @UiField
     SimplePanel settings;
+    @UiField
+    SimplePanel pathways;
 
     @Inject
     public TracesSettingsViewImpl(final Binder binder) {
@@ -49,6 +51,11 @@ public class TracesSettingsViewImpl
     @Override
     public void setSettingsView(final View view) {
         this.settings.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setPathwaysView(final View view) {
+        this.pathways.setWidget(view.asWidget());
     }
 
     @Override

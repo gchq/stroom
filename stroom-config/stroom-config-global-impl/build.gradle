@@ -61,6 +61,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-node:stroom-node-impl')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-pathways:stroom-pathways-impl')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-query:stroom-query-common')

@@ -26,4 +26,11 @@ import java.util.List;
 public interface PathwaysStore extends DocumentStore<PathwaysDoc> {
 
     List<DocRef> list();
+
+    /**
+     * Whether a model or a queue already exists on the shared file store for this document, so the
+     * editor can stop its path and shard count being changed out from under them.
+     */
+    boolean hasSharedFileStoreData(String uuid);
+
 }

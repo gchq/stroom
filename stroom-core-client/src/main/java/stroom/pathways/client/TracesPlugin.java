@@ -18,9 +18,7 @@ package stroom.pathways.client;
 
 import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
-import stroom.core.client.event.CloseContentEvent;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.pathways.client.presenter.ShowTracesEvent;
 import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 
@@ -34,8 +32,6 @@ import javax.inject.Singleton;
 public class TracesPlugin extends ContentPlugin<TracesPresenter> {
 
     private final ClientSecurityContext securityContext;
-    private final Provider<TracesPresenter> tracesPresenterProvider;
-    private final ContentManager contentManager;
 
     @Inject
     public TracesPlugin(final EventBus eventBus,
@@ -45,26 +41,6 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
                         final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, tracesPresenterProvider, documentPluginRegistry);
         this.securityContext = securityContext;
-        this.tracesPresenterProvider = tracesPresenterProvider;
-        this.contentManager = contentManager;
-
-
-        registerHandler(getEventBus().addHandler(
-                ShowTracesEvent.getType(), showTracesEvent -> {
-
-                    final TracesPresenter tracesPresenter = tracesPresenterProvider.get();
-                    tracesPresenter.setDataSourceRef(showTracesEvent.getDataSourceRef());
-                    tracesPresenter.setPathway(showTracesEvent.getPathway());
-                    tracesPresenter.setFilter(showTracesEvent.getFilter());
-                    tracesPresenter.forceRefresh();
-
-                    final CloseContentEvent.Handler closeHandler = (event) -> {
-                        event.getCallback().closeTab(true);
-                    };
-
-                    // Tell the content manager to open the tab.
-                    contentManager.open(closeHandler, tracesPresenter, tracesPresenter);
-                }));
 
 //        // TODO : TEMPORARY
 //        registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), e -> {

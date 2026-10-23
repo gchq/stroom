@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -65,7 +66,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * <p><b>The bucket dir is never renamed away.</b> Publication renames the data file <em>within</em> the
  * live bucket dir rather than swapping the dir itself, so there is no instant at which the bucket is
- * absent. That matters because {@code recoverOrphaned} only scans the {@code holding/} tree, so an
+ * absent. That matters because {@code recoverOrphaned} only scans the {@code shards/} tree, so an
  * interrupted dir swap under {@code archive/} would orphan the bucket permanently.
  *
  * <p>That repeated pushes for one date <em>merge</em> rather than overwrite is covered by
@@ -240,7 +241,7 @@ class TestPushArchive {
     /**
      * A JVM kill between the copy up and the rename orphans a bucket-sized temp file inside the live
      * bucket dir, and nothing else would ever clean it ({@code recoverOrphaned} scans only
-     * {@code holding/}, as does {@code SharedFileStoreCleaner}). The next push must sweep it.
+     * {@code shards/}, as does {@code SharedFileStoreCleaner}). The next push must sweep it.
      */
     @Test
     void push_sweepsOrphanedTempDataLeftByAnInterruptedPush() throws IOException {
@@ -298,8 +299,8 @@ class TestPushArchive {
 
     private SharedFileStorePublisher newPublisher() {
         // pushArchive does not use NodeInfo, so null is fine here.
-        return new SharedFileStorePublisher(
-                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(localState));
+        return new SharedFileStorePublisher(null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(localState),
+                Map.of());
     }
 
     private Path stagingDir() {

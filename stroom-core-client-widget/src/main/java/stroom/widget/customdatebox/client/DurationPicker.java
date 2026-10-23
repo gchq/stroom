@@ -75,6 +75,19 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         timeUnit.addItem(TimeUnit.HOURS);
     }
 
+    /**
+     * Offers only units that are a whole day or more, for a duration that is counted in days however
+     * it is written. Without this a reader can pick thirty minutes from something that will treat it
+     * as a day, and nothing on the form says so.
+     */
+    public void wholeDaysMode() {
+        timeUnit.clear();
+        timeUnit.addItem(TimeUnit.DAYS);
+        timeUnit.addItem(TimeUnit.WEEKS);
+        timeUnit.addItem(TimeUnit.MONTHS);
+        timeUnit.addItem(TimeUnit.YEARS);
+    }
+
     @Override
     public void focus() {
         time.focus();

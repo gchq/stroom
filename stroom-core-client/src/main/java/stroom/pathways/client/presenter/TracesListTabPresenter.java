@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.pathways.client.presenter.TraceNavigation.TraceToShow;
 import stroom.pathways.client.presenter.TracesListTabPresenter.TracesView;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceRequest;
@@ -28,7 +29,6 @@ import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
-import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
 import stroom.query.client.view.TimeRangeSelector;
@@ -55,6 +55,7 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     private final TracesListPresenter listPresenter;
     private final TraceOverviewWidget traceOverviewWidget;
     private final RestFactory restFactory;
+    private final TraceNavigation traceNavigation;
     // The time-range selector lives on the doc tab's save-toolbar row (contributed via HasToolbar),
     // right-aligned by the .traces-toolbar wrapper, rather than in a dedicated band above the grid.
     private final TimeRangeSelector timeRangeSelector = new TimeRangeSelector();
@@ -66,10 +67,12 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
                                   final TracesView view,
                                   final TracesListPresenter listPresenter,
                                   final DefaultResources resources,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final TraceNavigation traceNavigation) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
+        this.traceNavigation = traceNavigation;
         traceOverviewWidget = new TraceOverviewWidget(this, resources);
 
         toolbar.addStyleName("traces-toolbar");
@@ -97,6 +100,8 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(e -> {
             final TraceRoot traceRoot = listPresenter.getSelectionModel().getSelected();
             if (traceRoot == null) {
+                // Nothing selected, so there is nothing to show below the list.
+                traceOverviewWidget.setTrace(null);
                 return;
             }
             // Every span list is paged via the bounded getSpans path, regardless of size. The one
@@ -171,10 +176,17 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     protected void onRead(final DocRef docRef, final TracesDoc document, final boolean readOnly) {
         if (docRef != null) {
             setDataSourceRef(docRef);
-            // Default the time range selector to Today on first open.
-            timeRangeSelector.setValue(TimeRanges.TODAY);
-            listPresenter.setTimeRange(TimeRanges.TODAY);
-            refresh();
+            // This store may have been opened to show one trace so the time range and filter are
+            // set before the first fetch — otherwise today's traces are fetched and drawn and then replaced.
+            final TraceToShow trace = traceNavigation.getAndClearTraceToShow(docRef);
+            if (trace != null) {
+                showTrace(trace.traceId(), trace.fromMs(), trace.toMs());
+            } else {
+                // Default the time range selector to Today on first open.
+                timeRangeSelector.setValue(TimeRanges.TODAY);
+                listPresenter.setTimeRange(TimeRanges.TODAY);
+                refresh();
+            }
         }
     }
 
@@ -192,8 +204,32 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
         listPresenter.setFilter(filter);
     }
 
-    public void setPathway(final Pathway pathway) {
-        listPresenter.setPathway(pathway);
+    /**
+     * Shows one trace: the window narrowed to when it ran and the quick filter set to its id.
+     *
+     * <p>The selector is set as well as the list, or the window on show would not be the window being
+     * searched and the next thing the reader did with it would widen rather than narrow.
+     */
+    public void showTrace(final String traceId, final long fromMs, final long toMs) {
+        // Given no name, so the selector shows the times themselves. A name is what it displays when
+        // it has one, and a window around one trace has nothing to call itself.
+        //
+        // Set on the selector rather than straight onto the list, and told to say so: the handler
+        // above is what carries a window from the selector to the list, so going round it would leave
+        // the window on show and the window being searched as two different things.
+        final TimeRange window = new TimeRange(
+                null, ClientDateUtil.toISOString(fromMs), ClientDateUtil.toISOString(toMs));
+        // Set without telling anyone, and the list told directly. Announcing it would have the handler
+        // above fetch a page for the window alone, which is then thrown away a moment later when the
+        // filter arrives — a page drawn only to be replaced, which is what a reader sees as a flicker.
+        timeRangeSelector.setValue(window);
+        listPresenter.setTimeRange(window);
+        listPresenter.showFilter(traceId);
+        listPresenter.refresh();
+    }
+
+    public void setPathway(final Pathway pathway, final List<String> ignoredSpanNames) {
+        listPresenter.setPathway(pathway, ignoredSpanNames);
     }
 
     public void refresh() {

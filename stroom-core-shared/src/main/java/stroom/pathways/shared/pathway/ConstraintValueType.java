@@ -37,7 +37,11 @@ public enum ConstraintValueType implements HasDisplayValue, HasPrimitiveValue {
     DOUBLE_RANGE("Double Range", 13),
     LONG("Long", 14),
     LONG_SET("Long Set", 15),
-    LONG_RANGE("Long Range", 16);
+    LONG_RANGE("Long Range", 16),
+    // A range with one end left open is still a duration range, and says which end in its value, so
+    // all three read the same here rather than splitting one idea into three names.
+    DURATION_AT_LEAST("Duration Range", 17),
+    DURATION_AT_MOST("Duration Range", 18);
 
     public static final PrimitiveValueConverter<ConstraintValueType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(ConstraintValueType.class, ConstraintValueType.values());

@@ -72,7 +72,9 @@ class TracesDocLoader {
             if (handler == null) {
                 throw new IllegalStateException("No handler found for type: " + TracesDoc.TYPE);
             }
-            doc = (PlanBDocument) handler.readDocument(docRef);
+            // The handler authorises a read on VIEW. A trace query needs only USE, which ranks
+            // below it, so the read runs as the processing user and USE is decided below instead.
+            doc = securityContext.useAsReadResult(() -> (PlanBDocument) handler.readDocument(docRef));
         } catch (final Exception e) {
             LOGGER.error("Failed to read TracesDoc " + docRef, e);
             throw new RuntimeException("Failed to read TracesDoc '" + docRef.getName() + "'", e);
@@ -81,8 +83,8 @@ class TracesDocLoader {
         return checkUsePermission(doc);
     }
 
-    // The read above is unauthorised, so this is the only point at which a caller's right to the
-    // trace store is decided.
+    // The read above runs as the processing user, so this is the point at which a caller's right to
+    // the trace store is decided.
     private PlanBDocument checkUsePermission(final PlanBDocument doc) {
         if (doc == null) {
             return null;

@@ -511,9 +511,13 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 
     private void onSelectionChanged() {
         if (largeMode) {
-            // The visible row set (and offsets) changes with the selection → refetch from the first page.
+            // Expanding or collapsing changes which rows are visible, so the saved resume cursors no
+            // longer point where they did and every page has to be found by offset again. The page
+            // number is kept, because the reader is still looking at the same part of the trace;
+            // where collapsing has removed enough rows for that page no longer to exist, the fetch
+            // below falls back to the last one that does.
             pageCursors.clear();
-            goToPage(0);
+            goToPage(pageIndex, true);
         } else {
             refresh();
         }
@@ -1115,6 +1119,13 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // the cursor when present (cheap sequential next/prev) and the offset otherwise (live checkpoints, or
     // a merged checkpoint index for split traces), so first/prev/next/last/jump all work.
     private void goToPage(final int targetIndex) {
+        goToPage(targetIndex, false);
+    }
+
+    // keepScroll asks for the reader's place in the list to be kept, for a re-render of rows they are
+    // already looking at — expanding or collapsing a span part of the way down. It is honoured only
+    // where the page does not change, since a scroll offset means nothing against different rows.
+    private void goToPage(final int targetIndex, final boolean keepScroll) {
         if (fetcher == null || fetching) {
             return;
         }
@@ -1126,11 +1137,30 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
             if (!largeMode) {
                 return; // switched trace/mode while the request was in flight
             }
-            applyPage(targetIndex, page);
+            final int lastIndex = lastPageIndex(page, targetIndex);
+            if (targetIndex > lastIndex) {
+                // Past the end of what is now visible, so show the last page that is.
+                goToPage(lastIndex, keepScroll);
+                return;
+            }
+            applyPage(targetIndex, page, keepScroll);
         });
     }
 
-    private void applyPage(final int targetIndex, final TraceSpanPage page) {
+    // The last page that exists under the current expand/collapse state. The server counts the visible
+    // rows only when asked for one by offset, so where no count comes back an empty page is the only
+    // sign of having fallen off the end, and the first page is the one place known to exist.
+    private int lastPageIndex(final TraceSpanPage page, final int targetIndex) {
+        final Integer total = page == null ? null : page.getTotalSpans();
+        if (total != null) {
+            return Math.max(0, (total - 1) / SPANS_PER_PAGE);
+        }
+        final boolean empty = page == null || page.getRows() == null || page.getRows().isEmpty();
+        return empty ? 0 : targetIndex;
+    }
+
+    private void applyPage(final int targetIndex, final TraceSpanPage page, final boolean keepScroll) {
+        final boolean samePage = targetIndex == pageIndex;
         pageIndex = targetIndex;
         pageRows.clear();
         if (page != null && page.getRows() != null) {
@@ -1153,10 +1183,14 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         windowEnd = extents.totalDuration;
 
         syncPager();
+        // Restores the scroll offset the reader was at.
         refresh();
-        // A new page starts at the top (refresh() otherwise restores the previous page's scroll offset,
-        // which is right for a span-click/slider re-render but not for navigating to a different page).
-        setOperationListScrollTop(0);
+        // A different page starts at the top: the offset restored above belongs to rows that are no
+        // longer on screen. The same page re-rendered keeps it, so expanding or collapsing a span
+        // leaves the reader looking at that span rather than at the top of the list.
+        if (!keepScroll || !samePage) {
+            setOperationListScrollTop(0);
+        }
     }
 
     // Pushes the current page state into the pager's HasRows adapter so its buttons/labels reflect it: the

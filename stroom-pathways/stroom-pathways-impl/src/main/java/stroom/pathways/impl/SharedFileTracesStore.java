@@ -225,7 +225,8 @@ class SharedFileTracesStore implements TracesStore {
                 criteria.getFilter(),
                 criteria.getPathway(),
                 criteria.getTemporalOrderingTolerance(),
-                criteria.getTimeRange());
+                criteria.getTimeRange(),
+                criteria.getIgnoredSpanNames());
 
         final TimeFilter timeFilter = TraceHistograms.resolveTimeFilter(criteria.getTimeRange());
         validateTimeRangeLimit(doc, timeFilter);

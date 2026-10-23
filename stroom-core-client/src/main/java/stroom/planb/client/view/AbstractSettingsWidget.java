@@ -32,5 +32,5 @@ public abstract class AbstractSettingsWidget {
         return uiHandlers;
     }
 
-    abstract Widget asWidget();
+    public abstract Widget asWidget();
 }

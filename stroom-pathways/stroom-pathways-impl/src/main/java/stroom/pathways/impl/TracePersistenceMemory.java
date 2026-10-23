@@ -31,6 +31,8 @@ import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
+import stroom.planb.impl.dao.trace.CanonicalSpanOrder;
+import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -70,12 +72,13 @@ public class TracePersistenceMemory implements TracePersistence {
 
     @Override
     public ResultPage<TraceRoot> findTraces(final FindTraceCriteria criteria) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(criteria.getTemporalOrderingTolerance());
+        final CanonicalSpanOrder spanOrder = new CanonicalSpanOrder(criteria.getTemporalOrderingTolerance());
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
         final Collection<Trace> traces = getTraces();
         if (criteria.getPathway() != null) {
             final TracePredicate tracePredicate = new TracePredicate(
-                    spanComparator,
+                    spanOrder,
+                    new IgnoredSpans(criteria.getIgnoredSpanNames()),
                     pathKeyFactory,
                     Map.of(criteria.getPathway().getPathKey(), criteria.getPathway().getRoot()));
             final List<TraceRoot> filtered = traces

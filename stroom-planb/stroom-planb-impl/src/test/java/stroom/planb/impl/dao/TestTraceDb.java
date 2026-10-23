@@ -221,7 +221,7 @@ public class TestTraceDb {
 
             // Read compacted
             assertThat(shardCount(shardManager)).isEqualTo(166);
-            assertThat(shardDbNameCount(shardManager)).isEqualTo(19);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(18);
 
             // Try deletion.
             shardManager.condenseAll(new SimpleTaskContext());
@@ -230,7 +230,7 @@ public class TestTraceDb {
             assertThat(shardCount(shardManager)).isEqualTo(0);
             final String infoString = shardManager.get(MAP_NAME, Db::getInfoString);
             System.err.println(infoString);
-            assertThat(shardDbNameCount(shardManager)).isEqualTo(19);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(18);
 
             // Try compaction.
             shardManager.compactAll();
@@ -238,7 +238,7 @@ public class TestTraceDb {
 
             // Read compacted
             assertThat(shardCount(shardManager)).isEqualTo(0);
-            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(19);
+            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(18);
         } finally {
             // The shard's env must be closed before JUnit deletes the @TempDir
             shardManager.closeAll();

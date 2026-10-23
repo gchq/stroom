@@ -48,6 +48,10 @@ public class PlanBEnv implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBEnv.class);
 
     private static final int CONCURRENT_READERS = 1023;
+
+    // Maintenance opens no named database, so this only has to be non-negative. Matched to the widest
+    // store rather than zero so the same value stays right if maintenance ever needs to open one.
+    private static final int MAINTENANCE_MAX_DBS = 20;
     private final Semaphore concurrentReaderSemaphore;
     protected final Env<ByteBuffer> env;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
@@ -204,6 +208,25 @@ public class PlanBEnv implements AutoCloseable {
 
     public void copy(final File dest, final CopyFlags... flags) {
         env.copy(dest, flags);
+    }
+
+    /**
+     * Writes only the live pages of this environment into {@code destination}, which must be an
+     * existing empty directory.
+     */
+    public void compactTo(final Path destination) {
+        env.copy(destination.toFile(), CopyFlags.MDB_CP_COMPACT);
+    }
+
+    /**
+     * Opens an existing environment read-only so its file can be sized or copied.
+     *
+     * <p>No named database is opened, so this works whatever the environment holds and needs to know
+     * nothing about the store that wrote it. Read-only here means {@code MDB_NOLOCK}, so no
+     * {@code lock.mdb} is created beside the data.
+     */
+    public static PlanBEnv openForMaintenance(final Path path) {
+        return new PlanBEnv(path, null, MAINTENANCE_MAX_DBS, true, new HashClashCommitRunnable());
     }
 
     public final boolean isReadOnly() {

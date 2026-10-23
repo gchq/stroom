@@ -168,7 +168,7 @@ class TestStage1PipelineRouting {
         // 2. Verify files are copied to shared root and deleted locally
         assertThat(writerDir).isEmptyDirectory(); // Local temp staging must have been cleaned up
 
-        final Path sharedProcessingDir = sharedRoot.resolve("processing").resolve(doc.getUuid());
+        final Path sharedProcessingDir = sharedRoot.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(doc.getUuid());
         assertThat(sharedProcessingDir).exists();
 
         // There should be shard subdirectories: e.g. 0000, 0001, etc.
@@ -279,7 +279,7 @@ class TestStage1PipelineRouting {
                 .storePart(Mockito.any(FileDescriptor.class), Mockito.any(Path.class), Mockito.anyBoolean());
 
         // Shared processing directory for this map should NOT exist
-        final Path sharedProcessingDir = sharedRoot.resolve("processing").resolve(doc.getUuid());
+        final Path sharedProcessingDir = sharedRoot.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(doc.getUuid());
         assertThat(sharedProcessingDir).doesNotExist();
 
         // Local staging should still be cleaned up
@@ -311,7 +311,7 @@ class TestStage1PipelineRouting {
         // --- Shared .tmp cleanup (SharedFileStoreCleaner.startup()) ---
         // Pre-create an incomplete .tmp dir on shared storage
         final Path incompleteSharedTemp = sharedRoot
-                .resolve("processing")
+                .resolve(PlanBConstants.QUEUE_DIR_NAME)
                 .resolve(docUuid)
                 .resolve("0000")
                 .resolve("batch_1" + PlanBConstants.TMP_DIR_SUFFIX);
@@ -323,7 +323,7 @@ class TestStage1PipelineRouting {
 
         // Pre-create a complete (non-.tmp) batch — must be preserved
         final Path completeSharedBatch = sharedRoot
-                .resolve("processing")
+                .resolve(PlanBConstants.QUEUE_DIR_NAME)
                 .resolve(docUuid)
                 .resolve("0000")
                 .resolve("batch_2");

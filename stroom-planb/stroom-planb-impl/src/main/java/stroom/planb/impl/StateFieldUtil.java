@@ -49,6 +49,10 @@ public class StateFieldUtil {
             case HISTOGRAM -> HistogramFields.FIELDS;
             case METRIC -> getMetricFields(doc);
             case TRACE -> TraceFields.FIELDS;
+            // Nothing queries a pathways document this way. It is a Plan B document because its
+            // shards live on the shared file store and are worked like any other's, not because it
+            // is a store anything runs a query against.
+            case PATHWAYS -> List.of();
         };
     }
 
@@ -102,6 +106,7 @@ public class StateFieldUtil {
                     .stream()
                     .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
             case TRACE -> TraceFields.FIELD_MAP;
+            case PATHWAYS -> Map.of();
         };
     }
 
@@ -114,6 +119,7 @@ public class StateFieldUtil {
             case HISTOGRAM -> HistogramFields.TIME_FIELD;
             case METRIC -> MetricFields.TIME_FIELD;
             case TRACE -> TraceFields.START_TIME_FIELD;
+            case PATHWAYS -> null;
         };
     }
 }

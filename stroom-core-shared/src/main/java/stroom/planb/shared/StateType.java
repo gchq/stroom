@@ -26,7 +26,8 @@ public enum StateType implements HasDisplayValue {
     SESSION("Session"),
     HISTOGRAM("Histogram"),
     METRIC("Metric"),
-    TRACE("Trace");
+    TRACE("Trace"),
+    PATHWAYS("Pathways");
 
     private final String displayValue;
 

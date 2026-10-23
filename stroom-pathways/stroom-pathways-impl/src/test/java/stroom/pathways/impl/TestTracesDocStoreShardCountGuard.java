@@ -28,6 +28,7 @@ import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.TraceSettings;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 
 import jakarta.inject.Provider;
@@ -71,6 +72,8 @@ class TestTracesDocStoreShardCountGuard {
     private TracesDocSerialiser serialiser;
     @Mock
     private ClusterLockService clusterLockService;
+    @Mock
+    private SecurityContext securityContext;
 
     private TracesDocStoreImpl storeImpl;
 
@@ -78,8 +81,13 @@ class TestTracesDocStoreShardCountGuard {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         doReturn(store).when(storeFactory).createStore(any(), any(), any(), any(), any());
+        // AbstractDocumentStore asks the store for the type when authorising a write.
+        when(store.getType()).thenReturn(TracesDoc.TYPE);
+        // These tests are about the shard count guard, so the user always holds the permission.
+        // TestTracesDocStorePermissions covers the refusal.
+        when(securityContext.hasDocumentPermission(any(), any())).thenReturn(true);
         final Provider<ClusterLockService> lockServiceProvider = () -> clusterLockService;
-        storeImpl = new TracesDocStoreImpl(storeFactory, serialiser, lockServiceProvider);
+        storeImpl = new TracesDocStoreImpl(storeFactory, securityContext, serialiser, lockServiceProvider);
     }
 
     private static TracesDoc doc(final int shardCount, final Path sharedPath) {

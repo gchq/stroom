@@ -22,10 +22,16 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.PathwaysSettings;
+import stroom.planb.shared.PlanBDocument;
+import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.planb.shared.StateType;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,14 +64,18 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
+        "sharedFileStore",
+        "ignoredSpanNames",
+        "ignoredAttributes",
         "pathways"})
 @JsonInclude(Include.NON_NULL)
-public class PathwaysDoc extends AbstractDoc {
+public class PathwaysDoc extends AbstractDoc implements PlanBDocument {
 
     private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
     private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
     private static final boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
     private static final boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
+    private static final SimpleDuration DEFAULT_NARROWING_WINDOW = new SimpleDuration(7L, TimeUnit.DAYS);
 
     public static final String TYPE = "Pathways";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
@@ -74,6 +84,34 @@ public class PathwaysDoc extends AbstractDoc {
     private final String description;
     @JsonProperty
     private final SimpleDuration temporalOrderingTolerance;
+    /**
+     * How far back a pathway is held to. What a trace teaches only ever widens the model, so an
+     * envelope left to itself ends up admitting everything and saying nothing. Each night the model is
+     * narrowed to what has actually been seen within this of now, which is also what gives a widening
+     * its meaning again: something outside the envelope is something that has not happened lately,
+     * rather than something that has not happened since the model was new.
+     */
+    @JsonProperty
+    private final SimpleDuration narrowingWindow;
+    /**
+     * Spans that are no part of a pathway, as names where '*' stands for any run of characters, e.g.
+     * 'Ping'. For work the runtime does when it feels like it rather than when the code says to, such
+     * as a connection pool checking a connection it has not used for a while: whether it happens is
+     * decided by how long something sat idle, so recording it doubles the paths for every place it
+     * can appear. Such a span is left out of the model as well as the path, along with whatever it
+     * ran, and it takes no part in deciding what else ran at the same time. Matching is case
+     * sensitive and covers the whole name.
+     */
+    @JsonProperty
+    private final List<String> ignoredSpanNames;
+    /**
+     * Span attributes the model should not learn a value for, as names where '*' stands for any run of
+     * characters, e.g. 'thread.*'. A matching attribute is recorded once as accepting anything and is
+     * never changed again, so it stays visible against the node without the model growing every time
+     * its value differs. Matching is case sensitive and covers the whole name.
+     */
+    @JsonProperty
+    private final List<String> ignoredAttributes;
     @JsonProperty
     private final List<Pathway> pathways;
     @JsonProperty
@@ -85,11 +123,33 @@ public class PathwaysDoc extends AbstractDoc {
     @JsonProperty
     private final boolean allowConstraintMutation;
     @JsonProperty
-    private final DocRef tracesDocRef;
-    @JsonProperty
     private final DocRef infoFeed;
+    /**
+     * Where this document's learnt model lives on the shared filesystem, and how many ways it is
+     * split, or {@code null} while it has not been configured.
+     *
+     * <p>Shares {@link SharedFileStoreSettings} with the Plan B store types, which is where the path
+     * and shard count mean the same two things, but a Pathways document is not a Plan B store and
+     * carries them directly rather than through a settings object.
+     */
     @JsonProperty
-    private final String processingNode;
+    private final SharedFileStoreSettings sharedFileStore;
+
+    /**
+     * Whether a model or a queue already exists under {@link #sharedFileStore}, so the editor can stop
+     * the path and shard count being changed out from under them.
+     *
+     * <p>Stamped onto the document as it is fetched and never stored: where the data is decides this,
+     * not what the document says about itself.
+     */
+    @JsonProperty("hasSharedFileStoreData")
+    @JsonInclude(Include.NON_NULL)
+    private final Boolean hasSharedFileStoreData;
+
+    /** Held rather than made on demand: Plan B asks for it once per shard of every pass. */
+    @JsonIgnore
+    private final PathwaysSettings planBSettings;
+
 
     @JsonCreator
     public PathwaysDoc(@JsonProperty("uuid") final String uuid,
@@ -101,17 +161,25 @@ public class PathwaysDoc extends AbstractDoc {
                        @JsonProperty("updateUser") final String updateUser,
                        @JsonProperty("description") final String description,
                        @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
+                       @JsonProperty("narrowingWindow") final SimpleDuration narrowingWindow,
+                       @JsonProperty("ignoredSpanNames") final List<String> ignoredSpanNames,
+                       @JsonProperty("ignoredAttributes") final List<String> ignoredAttributes,
                        @JsonProperty("pathways") final List<Pathway> pathways,
                        @JsonProperty("allowPathwayCreation") final Boolean allowPathwayCreation,
                        @JsonProperty("allowPathwayMutation") final Boolean allowPathwayMutation,
                        @JsonProperty("allowConstraintCreation") final Boolean allowConstraintCreation,
                        @JsonProperty("allowConstraintMutation") final Boolean allowConstraintMutation,
-                       @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed,
-                       @JsonProperty("processingNode") final String processingNode) {
+                       @JsonProperty("sharedFileStore") final SharedFileStoreSettings sharedFileStore,
+                       @JsonProperty("hasSharedFileStoreData") final Boolean hasSharedFileStoreData) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
+        this.narrowingWindow = narrowingWindow;
+        // Held as given, empty included, because a document saved with nothing to ignore means exactly
+        // that and must not be read as never having been asked.
+        this.ignoredSpanNames = ignoredSpanNames;
+        this.ignoredAttributes = ignoredAttributes;
         this.pathways = pathways;
         this.allowPathwayCreation =
                 Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
@@ -121,9 +189,10 @@ public class PathwaysDoc extends AbstractDoc {
                 Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
         this.allowConstraintMutation =
                 Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
-        this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
-        this.processingNode = processingNode;
+        this.sharedFileStore = sharedFileStore;
+        this.hasSharedFileStoreData = hasSharedFileStoreData;
+        this.planBSettings = new PathwaysSettings(sharedFileStore);
     }
 
     /**
@@ -146,8 +215,48 @@ public class PathwaysDoc extends AbstractDoc {
         return description;
     }
 
+    /**
+     * What kind of store this is to Plan B, which keeps every document that has shards on the shared
+     * file store and works them the same way.
+     */
+    @JsonIgnore
+    @Override
+    public StateType getStateType() {
+        return StateType.PATHWAYS;
+    }
+
+    /**
+     * What Plan B asks every document for when it wants to know where its shards are.
+     *
+     * <p>Built from this document's own shared file store setting rather than stored, so nothing
+     * about the document on disk changes — which is why it is not written out.
+     */
+    @JsonIgnore
+    @Override
+    public AbstractPlanBSettings getSettings() {
+        return planBSettings;
+    }
+
     public SimpleDuration getTemporalOrderingTolerance() {
         return temporalOrderingTolerance;
+    }
+
+    /**
+     * How far back the model is held to, never null — a document saved before there was such a setting
+     * takes the default rather than being held to nothing at all.
+     */
+    public SimpleDuration getNarrowingWindow() {
+        return narrowingWindow == null
+                ? DEFAULT_NARROWING_WINDOW
+                : narrowingWindow;
+    }
+
+    public List<String> getIgnoredSpanNames() {
+        return ignoredSpanNames;
+    }
+
+    public List<String> getIgnoredAttributes() {
+        return ignoredAttributes;
     }
 
     public List<Pathway> getPathways() {
@@ -170,16 +279,16 @@ public class PathwaysDoc extends AbstractDoc {
         return allowConstraintMutation;
     }
 
-    public DocRef getTracesDocRef() {
-        return tracesDocRef;
-    }
-
     public DocRef getInfoFeed() {
         return infoFeed;
     }
 
-    public String getProcessingNode() {
-        return processingNode;
+    public boolean hasSharedFileStoreData() {
+        return Boolean.TRUE.equals(hasSharedFileStoreData);
+    }
+
+    public SharedFileStoreSettings getSharedFileStore() {
+        return sharedFileStore;
     }
 
     @Override
@@ -200,10 +309,15 @@ public class PathwaysDoc extends AbstractDoc {
                allowConstraintMutation == that.allowConstraintMutation &&
                Objects.equals(description, that.description) &&
                Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
+               Objects.equals(narrowingWindow, that.narrowingWindow) &&
+               Objects.equals(ignoredSpanNames, that.ignoredSpanNames) &&
+               Objects.equals(ignoredAttributes, that.ignoredAttributes) &&
                Objects.equals(pathways, that.pathways) &&
-               Objects.equals(tracesDocRef, that.tracesDocRef) &&
                Objects.equals(infoFeed, that.infoFeed) &&
-               Objects.equals(processingNode, that.processingNode);
+               // hasSharedFileStoreData is left out on purpose: it is stamped onto the document as
+               // it is fetched and never stored, so comparing it would make an untouched document
+               // look edited.
+               Objects.equals(sharedFileStore, that.sharedFileStore);
     }
 
     @Override
@@ -211,14 +325,16 @@ public class PathwaysDoc extends AbstractDoc {
         return Objects.hash(super.hashCode(),
                 description,
                 temporalOrderingTolerance,
+                narrowingWindow,
+                ignoredSpanNames,
+                ignoredAttributes,
                 pathways,
                 allowPathwayCreation,
                 allowPathwayMutation,
                 allowConstraintCreation,
                 allowConstraintMutation,
-                tracesDocRef,
                 infoFeed,
-                processingNode);
+                sharedFileStore);
     }
 
     @Override
@@ -226,14 +342,14 @@ public class PathwaysDoc extends AbstractDoc {
         return "PathwaysDoc{" +
                "description='" + description + '\'' +
                ", temporalOrderingTolerance=" + temporalOrderingTolerance +
+               ", narrowingWindow=" + narrowingWindow +
                ", pathways=" + pathways +
                ", allowPathwayCreation=" + allowPathwayCreation +
                ", allowPathwayMutation=" + allowPathwayMutation +
                ", allowConstraintCreation=" + allowConstraintCreation +
                ", allowConstraintMutation=" + allowConstraintMutation +
-               ", tracesDocRef=" + tracesDocRef +
                ", infoFeed=" + infoFeed +
-               ", processingNode=" + processingNode +
+               ", sharedFileStore=" + sharedFileStore +
                '}';
     }
 
@@ -250,14 +366,19 @@ public class PathwaysDoc extends AbstractDoc {
 
         private String description;
         private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
+        private SimpleDuration narrowingWindow = DEFAULT_NARROWING_WINDOW;
+        private List<String> ignoredSpanNames;
+        private List<String> ignoredAttributes;
         private List<Pathway> pathways;
         private boolean allowPathwayCreation = true;
         private boolean allowPathwayMutation = true;
         private boolean allowConstraintCreation = true;
         private boolean allowConstraintMutation = true;
-        private DocRef tracesDocRef;
         private DocRef infoFeed;
-        private String processingNode;
+        private SharedFileStoreSettings sharedFileStore;
+
+        // Intentionally not copied — it is always recomputed server-side.
+        private Boolean hasSharedFileStoreData;
 
         private Builder() {
         }
@@ -266,14 +387,16 @@ public class PathwaysDoc extends AbstractDoc {
             super(pathwaysDoc);
             this.description = pathwaysDoc.description;
             this.temporalOrderingTolerance = pathwaysDoc.temporalOrderingTolerance;
+            this.narrowingWindow = pathwaysDoc.narrowingWindow;
+            this.ignoredSpanNames = pathwaysDoc.ignoredSpanNames;
+            this.ignoredAttributes = pathwaysDoc.ignoredAttributes;
             this.pathways = pathwaysDoc.pathways;
             this.allowPathwayCreation = pathwaysDoc.allowPathwayCreation;
             this.allowPathwayMutation = pathwaysDoc.allowPathwayMutation;
             this.allowConstraintCreation = pathwaysDoc.allowConstraintCreation;
             this.allowConstraintMutation = pathwaysDoc.allowConstraintMutation;
-            this.tracesDocRef = pathwaysDoc.tracesDocRef;
             this.infoFeed = pathwaysDoc.infoFeed;
-            this.processingNode = pathwaysDoc.processingNode;
+            this.sharedFileStore = pathwaysDoc.sharedFileStore;
         }
 
         public Builder description(final String description) {
@@ -281,8 +404,23 @@ public class PathwaysDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder narrowingWindow(final SimpleDuration narrowingWindow) {
+            this.narrowingWindow = narrowingWindow;
+            return self();
+        }
+
         public Builder temporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
             this.temporalOrderingTolerance = temporalOrderingTolerance;
+            return self();
+        }
+
+        public Builder ignoredSpanNames(final List<String> ignoredSpanNames) {
+            this.ignoredSpanNames = ignoredSpanNames;
+            return self();
+        }
+
+        public Builder ignoredAttributes(final List<String> ignoredAttributes) {
+            this.ignoredAttributes = ignoredAttributes;
             return self();
         }
 
@@ -311,18 +449,18 @@ public class PathwaysDoc extends AbstractDoc {
             return self();
         }
 
-        public Builder tracesDocRef(final DocRef tracesDocRef) {
-            this.tracesDocRef = tracesDocRef;
-            return self();
-        }
-
         public Builder infoFeed(final DocRef infoFeed) {
             this.infoFeed = infoFeed;
             return self();
         }
 
-        public Builder processingNode(final String processingNode) {
-            this.processingNode = processingNode;
+        public Builder sharedFileStore(final SharedFileStoreSettings sharedFileStore) {
+            this.sharedFileStore = sharedFileStore;
+            return self();
+        }
+
+        public Builder hasSharedFileStoreData(final Boolean hasSharedFileStoreData) {
+            this.hasSharedFileStoreData = hasSharedFileStoreData;
             return self();
         }
 
@@ -342,14 +480,17 @@ public class PathwaysDoc extends AbstractDoc {
                     updateUser,
                     description,
                     temporalOrderingTolerance,
+                    narrowingWindow,
+                    ignoredSpanNames,
+                    ignoredAttributes,
                     pathways,
-                    allowPathwayCreation = true,
-                    allowPathwayMutation = true,
-                    allowConstraintCreation = true,
-                    allowConstraintMutation = true,
-                    tracesDocRef,
+                    allowPathwayCreation,
+                    allowPathwayMutation,
+                    allowConstraintCreation,
+                    allowConstraintMutation,
                     infoFeed,
-                    processingNode);
+                    sharedFileStore,
+                    hasSharedFileStoreData);
         }
     }
 }

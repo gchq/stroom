@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -550,7 +551,8 @@ class TestPublish {
 
         // pushArchive does not use NodeInfo, so null is fine here.
         final SharedFileStorePublisher publisher = new SharedFileStorePublisher(
-                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(tempDir.resolve("local_state")));
+                null, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, new PlanBPaths(tempDir.resolve("local_state")),
+                Map.of());
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch1));
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch2)); // must MERGE
 

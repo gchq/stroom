@@ -84,7 +84,7 @@ class TestHoldingAreaMergeStrategy {
                 publisher,
                 new LocalArchive(publisher, planBPaths));
         sharedHoldingDocDir = sharedRoot()
-                .resolve(PlanBConstants.HOLDING_DIR_NAME)
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve(DOC_UUID);
         Files.createDirectories(sharedHoldingDocDir.resolve(PlanBConstants.formatShardIndex(SHARD_INDEX)));
     }

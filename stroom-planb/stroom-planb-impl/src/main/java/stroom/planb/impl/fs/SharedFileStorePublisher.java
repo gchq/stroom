@@ -24,6 +24,7 @@ import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.Db;
 import stroom.planb.impl.dao.PlanBDb;
 import stroom.planb.shared.PlanBDocument;
+import stroom.planb.shared.StateType;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,11 +33,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -59,9 +60,15 @@ import java.util.stream.Stream;
  * publishes whole shards to — never {@code archive/}, which is why {@link #pushArchive} uses a
  * different, recovery-free protocol.
  *
+ * <p>That split is what decides between {@link #push} and {@link #publishShard} for a whole shard: the
+ * swap is only safe where the tree's only reader is the writer itself, holding the same lock and
+ * running the recovery first. A tree read without that lock needs {@link #publishShard}, which
+ * replaces the data file inside the live directory and so never makes the shard absent.
+ *
  * <p>Two invariants hold for everything here: no LMDB env is ever opened on the shared mount (data is
- * only copied to and from it, with all LMDB work done locally), and an archive bucket dir is never
- * renamed away, so a bucket can never transiently disappear from queries.
+ * only copied to and from it, with all LMDB work done locally), and a directory published by
+ * {@link #publishShard} or {@link #pushArchive} is never renamed away, so it can never transiently
+ * disappear from a reader that holds no lock.
  */
 @Singleton
 public class SharedFileStorePublisher {
@@ -71,16 +78,19 @@ public class SharedFileStorePublisher {
     private final NodeInfo nodeInfo;
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
+    private final Map<StateType, MergeCompletionStrategy> mergeCompletionStrategies;
     private final Path archiveLocalDir;
 
     @Inject
     public SharedFileStorePublisher(final NodeInfo nodeInfo,
                                     final ByteBuffers byteBuffers,
                                     final ByteBufferFactory byteBufferFactory,
-                                    final PlanBPaths planBPaths) {
+                                    final PlanBPaths planBPaths,
+                                    final Map<StateType, MergeCompletionStrategy> mergeCompletionStrategies) {
         this.nodeInfo = nodeInfo;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
+        this.mergeCompletionStrategies = mergeCompletionStrategies;
 
         // Clear any local archive dirs left by a previous JVM crash; each push removes its own on the way
         // out, so anything present at startup is dead. Mirrors MergeProcessor's treatment of
@@ -99,6 +109,10 @@ public class SharedFileStorePublisher {
      *
      * <p>Takes the destination rather than deriving it, as {@link #recoverOrphaned} does, so which
      * tree a store type publishes a whole shard to stays that store type's business.
+     *
+     * <p>Leaves the shard absent between the two renames, and relies on {@link #recoverOrphaned} to
+     * repair a crash in that window. Only safe where the tree's only reader holds the same lock and
+     * runs that recovery first; anything else wants {@link #publishShard}.
      */
     public void push(final Path localShardDir,
               final Path sharedDocDir,
@@ -144,6 +158,34 @@ public class SharedFileStorePublisher {
 
         // Atomic rename-swap: live -> old, temp -> live, delete old.
         pushDir(sharedTempDir, sharedShardDir);
+    }
+
+    /**
+     * Publishes the local shard into {@code sharedDocDir/<shardIndex>} by replacing that directory's
+     * data file in place, so the directory itself is never renamed away.
+     *
+     * <p>For a shard tree that is read without the writer's cluster lock, where {@link #push} cannot be
+     * used: its swap makes the shard briefly absent, and a reader landing there reads it as empty. This
+     * is the protocol {@link #pushArchive} uses, for the same reason.
+     *
+     * <p>Files the shared shard directory already holds and this does not write are left where they
+     * are, rather than being carried forward into a replacement directory as {@link #push} must.
+     */
+    public void publishShard(final Path localShardDir,
+                             final Path sharedDocDir,
+                             final int shardIndex) throws IOException {
+        final Path sharedShardDir = sharedDocDir.resolve(PlanBConstants.formatShardIndex(shardIndex));
+        final String version = Instant.now().toEpochMilli() + "_" + nodeInfo.getThisNodeName();
+        final Path localData = localShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
+
+        if (Files.exists(localData)) {
+            publishData(localData, sharedShardDir, PlanBConstants.DATA_FILE_NAME, version);
+        } else {
+            // A shard whose work wrote no environment still gets a version, so a reader can tell it
+            // was published rather than never written.
+            Files.createDirectories(sharedShardDir);
+            Files.writeString(sharedShardDir.resolve(PlanBConstants.VERSION_FILE_NAME), version);
+        }
     }
 
     /**
@@ -195,14 +237,14 @@ public class SharedFileStorePublisher {
                                       + " has no data file, so its records cannot be pushed");
             }
 
-            final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
             final Path localData = localDir.resolve(PlanBConstants.DATA_FILE_NAME);
-            if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
-                    && Files.exists(existingData)) {
-                // Seed the local env with the existing bucket, copied DOWN, so the new batch unions
-                // with it rather than replacing it.
-                LOGGER.debug("Merging new archive batch into existing archive shard {}", archiveShardDir);
-                Files.copy(existingData, localData, StandardCopyOption.REPLACE_EXISTING);
+            if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))) {
+                // Seed the local env with the existing bucket, copied DOWN and decompressed where it
+                // is compressed, so the new batch unions with it rather than replacing it.
+                if (ArchiveData.copyDown(archiveShardDir, localData)) {
+                    LOGGER.debug("Merging new archive batch into existing archive shard {}",
+                            archiveShardDir);
+                }
             }
 
             // Always merge, even into an empty local env for a brand-new bucket, rather than copying the
@@ -215,13 +257,28 @@ public class SharedFileStorePublisher {
                 // Lets the bucket rebuild its own derived state from the records it now holds, rather
                 // than inheriting whatever the batch happened to carry. merge() maintains the per-record
                 // stats this needs and queues every record it touched.
-                db.mergeComplete();
+                //
+                // A store type with something further to do with what the merge found does it here, in
+                // the same step, because only the merge knows what that was — and doing it before the
+                // bucket is published means a failure retries rather than strands it.
+                mergeCompletionStrategies
+                        .getOrDefault(doc.getStateType(), MergeCompletionStrategy.DEFAULT)
+                        .completeMerge(doc, db);
             }
             // Keep the archive layout as data.mdb + .version only: drop the lock file LMDB created
             // locally during the merge (it is recreated on the next open).
             Files.deleteIfExists(localDir.resolve(PlanBConstants.LOCK_FILE_NAME));
 
-            publishBucketData(localData, archiveShardDir, uid);
+            // Compressed on the way up, and only here: a bucket is written once and read by being
+            // copied down again, so this is paid once and saved on every read as well as on disk.
+            final Path localCompressed = localDir.resolve(PlanBConstants.DATA_ZST_FILE_NAME);
+            ArchiveData.compress(localData, localCompressed);
+            publishData(localCompressed, archiveShardDir,
+                    PlanBConstants.DATA_ZST_FILE_NAME, uid);
+            // A bucket that held the plain form still has it beside the compressed one just written.
+            // Dropped only after that one is published and versioned, so a crash between the two
+            // leaves both and a reader prefers the compressed one.
+            Files.deleteIfExists(archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME));
         } finally {
             // Swallow cleanup failures so they cannot mask an in-flight exception from the push. A
             // leftover local dir is harmless: the next startup clears the whole local archive root.
@@ -233,50 +290,53 @@ public class SharedFileStorePublisher {
         }
     }
 
-    // Copies up under a temp name, renames within the live bucket dir, then bumps .version — so the dir
-    // is never renamed away and the bucket cannot transiently vanish.
+    // Copies up under a temp name, renames it over targetFileName within the live dir, then writes
+    // .version — so the dir is never renamed away and cannot transiently vanish from a reader holding
+    // no lock. The name to publish under comes from the caller because a live shard and an archive
+    // bucket hold their data in different forms.
     //
-    // .version goes last because ArchiveShardLocator treats its presence as "bucket complete", so a bucket
-    // stays invisible until its data is in place; writing it first would advertise data that never arrived.
-    // Not covered: a crash between the two on a bucket's first push leaves data.mdb unversioned, so it is
-    // invisible and the next run overwrites it rather than merging into it.
-    private static void publishBucketData(final Path localData,
-                                          final Path archiveShardDir,
-                                          final String version) throws IOException {
-        // As in pushArchive: the rows this would have carried are already gone locally, so a silent return
-        // would drop them. Fail so the merged shard is not published and the next cycle retries.
+    // .version goes last because a reader treats its presence as "this holds something", so writing it
+    // first would advertise data that never arrived. Not covered: a crash between the two on a dir's
+    // first publish leaves data.mdb unversioned. A reader copies such a file down anyway and records an
+    // empty version; for an archive bucket the next run then overwrites it rather than merging into it.
+    private static void publishData(final Path localData,
+                                    final Path targetDir,
+                                    final String targetFileName,
+                                    final String version) throws IOException {
+        // The rows this would have carried are already gone locally, so a silent return would drop
+        // them. Fail so nothing is published and the next cycle retries.
         if (!Files.exists(localData)) {
-            throw new IOException("No data file to publish for archive shard " + archiveShardDir);
+            throw new IOException("No data file to publish to " + targetDir);
         }
-        Files.createDirectories(archiveShardDir);
-        deleteOrphanedTempData(archiveShardDir);
+        Files.createDirectories(targetDir);
+        deleteOrphanedTempData(targetDir);
 
-        // Unique per push: the merge cluster lock already serialises pushes to a given bucket, but a
-        // collision here would corrupt the published file rather than merely retry.
-        final Path tmpData = archiveShardDir.resolve(PlanBConstants.DATA_TMP_FILE_NAME + "_" + version);
+        // Unique per publish: the cluster lock already serialises publishes to a given dir, but a
+        // collision here would corrupt the published file rather than merely retry. Named from the
+        // clock and a UUID rather than the version, which a caller may build from a node name.
+        final Path tmpData = targetDir.resolve(PlanBConstants.DATA_TMP_FILE_NAME
+                                               + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID());
         try {
             Files.copy(localData, tmpData, StandardCopyOption.REPLACE_EXISTING);
-            moveWithAtomicFallback(tmpData, archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME));
-            Files.writeString(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME), version);
+            SharedFileStore.moveWithAtomicFallback(tmpData, targetDir.resolve(targetFileName));
+            Files.writeString(targetDir.resolve(PlanBConstants.VERSION_FILE_NAME), version);
         } finally {
             // A failed copy/rename must not leave a partial temp file behind.
             Files.deleteIfExists(tmpData);
         }
     }
 
-    // A JVM kill between the copy up and the rename orphans a bucket-sized temp file here, and nothing
-    // else would ever clean it: recoverOrphaned is never called for the archive/ tree, and
-    // SharedFileStoreCleaner sweeps only holding/ and processing/. Sweeping on the next push keeps
-    // that self-healing.
-    private static void deleteOrphanedTempData(final Path archiveShardDir) throws IOException {
-        try (final Stream<Path> files = Files.list(archiveShardDir)) {
+    // A JVM kill between the copy up and the rename orphans a data-sized temp file here, and nothing
+    // else cleans one. Sweeping on the next publish to this dir keeps that self-healing.
+    private static void deleteOrphanedTempData(final Path targetDir) throws IOException {
+        try (final Stream<Path> files = Files.list(targetDir)) {
             files.filter(p -> p.getFileName().toString().startsWith(PlanBConstants.DATA_TMP_FILE_NAME))
                     .forEach(p -> {
-                        LOGGER.warn("Deleting orphaned archive temp data file: {}", p);
+                        LOGGER.warn("Deleting orphaned temp data file: {}", p);
                         try {
                             Files.deleteIfExists(p);
                         } catch (final IOException e) {
-                            LOGGER.warn("Could not delete orphaned archive temp data file {}: {}",
+                            LOGGER.warn("Could not delete orphaned temp data file {}: {}",
                                     p, e.getMessage());
                         }
                     });
@@ -292,9 +352,9 @@ public class SharedFileStorePublisher {
         final Path oldDir = sharedTargetDir.resolveSibling(
                 PlanBConstants.OLD_DIR_PREFIX + sharedTargetDir.getFileName() + "_" + uid);
         if (Files.exists(sharedTargetDir)) {
-            moveWithAtomicFallback(sharedTargetDir, oldDir);
+            SharedFileStore.moveWithAtomicFallback(sharedTargetDir, oldDir);
         }
-        moveWithAtomicFallback(localDir, sharedTargetDir);
+        SharedFileStore.moveWithAtomicFallback(localDir, sharedTargetDir);
         if (Files.exists(oldDir)) {
             FileUtil.deleteDir(oldDir);
         }
@@ -339,7 +399,7 @@ public class SharedFileStorePublisher {
                         LOGGER.warn("Restoring shard from orphaned push old dir: {} -> {}",
                                 sibling, canonicalShardDir);
                         try {
-                            moveWithAtomicFallback(sibling, canonicalShardDir);
+                            SharedFileStore.moveWithAtomicFallback(sibling, canonicalShardDir);
                         } catch (final IOException e) {
                             LOGGER.error("Failed to restore shard from orphaned old dir: {}", sibling, e);
                         }
@@ -357,14 +417,6 @@ public class SharedFileStorePublisher {
         }
     }
 
-    private static void moveWithAtomicFallback(final Path src, final Path dst) throws IOException {
-        try {
-            Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE);
-        } catch (final AtomicMoveNotSupportedException e) {
-            LOGGER.warn("Atomic move not supported, falling back to REPLACE_EXISTING: {} -> {}", src, dst);
-            Files.move(src, dst, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
 
     /**
      * Returns {@code true} for files that are always regenerated during a push

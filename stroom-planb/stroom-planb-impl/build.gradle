@@ -53,6 +53,7 @@ dependencies {
     implementation libs.saxon.he
     implementation libs.swagger.annotations
     implementation libs.zero.allocation.hashing
+    implementation libs.zstd.jni
 
     // Constructing the real document store in a test needs the docstore implementation
     // (StoreFactoryImpl, Serialiser2FactoryImpl) and an in-memory persistence.

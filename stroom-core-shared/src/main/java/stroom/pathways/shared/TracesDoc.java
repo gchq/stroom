@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @Description(
         """
         Defines a Plan B store used to hold trace logs, i.e. the spans that make up each trace as it \
@@ -51,13 +53,25 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "updateUser",
         "description",
         "stateType",
-        "settings"
+        "settings",
+        "pathwaysDocRef"
 })
 @JsonInclude(Include.NON_NULL)
 public class TracesDoc extends AbstractPlanBDoc {
 
     public static final String TYPE = "Traces";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.TRACES_DOCUMENT_TYPE;
+
+    /**
+     * The Pathways document this store hands finished traces to, or {@code null} to hand over
+     * nothing.
+     *
+     * <p>The link is held here rather than on the Pathways document so that the merge can decide
+     * whether anyone is listening by reading a field of the document it already has loaded. Held the
+     * other way round it would have to search every Pathways document to find out.
+     */
+    @JsonProperty("pathwaysDocRef")
+    private final DocRef pathwaysDocRef;
 
     @JsonProperty("hasSharedFileStoreData")
     @JsonInclude(Include.NON_NULL)
@@ -75,6 +89,7 @@ public class TracesDoc extends AbstractPlanBDoc {
             @JsonProperty("description") final String description,
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("settings") final AbstractPlanBSettings settings,
+            @JsonProperty("pathwaysDocRef") final DocRef pathwaysDocRef,
             @JsonProperty("hasSharedFileStoreData") final Boolean hasSharedFileStoreData) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser,
                 description, stateType == null ? StateType.TRACE : stateType, settings);
@@ -83,7 +98,12 @@ public class TracesDoc extends AbstractPlanBDoc {
                     "TracesDoc requires TraceSettings, got: " +
                     settings.getClass().getSimpleName());
         }
+        this.pathwaysDocRef = pathwaysDocRef;
         this.hasSharedFileStoreData = hasSharedFileStoreData;
+    }
+
+    public DocRef getPathwaysDocRef() {
+        return pathwaysDocRef;
     }
 
     public boolean hasSharedFileStoreData() {
@@ -114,12 +134,19 @@ public class TracesDoc extends AbstractPlanBDoc {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        return super.equals(o);
+        if (!super.equals(o)) {
+            return false;
+        }
+        // hasSharedFileStoreData is left out on purpose: it is stamped onto the document as it is
+        // fetched and never stored, so comparing it would make the editor think an untouched
+        // document had changed.
+        final TracesDoc that = (TracesDoc) o;
+        return Objects.equals(pathwaysDocRef, that.pathwaysDocRef);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return Objects.hash(super.hashCode(), pathwaysDocRef);
     }
 
     @Override
@@ -131,6 +158,7 @@ public class TracesDoc extends AbstractPlanBDoc {
                ", description='" + getDescription() + '\'' +
                ", stateType=" + getStateType() +
                ", settings=" + getSettings() +
+               ", pathwaysDocRef=" + pathwaysDocRef +
                '}';
     }
 
@@ -145,6 +173,8 @@ public class TracesDoc extends AbstractPlanBDoc {
     public static final class Builder
             extends AbstractPlanBDoc.AbstractBuilder<TracesDoc, Builder> {
 
+        private DocRef pathwaysDocRef;
+
         // hasSharedFileStoreData is intentionally not copied — it is always recomputed server-side.
         private Boolean hasSharedFileStoreData;
 
@@ -154,6 +184,12 @@ public class TracesDoc extends AbstractPlanBDoc {
 
         private Builder(final TracesDoc tracesDoc) {
             super(tracesDoc);
+            this.pathwaysDocRef = tracesDoc.pathwaysDocRef;
+        }
+
+        public Builder pathwaysDocRef(final DocRef pathwaysDocRef) {
+            this.pathwaysDocRef = pathwaysDocRef;
+            return self();
         }
 
         public Builder hasSharedFileStoreData(final Boolean hasSharedFileStoreData) {
@@ -179,6 +215,7 @@ public class TracesDoc extends AbstractPlanBDoc {
                     description,
                     stateType,
                     settings,
+                    pathwaysDocRef,
                     hasSharedFileStoreData);
         }
     }

@@ -64,12 +64,19 @@ public class FindTraceCriteria extends BaseCriteria {
     private SimpleDuration temporalOrderingTolerance;
     @JsonProperty
     private final TimeRange timeRange;
+    /**
+     * The spans the pathway was built without, which a trace has to be judged without too. Carried
+     * beside the pathway because the two are read together: a model that was taught to leave these out
+     * holds no node for them, so a trace still carrying them would match nothing.
+     */
+    @JsonProperty
+    private final List<String> ignoredSpanNames;
 
     public FindTraceCriteria(final PageRequest pageRequest,
                              final List<CriteriaFieldSort> sortList,
                              final DocRef dataSourceRef,
                              final SimpleDuration temporalOrderingTolerance) {
-        this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance, null);
+        this(pageRequest, sortList, dataSourceRef, null, null, temporalOrderingTolerance, null, null);
     }
 
     public FindTraceCriteria(final PageRequest pageRequest,
@@ -78,7 +85,7 @@ public class FindTraceCriteria extends BaseCriteria {
                              final String filter,
                              final Pathway pathway,
                              final SimpleDuration temporalOrderingTolerance) {
-        this(pageRequest, sortList, dataSourceRef, filter, pathway, temporalOrderingTolerance, null);
+        this(pageRequest, sortList, dataSourceRef, filter, pathway, temporalOrderingTolerance, null, null);
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -89,13 +96,15 @@ public class FindTraceCriteria extends BaseCriteria {
                              @JsonProperty("filter") final String filter,
                              @JsonProperty("pathway") final Pathway pathway,
                              @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
-                             @JsonProperty("timeRange") final TimeRange timeRange) {
+                             @JsonProperty("timeRange") final TimeRange timeRange,
+                             @JsonProperty("ignoredSpanNames") final List<String> ignoredSpanNames) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
         this.filter = filter;
         this.pathway = pathway;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.timeRange = timeRange;
+        this.ignoredSpanNames = ignoredSpanNames;
     }
 
     public DocRef getDataSourceRef() {
@@ -108,6 +117,10 @@ public class FindTraceCriteria extends BaseCriteria {
 
     public Pathway getPathway() {
         return pathway;
+    }
+
+    public List<String> getIgnoredSpanNames() {
+        return ignoredSpanNames;
     }
 
     public SimpleDuration getTemporalOrderingTolerance() {
@@ -134,12 +147,14 @@ public class FindTraceCriteria extends BaseCriteria {
                Objects.equals(filter, that.filter) &&
                Objects.equals(pathway, that.pathway) &&
                Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
+               Objects.equals(ignoredSpanNames, that.ignoredSpanNames) &&
                Objects.equals(timeRange, that.timeRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway, temporalOrderingTolerance, timeRange);
+        return Objects.hash(super.hashCode(), dataSourceRef, filter, pathway, temporalOrderingTolerance,
+                ignoredSpanNames, timeRange);
     }
 
     @Override
@@ -149,6 +164,7 @@ public class FindTraceCriteria extends BaseCriteria {
                ", filter='" + filter + '\'' +
                ", pathway=" + pathway +
                ", temporalOrderingTolerance=" + temporalOrderingTolerance +
+               ", ignoredSpanNames=" + ignoredSpanNames +
                ", timeRange=" + timeRange +
                '}';
     }

@@ -40,17 +40,17 @@ import java.time.Instant;
  * The marker is only written once a run completes, so an operation that throws is retried
  * on the next tick rather than waiting out a whole interval.
  */
-final class OperationMarker {
+public final class OperationMarker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OperationMarker.class);
 
     private final String fileName;
 
-    OperationMarker(final String fileName) {
+    public OperationMarker(final String fileName) {
         this.fileName = fileName;
     }
 
-    Instant lastRun(final Path sharedShardsDocDir, final int shardIndex) {
+    public Instant lastRun(final Path sharedShardsDocDir, final int shardIndex) {
         final Path file = file(sharedShardsDocDir, shardIndex);
         if (!Files.exists(file)) {
             return null;
@@ -63,7 +63,7 @@ final class OperationMarker {
         }
     }
 
-    void recordRun(final Path sharedShardsDocDir, final int shardIndex) {
+    public void recordRun(final Path sharedShardsDocDir, final int shardIndex) {
         final Path file = file(sharedShardsDocDir, shardIndex);
         try {
             Files.createDirectories(file.getParent());

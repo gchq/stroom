@@ -1,9 +1,39 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
     <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="400">
-            <g:SimplePanel ui:field="tree" styleName="max"/>
+            <!-- Wrapped, because the gap has to be outside the split panel: a layout panel places its
+                 children at coordinates worked out from its own height and takes no notice of its
+                 padding, so a gap set on it would move nothing. -->
+            <g:FlowPanel styleName="max pathways-lower pathway-headings">
+                <g:MySplitLayoutPanel ui:field="nodeSplit" addStyleNames="max">
+                    <!-- As wide as the table it holds and no wider: its columns come to 560px
+                         between them, and the rest is what the grid itself takes up at the edges, so
+                         anything more than this is empty. What is left over goes to the drawing,
+                         which is the half that can use it. -->
+                    <g:east size="573">
+                        <g:FlowPanel styleName="max dock-container-vertical">
+                            <tab:LinkTabBar ui:field="nodeTabBar"
+                                            styleName="dock-min linkTabBar pathway-tabs"/>
+                            <g:FlowPanel
+                                    styleName="max dock-container-vertical form-control-background form-control-border">
+                                <g:Label ui:field="nodePath" styleName="dock-min pathway-node-path"/>
+                                <tab:LayerContainerImpl ui:field="nodeLayerContainer"
+                                                        styleName="dock-max"/>
+                            </g:FlowPanel>
+                        </g:FlowPanel>
+                    </g:east>
+                    <g:center>
+                        <form:FormGroup ui:field="treeGroup" identity="pathwaysDetails" label="Pathway">
+                            <g:SimplePanel ui:field="tree"
+                                           styleName="max form-control-background form-control-border"/>
+                        </form:FormGroup>
+                    </g:center>
+                </g:MySplitLayoutPanel>
+            </g:FlowPanel>
         </g:south>
         <g:center>
             <g:SimplePanel ui:field="dataGrid" styleName="max"/>

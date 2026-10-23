@@ -45,7 +45,7 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget implement
     }
 
     @Override
-    Widget asWidget() {
+    public Widget asWidget() {
         return widget;
     }
 

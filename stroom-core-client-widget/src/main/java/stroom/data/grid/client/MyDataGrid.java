@@ -699,21 +699,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 if (resizeHandle.isResizing()) {
                     if (doubleClickTester.isDoubleClick(resizeHandle)) {
                         final int colNo = resizeHandle.getColNo();
-
-                        final Element tempDiv = DOM.createDiv();
-                        tempDiv.setClassName("dataGridCell-text-measurement");
-
-                        RootPanel.get().getElement().appendChild(tempDiv);
-
-                        final double minHeaderWidth = getMinHeaderWidth(colNo, tempDiv);
-                        final double minBodyWidth = getMinBodyWidth(colNo, tempDiv);
-                        final double minWidth = Math.max(minHeaderWidth, minBodyWidth);
-
-                        RootPanel.get().getElement().removeChild(tempDiv);
-
+                        final int minWidth = contentWidth(colNo);
                         final int existingWidth = resizeHandle.getExistingWidth();
-                        final int diff = (int) minWidth - existingWidth;
-                        resizeHandle.endResize(diff);
+                        resizeHandle.endResize(minWidth - existingWidth);
 
                     } else {
                         // Find out how far we moved.
@@ -798,6 +786,19 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return super.getTableHeadElement();
     }
 
+    // Measured against a throwaway element carrying the cell font, because the width text takes is not
+    // something that can be worked out from the number of characters.
+    private int contentWidth(final int colNo) {
+        final Element tempDiv = DOM.createDiv();
+        tempDiv.setClassName("dataGridCell-text-measurement");
+        RootPanel.get().getElement().appendChild(tempDiv);
+        try {
+            return (int) Math.max(getMinHeaderWidth(colNo, tempDiv), getMinBodyWidth(colNo, tempDiv));
+        } finally {
+            RootPanel.get().getElement().removeChild(tempDiv);
+        }
+    }
+
     private double getMinHeaderWidth(final int colNo, final Element tempDiv) {
         double minWidth = 3;
 
@@ -828,10 +829,19 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private double getMinBodyWidth(final int colNo, final Element tempDiv) {
         double minWidth = 3;
         for (int row = 0; row < getVisibleItemCount(); row++) {
+            // The grid counts the rows it has been given, which is not the same as the rows on the
+            // page: it draws them after the data reaches it. One that is not there yet measures
+            // nothing rather than bringing the measurement down.
             final TableRowElement tableRowElement = getRowElement(row);
+            if (tableRowElement == null) {
+                continue;
+            }
             final NodeList<TableCellElement> cells = tableRowElement.getCells();
 
             Element el = cells.getItem(colNo);
+            if (el == null) {
+                continue;
+            }
             while (el.getFirstChildElement() != null) {
                 el = el.getFirstChildElement();
             }

@@ -17,22 +17,20 @@
 package stroom.pathways.impl;
 
 import stroom.docstore.api.DocumentStoreBinder;
-import stroom.job.api.ScheduledJobsBinder;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesStore;
 import stroom.planb.impl.PlanBDocumentTypes;
 import stroom.planb.impl.fs.HoldingAreaMergeStrategy;
+import stroom.planb.impl.fs.MergeCompletionStrategy;
 import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.shared.StateType;
-import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import jakarta.inject.Inject;
 
 public class PathwaysModule extends AbstractModule {
 
@@ -41,8 +39,12 @@ public class PathwaysModule extends AbstractModule {
         bind(TracesStore.class).to(SharedFileTracesStore.class);
         bind(TracesDocStore.class).to(TracesDocStoreImpl.class);
 
+        // Both are documents with shards on the shared file store, so Plan B's merge finds them the
+        // same way and works them with whatever strategy is bound for their type.
         Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
                 .addBinding().toInstance(TracesDoc.TYPE);
+        Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
+                .addBinding().toInstance(PathwaysDoc.TYPE);
 
         DocumentStoreBinder.create(binder())
                 .bind(PathwaysDoc.TYPE, PathwaysStore.class, PathwaysStoreImpl.class)
@@ -53,26 +55,27 @@ public class PathwaysModule extends AbstractModule {
                 .bind(TracesResourceImpl.class)
                 .bind(TracesDocResourceImpl.class);
 
-        ScheduledJobsBinder.create(binder())
-                .bindJobTo(ProcessPathways.class, builder -> builder
-                        .name("Process Pathways")
-                        .description("Job to process trace data to form pathways and/or validate traces")
-                        .frequencySchedule("1m"));
-
+        // Both keep data on a shared file store, so both have to say which documents are live: the
+        // cleaner trashes every uuid it finds on that store and is not told about.
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)
-                .addBinding(TracesDocStoreImpl.class);
+                .addBinding(TracesDocStoreImpl.class)
+                .addBinding(PathwaysStoreImpl.class);
 
         // A trace store accumulates spans in a holding shard and moves them on to the archive
         // buckets that queries read.
         GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class)
                 .addBinding(StateType.TRACE, HoldingAreaMergeStrategy.class);
+
+        // A pathways document's shards are worked like any other's: the traces handed over to it wait
+        // in the same queue folder as every other store type's work and are found the same way, and
+        // the narrowing it needs once a day is said through the same hook retention uses.
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class)
+                .addBinding(StateType.PATHWAYS, PathwaysProcessor.class);
+
+        // Once a bucket has merged, a trace store linked to a Pathways document hands the traces that
+        // became newly complete over to it.
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeCompletionStrategy.class)
+                .addBinding(StateType.TRACE, TraceMergeCompletionStrategy.class);
     }
 
-    private static class ProcessPathways extends RunnableWrapper {
-
-        @Inject
-        ProcessPathways(final PathwaysProcessor pathwaysProcessor) {
-            super(pathwaysProcessor::exec);
-        }
-    }
 }
