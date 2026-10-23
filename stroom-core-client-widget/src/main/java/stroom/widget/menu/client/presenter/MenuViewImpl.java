@@ -57,6 +57,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private static final String ARIA_DISABLED = "aria-disabled";
     private static final String ARIA_EXPANDED = "aria-expanded";
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
+    private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
@@ -179,6 +180,12 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             } else {
                 element.setAttribute(ARIA_DISABLED, "true");
             }
+            final String keyShortcuts = toAriaKeyShortcuts(menuItem.getShortcut());
+            if (keyShortcuts != null) {
+                element.setAttribute(ARIA_KEY_SHORTCUTS, keyShortcuts);
+            } else {
+                element.removeAttribute(ARIA_KEY_SHORTCUTS);
+            }
             if (item instanceof HasChildren) {
                 element.setAttribute(ARIA_HAS_POPUP, "menu");
                 element.setAttribute(ARIA_EXPANDED, String.valueOf(Objects.equals(item, openItem)));
@@ -192,6 +199,32 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             // e.g. a group heading, which is read as it comes
             element.setAttribute(ROLE, ROLE_NONE);
         }
+    }
+
+    // A shortcut as shown (e.g. "Ctrl+C") in the form aria-keyshortcuts takes ("Control+C"); null for
+    // none, or for a key sequence (e.g. "G H"), which the attribute can't express (a space separates
+    // alternatives)
+    static String toAriaKeyShortcuts(final String shortcut) {
+        if (shortcut == null || shortcut.isEmpty() || shortcut.contains(" ")) {
+            return null;
+        }
+        final String[] keys = shortcut.split("\\+", -1);
+        final StringBuilder sb = new StringBuilder();
+        for (final String key : keys) {
+            if (sb.length() > 0) {
+                sb.append('+');
+            }
+            if ("Ctrl".equals(key)) {
+                sb.append("Control");
+            } else if ("Cmd".equals(key)) {
+                sb.append("Meta");
+            } else if ("Del".equals(key)) {
+                sb.append("Delete");
+            } else {
+                sb.append(key);
+            }
+        }
+        return sb.toString();
     }
 
     // Goes to the next item, enabled or not, whose text starts with what has been typed, as the arrow

@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -30,6 +31,7 @@ public abstract class MenuItem extends Item {
     private final Command command;
     private final boolean enabled;
     private final boolean opensNewTab;
+    private final String shortcut;
 
     protected MenuItem(final int priority,
                        final SafeHtml text,
@@ -55,6 +57,21 @@ public abstract class MenuItem extends Item {
                        final boolean enabled,
                        final Command command,
                        final boolean opensNewTab) {
+        this(priority, text, tooltip, action, enabled, command, opensNewTab, null);
+    }
+
+    /// @param shortcut The shortcut shown beside the item as fixed text, e.g. "Ctrl+C" for a key
+    ///                 the browser handles rather than a Stroom key binding, or null to show the
+    ///                 action's binding (see [#getShortcut]). The other parameters are as for the
+    ///                 other constructors.
+    protected MenuItem(final int priority,
+                       final SafeHtml text,
+                       final SafeHtml tooltip,
+                       final Action action,
+                       final boolean enabled,
+                       final Command command,
+                       final boolean opensNewTab,
+                       final String shortcut) {
         super(priority);
         this.text = text;
         this.tooltip = tooltip;
@@ -62,6 +79,7 @@ public abstract class MenuItem extends Item {
         this.enabled = enabled;
         this.command = command;
         this.opensNewTab = opensNewTab;
+        this.shortcut = shortcut;
     }
 
     public SafeHtml getText() {
@@ -74,6 +92,17 @@ public abstract class MenuItem extends Item {
 
     public Action getAction() {
         return action;
+    }
+
+    /// @return The shortcut shown beside the item, e.g. "Ctrl+C": the fixed text it was given,
+    /// else the key its action is bound to, or null for none.
+    public String getShortcut() {
+        if (shortcut != null) {
+            return shortcut;
+        }
+        return action != null
+                ? KeyBinding.getShortcut(action)
+                : null;
     }
 
     public boolean isEnabled() {

@@ -964,6 +964,8 @@
 
 .welcomeViewImpl-body {
     padding: 5px !important;
+    /* Its text can be selected, so copied */
+    user-select: text;
 }
 
 .welcomeViewImpl-buildInfo {

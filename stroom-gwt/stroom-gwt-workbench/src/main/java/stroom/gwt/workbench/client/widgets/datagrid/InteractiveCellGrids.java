@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.info.client.CommandLink;
+import stroom.cell.textfield.client.TextFieldCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
@@ -195,6 +196,38 @@ final class InteractiveCellGrids {
                 poll.cancel();
             }
         });
+        return sized(grid);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Text field column, as FloorMapSettingsPresenter builds them, in a grid showing Stroom's menus
+
+    static Widget textFieldGrid(final StoryContext context) {
+        final Spy onChange = context.fn(ON_CHANGE);
+        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        final DataGridWidget<Person> grid = new DataGridWidget<>(popups.getEventBus()::fireEvent);
+        grid.setWidth("100%");
+        grid.setHeight("100%");
+        grid.setTableName("People");
+        final List<Person> rows = fourPeople();
+        final Map<String, String> nicknames = new HashMap<>();
+        for (final Person person : rows) {
+            nicknames.put(person.getName(), person.getName().split(" ")[0]);
+        }
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
+        final Column<Person, String> nickname = new Column<Person, String>(
+                new TextFieldCell(index -> "Nickname for " + rows.get(index).getName())) {
+            @Override
+            public String getValue(final Person person) {
+                return nicknames.get(person.getName());
+            }
+        };
+        nickname.setFieldUpdater((index, person, value) -> {
+            nicknames.put(person.getName(), value);
+            onChange.call(person.getName(), value);
+        });
+        grid.addColumn(nickname, "Nickname", 160);
+        grid.setRowData(rows);
         return sized(grid);
     }
 

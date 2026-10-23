@@ -17,14 +17,22 @@
 package stroom.gwt.workbench.client;
 
 import stroom.gwt.workbench.framework.client.Workbench;
+import stroom.gwt.workbench.framework.client.story.StoryUrls;
+import stroom.widget.contextmenu.client.ContextMenuManager;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.user.client.Window;
 
 /// Entry point for the workbench of Stroom's GWT widgets and screens.
 public class StroomWorkbenchEntryPoint implements EntryPoint {
 
     @Override
     public void onModuleLoad() {
+        // A story's page stops the browser's own context menu as Stroom does, so right-clicks behave
+        // as in Stroom: the edit menu on text fields for stories that show menus, none elsewhere
+        if (StoryUrls.isPreviewPage(Window.Location.getPath())) {
+            ContextMenuManager.install(null);
+        }
         Workbench.start(AllStories.create(), new StroomThemeDecorator());
     }
 }

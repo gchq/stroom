@@ -58,7 +58,25 @@ public class IconMenuItem extends MenuItem {
                            final Command command,
                            final boolean highlight,
                            final boolean opensNewTab) {
-        super(priority, text, tooltip, action, enabled, command, opensNewTab);
+        this(priority, enabledIcon, disabledIcon, iconColour, text, tooltip, action, enabled, command,
+                highlight, opensNewTab, null);
+    }
+
+    /// @param shortcut The shortcut shown beside the item as fixed text (see [MenuItem]), or null.
+    ///                 The other parameters are as for the other constructors.
+    protected IconMenuItem(final int priority,
+                           final SvgImage enabledIcon,
+                           final SvgImage disabledIcon,
+                           final IconColour iconColour,
+                           final SafeHtml text,
+                           final SafeHtml tooltip,
+                           final Action action,
+                           final boolean enabled,
+                           final Command command,
+                           final boolean highlight,
+                           final boolean opensNewTab,
+                           final String shortcut) {
+        super(priority, text, tooltip, action, enabled, command, opensNewTab, shortcut);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
@@ -88,6 +106,7 @@ public class IconMenuItem extends MenuItem {
         protected SvgImage disabledIcon = null;
         protected IconColour iconColour;
         protected boolean highlight;
+        protected String shortcut;
 
         public B icon(final SvgImage icon) {
             this.enabledIcon = icon;
@@ -106,6 +125,16 @@ public class IconMenuItem extends MenuItem {
 
         public B highlight(final boolean highlight) {
             this.highlight = highlight;
+            return self();
+        }
+
+        /// Shows a shortcut beside the item as fixed text, e.g. "Ctrl+C" for a key the browser
+        /// handles, rather than the key bound to the item's action.
+        ///
+        /// @param shortcut The shortcut's text, or null for none.
+        /// @return This builder.
+        public B shortcut(final String shortcut) {
+            this.shortcut = shortcut;
             return self();
         }
 
@@ -137,7 +166,8 @@ public class IconMenuItem extends MenuItem {
                     enabled,
                     command,
                     highlight,
-                    opensNewTab);
+                    opensNewTab,
+                    shortcut);
         }
     }
 }

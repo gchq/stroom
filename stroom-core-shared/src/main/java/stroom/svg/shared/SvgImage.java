@@ -528,6 +528,14 @@ public enum SvgImage {
             "svg>\n" +
             ""),
 
+    CUT("cut.svg", "svg-image__cut", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
+            "4\"><circle style=\"fill:none;stroke:currentColor;stroke-width:2\" cx=\"6\" cy=\"18\" r" +
+            "=\"3\"/><circle style=\"fill:none;stroke:currentColor;stroke-width:2\" cx=\"18\" cy=\"1" +
+            "8\" r=\"3\"/><path style=\"fill:none;stroke:currentColor;stroke-width:2;stroke-linec" +
+            "ap:round\" d=\"M 8.2,15.8 18,2.5 M 15.8,15.8 6,2.5\"/></svg> \n" +
+            ""),
+
     DATABASE("database.svg", "svg-image__database", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M896 768q237 0 443-43t325-127v170q" +
@@ -2993,6 +3001,14 @@ public enum SvgImage {
             "5-12.5t77.5 59.5l64 110q26 46 12.5 97.5t-59.5 77.5l-266 154z\"/></svg>\n" +
             ""),
 
+    PASTE("paste.svg", "svg-image__paste", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
+            "4\"><rect style=\"fill:none;stroke:currentColor;stroke-width:2\" x=\"4\" y=\"4\" width=" +
+            "\"16\" height=\"18\" rx=\"2\"/><rect style=\"fill:currentColor\" x=\"8\" y=\"2\" width=\"8\" h" +
+            "eight=\"5\" rx=\"1\"/><path style=\"fill:none;stroke:currentColor;stroke-width:2;stro" +
+            "ke-linecap:round\" d=\"M 8,12 H 16 M 8,16.5 H 14\"/></svg> \n" +
+            ""),
+
     PATHWAYS_CHOICE("pathways/choice.svg", "svg-image__pathways-choice", "" +
             "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" xmlns=\"htt" +
             "p://www.w3.org/2000/svg\" style=\"fill:none;stroke:currentColor;stroke-width:113.5" +
@@ -4506,6 +4522,17 @@ public enum SvgImage {
             "-19h-328.96-19.717-247.17z\"/></svg> \n" +
             ""),
 
+    REDO("redo.svg", "svg-image__redo", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\"><path style=\"fill:currentColor\" transform=\"matrix(-1,0,0,1,1792,0)\" d" +
+            "=\"M1664 896q0 156-61 298t-164 245-245 164-298 61q-172 0-327-72.5t-264-204.5q-7-1" +
+            "0-6.5-22.5t8.5-20.5l137-138q10-9 25-9 16 2 23 12 73 95 179 147t225 52q104 0 198." +
+            "5-40.5t163.5-109.5 109.5-163.5 40.5-198.5-40.5-198.5-109.5-163.5-163.5-109.5-198" +
+            ".5-40.5q-98 0-188 35.5t-160 101.5l137 138q31 30 14 69-17 40-59 40h-448q-26 0-45-" +
+            "19t-19-45v-448q0-42 40-59 39-17 69 14l130 129q107-101 244.5-156.5t284.5-55.5q156" +
+            " 0 298 61t245 164 164 245 61 298z\"/></svg> \n" +
+            ""),
+
     REFRESH("refresh.svg", "svg-image__refresh", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M1639 1056q0 5-1 7-64 268-268 434." +
@@ -4726,6 +4753,13 @@ public enum SvgImage {
             "tyle=\"fill:currentColor;fill-opacity:0;stroke:currentColor;stroke-width:2;stroke" +
             "-linecap:square;stroke-linejoin:round;paint-order:normal\" d=\"M 17.229453,25.9624" +
             "32 12.2688,13.398157 l 13.662125,6.261807 -7.237673,0.528594 z\"/></svg> \n" +
+            ""),
+
+    SELECT_ALL("select-all.svg", "svg-image__select-all", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
+            "4\"><rect style=\"fill:none;stroke:currentColor;stroke-width:2;stroke-dasharray:3," +
+            "2\" x=\"3\" y=\"3\" width=\"18\" height=\"18\"/><rect style=\"fill:currentColor\" x=\"7\" y=\"" +
+            "7\" width=\"10\" height=\"10\"/></svg> \n" +
             ""),
 
     SETTINGS("settings.svg", "svg-image__settings", "" +

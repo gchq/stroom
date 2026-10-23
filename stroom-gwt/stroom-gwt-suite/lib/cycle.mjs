@@ -1244,7 +1244,8 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await runQuery(annotationsQuery);
       await annotate('Edit Annotation');
       await toTab(new RegExp(`#${id} `));
-      return page.locator('.annotationHistoryText').filter({ visible: true }).first().inputValue({ timeout: 5_000 });
+      // The history as shown (it has no hidden copy of its text since gchq/stroom#5897)
+      return page.locator('.annotationHistoryContainer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
     };
     if (spec.comment && await phase('add a comment', async () => {
       if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {

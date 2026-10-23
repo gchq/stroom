@@ -29,6 +29,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -94,9 +96,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
-            final List<Item> menuItems = addExpressionActionsToMenu();
+            // On a term's field, the field's edit items come first
+            final List<Item> menuItems = ContextMenuManager.withEditItems(
+                    event.getEditTarget(), addExpressionActionsToMenu());
             if (NullSafe.hasItems(menuItems)) {
-                showMenu(menuItems, event.getPopupPosition());
+                showMenu(menuItems, event.getPopupPosition(), event.getEditTarget());
             }
         }));
     }
@@ -213,13 +217,18 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private void showMenu(final List<Item> menuItems,
-                          final PopupPosition popupPosition) {
-        ShowMenuEvent
+                          final PopupPosition popupPosition,
+                          final TextEditTarget textField) {
+        final ShowMenuEvent.Builder builder = ShowMenuEvent
                 .builder()
                 .name(getMenuName())
                 .items(menuItems)
-                .popupPosition(popupPosition)
-                .fire(this);
+                .popupPosition(popupPosition);
+        if (textField != null) {
+            // Opened on a term's field: the focus goes back to it
+            builder.onHide(e -> textField.restore());
+        }
+        builder.fire(this);
     }
 
     // The context menu's accessible name, saying which term or operator it acts on

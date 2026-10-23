@@ -17,6 +17,9 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.data.grid.client.MouseHelper;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
+import stroom.widget.contextmenu.client.TextField;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -110,7 +113,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         layoutPanel.add(treePanel);
         initWidget(layoutPanel);
 
-        sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+        sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCONTEXTMENU);
     }
 
     @Override
@@ -122,6 +125,8 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
             onMouseDown(event);
         } else if (Event.ONMOUSEUP == eventType) {
             onMouseUp(event);
+        } else if (Event.ONCONTEXTMENU == eventType) {
+            onTextFieldContextMenu(event);
         } else {
             // e.g. key presses, for handlers added with addDomHandler
             super.onBrowserEvent(event);
@@ -227,7 +232,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                 }
             }
 
-            if (MouseUtil.isSecondary(event)) {
+            // A right-click on a text field (e.g. a term's value) opens the menu with the edit items
+            // instead, on contextmenu (see onTextFieldContextMenu)
+            if (MouseUtil.isSecondary(event) && !TextField.isTextField(element)) {
                 onContextMenu(event);
             }
         }
@@ -489,6 +496,20 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     private void onContextMenu(final Event event) {
         final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
         ContextMenuEvent.fire(this, popupPosition);
+    }
+
+    // A right-click on a text field in an item (or Shift+F10 or the context menu key there) opens the
+    // tree's menu with the field's edit items at its top, in place of the browser's menu. A
+    // Shift+right-click is left to the browser
+    private void onTextFieldContextMenu(final Event event) {
+        final TextEditTarget textField = ContextMenuManager.findEditTarget(event);
+        if (textField != null) {
+            event.preventDefault();
+            event.stopPropagation();
+            ContextMenuEvent.fire(this,
+                    ContextMenuManager.getPosition(event, textField),
+                    textField);
+        }
     }
 
     // Marks the item under the pointer, if any, as the drop target if it would take what is dragged,

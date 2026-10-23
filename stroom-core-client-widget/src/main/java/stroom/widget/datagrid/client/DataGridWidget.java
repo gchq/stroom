@@ -23,12 +23,15 @@ import stroom.data.grid.client.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.ColumnSizing;
 import stroom.widget.datagrid.client.model.KeyboardRow;
 import stroom.widget.datagrid.client.model.PageState;
 import stroom.widget.datagrid.client.model.SortCycle;
 import stroom.widget.datagrid.client.model.SortEntry;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -1858,12 +1861,23 @@ public class DataGridWidget<R> extends Widget
     }
 
     private void onContextMenu(final NativeEvent event, final Element target) {
-        // As MyDataGrid: the browser's own menu is never shown, and the grid's only if enabled.
-        event.preventDefault();
-        event.stopPropagation();
-        if (!hasContextMenu) {
+        if (ContextMenuManager.isLeftToBrowser(event)) {
+            // e.g. a Shift+right-click shows the browser's own menu, as everywhere in Stroom
             return;
         }
+        // A right-click on a cell's text field (or the header's filter) starts with the edit items
+        final TextEditTarget textField = ContextMenuManager.findEditTarget(event);
+        if (!hasContextMenu) {
+            if (textField == null) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            // else the document's ContextMenuManager shows the edit menu alone
+            return;
+        }
+        // Otherwise the grid's menu, never the browser's
+        event.preventDefault();
+        event.stopPropagation();
         int rowIndex = -1;
         int columnIndex = -1;
         final Element cellElement = findAncestorWithAttribute(target, DATA_COL);
@@ -1876,7 +1890,10 @@ public class DataGridWidget<R> extends Widget
                 columnIndex = -1;
             }
         }
-        contextMenu.show(event.getClientX(), event.getClientY(), rowIndex, columnIndex, target);
+        final PopupPosition position = textField != null
+                ? ContextMenuManager.getPosition(event, textField)
+                : new PopupPosition(event.getClientX(), event.getClientY());
+        contextMenu.show(position, rowIndex, columnIndex, target, textField);
     }
 
     private boolean firePreview(final NativeEvent event,
