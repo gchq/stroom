@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.2] - 2026-10-23
+
+* Dependency : Uplift docker image base from `eclipse-temurin:25.0.3_9-jdk-alpine-3.23` to `eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24`.
+
+
 ## [v7.13.1] - 2026-10-21
 
 * Bug **#5835** : Stop logging an ERROR on every run of the Table Builder analytic job for each rule with an empty or broken query. A WARN is now only logged if such a rule is preventing an existing store from being deleted.
@@ -2596,7 +2601,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.2...HEAD
+[v7.13.2]: https://github.com/gchq/stroom/compare/v7.13.1...v7.13.2
 [v7.13.1]: https://github.com/gchq/stroom/compare/v7.13.0...v7.13.1
 [v7.13.0]: https://github.com/gchq/stroom/compare/v7.13-beta.18...v7.13.0
 [v7.13-beta.18]: https://github.com/gchq/stroom/compare/v7.13-beta.17...v7.13-beta.18
