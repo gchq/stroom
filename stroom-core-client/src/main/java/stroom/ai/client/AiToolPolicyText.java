@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolEffectiveGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.ai.shared.AiToolSummary;
 import stroom.util.shared.NullSafe;
@@ -25,17 +26,18 @@ import stroom.util.shared.UserRef;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/// The text the MCP Tool Policies screen shows for a tool policy: who it covers, its categories, the tools its
-/// categories grant, and why it cannot be saved.
+/// The text the MCP Tool Policies screen shows for a tool policy: who it covers, the tools of a category it
+/// grants and how much of each, the tool search's matches, and why it cannot be saved.
 public final class AiToolPolicyText {
 
-    /// What the Covers column shows for a policy that covers every user.
+    /// What is shown for a policy that covers every user.
     public static final String ALL_USERS = "All users";
 
     private AiToolPolicyText() {
@@ -63,65 +65,133 @@ public final class AiToolPolicyText {
                 : name;
     }
 
-    /// @param policy A tool policy.
-    /// @return The display values of its categories, comma-separated, in the order they are declared.
-    public static String categories(final AiToolPolicy policy) {
-        return policy.getCategories()
-                .stream()
-                .sorted()
-                .map(AiToolCategory::getDisplayValue)
-                .collect(Collectors.joining(", "));
+    /// @param category A category of tools.
+    /// @param tools    Stroom's tools.
+    /// @return The category's tools, by name.
+    public static List<AiToolSummary> toolsIn(final AiToolCategory category, final List<AiToolSummary> tools) {
+        return NullSafe.list(tools).stream()
+                .filter(tool -> tool.getCategory() == category)
+                .sorted(Comparator.comparing(AiToolSummary::getName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
-    /// Lists, for each ticked category, the names of its tools, marking those that change things as not granted
-    /// when the access is read-only.
-    ///
-    /// @param categories The ticked categories.
-    /// @param access     The access the policy grants.
-    /// @param tools      Stroom's tools, or null if they have not been fetched yet.
-    /// @return The tools the categories grant, as HTML.
-    public static SafeHtml grantedTools(final List<AiToolCategory> categories,
-                                        final AiToolAccess access,
-                                        final List<AiToolSummary> tools) {
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        if (tools == null) {
-            builder.appendEscaped("Fetching the tools...");
-            return builder.toSafeHtml();
-        }
-        if (NullSafe.isEmptyCollection(categories)) {
-            builder.appendEscaped("Tick a category to see the tools it grants.");
-            return builder.toSafeHtml();
-        }
+    /// @param tool   A tool.
+    /// @param access The access its category is granted.
+    /// @return False if none of it is granted: it changes things, every call of it, and the access is read-only.
+    public static boolean isGranted(final AiToolSummary tool, final AiToolAccess access) {
+        return access == AiToolAccess.READ_WRITE
+               || tool.isReadOnly()
+               || tool.isReadOnlyCalls();
+    }
 
-        final boolean readOnly = access != AiToolAccess.READ_WRITE;
-        final List<AiToolCategory> sortedCategories = new ArrayList<>(categories);
-        sortedCategories.sort(Comparator.naturalOrder());
-        for (final AiToolCategory category : sortedCategories) {
-            builder.appendHtmlConstant("<div><b>");
-            builder.appendEscaped(category.getDisplayValue());
-            builder.appendHtmlConstant("</b>");
-            final List<AiToolSummary> categoryTools = toolsIn(category, tools);
-            if (categoryTools.isEmpty()) {
-                builder.appendHtmlConstant("<div>");
-                builder.appendEscaped("No tools.");
-                builder.appendHtmlConstant("</div>");
-            } else {
-                builder.appendHtmlConstant("<ul>");
-                for (final AiToolSummary tool : categoryTools) {
-                    builder.appendHtmlConstant("<li>");
-                    builder.appendEscaped(tool.getName());
-                    if (readOnly && !tool.isReadOnly()) {
-                        builder.appendEscaped(tool.isReadOnlyCalls()
-                                ? " (only its calls that cannot change anything, as access is "
-                                  + AiToolAccess.READ_ONLY.getDisplayValue() + ")"
-                                : " (not granted: it changes things and access is "
-                                  + AiToolAccess.READ_ONLY.getDisplayValue() + ")");
-                    }
-                    builder.appendHtmlConstant("</li>");
-                }
-                builder.appendHtmlConstant("</ul>");
+    /// @param tool   A tool, or null for its category.
+    /// @param access The access its category is granted, or null if the category is not granted.
+    /// @return For the Read column: null if the tool has no calls that only read (nothing to show), otherwise
+    /// whether they are permitted. A category's are if it is granted at all.
+    public static Boolean canRead(final AiToolSummary tool, final AiToolAccess access) {
+        if (tool != null && !tool.isReadOnly() && !tool.isReadOnlyCalls()) {
+            return null;
+        }
+        return access != null;
+    }
+
+    /// @param tool   A tool, or null for its category.
+    /// @param access The access its category is granted, or null if the category is not granted.
+    /// @return For the Write column: null if the tool cannot change anything (nothing to show), otherwise whether
+    /// its calls that change things are permitted, which needs read and write.
+    public static Boolean canWrite(final AiToolSummary tool, final AiToolAccess access) {
+        if (tool != null && tool.isReadOnly()) {
+            return null;
+        }
+        return access == AiToolAccess.READ_WRITE;
+    }
+
+    /// @param grant A category a user's policies grant them, or null if they grant it nothing.
+    /// @param tool  One of the category's tools, or null for the category itself.
+    /// @return The policies the access comes from, by name: for the category, those granting its widest access;
+    /// for a tool, those granting whatever of it is permitted (so any of them for one that cannot change anything).
+    public static List<String> grantedBy(final AiToolEffectiveGrant grant, final AiToolSummary tool) {
+        if (grant == null) {
+            return List.of();
+        }
+        if (Boolean.TRUE.equals(canWrite(tool, grant.getAccess()))) {
+            return grant.getReadWriteBy();
+        }
+        if (!Boolean.TRUE.equals(canRead(tool, grant.getAccess()))) {
+            return List.of();
+        }
+        return Stream.concat(grant.getReadWriteBy().stream(), grant.getReadOnlyBy().stream())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+    }
+
+    /// @param tool  A tool.
+    /// @param query What is searched for, or blank.
+    /// @return True if the tool's name contains the query, ignoring case.
+    public static boolean matches(final AiToolSummary tool, final String query) {
+        return contains(tool.getName(), query);
+    }
+
+    /// @param text  Some text, or null.
+    /// @param query What is searched for, or blank.
+    /// @return True if the text contains the query, ignoring case. Nothing matches a blank query.
+    public static boolean contains(final String text, final String query) {
+        if (NullSafe.isBlankString(query) || text == null) {
+            return false;
+        }
+        return text.toLowerCase().contains(query.trim().toLowerCase());
+    }
+
+    /// @param text  Plain text, or null.
+    /// @param query What is searched for, or blank.
+    /// @return The text, escaped, with each occurrence of the query (ignoring case) highlighted.
+    public static SafeHtml highlight(final String text, final String query) {
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        final String plain = NullSafe.string(text);
+        if (NullSafe.isBlankString(query)) {
+            return builder.appendEscaped(plain).toSafeHtml();
+        }
+        final String needle = query.trim().toLowerCase();
+        final String haystack = plain.toLowerCase();
+        int from = 0;
+        int found = haystack.indexOf(needle);
+        while (found >= 0) {
+            builder.appendEscaped(plain.substring(from, found));
+            builder.appendHtmlConstant("<span class=\"findCell-highlight\">");
+            builder.appendEscaped(plain.substring(found, found + needle.length()));
+            builder.appendHtmlConstant("</span>");
+            from = found + needle.length();
+            found = haystack.indexOf(needle, from);
+        }
+        return builder.appendEscaped(plain.substring(from)).toSafeHtml();
+    }
+
+    /// @param text    Plain text, or null, shown on one line.
+    /// @param query   What is searched for, or blank.
+    /// @param tooltip The full text to show on hover, or null for none.
+    /// @return The text on one line, highlighted, in an element showing the tooltip.
+    public static SafeHtml oneLine(final String text, final String query, final String tooltip) {
+        final String line = NullSafe.string(text).replaceAll("\\s+", " ").trim();
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.appendHtmlConstant(NullSafe.isBlankString(tooltip)
+                ? "<span>"
+                : "<span title=\"" + SafeHtmlUtils.htmlEscape(tooltip.trim()) + "\">");
+        builder.append(highlight(line, query));
+        builder.appendHtmlConstant("</span>");
+        return builder.toSafeHtml();
+    }
+
+    /// @param text Plain text, its paragraphs separated by blank lines, or null.
+    /// @return The text as HTML paragraphs, escaped.
+    public static SafeHtml paragraphs(final String text) {
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        for (final String paragraph : NullSafe.string(text).split("\\n\\s*\\n")) {
+            if (!NullSafe.isBlankString(paragraph)) {
+                builder.appendHtmlConstant("<p>");
+                builder.appendEscapedLines(paragraph.trim());
+                builder.appendHtmlConstant("</p>");
             }
-            builder.appendHtmlConstant("</div>");
         }
         return builder.toSafeHtml();
     }
@@ -132,16 +202,9 @@ public final class AiToolPolicyText {
         if (NullSafe.isBlankString(policy.getName())) {
             return "A name is required.";
         }
-        if (NullSafe.isEmptyCollection(policy.getCategories())) {
+        if (NullSafe.isEmptyCollection(policy.getGrants())) {
             return "At least one category is required.";
         }
         return null;
-    }
-
-    private static List<AiToolSummary> toolsIn(final AiToolCategory category, final List<AiToolSummary> tools) {
-        return tools.stream()
-                .filter(tool -> tool.getCategory() == category)
-                .sorted(Comparator.comparing(AiToolSummary::getName, String.CASE_INSENSITIVE_ORDER))
-                .toList();
     }
 }

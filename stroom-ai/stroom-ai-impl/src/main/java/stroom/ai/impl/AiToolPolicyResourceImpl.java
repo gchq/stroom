@@ -16,11 +16,13 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiToolEffectiveGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.ai.shared.AiToolPolicyResource;
 import stroom.ai.shared.AiToolSummary;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -66,5 +68,11 @@ class AiToolPolicyResourceImpl implements AiToolPolicyResource {
     @Override
     public List<AiToolSummary> listTools() {
         return serviceProvider.get().listTools();
+    }
+
+    @AutoLogged(OperationType.VIEW)
+    @Override
+    public List<AiToolEffectiveGrant> effectiveGrants(final UserRef userRef) {
+        return serviceProvider.get().effectiveGrants(userRef);
     }
 }

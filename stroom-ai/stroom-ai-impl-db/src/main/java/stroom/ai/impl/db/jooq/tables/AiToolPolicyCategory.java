@@ -69,6 +69,11 @@ public class AiToolPolicyCategory extends TableImpl<AiToolPolicyCategoryRecord> 
      */
     public final TableField<AiToolPolicyCategoryRecord, Byte> CATEGORY = createField(DSL.name("category"), SQLDataType.TINYINT.nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.ai_tool_policy_category.access</code>.
+     */
+    public final TableField<AiToolPolicyCategoryRecord, Byte> ACCESS = createField(DSL.name("access"), SQLDataType.TINYINT.nullable(false), this, "");
+
     private AiToolPolicyCategory(Name alias, Table<AiToolPolicyCategoryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

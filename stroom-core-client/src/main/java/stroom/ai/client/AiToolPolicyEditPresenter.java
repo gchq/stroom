@@ -17,64 +17,47 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AiToolPolicyEditPresenter.AiToolPolicyEditView;
-import stroom.ai.shared.AiToolAccess;
-import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.ai.shared.AiToolPolicyResource;
-import stroom.ai.shared.AiToolSummary;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
-import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// The dialog for creating or editing a tool policy: who it covers, which categories of tools it grants, and
-/// whether only the tools that cannot change anything or all of them.
-public class AiToolPolicyEditPresenter
-        extends MyPresenterWidget<AiToolPolicyEditView>
-        implements AiToolPolicyEditUiHandlers {
+/// The dialog for creating or editing a tool policy: whether it is enabled, its name and description, and which
+/// categories of tools it grants, each read-only or read and write. Who it covers is set on the MCP Tool Policies
+/// screen itself, and is kept as it is when the dialog saves.
+public class AiToolPolicyEditPresenter extends MyPresenterWidget<AiToolPolicyEditView> {
 
     private static final AiToolPolicyResource RESOURCE = GWT.create(AiToolPolicyResource.class);
 
     private final RestFactory restFactory;
-    private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
 
     // The policy as it was read, or null for a new one.
     private AiToolPolicy policy;
-    private final List<UserRef> members = new ArrayList<>();
-    // Stroom's tools, or null until they have been fetched.
-    private List<AiToolSummary> tools;
 
-    /// @param eventBus                      The event bus.
-    /// @param view                          The dialog's view.
-    /// @param restFactory                   For calling the tool policy API.
-    /// @param userRefPopupPresenterProvider Provides the picker for adding a user or group.
+    /// @param eventBus    The event bus.
+    /// @param view        The dialog's view.
+    /// @param restFactory For calling the tool policy API.
     @Inject
     public AiToolPolicyEditPresenter(final EventBus eventBus,
                                      final AiToolPolicyEditView view,
-                                     final RestFactory restFactory,
-                                     final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider) {
+                                     final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
-        view.setUiHandlers(this);
     }
 
     /// Shows the dialog to create a new tool policy.
@@ -97,14 +80,13 @@ public class AiToolPolicyEditPresenter
         read(policy != null
                 ? policy
                 : AiToolPolicy.builder().build());
-        fetchTools();
 
         final String caption = policy == null
                 ? "Create MCP Tool Policy"
                 : "Edit MCP Tool Policy";
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(700, 750))
+                .popupSize(PopupSize.resizable(600, 660))
                 .caption(caption)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
@@ -118,17 +100,10 @@ public class AiToolPolicyEditPresenter
     }
 
     private void read(final AiToolPolicy policy) {
+        getView().setEnabled(policy.isEnabled());
         getView().setName(policy.getName());
         getView().setDescription(policy.getDescription());
-        getView().setEnabled(policy.isEnabled());
-        getView().setAllUsers(policy.isAllUsers());
-        members.clear();
-        members.addAll(policy.getMembers());
-        getView().setMembers(members);
-        getView().setMembersEnabled(!policy.isAllUsers());
-        getView().setCategories(policy.getCategories());
-        getView().setAccess(policy.getAccess());
-        updateGrantedTools();
+        getView().setGrants(policy.getGrants());
     }
 
     private AiToolPolicy write() {
@@ -136,13 +111,10 @@ public class AiToolPolicyEditPresenter
                 ? policy.copy()
                 : AiToolPolicy.builder();
         return builder
+                .enabled(getView().isEnabled())
                 .name(NullSafe.trim(getView().getName()))
                 .description(NullSafe.trim(getView().getDescription()))
-                .enabled(getView().isEnabled())
-                .allUsers(getView().isAllUsers())
-                .members(new ArrayList<>(members))
-                .categories(getView().getCategories())
-                .access(getView().getAccess())
+                .grants(getView().getGrants())
                 .build();
     }
 
@@ -171,66 +143,21 @@ public class AiToolPolicyEditPresenter
                 .exec();
     }
 
-    private void fetchTools() {
-        if (tools != null) {
-            return;
-        }
-        restFactory
-                .create(RESOURCE)
-                .method(AiToolPolicyResource::listTools)
-                .onSuccess(result -> {
-                    tools = NullSafe.list(result);
-                    updateGrantedTools();
-                })
-                .onFailure(restError -> AlertEvent.fireError(
-                        this, "Error fetching the tools: " + restError.getMessage(), null))
-                .taskMonitorFactory(this)
-                .exec();
-    }
-
-    private void updateGrantedTools() {
-        getView().setGrantedTools(AiToolPolicyText.grantedTools(
-                getView().getCategories(),
-                getView().getAccess(),
-                tools));
-    }
-
-    @Override
-    public void onAddMember() {
-        userRefPopupPresenterProvider.get().show("Add User Or Group", userRef -> {
-            if (userRef != null && !members.contains(userRef)) {
-                members.add(userRef);
-                getView().setMembers(members);
-            }
-        });
-    }
-
-    @Override
-    public void onRemoveMember(final UserRef member) {
-        if (members.remove(member)) {
-            getView().setMembers(members);
-        }
-    }
-
-    @Override
-    public void onAllUsersChange() {
-        getView().setMembersEnabled(!getView().isAllUsers());
-    }
-
-    @Override
-    public void onGrantChange() {
-        updateGrantedTools();
-    }
-
 
     // --------------------------------------------------------------------------------
 
 
     /// The tool policy dialog.
-    public interface AiToolPolicyEditView extends View, HasUiHandlers<AiToolPolicyEditUiHandlers> {
+    public interface AiToolPolicyEditView extends View {
 
-        /// Puts the cursor in the first field.
+        /// Puts the cursor in the name.
         void focus();
+
+        /// @return True if 'Enabled' is ticked.
+        boolean isEnabled();
+
+        /// @param enabled True to tick 'Enabled'.
+        void setEnabled(boolean enabled);
 
         /// @return The name entered.
         String getName();
@@ -244,37 +171,10 @@ public class AiToolPolicyEditPresenter
         /// @param description The description to show.
         void setDescription(String description);
 
-        /// @return True if 'Enabled' is ticked.
-        boolean isEnabled();
+        /// @return The ticked categories, in the order they are declared, each with the access chosen for it.
+        List<AiToolCategoryGrant> getGrants();
 
-        /// @param enabled True to tick 'Enabled'.
-        void setEnabled(boolean enabled);
-
-        /// @return True if 'All users' is ticked.
-        boolean isAllUsers();
-
-        /// @param allUsers True to tick 'All users'.
-        void setAllUsers(boolean allUsers);
-
-        /// @param members The users and groups to list, each with a button to remove it.
-        void setMembers(List<UserRef> members);
-
-        /// @param enabled False to disable the members list and its buttons, e.g. when 'All users' is ticked.
-        void setMembersEnabled(boolean enabled);
-
-        /// @return The ticked categories, in the order they are declared.
-        List<AiToolCategory> getCategories();
-
-        /// @param categories The categories to tick.
-        void setCategories(List<AiToolCategory> categories);
-
-        /// @return The access chosen.
-        AiToolAccess getAccess();
-
-        /// @param access The access to show.
-        void setAccess(AiToolAccess access);
-
-        /// @param html The tools the ticked categories grant.
-        void setGrantedTools(SafeHtml html);
+        /// @param grants The categories to tick, each with its access.
+        void setGrants(List<AiToolCategoryGrant> grants);
     }
 }

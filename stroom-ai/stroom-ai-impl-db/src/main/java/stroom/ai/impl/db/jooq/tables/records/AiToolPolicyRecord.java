@@ -158,20 +158,6 @@ public class AiToolPolicyRecord extends UpdatableRecordImpl<AiToolPolicyRecord> 
         return (Boolean) get(9);
     }
 
-    /**
-     * Setter for <code>stroom.ai_tool_policy.access</code>.
-     */
-    public void setAccess(Byte value) {
-        set(10, value);
-    }
-
-    /**
-     * Getter for <code>stroom.ai_tool_policy.access</code>.
-     */
-    public Byte getAccess() {
-        return (Byte) get(10);
-    }
-
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -195,7 +181,7 @@ public class AiToolPolicyRecord extends UpdatableRecordImpl<AiToolPolicyRecord> 
     /**
      * Create a detached, initialised AiToolPolicyRecord
      */
-    public AiToolPolicyRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String description, Boolean enabled, Boolean allUsers, Byte access) {
+    public AiToolPolicyRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String description, Boolean enabled, Boolean allUsers) {
         super(AiToolPolicy.AI_TOOL_POLICY);
 
         setId(id);
@@ -208,7 +194,6 @@ public class AiToolPolicyRecord extends UpdatableRecordImpl<AiToolPolicyRecord> 
         setDescription(description);
         setEnabled(enabled);
         setAllUsers(allUsers);
-        setAccess(access);
         resetTouchedOnNotNull();
     }
 }

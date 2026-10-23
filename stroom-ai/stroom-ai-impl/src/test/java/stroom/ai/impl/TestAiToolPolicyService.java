@@ -19,6 +19,8 @@ package stroom.ai.impl;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
+import stroom.ai.shared.AiToolEffectiveGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -81,16 +84,15 @@ class TestAiToolPolicyService {
     @Test
     void testAUserGetsTheUnionOfThePoliciesThatCoverThem() {
         service.create(policy("Everyone reads").allUsers(true)
-                .categories(List.of(AiToolCategory.CORE, AiToolCategory.SEARCH)).build());
+                .grants(readOnly(AiToolCategory.CORE, AiToolCategory.SEARCH)).build());
         // Through a group of a group.
         service.create(policy("Staff write content").members(List.of(STAFF))
-                .categories(List.of(AiToolCategory.CONTENT, AiToolCategory.SEARCH))
-                .access(AiToolAccess.READ_WRITE).build());
+                .grants(readWrite(AiToolCategory.CONTENT, AiToolCategory.SEARCH)).build());
         service.create(policy("Alice processes").members(List.of(ALICE))
-                .categories(List.of(AiToolCategory.PROCESSING)).build());
+                .grants(readOnly(AiToolCategory.PROCESSING)).build());
         // Disabled policies grant nothing.
         service.create(policy("Administration (off)").members(List.of(ALICE)).enabled(false)
-                .categories(List.of(AiToolCategory.ADMINISTRATION)).access(AiToolAccess.READ_WRITE).build());
+                .grants(readWrite(AiToolCategory.ADMINISTRATION)).build());
 
         assertThat(service.grantsFor(ALICE).byCategory()).isEqualTo(Map.of(
                 AiToolCategory.CORE, AiToolAccess.READ_ONLY,
@@ -105,10 +107,51 @@ class TestAiToolPolicyService {
 
     @Test
     void testAUserWithNoPolicyGetsNoTools() {
-        service.create(policy("Analysts").members(List.of(ANALYSTS)).categories(List.of(AiToolCategory.CORE))
+        service.create(policy("Analysts").members(List.of(ANALYSTS)).grants(readOnly(AiToolCategory.CORE))
                 .build());
 
         assertThat(service.grantsFor(BOB).isEmpty()).isTrue();
+    }
+
+    @Test
+    void testEachCategoryOfAPolicyHasItsOwnAccess() {
+        service.create(policy("Bob builds").members(List.of(BOB))
+                .grants(List.of(
+                        AiToolCategoryGrant.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY),
+                        AiToolCategoryGrant.of(AiToolCategory.PROCESSING, AiToolAccess.READ_WRITE)))
+                .build());
+
+        assertThat(service.grantsFor(BOB).byCategory()).isEqualTo(Map.of(
+                AiToolCategory.CORE, AiToolAccess.READ_ONLY,
+                AiToolCategory.PROCESSING, AiToolAccess.READ_WRITE));
+    }
+
+    @Test
+    void testEffectiveGrantsSayWhichPoliciesGrantEachCategory() {
+        service.create(policy("Everyone reads").allUsers(true)
+                .grants(readOnly(AiToolCategory.SEARCH, AiToolCategory.CORE)).build());
+        service.create(policy("Staff search").members(List.of(STAFF))
+                .grants(readWrite(AiToolCategory.SEARCH)).build());
+        service.create(policy("analysts search").members(List.of(ANALYSTS))
+                .grants(readWrite(AiToolCategory.SEARCH)).build());
+        // Disabled policies grant nothing.
+        service.create(policy("Admin (off)").members(List.of(ALICE)).enabled(false)
+                .grants(readWrite(AiToolCategory.ADMINISTRATION)).build());
+
+        // Alice is in Staff through Analysts. By category, each list of policies by name, ignoring case.
+        assertThat(service.effectiveGrants(ALICE)).containsExactly(
+                new AiToolEffectiveGrant(AiToolCategory.CORE, List.of(), List.of("Everyone reads")),
+                new AiToolEffectiveGrant(AiToolCategory.SEARCH,
+                        List.of("analysts search", "Staff search"),
+                        List.of("Everyone reads")));
+        assertThat(service.effectiveGrants(ALICE))
+                .extracting(AiToolEffectiveGrant::getAccess)
+                .containsExactly(AiToolAccess.READ_ONLY, AiToolAccess.READ_WRITE);
+        // A group's own access, as its members would get from it.
+        assertThat(service.effectiveGrants(STAFF)).containsExactly(
+                new AiToolEffectiveGrant(AiToolCategory.CORE, List.of(), List.of("Everyone reads")),
+                new AiToolEffectiveGrant(AiToolCategory.SEARCH, List.of("Staff search"), List.of("Everyone reads")));
+        assertThat(service.effectiveGrants(null)).isEmpty();
     }
 
     @Test
@@ -116,10 +159,10 @@ class TestAiToolPolicyService {
         final AtomicInteger told = new AtomicInteger();
         service.addChangeListener(told::incrementAndGet);
         final AiToolPolicy created = service.create(policy("Bob").members(List.of(BOB))
-                .categories(List.of(AiToolCategory.CORE)).build());
+                .grants(readOnly(AiToolCategory.CORE)).build());
         assertThat(service.grantsFor(BOB).access(AiToolCategory.CORE)).contains(AiToolAccess.READ_ONLY);
 
-        service.update(created.getId(), created.copy().access(AiToolAccess.READ_WRITE).build());
+        service.update(created.getId(), created.copy().grants(readWrite(AiToolCategory.CORE)).build());
         assertThat(service.grantsFor(BOB).access(AiToolCategory.CORE)).contains(AiToolAccess.READ_WRITE);
 
         service.delete(created.getId());
@@ -131,7 +174,7 @@ class TestAiToolPolicyService {
     void testPoliciesReadBeforeAChangeAreNotKeptAsCurrent() {
         // A change saved while another thread read the policies: what it read is out of date.
         dao.whileListing = () -> service.create(policy("Bob").members(List.of(BOB))
-                .categories(List.of(AiToolCategory.CORE)).build());
+                .grants(readOnly(AiToolCategory.CORE)).build());
 
         assertThat(service.grantsFor(BOB).isEmpty()).isTrue();
         assertThat(service.grantsFor(BOB).access(AiToolCategory.CORE)).contains(AiToolAccess.READ_ONLY);
@@ -139,19 +182,22 @@ class TestAiToolPolicyService {
 
     @Test
     void testPoliciesAreCheckedBeforeTheyAreSaved() {
-        assertThatThrownBy(() -> service.create(policy(" ").categories(List.of(AiToolCategory.CORE)).build()))
+        assertThatThrownBy(() -> service.create(policy(" ").grants(readOnly(AiToolCategory.CORE)).build()))
                 .hasMessageContaining("Give the policy a name");
         assertThatThrownBy(() -> service.create(policy("No categories").build()))
                 .hasMessageContaining("at least one category");
-        assertThatThrownBy(() -> service.create(policy("x".repeat(256)).categories(List.of(AiToolCategory.CORE))
+        assertThatThrownBy(() -> service.create(policy("No category named")
+                .grants(List.of(AiToolCategoryGrant.of(null, AiToolAccess.READ_WRITE))).build()))
+                .hasMessageContaining("at least one category");
+        assertThatThrownBy(() -> service.create(policy("x".repeat(256)).grants(readOnly(AiToolCategory.CORE))
                 .build()))
                 .hasMessageContaining("at most 255");
-        assertThatThrownBy(() -> service.create(policy("Ghost").categories(List.of(AiToolCategory.CORE))
+        assertThatThrownBy(() -> service.create(policy("Ghost").grants(readOnly(AiToolCategory.CORE))
                 .members(List.of(UserRef.builder().uuid("ghost").subjectId("ghost").build())).build()))
                 .hasMessageContaining("There is no user or group");
 
-        service.create(policy("Readers").categories(List.of(AiToolCategory.CORE)).build());
-        assertThatThrownBy(() -> service.create(policy("READERS").categories(List.of(AiToolCategory.SEARCH))
+        service.create(policy("Readers").grants(readOnly(AiToolCategory.CORE)).build());
+        assertThatThrownBy(() -> service.create(policy("READERS").grants(readOnly(AiToolCategory.SEARCH))
                 .build()))
                 .hasMessageContaining("There is already a tool policy called 'READERS'");
     }
@@ -160,17 +206,24 @@ class TestAiToolPolicyService {
     void testASavedPolicyIsTidiedAndShowsItsMembersNames() {
         final AiToolPolicy saved = service.create(policy("  Readers  ").description("  ")
                 .members(List.of(UserRef.builder().uuid("alice").build(), ALICE))
-                .categories(List.of(AiToolCategory.SEARCH, AiToolCategory.CORE, AiToolCategory.SEARCH)).build());
+                .grants(List.of(
+                        AiToolCategoryGrant.of(AiToolCategory.SEARCH, AiToolAccess.READ_ONLY),
+                        AiToolCategoryGrant.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY),
+                        AiToolCategoryGrant.of(AiToolCategory.SEARCH, AiToolAccess.READ_WRITE)))
+                .build());
 
         assertThat(saved.getName()).isEqualTo("Readers");
         assertThat(saved.getDescription()).isNull();
         assertThat(saved.getMembers()).containsExactly(ALICE);
-        assertThat(saved.getCategories()).containsExactly(AiToolCategory.CORE, AiToolCategory.SEARCH);
+        // One grant per category, in category order, a category given twice keeping the wider access.
+        assertThat(saved.getGrants()).containsExactly(
+                AiToolCategoryGrant.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY),
+                AiToolCategoryGrant.of(AiToolCategory.SEARCH, AiToolAccess.READ_WRITE));
     }
 
     @Test
     void testAStaleUpdateIsRefused() {
-        final AiToolPolicy created = service.create(policy("Readers").categories(List.of(AiToolCategory.CORE))
+        final AiToolPolicy created = service.create(policy("Readers").grants(readOnly(AiToolCategory.CORE))
                 .build());
         service.update(created.getId(), created.copy().description("first").build());
 
@@ -186,15 +239,28 @@ class TestAiToolPolicyService {
                 Mockito.<Supplier<Object>>any())).thenThrow(new RuntimeException("Permission denied"));
 
         assertThatThrownBy(service::list).hasMessageContaining("Permission denied");
-        assertThatThrownBy(() -> service.create(policy("x").categories(List.of(AiToolCategory.CORE)).build()))
+        assertThatThrownBy(() -> service.create(policy("x").grants(readOnly(AiToolCategory.CORE)).build()))
                 .hasMessageContaining("Permission denied");
         assertThatThrownBy(service::listTools).hasMessageContaining("Permission denied");
+        assertThatThrownBy(() -> service.effectiveGrants(BOB)).hasMessageContaining("Permission denied");
         // Asking what a user may use needs none: every run asks it.
         assertThat(service.grantsFor(BOB)).isEqualTo(ToolGrants.NONE);
     }
 
     private static AiToolPolicy.Builder policy(final String name) {
         return AiToolPolicy.builder().name(name);
+    }
+
+    private static List<AiToolCategoryGrant> readOnly(final AiToolCategory... categories) {
+        return Arrays.stream(categories)
+                .map(category -> AiToolCategoryGrant.of(category, AiToolAccess.READ_ONLY))
+                .toList();
+    }
+
+    private static List<AiToolCategoryGrant> readWrite(final AiToolCategory... categories) {
+        return Arrays.stream(categories)
+                .map(category -> AiToolCategoryGrant.of(category, AiToolAccess.READ_WRITE))
+                .toList();
     }
 
 
