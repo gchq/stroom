@@ -1030,10 +1030,14 @@ and Escape stops), now turned on (see Keyboard trap in the code editor).
 ### Expression terms and tables
 
 **Reported.** The expression tree is now a named `tree` whose items say what they are and are
-reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are now
-`treegrid`s of rows, column headers and cells, but have no name, and the first (icon) column's
-header is empty (seen in `App/Query/QueryResultsTable`). Not yet checked again: the number inputs in
-their cells have no name, and the quick filter's help button is 22px (under WCAG 2.2's 24px).
+reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are
+`treegrid`s of rows, column headers and cells. Checked again (data_grid2, 23 October 2026): a grid
+with no name of its own is named by its table name, the number inputs in cells are named by their
+column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px. Left:
+a grid's first (icon) column has a `columnheader` with no name (`GridHtml.header` draws an empty
+header as it is; seen in `App/Query/QueryResultsTable`). A fix, item 5 of the
+[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW): an icon column's
+header is named after what its icons show (e.g. "Info", "Actions"), visually hidden.
 
 ### Menu buttons don't say they open a menu
 
