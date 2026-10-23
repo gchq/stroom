@@ -1,0 +1,351 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl;
+
+import stroom.ai.api.AiService;
+import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
+import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.LongPredicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/// Makes the documents and streams an answer mentions into links the user can click to open them. The model is
+/// asked to write the links itself, but often writes only the name, e.g. `stream 73145` or **ACME-EVENTS**.
+///
+/// Only what the chat's tools gave is linked, so nothing is made up: a document whose UUID a tool result (or an
+/// attachment) holds, and which the user can view, and a stream whose id a tool result holds. A document is
+/// linked where the answer names it:
+///
+/// - formatted as a name, i.e. in bold, in quotes or as inline code;
+/// - next to a word for its type, e.g. `the feed ACME-EVENTS` or `ACME-EVENTS pipeline`; or
+/// - anywhere, if its name can't be mistaken for an ordinary word, e.g. `ACME-EVENTS` or `Event Data (Text)`.
+///
+/// Where documents of different types share the name, only a word for the type tells which one is meant, and
+/// without one the name is left alone. Each document and stream is linked once a line. Code blocks, inline code
+/// that isn't exactly a name, and links already written are left as they are.
+public class AnswerLinks {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnswerLinks.class);
+
+    // The most documents looked up for an answer, the latest the chat's tools gave first.
+    static final int MAX_DOCUMENTS = 300;
+
+    private static final Pattern UUID = Pattern.compile(
+            "\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b");
+    // A link already written, inline code, or a bare URL: none of them is changed.
+    private static final Pattern LEAVE_ALONE = Pattern.compile(
+            "!?\\[(?:[^\\]\\\\]|\\\\.)*]\\([^)\\s]*\\)|(`+).+?\\1|https?://\\S+");
+    // E.g. 'stream 73145', 'Stream ID 73145', 'streams 73144 and 73145'.
+    private static final Pattern STREAMS = Pattern.compile(
+            "\\b[Ss]treams?(?:\\s+(?:[Ii][Dd]s?|#))?\\s+"
+            + "(\\d{1,18}(?:(?:\\s*,\\s*|,?\\s+(?:and|or)\\s+)\\d{1,18})*)\\b");
+    private static final Pattern NUMBER = Pattern.compile("\\d{1,18}");
+    private static final Pattern FENCE = Pattern.compile("^\\s*(```|~~~)");
+    // A name of ordinary words, e.g. 'Events' or 'Data Splitter', is only linked where it is formatted as a name
+    // or its type is named next to it.
+    private static final Pattern ORDINARY_WORDS = Pattern.compile(
+            "(?:[A-Z]?[a-z]+|[A-Z]+)(?: (?:[A-Z]?[a-z]+|[A-Z]+))*");
+
+    private final AiService aiService;
+    private final DocumentAccess documentAccess;
+
+    /// @param aiService      Reads the chat's messages.
+    /// @param documentAccess Finds the documents the chat's tools gave, as the user.
+    @Inject
+    AnswerLinks(final AiService aiService, final DocumentAccess documentAccess) {
+        this.aiService = aiService;
+        this.documentAccess = documentAccess;
+    }
+
+    /// Run as the user, who must be able to view a document for it to be linked.
+    ///
+    /// @param chatId The chat the answer is in.
+    /// @param answer The answer, in Markdown.
+    /// @return The answer with the documents and streams the chat's tools gave linked, or as it was if that can't
+    /// be done.
+    public String link(final int chatId, final String answer) {
+        if (NullSafe.isBlankString(answer)) {
+            return answer;
+        }
+        try {
+            final List<String> given = aiService.getMessages(chatId).stream()
+                    .filter(message -> message.getMessageType() == AiMessageType.TOOL_RESULT
+                                       || message.getMessageType() == AiMessageType.ATTACHMENT)
+                    .map(AiChatMessage::getMessage)
+                    .filter(NullSafe::isNonBlankString)
+                    .toList()
+                    .reversed();
+            final Map<String, List<DocRef>> documents = documentsByName(given);
+            final String allGiven = String.join("\n", given);
+            return link(answer, documents, id -> Pattern.compile("\\b" + id + "\\b").matcher(allGiven).find());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to link the answer in chat {}: {}", chatId, e.getMessage()),
+                    e);
+            return answer;
+        }
+    }
+
+    // The documents whose UUIDs the texts hold, that the user can view, by name.
+    private Map<String, List<DocRef>> documentsByName(final List<String> texts) {
+        final Set<String> uuids = new LinkedHashSet<>();
+        for (final String text : texts) {
+            final Matcher matcher = UUID.matcher(text);
+            while (matcher.find() && uuids.size() < MAX_DOCUMENTS) {
+                uuids.add(matcher.group().toLowerCase(Locale.ROOT));
+            }
+        }
+        final Map<String, List<DocRef>> byName = new HashMap<>();
+        for (final String uuid : uuids) {
+            documentAccess.find(uuid)
+                    .map(ExplorerNode::getDocRef)
+                    .filter(docRef -> NullSafe.isNonBlankString(docRef.getName()))
+                    .ifPresent(docRef -> byName.computeIfAbsent(docRef.getName(), name -> new ArrayList<>())
+                            .add(docRef));
+        }
+        return byName;
+    }
+
+    /// @param answer      An answer, in Markdown.
+    /// @param documents   The documents that may be linked, by name.
+    /// @param knownStream True for the id of a stream that may be linked.
+    /// @return The answer with them linked.
+    static String link(final String answer,
+                       final Map<String, List<DocRef>> documents,
+                       final LongPredicate knownStream) {
+        // Longest first, so that 'ACME-EVENTS Translation' is linked rather than 'ACME-EVENTS' in it.
+        final List<String> names = documents.keySet().stream()
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .toList();
+        final StringBuilder linked = new StringBuilder();
+        boolean inFence = false;
+        for (final String line : answer.split("\n", -1)) {
+            if (!linked.isEmpty()) {
+                linked.append('\n');
+            }
+            if (FENCE.matcher(line).find()) {
+                inFence = !inFence;
+                linked.append(line);
+            } else if (inFence) {
+                linked.append(line);
+            } else {
+                linked.append(linkLine(line, names, documents, knownStream));
+            }
+        }
+        return linked.toString();
+    }
+
+    private static String linkLine(final String line,
+                                   final List<String> names,
+                                   final Map<String, List<DocRef>> documents,
+                                   final LongPredicate knownStream) {
+        final List<Replacement> replacements = new ArrayList<>();
+        final List<int[]> leftAlone = new ArrayList<>();
+        final Set<String> linkedOnLine = new HashSet<>();
+        final Matcher leave = LEAVE_ALONE.matcher(line);
+        while (leave.find()) {
+            leftAlone.add(new int[]{leave.start(), leave.end()});
+            // Inline code that is exactly a document's name is linked, keeping it as code.
+            final String code = leave.group(1) != null
+                    ? line.substring(leave.start() + leave.group(1).length(), leave.end() - leave.group(1).length())
+                    : null;
+            final DocRef docRef = code == null
+                    ? null
+                    : choose(documents.get(code.strip()), line, leave.start(), leave.end());
+            if (docRef != null && linkedOnLine.add(docRef.getUuid())) {
+                replacements.add(new Replacement(leave.start(), leave.end(), docLink(leave.group(), docRef)));
+            }
+        }
+
+        final Matcher streams = STREAMS.matcher(line);
+        while (streams.find()) {
+            if (overlaps(leftAlone, streams.start(), streams.end())) {
+                continue;
+            }
+            final List<long[]> ids = new ArrayList<>();
+            final Matcher number = NUMBER.matcher(line).region(streams.start(1), streams.end(1));
+            while (number.find()) {
+                final long id = Long.parseLong(number.group());
+                if (id > 0 && knownStream.test(id) && linkedOnLine.add("stream:" + id)) {
+                    ids.add(new long[]{id, number.start(), number.end()});
+                }
+            }
+            if (ids.size() == 1 && streams.start(1) == ids.getFirst()[1] && streams.end(1) == ids.getFirst()[2]) {
+                // One stream: the words and its id are the link, e.g. [stream 73145].
+                replacements.add(new Replacement(streams.start(), streams.end(),
+                        streamLink(streams.group(), ids.getFirst()[0])));
+            } else {
+                ids.forEach(id -> replacements.add(new Replacement((int) id[1], (int) id[2],
+                        streamLink(String.valueOf(id[0]), id[0]))));
+            }
+        }
+
+        for (final String name : names) {
+            int from = 0;
+            while (true) {
+                final int start = line.indexOf(name, from);
+                if (start < 0) {
+                    break;
+                }
+                final int end = start + name.length();
+                from = start + 1;
+                if (!isWholeName(line, start, end)
+                    || overlaps(leftAlone, start, end)
+                    || replacements.stream().anyMatch(r -> r.start < end && start < r.end)) {
+                    continue;
+                }
+                final DocRef docRef = choose(documents.get(name), line, start, end);
+                if (docRef == null) {
+                    continue;
+                }
+                if (!ORDINARY_WORDS.matcher(name).matches()
+                    || isFormattedAsName(line, start, end)
+                    || typeNamedNextTo(line, start, end, docRef.getType())) {
+                    if (linkedOnLine.add(docRef.getUuid())) {
+                        replacements.add(new Replacement(start, end, docLink(escape(name), docRef)));
+                    }
+                }
+            }
+        }
+
+        if (replacements.isEmpty()) {
+            return line;
+        }
+        replacements.sort(Comparator.comparingInt(Replacement::start));
+        final StringBuilder sb = new StringBuilder();
+        int at = 0;
+        for (final Replacement replacement : replacements) {
+            if (replacement.start < at) {
+                continue;
+            }
+            sb.append(line, at, replacement.start).append(replacement.text);
+            at = replacement.end;
+        }
+        return sb.append(line.substring(at)).toString();
+    }
+
+    // The one document meant: the only one by the name, or the one whose type is named next to it.
+    private static DocRef choose(final List<DocRef> candidates, final String line, final int start, final int end) {
+        if (NullSafe.isEmptyCollection(candidates)) {
+            return null;
+        }
+        if (candidates.size() == 1) {
+            return candidates.getFirst();
+        }
+        final List<DocRef> named = candidates.stream()
+                .filter(docRef -> typeNamedNextTo(line, start, end, docRef.getType()))
+                .toList();
+        return named.size() == 1
+                ? named.getFirst()
+                : null;
+    }
+
+    // Not part of a longer name or word, e.g. 'ACME' in 'ACME-EVENTS'.
+    private static boolean isWholeName(final String line, final int start, final int end) {
+        return (start == 0 || !isNameChar(line.charAt(start - 1)))
+               && (end == line.length() || !isNameChar(line.charAt(end)) || isSentenceEnd(line, end));
+    }
+
+    private static boolean isNameChar(final char c) {
+        return Character.isLetterOrDigit(c) || c == '-' || c == '_' || c == '.';
+    }
+
+    // A full stop that ends a sentence, not one in a name, e.g. 'ACME-EVENTS.' but not 'V1.0'.
+    private static boolean isSentenceEnd(final String line, final int at) {
+        return line.charAt(at) == '.' && (at + 1 == line.length() || Character.isWhitespace(line.charAt(at + 1)));
+    }
+
+    // In bold or italics, or in quotes, e.g. **Events**, 'Events' or "Events".
+    private static boolean isFormattedAsName(final String line, final int start, final int end) {
+        if (start == 0 || end == line.length()) {
+            return false;
+        }
+        final char before = line.charAt(start - 1);
+        final char after = line.charAt(end);
+        return (before == '*' && after == '*')
+               || (before == '_' && after == '_')
+               || (before == '\'' && after == '\'')
+               || (before == '"' && after == '"')
+               || (before == '‘' && after == '’')
+               || (before == '“' && after == '”');
+    }
+
+    // E.g. 'feed ACME-EVENTS', 'the ACME-EVENTS pipeline' or 'XSLT **ACME-EVENTS**'.
+    static boolean typeNamedNextTo(final String line, final int start, final int end, final String type) {
+        final String before = line.substring(0, start).replaceAll("[*_'\"`‘“\\s]+$", "");
+        final String after = line.substring(end).replaceAll("^[*_'\"`’”\\s]+", "");
+        final Matcher wordBefore = Pattern.compile("([A-Za-z]+)$").matcher(before);
+        final Matcher wordAfter = Pattern.compile("^([A-Za-z]+)").matcher(after);
+        return (wordBefore.find() && isWordForType(wordBefore.group(1), type))
+               || (wordAfter.find() && isWordForType(wordAfter.group(1), type));
+    }
+
+    // E.g. 'feed' for Feed, 'index' for LuceneIndex, 'converter' for TextConverter, 'XSLT' for XSLT.
+    private static boolean isWordForType(final String word, final String type) {
+        if (type == null || word.length() < 4 && !"xslt".equalsIgnoreCase(word)) {
+            return false;
+        }
+        final String lowerWord = word.toLowerCase(Locale.ROOT);
+        final String lowerType = type.toLowerCase(Locale.ROOT);
+        final String singular = lowerWord.endsWith("s") && !lowerWord.endsWith("ss")
+                ? lowerWord.substring(0, lowerWord.length() - 1)
+                : lowerWord;
+        return lowerType.equals(singular) || lowerType.endsWith(singular);
+    }
+
+    private static boolean overlaps(final List<int[]> ranges, final int start, final int end) {
+        return ranges.stream().anyMatch(range -> range[0] < end && start < range[1]);
+    }
+
+    private static String docLink(final String text, final DocRef docRef) {
+        return "[" + text + "](?action=open-doc&docType=" + docRef.getType() + "&docUuid=" + docRef.getUuid() + ")";
+    }
+
+    private static String streamLink(final String text, final long id) {
+        return "[" + text + "](?action=open-stream&id=" + id + ")";
+    }
+
+    private static String escape(final String text) {
+        return text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]");
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record Replacement(int start, int end, String text) {
+
+    }
+}
