@@ -1,0 +1,65 @@
+name: HR joiners and leavers (a file in Windows-1252, not UTF-8)
+template: Event Data (Text)
+capabilities: [encoding]
+request: >
+  Onboard the HR system's joiners, movers and leavers export: a CSV file with a header, one record per change to
+  an employee's account (joiner, mover or leaver), who made it, and the employee's name and department. Times are
+  UTC. The file is in the current folder; below are its first lines as I see them. Names must come out exactly as
+  they are spelt here. Index the events.
+# The trap: the file's bytes are Windows-1252. Sent whole with the feed left as UTF-8, every accented name reads as
+# replacement characters in Stroom, though the user's excerpt shows them right. The feed's encoding has to be
+# windows-1252 (create_feed encoding=...), which the user knows when asked.
+user_knows: >
+  The export comes from our old HR system on Windows, which writes Windows-1252 (cp1252) text, not UTF-8.
+expected:
+  records: 6
+  event_types: [Create, Update, Delete]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventDetail/Create/User/Name: [José Núñez, Zoë Brontë]
+    EventDetail/Update/After/User/Name: [François Lefèvre]
+    EventDetail/Delete/User/Name: [Måns Ödegård]
+files:
+  - name: hr-changes-2026-10.csv
+    encoding: cp1252
+    text: |
+      time,changed_by,change,employee_id,employee_name,department
+      2026-10-01T09:00:00Z,hr.admin,joiner,E1041,José Núñez,Finance
+      2026-10-01T09:05:00Z,hr.admin,joiner,E1042,Zoë Brontë,Engineering
+      2026-10-01T11:30:00Z,hr.lead,mover,E0877,François Lefèvre,Ventes et Marketing
+      2026-10-02T16:00:00Z,hr.admin,leaver,E0512,Måns Ödegård,Logistics
+      2026-10-02T16:02:00Z,hr.admin,mover,E0990,Siân O'Connor,Customer Care
+      2026-10-02T16:10:00Z,hr.lead,leaver,E0333,Renée Dupré,Legal
+reference:
+  feed_encoding: windows-1252
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: HR System}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: hr-export}
+      - {path: EventSource/Device/HostName, value: hr01.example.org}
+      - {path: EventSource/User/Id, field: changed_by}
+      - {path: EventDetail/TypeId, field: change}
+    events:
+      - name: joiner
+        when: [{field: change, equals: joiner}]
+        fields:
+          - {path: EventDetail/Create/User/Id, field: employee_id}
+          - {path: EventDetail/Create/User/Name, field: employee_name}
+          - {path: EventDetail/Create/User/Data, data_name: department, field: department}
+      - name: mover
+        when: [{field: change, equals: mover}]
+        fields:
+          - {path: EventDetail/Update/After/User/Id, field: employee_id}
+          - {path: EventDetail/Update/After/User/Name, field: employee_name}
+          - {path: EventDetail/Update/After/User/Data, data_name: department, field: department}
+      - name: leaver
+        when: [{field: change, equals: leaver}]
+        fields:
+          - {path: EventDetail/Delete/User/Id, field: employee_id}
+          - {path: EventDetail/Delete/User/Name, field: employee_name}
+          - {path: EventDetail/Delete/User/Data, data_name: department, field: department}

@@ -1,0 +1,51 @@
+name: API gateway audit (JSON lines, each request's SOAP payload as XML text in a field)
+template: Event Data (JSON)
+capabilities: [mixed_formats, nesting]
+# An API gateway's audit, 500 requests as JSON lines: the request's SOAP payload kept as XML text in the payload field,
+# namespaced (soap:, acme:), the user and the outcome only inside it. The traps: XML inside JSON (read with
+# xml_fields: a path into it is payload/<path> or payload//<name>, matched by local name, so its namespaces don't
+# matter); the payload itself is never mapped as text; and the account a request touched is an attribute.
+request: >
+  Onboard our API gateway's audit log (a JSON lines file on my disk). Index the requests.
+expected:
+  records: 500
+  event_types: [Authenticate, View, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+files:
+  - {name: gateway-audit.jsonl, generate: {kind: soap_gateway, records: 500, seed: 15}}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    xml_fields: [payload]
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: API Gateway}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: service}
+      - {path: EventSource/Device/HostName, value: apigw01}
+      - {path: EventSource/User/Id, field: payload//User}
+      - {path: EventSource/Client/IPAddress, field: client_ip}
+      - {path: EventDetail/TypeId, field: operation}
+    events:
+      - name: login
+        when: [{field: operation, equals: Login}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: payload//User}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: payload//Result, map: {success: 'true', failure: 'false'}}
+      - name: read
+        when: [{field: operation, equals: GetAccount}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Account}
+          - {path: EventDetail/View/Object/Id, field: payload//Account/@id}
+          - {path: EventDetail/View/Outcome/Success, field: payload//Result, map: {success: 'true', failure: 'false'}}
+      - name: update
+        when: [{field: operation, equals: UpdateAccount}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Account}
+          - {path: EventDetail/Update/After/Object/Id, field: payload//Account/@id}
+          - {path: EventDetail/Update/Outcome/Success, field: payload//Result, map: {success: 'true', failure: 'false'}}

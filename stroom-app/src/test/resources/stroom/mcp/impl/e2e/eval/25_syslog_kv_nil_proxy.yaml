@@ -1,0 +1,46 @@
+name: Web filter (RFC 5424 syslog, key=value body, "-" for none)
+template: Event Data (Text)
+capabilities: [optional_fields, mixed_formats]
+request: >
+  Onboard the web filter's logs: RFC 5424 syslog with a key=value body. Each line is a web request it allowed or
+  blocked. Where the filter has no value for a key it writes "-" (no user when the client wasn't signed in, no
+  referer): that means nothing, so don't record "-" as a value. Index the events.
+expected:
+  records: 5
+  event_types: [Network]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Network/*/Source/Device/IPAddress]
+  values:
+    EventSource/User/Id: [alice, bob]
+  # "-" is the filter's none: it is no one's user id.
+  forbidden_values:
+    EventSource/User/Id: ['-']
+sample: |
+  <134>1 2026-10-02T11:00:00.000Z wf01 webfilter 2211 - - user=alice src=10.2.0.5 dst=93.184.216.34 url=https://example.com/ category=business action=allow referer=-
+  <134>1 2026-10-02T11:00:05.000Z wf01 webfilter 2211 - - user=- src=10.2.0.77 dst=198.51.100.40 url=http://198.51.100.40/x.bin category=malware action=block referer=-
+  <134>1 2026-10-02T11:01:10.000Z wf01 webfilter 2211 - - user=bob src=10.2.0.9 dst=93.184.216.34 url=https://example.com/news category=news action=allow referer=https://example.com/
+  <134>1 2026-10-02T11:02:00.000Z wf02 webfilter 1907 - - user=- src=10.2.1.4 dst=203.0.113.80 url=https://203.0.113.80/login category=phishing action=block referer=https://mail.example.org/
+  <134>1 2026-10-02T11:05:30.000Z wf02 webfilter 1907 - - user=alice src=10.2.0.5 dst=192.0.2.15 url=https://intranet.example.org/ category=- action=allow referer=-
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    # The filter's "-" is no value: guarded everywhere, so no element or Data holds it.
+    nil_values: ['-']
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Web Filter}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: app}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: web request
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: url}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: category}
+          - {path: EventDetail/Network/Open/Source/Data, data_name: referer, field: referer}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: action, map: {allow: 'true', block: 'false'}}

@@ -1,0 +1,63 @@
+name: PostgreSQL server log with statement logging (statements over several lines)
+template: Event Data (Text)
+capabilities: [multiline, event_boundaries, schema_variation]
+# A PostgreSQL log, 600 entries: each starts with its time, zone and the session's [pid] user@database, and a logged
+# statement runs over several tab-indented lines (SELECT ... FROM ... JOIN ... WHERE ... GROUP BY). The traps: a
+# record is an entry, not a line (record_start); the kind of event is the statement's first word or the connection
+# message; a regex over a statement must cross its lines ([\s\S], not .); and the zone is a word of its own.
+request: >
+  Onboard our PostgreSQL server's log (statement logging is on; the file is on my disk). Index the activity.
+expected:
+  records: 600
+  event_types: [Authenticate, View, Update, Delete]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, svc_report]
+files:
+  - {name: postgresql-2026-10-11.log, generate: {kind: postgres_log, records: 600, seed: 18}}
+reference:
+  splitter:
+    kind: regex
+    record_start: '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+    pattern: '(?s)^(\S+ \S+) (\S+) \[(\d+)\] ([^@\s]+)@(\S+) (\w+):  (.*)$'
+    names: [time, zone, pid, user, database, level, message]
+  mapping:
+    input: data_splitter
+    extract:
+      - {field: message, regex: '^statement: (\w+)[\s\S]*$', names: [verb]}
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: 'yyyy-MM-dd HH:mm:ss.SSS', timezone: UTC}
+      - {path: EventSource/System/Name, value: Finance Database}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: PostgreSQL}
+      - {path: EventSource/Device/HostName, value: pg01}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, any_of: [verb, level]}
+      - {path: EventDetail/Description, field: message}
+    events:
+      - name: connect
+        when: [{field: message, matches: '^connection authorized'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: disconnect
+        when: [{field: message, matches: '^disconnection'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: query
+        when: [{field: verb, equals: SELECT}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: Database query}
+          - {path: EventDetail/View/Object/Name, field: database}
+      - name: update
+        when: [{field: verb, equals: UPDATE}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Database rows}
+          - {path: EventDetail/Update/After/Object/Name, field: database}
+      - name: delete
+        when: [{field: verb, equals: DELETE}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: Database rows}
+          - {path: EventDetail/Delete/Object/Name, field: database}
