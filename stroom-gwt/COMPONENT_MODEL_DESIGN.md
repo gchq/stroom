@@ -788,9 +788,50 @@ The framework classes are tested with plain JUnit; components are tested as work
 
 `LeakProbe` changes from disposing a `PresenterScope` to asserting that, after the story root is disposed, the development registry reports no live components from that story and no handlers left on the story event bus. The full-app suite in `stroom-gwt-suite` keeps its open-close memory checks as the end-to-end guard.
 
+## Simplifying the lifecycle
+
+With GWTP gone, every presenter is a `Component` (`MyPresenterWidget extends Component`), but the ways to make, own, register and release have piled up: a child is made in two steps (`own(provider.get())`, 67 sites), a one-use dialog in three different ways (`ownUntilHidden` 82, `disposeWhenHidden` 30, `ComponentDialog.showOnce` 4), a bus handler in two (`listen` 15, `own(getEventBus().addHandler(...))` 35), and a clean-up in two (`onDispose()` overridden 11 times, and `onDispose(Runnable)`). Most leaks found in Phases 1 to 6 were a missed `own`. Phase 7 makes each of these one call, before the screens move to components (Phases 8 to 11), so that every conversion is simpler. Decided 23 October 2026:
+
+### Making children
+
+`Component` (and so every presenter) gets two methods, which replace `own(provider.get())`, `ownUntilHidden(...)` and `disposeWhenHidden(...)`:
+
+```java
+// A child made now and owned until this is disposed (a tab, a list, a settings panel)
+final FieldList list = make(fieldListProvider);
+// A dialog made for one use: owned until it is hidden, then disposed
+makeDialog(fieldEditorProvider).edit(field, updated -> ...);
+```
+
+`own(child)` stays for a child injected into the constructor (GIN made it, so there is nothing to make). An injectable `Children<T>` (a provider that takes its owner) was considered and not chosen: GIN can't inject the object being made, so the owner would still be passed at each call, for a binding pattern of its own. The leak check and the unowned counter stay as the safety net.
+
+### The app root
+
+The things outside the ownership tree, the plugins, `AlertPlugin`, the managers (`DocumentPluginEventManager`, `TabSessionManager`) and `HyperlinkEventHandlerImpl`, which are app-wide singletons, get an `AppRoot` to inject: a `ComponentNode` that lasts as long as the page. Their dialogs are made with `appRoot.makeDialog(provider)`, so `disposeWhenHidden` (a static helper for exactly this case) goes, and a dialog a plugin leaves behind shows in the leak counts. Making the plugins components themselves was considered: cleaner, but it touches all 92 plugins' construction for little gain while they stay app-wide singletons.
+
+### Registering and releasing
+
+* An app-wide (bus) handler is `listen(type, handler)`; a handler on a widget or another object is `own(registration)`. `MyPresenterWidget.addHandler(...)` and the `own(getEventBus().addHandler(...))` form go.
+* A clean-up is registered where its thing is made, `onDispose(timer::cancel)`, as components already do; the overridable `onDispose()` goes (its 11 overrides become registrations).
+
+### App-wide screens
+
+The 22 listener classes (`FindPresenter.FindListener` and the like) and their `bindPresenter(presenter, view, viewImpl, listener)` lines are replaced by one registry, `AppScreens`, an eager singleton that maps an event type to a `Provider` of the screen and what to call on it:
+
+```java
+// In an area's plugin (already an eager singleton): Find opens on ShowFindEvent, made when first needed
+screens.on(ShowFindEvent.getType(), findProvider, FindDialog::onShow);
+```
+
+The screen is made the first time its event comes, as the listeners do now. Screens that listen themselves (each an eager singleton) were considered and not chosen: every screen would be made at start-up.
+
+### Stories
+
+The workbench's three overlapping calls for what a story shows (`addContent`, `disposeOnCleanUp`, `closeOnCleanUp`), each owning or closing differently (two of the leak check's failures came from that), become one rule: the story's root owns whatever the story shows, and the leak check closes it. There is one call to show a screen (`harness.show(screen)`) and one to show a popup that must be asked to close, e.g. to stop polling (`harness.showPopup(popup)`).
+
 ## Phased implementation
 
-A pilot, then six phases, each shippable on its own and each ending by deleting an old mechanism. The pilot proves the framework on a duplicated screen without changing existing code. Phases 1 and 2 then fix today's leak and read-only bugs before any screen is rewritten; Phase 3 is where the component and callback model becomes the way new screens are written.
+A pilot, then eleven phases, each shippable on its own and each ending by deleting an old mechanism. The pilot proves the framework on a duplicated screen without changing existing code. Phases 1 and 2 then fix today's leak and read-only bugs before any screen is rewritten; Phase 3 is where the component and callback model becomes the way new screens are written. Phases 0 to 6 (done 23 October 2026) put every presenter on the component model and removed GWTP; Phase 7 simplifies the lifecycle API, and Phases 8 to 11 move the screens themselves to components, area by area, ending with no presenters at all.
 
 ### Roadmap
 
@@ -803,6 +844,11 @@ A pilot, then six phases, each shippable on its own and each ending by deleting 
 | 4 · Dirty state and the bus | `DirtyEvent` chains to callbacks; `addHandlerToSource` retired; bus kept for app-wide events | No parent-child bus use |
 | 5 · Migrate by area | Documents, dashboards, admin; `HasTaskMonitorFactory` retired; `onReveal`/`onHide` audited | Every presenter owned |
 | 6 · Remove GWTP | Plugin registry for proxies; `PresenterWidget` base dropped; GIN kept | No GWTP dependency |
+| 7 · Lifecycle API | `make`, `makeDialog`, `AppRoot`, `listen`/`own`, `onDispose(Runnable)`, `AppScreens`; one rule for stories | One way to make, own, register and release |
+| 8 · Dialogs | The 115 presenters that show themselves as a popup become component dialogs; the popup manager shows components | No dialog presenter; no listener classes |
+| 9 · Documents | `DocPresenter` (51) and `DocTabPresenter` (30) become `DocumentEditor`s; tab bodies become components; tab providers go | `DocPresenter`, `DocTabPresenter` and the tab providers deleted |
+| 10 · Dashboards | The dashboard, its components and their settings become components | `AbstractComponentPresenter` deleted |
+| 11 · The rest, and removal | Admin and content screens, lists, the main shell; then the presenter framework | No presenters: `MyPresenterWidget` and the view types deleted |
 
 ### Phase 0: Pilot
 
@@ -980,7 +1026,58 @@ Progress:
 - Done (23 October 2026), revealing is gone. A dialog screen's `revealInParent()` became its own `show()`, called where it called `forceReveal()`, and the overrides that did nothing were deleted. The sign in, password reset and authentication error pages extend `SignInPagePresenter`, whose `show()` makes the page the whole browser page (`Page.show`) and then calls the page's `onShown()` (hiding the loading message, focusing); a workbench story adds the page to itself and calls `onShown()`, so `IdpPage`'s JSNI went. The apps put the core screen in the page with `Page.show(core)`. `MyPresenter`, `RootPresenter` and `RevealRootContentEvent` are deleted: every presenter is a `MyPresenterWidget`.
 - Done (23 October 2026), no GWTP names are left: the proxy classes are listeners (`FindPresenter.FindListener`, bound by `bindPresenter(presenter, view, viewImpl, listener)`), and the apps' `gin.ginjector` configuration property, which only GWTP's proxy generator read, is gone.
 - Done (23 October 2026), `MyPresenterWidget` is a `Component`, and presenters have no bind lifecycle: a presenter registers its handlers when it is made (`own(registration)`, `listen(type, handler)`) and they last until it is disposed, as a component's do. The 193 `onBind()` overrides moved into their constructors (base classes' too: what they use is set in their own constructors) and the `onUnbind()` work into `onDispose()`. A dialog's handlers used to be registered only while it was shown, as the popup manager bound it to show it and unbound it when hidden: they now last while it is hidden too, which matters only for app-wide events, and the few dialogs that listen to them do nothing while hidden (checked one by one); what a dialog did each time it was bound (wiring callbacks and view handlers) now runs once, so re-showing one no longer adds its handlers again. Dashboard components and rule tabs no longer unbind themselves when closed or removed: their owner (the dashboard, or the tab's root) disposes them.
-- Not yet: `HandlerContainerImpl` (`bind`/`onBind`/`unbind`) is kept for what isn't a presenter: the plugins, the tab providers, `AlertPlugin`, `HyperlinkEventHandlerImpl` and widgets' `EventBinder`s.
+- Done (23 October 2026), `HandlerContainer` and `HandlerContainerImpl` are deleted. The plugins, `AlertPlugin` and `HyperlinkEventHandlerImpl` register their handlers when GIN makes them, for the application's life (their `onBind()` moved into their constructors); a tab provider keeps what it registers on the presenter it makes (`own(registration)`) until its document is disposed, when `TabContentProvider` releases it. Widgets keep their own `EventBinder`, which binds on attach and unbinds on detach. Nothing in Stroom is bound or unbound any more.
+
+### Phase 7: Lifecycle API
+
+Make each lifecycle step one call, everywhere, before any screen is rewritten (see [Simplifying the lifecycle](#simplifying-the-lifecycle)).
+
+1. `make(provider)` and `makeDialog(provider)` on `Component`, with tests (`TestComponent`); convert the 67 `own(provider.get())`, 82 `ownUntilHidden(...)` and the presenter uses of `disposeWhenHidden(...)`, mechanically, with the full story run and leak check.
+2. `AppRoot`, injected into the plugins, `AlertPlugin`, the managers and `HyperlinkEventHandlerImpl`; their dialogs made with `appRoot.makeDialog(...)`; the widgets that make popups (the date, time and schedule boxes) own theirs through it too. `disposeWhenHidden` deleted.
+3. `listen(type, handler)` for every bus handler (the 35 `own(getEventBus().addHandler(...))`), `own(registration)` for the rest; `MyPresenterWidget.addHandler` deleted.
+4. `onDispose(Runnable)` for every clean-up; the overridable `onDispose()` deleted.
+5. `AppScreens`, and the 22 listener classes moved onto it, area by area; the listener classes and `bindPresenter(..., listener)` deleted.
+6. The workbench harness's one rule (`harness.show`, `harness.showPopup`), the stories moved onto it, and `addContent`, `disposeOnCleanUp` and `closeOnCleanUp` deleted.
+7. The authoring guide in `AGENTS.md` updated to the new calls.
+
+**Exit:** one way each to make a child, show a dialog, register a handler and release something; `ownUntilHidden`, `disposeWhenHidden`, `own(provider.get())`, the listener classes and the overridable `onDispose()` are gone.
+
+### Phase 8: Dialogs
+
+The 115 presenters that show themselves as a popup (`ShowPopupEvent.builder(this)`) are small, self-contained, and the ones most often made for one use, so they go first and prove `makeDialog`.
+
+1. Each dialog becomes a `Component` that owns its UiBinder template (no view interface), with a method that shows it and takes a callback for its result (as `FieldEditor.edit` does), made with `makeDialog(...)` by its opener.
+2. Area by area (documents' dialogs, explorer, security, processing, dashboards, admin), each with workbench stories for its default, read-only, OK and Cancel paths, and the leak check.
+3. App-wide dialogs (Find, Recent Items, Copy, Move, Rename, Info, Export, Import, Edit Tags, About, the AI chat) registered with `AppScreens`.
+4. The popup manager shows components; `ComponentView` (the presenter that carried a component into a popup) goes.
+
+**Exit:** no presenter shows itself as a popup; `ShowPopupEvent` takes a component; `ComponentView` deleted.
+
+### Phase 9: Documents
+
+1. Each `DocPresenter` (51) and `DocTabPresenter` (30) becomes a `DocumentEditor` (Save, Save As, read-only and dirty state), opened by its plugin through `DocumentEditorHost`, as the Dictionary and folders are.
+2. Tab bodies become components added with `TabbedComponent.addTab(tab, make, reader[, writer])`; the 68 tab providers (`AbstractTabProvider`, `DocTabProvider`) become those `make`/`read`/`write` functions.
+3. The settings presenters shared between documents (processing, notifications, duplicate management, query editing) become components their documents own.
+4. Document by document, the most used first (pipelines, feeds, XSLT, dictionaries, queries, analytics), each with its stories and the leak check.
+
+**Exit:** `DocPresenter`, `DocTabPresenter`, `TabContentProvider`, `AbstractTabProvider` and `DocTabProvider` deleted; `DocumentPlugin` opens only `DocumentEditor`s.
+
+### Phase 10: Dashboards
+
+1. The dashboard document, its layout (`FlexLayout`, `TabLayout`) and the 9 dashboard components (table, query, vis, text, inputs, embedded query, key-value, table filter, list input) become components; their settings dialogs follow Phase 8's pattern.
+2. `Components` makes and owns them with `make(...)`; the dashboard context stays a context value.
+
+**Exit:** `AbstractComponentPresenter` and the dashboard presenters deleted.
+
+### Phase 11: The rest, and removal
+
+1. The content tabs (`ContentTabPresenter`: jobs, nodes, caches, properties, users, tasks, data and processing screens), the lists inside them, and the main shell (`CorePresenter`, `MainPresenter`, `NavigationPresenter`, `ContentTabPanePresenter`, `FullScreenPresenter`) become components.
+2. The sign in pages (`SignInPagePresenter`) become components.
+3. The presenter framework is deleted: `MyPresenterWidget`, `View`, `ViewImpl`, `ViewWithUiHandlers`, `UiHandlers`, `HasUiHandlers`, `PresenterAdapter`, `DocumentEditorHost`'s presenter side, and `AbstractPresenterModule`'s presenter bindings (the 717 `bindPresenterWidget` lines in the app and workbench modules).
+
+**Exit:** no presenters; GIN modules bind services and the few singletons, and components are made just in time.
+
+Each of Phases 8 to 11 converts area by area, one pull request each, with its workbench stories, the leak check, and the full story run; nothing is converted without stories.
 
 ## Risks and open questions
 
@@ -996,6 +1093,8 @@ The main risk is a long period with two styles side by side; each phase therefor
 | In-house framework to maintain | Knowledge held by few people | Keep the API to the classes in this document; full Javadoc and tests; no general-purpose features |
 | GIN is also unmaintained | Generator-based injection blocks any future J2CL move | GIN is kept (decided 23 October 2026); components use only constructor injection |
 | Attach-based lifecycle differs from reveal | Code relying on `onReveal()` ordering behaves differently | Audit `onReveal`/`onHide` overrides when their presenter is converted, not in bulk |
+| A reused dialog made with `makeDialog` | Disposed when first hidden, so showing it again fails | `makeDialog` only for one use; a dialog shown again is owned with `own` (or `make`); a development-build check throws on showing a disposed component |
+| Moving 465 presenters takes a long time | Two styles for months; conversions stall | Phases 8 to 11 each end by deleting a framework class, so progress is visible and the old style can't creep back; new screens are components already (Phase 3) |
 
 ### Open questions
 
@@ -1007,5 +1106,11 @@ The main risk is a long period with two styles side by side; each phase therefor
 - [x] Should `RestFactory` take an owner so in-flight requests are cancelled on dispose, or is dropping late callbacks with `guard()` enough? `RestFactory.owner(component)` drops the callback and ends the task monitor once the owner is disposed; requests are not cancelled (decided 22 October 2026).
 - [x] Where do proxy presenters (code-split plugins) go once GWTP is removed: a plain plugin registry, and do we still need code splitting? A plain plugin registry: each plugin, an eager singleton, makes its presenter through a GIN `Provider` when first needed. Code splitting is dropped: in the 7.13 build it defers about 330 KB of a 4.8 MB permutation (~7%); load time is measured before and after (decided 22 October 2026).
 - [x] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place? Left in place: GWTP is removed with GIN kept (decided 22 October 2026), and GIN stays: it is not to be replaced (decided 23 October 2026).
+- [x] How does a component make a child it owns, in one step? `make(provider)` and `makeDialog(provider)` on `Component`; not an injectable `Children<T>` (decided 23 October 2026).
+- [x] What owns the plugins' and managers' dialogs? An injectable `AppRoot` for the page's life; the plugins stay singletons rather than components (decided 23 October 2026).
+- [x] How do app-wide screens hear the events that open them? One registry, `AppScreens` (event type → `Provider` of the screen), replacing the listener classes (decided 23 October 2026).
+- [x] Which clean-up form stays? `onDispose(Runnable)`; the overridable `onDispose()` goes (decided 23 October 2026).
+- [x] Is the story harness simplified? Yes: one rule, the story's root owns what it shows (decided 23 October 2026).
+- [x] In what order do the presenters move to components? Dialogs, then documents, then dashboards, then the rest and the framework's removal (decided 23 October 2026).
 - [x] Does UiBinder set a button's icon from an `svg="..."` attribute? Yes (`Widgets/Buttons/Toolbar` `Template`).
 - [x] Do menus also use `SvgPresets`, and what replaces them there, before `SvgPresets` can be deleted? They did; menus now take an `SvgImage`, and `SvgPresets` is deleted (Toolbars, Migration step 5).
