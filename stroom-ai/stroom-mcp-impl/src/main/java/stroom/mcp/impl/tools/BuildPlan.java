@@ -430,7 +430,10 @@ public class BuildPlan {
         // CEF output build does neither, whatever it works from.
         final boolean cefOnly = cefBuild && translation.isEmpty() && indexing.isEmpty() && !surveyed;
         final boolean newSource = !existing && !cefOnly;
-        final boolean stage1 = newSource || !translation.isEmpty() || surveyed;
+        // A translation XSLT saved from a mapping starts it too: a next version written anew needn't survey first
+        // (seen in the Stroom MCP server's e2e: its XSLT saved, the plan still said to choose the work, and never
+        // reached its pipeline).
+        final boolean stage1 = newSource || !translation.isEmpty() || surveyed || hasMapping(xslts, "translation");
         // Indexing too when the build onboards an existing feed (surveyed for its events pipeline), as for a new
         // source, or holds any indexing work (an indexing XSLT saved from its plan comes before the index doc and
         // pipeline). Seen in Ask Stroom AI: the user asked for an index, and after the events pipeline's

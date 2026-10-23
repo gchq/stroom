@@ -1,0 +1,167 @@
+{
+ "01_csv_vpn": {
+  "sample": "time,user,src_ip,gateway,action,result\n2026-09-28 08:01:12,alice,203.0.113.10,vpn-gw1,login,success\n2026-09-28 08:03:40,bob,198.51.100.7,vpn-gw1,login,failure\n2026-09-28 09:15:02,alice,203.0.113.10,vpn-gw1,logout,success\n",
+  "reference": {
+   "converter": "csv_header",
+   "mapping": {
+    "input": "data_splitter",
+    "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "yyyy-MM-dd HH:mm:ss",
+      "timezone": "UTC"
+     },
+     {
+      "path": "EventSource/System/Name",
+      "value": "Acme VPN"
+     },
+     {
+      "path": "EventSource/System/Environment",
+      "value": "Eval"
+     },
+     {
+      "path": "EventSource/Generator",
+      "value": "vpn-gateway"
+     },
+     {
+      "path": "EventSource/Device/HostName",
+      "field": "gateway"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "result",
+      "map": {
+       "success": "true",
+       "failure": "false"
+      }
+     }
+    ],
+    "events": [
+     {
+      "name": "logon",
+      "when": [
+       {
+        "field": "action",
+        "equals": "login"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
+       }
+      ]
+     },
+     {
+      "name": "logoff",
+      "when": [
+       {
+        "field": "action",
+        "equals": "logout"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logoff"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "06_syslog5424_ssh": {
+  "sample": "<38>1 2026-09-28T13:00:00.000Z bastion sshd 812 - - Accepted publickey for frank from 192.0.2.44 port 50122 ssh2\n<38>1 2026-09-28T13:02:10.000Z bastion sshd 815 - - Failed password for invalid user admin from 192.0.2.99 port 40022 ssh2\n<38>1 2026-09-28T13:04:55.000Z bastion sshd 820 - - Accepted password for grace from 192.0.2.45 port 50410 ssh2\n",
+  "reference": {
+   "converter": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^&lt;(\\d+)&gt;1 (\\S+) (\\S+) (\\S+) (\\S+) \\S+ \\S+ (Accepted|Failed) (\\S+) for (invalid user )?(\\S+) from (\\S+) port (\\d+).*$\">\n        <data name=\"pri\" value=\"$1\" /><data name=\"time\" value=\"$2\" /><data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" /><data name=\"pid\" value=\"$5\" /><data name=\"result\" value=\"$6\" />\n        <data name=\"method\" value=\"$7\" /><data name=\"invalid\" value=\"$8\" /><data name=\"user\" value=\"$9\" />\n        <data name=\"ip\" value=\"$10\" /><data name=\"port\" value=\"$11\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n",
+   "mapping": {
+    "input": "data_splitter",
+    "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+     },
+     {
+      "path": "EventSource/System/Name",
+      "value": "Bastion"
+     },
+     {
+      "path": "EventSource/System/Environment",
+      "value": "Eval"
+     },
+     {
+      "path": "EventSource/Generator",
+      "field": "app"
+     },
+     {
+      "path": "EventSource/Device/HostName",
+      "field": "host"
+     },
+     {
+      "path": "EventSource/Client/IPAddress",
+      "field": "ip"
+     },
+     {
+      "path": "EventSource/Client/Port",
+      "field": "port"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "user"
+     }
+    ],
+    "events": [
+     {
+      "name": "ssh logon",
+      "fields": [
+       {
+        "path": "EventDetail/TypeId",
+        "value": "SSH-Logon"
+       },
+       {
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
+       },
+       {
+        "path": "EventDetail/Authenticate/User/Id",
+        "field": "user"
+       },
+       {
+        "path": "EventDetail/Authenticate/Outcome/Success",
+        "field": "result",
+        "map": {
+         "Accepted": "true",
+         "Failed": "false"
+        }
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "method",
+        "field": "method"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ }
+}
