@@ -16,9 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiChatRunManager;
+
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 
 import java.util.Map;
+import java.util.Optional;
 
 /// How a tool asks the user questions in its session and waits for the answers: a form in the chat for Stroom
 /// AI's chat (see `McpElicitations`), and an MCP elicitation later.
@@ -58,6 +61,12 @@ public interface UserQuestions {
     /// @throws stroom.ai.impl.AiChatRunManager.WaitingForUserException if the run is to stop until the user
     ///                                                                 answers.
     ElicitResult ask(String toolName, String callId, String intro, Map<String, Object> form);
+
+    /// @return The stop [#ask] asked of the run, to wait for the user's answer, if it did: the run is to stop even if
+    /// the tool that asked gave a result instead, e.g. from a catch-all that took the stop for a failure.
+    default Optional<AiChatRunManager.WaitingForUserException> waitingForUser() {
+        return Optional.empty();
+    }
 
     /// The id to ask one of several forms of a tool call with. In a chat, the call is made again once a form is
     /// answered, and each form it asks is told apart by its id: a call asking a confirmation and then a choice
