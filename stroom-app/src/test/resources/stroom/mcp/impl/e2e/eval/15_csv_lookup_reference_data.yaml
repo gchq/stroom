@@ -1,0 +1,59 @@
+name: Badge access with a user directory lookup
+template: Event Data (Text)
+capabilities: [schema_inference, field_normalization]
+request: >
+  Onboard these door-controller badge events (CSV). The user directory export (also CSV: user, name, department,
+  site) must be loaded as reference data, and each event enriched with the badge holder's name and department
+  from it, looked up by user id (the directory has ids in lower case; the events have them in upper case).
+  Index the events.
+expected:
+  records: 3
+  # A badge at a door is as well an Authorise (access to a resource) as an Authenticate, and a department as well a
+  # UserDetails Unit or Group as an Organisation: any of them passes, as long as the lookup filled it.
+  event_types: ['Authenticate|Authorise']
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/User/Name,
+          'EventSource/User/UserDetails/Organisation|EventSource/User/UserDetails/Unit|EventSource/User/UserDetails/Group']
+  # No Action required: the source says only granted or denied, and Authorise's Action is optional (Authenticate's
+  # is required, which validation already checks).
+sample: |
+  time,badge_user,door,result
+  2026-10-01T07:58:00Z,ALICE,Main entrance,granted
+  2026-10-01T08:02:00Z,BOB,Server room,denied
+  2026-10-01T08:10:00Z,ALICE,Server room,granted
+reference:
+  converter: csv_header
+  reference_data:
+    converter: csv_header
+    sample: |
+      user,name,department,site
+      alice,Alice Anderson,Operations,HQ
+      bob,Bob Brown,Finance,HQ
+      carol,Carol Clark,Engineering,Annex
+    mapping:
+      input: data_splitter
+      maps:
+        - name: USER_DIRECTORY
+          key: user
+          values:
+            - {element: name, field: name}
+            - {element: department, field: department}
+            - {element: site, field: site}
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Door Control}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: badge-controller}
+      - {path: EventSource/Device/Name, field: door}
+      - {path: EventSource/User/Id, field: badge_user, transform: lower}
+      - {path: EventSource/User/Name, lookup: {map: USER_DIRECTORY, xpath: "lower-case(data[@name='badge_user']/@value)", path: name}}
+      - {path: EventSource/User/UserDetails/Organisation, lookup: {map: USER_DIRECTORY, xpath: "lower-case(data[@name='badge_user']/@value)", path: department}}
+    events:
+      - name: badge
+        fields:
+          - {path: EventDetail/TypeId, value: Badge-Access}
+          - {path: EventDetail/Description, field: door}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: badge_user, transform: lower}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {granted: "true", denied: "false"}}

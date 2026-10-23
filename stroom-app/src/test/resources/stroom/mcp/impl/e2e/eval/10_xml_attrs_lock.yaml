@@ -1,0 +1,37 @@
+name: Workstation screen locks (XML attributes)
+template: Event Data (XML)
+capabilities: [nesting]
+request: >
+  Onboard these workstation session events: XML where each event element carries its values as attributes
+  (time, user, host, action). The action is lock or unlock of the screen. Index them.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Authenticate/Action]
+sample: |
+  <events>
+    <event time="2026-09-28 17:00:00" user="ivy" host="ws12" action="lock"/>
+    <event time="2026-09-28 17:20:41" user="ivy" host="ws12" action="unlock"/>
+    <event time="2026-09-28 17:45:03" user="jack" host="ws13" action="lock"/>
+  </events>
+reference:
+  mapping:
+    input: xml
+    root: events
+    record: event
+    common:
+      - {path: EventTime/TimeCreated, field: "@time", time_format: "yyyy-MM-dd HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Workstations}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: session-agent}
+      - {path: EventSource/Device/HostName, field: "@host"}
+      - {path: EventSource/User/Id, field: "@user"}
+      - {path: EventDetail/TypeId, field: "@action"}
+      - {path: EventDetail/Authenticate/User/Id, field: "@user"}
+    events:
+      - name: lock
+        when: [{field: "@action", equals: lock}]
+        fields: [{path: EventDetail/Authenticate/Action, value: ScreenLock}]
+      - name: unlock
+        when: [{field: "@action", equals: unlock}]
+        fields: [{path: EventDetail/Authenticate/Action, value: ScreenUnlock}]

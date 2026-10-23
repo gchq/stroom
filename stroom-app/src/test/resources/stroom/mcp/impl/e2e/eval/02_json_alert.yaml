@@ -1,0 +1,34 @@
+name: Suricata-style IDS alerts
+template: Event Data (JSON)
+capabilities: [format_recognition, nesting, schema_inference]
+request: >
+  Onboard these IDS alerts (a JSON array). Each object is one alert from a sensor: signature, severity, and the
+  source and destination of the traffic that triggered it. Index them for the SOC.
+expected:
+  records: 3
+  event_types: [Alert]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Alert/Type]
+sample: |
+  [{"ts": "2026-09-28T10:00:00Z", "sensor": "ids-1", "sig": "ET SCAN Nmap Scripting Engine", "sev": 2, "src": "10.1.1.5", "dst": "10.1.1.20", "dport": 22},
+   {"ts": "2026-09-28T10:02:30Z", "sensor": "ids-1", "sig": "ET POLICY curl User-Agent", "sev": 3, "src": "10.1.1.7", "dst": "93.184.216.34", "dport": 80},
+   {"ts": "2026-09-28T10:05:10Z", "sensor": "ids-2", "sig": "ET EXPLOIT Possible SQL injection", "sev": 1, "src": "203.0.113.50", "dst": "10.1.2.10", "dport": 443}]
+reference:
+  mapping:
+    input: json
+    common:
+      - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: IDS}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: ids-sensor}
+      - {path: EventSource/Device/HostName, field: sensor}
+    events:
+      - name: alert
+        fields:
+          - {path: EventDetail/TypeId, value: IDS-Alert}
+          - {path: EventDetail/Description, field: sig}
+          - {path: EventDetail/Alert/Type, value: IDS}
+          - {path: EventDetail/Alert/Severity, field: sev, map: {"1": Critical, "2": Major, "3": Minor}, default: Info}
+          - {path: EventDetail/Alert/Description, field: sig}
+          - {path: EventDetail/Alert/Data, data_name: source_ip, field: src}
+          - {path: EventDetail/Alert/Data, data_name: destination_ip, field: dst}
+          - {path: EventDetail/Alert/Data, data_name: destination_port, field: dport}

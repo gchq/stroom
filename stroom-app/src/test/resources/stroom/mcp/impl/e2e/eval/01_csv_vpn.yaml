@@ -1,0 +1,37 @@
+name: Acme VPN gateway
+template: Event Data (Text)
+capabilities: [format_recognition, delimiters, schema_inference, timestamps]
+request: >
+  Onboard the Acme VPN gateway logs below (CSV with a header). Each line is a user logging in to or out of the
+  VPN gateway; result says whether it worked. Index the events so analysts can search by user and source IP.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
+sample: |
+  time,user,src_ip,gateway,action,result
+  2026-09-28 08:01:12,alice,203.0.113.10,vpn-gw1,login,success
+  2026-09-28 08:03:40,bob,198.51.100.7,vpn-gw1,login,failure
+  2026-09-28 09:15:02,alice,203.0.113.10,vpn-gw1,logout,success
+reference:
+  converter: csv_header
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Acme VPN}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: vpn-gateway}
+      - {path: EventSource/Device/HostName, field: gateway}
+      - {path: EventSource/Client/IPAddress, field: src_ip}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Authenticate/User/Id, field: user}
+      - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {success: "true", failure: "false"}}
+    events:
+      - name: logon
+        when: [{field: action, equals: login}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+      - name: logoff
+        when: [{field: action, equals: logout}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]

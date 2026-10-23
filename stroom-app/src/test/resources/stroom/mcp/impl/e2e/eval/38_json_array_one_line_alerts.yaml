@@ -1,0 +1,39 @@
+name: IDS alert export, one JSON array on a single line
+template: Event Data (JSON)
+capabilities: [large_samples, event_boundaries]
+# Case 02 as a SIEM exports it: 2,500 alerts (387 KB) in one JSON array on one line, in a file on the user's disk.
+# Stroom holds the stream as one record of one line: reading it by record (read_stream), surveying it, and stepping
+# each alert all depend on the server splitting it, and the parser needs addRootObject false. The first 1,500 alerts
+# are scans and policy alerts only; the critical exploit and malware ones start about 230,000 characters in. Same
+# reference as case 02.
+request: >
+  Onboard our IDS alert export (the JSON file on my disk) to Stroom. Index the alerts.
+expected:
+  records: 2500
+  event_types: [Alert]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Alert/Type]
+  values:
+    EventDetail/Alert/Severity: [Critical, Major, Minor]
+files:
+  - {name: ids-alerts-2026-09-28.json, generate: {kind: json_alerts_one_line, records: 2500, seed: 4}}
+reference:
+  mapping:
+    input: json
+    common:
+      - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: IDS}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: ids-sensor}
+      - {path: EventSource/Device/HostName, field: sensor}
+    events:
+      - name: alert
+        fields:
+          - {path: EventDetail/TypeId, value: IDS-Alert}
+          - {path: EventDetail/Description, field: sig}
+          - {path: EventDetail/Alert/Type, value: IDS}
+          - {path: EventDetail/Alert/Severity, field: sev, map: {"1": Critical, "2": Major, "3": Minor}, default: Info}
+          - {path: EventDetail/Alert/Description, field: sig}
+          - {path: EventDetail/Alert/Data, data_name: source_ip, field: src}
+          - {path: EventDetail/Alert/Data, data_name: destination_ip, field: dst}
+          - {path: EventDetail/Alert/Data, data_name: destination_port, field: dport}

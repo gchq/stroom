@@ -1,0 +1,59 @@
+name: Document service (JSON event string with a free-form message)
+template: Event Data (JSON)
+capabilities: [mixed_formats, escaping]
+request: >
+  Onboard the document service's audit log (a JSON array from our log shipper). The shipper adds the host and the
+  time it received each record; the event itself is JSON held as a string in the event field: its own timestamp
+  (with a UTC offset), the username, the event_type (logins and logouts, password changes, documents viewed and
+  deleted, with the document in resource) and a free-form message. Keep each message whole as the event's
+  description. Index the events.
+expected:
+  records: 6
+  event_types: [Authenticate, View, Delete]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId, EventDetail/Description]
+  values:
+    EventTime/TimeCreated: ["2026-10-01T22:15:30.120Z"]
+    EventDetail/Description: ['Sign-in rejected: password expired (policy "90-day rotation")', "Moved to recycle bin: user=alice reason=duplicate"]
+sample: |
+  [{"host": "dms01", "received": "2026-10-01T22:15:31Z", "event": "{\"timestamp\": \"2026-10-02T08:15:30.120+10:00\", \"username\": \"alice\", \"event_type\": \"LOGIN_SUCCESS\", \"message\": \"Signed in with SSO from the web portal\"}"},
+   {"host": "dms01", "received": "2026-10-01T22:16:03Z", "event": "{\"timestamp\": \"2026-10-02T08:16:02.004+10:00\", \"username\": \"bob\", \"event_type\": \"LOGIN_FAILURE\", \"message\": \"Sign-in rejected: password expired (policy \\\"90-day rotation\\\")\"}"},
+   {"host": "dms01", "received": "2026-10-01T22:20:12Z", "event": "{\"timestamp\": \"2026-10-02T08:20:11.500+10:00\", \"username\": \"alice\", \"event_type\": \"DOCUMENT_VIEW\", \"resource\": \"Q3-2026 board pack.pdf\", \"message\": \"Opened document, 14 pages, read-only mode\"}"},
+   {"host": "dms01", "received": "2026-10-01T22:21:46Z", "event": "{\"timestamp\": \"2026-10-02T08:21:45.000+10:00\", \"username\": \"bob\", \"event_type\": \"PASSWORD_CHANGE\", \"message\": \"Password changed after expiry; next change due 2026-12-30\"}"},
+   {"host": "dms01", "received": "2026-10-01T22:40:10Z", "event": "{\"timestamp\": \"2026-10-02T08:40:09.250+10:00\", \"username\": \"alice\", \"event_type\": \"DOCUMENT_DELETE\", \"resource\": \"draft-v2.docx\", \"message\": \"Moved to recycle bin: user=alice reason=duplicate\"}"},
+   {"host": "dms01", "received": "2026-10-01T23:02:01Z", "event": "{\"timestamp\": \"2026-10-02T09:02:00.000+10:00\", \"username\": \"alice\", \"event_type\": \"LOGOUT\", \"message\": \"Session ended after 47 minutes\"}"}]
+reference:
+  mapping:
+    input: json
+    json_layout: array
+    common:
+      - {path: EventTime/TimeCreated, xpath: "json-to-xml(*[@key='event'])/*/*[@key='timestamp']", time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
+      - {path: EventSource/System/Name, value: Document Service}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: dms}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
+      - {path: EventDetail/TypeId, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']"}
+      - {path: EventDetail/Description, xpath: "json-to-xml(*[@key='event'])/*/*[@key='message']"}
+    events:
+      - name: logon
+        when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", one_of: [LOGIN_SUCCESS, LOGIN_FAILURE]}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
+          - {path: EventDetail/Authenticate/Outcome/Success, xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", map: {LOGIN_SUCCESS: "true", LOGIN_FAILURE: "false"}}
+      - name: logoff
+        when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: LOGOUT}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
+      - name: password change
+        when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: PASSWORD_CHANGE}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+          - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='event'])/*/*[@key='username']"}
+      - name: view
+        when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: DOCUMENT_VIEW}]
+        fields: [{path: EventDetail/View/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}]
+      - name: delete
+        when: [{xpath: "json-to-xml(*[@key='event'])/*/*[@key='event_type']", equals: DOCUMENT_DELETE}]
+        fields: [{path: EventDetail/Delete/Document/Name, xpath: "json-to-xml(*[@key='event'])/*/*[@key='resource']"}]

@@ -1,0 +1,50 @@
+name: Application messages in Graylog's GELF (JSON lines)
+template: Event Data (JSON)
+capabilities: [timestamps, field_variability]
+# GELF as Graylog inputs take it, 400 messages: short_message, an optional full_message over several lines, a
+# timestamp in epoch seconds with a fraction, a syslog level, and _-prefixed additional fields that differ by kind
+# of message. The traps: the time is fractional epoch seconds (epoch_s), not ISO; the kind of event is _action, an
+# additional field; and a disk alert carries no user.
+request: >
+  Onboard our application's GELF messages (a file of them is on my disk). Index the events.
+expected:
+  records: 400
+  event_types: [Authenticate, Alert]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob]
+files:
+  - {name: app-gelf.jsonl, generate: {kind: gelf_app, records: 400, seed: 11}}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: timestamp, time_format: epoch_s}
+      - {path: EventSource/System/Name, value: Billing App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: gelf}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: _user}
+      - {path: EventSource/Client/IPAddress, field: _src_ip}
+      - {path: EventDetail/TypeId, field: _action}
+      - {path: EventDetail/Description, any_of: [full_message, short_message]}
+    events:
+      - name: logon
+        when: [{field: _action, equals: login}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: _user}
+      - name: logoff
+        when: [{field: _action, equals: logout}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: _user}
+      - name: disk
+        when: [{field: _action, equals: disk_alert}]
+        fields:
+          - {path: EventDetail/Alert/Type, value: Other}
+          - {path: EventDetail/Alert/Description, field: short_message}
+          - {path: EventDetail/Alert/Data, data_name: disk, field: _disk}
+          - {path: EventDetail/Alert/Data, data_name: percent_used, field: _pct}

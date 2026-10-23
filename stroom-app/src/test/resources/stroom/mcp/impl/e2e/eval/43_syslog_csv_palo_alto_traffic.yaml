@@ -1,0 +1,50 @@
+name: Palo Alto firewall TRAFFIC logs (an RFC 3164 syslog header, then the log's positional CSV)
+template: Event Data (Text)
+capabilities: [mixed_formats, delimiters, schema_inference]
+# As a Palo Alto firewall sends them over syslog, 2,500 sessions: the header, then 47 comma-separated columns with no
+# header anywhere, their names only in the vendor's documentation. The traps: the body is delimited, not key=value
+# (read as text, every line was a kind of event of its own); the columns are positional (col1, col2 ... until named);
+# the kind of event is type and subtype (TRAFFIC end, deny, drop) with the action; srcuser is domain\user or empty;
+# and the first 1,500 sessions are allowed ones only.
+request: >
+  Onboard our Palo Alto firewall's traffic logs (a file of them is on my disk). Index the sessions.
+expected:
+  records: 2500
+  event_types: [Network]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/Client/IPAddress, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob]
+files:
+  - {name: pa-fw01-traffic.log, generate: {kind: palo_alto_traffic, records: 2500, seed: 9}}
+reference:
+  splitter:
+    kind: syslog
+    rfc: rfc3164
+    body:
+      kind: delimited
+      delimiter: ','
+      header: [future_use1, receive_time, serial, type, subtype, future_use2, generated_time, src, dst, natsrc, natdst, rule, srcuser, dstuser, app, vsys, from, to, inbound_if, outbound_if, logset, future_use3, sessionid, repeatcnt, sport, dport, natsport, natdport, flags, proto, action, bytes, bytes_sent, bytes_received, packets, start, elapsed, category, future_use4, seqno, actionflags, srcloc, dstloc, future_use5, pkts_sent, pkts_received, session_end_reason]
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: generated_time, time_format: 'yyyy/MM/dd HH:mm:ss', timezone: UTC}
+      - {path: EventSource/System/Name, value: Palo Alto Firewall}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: PAN-OS}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, field: srcuser, transform: strip_domain}
+      - {path: EventSource/Client/IPAddress, field: src}
+      - {path: EventDetail/TypeId, xpath: "concat(data[@name='type']/@value, '-', data[@name='subtype']/@value)"}
+    events:
+      - name: session
+        when: [{field: type, equals: TRAFFIC}]
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
+          - {path: EventDetail/Network/Open/Source/Port, field: sport}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
+          - {path: EventDetail/Network/Open/Destination/Port, field: dport}
+          - {path: EventDetail/Network/Open/Data, data_name: rule, field: rule}
+          - {path: EventDetail/Network/Open/Data, data_name: app, field: app}
+          - {path: EventDetail/Network/Open/Data, data_name: end_reason, field: session_end_reason}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: action, map: {allow: 'true'}, default: 'false'}
