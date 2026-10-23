@@ -181,6 +181,24 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testInterruptStale_aRunCarriedOnAfterWaitingIsNotStale() throws InterruptedException {
+        // Waiting for answers, with no thread, so sending no heartbeats, for longer than a run takes to go stale.
+        final AiChatRun run = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", null);
+        runDao.compareAndSetStatus(run.getId(), Set.of(AiChatRunStatus.RUNNING),
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_ANSWERS, null);
+        Thread.sleep(5);
+        final long cutOff = System.currentTimeMillis();
+        Thread.sleep(5);
+
+        // The user sends a message instead, so the run carries on, before its node's next heartbeat.
+        runDao.compareAndSetStatus(run.getId(), Set.of(AiChatRunStatus.WAITING_FOR_USER), AiChatRunStatus.RUNNING,
+                null, null);
+
+        assertThat(runDao.interruptStale(cutOff)).isEmpty();
+        assertThat(runDao.get(run.getId()).orElseThrow().getStatus()).isEqualTo(AiChatRunStatus.RUNNING);
+    }
+
+    @Test
     void testSessionRuns() {
         final AiChatRun fromSession = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", "hash1");
         final AiChat otherChat = aiDao.createChat(UserRef.builder().uuid("user1").build());
