@@ -20,6 +20,7 @@ import stroom.ai.impl.AiToolPolicyDao;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,12 +75,13 @@ class TestAiToolPolicyDaoImpl {
     void testTheUpgradeLeavesEveryoneTheToolsThatOnlyRead() {
         // Policies govern the chat too, so without this nobody would have any tools after the upgrade.
         assertThat(dao.list()).singleElement().satisfies(policy -> {
-            assertThat(policy.getName()).isEqualTo("Everyone: read-only tools");
+            assertThat(policy.getName()).isEqualTo("Default read-only tool policy");
             assertThat(policy.isEnabled()).isTrue();
             assertThat(policy.isAllUsers()).isTrue();
             assertThat(policy.getMembers()).isEmpty();
-            assertThat(policy.getAccess()).isEqualTo(AiToolAccess.READ_ONLY);
-            assertThat(policy.getCategories()).containsExactly(AiToolCategory.values());
+            assertThat(policy.getGrants()).containsExactlyElementsOf(Arrays.stream(AiToolCategory.values())
+                    .map(category -> AiToolCategoryGrant.of(category, AiToolAccess.READ_ONLY))
+                    .toList());
         });
     }
 
@@ -88,30 +91,35 @@ class TestAiToolPolicyDaoImpl {
                 .name("Analysts")
                 .description("Search and content")
                 .members(List.of(user("alice"), user("analysts")))
-                .categories(List.of(AiToolCategory.SEARCH, AiToolCategory.CONTENT))
-                .access(AiToolAccess.READ_WRITE)
+                // Each category has its own access.
+                .grants(List.of(
+                        AiToolCategoryGrant.of(AiToolCategory.SEARCH, AiToolAccess.READ_ONLY),
+                        AiToolCategoryGrant.of(AiToolCategory.CONTENT, AiToolAccess.READ_WRITE)))
                 .build(), "admin");
 
         assertThat(created.getId()).isNotNull();
         assertThat(created.getVersion()).isEqualTo(1);
         assertThat(created.getCreateUser()).isEqualTo("admin");
         assertThat(created.getMembers()).extracting(UserRef::getUuid).containsExactly("alice", "analysts");
-        assertThat(created.getCategories()).containsExactly(AiToolCategory.SEARCH, AiToolCategory.CONTENT);
+        assertThat(created.getGrants()).containsExactly(
+                AiToolCategoryGrant.of(AiToolCategory.SEARCH, AiToolAccess.READ_ONLY),
+                AiToolCategoryGrant.of(AiToolCategory.CONTENT, AiToolAccess.READ_WRITE));
         assertThat(dao.fetch(created.getId())).contains(created);
         assertThat(dao.list()).extracting(AiToolPolicy::getName)
-                .containsExactly("Analysts", "Everyone: read-only tools");
+                .containsExactly("Analysts", "Default read-only tool policy");
 
         final AiToolPolicy updated = dao.update(created.copy()
                 .enabled(false)
                 .members(List.of(user("bob")))
-                .categories(List.of(AiToolCategory.PROCESSING))
+                .grants(List.of(AiToolCategoryGrant.of(AiToolCategory.PROCESSING, AiToolAccess.READ_WRITE)))
                 .build(), "admin2");
 
         assertThat(updated.getVersion()).isEqualTo(2);
         assertThat(updated.isEnabled()).isFalse();
         assertThat(updated.getUpdateUser()).isEqualTo("admin2");
         assertThat(updated.getMembers()).extracting(UserRef::getUuid).containsExactly("bob");
-        assertThat(updated.getCategories()).containsExactly(AiToolCategory.PROCESSING);
+        assertThat(updated.getGrants())
+                .containsExactly(AiToolCategoryGrant.of(AiToolCategory.PROCESSING, AiToolAccess.READ_WRITE));
         // The list reads members and categories for every policy at once.
         assertThat(dao.list()).filteredOn(policy -> policy.getName().equals("Analysts")).containsExactly(updated);
 
@@ -124,7 +132,7 @@ class TestAiToolPolicyDaoImpl {
     void testAnUpdateFromAStaleReadIsRefused() {
         final AiToolPolicy created = dao.create(AiToolPolicy.builder()
                 .name("Readers")
-                .categories(List.of(AiToolCategory.CORE))
+                .grants(List.of(AiToolCategoryGrant.of(AiToolCategory.CORE, AiToolAccess.READ_ONLY)))
                 .build(), "admin");
         dao.update(created.copy().description("first").build(), "admin");
 
