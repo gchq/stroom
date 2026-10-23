@@ -27,6 +27,7 @@ import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.fs.ArchiveBucketTestUtil;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.impl.serde.trace.HexStringUtil;
@@ -117,7 +118,9 @@ class TestOrphanTraceVisibility {
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(0))
                 .resolve(OLD_DAY);
-        try (final TraceDb archive = TraceDb.create(bucket, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+        // Read through a local copy, as the store does: the bucket may hold its data compressed.
+        final Path localCopy = ArchiveBucketTestUtil.copyDown(bucket, tempDir);
+        try (final TraceDb archive = TraceDb.create(localCopy, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             final List<TraceRoot> found = roots(archive);
             assertThat(found).as("the published bucket must list the orphan").hasSize(1);
             assertThat(found.getFirst().getTraceId()).isEqualTo(TRACE_A);

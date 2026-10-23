@@ -27,6 +27,7 @@ import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.fs.ArchiveBucketTestUtil;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.impl.serde.trace.HexStringUtil;
@@ -563,7 +564,9 @@ class TestPublish {
                 .resolve(PlanBConstants.formatShardIndex(0))
                 .resolve(dayLabel);
         assertThat(bucket.resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
-        try (final TraceDb archive = TraceDb.create(bucket, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+        // Read through a local copy, as the store does: the bucket may hold its data compressed.
+        final Path localCopy = ArchiveBucketTestUtil.copyDown(bucket, tempDir);
+        try (final TraceDb archive = TraceDb.create(localCopy, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             assertThat(traceIds(archive)).containsExactly(TRACE_A, TRACE_B);
         }
     }

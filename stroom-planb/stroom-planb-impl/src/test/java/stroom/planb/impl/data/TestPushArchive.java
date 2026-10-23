@@ -26,6 +26,7 @@ import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.fs.ArchiveBucketTestUtil;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.impl.serde.trace.SpanKey;
@@ -124,7 +125,7 @@ class TestPushArchive {
         publisher.pushArchive(doc, SHARD_INDEX, stagedBatch("batch2", TRACE_B));
 
         assertThat(listNames(bucketDir()))
-                .containsExactlyInAnyOrder(PlanBConstants.DATA_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
+                .containsExactlyInAnyOrder(PlanBConstants.DATA_ZST_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
     }
 
     // -----------------------------------------------------------------------
@@ -165,7 +166,7 @@ class TestPushArchive {
     void firstPush_writesDataAndVersion() throws IOException {
         publisher.pushArchive(doc, SHARD_INDEX, stagedBatch("batch1", TRACE_A));
 
-        assertThat(bucketDir().resolve(PlanBConstants.DATA_FILE_NAME)).exists();
+        assertThat(bucketDir().resolve(PlanBConstants.DATA_ZST_FILE_NAME)).exists();
         assertThat(bucketDir().resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
         assertThat(archivedTraceIds()).containsExactly(TRACE_A);
     }
@@ -231,7 +232,7 @@ class TestPushArchive {
                 .isEqualTo(versionBefore);
         assertThat(archivedTraceIds()).containsExactly(TRACE_A);
         assertThat(listNames(bucketDir()))
-                .containsExactlyInAnyOrder(PlanBConstants.DATA_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
+                .containsExactlyInAnyOrder(PlanBConstants.DATA_ZST_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
     }
 
     // -----------------------------------------------------------------------
@@ -255,7 +256,7 @@ class TestPushArchive {
 
         assertThat(orphan).doesNotExist();
         assertThat(listNames(bucketDir()))
-                .containsExactlyInAnyOrder(PlanBConstants.DATA_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
+                .containsExactlyInAnyOrder(PlanBConstants.DATA_ZST_FILE_NAME, PlanBConstants.VERSION_FILE_NAME);
         // The sweep must not disturb the data itself.
         assertThat(archivedTraceIds()).containsExactly(TRACE_A, TRACE_B);
     }
@@ -333,9 +334,11 @@ class TestPushArchive {
         return new StagedArchive(DAY_LABEL, dir);
     }
 
-    private List<String> archivedTraceIds() {
+    // Read through a local copy, as the store does: the bucket may hold its data compressed.
+    private List<String> archivedTraceIds() throws IOException {
+        final Path localCopy = ArchiveBucketTestUtil.copyDown(bucketDir(), tempDir);
         try (final TraceDb archive = TraceDb.create(
-                bucketDir(), BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
+                localCopy, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             final TracesResultPage page = archive.findTraces(new FindTraceCriteria(
                     new PageRequest(0, 1000), null, null, SimpleDuration.ZERO));
             return page.getValues().stream().map(TraceRoot::getTraceId).sorted().toList();
