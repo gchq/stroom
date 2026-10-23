@@ -167,16 +167,19 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         final DocRef docRef = NullSafe.get(value, docRefFunction);
         if (docRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 OpenDocumentEvent.fire(this, docRef, true);
             }
         } else {
             final String text = cellTextFunction.apply(value).asString();
             if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }

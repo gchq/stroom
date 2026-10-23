@@ -29,6 +29,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.query.api.Column;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
+import stroom.visualisation.shared.VisInput;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.presenter.client.HasUiHandlers;
@@ -60,7 +61,10 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
     private JSONObject dynamicSettings;
-    private List<String> fieldNames;
+    // The table's columns, which the field controls can choose
+    private List<VisFieldOption> fieldOptions = new ArrayList<>();
+    // The visualisation's typed inputs, by id
+    private Map<String, VisInput> inputs = new HashMap<>();
 
     @Inject
     public BasicVisSettingsPresenter(final EventBus eventBus,
@@ -97,22 +101,23 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     private void updateFieldNames(final Component component) {
-        fieldNames = new ArrayList<>();
+        final Map<String, VisFieldOption> optionsByName = new HashMap<>();
         if (component instanceof final TablePresenter tablePresenter) {
             final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
-            if (columns != null && !columns.isEmpty()) {
+            if (columns != null) {
                 for (final Column column : columns) {
-                    if (!fieldNames.contains(column.getName())) {
-                        fieldNames.add(column.getName());
-                    }
+                    optionsByName.putIfAbsent(column.getName(), new VisFieldOption(column.getName(),
+                            column.getFormat() == null
+                                    ? null
+                                    : column.getFormat().getType()));
                 }
             }
         }
-        fieldNames.sort(Comparator.naturalOrder());
-        fieldNames.add(0, "");
+        fieldOptions = new ArrayList<>(optionsByName.values());
+        fieldOptions.sort(Comparator.comparing(VisFieldOption::getName));
 
         for (final DynamicSettingsPane dynamicSettings : dynamicSettingsMap.values()) {
-            dynamicSettings.setFieldNames(fieldNames);
+            dynamicSettings.setFields(fieldOptions);
         }
     }
 
@@ -138,6 +143,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private void readSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {
         clearTabs();
 
+        inputs = VisInputChoices.parseInputs(possibleSettings);
         if (possibleSettings != null) {
             final JSONArray tabs = JSONUtil.getArray(possibleSettings.get("tabs"));
             if (tabs != null) {
@@ -160,8 +166,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 
-                dynamicSettingsPane.addControls(controls);
-                dynamicSettingsPane.setFieldNames(fieldNames);
+                dynamicSettingsPane.addControls(controls, inputs);
+                dynamicSettingsPane.setFields(fieldOptions);
             }
         }
     }

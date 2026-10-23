@@ -7,7 +7,7 @@
     <split:SplitPane sizes="245px, *"
                      names="Elements, Filter" addStyleNames="steppingFilterViewImpl max">
         <g:MaxScrollPanel styleName="max stroom-control">
-            <g:SimplePanel ui:field="elementChooser"/>
+            <g:SimplePanel ui:field="elementChooser" styleName="max"/>
         </g:MaxScrollPanel>
         <g:FlowPanel styleName="max form">
             <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>

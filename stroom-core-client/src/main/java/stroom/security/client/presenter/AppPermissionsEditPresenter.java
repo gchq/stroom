@@ -18,8 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
@@ -34,6 +32,8 @@ import stroom.security.shared.AppUserPermissionsReport;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -63,7 +63,7 @@ public class AppPermissionsEditPresenter
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
-    private final MyDataGrid<AppPermission> dataGrid;
+    private final DataGridWidget<AppPermission> dataGrid;
     private final MultiSelectionModelImpl<AppPermission> selectionModel;
 
     private AppUserPermissionsReport currentPermissions;
@@ -81,13 +81,11 @@ public class AppPermissionsEditPresenter
         this.restFactory = restFactory;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Application Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<AppPermission> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
+        final DataGridWidgetSelectionEventManager<AppPermission> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
         view.setPermissionsView(pagerView);

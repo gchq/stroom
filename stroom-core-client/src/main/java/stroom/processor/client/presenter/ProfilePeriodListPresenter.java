@@ -16,7 +16,6 @@
 
 package stroom.processor.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.svg.shared.SvgImage;
@@ -25,6 +24,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -45,7 +45,7 @@ public class ProfilePeriodListPresenter
     private static final String REMOVE_TITLE = "Remove Selected Profile Period";
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    private final MyDataGrid<ProfilePeriod> dataGrid;
+    private final DataGridWidget<ProfilePeriod> dataGrid;
     private final MultiSelectionModelImpl<ProfilePeriod> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -62,7 +62,9 @@ public class ProfilePeriodListPresenter
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by uuid: an edit replaces the row
+        dataGrid.setKeyProvider(ProfilePeriod::getUuid);
         dataGrid.setTableName("Profile Periods");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

@@ -23,6 +23,7 @@ import stroom.widget.presenter.client.ViewImpl;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -32,6 +33,8 @@ public class ResultStoreViewImpl extends ViewImpl implements ResultStoreView {
     private final Widget widget;
 
     @UiField
+    MaxScrollPanel infoScroll;
+    @UiField
     SimplePanel tableContainer;
     @UiField
     SimplePanel infoPanel;
@@ -39,6 +42,11 @@ public class ResultStoreViewImpl extends ViewImpl implements ResultStoreView {
     @Inject
     public ResultStoreViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // The store's details scroll when they are long, so the keyboard can reach them to scroll
+        // them: a named region that takes the focus
+        infoScroll.getElement().setTabIndex(0);
+        infoScroll.getElement().setAttribute("role", "region");
+        infoScroll.getElement().setAttribute("aria-label", "Info");
     }
 
     @Override

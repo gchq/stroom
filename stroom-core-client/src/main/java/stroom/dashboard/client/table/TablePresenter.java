@@ -47,7 +47,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
@@ -94,7 +93,6 @@ import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UserPreferences;
@@ -106,6 +104,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Listeners;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -171,7 +170,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final UserPreferencesManager userPreferencesManager;
     private final DynamicColumnSelectionListModel columnSelectionListModel;
     private final ColumnsManager columnsManager;
-    private final MyDataGrid<TableRow> dataGrid;
+    private final DataGridWidget<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
@@ -234,7 +233,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(this);
         annotationManager.setTaskMonitorFactory(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
+        dataGrid.setVirtual(true);
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(rowStyles);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -719,10 +720,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public Element getFilterButton(final Column column) {
         final int index = columnsManager.getColumnIndex(column);
         if (index >= 0) {
-            final Element thead = dataGrid.getTableHeadElement().cast();
-            final Element tr = thead.getChild(0).cast();
-            final Element th = tr.getChild(index).cast();
-            return ElementUtil.findChild(th, "column-valueFilterIcon");
+            final Element headerCell = dataGrid.getHeaderCellElement(index);
+            return headerCell != null
+                    ? ElementUtil.findChild(headerCell, "column-valueFilterIcon")
+                    : null;
         }
 
         return null;
@@ -901,6 +902,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
+        // A wrapping column's rows vary in height, which the grid must know (it then draws every
+        // row rather than only those in view)
+        dataGrid.setColumnWraps(col, column.getFormat() != null
+                                     && Boolean.TRUE.equals(column.getFormat().getWrap()));
         existingColumns.add(col);
     }
 

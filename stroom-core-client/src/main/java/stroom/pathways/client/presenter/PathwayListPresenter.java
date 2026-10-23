@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
@@ -41,6 +40,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -68,7 +68,7 @@ public class PathwayListPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final MyDataGrid<Pathway> dataGrid;
+    private final DataGridWidget<Pathway> dataGrid;
     private final MultiSelectionModelImpl<Pathway> selectionModel;
     private final PathwayEditPresenter pathwayEditPresenter;
     private final ButtonView newButton;
@@ -97,7 +97,9 @@ public class PathwayListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by name, unique in the document
+        dataGrid.setKeyProvider(Pathway::getName);
         dataGrid.setTableName("Pathways");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);

@@ -17,6 +17,7 @@
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
 
@@ -39,7 +40,7 @@
 
         <!-- Show All — sets date range to cover all data in the store -->
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-settings-show-all-row">
-            <g:Button ui:field="showAllButton" text="Show All" addStyleNames="stroom-button stroom-button-blue stroom-floormap-timeline-settings-show-all-button" />
+            <b:Button ui:field="showAllButton" addStyleNames="allow-focus" text="Show All"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -47,6 +47,28 @@ class TestQueryFixtures {
     }
 
     @Test
+    void testTableResult_givesRowsGroupKeys() {
+        final String table = QueryFixtures.tableResult("table", "[]",
+                "[{\"values\": [\"a {b} [c] \\\"d\\\"\"], \"depth\": 0}, "
+                + "{\"values\": [\"e\"], \"depth\": 0, \"groupKey\": \"g-e\"}, "
+                + "{\"values\": [\"f\"], \"depth\": 1}]", 3);
+        final List<?> rows = (List<?>) ((Map<?, ?>) JsonValues.parse(table)).get("rows");
+
+        final List<Object> groupKeys = rows.stream()
+                .map(row -> (Object) ((Map<?, ?>) row).get("groupKey"))
+                .toList();
+        assertThat(groupKeys).containsExactly("row-0", "g-e", "row-2");
+        assertThat(((Map<?, ?>) rows.get(0)).get("values")).isEqualTo(List.of("a {b} [c] \"d\""));
+    }
+
+    @Test
+    void testWithGroupKeys_emptyRowsAndArrays() {
+        assertThat(QueryFixtures.withGroupKeys("[]")).isEqualTo("[]");
+        assertThat(JsonValues.parse(QueryFixtures.withGroupKeys("[{}]")))
+                .isEqualTo(List.of(Map.of("groupKey", "row-0")));
+    }
+
+    @Test
     void testResponse_noResults() {
         final Map<?, ?> response = (Map<?, ?>) JsonValues.parse(QueryFixtures.response(true));
 

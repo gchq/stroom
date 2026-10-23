@@ -17,7 +17,6 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -31,6 +30,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -51,7 +51,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
     private static final String TYPE_FIELD = "type";
     private static final String OBFUSCATED_FIELD = "obfuscated";
 
-    private final MyDataGrid<QueryField> dataGrid;
+    private final DataGridWidget<QueryField> dataGrid;
     private final MultiSelectionModelImpl<QueryField> selectionModel;
     private final Provider<FieldEditor> fieldEditorProvider;
     private final ButtonView newButton;
@@ -70,7 +70,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

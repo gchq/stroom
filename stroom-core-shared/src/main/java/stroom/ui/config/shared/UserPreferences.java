@@ -100,6 +100,11 @@ public class UserPreferences {
                              "turned on. Users of speech input may want to turn them off.")
     private final Boolean enableCharacterKeyShortcuts;
 
+    @JsonProperty
+    @JsonPropertyDescription("The palette visualisations colour categories (e.g. series) from, `Vivid` or " +
+                             "`Colour-blind safe`")
+    private final String visualisationPalette;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -114,7 +119,8 @@ public class UserPreferences {
                            @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles,
                            @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig,
                            @JsonProperty("keyBindings") final Map<String, List<String>> keyBindings,
-                           @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts) {
+                           @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts,
+                           @JsonProperty("visualisationPalette") final String visualisationPalette) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -131,6 +137,7 @@ public class UserPreferences {
         this.askStroomAiConfig = askStroomAiConfig;
         this.keyBindings = keyBindings;
         this.enableCharacterKeyShortcuts = Objects.requireNonNullElse(enableCharacterKeyShortcuts, true);
+        this.visualisationPalette = visualisationPalette;
     }
 
     public String getTheme() {
@@ -192,6 +199,12 @@ public class UserPreferences {
         return enableCharacterKeyShortcuts;
     }
 
+    /// @return The name of the palette visualisations colour categories from (see
+    /// `stroom.visualisation.shared.VisPalette`), or null for the default.
+    public String getVisualisationPalette() {
+        return visualisationPalette;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -214,7 +227,8 @@ public class UserPreferences {
                Objects.equals(hideConditionalStyles, that.hideConditionalStyles) &&
                Objects.equals(askStroomAiConfig, that.askStroomAiConfig) &&
                Objects.equals(keyBindings, that.keyBindings) &&
-               Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts);
+               Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts) &&
+               Objects.equals(visualisationPalette, that.visualisationPalette);
     }
 
     @Override
@@ -231,7 +245,8 @@ public class UserPreferences {
                 enableTransparency,
                 hideConditionalStyles,
                 keyBindings,
-                enableCharacterKeyShortcuts);
+                enableCharacterKeyShortcuts,
+                visualisationPalette);
     }
 
     @Override
@@ -251,6 +266,7 @@ public class UserPreferences {
                ", askStroomAiConfig='" + askStroomAiConfig + '\'' +
                ", keyBindings=" + keyBindings +
                ", enableCharacterKeyShortcuts=" + enableCharacterKeyShortcuts +
+               ", visualisationPalette='" + visualisationPalette + '\'' +
                '}';
     }
 
@@ -322,6 +338,7 @@ public class UserPreferences {
         private AskStroomAiConfig askStroomAiConfig;
         private Map<String, List<String>> keyBindings;
         private Boolean enableCharacterKeyShortcuts;
+        private String visualisationPalette;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -353,6 +370,7 @@ public class UserPreferences {
             this.askStroomAiConfig = userPreferences.askStroomAiConfig;
             this.keyBindings = userPreferences.keyBindings;
             this.enableCharacterKeyShortcuts = userPreferences.enableCharacterKeyShortcuts;
+            this.visualisationPalette = userPreferences.visualisationPalette;
         }
 
         public Builder theme(final String theme) {
@@ -431,6 +449,14 @@ public class UserPreferences {
             return this;
         }
 
+        /// @param visualisationPalette The name of the palette visualisations colour categories from,
+        ///                             or null for the default.
+        /// @return This builder.
+        public Builder visualisationPalette(final String visualisationPalette) {
+            this.visualisationPalette = visualisationPalette;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -446,7 +472,8 @@ public class UserPreferences {
                     hideConditionalStyles,
                     askStroomAiConfig,
                     keyBindings,
-                    enableCharacterKeyShortcuts);
+                    enableCharacterKeyShortcuts,
+                    visualisationPalette);
         }
     }
 

@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class AnnotationTagEditPresenter
@@ -110,7 +111,9 @@ public class AnnotationTagEditPresenter
         if (name == null || name.isEmpty()) {
             AlertEvent.fireError(
                     AnnotationTagEditPresenter.this,
-                    "You must provide a name for the annotation group.",
+                    "You must provide a name for the annotation " +
+                    annotationTag.getType().getDisplayValue().toLowerCase(Locale.ROOT) +
+                    ".",
                     event::reset);
         } else {
             work.run();

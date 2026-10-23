@@ -129,7 +129,7 @@ public final class PathwaysEditorStories {
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
-                    final Play constraints = play.within(dialog.getByText("host").closest(".dataGridWidget"));
+                    final Play constraints = play.within(dialog.getByText("host").closest(".data-grid"));
                     play.expect(constraints.getByText("Name")).toBeInTheDocument();
                     play.expect(constraints.getByText("Optional")).toBeInTheDocument();
                     // The value's type is shown as Stroom's ConstraintValueType

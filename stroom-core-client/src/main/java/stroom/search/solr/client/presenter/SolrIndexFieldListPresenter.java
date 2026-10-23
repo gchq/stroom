@@ -18,7 +18,6 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -32,6 +31,7 @@ import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -56,7 +56,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final PagerView pagerView;
-    private final MyDataGrid<SolrIndexField> dataGrid;
+    private final DataGridWidget<SolrIndexField> dataGrid;
     private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
     private final RestFactory restFactory;
@@ -82,7 +82,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(SolrIndexField::getFldName);
         dataGrid.setTableName("Solr Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);

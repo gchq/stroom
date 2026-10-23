@@ -40,6 +40,7 @@ import stroom.docref.DocRef;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
@@ -55,6 +56,7 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisPalette;
 import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
@@ -75,9 +77,11 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public class VisPresenter
         extends AbstractComponentPresenter<VisPresenter.VisView>
@@ -112,6 +116,7 @@ public class VisPresenter
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
+    private final DateTimeFormatter dateTimeFormatter;
     private final VisFrame visFrame;
 
     private VisFunction currentFunction;
@@ -136,12 +141,14 @@ public class VisPresenter
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
                         final RestFactory restFactory,
-                        final CurrentPreferences currentPreferences) {
+                        final CurrentPreferences currentPreferences,
+                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, settingsPresenterProvider);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
         this.currentPreferences = currentPreferences;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         visSelectionModel = new VisSelectionModel();
         visSelectionModel.addSelectionHandler(event ->
@@ -150,6 +157,13 @@ public class VisPresenter
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
         visFrame.setUiHandlers(visSelectionModel);
+        visFrame.setToolbarHandler(buttons -> getView().setVisButtons(buttons, visFrame::toolbarButtonPressed));
+        // A value has the same colour in every visualisation of the dashboard
+        visFrame.setColoursHandler((field, values) -> getDashboardContext().getVisColourList().colours(
+                field,
+                values,
+                VisPalette.fromDisplayValue(currentPreferences.getVisualisationPalette()),
+                Theme.getThemeType(currentPreferences.getTheme()).isDark()));
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
@@ -158,8 +172,13 @@ public class VisPresenter
         scriptCache.bind();
         visFrame.bind();
 
-        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
+        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
+            visFrame.setClassName(getClassName(event.getTheme()));
+            // The visualisation asks for its values' colours again, in the new palette or theme
+            visFrame.coloursChanged(VisPalette.fromDisplayValue(event.getVisualisationPalette()).getDisplayValue());
+            // ...and shows times in the new time zone and date-time pattern
+            visFrame.timeChanged(dateTimeFormatter.getVisTimeSettings());
+        }));
 
         getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
@@ -548,11 +567,21 @@ public class VisPresenter
                     if (function.getFunctionName() != null) {
                         if (loadedFunction == null || !loadedFunction.equals(function)) {
                             loadedFunction = function;
+                            // The buttons were the previous visualisation's
+                            getView().setVisButtons(Collections.emptyList(), visFrame::toolbarButtonPressed);
                             visFrame.setVisType(function.getFunctionName(),
                                     getClassName(currentPreferences.getTheme()));
+                            visFrame.coloursChanged(VisPalette.fromDisplayValue(
+                                    currentPreferences.getVisualisationPalette()).getDisplayValue());
+                            visFrame.timeChanged(dateTimeFormatter.getVisTimeSettings());
                         }
                     }
 
+                    // The settings of data that arrived before the visualisation loaded lack its
+                    // controls' defaults (e.g. whether to label the axes), which loading it read
+                    if (getVisSettings() != null && currentData != null) {
+                        currentSettings = getJSONSettings();
+                    }
                     currentError = null;
                     update();
 
@@ -644,6 +673,12 @@ public class VisPresenter
         if (!(settings instanceof VisComponentSettings)) {
             setSettings(VisComponentSettings.builder().build());
         }
+        updateFrameTitle();
+    }
+
+    // The frame is named after the component, as its tab is
+    private void updateFrameTitle() {
+        visFrame.setTitle(getComponentConfig().getName());
     }
 
     private VisComponentSettings getVisSettings() {
@@ -662,6 +697,8 @@ public class VisPresenter
     protected void changeSettings() {
         super.changeSettings();
 
+        // The component may have been renamed
+        updateFrameTitle();
         updateTableId(getVisSettings().getTableId());
 
         // Update the current settings JSON and refresh the visualisation.
@@ -789,5 +826,12 @@ public class VisPresenter
         void hideMessage();
 
         void setVisFrame(VisFrame visFrame);
+
+        /// Shows the buttons the visualisation asks for in its toolbar, replacing any it showed.
+        ///
+        /// @param buttons The buttons, none for no visualisation buttons.
+        /// @param onPress Given a button's id when it is pressed, and a toggle's new state (null
+        ///                for a button that isn't a toggle).
+        void setVisButtons(List<VisToolbarButton> buttons, BiConsumer<String, Boolean> onPress);
     }
 }

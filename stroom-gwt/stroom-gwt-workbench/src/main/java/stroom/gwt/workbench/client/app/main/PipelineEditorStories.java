@@ -517,6 +517,28 @@ public final class PipelineEditorStories {
                     play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
                     expectNoProblems(play);
                 })
+                // A right-click on an element that isn't selected selects it and opens its own menu,
+                // not the previously selected element's (#2748)
+                .story("RightClickMenu", context -> render(context, COMPLEX_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("rawWriter");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    play.click(elementBox(tree, "rawWriter"));
+                    play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+
+                    rightClick(play, elementBox(tree, "xmlWriter"));
+                    play.expect(screen.findByRole("menu", "Actions for element 'xmlWriter'"))
+                            .toBeVisible();
+                    play.keyboard("{Escape}");
+
+                    rightClick(play, elementBox(tree, "indexWriter"));
+                    play.expect(screen.findByRole("menu", "Actions for element 'indexWriter'"))
+                            .toBeVisible();
+                    play.keyboard("{Escape}");
+                    expectNoProblems(play);
+                })
                 // Dragging while an element is detached with the keyboard puts it back first
                 .story("DragCancelsKeyboardMove", context -> render(context, COMPLEX_FIXTURES))
                 .withPlay(play -> {
@@ -943,9 +965,8 @@ public final class PipelineEditorStories {
                     play.click(play.findByText("xslt"));
                     play.findByText("Inherited Ref");
                     // The 'Inherited From' column names the ancestor the reference comes from.
-                    // The grid's rows are <tr> elements
-                    play.expect(play.within(play.getByText("Inherited Ref").closest("tr")).getByText("Parent"))
-                            .toBeInTheDocument();
+                    final Query inheritedRow = play.getByText("Inherited Ref").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(inheritedRow).getByText("Parent")).toBeInTheDocument();
                     // Select the row and Remove it: it stays, struck through (a cell class)
                     play.click(play.getByText("REF_FEED"));
                     play.click(play.getByTitle("Remove Selected Pipeline Reference"));
@@ -1053,6 +1074,12 @@ public final class PipelineEditorStories {
     // The box of an element of the tree
     private static Query elementBox(final Play tree, final String name) {
         return tree.getByText(name, ".pipeline-element__label").closest(".pipeline-element");
+    }
+
+    // Presses and releases the right mouse button on an element, as a right-click does
+    private static void rightClick(final Play play, final Query element) {
+        play.fireEvent().mouseDown(element, EventInit.create().atCentreOf(element).button(2).buttons(2));
+        play.fireEvent().mouseUp(element, EventInit.create().atCentreOf(element).button(2));
     }
 
     // How far an element is scrolled across, and how far it can be

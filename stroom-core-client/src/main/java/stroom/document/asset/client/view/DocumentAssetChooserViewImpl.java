@@ -1,12 +1,12 @@
 package stroom.document.asset.client.view;
 
 import stroom.document.asset.client.presenter.DocumentAssetChooserPresenter.DocumentAssetChooserView;
+import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -15,7 +15,7 @@ public class DocumentAssetChooserViewImpl extends ViewImpl implements DocumentAs
     private final Widget widget;
 
     @UiField
-    ScrollPanel scrollPanel;
+    SimplePanel treePanel;
 
     @Inject
     public DocumentAssetChooserViewImpl(final Binder binder) {
@@ -28,8 +28,8 @@ public class DocumentAssetChooserViewImpl extends ViewImpl implements DocumentAs
     }
 
     @Override
-    public void setTree(final Tree tree) {
-        scrollPanel.setWidget(tree);
+    public void setTree(final DocumentAssetTree tree) {
+        treePanel.setWidget(tree);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentAssetChooserViewImpl> {

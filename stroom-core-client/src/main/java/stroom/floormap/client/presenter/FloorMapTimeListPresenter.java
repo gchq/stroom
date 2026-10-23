@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.editor.FloorMapEditorModel;
@@ -28,10 +27,11 @@ import stroom.util.client.JSONUtil;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
-import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -59,7 +59,7 @@ import java.util.function.Predicate;
 /// is selected. Clicks are reported via consumers that the Editor presenter sets.
 public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeListView> {
 
-    private final MyDataGrid<TemporalEntry> dataGrid;
+    private final DataGridWidget<TemporalEntry> dataGrid;
     private final ListDataProvider<TemporalEntry> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<TemporalEntry> selectionModel = new SingleSelectionModel<>();
 
@@ -82,7 +82,10 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Fact Times");
+        // The list holds one fact's entries, one per time
+        dataGrid.setKeyProvider(TemporalEntry::getEffectiveTimeMs);
         dataGrid.setSelectionModel(selectionModel);
         view.setGridView(dataGrid);
         initGridColumns();
@@ -123,7 +126,7 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
                         com.google.gwt.core.client.Scheduler.get().scheduleDeferred(() -> {
                             if (index < dataGrid.getVisibleItemCount()) {
                                 try {
-                                    final TableRowElement rowEl = dataGrid.getRowElement(index);
+                                    final Element rowEl = dataGrid.getRowElement(index);
                                     if (rowEl != null) {
                                         stroom.widget.util.client.ElementUtil
                                                 .scrollIntoViewNearest(rowEl);

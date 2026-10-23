@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -35,7 +34,9 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -63,7 +64,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
-    private final MyDataGrid<ProcessorTaskSummary> dataGrid;
+    private final DataGridWidget<ProcessorTaskSummary> dataGrid;
     private final MultiSelectionModelImpl<ProcessorTaskSummary> selectionModel;
     private RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
@@ -78,7 +79,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by their group, not their count, which changes
+        dataGrid.setKeyProvider(summary -> NullSafe.get(summary.getPipeline(), DocRef::getUuid)
+                                           + ":" + summary.getFeed()
+                                           + ":" + summary.getPriority()
+                                           + ":" + summary.getStatus());
         dataGrid.setTableName("Processor Task Summary");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -210,10 +216,15 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                 protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
                     final ProcessorTaskSummary selected = selectionModel.getSelected();
                     if (selected != null) {
-                        // Reselect the task set.
+                        // Reselect the task set: the row of the same group (its key), whose count
+                        // may have changed, so it isn't equal to the one selected
                         selectionModel.clear();
-                        if (data != null && data.getValues().contains(selected)) {
-                            selectionModel.setSelected(selected);
+                        final Object key = dataGrid.getKeyProvider().getKey(selected);
+                        if (data != null) {
+                            data.getValues().stream()
+                                    .filter(row -> key.equals(dataGrid.getKeyProvider().getKey(row)))
+                                    .findFirst()
+                                    .ifPresent(selectionModel::setSelected);
                         }
                     }
                     super.changeData(data);

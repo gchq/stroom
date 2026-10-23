@@ -128,6 +128,17 @@ public final class Play {
         return new Play(Objects.requireNonNull(container, "container"), build);
     }
 
+    /// Queries and events within the document shown in an `<iframe>` of the page's origin, e.g.
+    /// a visualisation's frame. Events fired on its elements are handled by the frame's own
+    /// scripts. Its document is empty until it has loaded, so wait for what is looked for.
+    ///
+    /// @param frame A query for the `<iframe>`.
+    /// @return A builder whose queries only find elements within the frame's document body, the
+    /// equivalent of `within(iframe.contentDocument.body)`.
+    public Play withinFrame(final Query frame) {
+        return within(Objects.requireNonNull(frame, "frame").frameBody());
+    }
+
     /// @return A query for the document's `<body>` element itself, e.g. as the target of
     /// `fireEvent.mouseUp(document)` or `fireEvent.keyDown(document.body, ...)`.
     public Query body() {
@@ -1353,11 +1364,14 @@ public final class Play {
     /// `{ArrowDown}`, `{Escape}`, `abc`, `{Shift}{Shift}`, `{Alt>}w{/Alt}` or
     /// `{Control>}a{/Control}`. See [Keys] for the syntax.
     ///
+    /// The focused element is that of the play's document, or for a play [#withinFrame(Query)],
+    /// of the frame's document, which has its own focus.
+    ///
     /// @param keys The keys.
     public void keyboard(final String keys) {
         final List<KeyAction> actions = Keys.parse(keys);
         addStep(PlayStep.action(root -> "userEvent.keyboard(" + Expectation.quote(keys) + ")",
-                root -> Keyboard.press(root, actions, false)));
+                root -> Keyboard.press(keyRoot(root), actions, false)));
     }
 
     /// Presses Tab to move the focus to the next focusable element, as `userEvent.tab()` does.
@@ -1375,7 +1389,16 @@ public final class Play {
         addStep(PlayStep.action(root -> shift
                         ? "userEvent.tab({ shift: true })"
                         : "userEvent.tab()",
-                root -> Keyboard.press(root, actions, false)));
+                root -> Keyboard.press(keyRoot(root), actions, false)));
+    }
+
+    // An element of the document whose focused element keys are pressed on: the scope's, so that
+    // a play within a frame presses them in the frame. Elements of the same document are
+    // equivalent, so a play without a scope, or whose scope isn't there, uses the story's root
+    private Element keyRoot(final Element root) {
+        return scope == null || !scope.exists().get()
+                ? root
+                : scope.element().get();
     }
 
     /// Chooses a file in a file input, as `userEvent.upload(input, new File([content], name,

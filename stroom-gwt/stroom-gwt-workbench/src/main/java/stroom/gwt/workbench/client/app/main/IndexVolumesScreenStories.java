@@ -142,7 +142,7 @@ public final class IndexVolumesScreenStories {
                     final Play dialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
                     dialog.findByText("/vol1");
                     // Use%: the percentage is the bar's title, with the danger class at 90%
-                    final Query vol1Row = dialog.getByText("/vol1").closest("tr");
+                    final Query vol1Row = dialog.getByText("/vol1").closest(StroomDom.GRID_ROW);
                     final Play vol1 = dialog.within(vol1Row);
                     final Query bar = vol1.querySelector(".percentBarCell-container");
                     play.expect(bar).toBeInTheDocument();
@@ -157,12 +157,13 @@ public final class IndexVolumesScreenStories {
                     play.expect(dialog.getByText("1.23G")).toBeInTheDocument();
                     play.expect(dialog.queryByText("1.2G")).toBeNull();
                     // The INACTIVE volume's cells have GWT's disabled class, the ACTIVE one's don't
-                    final Play vol2 = dialog.within(dialog.getByText("/vol2").closest("tr"));
+                    final Play vol2 = dialog.within(dialog.getByText("/vol2").closest(StroomDom.GRID_ROW));
                     play.expect(vol2.querySelectorAll(".dataGridDisabledCell").count()).toBeGreaterThan(0);
                     play.expect(vol1.querySelectorAll(".dataGridDisabledCell").count()).toBe(0);
                     // ...and no cell dims itself with an inline opacity
-                    play.expect(dialog.getByText("/vol2").closest("tr").element()).toSatisfy("has no inline opacity",
-                            row -> !((Element) row).getInnerHTML().contains("opacity: 0.5"));
+                    play.expect(dialog.getByText("/vol2").closest(StroomDom.GRID_ROW).element())
+                            .toSatisfy("has no inline opacity",
+                                    row -> !((Element) row).getInnerHTML().contains("opacity: 0.5"));
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

@@ -34,6 +34,12 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
     private static final Binder uiBinder = GWT.create(Binder.class);
     // What a screen reader is told while the spinner shows
     private static final String BUSY_TEXT = "Loading...";
+    // Its BEM modifiers (spinner.css): shown, and fading slowly
+    private static final String VISIBLE = "busy-spinner--active";
+    private static final String SOFT = "busy-spinner--soft";
+    /// The modifier that centres the spinner over what is loading, e.g. in UiBinder
+    /// `addStyleNames="busy-spinner--centred"`.
+    public static final String CENTRED = "busy-spinner--centred";
 
     // The text of the spinner's status (a live region), empty while it is hidden. It is put in only
     // once the spinner shows, as a live region that appears with its text already in it isn't
@@ -87,14 +93,14 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
             if (visible) {
                 super.setVisible(visible);
                 Scheduler.get().scheduleDeferred(() -> {
-                    addStyleName("spinner__visible");
+                    addStyleName(VISIBLE);
                     if (this.visible) {
                         status.setInnerText(BUSY_TEXT);
                     }
                 });
             } else {
                 status.setInnerText("");
-                removeStyleName("spinner__visible");
+                removeStyleName(VISIBLE);
                 hideTimer.schedule(500);
             }
         }
@@ -102,9 +108,9 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
 
     public void setSoft(final boolean soft) {
         if (soft) {
-            addStyleName("soft");
+            addStyleName(SOFT);
         } else {
-            removeStyleName("soft");
+            removeStyleName(SOFT);
         }
     }
 

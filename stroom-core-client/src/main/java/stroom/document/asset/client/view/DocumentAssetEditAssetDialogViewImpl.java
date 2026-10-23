@@ -63,7 +63,7 @@ public class DocumentAssetEditAssetDialogViewImpl extends ViewImpl implements
      */
     @Override
     public void setTreeItem(final DocumentAssetTreeItem assetTreeItem) {
-        this.txtAssetName.setText(assetTreeItem.getText());
+        this.txtAssetName.setText(assetTreeItem.getLabel());
         this.id = assetTreeItem.getId();
         this.leaf = assetTreeItem.isLeaf();
     }

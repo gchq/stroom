@@ -28,6 +28,8 @@
 //                          (stroom-gwt-workbench-framework) are picked up live; re-run it after changing
 //                          code in any other module.
 //   workbenchServe         Serves the workbench on http://localhost:6008 (-PworkbenchPort=NNNN).
+//                          The App/Visualisations stories need a stroom-visualisations-dev checkout,
+//                          found beside this repository or given by -PworkbenchVisualisationsDir=<dir>.
 //   workbenchFetchAxe      Downloads axe-core with npm for the Accessibility addon (run by
 //                          workbenchServe; without npm the addon explains what is missing).
 //                          It is kept in the Gradle user home, so `clean` doesn't remove it.
@@ -62,6 +64,31 @@ def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
 // This is a static root for workbenchServe, which serves it as /__workbench/axe.min.js
 def axeDir = new File(gradle.gradleUserHomeDir, "caches/stroom-gwt-workbench/axe-core-${axeVersion}").toString()
 def codeServerPort = findProperty('workbenchCodeServerPort') ?: '9877'
+
+// The source of the visualisations content pack (https://github.com/gchq/stroom-visualisations-dev),
+// whose visualisations and scripts the App/Visualisations stories load as Stroom would (the server's
+// --content-root). Set it with -PworkbenchVisualisationsDir=<dir>; by default it is a
+// stroom-visualisations-dev checkout beside this repository, or beside the main checkout when this is
+// a git worktree. Without one, those stories show that it is missing and workbenchTest skips them.
+def findVisualisationsDir = { ->
+    if (findProperty('workbenchVisualisationsDir')) {
+        return file(findProperty('workbenchVisualisationsDir'))
+    }
+    def checkouts = [rootDir]
+    // A worktree's .git is a file naming its git dir, <main checkout>/.git/worktrees/<name>
+    def dotGit = new File(rootDir, '.git')
+    if (dotGit.isFile()) {
+        def gitDir = dotGit.text.trim().replaceFirst(/^gitdir:\s*/, '')
+        checkouts += new File(gitDir).parentFile.parentFile.parentFile
+    }
+    return checkouts.collect { new File(it.parentFile, 'stroom-visualisations-dev') }
+            .find { it.isDirectory() } ?: new File(rootDir.parentFile, 'stroom-visualisations-dev')
+}
+// The content pack the checkout's build makes (`npm run build`), which is committed there and which
+// Stroom's content store imports
+def visualisationsContentDir = new File(findVisualisationsDir(), 'war/stroom_content')
+// The tag of the stories that need it
+def visualisationsTag = 'visualisations'
 
 // The GWT build directory, under this project's build directory rather than /tmp: /tmp is often
 // a RAM-backed tmpfs with a per-user quota, which GWT's compile cache can fill. Override with
@@ -536,6 +563,7 @@ tasks.register('workbenchServe', JavaExec) {
     // Earlier roots take precedence. The code server launcher dir comes before the war dir
     // so that a running workbenchCodeServer wins over a previous compile.
     args = [workbenchPort] + sourceRootArgs + [
+            "--content-root=${visualisationsContentDir}".toString(),
             "--stories-root=${storiesSourceRoot}".toString(),
             "--stories-package=${storiesPackage}".toString(),
             "--all-stories=${allStoriesFile}".toString(),
@@ -865,6 +893,12 @@ def runTestRunner = { String testUrl ->
         // A longer settle lets a story's last asynchronous updates finish before its screenshot.
         command += ['--fixed-time', SCREENSHOT_FIXED_TIME, '--retries', '1', '--settle', '750']
     }
+    if (!visualisationsContentDir.isDirectory()) {
+        // Before workbenchTestArgs, so that its --skip-tags wins
+        println "No visualisations in ${visualisationsContentDir} (build them with 'npm run build', and see "
+                + "-PworkbenchVisualisationsDir), so the stories tagged '${visualisationsTag}' are skipped"
+        command += ['--skip-tags', "skip-test,${visualisationsTag}".toString()]
+    }
     if (findProperty('workbenchTestArgs')) {
         command += splitArgs(findProperty('workbenchTestArgs').toString())
     }
@@ -1040,6 +1074,7 @@ tasks.register('workbenchTest') {
                 def serverCommand = [javaExecutable] + classpathArgs + [
                         'stroom.gwt.workbench.framework.server.WorkbenchServer',
                         port.toString(),
+                        "--content-root=${visualisationsContentDir}",
                         webappDir.toString(),
                         codeServerLauncherDir,
                         warDir,

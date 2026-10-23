@@ -79,7 +79,10 @@ public final class QueryFixtures {
                 .replace("RESULTS", String.join(", ", results));
     }
 
-    /// A table component's result (`TableResult`, type `table`).
+    /// A table component's result (`TableResult`, type `table`). A row with no `groupKey` is given
+    /// one, `row-N` by its position, as Stroom's server gives every row a key of its own
+    /// (`SimpleRowCreator`): the client tells rows apart by it (`TableRow.equals`), e.g. when one
+    /// is selected.
     ///
     /// @param componentId The component's id (`table` for a query's table).
     /// @param fields      The JSON array of the table's columns (`Column`s).
@@ -91,8 +94,71 @@ public final class QueryFixtures {
                                      final String rows,
                                      final int totalRows) {
         return "{\"type\": \"table\", \"componentId\": \"" + componentId + "\", \"fields\": " + fields
-               + ", \"rows\": " + rows + ", \"resultRange\": {\"offset\": 0, \"length\": " + totalRows
-               + "}, \"totalResults\": " + totalRows + "}";
+               + ", \"rows\": " + withGroupKeys(rows) + ", \"resultRange\": {\"offset\": 0, \"length\": "
+               + totalRows + "}, \"totalResults\": " + totalRows + "}";
+    }
+
+    // Adds "groupKey": "row-N" to each object in a JSON array (the rows) that has no groupKey
+    static String withGroupKeys(final String rows) {
+        final StringBuilder sb = new StringBuilder(rows.length() + 32);
+        int depth = 0;
+        int rowIndex = 0;
+        for (int i = 0; i < rows.length(); i++) {
+            final char c = rows.charAt(i);
+            if (c == '"') {
+                final int end = stringEnd(rows, i);
+                sb.append(rows, i, end + 1);
+                i = end;
+                continue;
+            }
+            sb.append(c);
+            if (c == '[' || c == '{') {
+                depth++;
+                if (c == '{' && depth == 2) {
+                    final int end = objectEnd(rows, i);
+                    if (!rows.substring(i, end).contains("\"groupKey\"")) {
+                        sb.append("\"groupKey\": \"row-").append(rowIndex).append('"');
+                        if (!rows.substring(i + 1, end).trim().isEmpty()) {
+                            sb.append(", ");
+                        }
+                    }
+                    rowIndex++;
+                }
+            } else if (c == ']' || c == '}') {
+                depth--;
+            }
+        }
+        return sb.toString();
+    }
+
+    // The index of the quote that ends the JSON string starting at `start`
+    private static int stringEnd(final String json, final int start) {
+        int i = start + 1;
+        while (i < json.length() && json.charAt(i) != '"') {
+            i += json.charAt(i) == '\\'
+                    ? 2
+                    : 1;
+        }
+        return Math.min(i, json.length() - 1);
+    }
+
+    // The index of the brace that ends the JSON object starting at `start`
+    private static int objectEnd(final String json, final int start) {
+        int depth = 0;
+        for (int i = start; i < json.length(); i++) {
+            final char c = json.charAt(i);
+            if (c == '"') {
+                i = stringEnd(json, i);
+            } else if (c == '{' || c == '[') {
+                depth++;
+            } else if (c == '}' || c == ']') {
+                depth--;
+                if (depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return json.length() - 1;
     }
 
     /// A StroomQL visualisation's result (`QLVisResult`, type `ql_vis`).

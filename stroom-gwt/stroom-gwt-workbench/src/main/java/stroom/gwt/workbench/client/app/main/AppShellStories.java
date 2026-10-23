@@ -445,9 +445,11 @@ public final class AppShellStories {
                 }, builder -> builder.uiConfig(QueryFixtures.uiConfigWith("\"maintenanceMessage\": "
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
-                    // GWT's banner has no 'alert' role
+                    // The banner is an alert, so a screen reader says it when it is shown
                     play.waitFor(() -> play.expect(play.querySelector(".mainViewImpl-banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
+                    play.expect(play.getByRole("alert")).toHaveTextContent(
+                            TextMatch.containingIgnoreCase("system maintenance"));
                     expectNoProblems(play);
                 })
                 // The current activity below the tree opens the chooser; choosing one updates it
@@ -587,6 +589,9 @@ public final class AppShellStories {
                     play.run("focus the main menu's button", () -> mainMenu.element().get().focus());
                     play.tab();
                     play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
+                    // The main view round it all isn't a tab stop (it was: a nameless stop holding
+                    // the whole app, which Shift+Tab from the first button landed on)
+                    play.expect(play.querySelector(".mainViewImpl[tabindex]")).not().toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened
@@ -603,6 +608,18 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
                     play.expect(play.getByTitle(MAIN_MENU)).not().toHaveFocus();
                     expectNoProblems(play);
+                })
+                // #5403: the explorer and the content are landmarks (navigation and main) that screen
+                // readers can go to, and F6 and Shift+F6 move the focus between the main toolbar, the
+                // explorer and the content (the runner's real input check, test-runner/lib/real-input/
+                // areas.mjs, presses them, as a play's F6 has no key code for the key bindings)
+                .story("MovesBetweenAreas", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByRole("navigation", "Explorer")).toBeInTheDocument());
+                    play.expect(play.getByRole("main")).toBeInTheDocument();
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
                 })
                 // #5405: a document opened from the explorer takes the focus
                 .story("OpenedDocumentTakesFocus", context -> render(context, AppShellFixtures.dictTree()))

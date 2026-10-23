@@ -17,6 +17,7 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
+import stroom.dashboard.client.vis.VisTooltipPlacement.Direction;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.query.client.presenter.VisComponentSelection;
@@ -24,19 +25,29 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.JSONUtil;
 import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONNull;
+import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public class MessageSupport
         implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers> {
@@ -50,6 +61,8 @@ public class MessageSupport
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     private SelectionUiHandlers uiHandlers;
+    private Consumer<List<VisToolbarButton>> toolbarHandler;
+    private BiFunction<String, List<String>, List<String>> coloursHandler;
 
     public MessageSupport(final EventBus eventBus,
                           final Element frame) {
@@ -64,12 +77,33 @@ public class MessageSupport
         this.uiHandlers = uiHandlers;
     }
 
+    /// Sets what to do when the visualisation asks for buttons in its toolbar
+    /// (`stroom.setToolbarButtons` in `vis.js`).
+    ///
+    /// @param toolbarHandler Given the buttons it wants, replacing any it asked for before; an empty
+    ///                       list when it wants none.
+    public void setToolbarHandler(final Consumer<List<VisToolbarButton>> toolbarHandler) {
+        this.toolbarHandler = toolbarHandler;
+    }
+
+    /// Sets what gives the visualisation the colours of its values when it asks for them
+    /// (`stroom.colours` in `vis.js`), so that a value has the same colour in every visualisation
+    /// of a dashboard.
+    ///
+    /// @param coloursHandler Given a field and some of its values, gives each value's colour,
+    ///                       `#rrggbb`, in the same order.
+    public void setColoursHandler(final BiFunction<String, List<String>, List<String>> coloursHandler) {
+        this.coloursHandler = coloursHandler;
+    }
+
     public void bind() {
         PostMessage.get().addFrameListener(this);
     }
 
     public void unbind() {
         PostMessage.get().removeFrameListener(this);
+        // The frame is going, so it can no longer ask for its tooltip to be hidden
+        VisTooltip.hide(frameId);
     }
 
     public void postMessage(final JSONObject json, final Callback<String, Exception> callback) {
@@ -106,6 +140,20 @@ public class MessageSupport
                 uiHandlers.onSelection(VisComponentSelection.create(selection));
             }
 
+        } else if ("showTooltip".equals(functionName)) {
+            showTooltip(message);
+
+        } else if ("hideTooltip".equals(functionName)) {
+            VisTooltip.hide(frameId);
+
+        } else if ("setToolbarButtons".equals(functionName)) {
+            if (toolbarHandler != null) {
+                toolbarHandler.accept(toolbarButtons(message));
+            }
+
+        } else if ("colours".equals(functionName)) {
+            answerColours(message);
+
         } else {
             // Test to see if this is a callback message.
             if (callbackId != null) {
@@ -127,6 +175,88 @@ public class MessageSupport
                 }
             }
         }
+    }
+
+    // Answers a colours message, {requestId, field, values}, with the values' colours, by calling
+    // visualisationManager.colours(requestId, colours) in the frame
+    private void answerColours(final JSONObject message) {
+        if (coloursHandler == null) {
+            return;
+        }
+        final String[] values = JSONUtil.getStrings(message.get("values"));
+        final List<String> colours = coloursHandler.apply(
+                JSONUtil.getString(message.get("field")),
+                values == null
+                        ? new ArrayList<>()
+                        : Arrays.asList(values));
+        final JSONArray coloursArray = new JSONArray();
+        for (int i = 0; i < colours.size(); i++) {
+            coloursArray.set(i, new JSONString(colours.get(i)));
+        }
+        final JSONArray params = new JSONArray();
+        final Integer requestId = JSONUtil.getInteger(message.get("requestId"));
+        params.set(0, requestId == null
+                ? JSONNull.getInstance()
+                : new JSONNumber(requestId));
+        params.set(1, coloursArray);
+        final JSONObject reply = new JSONObject();
+        reply.put("functionName", new JSONString("visualisationManager.colours"));
+        reply.put("params", params);
+        postMessage(reply);
+    }
+
+    private void showTooltip(final JSONObject message) {
+        final JSONObject rect = JSONUtil.getObject(message.get("rect"));
+        if (rect != null) {
+            final double left = getDouble(rect, "left");
+            final double top = getDouble(rect, "top");
+            final Rect rectInFrame = new Rect(
+                    top,
+                    top + getDouble(rect, "height"),
+                    left,
+                    left + getDouble(rect, "width"));
+            VisTooltip.show(
+                    frameId,
+                    frame,
+                    JSONUtil.getString(message.get("html")),
+                    rectInFrame,
+                    Direction.fromCode(JSONUtil.getString(message.get("direction"))));
+        }
+    }
+
+    // The buttons of a setToolbarButtons message, leaving out any without an id
+    private static List<VisToolbarButton> toolbarButtons(final JSONObject message) {
+        final List<VisToolbarButton> buttons = new ArrayList<>();
+        final JSONArray array = JSONUtil.getArray(message.get("buttons"));
+        if (array != null) {
+            for (int i = 0; i < array.size(); i++) {
+                final JSONObject button = JSONUtil.getObject(array.get(i));
+                final String id = button == null
+                        ? null
+                        : JSONUtil.getString(button.get("id"));
+                if (id != null) {
+                    final JSONValue pressed = button.get("pressed");
+                    final JSONValue enabled = button.get("enabled");
+                    buttons.add(new VisToolbarButton(
+                            id,
+                            JSONUtil.getString(button.get("title")),
+                            JSONUtil.getString(button.get("icon")),
+                            pressed != null && pressed.isBoolean() != null
+                                    ? pressed.isBoolean().booleanValue()
+                                    : null,
+                            // Enabled unless it says otherwise (an older vis.js doesn't say)
+                            enabled == null || enabled.isBoolean() == null || enabled.isBoolean().booleanValue()));
+                }
+            }
+        }
+        return buttons;
+    }
+
+    private static double getDouble(final JSONObject object, final String key) {
+        final Double value = JSONUtil.getDouble(object.get(key));
+        return value != null
+                ? value
+                : 0;
     }
 
     @Override

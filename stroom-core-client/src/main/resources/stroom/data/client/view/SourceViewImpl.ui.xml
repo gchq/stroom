@@ -39,7 +39,7 @@
                                    addStyleNames="stepping-button"
                                    title="Enter Stepping Mode"
                                    visible="false"/>
-                    <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
+                    <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" />
                 </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>

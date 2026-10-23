@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.script.shared.ScriptDoc;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisFunction;
@@ -28,6 +29,9 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONBoolean;
+import com.google.gwt.json.client.JSONNull;
+import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
@@ -37,7 +41,10 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public class VisFrame extends Composite implements VisPane {
 
@@ -45,11 +52,16 @@ public class VisFrame extends Composite implements VisPane {
     private VisFunction function;
     private final SimplePanel container;
     private final Frame frame;
+    // The messages to send once the frame's page has loaded. vis.js only hears messages once it
+    // has run, so one sent sooner, e.g. scripts to inject when the server replies quickly, is lost
+    private final List<Runnable> pendingMessages = new ArrayList<>();
+    private boolean frameLoaded;
 
     public VisFrame(final EventBus eventBus) {
         // + "?time=" + System.currentTimeMillis());
         frame = new Frame("ui/vis.html");
         frame.addStyleName("VisFrame-frame");
+        frame.addLoadHandler(event -> onFrameLoaded());
         messageSupport = new MessageSupport(eventBus, frame.getElement());
 
         container = new SimplePanel(frame);
@@ -63,7 +75,33 @@ public class VisFrame extends Composite implements VisPane {
      * @param url The URL to set.
      */
     public void setUrl(final String url) {
+        frameLoaded = false;
         frame.setUrl(url);
+    }
+
+    private void onFrameLoaded() {
+        frameLoaded = true;
+        final List<Runnable> messages = new ArrayList<>(pendingMessages);
+        pendingMessages.clear();
+        messages.forEach(Runnable::run);
+    }
+
+    // Sends a message to the frame now if its page has loaded, or else once it has
+    private void send(final Runnable message) {
+        if (frameLoaded) {
+            message.run();
+        } else {
+            pendingMessages.add(message);
+        }
+    }
+
+    /// Names the frame for assistive technology, which announces a frame by its title (WCAG 4.1.2,
+    /// Name, Role, Value).
+    ///
+    /// @param title The frame's name, e.g. the name of the dashboard component showing it.
+    @Override
+    public void setTitle(final String title) {
+        frame.setTitle(title);
     }
 
     public void setContainerPositionAndSize(final double left,
@@ -112,6 +150,75 @@ public class VisFrame extends Composite implements VisPane {
     @Override
     public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
         messageSupport.setUiHandlers(uiHandlers);
+    }
+
+    /// Sets what to do when the visualisation asks for buttons in its toolbar.
+    ///
+    /// @param toolbarHandler Given the buttons it wants, replacing any it asked for before.
+    public void setToolbarHandler(final Consumer<List<VisToolbarButton>> toolbarHandler) {
+        messageSupport.setToolbarHandler(toolbarHandler);
+    }
+
+    /// Sets what gives the visualisation the colours of its values when it asks for them.
+    ///
+    /// @param coloursHandler Given a field and some of its values, gives each value's colour.
+    public void setColoursHandler(final BiFunction<String, List<String>, List<String>> coloursHandler) {
+        messageSupport.setColoursHandler(coloursHandler);
+    }
+
+    /// Tells the visualisation which palette its values' colours come from, now and whenever it
+    /// changes, so that it can ask for its colours again (`visualisationManager.coloursChanged` in
+    /// `vis.js`).
+    ///
+    /// @param palette The palette's name, e.g. `Vivid`.
+    public void coloursChanged(final String palette) {
+        final JSONArray params = new JSONArray();
+        params.set(0, new JSONString(palette));
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.coloursChanged"));
+        message.put("params", params);
+        send(() -> messageSupport.postMessage(message));
+    }
+
+    /// Tells the visualisation the user's time zone and date-time pattern, when it starts and when
+    /// they change, so that it shows times as the rest of Stroom does (`visualisationManager.timeChanged`
+    /// in `vis.js`).
+    ///
+    /// @param settings The user's time settings.
+    public void timeChanged(final DateTimeFormatter.VisTimeSettings settings) {
+        final JSONObject time = new JSONObject();
+        time.put("use", new JSONString(settings.getUse()));
+        time.put("zoneId", settings.getZoneId() == null
+                ? JSONNull.getInstance()
+                : new JSONString(settings.getZoneId()));
+        time.put("offsetMinutes", new JSONNumber(settings.getOffsetMinutes()));
+        time.put("pattern", new JSONString(settings.getPattern()));
+        time.put("compactPattern", new JSONString(settings.getCompactPattern()));
+        final JSONArray params = new JSONArray();
+        params.set(0, time);
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.timeChanged"));
+        message.put("params", params);
+        send(() -> messageSupport.postMessage(message));
+    }
+
+    /// Tells the visualisation that one of the buttons it asked for has been pressed.
+    ///
+    /// @param id      The button's id.
+    /// @param pressed A toggle's new state, or null for a button that isn't a toggle.
+    public void toolbarButtonPressed(final String id, final Boolean pressed) {
+        final JSONArray params = new JSONArray();
+        params.set(0, new JSONString(id));
+        params.set(1, pressed == null
+                ? JSONNull.getInstance()
+                : JSONBoolean.getInstance(pressed));
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.toolbarButtonPressed"));
+        message.put("params", params);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override
@@ -196,7 +303,7 @@ public class VisFrame extends Composite implements VisPane {
         message.put("functionName", new JSONString("visualisationManager.injectScripts"));
         message.put("params", params);
 
-        messageSupport.postMessage(message, callback);
+        send(() -> messageSupport.postMessage(message, callback));
     }
 
     @Override
@@ -207,21 +314,21 @@ public class VisFrame extends Composite implements VisPane {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.setClassName"));
         message.put("params", params);
-        messageSupport.postMessage(message);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override
     public void start() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.start"));
-        messageSupport.postMessage(message);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override
     public void end() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.end"));
-        messageSupport.postMessage(message);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override
@@ -247,7 +354,7 @@ public class VisFrame extends Composite implements VisPane {
             }
         };
 
-        messageSupport.postMessage(message, callback);
+        send(() -> messageSupport.postMessage(message, callback));
     }
 
     @Override
@@ -261,14 +368,14 @@ public class VisFrame extends Composite implements VisPane {
         message.put("functionName", new JSONString("visualisationManager.setData"));
         message.put("params", params);
 
-        messageSupport.postMessage(message);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override
     public void onResize() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.resize"));
-        messageSupport.postMessage(message);
+        send(() -> messageSupport.postMessage(message));
     }
 
     @Override

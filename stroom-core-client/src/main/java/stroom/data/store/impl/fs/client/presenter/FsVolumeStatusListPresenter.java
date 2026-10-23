@@ -20,7 +20,6 @@ import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
@@ -36,6 +35,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -56,7 +56,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
-    private final MyDataGrid<FsVolume> dataGrid;
+    private final DataGridWidget<FsVolume> dataGrid;
     private final MultiSelectionModelImpl<FsVolume> selectionModel;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -71,7 +71,9 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(FsVolume::getId);
         dataGrid.setTableName("FS Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

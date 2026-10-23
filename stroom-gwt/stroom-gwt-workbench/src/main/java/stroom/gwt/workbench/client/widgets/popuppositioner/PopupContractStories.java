@@ -104,12 +104,10 @@ public final class PopupContractStories {
         cases.add(PopupCase.of("TypeFilter", PopupHarnesses::typeFilter)
                 .opener(".type-filter-trigger")
                 .partners(".type-filter-trigger")
-                // The type filter's list is also a `menu`, but without menu rows
-                .panel(".popup--floating:has(.menu):not(:has(.menu__item))")
-                .insideTarget(".popup--floating:not(:has(.menu__item)) .popupContent")
-                // Left out of EscapeCloses: Escape is handled by the popup's list, not the popup
-                // (TypeFilterSelectionEventManager.onClose → TypeFilterPresenter.escape() → hideSelf())
-                .storyCases(true, false)
+                // The popup holding the type filter's list (a listbox on the data grid); Escape on
+                // the list goes on to the popup, which closes
+                .panel(".popup--floating:has([role='listbox'][aria-label='Document types'])")
+                .insideTarget(".popup--floating:has([role='listbox'][aria-label='Document types']) .popupContent")
                 .placement(".type-filter-trigger", PopupLocation.RIGHT, 3,
                         "TypeFilterPresenter.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
         cases.add(PopupCase.of("Popover (SettingBlock)", PopupHarnesses::settingBlock)

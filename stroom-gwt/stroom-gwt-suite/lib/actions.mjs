@@ -56,7 +56,7 @@ async function untilStable(page, project, { samples = 6, intervalMs = 500, maxMs
 export async function runDashboardSearch(page) {
   const project = () => ({
     pagers: [...document.querySelectorAll('.pager')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).slice(0, 6),
-    rows: document.querySelectorAll('.dataGridWidget tbody tr, .data-grid__row').length,
+    rows: document.querySelectorAll('.data-grid__row').length,
   });
   await page.locator('[title="Execute Query"]').first().click({ timeout: 15_000 });
   const tables = await untilStable(page, project);

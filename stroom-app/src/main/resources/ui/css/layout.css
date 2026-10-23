@@ -17,6 +17,15 @@
        edge: the ring's 1px edge and 4px band, and the 3px a form's help button stands above its
        label row */
     --focus-ring__room: 7px;
+    /* A mouse-over's fill fades in, so that sweeping the mouse over rows or buttons doesn't flicker.
+       Set only in a :hover rule: leaving, selecting, focus and pressing change at once */
+    --hover__transition: background-color 120ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --hover__transition: none;
+    }
 }
 
 .stroom-density-compact {

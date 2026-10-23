@@ -19,6 +19,7 @@ package stroom.preferences.client;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.visualisation.shared.VisPalette;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
@@ -72,6 +73,8 @@ public final class ThemePreferencesPresenter
                 Objects.requireNonNullElse(userPreferences.getEnableTransparency(), true));
         getView().setHideConditionalStyles(
                 Objects.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
+        getView().setVisualisationPalette(
+                VisPalette.fromDisplayValue(userPreferences.getVisualisationPalette()).getDisplayValue());
     }
 
     public void write(final UserPreferences.Builder builder) {
@@ -81,7 +84,8 @@ public final class ThemePreferencesPresenter
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
                 .enableTransparency(getView().isEnableTransparency())
-                .hideConditionalStyles(getView().isHideConditionalStyles());
+                .hideConditionalStyles(getView().isHideConditionalStyles())
+                .visualisationPalette(getView().getVisualisationPalette());
     }
 
     /// @param onChange What to run when the user changes a theme preference.
@@ -122,5 +126,11 @@ public final class ThemePreferencesPresenter
         boolean isHideConditionalStyles();
 
         void setHideConditionalStyles(boolean hideConditionalStyles);
+
+        /// @return The name of the palette chosen for visualisations' colours.
+        String getVisualisationPalette();
+
+        /// @param visualisationPalette The name of the palette for visualisations' colours.
+        void setVisualisationPalette(String visualisationPalette);
     }
 }

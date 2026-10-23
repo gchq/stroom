@@ -1092,7 +1092,7 @@ appConfig:
           tls: null
           userAgent: null
           validateAfterInactivityPeriod: "PT0S"
-        maxNumberOfMessages: 1000
+        maxNumberOfMessages: 10
         pollMaxWaitTime: "PT10S"
         queueUrl: null
         visibilityTimeout: "PT3M"

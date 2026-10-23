@@ -19,15 +19,20 @@ package stroom.gwt.workbench.client.widgets.actionmenucell;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.DataGridUtil;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.cellview.client.CellWidget;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -68,33 +73,79 @@ public final class ActionMenuCellStories {
                 })
                 .withPlay(play -> {
                     final Play body = play.screen();
-                    play.click(play.getByTitle("Actions..."));
+                    // The button says it opens a menu, and whether the menu is open
+                    final Query button = play.getByTitle("Actions...");
+                    play.expect(button).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(button).toHaveAttribute("aria-expanded", "false");
+                    play.click(button);
                     play.waitFor(() -> play.expect(body.getByText("Duplicate Rule")).toBeVisible());
                     play.expect(body.getByRole("menu", "Actions for row 1")).toBeInTheDocument();
+                    play.expect(button).toHaveAttribute("aria-expanded", "true");
                     play.expect(body.getByText("Add Rule Above")).toBeVisible();
 
                     play.click(body.getByText("Duplicate Rule"));
                     play.waitFor(() -> play.expect(play.spy(CLICKED)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(CLICKED)).toHaveBeenCalledWith("copy");
                 })
-                // No items: the cell has no menu to show
+                // The "Actions..." button is a button, so the keyboard can use it (it was a picture that
+                // only a mouse press opened): in a grid, as Stroom's screens show it, the grid's keys
+                // reach it, Enter, or Space, opens the menu, which takes the focus, and Escape puts
+                // the focus back on the button
+                .story("OpensFromTheKeyboard", context -> {
+                    final Spy clicked = context.fn(CLICKED);
+                    final List<Item> items = new ArrayList<>();
+                    items.add(menuItem(1, "Add Rule Above", SvgImage.ADD_ABOVE, () -> clicked.call("add")));
+                    items.add(menuItem(2, "Duplicate Rule", SvgImage.COPY, () -> clicked.call("copy")));
+                    return actionMenuGrid(context, items);
+                })
+                .withPlay(play -> {
+                    final Play body = play.screen();
+                    final Query button = play.getByRole("button", "Actions...");
+                    play.click(play.getByText(ROW));
+                    play.keyboard("{ArrowRight}{End}");
+                    play.expect(button).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(body.getByRole("menuitem", "Add Rule Above")).toHaveFocus());
+                    play.expect(body.getByRole("menu", "Actions for row 1")).toBeInTheDocument();
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(body.queryByRole("menu")).toBeNull());
+                    play.expect(button).toHaveFocus();
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(body.getByRole("menuitem", "Add Rule Above")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.expect(play.spy(CLICKED)).not().toHaveBeenCalled();
+                })
+                // No items: the cell has no menu to show, so no button (it once showed one that did
+                // nothing)
                 .story("NoItems", context -> {
                     context.fn(CLICKED);
                     return actionMenuCell(context, Collections.emptyList());
                 })
-                .withPlay(play -> {
-                    // ActionMenuCell renders its ellipsis for every row, even with no items; a mouse
-                    // down on it then shows no menu
-                    play.expect(play.getByTitle("Actions...")).toBeInTheDocument();
-                    play.click(play.getByTitle("Actions..."));
-                    play.expect(play.screen().querySelector(".menu")).toBeNull();
-                });
+                .withPlay(play -> play.expect(play.queryByTitle("Actions...")).toBeNull());
     }
 
     private static Widget actionMenuCell(final StoryContext context, final List<Item> items) {
         final StoryPopups popups = StoryPopups.create(context).withMenus();
         final ActionMenuCell<String> cell = new ActionMenuCell<>(row -> items, popups.getEventBus()::fireEvent);
         return new CellWidget<>(cell, ROW);
+    }
+
+    // A one-row grid of a name column and the cell's, as Stroom's lists show it
+    private static Widget actionMenuGrid(final StoryContext context, final List<Item> items) {
+        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        final DataGridWidget<String> grid = new DataGridWidget<>(new SimpleEventBus());
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder((String row) -> row).build(), "Name", 150);
+        grid.addColumn(DataGridUtil.columnBuilder(
+                                (String row) -> row,
+                                () -> new ActionMenuCell<String>(row -> items, popups.getEventBus()::fireEvent))
+                        .build(),
+                "",
+                40);
+        grid.setRowData(List.of(ROW));
+        final SimplePanel panel = new SimplePanel(grid);
+        panel.getElement().getStyle().setProperty("height", "120px");
+        panel.getElement().getStyle().setProperty("width", "240px");
+        return panel;
     }
 
     private static Item menuItem(final int priority,

@@ -163,7 +163,8 @@ public final class DocumentPermissionsTabStories {
                             .toBeInTheDocument();
                     // Pipeline is half ticked (inherited); ticking it makes it explicit.
                     // The tick box is a TickBoxCell div with no label
-                    play.click(nested.within(nested.getByText("Pipeline").closest("tr")).querySelector(".tick-box"));
+                    play.click(nested.within(nested.getByText("Pipeline").closest(StroomDom.GRID_ROW))
+                            .querySelector(".tick-box"));
                     play.click(nested.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)

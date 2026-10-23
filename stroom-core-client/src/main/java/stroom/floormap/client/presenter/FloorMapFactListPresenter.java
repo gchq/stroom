@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactListView;
@@ -27,6 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.JSONUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -72,7 +72,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
 
     private static final String END_TITLE = "Delete From This Time (keeps history)";
 
-    private final MyDataGrid<FactObject> dataGrid;
+    private final DataGridWidget<FactObject> dataGrid;
     private final ListDataProvider<FactObject> dataProvider = new ListDataProvider<>();
     private final MultiSelectionModelImpl<FactObject> selectionModel;
     /// Called with the full multi-selection on every change. Used by the Editor tab.
@@ -117,7 +117,8 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                                      final FloorMapFactListView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Facts");
         // Multi-select: ctrl/shift-click extends the selection natively via the
         // grid's selection event manager.
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -163,7 +164,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                         com.google.gwt.core.client.Scheduler.get().scheduleDeferred(() -> {
                             if (index < dataGrid.getVisibleItemCount()) {
                                 try {
-                                    final com.google.gwt.dom.client.TableRowElement rowEl =
+                                    final com.google.gwt.dom.client.Element rowEl =
                                             dataGrid.getRowElement(index);
                                     if (rowEl != null) {
                                         stroom.widget.util.client.ElementUtil.scrollIntoViewNearest(rowEl);
@@ -250,7 +251,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     /// Replaces the entire grid data with the supplied list.
     ///
     /// Both the backing [ListDataProvider] and the visible
-    /// [MyDataGrid] row data are updated. The current selection is
+    /// [DataGridWidget] row data are updated. The current selection is
     /// *not* automatically adjusted — callers should follow up with
     /// [#setSelected(String)] as appropriate.
     ///

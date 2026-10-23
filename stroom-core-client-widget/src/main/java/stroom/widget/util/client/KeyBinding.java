@@ -118,6 +118,8 @@ public class KeyBinding {
         addDefault(Action.LOCATE, "Alt+L");
         addDefault(Action.MAXIMISE_PANE, "Alt+M");
         addDefault(Action.HELP, "F1");
+        addDefault(Action.FOCUS_NEXT_AREA, "F6");
+        addDefault(Action.FOCUS_PREVIOUS_AREA, "Shift+F6");
         addDefault(Action.FOCUS_FILTER, "/");
         addDefault(Action.FOCUS_EXPLORER_FILTER, "Ctrl+/");
 
@@ -454,8 +456,9 @@ public class KeyBinding {
                 action = testAction(e, action);
 
             } else if (isInput(e)) {
-                // We will support some single key bindings in text boxes.
-                if (e.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                // We will support some single key bindings in text boxes: Escape, and the function
+                // keys, which type nothing (e.g. F1, a form group's help)
+                if (e.getKeyCode() == KeyCodes.KEY_ESCAPE || isFunctionKey(e.getKeyCode())) {
                     keySequences.clear();
                     action = getKeyDownAction(e);
                     action = testAction(e, action);
@@ -514,6 +517,11 @@ public class KeyBinding {
             }
         }
         return action;
+    }
+
+    // F1 to F12, by key code
+    private static boolean isFunctionKey(final int keyCode) {
+        return keyCode >= KeyCodes.KEY_F1 && keyCode <= KeyCodes.KEY_F12;
     }
 
     private static boolean isInput(final NativeEvent e) {
@@ -685,6 +693,10 @@ public class KeyBinding {
         INFO("Info", null),
         FOCUS_FILTER("Go to quick filter", Category.GENERAL),
         FOCUS_EXPLORER_FILTER("Go to explorer filter", Category.GENERAL),
+        // Moves the focus between the main areas (the main toolbar, the explorer and the open
+        // content), as F6 does in browsers and IDEs, past what lies between them (WCAG 2.4.1)
+        FOCUS_NEXT_AREA("Go to next area", Category.GENERAL),
+        FOCUS_PREVIOUS_AREA("Go to previous area", Category.GENERAL),
         SETTINGS("Settings", null),
 
         // GOTO key sequences

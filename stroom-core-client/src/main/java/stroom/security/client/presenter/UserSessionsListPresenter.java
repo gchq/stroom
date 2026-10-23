@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -30,6 +29,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -57,7 +57,7 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final MyDataGrid<SessionDetails> dataGrid;
+    private final DataGridWidget<SessionDetails> dataGrid;
     private final MultiSelectionModelImpl<SessionDetails> selectionModel;
     private final ButtonView endSessionButton;
 
@@ -72,7 +72,9 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        this.dataGrid.setKeyProvider(SessionDetails::getSessionHandle);
         this.dataGrid.setTableName("Sessions");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

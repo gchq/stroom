@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.query;
 
 import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -83,6 +84,17 @@ public final class QueryResultsTableStories {
                     play.expect(nameCell.attribute("style")).toMatch("white-space:normal");
                     play.expect(nameCell.attribute("style")).toMatch("font-weight:bold");
                     play.expect(play.getByText("5").attribute("style")).not().toMatch("font-weight:bold");
+                    // A filter's button turns it off: the next search asks for it off (the header
+                    // shows the columns the server sends back, which here always have it on), and
+                    // no column menu opens
+                    final Query buttons = play.querySelectorAll(".dashboard-table-filter-cell-disable-button");
+                    play.expect(buttons.nth(1)).toHaveAttribute("title", "Disable Filter");
+                    play.click(buttons.nth(1));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            QueryFixtures.SEARCH.withBody("a column filter turned off", body ->
+                                            body.contains("\"enabled\":false"))
+                                    .toSpyMatcher()));
+                    play.expect(play.screen().querySelector(".menuItem-text")).not().toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // A link made by `link(url)`, with no text of its own, shows its URL but is named by

@@ -69,6 +69,11 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         final String detailId = DOM.createUniqueId();
         detail.getElement().setId(detailId);
         showHideDetail.getElement().setAttribute("aria-controls", detailId);
+        // The detail scrolls when it is long (e.g. a stack trace), so the keyboard can reach it to
+        // scroll it: a named region that takes the focus
+        detail.getElement().setTabIndex(0);
+        detail.getElement().setAttribute("role", "region");
+        detail.getElement().setAttribute("aria-label", "Detail");
 
         layout.setStyleName("alert-layout");
         layout.add(image);

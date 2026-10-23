@@ -26,6 +26,7 @@
 @import url("stroom-button.css");
 @import url("toolbar.css");
 @import url("focus-tooltip.css");
+@import url("vis-tooltip.css");
 @import url("help-popup.css");
 @import url("info-tooltip.css");
 @import url("split-pane.css");
@@ -49,6 +50,8 @@
 @import url("celltable/ExplorerTree.css");
 @import url("menu.css");
 @import url("celltable/DataGrid.css");
+@import url("celltable/DataGridWidget.css");
+@import url("data-grid.css");
 @import url("calendar.css");
 @import url("date-time-view.css");
 @import url("date-time-box.css");

@@ -25,12 +25,13 @@
             <g:TextArea ui:field="defaultValue"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Set a cluster-wide value in the database, entered in Database Value, to use instead of the default. A YAML value on a node still takes priority. Unticking removes the database value. Not available when Read Only is ticked.">
             <tickbox:CustomCheckBox ui:field="useOverride" identity="globalPropertyEditSetDatabasevalue" label="Set Database value"/>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value"
                         helpText="The cluster-wide value stored in the database. Only editable when 'Set Database value' is ticked. The format depends on the Data Type."
-                        screenReaderText="Editable when Set Database value is ticked. Format depends on the data type.">
+                        screenReaderText="Editable when Set Database value is ticked. Format depends on the data type."
+                        controlNames="Database Value, Database Value">
             <g:FlowPanel>
                 <g:TextArea ui:field="databaseValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
@@ -68,13 +69,13 @@
             <g:Label ui:field="source" addStyleNames="globalProperties"/>
         </form:FormGroup>
         <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-attributes">
-            <form:FormGroup>
-                <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh"/>
+            <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after the Stroom nodes serving the user interface are restarted.">
+                <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Node Restart"/>
             </form:FormGroup>
-            <form:FormGroup>
+            <form:FormGroup helpText="Read only. Ticked if a change to this property only takes effect after every Stroom node in the cluster is restarted.">
                 <tickbox:CustomCheckBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>
             </form:FormGroup>
-            <form:FormGroup>
+            <form:FormGroup helpText="Read only. Ticked if this property can't be changed here, only in the nodes' YAML configuration files.">
                 <tickbox:CustomCheckBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"/>
             </form:FormGroup>
         </g:FlowPanel>

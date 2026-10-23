@@ -26,10 +26,10 @@ import stroom.widget.presenter.client.ViewImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasRows;
 
 import javax.inject.Inject;
 
@@ -58,7 +58,7 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public void setDataWidget(final AbstractHasData<?> widget) {
+    public <W extends Widget & HasRows> void setDataWidget(final W widget) {
         pager.setDisplay(widget);
         listContainer.add(widget);
         listContainer.add(messagePanel);

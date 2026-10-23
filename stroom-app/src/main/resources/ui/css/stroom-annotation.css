@@ -483,3 +483,16 @@
 .setting-block.setting-block--readonly .setting-block-icon {
     display: none;
 }
+
+/* A setting's ⋮ is its button (SettingBlock): with the keyboard focus it shows, with a focus ring,
+   and its setting is highlighted as on a hover */
+.setting-block-icon:focus-visible {
+    opacity: 1;
+    outline: none;
+    border-radius: .25rem;
+    box-shadow: var(--focus-shadow);
+}
+
+.setting-block:has(> .setting-block-icon:focus-visible) {
+    background-color: var(--border-color);
+}

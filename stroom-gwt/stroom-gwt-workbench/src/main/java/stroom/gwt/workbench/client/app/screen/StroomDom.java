@@ -32,12 +32,20 @@ public final class StroomDom {
     /// A dialog's caption.
     public static final String DIALOG_TITLE = ".dialog__title";
     /// The data rows of a `MyDataGrid`/`CellTable` (GWT marks each with `__gwt_row`; there is no
-    /// `role="row"`). A cell's row is `play.getByText(x).closest("tr")`.
-    public static final String GRID_ROW = "tr[__gwt_row]";
-    /// The class of a selected `MyDataGrid` row (Stroom's grids have no `aria-selected`).
-    public static final String SELECTED_ROW = "dataGridSelectedRow";
-    /// The class of the header of a column that can be sorted.
-    public static final String SORTABLE_HEADER = "dataGridSortableHeader";
+    /// `role="row"`) or of a `DataGridWidget` (`data-row`). A cell's row is
+    /// `play.getByText(x).closest(GRID_ROW)`.
+    public static final String GRID_ROW = "tr[__gwt_row], .data-grid__row[data-row]";
+    /// A column's header cell in either grid: a `MyDataGrid`'s `th` or a `DataGridWidget`'s
+    /// `[data-hcol]`. A header's cell is `play.getByText(x).closest(GRID_HEADER_CELL)`.
+    public static final String GRID_HEADER_CELL = "th, [data-hcol]";
+    /// What holds a header's text in either grid, for `getByText(name, GRID_HEADER_TEXT)`.
+    public static final String GRID_HEADER_TEXT = "th, th *, [data-hcol], [data-hcol] *";
+    /// What holds a cell's text in either grid, for `getByText(text, GRID_CELL_TEXT)`.
+    public static final String GRID_CELL_TEXT = "td *, [data-col] *";
+    /// The class of a selected `DataGridWidget` row.
+    public static final String SELECTED_ROW = "data-grid__row--selected";
+    /// The class of the header of a grid column that can be sorted.
+    public static final String SORTABLE_HEADER = "data-grid__header-cell--sortable";
     /// The text box of Stroom's `SelectionBox` (a drop-down), which opens its list when clicked.
     public static final String SELECTION_BOX = ".selection-box__input";
     /// The placeholder of a `QuickFilter`'s text box, which has no label.

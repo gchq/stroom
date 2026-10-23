@@ -18,6 +18,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-    <g:ScrollPanel ui:field="scrollPanel" styleName="max stroom-control" />
+    <!-- The asset tree, which scrolls itself -->
+    <g:SimplePanel ui:field="treePanel" styleName="max form-control-border form-control-background" />
 
 </ui:UiBinder>

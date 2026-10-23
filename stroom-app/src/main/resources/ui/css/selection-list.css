@@ -21,8 +21,7 @@
    levels above) between them. It fills what holds it; a selection box's list is sized by
    selection-popup.css.
 
-   Its rows are a cell table, whose classes (cellTable*) are the grid session's to rename; until then
-   the row looks below reach into them.
+   Its rows are the data grid's, as a list's (DataGridProfile.LISTBOX), with the grid's row looks.
 */
 
 .selection-list {
@@ -70,41 +69,4 @@
     overflow: hidden;
 }
 
-/* Its rows */
-
-.selection-list .cellTableCell {
-    display: flex;
-    align-items: center;
-    min-height: 20px;
-}
-
-.selection-list .cellTableSelectedRow {
-    background-color: var(--row__background-color--selected);
-    color: var(--row__text-color--selected);
-}
-
-.selection-list .cellTableOddRow:hover,
-.selection-list .cellTableEvenRow:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
-/* A chosen row looks the same under the mouse, as the expression tree's does (the cell table's own
-   rule would darken it) */
-.selection-list .cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected);
-}
-
-/* The option with the focus: the focus border and ring every other control has (as the pipeline and
-   expression trees' rows), drawn inside the row, as the list's scrolling box would cut off a ring
-   drawn round the first and last rows. A chosen row with the focus takes the selected-and-focused
-   colour, as the expression tree's and the explorer's do, which the focus border stands out from
-   (the plain selected colour is too near it in the dark theme) */
-.selection-list .cellTableOddRow:focus-within,
-.selection-list .cellTableEvenRow:focus-within,
-.selection-list .cellTableSelectedRow:focus-within {
-    box-shadow: inset 0 0 0 1px var(--focus-border), inset 0 0 0 4px var(--focus-ring__color);
-}
-
-.selection-list .cellTableSelectedRow:focus-within {
-    background-color: var(--row__background-color--selected--focussed);
-}
+/* Its rows are the data grid's, as a list's (data-grid.css: the mouse over, chosen and focus looks) */

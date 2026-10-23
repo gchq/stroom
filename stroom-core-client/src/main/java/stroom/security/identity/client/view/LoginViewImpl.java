@@ -31,6 +31,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -44,6 +45,8 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
 
     private final Widget widget;
 
+    @UiField
+    FlowPanel page;
     @UiField
     SimplePanel userImage;
     @UiField
@@ -71,6 +74,12 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         userName.getElement().setAttribute("placeholder", "Enter User Name");
 
         password.setPlaceholder("Enter Password");
+
+        // The page is its main content (a landmark screen readers can go to), and the fields say what
+        // they hold, so that browsers and password managers can fill them in
+        page.getElement().setAttribute("role", "main");
+        userName.getElement().setAttribute("autocomplete", "username");
+        password.getInput().getElement().setAttribute("autocomplete", "current-password");
 
         setAllowPasswordResets(false);
     }

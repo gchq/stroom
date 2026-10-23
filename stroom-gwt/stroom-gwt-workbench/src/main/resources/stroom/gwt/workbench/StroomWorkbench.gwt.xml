@@ -72,6 +72,7 @@
     <inherits name='stroom.editor.Editor'/>
     <inherits name='stroom.data.Data'/>
     <inherits name='stroom.data.grid.Grid'/>
+    <inherits name='stroom.widget.datagrid.DataGrid'/>
     <inherits name='stroom.data.table.Table'/>
     <inherits name='stroom.data.pager.Pager'/>
     <inherits name='stroom.cell.Cell'/>

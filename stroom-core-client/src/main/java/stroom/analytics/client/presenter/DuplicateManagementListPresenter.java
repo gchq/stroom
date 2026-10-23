@@ -23,7 +23,6 @@ import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -33,6 +32,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -53,7 +53,7 @@ public class DuplicateManagementListPresenter
     private static final DuplicateCheckResource DUPLICATE_CHECK_RESOURCE =
             GWT.create(DuplicateCheckResource.class);
 
-    private final MyDataGrid<DuplicateCheckRow> dataGrid;
+    private final DataGridWidget<DuplicateCheckRow> dataGrid;
     private final MultiSelectionModelImpl<DuplicateCheckRow> selectionModel;
     private final RestFactory restFactory;
     private final ButtonView deleteButton;
@@ -70,7 +70,7 @@ public class DuplicateManagementListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Duplicate Management");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -18,11 +18,11 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -38,7 +38,7 @@ import java.util.ArrayList;
 public class XPathListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable {
 
-    private final MyDataGrid<XPathFilter> dataGrid;
+    private final DataGridWidget<XPathFilter> dataGrid;
     private final MultiSelectionModelImpl<XPathFilter> selectionModel;
     private final ListDataProvider<XPathFilter> dataProvider;
 
@@ -47,7 +47,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
                               final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("XPath Matches");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -96,9 +96,10 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
         };
         dataGrid.addResizableColumn(valueColumn, "Value", 150);
 
-        // Ignore case.
+        // Ignore case: shown, not changed here (the filter's dialog changes it), so read only, as
+        // DataGridUtil.readOnlyTickBoxColumnBuilder makes them
         final Column<XPathFilter, TickBoxState> ignoreCaseColumn = new Column<XPathFilter, TickBoxState>(
-                TickBoxCell.create(false, false)) {
+                TickBoxCell.create(new TickBoxCell.NoBorderAppearance(), false, false, false)) {
             @Override
             public TickBoxState getValue(final XPathFilter filter) {
                 return TickBoxState.fromBoolean(filter.isIgnoreCase());

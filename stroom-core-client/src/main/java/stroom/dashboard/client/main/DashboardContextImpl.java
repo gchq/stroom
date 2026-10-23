@@ -34,6 +34,7 @@ import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.util.shared.NullSafe;
+import stroom.visualisation.shared.VisColourList;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -65,6 +66,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     private final EventBus eventBus;
     private final Components components;
     private final QueryToolbarPresenter queryToolbarPresenter;
+    // The colours of the values the visualisations colour by
+    private final VisColourList visColourList = new VisColourList();
     private List<ComponentState> parentComponentStates = new ArrayList<>();
     private List<Param> linkParams = Collections.emptyList();
     private DocRef dashboardDocRef;
@@ -536,6 +539,11 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     public void fireComponentChangeEvent(final Component component) {
         componentChangeListeners.fire(component);
         fireContextChangeEvent();
+    }
+
+    @Override
+    public VisColourList getVisColourList() {
+        return visColourList;
     }
 
     @Override

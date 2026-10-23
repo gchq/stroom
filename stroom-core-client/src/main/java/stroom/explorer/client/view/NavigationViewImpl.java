@@ -68,10 +68,17 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     public NavigationViewImpl(final NavigationViewImpl.Binder binder) {
         layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        nameFilter.setAccessibleName("Filter explorer");
 
         logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
                 SvgImage.LOGO,
                 "navigation-logo-image"));
+        // A click on the logo opens the main menu, as the Main Menu button beside it does, so for
+        // the keyboard and screen readers it would be a second, nameless Main Menu: it is left out
+        // of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and hidden from them
+        logo.getElement().setTabIndex(-2);
+        logo.getElement().setAttribute("aria-hidden", "true");
     }
 
     @Override

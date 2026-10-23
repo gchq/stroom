@@ -12,19 +12,19 @@
     border-color: var(--grey-700);
 }
 
-.dataGridOddRow .percentBarCell-container {
+.data-grid__row--odd .percentBarCell-container {
     background-color: var(--row__background-color--odd);
 }
 
-.dataGridEvenRow .percentBarCell-container {
+.data-grid__row--even .percentBarCell-container {
     background-color: var(--row__background-color--even);
 }
 
-.dataGridSelectedRowCell.dataGridDisabledCell .percentBarCell-container {
+.data-grid__row--selected .dataGridDisabledCell .percentBarCell-container {
     border-color: var(--text-color--disabled);
 }
 
-.dataGridSelectedRowCell .percentBarCell-container {
+.data-grid__row--selected .percentBarCell-container {
     border-color: var(--grey-500);
 }
 

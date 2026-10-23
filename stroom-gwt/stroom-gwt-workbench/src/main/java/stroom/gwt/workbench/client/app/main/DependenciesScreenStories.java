@@ -96,8 +96,9 @@ public final class DependenciesScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alpha XSLT");
-                    // The action buttons: [row1 From, row1 To, row2 From, row2 To]. Open row1's To
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
+                    // Each action button is named for its document (as its menu is): open Alpha
+                    // XSLT's
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
                     // The menu is named for its document, and takes the focus. All five GWT items
                     // are present
                     screen.findByRole("menu", TextMatch.regex("^Actions for .+ 'Alpha XSLT'$"));
@@ -110,12 +111,12 @@ public final class DependenciesScreenStories {
                     play.click(screen.getByText("Show Info"));
                     play.waitFor(() -> play.expect(play.spy(ON_PROPERTIES)).toHaveBeenCalledWith("x-1"));
                     // Reopen: Locate fires LocateDocEvent
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
                     play.click(screen.findByText("Locate in Explorer"));
                     play.waitFor(() -> play.expect(play.spy(ON_LOCATE)).toHaveBeenCalledWith("x-1"));
                     // Reopen and show the dependants of Alpha XSLT: GWT writes `touuid:<uuid>` into
                     // the quick filter and lets the server apply it
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
+                    play.click(play.getAllByTitle(TextMatch.regex("^Actions for .+ 'Alpha XSLT'$")).nth(0));
                     play.click(screen.findByText("Show Dependants"));
                     // GWT's quick filter has no label, only a placeholder
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);

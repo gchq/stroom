@@ -61,7 +61,7 @@ public class DescriptionBuilder {
             // Pointless span but not sure if any css is relying on it, so leaving it in for now
             sb.appendHtmlConstant("<span>")
                     .append(text)
-                    .appendHtmlConstant("</span");
+                    .appendHtmlConstant("</span>");
         } else {
             sb.append(SafeHtmlUtil.getTemplate().spanWithClass(classNameBuilder.build(), text));
         }

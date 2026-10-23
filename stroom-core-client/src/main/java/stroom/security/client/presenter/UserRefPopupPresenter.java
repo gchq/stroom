@@ -19,8 +19,6 @@ package stroom.security.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
@@ -39,6 +37,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -81,7 +81,7 @@ public class UserRefPopupPresenter
     private static final UserRefResource RESOURCE = GWT.create(UserRefResource.class);
 
     private final PagerView pagerView;
-    private final MyDataGrid<UserRef> dataGrid;
+    private final DataGridWidget<UserRef> dataGrid;
     private RestDataProvider<UserRef, ResultPage<UserRef>> dataProvider;
     private final MultiSelectionModelImpl<UserRef> selectionModel;
     private final RestFactory restFactory;
@@ -109,15 +109,15 @@ public class UserRefPopupPresenter
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Users");
         dataGrid.setAccessibleName("Users and groups");
         selectionModel = new MultiSelectionModelImpl<>();
         // A picker's keys: Down in the filter goes to the chosen user, Up from the first row back
-        // to the filter, and typing in the grid goes to the filter; moving chooses
-        final DataGridSelectionEventManager<UserRef> selectionEventManager =
-                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
-        selectionEventManager.setSelectionFollowsFocus(true);
+        // to the filter, and typing in the grid goes to the filter; moving chooses (as in every
+        // single-choice grid)
+        final DataGridWidgetSelectionEventManager<UserRef> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
         selectionEventManager.setMoveUpFromFirst(userListView::focus);
         selectionEventManager.setTypedHandler(userListView::typeInFilter);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

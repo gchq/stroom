@@ -881,18 +881,25 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     }
 
 
+    // The list scrolls when it is taller than its pane and nothing in it takes the focus, so it is a
+    // named region that does, so that the keyboard can scroll it (a keyboard list or tree of its rows
+    // would be better still)
     private void appendOperationList(final HtmlBuilder hb) {
+        final Attribute[] attributes = {
+                Attribute.className("operation-list scroll-region"),
+                Attribute.id("operationList"),
+                new Attribute("tabindex", "0"),
+                new Attribute("role", "region"),
+                new Attribute("aria-label", "Service and operation")};
         if (largeMode) {
             // One page of already-flattened tree-order rows (depth carried per row). The server has already
             // pruned collapsed subtrees, so we just render the rows and their expanders.
             hb.div(div -> pageRows.forEach(r ->
                             appendPagedRow(div, r.getSpan(), r.getDepth(), r.isHasChildren())),
-                    Attribute.className("operation-list"),
-                    Attribute.id("operationList"));
+                    attributes);
         } else {
             hb.div(div -> forestRoots().forEach(span -> appendOperationItem(div, span, extents, 0)),
-                    Attribute.className("operation-list"),
-                    Attribute.id("operationList"));
+                    attributes);
         }
     }
 

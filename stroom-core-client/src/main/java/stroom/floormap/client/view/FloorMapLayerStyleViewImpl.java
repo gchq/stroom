@@ -102,6 +102,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
 
         grid = new Grid(6, 2);
         grid.addStyleName("floormap-layer-style-dialog");
+        FloorMapAria.layoutTable(grid);
 
         grid.setText(ROW_GRAPHIC, 0, "Graphic");
         grid.setWidget(ROW_GRAPHIC, 1, buildModePanel());

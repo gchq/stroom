@@ -208,7 +208,7 @@ public final class UsersScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     // The cell's open icon: GWT shows it to a MANAGE_USERS holder (or on your own row)
                     play.expect(row.getByTitle(TextMatch.containing("Open user Alice Anderson")))
                             .toBeInTheDocument();

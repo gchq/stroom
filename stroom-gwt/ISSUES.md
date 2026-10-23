@@ -258,21 +258,23 @@ basic use:
 
 **Confirmed** (by a full `workbenchTest`, 22 October 2026: 1,195 of 1,197 pass). The three listed
 here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterRejected`,
-`ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded`) now pass.
+`ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded`) now pass, as they do in master's full
+run of 22 October 2026 (1,538 stories).
 
-* `App/Main/CredentialsScreen` `KeyStore` expects the stored credential's own `keyStoreType` to be
+* Fixed on master: `App/Main/CredentialsScreen` `KeyStore` expected the stored credential's own `keyStoreType` to be
   `PKCS12`, but #5796 (`62501f0de8`, Key Store File credentials) sends it only in the secret
   (`secret.keyStoreType`), with `credential.keyStoreType` null. The story was last changed before
   #5796. Fails every time. Fix: the story should expect the type in the secret, unless the
   credential is meant to carry it too (then `CredentialEditPresenter` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
   full run, with 8 workers, and passes when run alone.
-* **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (47 open: `Embedded`, below, is fixed), and fail the
+* **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (13 open: `Embedded`, below, is fixed, and master's
+  `7ad091e2e6` and later fixed the `target-size` stories, `ImpactAbort`, `PauseButtonReportsUp` and `KeyStore`), and fail the
   same way when run at commit `0ca65724f4`, whose full run passed that afternoon, so something in
   the environment changed rather than the code (the browser and test runner are unchanged; a
   system font or layout change is a guess). They fail every time:
-  * `target-size` (an element under 24px, not in the a11y baseline): 33 stories in
-    `AnalyticRuleEditor`, `ReportEditor` and `QueryEditor`, plus `DataRetentionScreen`
+  * Fixed on master: `target-size` (an element under 24px, not in the a11y baseline): 33 stories
+    in `AnalyticRuleEditor`, `ReportEditor` and `QueryEditor`, plus `DataRetentionScreen`
     `ImpactAbort` and `QueryResultVis` `PauseButtonReportsUp`.
   * "the screen didn't open again within 15000 ms" (the leak check reopening the screen):
     `ContentTabPane` `NoDuplicateForSingleInstance`, `docPlugin`
@@ -281,6 +283,24 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
+* **Open** (found 23 October 2026, merging master into the remove_gwtp branch): the workbench's
+  JVM tests `TestAllStories` and `TestPresenterCoverage` fail on master too, as
+  `VisAccessibilityStories` (from `ba4815dce9`) works out a constant from
+  `StroomThemeDecorator.isForcedColours()`, a JSNI method, in its static initialiser, which the JVM
+  can't run (`UnsatisfiedLinkError`), so making the story list fails. Fix: look it up when a story
+  renders, not when the class loads.
+* **Open** (found 23 October 2026, on master `9ddf5f0b07`, and the same after merging it into
+  remove_gwtp): these stories fail with the leak check on master itself:
+  * the five `AskAiChatPanel` stories `SendAndReceive`, `AttachmentReady`, `DeleteMessageConfirm`
+    and `NewChatClears` (each close keeps 46 DOM nodes and 4 listeners) and `StopWhileWorking`;
+  * `AppShell` `MovesBetweenAreas`: "Real input: the opened document has the focus";
+  * `DashboardEditor` `TableFilterRow`: "Enter sets the filter, and the header drawn again keeps
+    the focus and caret in the box: expected the focus on box alpha 5 new, found box ha 2 new";
+  * `QueryEditor` `HyperlinksByKeyboard` (flaky, above).
+* **Open** (found 23 October 2026): the workbench's `build.gradle` (line 901 on master) fails with
+  `No signature of method: java.lang.String.positive()` when there are no built visualisations:
+  the `println` message's second line starts with `+`, which Groovy reads as a new statement. Fix:
+  end the first line with the `+`, or use one string.
 * **Fixed** (23 October 2026): `AppShell` `Embedded` (the full screen view) failed the leak check's
   reopen, for two reasons, neither the environment. The shell story unbound Stroom's plugins when
   the screen closed, and the injector gave the same, unbound, plugins when it opened again, so
@@ -298,6 +318,138 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   nothing) and passed alone.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
+
+### A dictionary's word list ignores its secondary sort orders
+
+**Confirmed.** `WordListPresenter.buildComparator` is given a primary comparator and the ones to
+break its ties, but the loop adds `comparator.thenComparing(comparator)` (itself) rather than
+`thenComparing(subsequentComparator)`. So sorting by Word, Source or Type never orders rows that
+tie on that column, e.g. words of one type stay in whatever order they came in. Fix: chain
+`subsequentComparator`.
+
+* `stroom-core-client/src/main/java/stroom/dictionary/client/presenter/WordListPresenter.java`
+  (`buildComparator`)
+
+### A duplicated selection handler has the same id as its original
+
+**Confirmed.** Duplicate Selected Selection Handler (`SelectionHandlersPresenter.onCopy`) copies the
+handler with `selected.copy().build()`, which keeps its `id`; only a new handler gets a fresh one
+(`RandomId.createId(5)`). Conditional formatting's copy does give a new id. Two handlers with one id
+may be confused by anything that finds a handler by id. Found while giving the list a row key for
+the new data grid, which copes (rows with one key are told apart by position). Fix: give the copy
+`RandomId.createId(5)`.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/query/SelectionHandlersPresenter.java`
+  (`onCopy`)
+
+### The Replace Secret dialog cuts its warning off
+
+**Reproduced** (screenshots of `App/Main/CredentialsScreen` `ReplaceSecret`, October 2026). The
+warning at the top of "Replace … Secret" ("The current secret of 'My Creds' will be discarded and
+cannot be recovered. Everything that uses this credential will use t…") runs on one line past the
+dialog's edge and is cut off, so the end of the warning, which says what happens, can't be read.
+Fix: let the label wrap (e.g. `white-space: normal` on it, or a form-group help style).
+
+* `stroom-core-client/src/main/resources/stroom/credentials/client/view/ReplaceSecretViewImpl.ui.xml`
+  (the `warning` label)
+
+### A dialog's focus drops to the page when OK disables itself
+
+**Fixed** (2026-10-22: `keepFocus` moves the focus to the dialog's next tab stop). **Reproduced** (by `Widgets/Dialogs/Modal` `OkDisabledByItsRequest`, October 2026). When OK is
+pressed and its hide request disables OK (`DisablePopupEvent`, e.g. on failed validation) and then
+resets, OK rightly stays disabled, but the focus, which was on OK, is left on the page's body,
+outside the dialog (and its focus trap): `DialogButtonAction.keepFocus` puts it back only on the
+button it was taken from, and only once that is enabled again. A keyboard user is then lost until
+they click. The Cancel path is fine, as Cancel is enabled again. Fix: when the button stays
+disabled, give the focus to the dialog's next control (or its first tab stop). The story doesn't
+check the focus until then.
+
+* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/DialogButtonAction.java`
+  (`keepFocus`), used by `OkCancelContent.onDialogAction` and the other `*Content` classes
+
+### A trace's operation list can't be scrolled with the keyboard
+
+**Fixed** (2026-10-22: the list is a named region that takes the focus; a keyboard list or tree of
+its rows would still be better). **Reproduced** (by `workbenchTest`'s accessibility check, October 2026). When the Traces screen's
+operation list (`#operationList`, built by `TraceOverviewWidget`) is taller than its pane, it
+scrolls, but nothing in it can take the focus, so a keyboard user can't scroll it
+(`scrollable-region-focusable`). Seen once the workbench's screens fitted the window (see Fixed), which
+made the pane shorter; any short enough window shows it in Stroom. Baselined for
+`App/Main/TracesScreen` `Traces` in `test-runner/a11y-baseline.json`. Fix: make the list (or its
+rows) focusable, ideally with the keys of a tree, as the rows expand.
+
+* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceOverviewWidget.java`
+  (`appendOperationList`)
+
+### Some visualisation stories' screenshots differ from run to run
+
+**Confirmed** (two screenshot runs of the same code, 21 October 2026). The stories pass, but their
+screenshots can't be used for a screenshot diff: they change between runs of the same code, so a
+diff around a change always reports them. Seen across dark, light and forced colours:
+
+* `App/Visualisations/Force` `Keyboard`, `ExpandLine`, `ExpandGroup`, `Teams` and `SelectionPayload`,
+  `App/Visualisations/Tree` `Keyboard`, `ShowAndHide` and `Radial`, `App/Visualisations/LineChart`
+  `PageKeys` and `ArrowKeysMoveBetweenPoints`, `App/Visualisations/Bubble` `KeyboardZoom`: the
+  screenshot catches a tooltip fading in or out, or a transition (a re-layout, a zoom) part of the way.
+* Every `App/Visualisations/Force2D` and `Force3D` story: the dots flowing along the lines are
+  wherever the flow has got to.
+
+A fix: the screenshots wait for transitions and tooltips to finish (e.g. the plays end by waiting for
+the tooltip's opacity, or the runner turns motion off when it takes screenshots), and the flow is
+paused (or its time fixed) when screenshots are taken.
+
+`App/Visualisations/Force3D` `ViewKeys` can also fail, not just differ: in a run of all 269
+visualisation stories with 6 workers (22 October 2026) the camera was 0.55 from where the play
+expected (under 0.5), taking 14 s rather than about 5 s, and it passed when re-run on its own. WebGL
+is slow when many stories share the machine, so the camera hadn't settled. A fix: the play waits for
+the camera to settle rather than checking once.
+
+* `stroom-gwt/stroom-gwt-workbench/test-runner/run.mjs` (`--screenshots`, `--settle`)
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/vis/`
+
+### A visualisation's selection offers only Name and Value to selection handlers
+
+**Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
+turns each into a parameter (`VisComponentSelection.getParams`). But `VisSelectionModel.getColumnRefs`
+offers only `name` and `value`, so the dashboard's selection handler editor can't pick the keys
+most visualisations send (`series`, `x`, `y`, `path`, `lat`, `lon`, `campus`, `floor`, `minTime`,
+`maxTime` and so on); they work only if typed by hand. Found by the visualisation audit of 21 October
+2026. A fix would let each visualisation declare its selection keys (e.g. in its settings JSON, as
+its inputs are) and offer those.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java`
+* `stroom-core-client/src/main/java/stroom/query/client/presenter/VisComponentSelection.java`
+
+### GeoMap's map tiles are blocked in an asset-based visualisation
+
+**Suspected (from the code, not yet seen on a running Stroom).** `DocumentAssetServlet` serves every
+asset, including a visualisation's `index.html`, with `img-src 'self' data:` and `default-src 'self'`.
+So an asset-based visualisation can't load images from other sites. GeoMap's default Tile Server
+URL (`https://{s}.tile.osm.org/...`) and any other external tile server would show no map. A
+FloorMap plan at an external address would fail the same way (plans held as Stroom assets, or as
+`data:` URLs, are fine; see the vis repo's `docs/FAQ.md`). The workbench doesn't send the header,
+so its stories don't catch this. A fix would either let the policy allow configured tile servers
+(e.g. a Stroom property listing allowed image origins) or proxy tiles through Stroom. Found while
+retiring FloorMapLocalBuilder, 22 October 2026.
+
+* `stroom-document-asset/stroom-document-asset-impl/src/main/java/stroom/document/asset/impl/DocumentAssetServlet.java`
+  (`CONTENT_SECURITY_POLICY_ASSET`)
+
+### Bootstrap's styles apply to every page
+
+**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
+`custom-bootstrap.css` recolouring parts of it), but Stroom uses only a few of its classes:
+`form-group` and `form-label` (`FormGroup`, `FormLabel` and about ten settings views), `dropdown`
+(`TermEditor`), and the `badge-*`, `form-control` and `dropdown-menu` looks. Its reboot and its
+generic classes (`.col`, `.row`, `.container`, `.table` and so on) apply to anything else with those
+names. The vis tooltip's key and value columns were classed `grid` and `col`, so they took
+Bootstrap's grid column (the whole width, shared equally, 1rem each side) and short values wrapped
+mid-word; the tooltip is now styled only by its own BEM classes (22 October 2026). Dropping
+Bootstrap would mean moving the classes Stroom uses into its own BEM styles, replacing the parts of
+reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.
+
+* `stroom-app/src/main/resources/ui/css/app.css`
+* `stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`
 
 ## Controls that stay enabled but do nothing
 
@@ -569,17 +721,20 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 
 **Reported.**
 
-* Annotation edit: Status, Assigned To, Labels, Collections and Retain are clickable blocks with no
-  tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
-  group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
-  e.g. a separate "Change Status" button beside the value.
-* A grid's spinners (Jobs' Max Tasks, Nodes' and Processors' Priority) can't be reached from the
-  keyboard: the field is `tabindex="-1"`, and Enter on a row doesn't go into it
-  (`ValueSpinnerCell`). Once it has the focus (by a click), its keys work. It also changes a typed
-  value without saying so: non-digits are dropped and the rest kept within its bounds (`500`
-  becomes `100`). Both wait on the data grid's keyboard pattern. A held finger doesn't repeat its
-  arrows (a tap steps once), as the grid hands a cell its events after the browser has handled
-  them (`AbstractHasData.onBrowserEvent`), so touch events don't reach it.
+* Traces: the Service & Operation list (`#operationList`, `TraceOverviewWidget`) scrolls when it is
+  taller than its pane, but neither it nor its rows take the focus, so a keyboard user can't scroll
+  it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
+  once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
+  list (or tree, as they nest), which would also let a row be selected without a mouse.
+* `HoverActionMenuCell` shows its "..." only on a mouse over and opens its menu only on a mouse
+  press. Nothing uses it (`UserListPresenter`'s use is commented out); if anything does again, it
+  wants the `ActionMenuCell` treatment (see Fixed: a grid row's action buttons).
+* A grid's spinner doesn't repeat while a finger is held on an arrow (a tap steps once): it steps
+  on the mouse events the browser makes after a touch, and takes no touch or pointer events
+  (`ValueSpinnerCell`; the `ValueSpinner` widget does repeat). The new grid hands a cell its
+  events as they happen, so the cell could now take pointer events and hold the touch itself.
+  Whether Page Up and Page Down in its field still scroll the grid hasn't been checked with the new
+  grid.
 
 ### Toolbars are a tab stop per button
 
@@ -916,7 +1071,7 @@ Identification):
 
 ### An expression term being edited is under 24px high
 
-**Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
+**Fixed** (2026-10-22: the rows and term fields are 24px). **Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
 `.termEditor-inner`), under WCAG 2.5.8's 24px, which axe reports as `target-size` for a story that
 ends with a term open (found with `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, which now
 leaves the term with Escape before it ends). For the expression tree's own work (session 5).
@@ -963,66 +1118,75 @@ and Escape stops), now turned on (see Keyboard trap in the code editor).
 
 ### Expression terms and tables
 
-An expression tree is drawn on a canvas that takes focus but has no role or name, so its terms
-can't be reached or edited by keyboard. Tables take focus with no role or name, the number inputs in
-their cells have no name, and icon columns have empty headers. The quick filter's help button is
-22px, under WCAG 2.2's 24px minimum target size.
+**Reported.** The expression tree is now a named `tree` whose items say what they are and are
+reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are now
+`treegrid`s of rows, column headers and cells, but have no name, and the first (icon) column's
+header is empty (seen in `App/Query/QueryResultsTable`). Not yet checked again: the number inputs in
+their cells have no name, and the quick filter's help button is 22px (under WCAG 2.2's 24px).
 
 ### Menu buttons don't say they open a menu
 
-**Reported.** Most buttons that open menus now say so and whether the menu is open (see Fixed):
-`ShowMenuEvent.Builder.opener` with a button marked by `ToolbarButton.setOpensMenu` or
-`MenuOpener.mark`. Left: the "..." action button in grid rows (`ActionMenuCell`) and the hover
-action menus (`HoverActionMenuCell`), which are cells with no role that open on a mouse press only
-(the grids session), and the row action menus of the data retention rules
-(`DataRetentionPolicyListPresenter`) and content templates (`ContentTemplateListPresenter`).
+**Fixed**: buttons that open menus say so and whether the menu is open (`ShowMenuEvent.Builder.opener`
+with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a grid row,
+`RowActions.menuButton`). Left: the hover action menus (`HoverActionMenuCell`, unused), and the row
+action menus of the data retention rules (`DataRetentionPolicyListPresenter`) and content templates
+(`ContentTemplateListPresenter`), whose `showActionMenu` is never called (dead code).
 
 ### Controls with no accessible name
 
-**Reported.**
+**Fixed**: all those listed here (see Fixed). Left: a grid's first (icon) column has an empty header.
 
-* Node: the jobs list's group has no label because its `setLabel` call is commented out
-  (`NodeViewImpl`).
-* The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
-  stop (`NavigationViewImpl`).
-* Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
-  (Its Send/Cancel button, once named only by `setText`, which didn't show, is now a `ToolbarButton`
-  named Send or Cancel.)
-* Quick filters have only a "Quick Filter" placeholder, no label, e.g. Dependencies, User Access
-  and Export (`QuickFilter`). `QuickFilter.setAccessibleName` and `setDescription` now give one a
-  name and say what may be typed; the Find and Recent Items dialogs use them (#5409).
-* A content tab's close cross (`.curveTab-close`, a `div`) has no name and isn't a button
-  (`CurveTab`).
-* The grid's group expander has no name or title (`ExpanderCell`).
-* Every row's action button on the Dependencies screen is named "Actions...", not for its row.
-* Properties: the Database Value text area and password box have no names of their own. When the
-  group loads both are shown, so the label names the panel holding them (`role="group"`), and the
-  group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
-* Iframes have no title: the Documentation editor's markdown preview (`#markdown-frame`,
-  `MarkdownEditPresenter`) and dashboard visualisations (`VisFrame`).
-* The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
-  their row (e.g. "Create Pipeline").
 
 ### Missing roles and states
 
-**Confirmed** (checked in the code; found by the workbench's plays).
+**Fixed**: all those listed here (see Fixed).
 
-* Grids (`MyDataGrid`): the table has no `grid` role; selected rows have only the
-  `dataGridSelectedRow` class, no `aria-selected`; sortable headers get `role="button"` from GWT's
-  `AbstractCellTable`, so they aren't column headers to assistive technology (other headers are
-  `<th>`s, so they are); the sorted column has no `aria-sort`.
-* Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
-* Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
-  sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
-* The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
-  its messages and no `autocomplete` hints on its fields.
-* The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
-  (`ChangePasswordViewImpl`).
-* The maintenance banner has no `role="alert"`, so it isn't announced (`MainViewImpl.setBanner`).
+
+### GWT widgets and raw controls used where a Stroom component should be
+
+**Confirmed** (a search of the client code, 22 October 2026). Leaving out layout panels, text
+(`Label`, `HTML`), the forked text boxes (`TextBox`, `TextArea`: the Text inputs component) and the
+Stroom components that wrap a native element (`Button`, `CustomCheckBox`, `ColourBox`,
+`CustomFileUpload`, `PasswordBox`, the cells' inputs, `RowActions`, `NewTabLink`).
+
+Decided on 2026-10-22: change only what stops a keyboard or screen reader user, and only without
+changing how it looks. Reset Store, Reset Data and Show All became Stroom's `Button`; the floor
+map's form grids are now `role="presentation"` (`FloorMapAria.layoutTable`); the welcome page's
+build info names are row headers; and content pack icons have an empty `alt`.
+
+Still to do:
+
+* The Pathways editor's paths (`PathwayTreePresenter`) are an `HTML` widget whose nodes are chosen
+  by a click, with no roles and no keys, so they can't be used without a mouse. The grid's tree
+  profile (`DataGridProfile.TREE`) would fix both, but changes its look to the explorer tree's.
+  Left until the Pathways editor itself is fixed (see "The Pathways editor can't create a pathway
+  or add a constraint").
+
+Left as they are, on purpose:
+
+* GWT's `Button` for the task's Terminate (`UserTaskViewImpl`), the navigation logo
+  (`NavigationViewImpl`) and the floor map layer grip (`FloorMapLayersPresenter`): real buttons
+  already, so only their styling differs.
+* GWT's `Hyperlink` for "Forgot password" (`LoginViewImpl`) and `Anchor` in the content pack
+  details (`ContentStoreContentPackDetailsPresenter`): real links already.
+* "View Source" (`DataViewImpl`): a `Label` made a button by hand, but complete (Enter and Space
+  press it, and it says when it is disabled).
+* The current selection's `<table>` (`TableBuilder`, from `DashboardContextImpl`): its components'
+  names are `<th>`; the name and value rows read in order, and row headers there would need `<th>`'s
+  heading look or a new `TableCell` option.
+* GWT's `SuggestBox` in the term editor (`TermEditor`): the Term editor in `COMPONENTS.md` replaces
+  it.
+* GWT's `PopupPanel` for the editor's indicator popup (`IndicatorPopup`): part of the Ace editor
+  work.
+* GWT's `FormPanel` round the asset add and rename dialogs and the step location dialog,
+  `FocusPanel` round the main and full-screen views (and the floor map canvas, its keyboard
+  surface), and `DockLayoutPanel` in six floor map views (the Layout panels row of `COMPONENTS.md`):
+  layout, not controls.
+* `Templates.input()` and `ItemCell`'s `<select>`: unused, waiting for the removals.
 
 ### Dialogs larger than the window
 
-**Confirmed** (measured in the workbench at 1280 x 720). Many dialogs open at a fixed size larger than a
+**Fixed** (`PopupUtil.showPopup` limits a dialog to the window, its content scrolling). **Confirmed** (measured in the workbench at 1280 x 720). Many dialogs open at a fixed size larger than a
 small window, so part of them is off screen and can't be reached: e.g. the processor filter, Find In
 Content, Recent Items, Batch Change Permissions and Change Permissions (800 x 800), the volume group
 editors and the stream viewer (1400 wide), the Edit Account dialog (737 high) and the index field
@@ -1089,14 +1253,75 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 * `AccountServiceImpl`: a comment says a user ID can't change after the account is created, but the
   field can be edited and the DAO updates it.
 
+### The data grid's follow-ups
+
+**Deferred** (October 2026, after the switch to `DataGridWidget`; for a later session). The grid
+works and its cells are covered by stories; these are the next steps, none urgent.
+
+* **A cell contract for cells holding a control.** The grid kept GWT's `Cell` contract (a cell
+  renders an HTML string and keeps no element of its own; `ViewData`, `isEditing` and `resetFocus`)
+  so that every cell and presenter worked unchanged. When a row changes, the grid replaces its HTML
+  and asks the focused cell to take the focus back, so a cell holding a control has to rebuild what
+  only the browser held (typed text, the caret, the focus, an open list). The grid spinner's lost
+  typing in polling lists came from this (see Fixed). Proposal: keep HTML strings for display
+  cells (text, dates, icons, links: cheap, and suited to virtual rows), and add a second kind for
+  interactive cells (`ValueSpinnerCell`, text fields, `TickBoxCell`, `SelectionBoxCell`,
+  `ActionCell`/`ActionMenuCell`) that owns an element: created once when its row is drawn, told
+  each new value and updating itself in place, left alone while it has the focus, disposed of when
+  its row goes. The grid then never replaces a focused control, so this kind of bug can't happen.
+  If `DataGridUtil`'s column builders hide which kind a cell is, presenters don't change; the work
+  is in the grid's row update and the five or six interactive cells. Do it before a new interactive
+  cell is written, or at the next bug of this kind.
+* **The row update renders every visible row's HTML to tell whether it changed** (`DataGridWidget`
+  `updateRow`, comparing strings), and a cell event reads the cell's `innerHTML` before and after
+  (`dispatchEvent`). The DOM is only written for rows that changed, but the rendering is paid on
+  every update, which a very wide grid that polls often would feel. Measure with the
+  `Widgets/Data Grid` Benchmark stories before changing it; the cell contract above would let an
+  interactive cell skip it.
+* **`DataGridWidget.java` is 2,274 lines**, over checkstyle's 2,000 (a warning). Split the row
+  rendering out, as the keyboard (`DataGridKeyboard`), column interactions (`ColumnInteractions`)
+  and context menu (`DataGridContextMenu`) are; best done with the cell contract change.
+* **A grid's selection depends on its rows' keys.** A presenter whose rows are fetched again as new
+  objects needs a key provider (or rows equal by identity), or its selection is lost on refresh:
+  the floor map, the task summary and the processor profile periods were cases (see Fixed and
+  Smaller oddities). Check each grid's presenter has one, e.g. by a story that refreshes a list
+  with a row selected.
+
 ## Smaller oddities
 
 **Reported.**
 
+* ~~The quick filter help's longest lines (the `!abc` match type, the last examples) run past the
+  popup's right border~~ Fixed: in a help popup an info table's last column wraps
+  (`help-popup.css`); `Widgets/Inputs/QuickFilter` `WithHelp` checks nothing runs past the edge.
+* ~~The workbench runner silently skips a real input check whose story id matches no story (the
+  copy icon check was first keyed `widgets-cellrenderers-…`, not `widgets-cell-renderers-…`, and
+  "passed")~~ Fixed: such a check stops the run before any story runs (`unknownCheckIds`);
+  `--skip-real-input` skips the checks and that test (the runner's own tests use it).
+
+* Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
+  pane, so the last column's resize handle starts off screen; the tree's expander column is 45px
+  (6px flat) and the widths aren't fitted again.
+* A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
+  so the box is clipped flush left rather than centred.
+
+* In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
+  Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
+  the suite's default, passes them.
+
+* After editing a processor profile's period, Remove does nothing until another row is chosen: the
+  edit replaces the row with an unequal copy, but the selection keeps the old one, which
+  `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListPresenter`).
+* `DocumentUserPermissionsListPresenter` asks the document type cache for its columns
+  (`setupColumns`) before its grid is created; with the cache already filled it would add them to
+  a null grid.
+* The activity chooser highlights the current activity with an object from another fetch
+  (`ManageActivityPresenter.setSelected`), which a grid comparing rows can't match.
+* A pathway's constraints list heads its value column "Type" (`ConstraintListPresenter.addValueColumn`),
+  a copy of the column before it.
+
 * Rename hides its dialog before the request is sent, and the document permission dialogs
   close once a failed change is dismissed, so both lose what was entered if the request fails.
-* An empty paged list says "1 to 1 of 0" rather than "0 of 0" (e.g. the user groups screen's
-  Member Of and Members panes with nothing selected).
 * `TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
   and second groups.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
@@ -1111,8 +1336,6 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
   the presenter overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
-* `ActionMenuCell` shows its "Actions..." icon on every row, even one with no actions, where pressing
-  it does nothing.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationListPresenter`).
@@ -1133,6 +1356,74 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 ## Fixed
 
 These were found by the review and fixed in the same change:
+
+* **Checked against the GitHub accessibility audit (#5397)** (2026-10-22):
+  * Required fields (#5410, batch 6 of `A11Y.md`): a required field's label ends with an asterisk
+    that screen readers skip (they hear `aria-required`); every field a form refuses to save empty is
+    marked (21 more than before).
+  * Size and contrast (batch 5 of `A11Y.md`): the data retention tabs are clear of the toolbar
+    below them; the expression tree's rows and term fields are 24px; the floor map form's unused
+    rows' labels are in the disabled text colour; Ace's search counter is #555. The a11y baseline
+    holds one story (Ace's autocomplete, for the Ace editor work).
+  * The annotation editor's settings (Status, Assigned To, Labels, Collections, Retain) were mouse
+    only: each one's ⋮ is now a button named for what it changes, opening its chooser with Enter or
+    Space. Bypass blocks (#5403): the explorer and content are landmarks, and F6 and Shift+F6
+    (configurable) move between the main toolbar, the explorer's tree and the open document.
+  * Keyboard (batch 4 of `A11Y.md`): an alert's detail, the Result Stores dialog's info and the
+    traces' operation list scroll but held nothing that takes the focus; each is a named region that
+    does. A dialog whose OK disables itself now moves the focus to its next tab stop, rather than
+    leaving it on the page's body.
+  * Roles and states (batch 3 of `A11Y.md`): the sign-in page has a `main` landmark, an `<h1>` for
+    screen readers and `autocomplete` hints; the password strength meter is a `meter` and the
+    policy message describes the field; the maintenance banner is an alert; a grid row's "..."
+    says it opens a menu. Idle spinners, small and on buttons, are hidden and stop spinning (#5299);
+    the spinners are one BEM block, `busy-spinner`, and the password meter, length badge and
+    button spinner no longer use Bootstrap's classes.
+  * Names (batch 2 of `A11Y.md`): the explorer's logo is out of the tab order and hidden from
+    screen readers (the Main Menu button beside it does the same); Ask Stroom AI's decorative icon
+    buttons are spans; a grid is named by its table name when it has no name of its own; a grid's
+    tick box is named by its column's header; explorer items have their type as their description;
+    nine quick filters, Properties' Database Value controls and the Nodes screen's jobs list are
+    named; links in running text are underlined. The a11y baseline went from 93 stories to 19.
+  * Help opened from the keyboard (F1 in a form group's field, Enter on a help button) takes the
+    focus, so that a screen reader reads it, and Escape gives it back; a mouse click leaves the
+    focus where it is (`HelpPopup`, #5400). Found doing it: F1 in a text field never opened its
+    help, though the field says it does (`aria-keyshortcuts`), as key bindings in inputs were tested
+    only for Escape (`KeyBinding` now tests the function keys too); and `InputModality` listened on
+    the document, after a key binding's capture listener, so it now listens on the window. Real
+    input checks: `test-runner/lib/real-input/help.mjs`.
+  * A field's help shortcut was announced as F1 (`aria-keyshortcuts`) whatever the user had bound
+    "Show help" to in their Keyboard Shortcuts preferences. It is now the user's binding (left off
+    when there is none, or when it is a key sequence), and the help button's tooltip shows it, as
+    menu items show theirs, e.g. "Email address - Click for help (F1)" (`FormGroup`;
+    `Widgets/Inputs/FormGroup` `HelpShortcutRebound` and `HelpShortcutRemoved`).
+  * Dialogs are `role="dialog"`, named by their title, and modal ones `aria-modal`
+    (`PopupUtil.setDialogRole`); tab bars are a `tablist` of `tab`s with `aria-selected` and
+    `aria-controls` (`AbstractTabBar`); a content tab closes with Delete, its cross hidden from
+    screen readers (`CurveTab`, `Widgets/Tabs/CurveTabBar`).
+  * The main view and full-screen view were a `FocusPanel`, so each was a nameless tab stop
+    holding the whole app, which Shift+Tab from the first button landed on. They are plain panels
+    (keyboard shortcuts work without them; `App/Main/AppShell` `MainToolbarTabOrder`).
+  * The Documentation editor's markdown preview frame is titled "Preview"
+    (`IFramePresenter.setAccessibleName`); its seven `frame-title` baseline entries are gone.
+    Visualisation frames were already named (`VisFrame`).
+
+* **Found while adding help to the fields that had none** (2026-10-22):
+  * HTTP TLS settings: with no TLS config yet, the dialog left Verify Host Name unticked and OK
+    saved it as false, though it defaults to true. It now shows the defaults
+    (`TestHttpTlsConfigPresenter`).
+  * Column format: one `FormatPresenter` serves all a table's columns, and a column with no format
+    showed the last column's number and date settings. It now shows the defaults
+    (`TestFormatPresenter`).
+  * Table settings: ticking Use Default Extraction Pipeline only disabled Extraction Pipeline, so
+    the table kept its old pipeline until its query's data source changed. It now puts the data
+    source's default pipeline in (`TestBasicTableSettingsPresenter`).
+  * Table settings: the Maximum String Field Length spinner allowed up to `Long.MAX_VALUE` but was
+    read as an int; it is now 1 to `Integer.MAX_VALUE`.
+  * Annotation tags: a blank name's error always said "annotation group"; it now names the tag's
+    type, as the create dialog does (`TestAnnotationTagEditPresenter`).
+  * Global property editor: "Requires UI Refresh" is now "Requires UI Node Restart", which is what
+    it means (`RestartScope.UI`).
 
 * **Controls that looked like links but were mouse only** (no role, no tab stop; WCAG 2.1.1,
   4.1.2), now buttons or links:
@@ -1940,6 +2231,127 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   size, border, padding, colours, focus), but for a text area's cursor, now the text cursor as on every
   other text area. Workbench: `App/Main/AnnotationEditor`, `App/Editors/DashboardEditor`
   `TableIncludeExcludeFilter`, `Widgets/Data Grid/DataGrid` `Pager`.
+* **A floor map's Layers and Groups panels couldn't be opened.** The dock beside the map (its Map
+  and Editor tabs) gave its `LinkTabBar` a `styleName`, which replaced the bar's own classes, so its
+  overflow button's arrow was drawn huge (a large white shape over the dock and its lists) and every
+  tab but the first went into an overflow menu, which never opened, as `FloorMapDockPresenter` didn't
+  pass on the bar's `ShowMenuEvent`. The view adds its class instead, and the presenter passes the
+  event on, so all three tabs show (`App/Editors/FloorMapMap` `Groups` checks them).
+* **Removing a statistic store's last custom roll-up left the list empty.** The list always has the
+  no roll-up permutation (`State.addNoRollUpPerm`, added when the list is shown), but Remove didn't put
+  it back. It does now (`StatisticsCustomMaskListPresenter.onRemove`). Its story,
+  `RemovingTheLastRollUpReSeedsIt`, had passed only because its click ticked a box instead of
+  choosing the row, so nothing was removed; with the new grid the click chooses the row.
+* **The stepping XPath filters list's Ignore Case tick box could be ticked but did nothing** (an
+  editable `TickBoxCell` with no field updater). It is read only, as such columns are elsewhere.
+* **`JobNodeListPresenter` added its default selection model twice.** It adds it once.
+* **A selection box that can't be typed in showed the page's colour, not an input's.** Its text box
+  is hidden (`opacity: 0`), and the value drawn over it was transparent, so the box showed what was
+  behind it (darker than a text box in the dark theme), and when disabled it kept its border. The
+  value now draws the field's background, and when disabled the filled field with no border that
+  every disabled control has (`Widgets/Inputs/ViewStates`).
+* **The floor map settings' Value Schema table had no box round it.** Its toolbar and table now sit
+  in a control's box, as other forms' tables do.
+* **App permission summaries wrote a broken closing tag.** `DescriptionBuilder` closed its plain
+  spans with `</span` (no `>`), so the markup after it was swallowed. In `MyDataGrid`'s tables the
+  browser recovered at the `td`'s end; in the new grid the next column's cell went inside it (axe
+  `aria-required-parent`, `App/Main/AppPermissionsScreen`). It also wrote the permission details
+  pane.
+* **A percent bar cell didn't close its bar's `div`.** `PercentBarCell`'s template wrote
+  `<div ... />`, which HTML doesn't take as closed, so the cell after it was put inside it. In
+  `MyDataGrid`'s tables the browser closed it at the `td`'s end; in the new grid's cells (divs) the
+  next column's cell was nested in the bar's, so screen readers lost the cell (axe
+  `aria-required-parent`, the volume status lists). It now closes it.
+* **A full-screen workbench story was 48px taller than the window.** `ScreenHarness` made a screen
+  `100vh` tall inside `StroomThemeDecorator`'s 24px padding, so its bottom 48px was off-screen and a
+  play's click there scrolled the page. Screens now take `StroomThemeDecorator.CANVAS_HEIGHT`
+  (`calc(100vh - 48px)`), as does `VisualisationAssetsStories`' frame. Every screen story's
+  screenshot changed once.
+* **A tree list's columns stopped short of the right edge in the new grid.** `TreeRowHandler`
+  narrows the expander column once rows arrive, and the new grid had already sized its fill
+  columns, so the width given up was left as a gap (Server Tasks' Info column, 199px short). The
+  handler now has the grid give spare width to its fill columns. `App/Main/ServerTasksScreen`
+  `FlatListDetails` checks it.
+* **A grid whose columns came after a fetch didn't fill its width in the new grid.** The grid
+  worked out its starting widths on its first layout, before the document create permissions
+  list had added any columns, so the Document Type column kept its declared 200px. The grid now
+  waits for columns before working them out. `TestColumnModel` and
+  `App/Main/DocumentCreatePermissionsGrid` `ToggleType` check it.
+* **A selection box in the new grid was replaced as it took the focus, and again as its list
+  opened.** The grid drew the row again for a cell that had handled an event (whether or not the
+  cell had changed) and for the keyboard row's look, which isn't in the cells. The open box was
+  replaced, so it didn't read as expanded and its list was placed off to one side (the floor map
+  settings' Value Schema). `Widgets/Data Grid/DataGridKeyboard` `SelectionBoxStaysPut` checks it.
+* **Grids had no grid semantics** (`MyDataGrid`: no `grid` role, selection only a class, sortable
+  headers `role="button"`, no `aria-sort`). The new grid (`DataGridWidget`) is a `grid` (or
+  `treegrid`), with `aria-selected` rows, `columnheader`s and `aria-sort`.
+* **A grid's spinners couldn't be reached from the keyboard.** With the new grid, Right goes into
+  a row's cells, and Enter or F2 edits a spinner (`Widgets/Data Grid/DataGridKeyboard` `Editing`,
+  the value spinner real-input checks). (This entry once said a held finger now repeats their
+  arrows too; it doesn't: see Controls that can't be reached with the keyboard.)
+* **The task summary lost its selection when a count changed.** `ProcessorTaskSummaryPresenter`
+  selected the row again only if the new data held an equal one, and a summary's equality takes in
+  its count. It now finds the row of the same group (the grid's key: pipeline, feed, priority and
+  status). `App/Main/ProcessorTaskSummary` `RefreshWithChangedCount` checks it.
+* **A tree grid's expander had no name or title.** It now has a title, Expand or Collapse, for the
+  mouse, and is hidden from assistive technology, which hears the row's `aria-expanded`
+  (`ExpanderCell`). `Widgets/Data Grid/DataGridWidget` `TreeKeys` checks it.
+* **Rows' action buttons were all named "Actions...".** An `ActionCell` can be named for its row,
+  as its menu is: Dependencies ("Actions for <type> '<name>'"), content templates, data retention
+  rules and job nodes. Their screens' stories find the buttons by those names.
+* **The Create permissions grid's tick boxes were named by their state.** A `TickBoxCell` can be
+  named for its row (`withNameForRow`): "Create Pipeline" and so on, kept when a tick draws the box
+  again. `App/Main/DocumentCreatePermissionsGrid` `ToggleType` checks it.
+* **`ActionMenuCell` showed its "Actions..." button on a row with no actions**, which then did
+  nothing. A row with none has no button. `Widgets/ActionMenuCell` `NoItems` checks it.
+* **An empty paged list said "1 to 1 of 0".** It says "0 to 0 of 0" (`Pager`).
+  `App/Main/UserGroupsScreen` `UserGroups` checks it.
+* **`SelectionBoxCell` looked for its grid with `closest('table')`**, which a grid drawn with divs
+  isn't, so its fallback (taking back the focus the grid gave one of its own cells after a choice)
+  never fired there. It looks for `.data-grid` too. No story shows the difference: the new grid
+  puts the focus back on the box itself, so the fallback isn't needed in any story.
+* **A grid's spinner changed a typed value without saying so** (`ValueSpinnerCell`: Jobs' Max
+  Tasks, Nodes' and Processors' Priority): non-digits were dropped and the rest kept within its
+  bounds, so `500` became `100`. It now rejects such a value as the `ValueSpinner` widget does: the
+  value before it is put back, the field is marked invalid and described by why (`"500" isn't
+  allowed. Enter a whole number from 1 to 100.`, its title for the mouse), and why is announced,
+  until a value is accepted; a row drawn again (a list that polls) keeps saying it.
+  `TestValueSpinnerCell`, `Widgets/Cell Renderers/ValueSpinnerCell` `TypedValueOutOfBoundsRejected`.
+* **A grid's spinner could lose what was typed in a list that polls** (Jobs, Nodes). A row drawn
+  again took the field's text from what the last key released had left, so a field cleared (or
+  pasted into) without a key showed its old value again, and typing went on after it (`3442` for
+  `42`). And a value typed and then drawn again wasn't committed by Enter, which relied on the
+  browser's change event, which a field drawn again doesn't fire. The cell now records the text on
+  every `input` event (which the grid now hands its cells) and commits when the field loses the
+  focus. This was the flaky `Widgets/Data Grid/DataGridWidget` `ValueSpinnerColumn`, which now polls
+  every 10ms, so a poll comes between each of its steps (it failed every time so before the fix),
+  and checks that a rejection survives the polls.
+* **`App/Editors/DashboardEditor` `TableFilterDrivesQuery` failed now and then under load** ("matched
+  red" not found after the second query). Its play now waits for each step to take effect: the
+  first query to finish and all the values to be listed, then each tick to show, before running the
+  second query. It wasn't caught failing, so this is a hardening, not a proven fix.
+* **The live-app suite's scripts (`stroom-gwt-suite`) looked for grids as `.dataGridWidget` tables**
+  (`tbody tr`, `td`, `th`, `.dataGridRow`), which no screen draws since the grids' switch, and some
+  fell back to `[role=grid]` (missing a `treegrid`) and `[role=row]` (taking in the header row).
+  They now look for `.data-grid`, its rows `[role=row][data-row]`, cells `[role=gridcell]` and
+  headers `[role=columnheader]`: `seed-import.mjs`, `probe-newfield.mjs`, `probe-stepping.mjs`,
+  `crawl.mjs`, `walk.mjs`, `run.mjs`, `record.mjs` and `lib/` `context`, `cycle`, `actions`,
+  `checks` and `dirty`. Checked against a workbench grid; not run against a live Stroom here.
+  (`compare/lib/structure.mjs` still lists `th.dataGridHeader` after `[role=columnheader]`, which is
+  harmless.)
+* **A grid row's action buttons worked only with the mouse** (found 2026-10-22, checking
+  `COMPONENTS.md`): `ActionMenuCell`'s "Actions..." (Users, Dependencies, Processors and others)
+  and `ActionCell`'s named buttons (job nodes, content templates, data retention rules) were `div`s
+  with a title that acted on a mouse down or click, so the grid's keyboard landed on their cell,
+  where Enter and Space did nothing. They are now `button`s (`RowActions.button`), which the grid's
+  keyboard puts the focus on: Enter or Space opens the `ActionMenuCell`'s menu below the button
+  (its opener, so the menu says it is open and the focus comes back to it), and presses an
+  `ActionCell` as a click at the button's lower left corner would (`RowActions.clickBelow`), so a
+  presenter that places its menu by the pointer places it by the button. As buttons they are
+  touch targets, so each is 24px round its icon (`SvgCell.css`), taking no more room in the row.
+  `Widgets/ActionMenuCell` `OpensFromTheKeyboard`, `App/Main/JobsScreen` `CrossNavigation` (End to
+  the row's button, Enter opens its menu); both failed before (no such button). The unused
+  `RowActions.updateTabStops`, `MyDataGrid`'s, is deleted.
 
 ## Checked and not bugs
 
@@ -1955,6 +2367,15 @@ Reported by the suite and found not to be bugs, kept so they aren't reported aga
 * #33: a Report has duplicate notification settings it doesn't use. Unused shared code, not a
   missing tab.
 * #34: `UserPermissionsReportPlugin` adds a Security menu item that never appears. Unused code.
+* A thin splitter right beside a grid has the grid's rows within 12px of it, where WCAG 2.5.8
+  wants a 24px circle round an undersized target (a splitter is 7px) clear of other targets. The
+  new grid's rows are focusable, so `TargetSpacing` sees them; `MyDataGrid`'s were as clickable,
+  but not focusable, so it didn't. Accepted (2026-10-21, the user): there is no practical way to
+  keep a splitter clear of the content it divides, and a row is a full-width target.
+  `Widgets/Layout/SplitPaneContent` `TableAndEditor` leaves the grid's rows out of its check.
+* A press on a grid's tick box ends in no `click`: `TickBoxCell` acts on mousedown and redraws
+  itself, so the element pressed is gone by mouseup. Both grids do it with real input (checked on
+  `Widgets/Cell Renderers/TickBoxCell` `InGrid`), so switching grids changed nothing. Stories that want to know a tick happened should listen for mousedown.
 
 ## Checking a fix
 

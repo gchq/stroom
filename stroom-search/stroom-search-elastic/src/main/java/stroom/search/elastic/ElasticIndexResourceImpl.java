@@ -21,7 +21,6 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
@@ -41,18 +40,24 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     private final Provider<ElasticIndexStore> elasticIndexStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ElasticConfig> elasticConfigProvider;
+    private final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider;
+    private final Provider<ElasticClientFactory> elasticClientFactoryProvider;
 
     @Inject
     ElasticIndexResourceImpl(
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
             final Provider<ElasticIndexStore> elasticIndexStoreProvider,
             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-            final Provider<ElasticConfig> elasticConfigProvider
+            final Provider<ElasticConfig> elasticConfigProvider,
+            final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider,
+            final Provider<ElasticClientFactory> elasticClientFactoryProvider
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.elasticConfigProvider = elasticConfigProvider;
+        this.elasticConnectionResolverProvider = elasticConnectionResolverProvider;
+        this.elasticClientFactoryProvider = elasticClientFactoryProvider;
     }
 
     @Override
@@ -86,18 +91,20 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final ElasticClusterDoc elasticCluster = documentResourceHelperProvider.get().read(
                     elasticClusterStoreProvider.get(), index.getClusterRef());
 
-            final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
+            final ResolvedElasticConnection connection = elasticConnectionResolverProvider.get()
+                    .resolve(elasticCluster.getConnection());
             final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
-            final ElasticsearchClient elasticClient = new ElasticClientFactory()
-                    .create(connectionConfig, elasticClientConfig);
+            try (final ElasticsearchClient elasticClient = elasticClientFactoryProvider.get()
+                    .create(connection, elasticClientConfig)) {
 
-            // Check whether the specified index exists
-            final String indexName = index.getIndexName();
-            final GetIndexResponse getIndexResponse = elasticClient.indices()
-                    .get(r -> r.index(indexName));
+                // Check whether the specified index exists
+                final String indexName = index.getIndexName();
+                final GetIndexResponse getIndexResponse = elasticClient.indices()
+                        .get(r -> r.index(indexName));
 
-            if (getIndexResponse.indices().isEmpty()) {
-                throw new NotFoundException("Index '" + indexName + "' was not found");
+                if (getIndexResponse.indices().isEmpty()) {
+                    throw new NotFoundException("Index '" + indexName + "' was not found");
+                }
             }
 
             return new ElasticIndexTestResponse(true, "Elasticsearch index '" + index.getIndexName() + "' was found");

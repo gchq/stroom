@@ -17,14 +17,15 @@
 package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
-import stroom.data.table.client.MyCellTable;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Listeners;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -32,18 +33,12 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.util.client.CheckListSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -70,9 +65,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             SELECT_ALL_OR_NONE_TEXT,
             SvgImage.DOCUMENT_SELECT_ALL_OR_NONE);
 
-    private final CellTable<DocumentType> cellTable;
-
-    private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
+    private final DataGridWidget<DocumentType> list;
     private Consumer<Boolean> filterStateConsumer = null;
 
     private final Listeners<TypeFilterPresenter> selectionListeners = new Listeners<>();
@@ -81,24 +74,36 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menu");
+        // A list of the types, each ticked or not (All / None part ticked when some are): the
+        // arrows move, and Space, Enter or a press ticks or unticks the type with the focus, Ctrl+A
+        // all of them. As wide as its longest type and as high as its types, up to the popup's
+        // size, then scrolling. Escape goes on to the popup, which closes
+        list = new DataGridWidget<>(this, DataGridWidget.DEFAULT_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName("Document types");
+        list.setFitContent(true);
+        list.setFitWidth(true);
+        list.setRowChecked(this::getState);
+        // As compact as the explorer's rows, whose cell draws its own padding, with a line under
+        // All / None
+        list.setCellPadding(false);
+        list.addStyleName("type-filter");
+        list.setRowStyles((type, index) -> SELECT_ALL_OR_NONE_DOCUMENT_TYPE.equals(type)
+                ? "type-filter__all"
+                : null);
+        list.addColumn(getTickBoxColumn(), "", 100);
+        final DataGridWidgetSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        selectionEventManager.setChooser(this::execute);
+        selectionEventManager.addSelectAllHandler(e -> {
+            toggleSelectAll();
+            refreshView();
+            selectionListeners.fire(TypeFilterPresenter.this);
+        });
+        // The ticks are the rows' own state, not a selection
+        list.setSelectionModel(null, selectionEventManager);
 
-        // Sink events.
-        final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
-        cellTable.sinkEvents(mouseMove);
-
-        cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
-        cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
-
-        cellTable.addColumn(getTickBoxColumn());
-        cellTable.setSkipRowHoverCheck(true);
-
-        final MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
-        typeFilterSelectionEventManager = new TypeFilterSelectionEventManager(cellTable);
-        cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
-
-        view.setWidget(cellTable);
+        view.setWidget(list);
     }
 
     public void escape() {
@@ -138,16 +143,18 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     public void setData(final List<DocumentType> items) {
-        cellTable.setRowData(0, items);
-        cellTable.setRowCount(items.size());
+        list.setRowData(0, items);
+        list.setRowCount(items.size());
     }
 
     public void selectFirstItem() {
-        typeFilterSelectionEventManager.selectFirstItem();
+        focus();
     }
 
     public void focus() {
-        typeFilterSelectionEventManager.selectFirstItem();
+        if (list.getVisibleItemCount() > 0) {
+            list.setKeyboardSelectedRow(0, true);
+        }
     }
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
@@ -208,8 +215,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
 
         // To refresh the view we need to set the row data again.
-        cellTable.setRowData(0, selectableTypes);
-        cellTable.setRowCount(selectableTypes.size());
+        list.setRowData(0, selectableTypes);
+        list.setRowCount(selectableTypes.size());
+        // The ticks aren't in the types, so the rows are drawn again for them
+        list.redraw();
     }
 
     private void toggleSelectAll() {
@@ -271,34 +280,5 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public interface TypeFilterView extends View {
 
         void setWidget(Widget widget);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
-
-        public TypeFilterSelectionEventManager(final AbstractHasData<DocumentType> cellTable) {
-            super(cellTable);
-        }
-
-        @Override
-        protected void onToggle(final DocumentType item) {
-            execute(item);
-        }
-
-        @Override
-        protected boolean onClose(final CellPreviewEvent<DocumentType> e) {
-            escape();
-            return true;
-        }
-
-        @Override
-        protected void onSelectAll(final CellPreviewEvent<DocumentType> e) {
-            toggleSelectAll();
-            refreshView();
-            selectionListeners.fire(TypeFilterPresenter.this);
-        }
     }
 }

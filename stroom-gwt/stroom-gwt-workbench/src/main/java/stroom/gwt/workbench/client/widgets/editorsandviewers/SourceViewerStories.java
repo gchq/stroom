@@ -32,6 +32,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -146,9 +147,10 @@ public final class SourceViewerStories {
                     // ElementId.toString(): `name {id}`
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
                     // Summary rows span Element+Stream+Line+Col+Message.
-                    // The summary cell has a colspan
-                    final Query summaryRow = play.getByText("Errors (1 item)").closest("tr");
-                    play.expect(play.within(summaryRow).querySelector("td[colspan=\"5\"]")).not().toBeNull();
+                    // The summary cell spans five columns
+                    final Query summaryRow = play.getByText("Errors (1 item)").closest(StroomDom.GRID_ROW);
+                    play.expect(play.within(summaryRow).querySelector("[data-col][aria-colspan=\"5\"]").exists())
+                            .toBe(true);
                     // The expander column is ExpanderCell.getColumnWidth(1) = 45px
                     final Value<Double> expanderWidth = play.getAllByRole("columnheader").nth(0).width();
                     play.expect("the expander column's width", expanderWidth::get).toBeGreaterThan(40);

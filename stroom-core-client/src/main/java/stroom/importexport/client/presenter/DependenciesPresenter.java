@@ -22,7 +22,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -45,6 +44,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -83,7 +83,7 @@ public class DependenciesPresenter
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private Consumer<String> filterErrorConsumer;
-    private final MyDataGrid<Dependency> dataGrid;
+    private final DataGridWidget<Dependency> dataGrid;
 
     private Set<String> openableTypes = new HashSet<>();
 
@@ -93,7 +93,11 @@ public class DependenciesPresenter
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this, 100);
+        dataGrid = new DataGridWidget<>(this, 100);
+        // Rows keyed by the documents they link
+        dataGrid.setKeyProvider(row -> NullSafe.get(row.getFrom(), DocRef::getUuid)
+                                       + ">"
+                                       + NullSafe.get(row.getTo(), DocRef::getUuid));
         dataGrid.setTableName("Dependencies");
         view.setDataWidget(dataGrid);
 
@@ -204,7 +208,7 @@ public class DependenciesPresenter
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,
                                        final String name,
                                        final int width) {
-        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu);
+        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu, this::getActionMenuName);
         final Column<Dependency, DocRef> actionColumn = DataGridUtil.columnBuilder(
                 docRefSelector,
                 () -> actionCell
@@ -219,11 +223,16 @@ public class DependenciesPresenter
                 ? Element.as(event.getEventTarget())
                 : null;
         ShowMenuEvent.builder()
-                .name("Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'")
+                .name(getActionMenuName(docRef))
                 .items(buildActionMenu(docRef))
                 .popupPosition(popupPosition)
                 .opener(opener)
                 .fire(this);
+    }
+
+    // The name of a document's actions (its button's and its menu's)
+    private String getActionMenuName(final DocRef docRef) {
+        return "Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'";
     }
 
     // A document type as users see it, e.g. 'XSLT Translation'

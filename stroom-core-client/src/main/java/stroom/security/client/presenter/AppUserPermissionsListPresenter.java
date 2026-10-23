@@ -21,8 +21,6 @@ import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -45,6 +43,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -73,7 +73,7 @@ public class AppUserPermissionsListPresenter
 
     private final RestFactory restFactory;
     private final FetchAppUserPermissionsRequest.Builder requestBuilder = new FetchAppUserPermissionsRequest.Builder();
-    private final MyDataGrid<AppUserPermissions> dataGrid;
+    private final DataGridWidget<AppUserPermissions> dataGrid;
     private final PagerView pagerView;
     private final UiConfigCache uiConfigCache;
     private final ClientSecurityContext securityContext;
@@ -98,11 +98,11 @@ public class AppUserPermissionsListPresenter
         this.uiConfigCache = uiConfigCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("User Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
-                new DataGridSelectionEventManager<>(
+        final DataGridWidgetSelectionEventManager<AppUserPermissions> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(
                         dataGrid,
                         selectionModel,
                         false);

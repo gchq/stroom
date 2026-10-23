@@ -28,16 +28,14 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 /// Buttons and links inside a table's cells, e.g. a cell's 'open' icon or a link in a query's
 /// results, marked with the [#ATTRIBUTE] attribute.
 ///
-/// A table is one tab stop, its keyboard selected row's cell, and the arrow keys move between its
-/// rows. The row actions of the keyboard selected row come next in the tab order (Tab from the row
-/// reaches them); those of the other rows are left out of it (`tabindex="-1"`), so a long table
-/// doesn't cost a tab stop per row. [stroom.data.grid.client.MyDataGrid] keeps their tab indexes
-/// up to date as the row changes, and a table with no keyboard selection leaves all of them in the
-/// tab order.
+/// A data grid is one tab stop, and its keyboard moves the focus onto a row action (Right along the
+/// row's cells), so every row action is out of the tab order (`tabindex="-1"`) and a long grid
+/// doesn't cost a tab stop per row (see `DataGridKeyboard`).
 ///
-/// The table leaves the keys pressed on a row action to it (see [AbstractSelectionEventManager]):
-/// a cell's button acts on Enter and Space in its cell's `onBrowserEvent` (see
-/// [#isKeyPress(NativeEvent)]), as it does on a mouse press, and a link on Enter.
+/// The grid leaves the keys pressed on a row action to it: a cell's button acts on Enter and Space in
+/// its cell's `onBrowserEvent` (see [#isKeyPress(NativeEvent)]), as it does on a mouse press, and a
+/// link on Enter. A button whose action places something by the pointer (e.g. a menu) can be pressed
+/// from the keyboard with [#clickBelow(Element)], which places it by the button.
 public final class RowActions {
 
     /// The attribute that marks a button or link in a cell as a row action.
@@ -61,6 +59,21 @@ public final class RowActions {
             template = GWT.create(Template.class);
         }
         return template.button(className, name, icon);
+    }
+
+    /// As [#button(String, String, SafeHtml)], for a button that opens a menu: it says so
+    /// (`aria-haspopup="menu"`) and whether the menu is open (`aria-expanded`, which the menu keeps up
+    /// to date for the button it is opened from), as the ARIA menu button pattern asks.
+    ///
+    /// @param className The button's classes.
+    /// @param name      The button's name, its title.
+    /// @param icon      The button's icon.
+    /// @return The button's HTML.
+    public static SafeHtml menuButton(final String className, final String name, final SafeHtml icon) {
+        if (template == null) {
+            template = GWT.create(Template.class);
+        }
+        return template.menuButton(className, name, icon);
     }
 
     /// @param element An element, or null.
@@ -91,25 +104,29 @@ public final class RowActions {
                && isRowActionEvent(event);
     }
 
-    /// Puts the row actions of the keyboard selected row in the tab order and takes those of the
-    /// other rows out of it.
+    /// @param event A click.
+    /// @return Whether the click came from the keyboard (Enter or Space on a button), which has no
+    /// pointer position (its `detail` is 0).
+    public static native boolean isKeyboardClick(NativeEvent event) /*-{
+        return event.detail === 0;
+    }-*/;
+
+    /// Clicks a button as the mouse would at its lower left corner, so that what its action places
+    /// by the pointer (e.g. a menu) is placed below the button, and the click's target is the button.
+    /// For a key press on a row action whose action takes the click.
     ///
-    /// @param tableBody   The table's body, whose rows are the visible rows.
-    /// @param keyboardRow The keyboard selected row, relative to the visible rows, or -1 for none
-    ///                    (the table has no keyboard selection), which puts every row action in
-    ///                    the tab order.
-    public static native void updateTabStops(Element tableBody, int keyboardRow) /*-{
-        var actions = tableBody.querySelectorAll('[data-row-action]');
-        if (actions.length === 0) {
-            return;
-        }
-        var row = keyboardRow >= 0 && keyboardRow < tableBody.rows.length
-            ? tableBody.rows[keyboardRow]
-            : null;
-        for (var i = 0; i < actions.length; i++) {
-            var inTabOrder = keyboardRow < 0 || (row !== null && row.contains(actions[i]));
-            actions[i].tabIndex = inTabOrder ? 0 : -1;
-        }
+    /// @param button The button.
+    public static native void clickBelow(Element button) /*-{
+        // In the window's coordinates, as a click's are
+        var rect = button.getBoundingClientRect();
+        button.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: $wnd,
+            detail: 1,
+            clientX: rect.left,
+            clientY: rect.bottom
+        }));
     }-*/;
 
 
@@ -121,5 +138,9 @@ public final class RowActions {
         @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
                   + "data-row-action=\"\">{2}</button>")
         SafeHtml button(String className, String name, SafeHtml icon);
+
+        @Template("<button type=\"button\" class=\"rowAction {0}\" title=\"{1}\" tabindex=\"-1\" "
+                  + "data-row-action=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\">{2}</button>")
+        SafeHtml menuButton(String className, String name, SafeHtml icon);
     }
 }

@@ -16,10 +16,15 @@
 
 package stroom.preferences.client;
 
+import stroom.query.api.UserTimeZone;
+import stroom.ui.config.shared.UserPreferences;
+
+import com.google.gwt.junit.GWTMockUtilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -196,4 +201,62 @@ public class TestDateTimeFormatter {
         assertThat(compact).doesNotMatch(".*[.,:#/-]$");
     }
 
+    // ------------------------------------------------------------------------
+    // getVisTimeSettings
+    //
+    // A visualisation shows times with these, so they must be what format and
+    // formatCompact use.
+    // ------------------------------------------------------------------------
+
+    @Test
+    void testGetVisTimeSettings_defaultsWithoutPreferences() {
+        final DateTimeFormatter.VisTimeSettings settings = formatterWith(null).getVisTimeSettings();
+
+        assertThat(settings.getUse()).isEqualTo("UTC");
+        assertThat(settings.getZoneId()).isEqualTo("UTC");
+        assertThat(settings.getOffsetMinutes()).isZero();
+        // As format(Long) writes UTC: the zone as a literal Z
+        assertThat(settings.getPattern()).isEqualTo("YYYY-MM-DD[T]HH:mm:ss.SSS[Z]");
+        assertThat(settings.getCompactPattern()).isEqualTo("YYYY-MM-DD[T]HH:mm");
+    }
+
+    @Test
+    void testGetVisTimeSettings_namedZoneAndPattern() {
+        final DateTimeFormatter.VisTimeSettings settings = formatterWith(UserPreferences.builder()
+                .dateTimePattern("dd/MM/yyyy HH:mm:ss")
+                .timeZone(UserTimeZone.fromId("Europe/London"))
+                .build())
+                .getVisTimeSettings();
+
+        assertThat(settings.getUse()).isEqualTo("Id");
+        assertThat(settings.getZoneId()).isEqualTo("Europe/London");
+        assertThat(settings.getPattern()).isEqualTo("DD/MM/YYYY HH:mm:ss");
+        assertThat(settings.getCompactPattern()).isEqualTo("DD/MM/YYYY HH:mm");
+    }
+
+    @Test
+    void testGetVisTimeSettings_offsetAnd12Hour() {
+        final DateTimeFormatter.VisTimeSettings settings = formatterWith(UserPreferences.builder()
+                .dateTimePattern("MM/dd/yyyy hh:mm:ss a")
+                .timeZone(UserTimeZone.fromOffset(5, 30))
+                .build())
+                .getVisTimeSettings();
+
+        assertThat(settings.getUse()).isEqualTo("Offset");
+        assertThat(settings.getOffsetMinutes()).isEqualTo(330);
+        assertThat(settings.getPattern()).isEqualTo("MM/DD/YYYY hh:mm:ss a");
+        assertThat(settings.getCompactPattern()).isEqualTo("MM/DD/YYYY hh:mm a");
+    }
+
+    private static DateTimeFormatter formatterWith(final UserPreferences userPreferences) {
+        // The manager's class uses GWT.create when it loads, which only works in a browser
+        GWTMockUtilities.disarm();
+        try {
+            final UserPreferencesManager manager = Mockito.mock(UserPreferencesManager.class);
+            Mockito.when(manager.getCurrentUserPreferences()).thenReturn(userPreferences);
+            return new DateTimeFormatter(manager);
+        } finally {
+            GWTMockUtilities.restore();
+        }
+    }
 }

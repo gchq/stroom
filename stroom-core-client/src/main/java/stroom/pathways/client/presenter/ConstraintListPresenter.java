@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
@@ -29,6 +28,7 @@ import stroom.pathways.shared.pathway.PathNode;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -55,7 +55,7 @@ public class ConstraintListPresenter
     //    private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final MyDataGrid<Constraint> dataGrid;
+    private final DataGridWidget<Constraint> dataGrid;
     private final MultiSelectionModelImpl<Constraint> selectionModel;
     private final ConstraintEditPresenter constraintEditPresenter;
     private final ButtonView newButton;
@@ -82,7 +82,9 @@ public class ConstraintListPresenter
 //        view.setDataView(pagerView);
 //        view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by name, unique, so an edited row is still the same row
+        dataGrid.setKeyProvider(Constraint::getName);
         dataGrid.setTableName("Constraints");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);

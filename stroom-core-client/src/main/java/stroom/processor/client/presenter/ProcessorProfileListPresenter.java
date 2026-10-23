@@ -18,7 +18,6 @@ package stroom.processor.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.processor.shared.FindProcessorProfileRequest;
@@ -26,10 +25,13 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,7 +40,7 @@ import java.util.function.Consumer;
 
 public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final MyDataGrid<ProcessorProfile> dataGrid;
+    private final DataGridWidget<ProcessorProfile> dataGrid;
     private final MultiSelectionModelImpl<ProcessorProfile> selectionModel;
     private final RestDataProvider<ProcessorProfile, ResultPage<ProcessorProfile>> dataProvider;
 
@@ -48,7 +50,9 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
                                          final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(ProcessorProfile::getId);
         dataGrid.setTableName("Processor Profiles");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -79,15 +83,18 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Name.
+        // Name. By name, unless another sort is chosen
+        final Column<ProcessorProfile, String> nameColumn = DataGridUtil.textColumnBuilder(
+                        DataGridUtil.toStringFunc(ProcessorProfile::getName))
+                .withSorting(FindProcessorProfileRequest.FIELD_ID_NAME)
+                .build();
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getName))
-                        .withSorting(FindProcessorProfileRequest.FIELD_ID_NAME)
-                        .build(),
+                nameColumn,
                 DataGridUtil.headingBuilder(FindProcessorProfileRequest.FIELD_ID_NAME)
                         .withToolTip("The name of the processor profile.")
                         .build(),
                 300);
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, true));
 
         // Node Group.
         dataGrid.addResizableColumn(

@@ -249,7 +249,7 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     screen.findByText("Edit HTTP Client Configuration");
                     // Cancel: the document is untouched, so Save is still disabled
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
@@ -283,7 +283,7 @@ public final class GitRepoEditorStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     screen.findByText("Edit HTTP Client Configuration");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration")).toBeNull());
@@ -297,7 +297,7 @@ public final class GitRepoEditorStories {
                 // The configuration button has no URL precondition; the remote actions do
                 .story("HttpClientConfigEnabledWithoutAUrl", context -> render(context, new Fixtures().noUrl()))
                 .withPlay(play -> {
-                    play.expect(play.findByRole("button", StroomDom.button("Set Http Client Config")))
+                    play.expect(play.findByRole("button", StroomDom.button("Set HTTP Client Config")))
                             .not().toBeDisabled();
                     play.waitFor(() -> play.expect(play.getByRole("button", StroomDom.button("Pull from Git")))
                             .toBeDisabled());

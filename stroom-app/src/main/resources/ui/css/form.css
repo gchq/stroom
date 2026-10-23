@@ -30,6 +30,14 @@
     color: var(--text-color--disabled);
 }
 
+/* A required field's label ends with an asterisk (FormGroup's required, #5410). Screen readers skip
+   it (its alternative text, after the slash, is empty), as they hear "required" from the field */
+.form-label--required::after {
+    content: "*";
+    content: "*" / "";
+    margin-left: 0.15em;
+}
+
 /* A form: its groups in a column (with form-padding, inset from the edges of its panel) */
 .form {
     display: flex;
@@ -52,6 +60,15 @@
 
 .form-group > div:has(> label) {
     display: flex;
+}
+
+/* A button in a form (one that acts on the whole document, e.g. Reset Data, needs no group) or in
+   a form group is as wide as its text, but at least as wide as the form's other controls (200px),
+   rather than stretched across the form (one that should fill it says so, e.g. w-100) */
+.form > .Button,
+.form-group > .Button {
+    align-self: flex-start;
+    min-width: 200px;
 }
 
 .form-group:not(:first-child) {

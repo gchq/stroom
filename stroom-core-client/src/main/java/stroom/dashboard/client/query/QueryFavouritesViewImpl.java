@@ -16,17 +16,13 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
-import stroom.dashboard.shared.StoredQuery;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,23 +31,21 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
 
     private final Widget widget;
 
-    @UiField(provided = true)
-    CustomCellList<StoredQuery> cellList;
+    @UiField
+    SimplePanel list;
     @UiField
     SimplePanel bottom;
     @UiField
     Toolbar toolbar;
 
     @Inject
-    public QueryFavouritesViewImpl(final Binder binder,
-                                   final DateTimeFormatter dateTimeFormatter) {
-        cellList = new CustomCellList<>(new QueryCell(dateTimeFormatter));
+    public QueryFavouritesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
     @Override
-    public CellList<StoredQuery> getCellList() {
-        return cellList;
+    public void setList(final Widget list) {
+        this.list.setWidget(list);
     }
 
     @Override

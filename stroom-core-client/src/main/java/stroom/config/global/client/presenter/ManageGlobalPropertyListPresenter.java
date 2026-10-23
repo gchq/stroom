@@ -22,7 +22,6 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
@@ -32,6 +31,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -42,7 +42,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -74,7 +73,7 @@ public class ManageGlobalPropertyListPresenter
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
-    private final MyDataGrid<ConfigPropertyRow> dataGrid;
+    private final DataGridWidget<ConfigPropertyRow> dataGrid;
     private final MultiSelectionModelImpl<ConfigPropertyRow> selectionModel;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
@@ -117,7 +116,9 @@ public class ManageGlobalPropertyListPresenter
                                              final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by name: each node's reply rebuilds the rows
+        dataGrid.setKeyProvider(ConfigPropertyRow::getNameAsString);
         dataGrid.setTableName("Properties");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

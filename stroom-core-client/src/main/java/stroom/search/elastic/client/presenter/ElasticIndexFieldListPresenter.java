@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -24,6 +23,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.cell.client.TextCell;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
 
-    private final MyDataGrid<ElasticIndexField> dataGrid;
+    private final DataGridWidget<ElasticIndexField> dataGrid;
     private final DateTimeFormatter dateTimeFormatter;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
@@ -52,7 +52,9 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(ElasticIndexField::getFldName);
         dataGrid.setTableName("Elastic Index Fields");
         dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

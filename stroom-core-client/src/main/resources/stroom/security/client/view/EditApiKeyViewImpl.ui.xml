@@ -7,7 +7,7 @@
              xmlns:item="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
-        <form:FormGroup identity="owner" label="Owner">
+        <form:FormGroup identity="owner" label="Owner" required="true">
             <form:HelpHTML>
                 <p>The API Key will have the same permissions as the owner of the key.</p>
                 <p>
@@ -23,7 +23,7 @@
                 <g:SimplePanel ui:field="ownerPanel" addStyleNames="w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="name" label="API Key Name"
+        <form:FormGroup identity="name" label="API Key Name" required="true"
                         screenReaderText="Must be unique for this owner.">
             <form:HelpHTML>
                 <p>A name for the API Key. This can be used to describe the intended purpose of the key.</p>
@@ -83,7 +83,7 @@
             </form:HelpHTML>
             <g:TextArea ui:field="commentsTextArea" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="expiry" label="Expiry Date"
+        <form:FormGroup identity="expiry" label="Expiry Date" required="true"
                         screenReaderText="Must be in the future, within the maximum age (365 days by default).">
             <form:HelpHTML>
                 <p>This is the expiry date of the key. After this date, the API Key will no longer be allowed to

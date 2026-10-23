@@ -16,14 +16,14 @@
   -->
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:HTMLPanel styleName="max page-container">
-        <div class="form-group">
-            <label class="form-label">Entry Count:</label>
-            <g:Label ui:field="count" styleName="form-control-static"/>
-        </div>
-        <div class="form-group">
-            <g:Button ui:field="reset" text="Reset Store" styleName="Button"/>
-        </div>
-    </g:HTMLPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="sqlTemporalStoreSettingsEntryCount" label="Entry Count"
+                        helpText="The number of entries currently held in the store.">
+            <g:Label ui:field="count"/>
+        </form:FormGroup>
+        <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Store"/>
+    </g:FlowPanel>
 </ui:UiBinder>

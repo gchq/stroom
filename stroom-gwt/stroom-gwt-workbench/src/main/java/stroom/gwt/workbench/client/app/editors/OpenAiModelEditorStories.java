@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
+import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -36,6 +37,9 @@ import stroom.openai.shared.OpenAIModelResource;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+import java.util.Map;
+
 /// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelPresenter] (an
 /// OpenAI Model's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
@@ -46,10 +50,12 @@ import com.google.gwt.user.client.ui.Widget;
 /// |---|---|
 /// | `POST /openAIModel/v1/validate` | validating the model |
 /// | `POST /credentials/findCredentials` (and `getByName` for the saved key) | the API keys |
+/// | `POST /credentials/findCredentials` for key stores | the TLS dialog's key and trust stores |
 /// | `POST /openAIModel/v1/getDefaultHttpClientConfig` | the default HTTP client config |
 /// | the Permissions tab's routes | the Permissions tab |
 ///
-/// The TLS dialog's key stores are text boxes, so no key stores are fetched.
+/// The TLS dialog's key and trust stores are credentials pickers, which ask for both kinds of key
+/// store credential (an uploaded Key Store and a Key Store File); the reply has one of each.
 public final class OpenAiModelEditorStories {
 
     private static final String USER_AGENT = "Stroom-Test/1.0";
@@ -78,6 +84,17 @@ public final class OpenAiModelEditorStories {
             {"values": [{"uuid": "k1", "name": "openai-key", "credentialType": "ACCESS_TOKEN"},
                 {"uuid": "k2", "name": "azure-key", "credentialType": "ACCESS_TOKEN"}],
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
+
+    // CredentialsResource.findCredentials() for key stores: an uploaded key store and a key store
+    // file
+    private static final String KEY_STORES = """
+            {"values": [{"uuid": "ks1", "name": "uploaded-store", "credentialType": "KEY_STORE",
+                  "keyStoreType": "PKCS12"},
+                {"uuid": "ks2", "name": "managed-store", "credentialType": "KEY_STORE_FILE",
+                  "keyStoreType": "PKCS12", "keyStorePath": "/etc/stroom/managed.p12"}],
+              "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
+
+    private static final String TLS_KEY_STORE = "#httpTlsConfigKeyStore";
 
     private static final String VALIDATE = "/openAIModel/v1/validate";
 
@@ -136,9 +153,9 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(context).toHaveValue("128001"));
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // Every settings FormGroup has GWT's help text, so a help button
-                    play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help")))
+                    play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help (F1)")))
                             .toHaveLength(6);
-                    play.click(play.getByRole("button", "Base URL (optional) - Click for help"));
+                    play.click(play.getByRole("button", "Base URL (optional) - Click for help (F1)"));
                     // The help is a popup on the page's body (the help is also in the page, hidden,
                     // as the field's description)
                     play.expect(screen.findByText(TextMatch.containing("The base URL of an OpenAI-compatible API"),
@@ -199,7 +216,7 @@ public final class OpenAiModelEditorStories {
                             RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
 
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Max Connections", "label")).toBeInTheDocument();
@@ -222,7 +239,7 @@ public final class OpenAiModelEditorStories {
                             .toBeNull());
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // The user agent is kept (it used to be lost on OK)
-                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.click(play.getByRole("button", StroomDom.button("Set HTTP Client Config")));
                     play.waitFor(() -> play.expect(screen.getByLabelText("User Agent")).toHaveValue(USER_AGENT));
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration"))
@@ -257,8 +274,8 @@ public final class OpenAiModelEditorStories {
                 .withPlay(play -> {
                     showHttpClientConfig(play);
                     // Each tick box has help beside its label, as the dialog's other fields do
-                    play.expect(play.screen().getByTitle("Cookies Enabled - Click for help")).toBeVisible();
-                    play.expect(play.screen().getByTitle("Follow Redirects - Click for help")).toBeVisible();
+                    play.expect(play.screen().getByTitle("Cookies Enabled - Click for help (F1)")).toBeVisible();
+                    play.expect(play.screen().getByTitle("Follow Redirects - Click for help (F1)")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The HTTP client configuration dialog, read only: the partner of
@@ -268,7 +285,43 @@ public final class OpenAiModelEditorStories {
                     showHttpClientConfig(play);
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
+                })
+                // The TLS dialog's Key Store picker offers both kinds of key store credential: an
+                // uploaded Key Store and a Key Store File on the nodes
+                .story("TlsKeyStorePicker", context -> render(context, null, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    showHttpClientConfig(play);
+                    play.click(screen.getByRole("button", StroomDom.button("Set HTTP TLS Config")));
+                    play.waitFor(() -> play.expect(screen.getByText("Edit HTTP TLS Configuration"))
+                            .toBeInTheDocument());
+                    final Query keyStore = screen.within(screen.querySelector(TLS_KEY_STORE))
+                            .querySelector(StroomDom.SELECTION_BOX);
+                    play.click(keyStore);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/findCredentials")
+                                    .withBody("asks for key stores", OpenAiModelEditorStories::asksForKeyStores)
+                                    .toSpyMatcher()));
+                    play.expect(screen.findByText("managed-store")).toBeInTheDocument();
+                    play.expect(screen.getByText("uploaded-store")).toBeInTheDocument();
+                    play.click(screen.getByText("managed-store"));
+                    play.waitFor(() -> play.expect(keyStore).toHaveValue("managed-store"));
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // Whether a find asks for both kinds of key store credential, and nothing else
+    private static boolean asksForKeyStores(final String body) {
+        final Object json = body == null
+                ? null
+                : JsonValues.parse(body);
+        final Object types = json instanceof final Map<?, ?> map
+                ? map.get("credentialTypes")
+                : null;
+        return types instanceof final List<?> list
+               && list.size() == 2
+               && list.contains("KEY_STORE")
+               && list.contains("KEY_STORE_FILE");
     }
 
     // Opens the HTTP client configuration dialog once the server's default has seeded it
@@ -276,7 +329,7 @@ public final class OpenAiModelEditorStories {
         final Play screen = play.screen();
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
-        play.click(play.findByRole("button", StroomDom.button("Set Http Client Config")));
+        play.click(play.findByRole("button", StroomDom.button("Set HTTP Client Config")));
         play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration")).toBeInTheDocument());
         play.expect(screen.getByText("Max Connections", "label")).toBeInTheDocument();
     }
@@ -296,6 +349,9 @@ public final class OpenAiModelEditorStories {
                 .get("/openAIModel/v1/model-1", RestReply.json(DOC))
                 .put("/openAIModel/v1/model-1", request -> RestReply.json(request.getBody()))
                 .post("/openAIModel/v1/getDefaultHttpClientConfig", RestReply.json(DEFAULT_HTTP_CLIENT_CONFIG))
+                .route(RequestMatcher.post("/credentials/findCredentials")
+                                .withBody("asks for key stores", OpenAiModelEditorStories::asksForKeyStores),
+                        RestReply.json(KEY_STORES))
                 .post("/credentials/findCredentials", RestReply.json(API_KEYS))
                 .post("/credentials/getByName", RestReply.json(
                         "{\"uuid\": \"k1\", \"name\": \"openai-key\", \"credentialType\": \"ACCESS_TOKEN\"}"));

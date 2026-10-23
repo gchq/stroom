@@ -179,7 +179,11 @@ final class DashboardPlays {
     static void clickHeader(final Play play, final Query target) {
         play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
         play.sleep(200);
+        // Pointer events before mouse events, as a browser sends them: the new grid
+        // (DataGridWidget) reads the pointer events, MyDataGrid the mouse events
+        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }
@@ -189,6 +193,13 @@ final class DashboardPlays {
     /// @return The label of a results table's column header.
     static Query header(final Play play, final String name) {
         return play.getByText(name, ".column-top .column-label");
+    }
+
+    /// @param play The play.
+    /// @param name The column's name.
+    /// @return A results table's column header cell, with its filter box and button.
+    static Query headerCell(final Play play, final String name) {
+        return header(play, name).closest("th, [data-hcol]");
     }
 
     /// Drags with the mouse, as Stroom's `FlexLayout` reads it (mouse events, the move and release

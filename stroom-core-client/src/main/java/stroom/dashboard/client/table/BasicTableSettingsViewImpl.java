@@ -73,7 +73,9 @@ public class BasicTableSettingsViewImpl
         pageSize.setValue(100);
         pageSize.setMin(1);
         pageSize.setMax(10000);
-        maxStringFieldLength.setMax(Long.MAX_VALUE);
+        // Read as an int, so no larger than one, and at least a character
+        maxStringFieldLength.setMin(1);
+        maxStringFieldLength.setMax(Integer.MAX_VALUE);
         // It has no label of its own, as the tick box above it says what it is
         AccessibleName.set(maxStringFieldLength, "Maximum String Field Length");
     }

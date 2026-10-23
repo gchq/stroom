@@ -19,7 +19,6 @@ package stroom.floormap.client.presenter;
 import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
@@ -32,6 +31,7 @@ import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -102,7 +102,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
 
     private final Provider<FloorMapGroupEditPresenter> groupEditPresenterProvider;
 
-    private final MyDataGrid<FloorMapGroup> dataGrid;
+    private final DataGridWidget<FloorMapGroup> dataGrid;
     private final ListDataProvider<FloorMapGroup> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<FloorMapGroup> selectionModel = new SingleSelectionModel<>();
 
@@ -142,7 +142,10 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         super(eventBus, view);
         this.groupEditPresenterProvider = groupEditPresenterProvider;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Groups");
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(FloorMapGroup::getId);
         dataGrid.setSelectionModel(selectionModel);
         view.setGridView(dataGrid);
         initGridColumns();

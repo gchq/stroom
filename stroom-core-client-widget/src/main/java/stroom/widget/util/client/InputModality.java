@@ -49,17 +49,19 @@ public final class InputModality {
         return $wnd.__stroomInputModalityKeyboard !== false;
     }-*/;
 
-    // Listens in the capture phase, so that a widget stopping an event doesn't hide it
+    // Listens on the window in the capture phase, so that it sees every input first: before a
+    // widget stops it, and before the document's own capture listeners (e.g. a key binding's,
+    // which may open something that asks whether the keyboard is in use)
     private static native void installNative() /*-{
-        var doc = $doc;
-        doc.addEventListener('keydown', function () {
-            $wnd.__stroomInputModalityKeyboard = true;
+        var win = $wnd;
+        win.addEventListener('keydown', function () {
+            win.__stroomInputModalityKeyboard = true;
         }, true);
-        doc.addEventListener('pointerdown', function () {
-            $wnd.__stroomInputModalityKeyboard = false;
+        win.addEventListener('pointerdown', function () {
+            win.__stroomInputModalityKeyboard = false;
         }, true);
-        doc.addEventListener('mousedown', function () {
-            $wnd.__stroomInputModalityKeyboard = false;
+        win.addEventListener('mousedown', function () {
+            win.__stroomInputModalityKeyboard = false;
         }, true);
     }-*/;
 }

@@ -166,7 +166,8 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Keep 30 days");
-                    play.click(play.within(row(play, "Keep 30 days")).getByTitle(StroomDom.ACTIONS_TITLE));
+                    // Each row's button is named for its rule, as its menu is
+                    play.click(play.getByTitle("Actions for rule 1 'Keep 30 days'"));
                     play.waitFor(() -> play.expect(menuItem(screen, "Edit Rule")).toBeVisible());
                     for (final String label : new String[]{
                             "Add Rule Above", "Add Rule Below", "Edit Rule", "Duplicate Rule", "Delete Rule"}) {
@@ -180,7 +181,7 @@ public final class DataRetentionScreenStories {
                     play.waitFor(() -> play.expect(play.getAllByText("Keep 30 days").count()).toBe(2));
                     // The default retain-all row: only Add above and Duplicate
                     play.click(play.within(row(play, "Default Retain All Forever Rule"))
-                            .getByTitle(StroomDom.ACTIONS_TITLE));
+                            .getByTitle(TextMatch.regex("^Actions for rule ")));
                     play.waitFor(() -> play.expect(menuItem(screen, "Add Rule Above")).toBeVisible());
                     play.expect(menuItem(screen, "Duplicate Rule")).toBeVisible();
                     play.expect(screen.queryByText("Edit Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();
@@ -236,7 +237,7 @@ public final class DataRetentionScreenStories {
                     play.click(play.findByTitle("Expand All Results"));
                     play.findByText("LONG_FEED");
                     // Ascending by Rule Age -> 30 Days (rule 1) before 5 Years (rule 2)
-                    final Query rows = play.querySelector("tbody");
+                    final Query rows = play.within(impactGrid(play)).querySelector(".data-grid__body");
                     play.click(play.getByText("Rule Age"));
                     play.waitFor(() -> play.expect("the first feed", () -> firstFeed(rows)).toBe("TEST"));
                     // Descending flips it
@@ -253,10 +254,9 @@ public final class DataRetentionScreenStories {
                     // so the toggle isn't needed; the rule and type rows show the subtotal (42 + 8)
                     play.waitFor(() -> play.expect(play.getAllByText("50").count())
                             .toBeGreaterThanOrEqual(1));
-                    // The full column set, behind an expander column.
-                    // GWT's sortable headers have role="button", so the headers
-                    // are the table's <th> cells
-                    play.expect(play.querySelectorAll("thead th").textContents()).toEqual(List.of(
+                    // The full column set, behind an expander column
+                    play.expect(play.within(impactGrid(play)).querySelectorAll(StroomDom.GRID_HEADER_CELL)
+                            .textContents()).toEqual(List.of(
                             "", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
                     // An active rule with no deletes still shows, as a 0 count row.
                     // GWT builds the rows from the fetched rules' active rules,
@@ -299,9 +299,14 @@ public final class DataRetentionScreenStories {
         play.findByTitle(RUN_QUERY);
     }
 
-    // GWT's grid rows are <tr> elements with no role attribute
+    // The impact summary's grid (the rules grid is on the screen too), found by its count column
+    private static Query impactGrid(final Play play) {
+        return play.getByText("Stream Delete Count", StroomDom.GRID_HEADER_TEXT).closest(".data-grid");
+    }
+
+    // A grid row
     private static Query row(final Play play, final String text) {
-        return play.getAllByText(text).nth(0).closest("tr");
+        return play.getAllByText(text).nth(0).closest(StroomDom.GRID_ROW);
     }
 
     private static Query menuItem(final Play screen, final String text) {

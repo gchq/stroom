@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.cluster.FloorMapCluster;
@@ -27,6 +26,7 @@ import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -93,7 +93,7 @@ public class FloorMapClusterPresenter
     /// line rather than wrapping.
     private static final PopupSize POPUP_SIZE = PopupSize.resizable(700, 500);
 
-    private final MyDataGrid<FloorMapClusterMember> dataGrid;
+    private final DataGridWidget<FloorMapClusterMember> dataGrid;
     private final ListDataProvider<FloorMapClusterMember> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<FloorMapClusterMember> selectionModel =
             new SingleSelectionModel<>();
@@ -116,7 +116,10 @@ public class FloorMapClusterPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Cluster Members");
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(FloorMapClusterMember::getId);
         dataGrid.setSelectionModel(selectionModel);
         // Says which of the two empty states this is: a filter that matched
         // nothing looks exactly like a broken dialog otherwise.

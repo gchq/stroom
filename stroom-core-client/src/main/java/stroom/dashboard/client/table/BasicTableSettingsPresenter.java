@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.client.DataSourceClient;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
@@ -46,15 +47,19 @@ public class BasicTableSettingsPresenter
         implements Focus, BasicTableSettingsUihandlers {
 
     private final DocSelectionBoxPresenter pipelinePresenter;
+    private final DataSourceClient dataSourceClient;
+    private DocRef dataSourceRef;
 
     @Inject
     public BasicTableSettingsPresenter(final EventBus eventBus,
                                        final BasicTableSettingsView view,
                                        final DocSelectionBoxPresenter pipelinePresenter,
-                                       final UiConfigCache uiConfigCache) {
+                                       final UiConfigCache uiConfigCache,
+                                       final DataSourceClient dataSourceClient) {
         super(eventBus, view);
         own(pipelinePresenter);
         this.pipelinePresenter = pipelinePresenter;
+        this.dataSourceClient = dataSourceClient;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -114,9 +119,22 @@ public class BasicTableSettingsPresenter
         pipelinePresenter.setEnabled(!useDefaultExtractionPipeline);
     }
 
+    /// Ticking Use Default Extraction Pipeline puts the data source's default pipeline in
+    /// Extraction Pipeline, so that the table uses it straight away rather than only once its
+    /// query's data source changes.
+    ///
+    /// @param useDefaultExtractionPipeline Whether the box is now ticked.
     @Override
     public void onUseDefaultExtractionPipeline(final boolean useDefaultExtractionPipeline) {
         pipelinePresenter.setEnabled(!useDefaultExtractionPipeline);
+        if (useDefaultExtractionPipeline && dataSourceRef != null) {
+            dataSourceClient.fetchDefaultExtractionPipeline(dataSourceRef, defaultPipeline -> {
+                // Still ticked, and the data source has a default
+                if (defaultPipeline != null && useDefaultExtractionPipeline()) {
+                    setPipeline(defaultPipeline);
+                }
+            }, this);
+        }
     }
 
     private DocRef getPipeline() {
@@ -183,6 +201,7 @@ public class BasicTableSettingsPresenter
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
+        dataSourceRef = settings.getDataSourceRef();
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
         setUseDefaultExtractionPipeline(settings.useDefaultExtractionPipeline());

@@ -222,6 +222,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        annotationStatusPresenter.setAccessibleName("Statuses");
 
         this.annotationLabelPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
@@ -230,6 +231,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationLabelPresenter.setAccessibleName("Labels");
 
         this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
@@ -238,6 +240,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
+        annotationCollectionPresenter.setAccessibleName("Collections");
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
@@ -251,6 +254,7 @@ public class AnnotationEditPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        commentPresenter.setAccessibleName("Standard comments");
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
 
         own(annotationStatusPresenter.addDataSelectionHandler(e -> {

@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
+import stroom.visualisation.shared.VisInput;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.presenter.client.Layer;
@@ -36,12 +37,16 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
     private final FlowPanel outer;
-    private final List<SelectionBox<String>> fieldControls = new ArrayList<>();
+    private final List<FieldControl> fieldControls = new ArrayList<>();
+    // The table's columns the field controls can choose
+    private List<VisFieldOption> fieldOptions = Collections.emptyList();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
 //    private double opacity;
 
@@ -58,7 +63,14 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         }
     }
 
-    public void addControls(final JSONArray controls) {
+    /// Adds a form group for each control.
+    ///
+    /// @param controls The controls of a tab of the visualisation's settings.
+    /// @param inputs   The visualisation's typed inputs by id (see [VisInput]), which describe its
+    ///                 field controls: a field control with an input offers only the columns it
+    ///                 takes, says what it is for and whether it is required, and says what is wrong
+    ///                 when the column chosen isn't one it takes. Empty if it declares none.
+    public void addControls(final JSONArray controls, final Map<String, VisInput> inputs) {
         for (int i = 0; i < controls.size(); i++) {
             final JSONObject control = JSONUtil.getObject(controls.get(i));
 
@@ -68,6 +80,18 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
             final FormGroup formGroup = new FormGroup();
             formGroup.setLabel(label);
             formGroup.add(widget);
+
+            if ("field".equals(JSONUtil.getString(control.get("type")))) {
+                @SuppressWarnings("unchecked") final SelectionBox<String> box = (SelectionBox<String>) widget;
+                final VisInput input = inputs.get(JSONUtil.getString(control.get("id")));
+                final FieldControl fieldControl = new FieldControl(box, formGroup, input);
+                fieldControls.add(fieldControl);
+                if (input != null) {
+                    formGroup.setRequired(input.isRequired());
+                    formGroup.setHelpText(VisInputChoices.helpText(input));
+                }
+                box.addValueChangeHandler(event -> fieldControl.check(fieldOptions));
+            }
 
             outer.add(formGroup);
         }
@@ -81,10 +105,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         Widget widget = null;
 
         if ("field".equals(type)) {
-            final SelectionBox<String> ctrl = createSelectionBox(id);
-            widget = ctrl;
-
-            fieldControls.add(ctrl);
+            widget = createSelectionBox(id);
 
         } else if ("selection".equals(type)) {
             final SelectionBox<String> ctrl = createSelectionBox(id);
@@ -329,12 +350,13 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return null;
     }
 
-    public void setFieldNames(final List<String> fieldNames) {
-        for (final SelectionBox<String> ctrl : fieldControls) {
-            final String selected = ctrl.getValue();
-            ctrl.clear();
-            ctrl.addItems(fieldNames);
-            ctrl.setValue(selected);
+    /// Sets the columns the field controls can choose, each offering those its input takes.
+    ///
+    /// @param fieldOptions The columns of the visualisation's table.
+    public void setFields(final List<VisFieldOption> fieldOptions) {
+        this.fieldOptions = fieldOptions;
+        for (final FieldControl fieldControl : fieldControls) {
+            fieldControl.setOptions(fieldOptions);
         }
     }
 
@@ -342,6 +364,10 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     public void read(final JSONObject settings) {
         for (final HasReadAndWrite<JSONObject> control : controls) {
             control.read(settings);
+        }
+        // The chosen columns may not be offered yet, or be of a type their inputs don't take
+        for (final FieldControl fieldControl : fieldControls) {
+            fieldControl.setOptions(fieldOptions);
         }
     }
 
@@ -393,4 +419,41 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     //*************
     // End Layer
     //*************/
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A field control, its form group, and the input the visualisation declares for it (or null)
+    private static final class FieldControl {
+
+        private final SelectionBox<String> box;
+        private final FormGroup formGroup;
+        private final VisInput input;
+
+        private FieldControl(final SelectionBox<String> box, final FormGroup formGroup, final VisInput input) {
+            this.box = box;
+            this.formGroup = formGroup;
+            this.input = input;
+        }
+
+        // Offers the columns the input takes, keeping the one chosen
+        void setOptions(final List<VisFieldOption> options) {
+            final String selected = box.getValue();
+            box.clear();
+            box.addItems(VisInputChoices.choices(input, options, selected));
+            box.setValue(selected);
+            check(options);
+        }
+
+        // Says what is wrong with the column chosen, if anything
+        void check(final List<VisFieldOption> options) {
+            final String problem = VisInputChoices.problem(input, options, box.getValue());
+            if (problem == null) {
+                formGroup.clearFeedback();
+            } else {
+                formGroup.setFeedback(problem);
+            }
+        }
+    }
 }

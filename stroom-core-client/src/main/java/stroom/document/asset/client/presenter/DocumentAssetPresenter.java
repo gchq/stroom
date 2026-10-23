@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter.DialogType;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
-import stroom.document.asset.client.presenter.assets.DocumentAssetImageResource;
+import stroom.document.asset.client.presenter.assets.DocumentAssetTree;
 import stroom.document.asset.client.presenter.assets.DocumentAssetTreeItem;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.document.asset.shared.DocumentAssetSaveAsParameters;
@@ -53,9 +53,7 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -101,7 +99,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Tree representing file assets and folders
      */
-    private final Tree tree = new Tree(new AssetTreeResources(), true);
+    private final DocumentAssetTree tree = new DocumentAssetTree("Assets");
 
     /**
      * Button to revert any changes and go back to live version
@@ -206,7 +204,6 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         this.editAssetDialog = editAssetDialog;
         this.editorPresenter = own(editorPresenterProvider.get());
 
-        tree.setStylePrimaryName("visualisation-asset-tree");
         tree.addSelectionHandler(event -> {
             DocumentAssetPresenter.this.onSelectionChange();
         });
@@ -292,7 +289,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 i++;
             }
         } else {
-            // Parent is the Tree itself
+            // Parent is the top of the tree
             int i = 1;
             while (DocumentAssetPresenterUtils.labelClashesInTreeRoot(tree, nonClashingLabel, itemId)) {
                 nonClashingLabel = DocumentAssetPresenterUtils.generateNonClashingLabel(label, i);
@@ -430,7 +427,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         if (!isReadOnly()) {
             final DocumentAssetTreeItem parentItem =
                     DocumentAssetPresenterUtils.findFolderForSelectedItem(
-                            (DocumentAssetTreeItem) tree.getSelectedItem());
+                            tree.getSelectedItem());
 
             final String path = DocumentAssetPresenterUtils.getItemPath(parentItem);
             final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(addItemDialog);
@@ -475,7 +472,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      */
     private void onDeleteButtonClick() {
         if (!isReadOnly()) {
-            final DocumentAssetTreeItem assetTreeItem = (DocumentAssetTreeItem) tree.getSelectedItem();
+            final DocumentAssetTreeItem assetTreeItem = tree.getSelectedItem();
             if (assetTreeItem != null) {
                 final String message;
                 if (assetTreeItem.isLeaf()) {
@@ -506,11 +503,11 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
 
     /**
      * Called when the EDIT button is pressed. Allows users to change the text of
-     * a TreeItem.
+     * an item in the tree.
      */
     private void onEditFilename() {
         if (!isReadOnly()) {
-            final DocumentAssetTreeItem selectedItem = (DocumentAssetTreeItem) tree.getSelectedItem();
+            final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
             if (selectedItem != null) {
                 final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(editAssetDialog);
                 editAssetDialog.setupPopup(popupEventBuilder, selectedItem, ILLEGAL_ASSET_NAME_CHARACTERS);
@@ -521,7 +518,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                     final String oldPath =
                                             DocumentAssetPresenterUtils.getItemPath(selectedItem);
                                     final DocumentAssetTreeItem parentItem =
-                                            (DocumentAssetTreeItem) selectedItem.getParentItem();
+                                            selectedItem.getParentItem();
                                     final String text = getNonClashingLabel(parentItem,
                                             editAssetDialog.getView().getText(),
                                             editAssetDialog.getView().getId());
@@ -633,7 +630,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     private void doSelectionChangeAfterUpdateContentSuccess() {
         assetDirtyState.onUpdateContentSuccess();
 
-        final DocumentAssetTreeItem selectedItem = (DocumentAssetTreeItem) tree.getSelectedItem();
+        final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
 
         if (selectedItem != null && selectedItem.isLeaf()) {
             final String selectedItemPath = DocumentAssetPresenterUtils.getItemPath(selectedItem);
@@ -672,7 +669,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         if (!isReadOnly()) {
             final DocumentAssetTreeItem folderItem =
                     DocumentAssetPresenterUtils.findFolderForSelectedItem(
-                            (DocumentAssetTreeItem) tree.getSelectedItem());
+                            tree.getSelectedItem());
             final String path = DocumentAssetPresenterUtils.getItemPath(folderItem);
             uploadFileDialog.fireShowPopup(this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
         }
@@ -683,7 +680,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
      * Opens a new Browser window (tab) pointing to the asset via the Servlet.
      */
     public void onViewAsset() {
-        final DocumentAssetTreeItem selectedItem = (DocumentAssetTreeItem) tree.getSelectedItem();
+        final DocumentAssetTreeItem selectedItem = tree.getSelectedItem();
         if (selectedItem != null) {
             // Find the document ID
             if (document != null) {
@@ -1041,7 +1038,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         } else {
             revertButton.setEnabled(isDirty());
 
-            final DocumentAssetTreeItem item = (DocumentAssetTreeItem) tree.getSelectedItem();
+            final DocumentAssetTreeItem item = tree.getSelectedItem();
             if (item == null) {
                 // Assume the root item is selected so enable 'add'
                 addButton.setEnabled(true);
@@ -1063,50 +1060,15 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     // --------------------------------------------------------------------------------
 
     /**
-     * Provides the images for the CellTree
-     */
-    private static class AssetTreeResources implements Tree.Resources {
-
-        /**
-         * Height and width of the image in pixels
-         */
-        private static final int HEIGHT = 12;
-        private static final int WIDTH = 16;
-        private static final DocumentAssetImageResource CLOSED =
-                new DocumentAssetImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-right.png");
-        private static final DocumentAssetImageResource OPEN =
-                new DocumentAssetImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-down.png");
-        private static final DocumentAssetImageResource TRANSPARENT =
-                new DocumentAssetImageResource(HEIGHT, WIDTH, "/ui/background-images/transparent-16x16.png");
-
-        @Override
-        public ImageResource treeClosed() {
-            return CLOSED;
-        }
-
-        @Override
-        public ImageResource treeLeaf() {
-            return TRANSPARENT;
-        }
-
-        @Override
-        public ImageResource treeOpen() {
-            return OPEN;
-        }
-
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /**
      * Interface for View.
      */
     public interface DocumentAssetView extends View {
 
-        /**
-         * Sets the cell tree within the view.
-         */
-        void setTreeAndEditor(final Tree cellTree, final EditorPresenter editor);
+        /// Puts the asset tree beside the editor.
+        ///
+        /// @param tree   The asset tree.
+        /// @param editor The editor of the chosen file.
+        void setTreeAndEditor(DocumentAssetTree tree, EditorPresenter editor);
 
         /// Shows the editor, or in its place a message asking for a file to be selected.
         ///

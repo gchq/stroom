@@ -78,6 +78,13 @@
 	border-radius: .25rem;
 }
 
+/* It takes the focus, so that the keyboard can scroll it */
+.alert-detail:focus-visible {
+    outline: none;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
 .alert-detail-text {
     font-family: monospace, Courier New;
     white-space: pre;

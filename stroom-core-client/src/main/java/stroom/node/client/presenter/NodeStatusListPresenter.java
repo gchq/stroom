@@ -22,7 +22,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -43,6 +42,7 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -82,7 +82,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
     private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
 
-    private final MyDataGrid<NodeStatusResult> dataGrid;
+    private final DataGridWidget<NodeStatusResult> dataGrid;
     private final NodeClient nodeClient;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
@@ -108,7 +108,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         super(eventBus, view);
         own(tooltipPresenter);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Nodes");
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

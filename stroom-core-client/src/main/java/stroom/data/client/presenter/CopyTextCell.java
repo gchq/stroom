@@ -79,6 +79,7 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
                                   final ValueUpdater<String> valueUpdater) {
         final Element element = event.getEventTarget().cast();
         if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+            CopyTextUtil.keepSelection(event);
             if (value != null) {
                 ClipboardUtil.copy(value);
             }

@@ -24,6 +24,8 @@ import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -64,7 +66,35 @@ public final class TypeFilterStories {
                 // Toggle the popup and tick/untick document types (tri-state All/None row)
                 .story("Basic", context -> typeFilter(context, null, false))
                 // Pre-filtered to a subset, so the All/None row shows the half-tick state
-                .story("PartialSelection", context -> typeFilter(context, Set.of("Feed", "Pipeline"), true));
+                .story("PartialSelection", context -> typeFilter(context, Set.of("Feed", "Pipeline"), true))
+                // The types are a list (listbox) whose options say whether they are ticked
+                // (aria-checked, All / None part ticked when some are): the arrows move, Space or
+                // Enter ticks or unticks the type with the focus, and typing goes to a type
+                .story("Keys", context -> typeFilter(context, null, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play types = screen.within(screen.findByRole("listbox", "Document types"));
+                    final Query all = types.getByRole("option", "All / None");
+                    final Query dashboard = types.getByRole("option", "Dashboard");
+                    final Query xslt = types.getByRole("option", "XSL Translation");
+                    play.expect(types.getAllByRole("option")).toHaveLength(FIXTURE_DOC_TYPES.length + 1);
+                    play.expect(xslt).toBeVisible();
+                    play.waitFor(() -> play.expect(all).toHaveFocus());
+                    play.expect(all).toHaveAttribute("aria-checked", "true");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(dashboard).toHaveFocus();
+                    play.expect(dashboard).toHaveAttribute("aria-checked", "true");
+                    play.keyboard(" ");
+                    play.expect(dashboard).toHaveAttribute("aria-checked", "false");
+                    play.expect(all).toHaveAttribute("aria-checked", "mixed");
+                    play.expect(play.spy(ON_INCLUDED_TYPES_CHANGE)).toHaveBeenCalledTimes(1);
+                    play.keyboard("x");
+                    play.expect(xslt).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.expect(xslt).toHaveAttribute("aria-checked", "false");
+                    play.expect(play.spy(ON_INCLUDED_TYPES_CHANGE)).toHaveBeenLastCalledWith(
+                            "Included: Folder, Feed, Pipeline, Query, Dictionary, Index");
+                });
     }
 
     private static Widget typeFilter(final StoryContext context,

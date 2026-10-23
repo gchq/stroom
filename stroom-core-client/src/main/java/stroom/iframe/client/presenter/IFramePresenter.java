@@ -56,6 +56,14 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         getView().setCustomTitle(customTitle);
     }
 
+    /// Names the frame for assistive technology, which announces a frame by its `title` (WCAG
+    /// 4.1.2). Not the same as [#setCustomTitle(String)], which is the title of the tab showing it.
+    ///
+    /// @param name The frame's name, e.g. `Preview`.
+    public void setAccessibleName(final String name) {
+        getView().setAccessibleName(name);
+    }
+
     public String getLabel() {
         return getView().getTitle();
     }
@@ -98,6 +106,11 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions);
 
         void setCustomTitle(String customTitle);
+
+        /// Names the frame for assistive technology (its `title` attribute).
+        ///
+        /// @param name The frame's name.
+        void setAccessibleName(String name);
 
         String getTitle();
 

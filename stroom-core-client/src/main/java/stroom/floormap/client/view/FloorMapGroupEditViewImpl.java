@@ -86,6 +86,7 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
 
         final Grid grid = new Grid(2, 2);
         grid.addStyleName("floormap-group-edit-fields");
+        FloorMapAria.layoutTable(grid);
         grid.setText(ROW_NAME, 0, "Name");
         grid.setWidget(ROW_NAME, 1, nameBox);
         grid.setText(ROW_COLOUR, 0, "Colour");

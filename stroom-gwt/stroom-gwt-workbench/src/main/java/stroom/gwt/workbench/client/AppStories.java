@@ -25,6 +25,9 @@ import stroom.gwt.workbench.client.app.dashboard.PausePollingStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryResultVisStories;
 import stroom.gwt.workbench.client.app.dashboard.QueryResultsTableDashboardStories;
 import stroom.gwt.workbench.client.app.dashboard.TableFilterSettingsStories;
+import stroom.gwt.workbench.client.app.dashboard.VisSettingsStories;
+import stroom.gwt.workbench.client.app.dashboard.VisToolbarStories;
+import stroom.gwt.workbench.client.app.dashboard.VisTooltipStories;
 import stroom.gwt.workbench.client.app.data.DataUploadDialogStories;
 import stroom.gwt.workbench.client.app.data.MetaBrowserStories;
 import stroom.gwt.workbench.client.app.data.ProcessChoiceDialogStories;
@@ -37,6 +40,8 @@ import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapInitStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapMapStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
 import stroom.gwt.workbench.client.app.editors.GitRepoEditorStories;
@@ -45,6 +50,7 @@ import stroom.gwt.workbench.client.app.editors.PathwaysEditorStories;
 import stroom.gwt.workbench.client.app.editors.PlanBEditorStories;
 import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.editors.ReportEditorStories;
+import stroom.gwt.workbench.client.app.editors.SqlTemporalStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.StatisticStoreEditorStories;
 import stroom.gwt.workbench.client.app.editors.ViewEditorStories;
 import stroom.gwt.workbench.client.app.editors.VisualisationEditorStories;
@@ -109,6 +115,7 @@ import stroom.gwt.workbench.client.app.main.ProcessorFilterListStories;
 import stroom.gwt.workbench.client.app.main.ProcessorLimitsDialogStories;
 import stroom.gwt.workbench.client.app.main.ProcessorProfilesScreenStories;
 import stroom.gwt.workbench.client.app.main.ProcessorTaskListStories;
+import stroom.gwt.workbench.client.app.main.ProcessorTaskSummaryStories;
 import stroom.gwt.workbench.client.app.main.PropertiesScreenStories;
 import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
 import stroom.gwt.workbench.client.app.main.RecentItemsDialogStories;
@@ -130,6 +137,12 @@ import stroom.gwt.workbench.client.app.main.VisualisationAssetsStories;
 import stroom.gwt.workbench.client.app.main.WelcomeScreenStories;
 import stroom.gwt.workbench.client.app.query.QueryResultsTableStories;
 import stroom.gwt.workbench.client.app.security.DocumentPermissionsTabStories;
+import stroom.gwt.workbench.client.app.vis.ChartVisStories;
+import stroom.gwt.workbench.client.app.vis.MapVisStories;
+import stroom.gwt.workbench.client.app.vis.NetworkVisStories;
+import stroom.gwt.workbench.client.app.vis.StatusVisStories;
+import stroom.gwt.workbench.client.app.vis.TimeVisStories;
+import stroom.gwt.workbench.client.app.vis.VisAccessibilityStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 /// Registers the workbench's `App/*` stories.
@@ -253,6 +266,8 @@ public final class AppStories {
         ProcessorProfilesScreenStories.addTo(registry);
         // App/Main/ProcessorTaskList
         ProcessorTaskListStories.addTo(registry);
+        // App/Main/ProcessorTaskSummary
+        ProcessorTaskSummaryStories.addTo(registry);
         // App/Main/PropertiesScreen
         PropertiesScreenStories.addTo(registry);
         // App/Main/RecentItemsDialog
@@ -311,6 +326,10 @@ public final class AppStories {
         FloorMapSettingsStories.addTo(registry);
         // App/Editors/FloorMapForms
         FloorMapFormsStories.addTo(registry);
+        // App/Editors/FloorMapInit
+        FloorMapInitStories.addTo(registry);
+        // App/Editors/FloorMapMap
+        FloorMapMapStories.addTo(registry);
         // App/Editors/FolderEditor
         FolderEditorStories.addTo(registry);
         // App/Editors/GitRepoEditor
@@ -341,6 +360,25 @@ public final class AppStories {
         TableFilterSettingsStories.addTo(registry);
         // App/Dashboard/QueryResultVis
         QueryResultVisStories.addTo(registry);
+        // App/Dashboard/VisTooltip
+        VisTooltipStories.addTo(registry);
+        // App/Dashboard/VisToolbar
+        VisToolbarStories.addTo(registry);
+        VisSettingsStories.addTo(registry);
+        // App/Visualisations/BarChart, LineChart, StackedArea, TimeSeries, Scatter, Bubble, Doughnut,
+        // TreeMap, WordCloud
+        ChartVisStories.addTo(registry);
+        // App/Visualisations/DayWeekHeatMap, HourDayMultiHeatMap, HourDayPointMap, HourDaySessionMap,
+        // Session, SeriesSessionMap
+        TimeVisStories.addTo(registry);
+        // App/Visualisations/Gauge, RAGStatus, TrafficLights, TextValue
+        StatusVisStories.addTo(registry);
+        // App/Visualisations/Force, ChordLabels, Sunburst, Tree
+        NetworkVisStories.addTo(registry);
+        // App/Visualisations/GeoMap, FloorMap
+        MapVisStories.addTo(registry);
+        // App/Visualisations/Accessibility
+        VisAccessibilityStories.addTo(registry);
         // App/Dashboard/PausePolling
         PausePollingStories.addTo(registry);
         // App/Data/DataUploadDialog
@@ -357,6 +395,8 @@ public final class AppStories {
         ElasticIndexEditorStories.addTo(registry);
         // App/Index/IndexEditor
         IndexEditorStories.addTo(registry);
+        // App/Editors/SqlTemporalStoreSettings
+        SqlTemporalStoreSettingsStories.addTo(registry);
         // App/Index/SolrIndexEditor
         SolrIndexEditorStories.addTo(registry);
         // App/Feed/FeedEditor

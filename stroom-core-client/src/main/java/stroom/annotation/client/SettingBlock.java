@@ -20,10 +20,13 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
@@ -35,6 +38,11 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Collections;
 import java.util.Iterator;
 
+/// A setting of an annotation (e.g. its status), shown as its value with a ⋮ hint, that a click
+/// anywhere on changes. When it has a title (e.g. `Change Status`), its ⋮ is a button named by it
+/// that the keyboard reaches and presses (Enter or Space), clicking the block, so opening its
+/// chooser (a dialog) as a click does. A setting without one (e.g. one holding a text box, which
+/// takes the focus itself) keeps the ⋮ as a hint only.
 public class SettingBlock extends Composite implements HasWidgets, HasClickHandlers {
 
     private final FlowPanel formGroupPanel = new FlowPanel();
@@ -48,6 +56,17 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         icon = new SimplePanel();
         icon.getElement().setInnerHTML(SvgImage.ELLIPSES_VERTICAL.getSvg());
         icon.getElement().setClassName("setting-block-icon icon-colour__grey svgIcon");
+        // A hint only, until the setting has a title (see setTitle)
+        icon.getElement().setAttribute("aria-hidden", "true");
+        icon.addDomHandler(event -> {
+            final int keyCode = event.getNativeKeyCode();
+            if (isButton() && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE)) {
+                event.preventDefault();
+                event.stopPropagation();
+                icon.getElement().dispatchEvent(Document.get().createClickEvent(
+                        1, 0, 0, 0, 0, false, false, false, false));
+            }
+        }, KeyDownEvent.getType());
 
         formGroupPanel.add(icon);
         initWidget(formGroupPanel);
@@ -62,6 +81,32 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         if (Action.HELP == KeyBinding.test(nativeEvent)) {
             nativeEvent.preventDefault();
         }
+    }
+
+    /// Sets the setting's tooltip, e.g. `Change Status`, which also makes its ⋮ a button named by it.
+    ///
+    /// @param title The tooltip, or null or blank for none (the ⋮ is then a hint only).
+    @Override
+    public void setTitle(final String title) {
+        super.setTitle(title);
+        final Element element = icon.getElement();
+        if (title == null || title.isEmpty()) {
+            element.removeAttribute("role");
+            element.removeAttribute("tabindex");
+            element.removeAttribute("aria-label");
+            element.removeAttribute("aria-haspopup");
+            element.setAttribute("aria-hidden", "true");
+        } else {
+            element.setAttribute("role", "button");
+            element.setTabIndex(0);
+            element.setAttribute("aria-label", title);
+            element.setAttribute("aria-haspopup", "dialog");
+            element.removeAttribute("aria-hidden");
+        }
+    }
+
+    private boolean isButton() {
+        return "button".equals(icon.getElement().getAttribute("role"));
     }
 
     /// Makes the setting read only: its value is greyed and its chooser doesn't open (the presenter

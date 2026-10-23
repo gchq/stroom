@@ -20,19 +20,24 @@ import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -47,7 +52,10 @@ public class QueryHistoryPresenter
 
     private final RestFactory restFactory;
     private final ExpressionTreePresenter expressionPresenter;
-    private final MySingleSelectionModel<StoredQuery> selectionModel;
+    private static final String NAME = "Query history";
+
+    private final MultiSelectionModelImpl<StoredQuery> selectionModel;
+    private final DataGridWidget<StoredQuery> list;
     private QueryPresenter queryPresenter;
     private String currentDashboardUuid;
 
@@ -55,7 +63,8 @@ public class QueryHistoryPresenter
     public QueryHistoryPresenter(final EventBus eventBus,
                                  final QueryHistoryView view,
                                  final ExpressionTreePresenter expressionPresenter,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         own(expressionPresenter);
 
@@ -67,11 +76,21 @@ public class QueryHistoryPresenter
 
         view.setExpressionView(expressionPresenter.getView());
 
-        selectionModel = new MySingleSelectionModel<>();
-        view.getCellList().setSelectionModel(selectionModel);
+        // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
+        // double click, on one opens it (the dialog's OK)
+        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName(NAME);
+        list.addColumn(DataGridUtil.columnBuilder((StoredQuery query) -> query,
+                        () -> new QueryCell(dateTimeFormatter))
+                .build(), "", 200);
+        selectionModel = new MultiSelectionModelImpl<>();
+        list.setSelectionModel(selectionModel,
+                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false));
+        view.setList(list);
 
         own(selectionModel.addSelectionChangeHandler(event -> {
-            final StoredQuery query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelected();
 
             if (query == null || query.getQuery() == null) {
                 expressionPresenter.read(null);
@@ -79,8 +98,11 @@ public class QueryHistoryPresenter
                 expressionPresenter.read(query.getQuery().getExpression());
             }
         }));
-        own(selectionModel.addDoubleSelectHandler(event ->
-                HidePopupRequestEvent.builder(this).fire()));
+        own(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                HidePopupRequestEvent.builder(this).fire();
+            }
+        }));
     }
 
     public void show(final QueryPresenter queryPresenter, final String dashboardUuid) {
@@ -119,8 +141,8 @@ public class QueryHistoryPresenter
                         }
                     }
 
-                    getView().getCellList().setRowData(dedupedList);
-                    getView().getCellList().setRowCount(dedupedList.size(), true);
+                    list.setRowData(0, dedupedList);
+                    list.setRowCount(dedupedList.size(), true);
 
                     if (showAfterRefresh) {
                         final PopupSize popupSize = PopupSize.resizable(500, 400);
@@ -130,10 +152,9 @@ public class QueryHistoryPresenter
                                 .popupSize(popupSize)
                                 .caption("Query History")
                                 .onShow(e -> {
-                                    if (getView().getCellList().getVisibleItems().size() > 0) {
-                                        final StoredQuery firstItem = getView().getCellList().getVisibleItem(0);
-                                        selectionModel.setSelected(firstItem, true);
-                                        getView().getCellList().setKeyboardSelectedRow(0, true);
+                                    if (list.getVisibleItemCount() > 0) {
+                                        selectionModel.setSelected(list.getVisibleItem(0));
+                                        list.setKeyboardSelectedRow(0, true);
                                     }
                                 })
                                 .onHideRequest(this)
@@ -147,7 +168,7 @@ public class QueryHistoryPresenter
     @Override
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
-            final StoredQuery query = selectionModel.getSelectedObject();
+            final StoredQuery query = selectionModel.getSelected();
             if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
                 queryPresenter.setExpression(query.getQuery().getExpression());
             }
@@ -157,7 +178,8 @@ public class QueryHistoryPresenter
 
     public interface QueryHistoryView extends View {
 
-        CellList<StoredQuery> getCellList();
+        /// @param list The list of queries, shown above the selected query.
+        void setList(Widget list);
 
         void setExpressionView(View view);
     }

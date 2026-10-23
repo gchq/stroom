@@ -22,9 +22,13 @@ import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.layout.client.SplitPane;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
+import stroom.widget.util.client.ContentFocus;
 import stroom.widget.util.client.Size;
+import stroom.widget.util.client.TabOrder;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -33,7 +37,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.ResizeFlowPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -41,6 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
@@ -49,7 +54,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     private final EventBus eventBus;
 
     @UiField
-    FocusPanel root;
+    SimplePanel root;
     @UiField
     SimplePanel banner;
     @UiField
@@ -58,6 +63,11 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     ResizeLayoutPanel contentPanel;
     @UiField
     MainToolbar mainToolbar;
+
+    // Where F6 puts the focus in the explorer and the content: the explorer's tree, and the open
+    // document's layers, below the content's tab bar
+    private static final String EXPLORER_START_SELECTOR = "[role=\"tree\"]";
+    private static final String DOCUMENT_SELECTOR = ".curveTabLayoutViewImpl-layerContainerOuter";
 
     // Persistent content widgets — set by setExplorerView and setContentView, never destroyed.
     private Widget westWidget;
@@ -76,6 +86,9 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
         this.widget = binder.createAndBindUi(this);
         this.eventBus = eventBus;
         banner.setVisible(false);
+        // An alert, so that a screen reader says the maintenance message when it is shown. The role
+        // is set before any text is, as a live region must exist before what it announces
+        banner.getElement().setAttribute("role", "alert");
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -87,12 +100,15 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @Override
     public void setExplorerView(final View view) {
         westWidget = view.asWidget();
+        // A landmark screen readers can go to
+        setLandmark(westWidget, "navigation", "Explorer");
         rebuildLayout();
     }
 
     @Override
     public void setContentView(final View view) {
         centerWidget = view.asWidget();
+        setLandmark(centerWidget, "main", null);
         rebuildLayout();
     }
 
@@ -349,6 +365,81 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
         if (colour != null && !colour.isBlank()) {
             DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".tab-bar--curved .tab-bar__tab[aria-selected=\"true\"]"),
                     SafeStylesUtils.fromTrustedNameAndValue("border-bottom-color", colour));
+        }
+    }
+
+    @Override
+    public void focusArea(final boolean backwards) {
+        final List<Widget> areas = new ArrayList<>();
+        for (final Widget area : new Widget[]{mainToolbar, westWidget, centerWidget}) {
+            // Only those shown, e.g. not the explorer while the sidebar is hidden
+            if (area != null && area.isAttached() && area.getElement().getOffsetWidth() > 0) {
+                areas.add(area);
+            }
+        }
+        if (areas.isEmpty()) {
+            return;
+        }
+        final Element active = getActiveElement();
+        int current = -1;
+        for (int i = 0; i < areas.size(); i++) {
+            if (active != null && areas.get(i).getElement().isOrHasChild(active)) {
+                current = i;
+            }
+        }
+        final int next = current < 0
+                ? (backwards
+                ? areas.size() - 1
+                : 0)
+                : (current + (backwards
+                ? areas.size() - 1
+                : 1)) % areas.size();
+        final Widget area = areas.get(next);
+        focusAreaWidget(area, area == westWidget
+                ? EXPLORER_START_SELECTOR
+                : area == centerWidget
+                        ? DOCUMENT_SELECTOR
+                        : null);
+    }
+
+    // Focuses an area at the first tab stop in the part of it where its work is (the explorer's tree,
+    // the content's open document, past the buttons above them), if it has one; otherwise as the
+    // area focuses itself, or else at its first tab stop
+    private static void focusAreaWidget(final Widget area, final String startSelector) {
+        final Element part = startSelector == null
+                ? null
+                : querySelector(area.getElement(), startSelector);
+        final Element partStart = part == null
+                ? null
+                : ContentFocus.firstTabStop(part);
+        if (partStart != null) {
+            partStart.focus();
+        } else if (area instanceof final Focus focus) {
+            focus.focus();
+        } else {
+            final JsArray<Element> stops = TabOrder.tabStops(area.getElement());
+            if (stops.length() > 0) {
+                stops.get(0).focus();
+            }
+        }
+    }
+
+    // The first element inside another matching a selector, or null
+    private static native Element querySelector(Element element, String selector) /*-{
+        return element.querySelector(selector);
+    }-*/;
+
+    // The element with the focus, or null
+    private static native Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    private static void setLandmark(final Widget widget, final String role, final String name) {
+        if (widget != null) {
+            widget.getElement().setAttribute("role", role);
+            if (name != null) {
+                widget.getElement().setAttribute("aria-label", name);
+            }
         }
     }
 

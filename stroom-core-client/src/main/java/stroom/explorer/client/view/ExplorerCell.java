@@ -47,7 +47,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     private static Template template;
     private final SelectionModel<ExplorerNode> selectionModel;
-    private TickBoxCell tickBoxCell;
+    private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
+
+    // Whether the items have tick boxes (a tick tree's)
+    private boolean tickBoxes;
     private boolean showAlerts;
 
     public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel, final boolean showAlerts) {
@@ -55,7 +58,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         this.showAlerts = showAlerts;
 
         if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
-            tickBoxCell = TickBoxCell.create(true, false);
+            tickBoxes = true;
         }
 
         if (template == null) {
@@ -112,11 +115,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                     paddingLeft,
                     expanderIconSafeHtml));
 
-            if (tickBoxCell != null) {
-                final SafeHtmlBuilder tb = new SafeHtmlBuilder();
-                tickBoxCell.render(context, getValue(node), tb);
-
-                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
+            if (tickBoxes) {
+                // The tick box as a picture: the tree item says whether it is ticked (aria-checked)
+                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox",
+                        TICK_BOX.getPicture(getValue(node)));
                 // Add tickbox
                 content.append(tickBoxHtml);
             }

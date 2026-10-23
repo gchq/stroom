@@ -20,22 +20,18 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
-import stroom.explorer.client.presenter.SelectionEventManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.FindResultLists;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,7 +41,7 @@ import java.util.function.Consumer;
 
 public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final CellTable<AiChat> cellTable;
+    private final DataGridWidget<AiChat> resultList;
     private final RestDataProvider<AiChat, ResultPage<AiChat>> dataProvider;
     private final MultiSelectionModelImpl<AiChat> selectionModel;
     private String filter;
@@ -72,26 +68,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
                                             final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        cellTable = new MyCellTable<AiChat>(100) {
-            @Override
-            protected void onBrowserEvent2(final Event event) {
-                super.onBrowserEvent2(event);
-                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
-                    if (cellTable.getKeyboardSelectedRow() == 0) {
-                        findResultListHandler.focus();
-                    }
-                }
-            }
-        };
-        cellTable.addStyleName("FindCellTable");
-
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<AiChat> selectionEventManager = new SelectionEventManager<>(
-                cellTable,
-                selectionModel,
-                doc -> findResultListHandler.openDocument(doc),
-                null);
-        cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         dataProvider = new RestDataProvider<AiChat, ResultPage<AiChat>>(eventBus) {
             @Override
@@ -114,8 +91,8 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
                                 filterErrorConsumer.accept(
                                         NullSafe.get(resultPage.getFilterError(), TokenError::getText));
                             }
-                            if (resultPage.getPageStart() != cellTable.getPageStart()) {
-                                cellTable.setPageStart(resultPage.getPageStart());
+                            if (resultPage.getPageStart() != resultList.getPageStart()) {
+                                resultList.setPageStart(resultPage.getPageStart());
                             }
                             dataConsumer.accept(resultPage);
 
@@ -131,14 +108,15 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
             }
         };
 
-        final Column<AiChat, AiChat> column = new Column<AiChat, AiChat>(new AiChatCell(dateTimeFormatter)) {
-            @Override
-            public AiChat getValue(final AiChat object) {
-                return object;
-            }
-        };
-        cellTable.addColumn(column);
-        view.setDataWidget(cellTable);
+        // A striped list of a page of results, the one with the focus chosen; Enter, or a double
+        // click, opens it, and Up on the first goes back to the filter
+        resultList = FindResultLists.create(this,
+                "Chats",
+                new AiChatCell(dateTimeFormatter),
+                selectionModel,
+                doc -> findResultListHandler.openDocument(doc),
+                () -> findResultListHandler.focus());
+        view.setDataWidget(resultList);
     }
 
     private void resetFocus() {
@@ -151,7 +129,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(cellTable);
+            dataProvider.addDataDisplay(resultList);
         } else {
             dataProvider.refresh();
         }
@@ -175,7 +153,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
     }
 
     public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
-        cellTable.setKeyboardSelectedRow(row, stealFocus);
+        resultList.setKeyboardSelectedRow(row, stealFocus);
     }
 
     public void setFocusText(final boolean focusText) {

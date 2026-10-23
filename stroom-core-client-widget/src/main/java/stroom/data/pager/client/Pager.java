@@ -330,8 +330,14 @@ public class Pager extends AbstractPager {
             setEditing(false);
         }
 
-        lblFrom.setText(formatter.format(pageStart));
-        lblTo.setText(formatter.format(endIndex));
+        // A list known to be empty shows none of none ("0 to 0 of 0"), not a first row it hasn't got
+        final boolean empty = isRowCountExact && dataSize == 0;
+        lblFrom.setText(formatter.format(empty
+                ? 0
+                : pageStart));
+        lblTo.setText(formatter.format(empty
+                ? 0
+                : endIndex));
         if (isRowCountExact) {
             lblOf.setText(formatter.format(dataSize));
         } else {

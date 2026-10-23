@@ -5,11 +5,13 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="annotationTagName" label="Name">
+        <form:FormGroup identity="annotationTagName" label="Name" required="true"
+                        helpText="The tag's name, shown on annotations (for a comment, in the Choose Comment list). Required, and must be different from other tags of the same type.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotationTag-tagTextGroup">
+        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotationTag-tagTextGroup"
+                        helpText="The text of this standard comment. Choosing it with Choose Comment on an annotation adds this text to the end of the comment being written.">
             <g:TextArea ui:field="tagText" addStyleNames="w-100"/>
         </form:FormGroup>
 
@@ -21,10 +23,8 @@
             <l:SelectionBox ui:field="formattingStyle"/>
         </form:FormGroup>
 
-        <form:FormGroup>
-            <b:Button ui:field="editPermissions"
-                      addStyleNames="allow-focus Button--contained-primary"
-                      text="Change Permissions"/>
-        </form:FormGroup>
+        <b:Button ui:field="editPermissions"
+                  addStyleNames="allow-focus Button--contained-primary"
+                  text="Change Permissions"/>
     </g:FlowPanel>
 </ui:UiBinder> 

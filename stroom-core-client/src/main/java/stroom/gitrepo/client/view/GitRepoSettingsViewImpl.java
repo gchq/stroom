@@ -298,7 +298,7 @@ public class GitRepoSettingsViewImpl
     }
 
     /**
-     * Handles 'Set Http Client Config' button clicks.
+     * Handles 'Set HTTP Client Config' button clicks.
      *
      * @param event The button push event. Ignored. Can be null.
      */

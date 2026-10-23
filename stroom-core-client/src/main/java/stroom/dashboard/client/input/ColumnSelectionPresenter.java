@@ -20,7 +20,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -28,6 +27,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.ColumnRef;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.cell.client.TextCell;
@@ -53,7 +53,7 @@ public class ColumnSelectionPresenter
         extends MyPresenterWidget<PagerView>
         implements Refreshable, HasValueChangeHandlers<Set<ColumnRef>> {
 
-    private final MyDataGrid<ColumnRef> dataGrid;
+    private final DataGridWidget<ColumnRef> dataGrid;
     private RestDataProvider<ColumnRef, ResultPage<ColumnRef>> dataProvider;
     private final Set<ColumnRef> allColumns = new HashSet<>();
     private final Set<ColumnRef> selectedColumns = new HashSet<>();
@@ -64,7 +64,7 @@ public class ColumnSelectionPresenter
                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Column Selection");
         view.setDataWidget(dataGrid);
 

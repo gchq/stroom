@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
@@ -28,6 +27,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.Separator;
@@ -110,7 +110,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
     /// presenter (FloorMapMapPresenter.floorMapTrackingPresenter), so it reads the id from the instance.
     private final String gridElementId = FloorMapAria.uniqueId("floormap-tracking-grid");
 
-    private final MyDataGrid<EntityEntry> dataGrid;
+    private final DataGridWidget<EntityEntry> dataGrid;
     private final ListDataProvider<EntityEntry> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<EntityEntry> selectionModel = new SingleSelectionModel<>();
     private Consumer<EntityEntry> selectionConsumer;
@@ -156,7 +156,8 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
                                      final FloorMapTrackingView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        dataGrid.setTableName("Tracking");
         dataGrid.setSelectionModel(selectionModel);
         // The grid is the map's text equivalent — a navigable row per entity with
         // its type and containing area — so it needs a stable id for the canvas to

@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -34,6 +33,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -52,7 +52,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
-    private final MyDataGrid<IndexVolume> dataGrid;
+    private final DataGridWidget<IndexVolume> dataGrid;
     private final MultiSelectionModelImpl<IndexVolume> selectionModel;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -67,7 +67,9 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(IndexVolume::getId);
         dataGrid.setTableName("Index Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="LoginView">
+    <g:FlowPanel ui:field="page" styleName="LoginView">
+        <!-- The page's heading, for screen readers (the logo and form say it to sighted users) -->
+        <g:HTML styleName="sr-only"><h1>Sign in to Stroom</h1></g:HTML>
 
         <g:FlowPanel styleName="LoginViewFormPanel">
             <g:FlowPanel styleName="max form-padding form LoginViewForm">
@@ -13,7 +15,7 @@
                 </g:SimplePanel>
 
                 <!-- User Name -->
-                <form:FormGroup identity="userName" label="User Name"
+                <form:FormGroup identity="userName" label="User Name" required="true"
                                 helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
                         <!-- Add user name text box -->
@@ -27,7 +29,7 @@
                 </form:FormGroup>
 
                 <!-- Password -->
-                <form:FormGroup ui:field="passwordGroup" identity="password" label="Password">
+                <form:FormGroup ui:field="passwordGroup" identity="password" label="Password" required="true">
                     <g:FlowPanel>
                         <!-- Add password text box -->
                         <form:PasswordBox ui:field="password"/>

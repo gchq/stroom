@@ -93,8 +93,8 @@ export const CHECKS = {
     const box = () => page.getByRole('combobox', { name: 'Role for $.temp' });
     const hasFocus = (locator) => locator.evaluate((element) => element === document.activeElement);
     await box().focus();
-    await page.keyboard.press('ArrowDown');
-    await waitFor(page, () => popupOpen(page), 'Down opens the row\'s list');
+    await page.keyboard.press('Alt+ArrowDown');
+    await waitFor(page, () => popupOpen(page), 'Alt+Down opens the row\'s list');
     await page.keyboard.press('Escape');
     await waitFor(page, async () => !(await popupOpen(page)), 'Escape closes the list');
     await waitFor(page, () => hasFocus(box()), 'the focus is back on the box');

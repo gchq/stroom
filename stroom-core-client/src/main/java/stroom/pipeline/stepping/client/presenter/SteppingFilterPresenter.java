@@ -17,7 +17,6 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.info.client.CellIcon;
-import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -31,19 +30,19 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.util.client.BasicSelectionEventManager;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -64,8 +63,8 @@ public class SteppingFilterPresenter extends
     private final XPathFilterPresenter xPathFilterPresenter;
     private List<XPathFilter> xPathFilters;
 
-    private final SingleSelectionModel<PipelineElement> elementSelectionModel = new SingleSelectionModel<>();
-    private final CellTable<PipelineElement> elementChooser;
+    private final MultiSelectionModelImpl<PipelineElement> elementSelectionModel = new MultiSelectionModelImpl<>();
+    private final DataGridWidget<PipelineElement> elementChooser;
     private final ButtonView addXPath;
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
@@ -98,7 +97,10 @@ public class SteppingFilterPresenter extends
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
-        elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
+        // A list of the pipeline's elements, the one with the focus chosen (its filters shown)
+        elementChooser = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        elementChooser.setProfile(DataGridProfile.LISTBOX);
+        elementChooser.setAccessibleName("Elements");
         elementChooser.getElement().addClassName(BASE_CLASS);
 
         pipelineElementTypesFactory.get(this, elementTypes -> {
@@ -119,8 +121,7 @@ public class SteppingFilterPresenter extends
                     .withStyleName(BASE_CLASS + "-iconCell svgIcon")
                     .centerAligned()
                     .build();
-            elementChooser.addColumn(iconColumn);
-            elementChooser.setColumnWidth(iconColumn, ICON_COL_WIDTH, Unit.PX);
+            elementChooser.addColumn(iconColumn, "", ICON_COL_WIDTH);
 
             final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
                     NullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
@@ -132,7 +133,7 @@ public class SteppingFilterPresenter extends
                             PipelineElement::getDisplayName)
                     .withStyleName(BASE_CLASS + "-textCell")
                     .build();
-            elementChooser.addColumn(textColumn);
+            elementChooser.addAutoResizableColumn(textColumn, "", 100);
 
             // Pipe element has active filter icon column (only visible if active filter)
             final Column<PipelineElement, CellIcon> filterIconColumn = DataGridUtil.cellIconColumnBuilder(
@@ -143,11 +144,10 @@ public class SteppingFilterPresenter extends
                     .withConditionalStyleName(filterActiveStyleFunc)
                     .centerAligned()
                     .build();
-            elementChooser.addColumn(filterIconColumn);
-            elementChooser.setColumnWidth(filterIconColumn, ICON_COL_WIDTH, Unit.PX);
+            elementChooser.addColumn(filterIconColumn, "", ICON_COL_WIDTH);
 
-            elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
-            elementChooser.setWidth("100%", true);
+            elementChooser.setSelectionModel(elementSelectionModel,
+                    new DataGridWidgetSelectionEventManager<>(elementChooser, elementSelectionModel, false));
         });
 
         getView().setElementChooser(elementChooser);
@@ -165,7 +165,7 @@ public class SteppingFilterPresenter extends
             }
         }));
         own(elementSelectionModel.addSelectionChangeHandler(e ->
-                update(elementSelectionModel.getSelectedObject())));
+                update(elementSelectionModel.getSelected())));
         getView().setSkipToErrorsChangeHandler(severity ->
                 updateLocalActiveFilterState());
         getView().setSkipToOutputChangeHandler(outputState ->
@@ -250,7 +250,7 @@ public class SteppingFilterPresenter extends
 
             // Distinction between the item that is selected and the one that has focus while
             // moving focus up/down with the keyboard
-            elementSelectionModel.setSelected(element, true);
+            elementSelectionModel.setSelected(element);
             elementChooser.setKeyboardSelectedRow(selectedRow, true);
             update(element);
         }

@@ -25,6 +25,9 @@ import com.google.gwt.view.client.SelectionModel;
 
 public class MyCellTable<T> extends CellTable<T> {
 
+    /// The usual page size of a list drawn as a cell table (the grids' too).
+    public static final int DEFAULT_LIST_PAGE_SIZE = 100;
+
     private static final Resources RESOURCES = GWT.create(DefaultResources.class);
 
     public MyCellTable(final int pageSize) {

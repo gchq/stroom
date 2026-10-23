@@ -20,8 +20,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.docstore.shared.DocumentType;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
@@ -33,6 +31,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -54,7 +54,7 @@ public class DocumentCreatePermissionsListPresenter
         extends MyPresenterWidget<DocumentCreatePermissionsListView> {
 
     private final ClientSecurityContext securityContext;
-    private final MyDataGrid<DocumentType> dataGrid;
+    private final DataGridWidget<DocumentType> dataGrid;
     private final MultiSelectionModelImpl<DocumentType> selectionModel;
 
     private final DocumentTypeCache documentTypeCache;
@@ -72,11 +72,11 @@ public class DocumentCreatePermissionsListPresenter
         this.documentTypeCache = documentTypeCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Document Create Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<DocumentType> selectionEventManager =
-                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridWidgetSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setTable(dataGrid);
 
@@ -208,8 +208,13 @@ public class DocumentCreatePermissionsListPresenter
                 : new TickBoxCell.NoBorderAppearance();
 
         // Selection
+        // Each tick box is named for its row's permission, e.g. "Create Pipeline"
+        final TickBoxCell tickBoxCell = TickBoxCell.create(appearance, true, true, updateable)
+                .withNameForRow(index -> index < documentTypes.getTypes().size()
+                        ? "Create " + documentTypes.getTypes().get(index).getDisplayType()
+                        : null);
         final Column<DocumentType, TickBoxState> selectionColumn = new Column<DocumentType, TickBoxState>(
-                TickBoxCell.create(appearance, true, true, updateable)) {
+                tickBoxCell) {
             @Override
             public TickBoxState getValue(final DocumentType documentType) {
                 return getPermissionState(documentType);

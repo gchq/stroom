@@ -17,23 +17,23 @@
 package stroom.entity.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.data.grid.client.DataGridView;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 
 import java.util.List;
 
 public class TreeRowHandler<R> {
 
     private final TreeAction<R> action;
-    private final DataGrid<R> dataGrid;
+    private final DataGridView<R> dataGrid;
     private final Column<R, Expander> expanderColumn;
 
-    public TreeRowHandler(final TreeAction<R> action, final DataGrid<R> dataGrid,
+    public TreeRowHandler(final TreeAction<R> action, final DataGridView<R> dataGrid,
                           final Column<R, Expander> expanderColumn) {
         this.action = action;
         this.dataGrid = dataGrid;
@@ -67,5 +67,9 @@ public class TreeRowHandler<R> {
         // Set the width of the expander column so
         // that all expanders can be seen.
         dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
+        // Give any width the expander column gave up to the fill columns. DataGridWidget sizes its
+        // columns before the first rows arrive, so without this a narrowed expander column leaves a
+        // gap at the right
+        dataGrid.resizeTableToFitColumns(true);
     }
 }

@@ -17,7 +17,6 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
@@ -138,7 +137,7 @@ public final class DocumentTypeCellStories {
         // In the order the types were given in
         final List<DocumentType> types = new ArrayList<>(states.keySet());
 
-        final MyCellTable<DocumentType> cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
+        final MyCellTable<DocumentType> cellTable = new MyCellTable<>(MyCellTable.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menu");
         final DocumentTypeSelectionModel selectionModel = states::get;
         cellTable.addColumn(new Column<DocumentType, DocumentType>(new DocumentTypeCell(selectionModel)) {

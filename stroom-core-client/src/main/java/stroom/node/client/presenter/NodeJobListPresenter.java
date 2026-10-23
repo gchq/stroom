@@ -18,7 +18,6 @@ package stroom.node.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -41,6 +40,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +66,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
-    private final MyDataGrid<JobNodeAndInfo> dataGrid;
+    private final DataGridWidget<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final ToolbarToggleButton showEnabledToggleBtn;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
@@ -85,8 +85,9 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         super(eventBus, view);
         own(schedulePresenter);
         this.nodeClient = nodeClient;
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("Node Jobs");
+        this.dataGrid.setAccessibleName("Node jobs");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
         this.dataProvider = buildDataProvider(eventBus, view, restFactory);
@@ -219,6 +220,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
             dataProvider.addDataDisplay(dataGrid);
         }
         setNodeNameCriteria(nodeName);
+        // Named for the node whose jobs it shows
+        dataGrid.setAccessibleName(nodeName == null
+                ? "Node jobs"
+                : "Jobs on " + nodeName);
         internalRefresh();
     }
 

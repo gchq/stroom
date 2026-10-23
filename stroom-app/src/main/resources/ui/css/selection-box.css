@@ -31,8 +31,10 @@
 }
 
 /* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
-   can be typed in). It draws the box's border (stroom-control); the box's field shows through it, and
-   its text stays on one line, ending in an ellipsis clear of the drop-down arrow */
+   can be typed in). It draws the box's field: its border (stroom-control) and background, which a box
+   that can't be typed in otherwise lacks (its text box is hidden), showing what is behind it instead
+   of an input's colour. Its text stays on one line, ending in an ellipsis clear of the drop-down
+   arrow */
 .selection-box .selection-box__value {
     position: absolute;
     top: 0;
@@ -44,7 +46,7 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    background-color: transparent;
+    background-color: var(--control__background-color);
 }
 
 /* The text box: the named control, and what is typed in a box that can be typed in */
@@ -58,14 +60,15 @@
     cursor: pointer;
 }
 
-/* Disabled: the filled field with no border that every disabled control has */
+/* Disabled: the filled field with no border that every disabled control has, drawn by the value (the
+   box itself has no fill, which the value's would double) */
 .selection-box.selection-box--disabled {
-    border-color: var(--control__border-color--disabled);
-    background-color: var(--control__background-color--disabled);
     color: var(--control__text-color--disabled);
 }
 
 .selection-box--disabled .selection-box__value {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
     color: var(--control__text-color--disabled);
 }
 

@@ -207,13 +207,13 @@ await page.waitForTimeout(1500);
 // The tick is a `div.tick-box--cell` (role=checkbox), not an input, so it is clicked as an element and its
 // state is read from the class. Clicking the header's select-all turns the HEADER tick blue and
 // leaves the rows untouched, so each row is ticked individually and the result is asserted.
-const rows = confirm.locator('.dataGridWidget tbody tr');
+const rows = confirm.locator('.data-grid [role=row][data-row]');
 const n = await rows.count();
 for (let i = 0; i < n; i += 1) {
   await rows.nth(i).locator('.tick-box--cell').first().click().catch(() => {});
   await page.waitForTimeout(200);
 }
-const ticked = await confirm.locator('.dataGridWidget tbody .tick-box--cell[aria-checked="true"]').count();
+const ticked = await confirm.locator('.data-grid [data-row] .tick-box--cell[aria-checked="true"]').count();
 console.log(`confirm grid: ${ticked}/${n} rows ticked`);
 if (ticked < n) throw new Error(`only ${ticked} of ${n} import rows ticked — OK would import nothing`);
 await page.screenshot({ path: `${SUITE}/out/seed/import-ticked.png` }).catch(() => {});

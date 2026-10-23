@@ -16,7 +16,6 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -81,7 +80,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private Item openItem;
 
     public MenuViewImpl() {
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
+        cellTable = new MyCellTable<>(MyCellTable.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menu");
         // The table is a menu, and each time it is drawn its rows are given the roles of menu items
         cellTable.getElement().setAttribute(ROLE, "menu");

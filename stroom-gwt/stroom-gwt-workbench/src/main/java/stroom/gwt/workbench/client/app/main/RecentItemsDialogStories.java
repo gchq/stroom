@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -52,8 +53,8 @@ public final class RecentItemsDialogStories {
     /// The name of the spy recording the documents opened.
     static final String OPEN_DOC_SPY = "onOpenDoc";
 
-    // The rows of the dialog's result list (GWT marks each data row of a CellTable with __gwt_row)
-    private static final String RESULT_ROWS = ".FindCellTable tr[__gwt_row]";
+    // The results in the dialog's list (a listbox of options)
+    private static final String RESULT_ROWS = "[role='listbox'] [role='option']";
 
     private static final DocRef RECENT_DICTIONARY = new DocRef("Dictionary", "d-1", "Recent Dictionary");
     private static final DocRef OLDER_FEED = new DocRef("Feed", "f-1", "Older Feed");
@@ -114,6 +115,23 @@ public final class RecentItemsDialogStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Recent Items")).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // The results are a list (listbox), the one with the focus chosen; Enter opens it,
+                // as a double click does
+                .story("RecentByKeyboard", context -> render(context, Arrays.asList(RECENT_DICTIONARY, OLDER_FEED)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play results = screen.within(screen.findByRole("listbox", "Documents found"));
+                    results.findByText("Older Feed");
+                    play.click(results.getByText("Recent Dictionary"));
+                    play.keyboard("{ArrowDown}");
+                    final Query older = results.getByText("Older Feed").closest("[role='option']");
+                    play.expect(older).toHaveFocus();
+                    play.expect(older).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.spy(OPEN_DOC_SPY)).not().toHaveBeenCalled();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(OPEN_DOC_SPY)).toHaveBeenCalledWith("Feed Older Feed"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Recent Items")).toBeNull());
                 })
                 // Empty history shows no results, without asking the server
                 .story("Empty", context -> render(context, Collections.emptyList()))

@@ -53,6 +53,8 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
     @Inject
     public ManageActivityViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        nameFilter.setAccessibleName("Filter activities");
 
         nameFilter.registerPopupTextProvider(this::getTooltipContent);
     }

@@ -56,6 +56,8 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
         super(eventBus, view);
         own(getView().getTabBar()
                 .addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+        // The bar's overflow menu (tabs that don't fit) is shown by whoever handles the event
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     /// Adds a tab hosting the given content presenter.

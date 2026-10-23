@@ -20,10 +20,10 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -38,7 +38,7 @@ import java.util.List;
 public class SelectionHandlerListPresenter
         extends MyPresenterWidget<PagerView> {
 
-    private final MyDataGrid<ComponentSelectionHandler> dataGrid;
+    private final DataGridWidget<ComponentSelectionHandler> dataGrid;
     private final MultiSelectionModelImpl<ComponentSelectionHandler> selectionModel;
     private Components components;
 
@@ -47,7 +47,9 @@ public class SelectionHandlerListPresenter
                                          final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(ComponentSelectionHandler::getId);
         dataGrid.setTableName("Selection Handlers");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
