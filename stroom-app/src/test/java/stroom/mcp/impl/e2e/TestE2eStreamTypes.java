@@ -26,7 +26,6 @@ import stroom.pipeline.xslt.XsltStore;
 import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -63,7 +62,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///    pipeline; the Records stream is refused as Events to plan an index from, drafted as XML it is refused for
 ///    delimited, and drafted as delimited it gives a plan.
 ///
-/// The next version (the end of part 2) is ported but @Disabled: the Java port has none of what it checks.
 /// Left out of part 3: the Elasticsearch indexing of the Records (the indexing pipeline on a cluster, its index
 /// template applied, the documents counted in Elasticsearch), which needs an Elasticsearch cluster.
 @SuppressWarnings("unchecked")
@@ -171,10 +169,6 @@ class TestE2eStreamTypes extends AbstractE2eTest {
     }
 
     @Test
-    @Disabled("Not ported: the next version of a pipeline whose translation is written anew (Python 0.18.43's "
-              + "create_pipeline version_of=/keep_references=, draft_translation_mapping's current_translation, "
-              + "build_translation_xslt's warning that a mapping keeps none of the current lookups, and the plan's "
-              + "create_pipeline version_of= step; tests/test_new_version.py). None of it is in the Java port.")
     void part2TheNextVersionKeepsTheReferenceDataWhenTheUserSays() {
         final Badge badge = referenceData();
         newVersion(badge.eventsUuid(), badge.textUuid(), badge.refFeed(), badge.eventsFeed(), badge.eventsRaw());

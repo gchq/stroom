@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,6 +91,30 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aNextVersionsDraftNamesWhatTheCurrentTranslationLooksUp() {
+        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 drafted for a feed V1.2
+        // translates, and its IP lookups were gone, though the user meant to keep them.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).containsEntry("current_translation", currentTranslation());
+        assertThat(((List<?>) draft.get("notes")).getLast()).asString()
+                .startsWith("The feed is translated now by 'FG-V1.2' (v12), whose XSLT looks up reference map(s) "
+                            + "['GEOIP'] with stroom:lookup(); loads reference data ['GEO-IP via Reference Loader "
+                            + "on translationFilter']. Ask the user whether the new version keeps these lookups.")
+                .contains("create_pipeline version_of='v12' keep_references=true");
+        // A feed translated by a pipeline that looks nothing up, or no build: nothing to say.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(Map.of("pipeline",
+                Map.of("name", "FG-V1.2", "uuid", "v12"))));
+        assertThat(world.call(tool, Map.of("samples", Map.of("acme.csv", CSV), "build", "acme-v1")))
+                .doesNotContainKey("current_translation");
+        assertThat(world.call(tool, Map.of("samples", Map.of("acme.csv", CSV))))
+                .doesNotContainKey("current_translation");
+    }
+
+    @Test
     void theSessionsDraftFitsTheClientInline() {
         // Copilot saved a 10.6 KB draft to a file; the agent read 100 of its 502 lines and wrote its own mapping.
         final Map<String, Object> draft = world.call(tool, Map.of("samples", List.of(FIREWALL),
@@ -135,5 +160,15 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> refused = world.call(tool, Map.of("samples", List.of("C:\\logs\\acme.csv")));
 
         assertThat((String) refused.get("error")).contains("path");
+    }
+
+    // A feed translated now by FG-V1.2, whose XSLT looks up GEOIP and loads its reference data.
+    private static Map<String, Object> currentTranslation() {
+        final Map<String, Object> current = new LinkedHashMap<>();
+        current.put("pipeline", Map.of("name", "FG-V1.2", "uuid", "v12"));
+        current.put("xslt", List.of(Map.of("name", "FG-Events-V1.2", "uuid", "x12")));
+        current.put("reference_data", List.of("GEO-IP via Reference Loader on translationFilter"));
+        current.put("lookup_maps", List.of("GEOIP"));
+        return current;
     }
 }
