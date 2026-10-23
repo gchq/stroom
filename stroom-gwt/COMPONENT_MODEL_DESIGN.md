@@ -784,7 +784,7 @@ A pilot, then six phases, each shippable on its own and each ending by deleting 
 | 3 · Components and callbacks | `ComponentDialog.showOnce`, REST owner; receive rules dialogs converted; components as document tabs; authoring guide published | New screens use components |
 | 4 · Dirty state and the bus | `DirtyEvent` chains to callbacks; `addHandlerToSource` retired; bus kept for app-wide events | No parent-child bus use |
 | 5 · Migrate by area | Documents, dashboards, admin; `HasTaskMonitorFactory` retired; `onReveal`/`onHide` audited | Every presenter owned |
-| 6 · Remove GWTP | Plugin registry for proxies; `PresenterWidget` base dropped; GIN or Dagger decision | No GWTP dependency |
+| 6 · Remove GWTP | Plugin registry for proxies; `PresenterWidget` base dropped; GIN kept | No GWTP dependency |
 
 ### Phase 0: Pilot
 
@@ -947,7 +947,7 @@ Progress:
 
 1. Replace the proxy presenters with a plain plugin and content registry, and drop code splitting (measuring load time before and after).
 2. Rebase `MyPresenterWidget` on `Component` and drop `PresenterWidget`, `HandlerContainerImpl` and slots.
-3. Keep GIN; whether Dagger 2 replaces it is decided after GWTP is gone.
+3. Keep GIN.
 
 **Exit:** no GWTP dependency in the build.
 
@@ -976,7 +976,7 @@ The main risk is a long period with two styles side by side; each phase therefor
 | A shared (singleton) presenter gets owned | Closing one document breaks it for every other | Development-build check in `own()`; list of known singletons reviewed in Phase 1 |
 | Two styles for a long time | Authors unsure which to use; reviewers check both | New screens must use components from Phase 3; a short authoring guide; each phase retires an old API |
 | In-house framework to maintain | Knowledge held by few people | Keep the API to the classes in this document; full Javadoc and tests; no general-purpose features |
-| GIN is also unmaintained | Generator-based injection blocks any future J2CL move | Components use only constructor injection, which Dagger 2 also supports; the GIN decision stays separate |
+| GIN is also unmaintained | Generator-based injection blocks any future J2CL move | GIN is kept (decided 23 October 2026); components use only constructor injection |
 | Attach-based lifecycle differs from reveal | Code relying on `onReveal()` ordering behaves differently | Audit `onReveal`/`onHide` overrides when their presenter is converted, not in bulk |
 
 ### Open questions
@@ -988,6 +988,6 @@ The main risk is a long period with two styles side by side; each phase therefor
 - [x] Do we keep a view interface for components with complex UiBinder layouts, or let the component own its UiBinder template directly? The component owns its template; a view interface is added only when a second implementation or a test needs one (decided 22 October 2026).
 - [x] Should `RestFactory` take an owner so in-flight requests are cancelled on dispose, or is dropping late callbacks with `guard()` enough? `RestFactory.owner(component)` drops the callback and ends the task monitor once the owner is disposed; requests are not cancelled (decided 22 October 2026).
 - [x] Where do proxy presenters (code-split plugins) go once GWTP is removed: a plain plugin registry, and do we still need code splitting? A plain plugin registry: each plugin, an eager singleton, makes its presenter through a GIN `Provider` when first needed. Code splitting is dropped: in the 7.13 build it defers about 330 KB of a 4.8 MB permutation (~7%); load time is measured before and after (decided 22 October 2026).
-- [x] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place? Left in place: GWTP is removed with GIN kept, and Dagger is a separate later decision, kept open by components using only constructor injection (decided 22 October 2026).
+- [x] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place? Left in place: GWTP is removed with GIN kept (decided 22 October 2026), and GIN stays: it is not to be replaced (decided 23 October 2026).
 - [x] Does UiBinder set a button's icon from an `svg="..."` attribute? Yes (`Widgets/Buttons/Toolbar` `Template`).
 - [x] Do menus also use `SvgPresets`, and what replaces them there, before `SvgPresets` can be deleted? They did; menus now take an `SvgImage`, and `SvgPresets` is deleted (Toolbars, Migration step 5).
