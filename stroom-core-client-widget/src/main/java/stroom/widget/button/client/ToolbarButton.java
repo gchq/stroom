@@ -17,9 +17,12 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.MenuOpener;
 import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.DisabledState;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
@@ -30,6 +33,9 @@ import com.google.gwt.user.client.ui.ButtonBase;
 
 /// An icon button in a [Toolbar]: a `<button class="toolbar-button">` holding its icon. It is named
 /// by its title, which is also its tooltip, and styled by toolbar.css.
+///
+/// A button that a shortcut also presses shows the shortcut in its tooltip, e.g. "Save (Ctrl+S)"
+/// (see [#setShortcut(Action)]).
 ///
 /// It is a real button, so Enter and Space press it as they press any button. Disabled, it says so
 /// (`aria-disabled`) but stays focusable, so it can still be found in its toolbar and its name
@@ -45,12 +51,18 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
     // Marks focus that a mouse press gave the button, which toolbar.css draws no focus ring for: the
     // button focuses itself from code (see onBrowserEvent), which browsers treat as keyboard focus
     private static final String POINTER_FOCUS_ATTRIBUTE = "data-pointer-focus";
+    private static final String ARIA_LABEL = "aria-label";
+    private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
 
     private boolean enabled = true;
     // Whether pressing the button with the mouse focuses it
     private boolean focusOnMouseDown = true;
     // What pressing the button does, if set
     private Runnable onClickCallback;
+    // The action whose shortcut the tooltip shows, if any (see setShortcut)
+    private Action shortcutAction;
+    // The title as given, without the shortcut
+    private String plainTitle;
 
     public ToolbarButton() {
         super(Document.get().createPushButtonElement());
@@ -81,6 +93,49 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
         } else {
             MenuOpener.unmark(getElement());
         }
+    }
+
+    /// Shows the shortcut that does what the button does, as the user has bound it, in the
+    /// button's tooltip, e.g. "Save (Ctrl+S)", so that it can be discovered, and tells screen
+    /// readers about it (`aria-keyshortcuts`). The button's name stays its title alone. It can be
+    /// set before or after the title. The tooltip shows the shortcut bound when the title is set.
+    ///
+    /// @param action The action the button does, or null for none.
+    public void setShortcut(final Action action) {
+        shortcutAction = action;
+        setTitle(getTitle());
+    }
+
+    @Override
+    public void setTitle(final String title) {
+        plainTitle = title;
+        final String shortcut = shortcutAction == null
+                ? null
+                : KeyBinding.getShortcut(shortcutAction);
+        final Element element = getElement();
+        if (shortcut == null || NullSafe.isBlankString(title)) {
+            element.removeAttribute(ARIA_LABEL);
+            element.removeAttribute(ARIA_KEY_SHORTCUTS);
+            super.setTitle(title);
+        } else {
+            super.setTitle(title + " (" + shortcut + ")");
+            // Named by the title alone, as it was before the shortcut was shown
+            element.setAttribute(ARIA_LABEL, title);
+            final String ariaShortcut = KeyBinding.getAriaShortcut(shortcutAction);
+            if (ariaShortcut == null) {
+                element.removeAttribute(ARIA_KEY_SHORTCUTS);
+            } else {
+                element.setAttribute(ARIA_KEY_SHORTCUTS, ariaShortcut);
+            }
+        }
+    }
+
+    /// @return The title as set, without the shortcut that the tooltip shows after it.
+    @Override
+    public String getTitle() {
+        return plainTitle != null
+                ? plainTitle
+                : super.getTitle();
     }
 
     /// @param icon The button's icon.

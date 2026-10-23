@@ -148,7 +148,7 @@ public final class DataReceiptRulesScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Drop everything else");
                     // Save -> PUT the whole document with the new rule, inserted at the top as rule 1
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -182,7 +182,7 @@ public final class DataReceiptRulesScreenStories {
                     play.type(dialog.querySelector("#fieldEditName"), "Environment");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Environment");
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

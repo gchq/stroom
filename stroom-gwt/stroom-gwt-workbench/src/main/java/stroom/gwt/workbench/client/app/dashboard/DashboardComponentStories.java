@@ -617,6 +617,8 @@ public final class DashboardComponentStories {
                     final Play queries = screen.within(history.findByRole("listbox", "Query history"));
                     final Query first = queries.getAllByRole("option").nth(0);
                     play.expect(first).toHaveTextContent(TextMatch.containing("Name = alpha"));
+                    // Its time and its query are apart in its text, so a copied row reads well (#1070)
+                    play.expect(first).toHaveTextContent(TextMatch.containing("Z AND {Name = alpha}"));
                     play.expect(first).toBeVisible();
                     play.waitFor(() -> play.expect(first).toHaveFocus());
                     play.expect(first).toHaveAttribute("aria-selected", "true");

@@ -80,10 +80,11 @@ final class DashboardPlays {
     }
 
     /// @param play  The play.
-    /// @param title The button's title, e.g. `Execute Query`.
+    /// @param title The button's name (its title without the shortcut its tooltip shows), e.g.
+    ///              `Execute Query`.
     /// @return A button of the dashboard's own query toolbar.
     static Query toolbarButton(final Play play, final String title) {
-        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByTitle(title);
+        return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByRole("button", title);
     }
 
     /// Clicks a Query component's own Execute Query button.

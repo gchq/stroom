@@ -121,6 +121,12 @@ public class KeyBinding {
         addDefault(Action.FOCUS_NEXT_AREA, "F6");
         addDefault(Action.FOCUS_PREVIOUS_AREA, "Shift+F6");
         addDefault(Action.FOCUS_FILTER, "/");
+        // Alt, as the browser keeps Ctrl+R and F5 (reload) and Ctrl+PageUp/PageDown (its own tabs)
+        addDefault(Action.REFRESH, "Alt+R");
+        addDefault(Action.NEXT_TAB, "Alt+PageDown");
+        addDefault(Action.PREVIOUS_TAB, "Alt+PageUp");
+        // '?', as many web applications use
+        addDefault(Action.SHOW_KEY_BINDS, "Shift+/");
         addDefault(Action.FOCUS_EXPLORER_FILTER, "Ctrl+/");
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
@@ -201,6 +207,28 @@ public class KeyBinding {
         return shortcuts.isEmpty()
                 ? null
                 : shortcuts.get(0).toString();
+    }
+
+    /// The shortcuts bound to an action, as the user has them (with their changes, and without
+    /// character key shortcuts if they have turned those off).
+    ///
+    /// @param action The action.
+    /// @return The action's shortcuts, the main one first. Empty if it has none.
+    public static List<KeyShortcut> getShortcuts(final Action action) {
+        return new ArrayList<>(NullSafe.list(ACTION_TO_SHORTCUTS_MAP.get(action)));
+    }
+
+    /// The main shortcut bound to an action in the form `aria-keyshortcuts` takes, e.g. `Ctrl+S`,
+    /// for telling screen readers about it.
+    ///
+    /// @param action The action.
+    /// @return The shortcut, or null if the action has none or it is a key sequence (e.g. `G U`),
+    /// which the attribute can't express (a space separates alternatives).
+    public static String getAriaShortcut(final Action action) {
+        final String shortcut = getShortcut(action);
+        return shortcut == null || shortcut.contains(" ")
+                ? null
+                : shortcut;
     }
 
     /// @return The actions whose bindings the user can change, in the order to show them.
@@ -439,6 +467,21 @@ public class KeyBinding {
                && getKeyDownAction(e) == action;
     }
 
+    /// Whether a key press is a single key shortcut for an action that runs a command wherever
+    /// the focus is, e.g. `?` to show the keyboard shortcuts, so that a widget that would take the
+    /// key for itself (a list's type-ahead) leaves it to the global key handler. Keys that only
+    /// start a sequence (e.g. `G`) aren't.
+    ///
+    /// @param e A key event.
+    /// @return Whether the key runs a command.
+    public static boolean isCommandShortcut(final NativeEvent e) {
+        if (recording || !BrowserEvents.KEYDOWN.equals(e.getType())) {
+            return false;
+        }
+        final Action action = getKeyDownAction(e);
+        return action != null && COMMANDS.containsKey(action);
+    }
+
     public static Action test(final NativeEvent e) {
         if (recording) {
             return testWhileRecording(e);
@@ -662,7 +705,8 @@ public class KeyBinding {
          * 'e' - E.g. to edit the current item
          */
         EDIT("Edit", null),
-        CLOSE("Close", null),
+        // Escape also stops a dashboard's or a query's search
+        CLOSE("Close, or stop a query", null),
         /**
          * enter
          */
@@ -676,7 +720,8 @@ public class KeyBinding {
         /**
          * ctrl-enter
          */
-        OK("OK", null),
+        // Ctrl+Enter also runs a dashboard's or a query's search
+        OK("OK, or run a query", null),
         ITEM_SAVE("Save", Category.GENERAL),
         ITEM_SAVE_ALL("Save all", Category.GENERAL),
         ITEM_CLOSE("Close tab", Category.GENERAL),
@@ -689,7 +734,7 @@ public class KeyBinding {
         MAXIMISE_PANE("Maximise or restore pane", Category.GENERAL),
         HELP("Show help", Category.GENERAL),
         DOCUMENTATION("Documentation", null),
-        SHOW_KEY_BINDS("Show keyboard shortcuts", null),
+        SHOW_KEY_BINDS("Show keyboard shortcuts", Category.GENERAL),
         INFO("Info", null),
         FOCUS_FILTER("Go to quick filter", Category.GENERAL),
         FOCUS_EXPLORER_FILTER("Go to explorer filter", Category.GENERAL),
@@ -697,6 +742,11 @@ public class KeyBinding {
         // content), as F6 does in browsers and IDEs, past what lies between them (WCAG 2.4.1)
         FOCUS_NEXT_AREA("Go to next area", Category.GENERAL),
         FOCUS_PREVIOUS_AREA("Go to previous area", Category.GENERAL),
+        // Moves between the main tabs (the open documents and screens), going round at either end
+        NEXT_TAB("Go to next tab", Category.GENERAL),
+        PREVIOUS_TAB("Go to previous tab", Category.GENERAL),
+        // Presses the Refresh button of the list that has the focus
+        REFRESH("Refresh list", Category.GENERAL),
         SETTINGS("Settings", null),
 
         // GOTO key sequences
