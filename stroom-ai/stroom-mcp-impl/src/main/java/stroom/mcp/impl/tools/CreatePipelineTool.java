@@ -41,6 +41,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
@@ -74,6 +75,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     static final String REUSE_EXISTING_DOCS_ARG = "reuse_existing_docs";
     static final String ACCEPT_PARSER_MISMATCH_ARG = "accept_parser_mismatch";
     static final String STANDALONE_ARG = "standalone";
+    static final String VERSION_OF_ARG = "version_of";
+    static final String KEEP_REFERENCES_ARG = "keep_references";
     /// The chain of a pipeline of its own sending Events to Kafka: element ids and types, in order.
     static final List<Map.Entry<String, String>> KAFKA_CHAIN = List.of(Map.entry("Source", "Source"),
             Map.entry("xmlParser", "XMLParser"), Map.entry("splitFilter", "SplitFilter"),
@@ -86,6 +89,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final WriteGuard guard;
     private final Consent consent;
     private final BuildPlan plan;
+    private final BuildRecords records;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -93,13 +97,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                        final PipelineShapes pipelineShapes,
                        final WriteGuard guard,
                        final Consent consent,
-                       final BuildPlan plan) {
+                       final BuildPlan plan,
+                       final BuildRecords records) {
         this.writes = writes;
         this.pipelineDocs = pipelineDocs;
         this.pipelineShapes = pipelineShapes;
         this.guard = guard;
         this.consent = consent;
         this.plan = plan;
+        this.records = records;
     }
 
     @Override
@@ -139,7 +145,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                              + "References attach reference data for stroom:lookup(). It refuses an XSLT or text "
                              + "converter from outside the build (a new source gets its own, from "
                              + "build_translation_xslt and build_data_splitter) and a template whose parser cannot "
-                             + "read the build's sample streams. The user confirms the template and name first.")
+                             + "read the build's sample streams. A production pipeline's next version, with the "
+                             + "build's XSLT: version_of= it, a child of its template, with its reference data if "
+                             + "the user keeps them. The user confirms the template and name first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "Pipeline name following the environment's convention.")
                         .addStringProperty(TEMPLATE_UUID_ARG, "Parent template, from find_pipeline_templates (its "
@@ -187,6 +195,16 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                                                                           + "set_properties gives xsltFilter.xslt "
                                                                           + "and standardKafkaProducer.kafkaConfig."
                                                                           + " The user confirms the chain.")
+                        .addStringProperty(VERSION_OF_ARG, "The pipeline this one is the next version of (V1.2's, "
+                                                           + "for a V1.3 with the build's new XSLT): its template "
+                                                           + "is the parent, unless template is given, and "
+                                                           + "promotion puts the new version beside it. To keep its "
+                                                           + "XSLT as it is and change only parts, copy_pipeline "
+                                                           + "instead.")
+                        .addBooleanProperty(KEEP_REFERENCES_ARG, "With version_of: whether the new version loads "
+                                                                 + "the reference data that pipeline loads (for its "
+                                                                 + "lookups), as the user chooses. Asked for when it "
+                                                                 + "loads any.")
                         .required(NAME_ARG)
                         .build())
                 .build();
@@ -216,17 +234,26 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final String templateGiven = stringArg(call, TEMPLATE_UUID_ARG) != null
                 ? stringArg(call, TEMPLATE_UUID_ARG)
                 : stringArg(call, TEMPLATE_ARG);
+        final String versionOf = stringArg(call, VERSION_OF_ARG);
         if (stringArg(call, STANDALONE_ARG) != null) {
-            if (templateGiven != null) {
+            if (templateGiven != null || versionOf != null) {
                 throw new ToolRefusal("standalone is for when there is no template: give it, or a template, not "
                                       + "both");
             }
             return standaloneKafka(call, context, build, proposed, description, given, reuse);
         }
+        final Object keeping = ToolArgs.raw(call, KEEP_REFERENCES_ARG);
+        final Boolean keepReferences = keeping == null
+                ? null
+                : ToolArgs.flag(keeping);
+        if (keepReferences != null && versionOf == null) {
+            throw new ToolRefusal("keep_references is for a new version (version_of=): other reference data go in "
+                                  + "references");
+        }
         return fromTemplate(call, context, new FromTemplate(build, proposed, templateGiven, given, description,
                 stringArg(call, REPLACE_PARSER_ARG),
                 ReferenceRequest.listOf(argsMap(call).get(REFERENCES_ARG), REFERENCES_ARG), reuse,
-                ToolArgs.flag(call, ACCEPT_PARSER_MISMATCH_ARG)));
+                ToolArgs.flag(call, ACCEPT_PARSER_MISMATCH_ARG), versionOf, keepReferences));
     }
 
     /// Creates a pipeline as a child of a template, setting only what the child supplies: create_pipeline's path,
@@ -247,7 +274,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<PropertyValue> given = request.properties();
         final String description = request.description();
         final String replaceParser = request.replaceParser();
-        final String templateUuid = writes.templateUuid(request.template());
+        final Version version = version(request);
+        final PipelineDoc previous = version.previous();
+        final String templateUuid = writes.templateUuid(version.template());
         final PipelineDoc template = pipelineDocs.read(templateUuid);
         final Layout merged = writes.layout(templateUuid);
         final Set<String> elements = new LinkedHashSet<>(merged.elements().keySet());
@@ -275,9 +304,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         // (seen: an XML source refused the Data Splitter template for want of a text converter, not for its
         // parser).
         writes.parserReadsSample(build, merged, replaceParser, request.acceptParserMismatch());
-        final Filled slots = writes.fillOpenSlots(build, merged, replaceParser, typed.properties());
+        final Filled slots = writes.fillOpenSlots(build, merged, replaceParser, typed.properties(), previous);
         final List<PropertyValue> properties = new ArrayList<>(slots.properties());
         final List<String> filled = new ArrayList<>(slots.filled());
+        if (previous != null) {
+            final List<PropertyValue> kept = PipelineWrites.plainSettings(previous, elementTypes, properties);
+            properties.addAll(kept);
+            kept.forEach(property -> filled.add(property.dotted() + " = " + PyText.str(property.value()) + " (as "
+                                                + previous.getName() + " has it)"));
+        }
         final Optional<PropertyValue> array = writes.jsonArrayParser(merged.elements(), properties,
                 writes.sampleIsArray(build));
         array.ifPresent(property -> {
@@ -285,13 +320,24 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             filled.add(property.element() + ".addRootObject = false (the sample is a JSON array: each item is a "
                        + "record)");
         });
-        writes.ownDocuments(build, properties, request.reuseExistingDocs());
-        final List<PipelineReference> references = writes.referenceEntries(merged, request.references());
+        writes.ownDocuments(build, properties, request.reuseExistingDocs(), previous);
+        final List<PipelineReference> references = new ArrayList<>(writes.referenceEntries(merged,
+                request.references()));
+        references.addAll(PipelineWrites.carriedReferences(merged, version.carried(), references));
+        final List<String> left = previous == null
+                ? List.of()
+                : PipelineWrites.notCarried(previous, properties);
         final List<String> sets = properties.stream().map(PropertyValue::dotted).toList();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
         details.put("pipeline name", proposed);
         details.put("template", template.getName());
+        if (previous != null) {
+            details.put("new version of", previous.getName());
+        }
+        if (!left.isEmpty()) {
+            details.put("set in " + previous.getName() + ", not here", left);
+        }
         details.put("sets", sets);
         if (!filled.isEmpty()) {
             details.put("filled from the build", filled);
@@ -318,12 +364,18 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<PropertyValue> toSet = new ArrayList<>(typed.properties());
         toSet.addAll(addedTyped.properties());
         references.forEach(data::addPipelineReference);
+        // Not the previous version's converter, which a new version runs where it is, in production.
+        final Set<String> theirs = new HashSet<>();
+        if (previous != null) {
+            PipelineDocs.addedProperties(previous).forEach(property -> theirs.add(NullSafe.get(property.getValue(),
+                    PipelinePropertyValue::getEntity, DocRef::getUuid)));
+        }
         final PipelineDoc doc = guard.createFilled(PipelineDoc.TYPE, name, build, ref -> {
             if (role != null && WriteGuard.SOURCE_ROLES.contains(role)) {
                 // The build's text converter and XSLT it runs, made before it, go where it went: Events or Records.
                 for (final PropertyValue property : toSet) {
                     if ((TextConverterDoc.TYPE.equals(property.docType()) || XsltDoc.TYPE.equals(property.docType()))
-                        && property.docUuid() != null) {
+                        && property.docUuid() != null && !theirs.contains(property.docUuid())) {
                         guard.moveToRole(build, new DocRef(property.docType(), property.docUuid()), role);
                     }
                 }
@@ -338,11 +390,20 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             }
             return pipelineDocs.write(child);
         }, false, role);
+        if (previous != null) {
+            recordVersion(build, doc.asDocRef(), previous, toSet);
+        }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("template", template.getName());
+        if (previous != null) {
+            result.put("version_of", previous.getName());
+        }
+        if (!left.isEmpty()) {
+            result.put("set_in_" + previous.getName() + "_not_here", left);
+        }
         result.put("sets", sets);
         if (!filled.isEmpty()) {
             result.put("filled_from_build", filled);
@@ -445,6 +506,61 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
+    // The template a new pipeline is a child of, and for a next version (version_of), the pipeline it follows and
+    // the reference data it keeps of that one's: whether to keep them is the user's, so a version of a pipeline
+    // that loads any is refused until keep_references says.
+    private Version version(final FromTemplate request) {
+        if (request.versionOf() == null) {
+            return new Version(request.template(), null, List.of());
+        }
+        final PipelineDoc previous = pipelineDocs.read(request.versionOf());
+        String template = request.template();
+        if (template == null) {
+            final String parent = NullSafe.get(previous.getParentPipeline(), DocRef::getUuid);
+            if (parent == null) {
+                throw new ToolRefusal("'" + previous.getName() + "' inherits from no template, so a new version "
+                                      + "can't be its template's child: copy_pipeline source_uuid='"
+                                      + request.versionOf() + "' copies it as it is (with set_properties for the "
+                                      + "build's XSLT), or give template.");
+            }
+            template = parent;
+        }
+        final List<PipelineReference> carried = CurrentTranslations.ownReferences(previous);
+        if (!carried.isEmpty() && request.keepReferences() == null) {
+            throw new ToolRefusal("'" + previous.getName() + "' loads reference data for its lookups: "
+                                  + PyText.list(carried.stream().map(CurrentTranslations::referenceText).toList())
+                                  + ". Ask the user whether the new version keeps them (its XSLT looks them up only "
+                                  + "if its mapping does), then call again with keep_references=true or false.");
+        }
+        return new Version(template, previous, Boolean.TRUE.equals(request.keepReferences())
+                ? carried
+                : List.of());
+    }
+
+    // The new pipeline as the next version of the previous one, and each build document it runs in the place of
+    // one the previous version runs (its XSLT for V1.2's), so promotion puts them beside their predecessors.
+    private void recordVersion(final String build,
+                               final DocRef ref,
+                               final PipelineDoc previous,
+                               final List<PropertyValue> properties) {
+        records.update(build, ref, entry -> entry.put("version_of", previous.getUuid()));
+        final Map<String, DocRef> before = new LinkedHashMap<>();
+        PipelineDocs.addedProperties(previous).forEach(property -> {
+            final DocRef entity = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
+            if (entity != null) {
+                before.put(property.getElement() + "." + property.getName(), entity);
+            }
+        });
+        for (final PropertyValue property : properties) {
+            final DocRef was = before.get(property.dotted());
+            if (property.docUuid() != null && was != null && was.getUuid() != null
+                && was.getType().equals(property.docType()) && !was.getUuid().equals(property.docUuid())) {
+                records.update(build, new DocRef(property.docType(), property.docUuid()),
+                        entry -> entry.put("version_of", was.getUuid()));
+            }
+        }
+    }
+
     // The new pipeline with the description given, if one was.
     private static PipelineDoc described(final PipelineDoc doc, final String description) {
         return NullSafe.isNonBlankString(description)
@@ -499,6 +615,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     /// @param references           The reference data its translation looks up.
     /// @param reuseExistingDocs    Whether documents from outside the build may be used.
     /// @param acceptParserMismatch Whether a template whose parser can't read the build's sample may be used.
+    /// @param versionOf            The pipeline this one is the next version of, or null.
+    /// @param keepReferences       With versionOf: whether the new version loads its reference data; null when the
+    ///                             user hasn't said.
     record FromTemplate(String build,
                         String name,
                         String template,
@@ -507,7 +626,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                         String replaceParser,
                         List<ReferenceRequest> references,
                         boolean reuseExistingDocs,
-                        boolean acceptParserMismatch) {
+                        boolean acceptParserMismatch,
+                        String versionOf,
+                        Boolean keepReferences) {
+
+    }
+
+    // The template a pipeline is made from; for a next version, the pipeline it follows and the reference data it
+    // keeps of that one's.
+    private record Version(String template, PipelineDoc previous, List<PipelineReference> carried) {
 
     }
 }

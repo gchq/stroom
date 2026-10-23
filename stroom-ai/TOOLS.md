@@ -940,6 +940,13 @@ editor does. Templates are inherited (`parentPipeline`), never copied: `copy_pip
 * **`BuildIndexes`**: `tools/indexing.py`'s `_build_index_docs` (`indexDocs`), `_build_destinations`
   (`destinations`) and `other_index`'s reads (`otherIndex`, on `IndexingHelpers.otherIndex`).
 * `_standalone_kafka` is `create_pipeline standalone='kafka'` (`CreatePipelineTool.KAFKA_CHAIN`).
+* A production pipeline's next version, its translation written anew (0.18.41): `create_pipeline version_of=`
+  `keep_references=`, with `_plain_settings`, `_carried_references` and `_not_carried` in `PipelineWrites`
+  (`plainSettings`, `carriedReferences`, `notCarried`), `fill_open_slots` and `_own_documents` taking the previous
+  version, and `_record_version` (`CreatePipelineTool.recordVersion`). `tools/plan.py`'s `current_translation`,
+  `lookups_of`, `lookups_kept`, `lookups_note`, `own_references` and `reference_text` are `CurrentTranslations`,
+  which `draft_translation_mapping` (`current_translation` and its note) and `build_translation_xslt` (the warning
+  for a mapping that keeps none of the lookups) use; the plan's `pipeline:version` step is `BuildPlan`'s.
 
 | Tool | Read-only | Has read-only calls | Confirms itself | Run slot |
 |------|-----------|---------------------|-----------------|----------|

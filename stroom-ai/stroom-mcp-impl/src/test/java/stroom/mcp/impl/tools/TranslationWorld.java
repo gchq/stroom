@@ -104,6 +104,8 @@ final class TranslationWorld {
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
+    // No feed translated now, unless a test says what is.
+    final CurrentTranslations currentTranslations = Mockito.mock(CurrentTranslations.class);
     final List<String> versions = new ArrayList<>(List.of(VERSION));
     // What the user answers each form with, by its question's start (`yes` or `no` for a confirmation or an
     // approval, else the choice picked); none: no forms.
@@ -147,12 +149,14 @@ final class TranslationWorld {
     /// @return build_translation_xslt, wired on the world.
     BuildTranslationXsltTool buildTool() {
         return new BuildTranslationXsltTool(docs, builds, eventVersions, requiredImports, consent,
-                sampleStreamTexts, stepping, agentInstructions, () -> auditLog, Clock.systemUTC());
+                sampleStreamTexts, stepping, agentInstructions, () -> auditLog, currentTranslations,
+                Clock.systemUTC());
     }
 
     /// @return draft_translation_mapping, wired on the world.
     DraftTranslationMappingTool draftTool() {
-        return new DraftTranslationMappingTool(eventVersions, sampleStreamTexts, builds, sampleProfiling);
+        return new DraftTranslationMappingTool(eventVersions, sampleStreamTexts, builds, sampleProfiling,
+                currentTranslations);
     }
 
     /// @return save_xslt, wired on the world, with no plans drafted.

@@ -223,7 +223,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         final Map<String, Object> made = pipelines.fromTemplate(call, context, new FromTemplate(build, name,
                 templateUuid, properties, "", null, List.of(), false,
                 // An indexing pipeline reads Events, not the raw sample.
-                true));
+                true, null, null));
         final Map<String, Object> result = new LinkedHashMap<>(made);
         result.put("backend", shape.backend());
         if (lucene && !missing.missing().isEmpty()) {

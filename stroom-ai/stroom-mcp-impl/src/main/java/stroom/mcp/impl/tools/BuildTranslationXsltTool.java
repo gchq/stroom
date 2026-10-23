@@ -115,6 +115,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private final PipelineStepping stepping;
     private final AgentInstructions agentInstructions;
     private final Provider<AiAuditLog> auditLogProvider;
+    private final CurrentTranslations currentTranslations;
     private final Clock clock;
 
     @Inject
@@ -126,9 +127,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final SampleStreamTexts sampleStreamTexts,
                              final PipelineStepping stepping,
                              final AgentInstructions agentInstructions,
-                             final Provider<AiAuditLog> auditLogProvider) {
+                             final Provider<AiAuditLog> auditLogProvider,
+                             final CurrentTranslations currentTranslations) {
         this(translationDocs, builds, eventVersions, requiredImports, consent, sampleStreamTexts, stepping,
-                agentInstructions, auditLogProvider, Clock.systemUTC());
+                agentInstructions, auditLogProvider, currentTranslations, Clock.systemUTC());
     }
 
     /// As the injected constructor, with the clock the sample check's time is read against, for tests.
@@ -141,6 +143,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              final PipelineStepping stepping,
                              final AgentInstructions agentInstructions,
                              final Provider<AiAuditLog> auditLogProvider,
+                             final CurrentTranslations currentTranslations,
                              final Clock clock) {
         this.translationDocs = translationDocs;
         this.builds = builds;
@@ -151,6 +154,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         this.stepping = stepping;
         this.agentInstructions = agentInstructions;
         this.auditLogProvider = auditLogProvider;
+        this.currentTranslations = currentTranslations;
         this.clock = clock;
     }
 
@@ -340,6 +344,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         checkSample(context, b);
         checkAgainstNotes(b);
+        checkLookups(b);
         jsonProperties(b);
         fieldMapping(context, b);
         final Optional<Map<String, Object>> round = save(call, context, b);
@@ -583,6 +588,18 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 ? "the mapping agrees with the event catalogue"
                 : contradictions);
         contradictions.forEach(c -> TranslationBuilds.warnings(b.result).add("source documentation: " + c));
+    }
+
+    // Unless the user chose to drop them: a next version written anew loses its predecessor's lookups silently.
+    private void checkLookups(final Build b) {
+        if (b.request.build() == null) {
+            return;
+        }
+        final Map<String, Object> current = currentTranslations.current(b.request.build()).orElse(null);
+        if (CurrentTranslations.lookupsOf(current) && !CurrentTranslations.lookupsKept(current, b.mapping)) {
+            TranslationBuilds.warnings(b.result).add("This mapping keeps none of the current translation's "
+                                                     + "lookups. " + CurrentTranslations.lookupsNote(current));
+        }
     }
 
     // As create_pipeline takes them (set_properties): seen, a dict passed on as is, to a parameter of another name.

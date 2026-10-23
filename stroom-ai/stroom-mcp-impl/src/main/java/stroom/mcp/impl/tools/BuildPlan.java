@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.docref.DocRef;
@@ -149,9 +150,9 @@ public class BuildPlan {
     private static final String ASK = "ask them to, on the pipeline's Processors tab, if they haven't said";
     private static final String DOCUMENTATION = "<the documentation, from the documentation guide>";
     // The steps whose call depends on how processing stands, as step:processing.
-    private static final Set<String> CALLS = Set.of("stepped:surveyed", "processed:disabled", "processed:running",
-            "index_template:unstepped", "indexed:disabled", "indexed:unstepped", "indexed:running",
-            "indexed:no_index", "indexed:finished", "documented:edited");
+    private static final Set<String> CALLS = Set.of("pipeline:version", "stepped:surveyed", "processed:disabled",
+            "processed:running", "index_template:unstepped", "indexed:disabled", "indexed:unstepped",
+            "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited");
 
     private final BuildFacts facts;
     private final WriteGuard guard;
@@ -584,12 +585,21 @@ public class BuildPlan {
                 ? "<recent Events streams from " + named + " (" + streamMetaCall(sources, "Events") + ")>"
                 : List.of());
         String edited = null;
+        Map<String, Object> version = null;
         if ("documented".equals(nextStep) && !translation.isEmpty()
             && checks.stream().anyMatch(check -> check.contains("differs from what its mapping generates"))) {
             // Changed by hand (save_xslt, or in Stroom): documentation would stay stale until the mapping is read
             // back.
             processing = "edited";
             edited = facts.keptXsltUuid(uuid(translation.getFirst())).orElse(null);
+        } else if ("pipeline".equals(nextStep) && existing && translation.isEmpty() && copies.isEmpty()) {
+            // The feed's next version, its translation written anew (seen in testing: told to find the best
+            // template, the agent offered copying V1.2 or a pipeline unlike it, and the user had to ask why).
+            final List<Map<String, Object>> current = facts.translating(sources);
+            if (!current.isEmpty()) {
+                processing = "version";
+                version = current.getFirst();
+            }
         } else if ("stepped".equals(nextStep) && survey != null && JsonValues.truthy(survey.get("locations"))) {
             // The survey's locations, when there are few enough to give: else step_sample over its streams, as the
             // plan says (seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a
@@ -612,7 +622,7 @@ public class BuildPlan {
                         : "<every location survey_feed gave>",
                 forwarding.isEmpty()
                         ? null
-                        : uuid(forwarding.getFirst()), edited);
+                        : uuid(forwarding.getFirst()), edited, version);
         final NextCall call = nextCall(nextStep == null
                 ? "promoted"
                 : nextStep, args);
@@ -698,6 +708,16 @@ public class BuildPlan {
                     + "splitter, build and name: it saves the XSLT with the mapping");
             case "pipeline" -> call("find_pipeline_templates", args("stage", "translation"),
                     "then create_pipeline from the best candidate: it takes the build's converter and XSLT");
+            // The feed's next version (V1.3 for V1.2): a child of the template the pipeline translating it now has.
+            case "pipeline:version" -> {
+                final Map<String, Object> version = NullSafe.map(args.version());
+                final String name = PyText.str(version.get("name"));
+                yield call("create_pipeline", args("build", build, "version_of", version.get("uuid"), "name",
+                                "<the new version's name ('" + name + "' with its new version)>"),
+                        "a child of the template '" + name + "' has, with the build's XSLT; whether it loads that "
+                        + "pipeline's reference data too is the user's choice (keep_references): ask them when it "
+                        + "asks");
+            }
             case "stepped" -> call("step_sample", args("pipeline_uuid", tr, "stream_ids", raw),
                     "until the verdict is clean: fix the mapping and build_translation_xslt uuid=... in between");
             case "stepped:surveyed" -> call("step_records", args("pipeline_uuid", tr, "locations", args.locations()),
@@ -984,8 +1004,11 @@ public class BuildPlan {
                    + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} "
                    + "(working_copy=true for a change in place), then build_translation_xslt uuid=<the copy's XSLT> "
                    + "changes= only what changes (rebuild_mapping uuid=<it> first, if its XSLT keeps no mapping): "
-                   + "what it does, its lookups and all, comes with the copy. survey_feed and "
-                   + "draft_translation_mapping are for an events pipeline written anew, when the user wants that. "
+                   + "what it does, its lookups and all, comes with the copy. Or, its translation written anew (a "
+                   + "new schema version, say): survey_feed, draft_translation_mapping (its notes say what the "
+                   + "current XSLT looks up, to keep if the user wants), build_translation_xslt build= name=, then "
+                   + "create_pipeline version_of=<it>: a child of the same template with the new XSLT, and its "
+                   + "reference data if the user keeps them. Ask the user which. "
                    + Character.toUpperCase(then.charAt(0)) + then.substring(1);
         }
         final Map<String, Object> start = new LinkedHashMap<>();
@@ -1254,6 +1277,8 @@ public class BuildPlan {
     /// @param locations   The survey's locations, or a placeholder.
     /// @param cef         Its CEF pipeline's UUID, or null.
     /// @param editedXslt  Its translation XSLT changed by hand, or null.
+    /// @param version     The pipeline translating the feed now (`name`, `uuid`), whose next version the build
+    ///                    makes with its translation written anew, or null.
     public record CallArgs(String build,
                            List<String> feeds,
                            Object raw,
@@ -1266,7 +1291,8 @@ public class BuildPlan {
                            boolean discovery,
                            Object locations,
                            String cef,
-                           String editedXslt) {
+                           String editedXslt,
+                           Map<String, Object> version) {
 
         /// @param build       The build.
         /// @param feeds       Its feeds' names.
@@ -1282,7 +1308,7 @@ public class BuildPlan {
                                   final String translation,
                                   final String indexing) {
             return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
-                    null, null, null);
+                    null, null, null, null);
         }
     }
 }
