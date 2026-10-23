@@ -33,8 +33,6 @@ import com.google.web.bindery.event.shared.EventBus;
 
 public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskView> {
 
-    public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
-    public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
     private final ProcessorTaskListPresenter processorTaskListPresenter;
 
@@ -51,8 +49,8 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
         this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
         this.processorTaskListPresenter = processorTaskListPresenter;
 
-        setInSlot(STREAM_TASK_SUMMARY, processorTaskSummaryPresenter);
-        setInSlot(STREAM_TASK_LIST, processorTaskListPresenter);
+        getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
+        getView().setTaskListView(processorTaskListPresenter.getView());
     }
 
     @Override
@@ -123,5 +121,16 @@ public class ProcessorTaskPresenter extends ContentTabPresenter<ProcessorTaskVie
         return "Tasks";
     }
 
-    public interface ProcessorTaskView extends View { }
+    public interface ProcessorTaskView extends View {
+
+        /// Shows the summary of tasks.
+        ///
+        /// @param view Its view.
+        void setTaskSummaryView(View view);
+
+        /// Shows the tasks.
+        ///
+        /// @param view Its view.
+        void setTaskListView(View view);
+    }
 }

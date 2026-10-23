@@ -38,9 +38,6 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     /** Tab type for the content (what is this?) */
     public static final String TAB_TYPE = "Content Store";
 
-    /** ID of the presenter for the list of content packs */
-    public static final String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";
-
     /** Resource to access server-side data across the package */
     static final ContentStoreResource CONTENT_STORE_RESOURCE
             = GWT.create(ContentStoreResource.class);
@@ -64,7 +61,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
         this.contentPackListPresenter.setContentStorePresenter(this);
         this.contentPackDetailsPresenter = contentPackDetailsPresenter;
         this.contentPackDetailsPresenter.setContentStorePresenter(this);
-        this.setInSlot(CONTENT_PACK_LIST, contentPackListPresenter);
+        getView().setContentPackListView(contentPackListPresenter.getView());
         view.getContentPackDetailsPanel().add(contentPackDetailsPresenter);
     }
 
@@ -127,6 +124,11 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
      * GWT view managed by this presenter.
      */
     public interface ContentStoreView extends View {
+
+        /// Shows the list of content packs.
+        ///
+        /// @param view Its view.
+        void setContentPackListView(View view);
 
         /**
          * Returns the details panel so stuff can be put into it

@@ -31,8 +31,6 @@ import com.google.web.bindery.event.shared.EventBus;
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
         implements HasDocumentRead<Object> {
 
-    public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
-    public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
     private final ProcessorTaskListPresenter processorTaskListPresenter;
 
@@ -46,8 +44,8 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
         this.processorTaskSummaryPresenter = processorTaskSummaryPresenter;
         this.processorTaskListPresenter = processorTaskListPresenter;
 
-        setInSlot(STREAM_TASK_SUMMARY, processorTaskSummaryPresenter);
-        setInSlot(STREAM_TASK_LIST, processorTaskListPresenter);
+        getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
+        getView().setTaskListView(processorTaskListPresenter.getView());
     }
 
     @Override
@@ -85,5 +83,14 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
 
     public interface StreamTaskView extends View {
 
+        /// Shows the summary of tasks.
+        ///
+        /// @param view Its view.
+        void setTaskSummaryView(View view);
+
+        /// Shows the tasks.
+        ///
+        /// @param view Its view.
+        void setTaskListView(View view);
     }
 }

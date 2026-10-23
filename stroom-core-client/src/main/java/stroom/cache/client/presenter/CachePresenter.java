@@ -27,8 +27,6 @@ import com.google.web.bindery.event.shared.EventBus;
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
 
     public static final String TAB_TYPE = "Caches";
-    public static final String LIST = "LIST";
-    public static final String NODE_LIST = "NODE_LIST";
 
     private final CacheListPresenter cacheListPresenter;
     private final CacheNodeListPresenter cacheNodeListPresenter;
@@ -44,8 +42,8 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
         this.cacheListPresenter = cacheListPresenter;
         this.cacheNodeListPresenter = cacheNodeListPresenter;
 
-        setInSlot(LIST, cacheListPresenter);
-        setInSlot(NODE_LIST, cacheNodeListPresenter);
+        getView().setCacheListView(cacheListPresenter.getView());
+        getView().setCacheNodeListView(cacheNodeListPresenter.getView());
     }
 
     @Override
@@ -88,5 +86,14 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
     public interface CacheView extends View {
 
+        /// Shows the list of caches.
+        ///
+        /// @param view Its view.
+        void setCacheListView(View view);
+
+        /// Shows the selected cache on each node.
+        ///
+        /// @param view Its view.
+        void setCacheNodeListView(View view);
     }
 }

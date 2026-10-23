@@ -33,8 +33,6 @@ import com.google.web.bindery.event.shared.EventBus;
 public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> implements Refreshable {
 
     public static final String TAB_TYPE = "Jobs";
-    public static final String JOB_LIST = "JOB_LIST";
-    public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
     private final JobListPresenter jobListPresenter;
     private final JobNodeListPresenter jobNodeListPresenter;
 
@@ -49,8 +47,8 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
         this.jobListPresenter = jobListPresenter;
         this.jobNodeListPresenter = jobNodeListPresenter;
 
-        setInSlot(JOB_LIST, jobListPresenter);
-        setInSlot(JOB_NODE_LIST, jobNodeListPresenter);
+        getView().setJobListView(jobListPresenter.getView());
+        getView().setJobNodeListView(jobNodeListPresenter.getView());
     }
 
     @Override
@@ -108,5 +106,14 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
 
     public interface JobView extends View {
 
+        /// Shows the list of jobs.
+        ///
+        /// @param view Its view.
+        void setJobListView(View view);
+
+        /// Shows the selected job on each node.
+        ///
+        /// @param view Its view.
+        void setJobNodeListView(View view);
     }
 }

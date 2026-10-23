@@ -34,8 +34,6 @@ public class NodePresenter
         implements Refreshable {
 
     public static final String TAB_TYPE = "Nodes";
-    public static final String NODE_LIST = "NODE_LIST";
-    public static final String NODE_JOB_LIST = "NODE_JOB_LIST";
 
     private final NodeStatusListPresenter nodeStatusListPresenter;
     private final NodeJobListPresenter nodeJobListPresenter;
@@ -51,8 +49,8 @@ public class NodePresenter
         this.nodeStatusListPresenter = nodeStatusListPresenter;
         this.nodeJobListPresenter = nodeJobListPresenter;
 
-        setInSlot(NODE_LIST, nodeStatusListPresenter);
-        setInSlot(NODE_JOB_LIST, nodeJobListPresenter);
+        getView().setNodeListView(nodeStatusListPresenter.getView());
+        getView().setNodeJobListView(nodeJobListPresenter.getView());
     }
 
     @Override
@@ -110,5 +108,14 @@ public class NodePresenter
 
     public interface NodeView extends View {
 
+        /// Shows the list of nodes.
+        ///
+        /// @param view Its view.
+        void setNodeListView(View view);
+
+        /// Shows the selected node's jobs.
+        ///
+        /// @param view Its view.
+        void setNodeJobListView(View view);
     }
 }

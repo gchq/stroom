@@ -19,6 +19,7 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -59,16 +60,19 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
         return widget;
     }
 
-    /// Routes slot content into the map, dock, or timeline panel.
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (FloorMapMapPresenter.MAP.equals(slot)) {
-            mapPanel.setWidget(content);
-        } else if (FloorMapMapPresenter.DOCK.equals(slot)) {
-            dockPanel.setWidget(content);
-        } else if (FloorMapMapPresenter.TIMELINE.equals(slot)) {
-            timelinePanel.setWidget(content);
-        }
+    public void setMapView(final View view) {
+        mapPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDockView(final View view) {
+        dockPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTimelineView(final View view) {
+        timelinePanel.setWidget(view.asWidget());
     }
 
     @Override

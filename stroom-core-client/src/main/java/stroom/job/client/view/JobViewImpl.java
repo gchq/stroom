@@ -17,6 +17,7 @@
 package stroom.job.client.view;
 
 import stroom.job.client.presenter.JobPresenter;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -44,12 +45,13 @@ public class JobViewImpl extends ViewImpl implements JobPresenter.JobView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (JobPresenter.JOB_LIST.equals(slot)) {
-            jobList.setWidget(content);
-        } else if (JobPresenter.JOB_NODE_LIST.equals(slot)) {
-            jobNodeList.setWidget(content);
-        }
+    public void setJobListView(final View view) {
+        jobList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setJobNodeListView(final View view) {
+        jobNodeList.setWidget(view.asWidget());
     }
 
 

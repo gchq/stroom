@@ -122,11 +122,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private static final int FIRST_ITEM_INDEX = 0;
 
-    /**
-     * ID of the presenter for the list of credentials
-     */
-    public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
-
     private final ExpiryFormatter expiryFormatter;
 
     /**

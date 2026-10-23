@@ -16,8 +16,8 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,15 +47,21 @@ public class MetaViewImpl extends ViewImpl implements MetaView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        content.addStyleName("dashboard-panel overflow-hidden");
-        if (MetaPresenter.STREAM_LIST.equals(slot)) {
-            streamList.setWidget(content);
-        } else if (MetaPresenter.STREAM_RELATION_LIST.equals(slot)) {
-            streamRelationList.setWidget(content);
-        } else if (MetaPresenter.DATA.equals(slot)) {
-            data.setWidget(content);
-        }
+    public void setStreamListView(final View view) {
+        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        streamList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setStreamRelationListView(final View view) {
+        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        streamRelationList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDataView(final View view) {
+        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
+        data.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, MetaViewImpl> {

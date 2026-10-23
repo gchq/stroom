@@ -16,8 +16,8 @@
 
 package stroom.cache.client.view;
 
-import stroom.cache.client.presenter.CachePresenter;
 import stroom.cache.client.presenter.CachePresenter.CacheView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,12 +45,13 @@ public class CacheViewImpl extends ViewImpl implements CacheView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (CachePresenter.LIST.equals(slot)) {
-            cacheList.setWidget(content);
-        } else if (CachePresenter.NODE_LIST.equals(slot)) {
-            cacheNodeList.setWidget(content);
-        }
+    public void setCacheListView(final View view) {
+        cacheList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setCacheNodeListView(final View view) {
+        cacheNodeList.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, CacheViewImpl> {

@@ -16,11 +16,11 @@
 
 package stroom.importexport.client.view;
 
-import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.client.presenter.DependenciesUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -55,25 +55,13 @@ public class DependenciesTabViewImpl
 //    }
 
     @Override
-    public void addToSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
     public Widget asWidget() {
         return widget;
     }
 
     @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (DependenciesTabPresenter.LIST.equals(slot)) {
-            dataGrid.setWidget(content);
-        }
+    public void setListView(final View view) {
+        dataGrid.setWidget(view.asWidget());
     }
 
     @Override

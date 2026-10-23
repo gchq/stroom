@@ -66,10 +66,6 @@ public class MetaPresenter
         implements HasDocumentRead<Object>,
         BeginSteppingHandler {
 
-    public static final String DATA = "DATA";
-    public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
-    public static final String STREAM_LIST = "STREAM_LIST";
-
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
@@ -124,9 +120,9 @@ public class MetaPresenter
         this.expressionValidator = expressionValidator;
         this.securityContext = securityContext;
 
-        setInSlot(STREAM_LIST, metaListPresenter);
-        setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
-        setInSlot(DATA, dataPresenter);
+        getView().setStreamListView(metaListPresenter.getView());
+        getView().setStreamRelationListView(metaRelationListPresenter.getView());
+        getView().setDataView(dataPresenter.getView());
 
         dataPresenter.setBeginSteppingHandler(this);
 
@@ -589,5 +585,19 @@ public class MetaPresenter
 
     public interface MetaView extends View {
 
+        /// Shows the list of streams.
+        ///
+        /// @param view Its view.
+        void setStreamListView(View view);
+
+        /// Shows the streams related to the selected one.
+        ///
+        /// @param view Its view.
+        void setStreamRelationListView(View view);
+
+        /// Shows the selected stream's data.
+        ///
+        /// @param view Its view.
+        void setDataView(View view);
     }
 }

@@ -52,7 +52,7 @@ public class CredentialsManagerDialogPresenter
         this.markdownConverter = markdownConverter;
         credentialsListPresenter.setDefaultSelection(false);
         view.setCredentialsList(credentialsListPresenter);
-        this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
+        getView().setCredentialsListView(credentialsListPresenter.getView());
     }
 
     /**
@@ -89,6 +89,11 @@ public class CredentialsManagerDialogPresenter
      * Interface for GWT.
      */
     public interface CredentialsManagerDialogView extends View {
+
+        /// Shows the list of credentials.
+        ///
+        /// @param view Its view.
+        void setCredentialsListView(View view);
 
         /**
          * Hooks up the UI

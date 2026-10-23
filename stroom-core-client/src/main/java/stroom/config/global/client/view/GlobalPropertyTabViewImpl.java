@@ -20,6 +20,7 @@ import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -55,15 +56,8 @@ public class GlobalPropertyTabViewImpl
     }
 
     @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (GlobalPropertyTabPresenter.LIST.equals(slot)) {
-            dataGrid.setWidget(content);
-        }
+    public void setListView(final View view) {
+        dataGrid.setWidget(view.asWidget());
     }
 
     @UiHandler("nameFilter")

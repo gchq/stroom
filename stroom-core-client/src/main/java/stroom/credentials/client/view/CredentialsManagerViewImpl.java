@@ -19,6 +19,7 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter.CredentialsManagerDialogView;
 import stroom.credentials.client.presenter.CredentialsManagerDialogUiHandlers;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -67,21 +68,19 @@ public class CredentialsManagerViewImpl
     }
 
     /**
-     * Used to add the list of credentials to the main tab.
-     */
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (CredentialsListPresenter.CREDENTIALS_LIST.equals(slot)) {
-            pnlCredentialsList.setWidget(content);
-        }
-    }
-
-    /**
      * @return The underlying widget.
      */
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    /**
+     * Used to add the list of credentials to the main tab.
+     */
+    @Override
+    public void setCredentialsListView(final View view) {
+        pnlCredentialsList.setWidget(view.asWidget());
     }
 
     /**

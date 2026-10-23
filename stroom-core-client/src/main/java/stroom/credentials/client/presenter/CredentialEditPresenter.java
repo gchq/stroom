@@ -75,11 +75,6 @@ public class CredentialEditPresenter
     private TabData selectedTab;
 
     /**
-     * ID for setInSlot()
-     */
-    public static final String CREDENTIALS_TABS = "credentials-tab";
-
-    /**
      * Width of dialog - set for requirements of Permissions tab
      */
     private static final int DIALOG_WIDTH = 750;

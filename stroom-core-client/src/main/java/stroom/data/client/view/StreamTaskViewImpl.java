@@ -16,8 +16,8 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,12 +45,13 @@ public class StreamTaskViewImpl extends ViewImpl implements StreamTaskView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (ProcessorTaskPresenter.STREAM_TASK_LIST.equals(slot)) {
-            streamTaskList.setWidget(content);
-        } else if (ProcessorTaskPresenter.STREAM_TASK_SUMMARY.equals(slot)) {
-            streamTaskSummary.setWidget(content);
-        }
+    public void setTaskSummaryView(final View view) {
+        streamTaskSummary.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTaskListView(final View view) {
+        streamTaskList.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, StreamTaskViewImpl> {

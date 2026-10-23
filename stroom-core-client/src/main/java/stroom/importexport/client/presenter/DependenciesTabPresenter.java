@@ -22,7 +22,6 @@ import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
@@ -40,7 +39,6 @@ public class DependenciesTabPresenter
         implements DependenciesUiHandlers {
 
     public static final String TAB_TYPE = "Dependencies";
-    public static final String LIST = "LIST";
 
     private final DependenciesPresenter dependenciesPresenter;
 
@@ -54,7 +52,7 @@ public class DependenciesTabPresenter
         own(dependenciesPresenter);
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
-        setInSlot(LIST, dependenciesPresenter);
+        getView().setListView(dependenciesPresenter.getView());
         // A rejected filter comes back as an empty grid like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         dependenciesPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -123,6 +121,11 @@ public class DependenciesTabPresenter
 
 
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {
+
+        /// Shows the list of dependencies.
+        ///
+        /// @param view Its view.
+        void setListView(View view);
 
         void setHelpTooltipText(final SafeHtml helpTooltipText);
 

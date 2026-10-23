@@ -41,23 +41,8 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
     }
 
     @Override
-    public void addToSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-
     }
 
     @Override

@@ -56,7 +56,6 @@ public class ManageActivityPresenter
         implements ManageActivityUiHandlers, HasHandlers {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
-    public static final String LIST = "LIST";
 
     private final ActivityListPresenter listPresenter;
     private final Provider<ActivityEditPresenter> editProvider;
@@ -93,7 +92,7 @@ public class ManageActivityPresenter
 
         getView().setUiHandlers(this);
 
-        setInSlot(LIST, listPresenter);
+        getView().setListView(listPresenter.getView());
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -311,6 +310,11 @@ public class ManageActivityPresenter
     }
 
     public interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
+
+        /// Shows the list of activities.
+        ///
+        /// @param view Its view.
+        void setListView(View view);
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
 

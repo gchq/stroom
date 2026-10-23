@@ -49,7 +49,7 @@ public class CredentialsPresenter
                                 final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
         own(credentialsListPresenter);
-        this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
+        getView().setCredentialsListView(credentialsListPresenter.getView());
     }
 
     /**
@@ -96,6 +96,11 @@ public class CredentialsPresenter
      * GWT view managed by this presenter.
      */
     public interface CredentialsView extends View {
+
+        /// Shows the list of credentials.
+        ///
+        /// @param view Its view.
+        void setCredentialsListView(View view);
         // No code
     }
 

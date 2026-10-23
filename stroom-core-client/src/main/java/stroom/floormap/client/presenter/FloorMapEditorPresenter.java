@@ -143,26 +143,6 @@ public class FloorMapEditorPresenter
     private static final int DISCOVER_PAGE_SIZE = 10_000;
 
     // -----------------------------------------------------------------------
-    // View slots
-    // -----------------------------------------------------------------------
-
-    /// Slot for the interactive map canvas.
-    public static final Object MAIN = new Object();
-
-    /// Slot for the right-hand dock, which holds the Layers panel.
-    public static final Object DOCK = new Object();
-
-    /// Slot for the timeline scrubber.
-    /// Fixed-height — stored in `FloorMapEditorViewImpl.TIMELINE_HEIGHT`.
-    public static final Object TIMELINE = new Object();
-
-    /// Slot for the Fact List panel (leftmost bottom column).
-    public static final Object FACT_LIST = new Object();
-
-    /// Slot for the Time List panel (centre bottom column).
-    public static final Object TIME_LIST = new Object();
-
-    // -----------------------------------------------------------------------
     // Child presenters
     // -----------------------------------------------------------------------
 
@@ -313,11 +293,11 @@ public class FloorMapEditorPresenter
         // Full facts-store type-discovery scan behind the panel's Discover action.
         floorMapLayersPresenter.setDiscoverHandler(this::onDiscoverTypes);
 
-        setInSlot(MAIN, floorMapCanvasPresenter);
-        setInSlot(DOCK, floorMapDockPresenter);
-        setInSlot(TIMELINE, floorMapTimelinePresenter);
-        setInSlot(FACT_LIST, floorMapFactListPresenter);
-        setInSlot(TIME_LIST, floorMapTimeListPresenter);
+        getView().setCanvasView(floorMapCanvasPresenter.getView());
+        getView().setDockView(floorMapDockPresenter.getView());
+        getView().setTimelineView(floorMapTimelinePresenter.getView());
+        getView().setFactListView(floorMapFactListPresenter.getView());
+        getView().setTimeListView(floorMapTimeListPresenter.getView());
 
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List
@@ -2203,11 +2183,32 @@ public class FloorMapEditorPresenter
     // -----------------------------------------------------------------------
 
     /// View interface for the Editor tab.
-    ///
-    /// Child content is routed through the standard
-    /// [stroom.widget.presenter.client.View#setInSlot] mechanism, overridden in
-    /// [stroom.floormap.client.view.FloorMapEditorViewImpl].
     public interface FloorMapEditorView extends View {
+
+        /// Shows the interactive map canvas, in the centre of the top area.
+        ///
+        /// @param view Its view.
+        void setCanvasView(View view);
+
+        /// Shows the right-hand dock, which holds the Layers panel, beside the canvas.
+        ///
+        /// @param view Its view.
+        void setDockView(View view);
+
+        /// Shows the timeline scrubber, a fixed-height strip above the lists.
+        ///
+        /// @param view Its view.
+        void setTimelineView(View view);
+
+        /// Shows the Fact List, the bottom-left column.
+        ///
+        /// @param view Its view.
+        void setFactListView(View view);
+
+        /// Shows the Time List, the bottom-right column, filling the remaining space.
+        ///
+        /// @param view Its view.
+        void setTimeListView(View view);
 
         /// Shows or hides the right-hand dock, preserving its dragged width.
         ///

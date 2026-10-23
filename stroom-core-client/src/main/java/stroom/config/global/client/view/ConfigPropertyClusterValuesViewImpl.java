@@ -53,18 +53,6 @@ public class ConfigPropertyClusterValuesViewImpl
         dataGrid.setWidget(widget);
     }
 
-    @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (ConfigPropertyClusterValuesPresenter.LIST.equals(slot)) {
-            dataGrid.setWidget(content);
-        }
-    }
-
     public interface Binder extends UiBinder<Widget, ConfigPropertyClusterValuesViewImpl> {
 
     }

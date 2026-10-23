@@ -37,8 +37,6 @@ public class ConfigPropertyClusterValuesPresenter
         extends MyPresenterWidget<ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView>
         implements ConfigPropertyClusterValuesUiHandlers, Refreshable {
 
-    public static final String LIST = "LIST";
-
     private final ConfigPropertyClusterValuesListPresenter listPresenter;
 
     @Inject

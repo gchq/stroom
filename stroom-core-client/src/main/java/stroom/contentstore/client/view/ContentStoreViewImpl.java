@@ -16,8 +16,8 @@
 
 package stroom.contentstore.client.view;
 
-import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.contentstore.client.presenter.ContentStorePresenter.ContentStoreView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,7 +34,7 @@ public class ContentStoreViewImpl extends ViewImpl implements ContentStoreView {
     /** Underlying widget */
     private final Widget widget;
 
-    /** Grid of available content packs, set by setInSlot(). Must be public for GWT. */
+    /** Grid of available content packs, set by setContentPackListView(). Must be public for GWT. */
     @UiField
     public SimplePanel contentPackList;
 
@@ -62,17 +62,16 @@ public class ContentStoreViewImpl extends ViewImpl implements ContentStoreView {
         return widget;
     }
 
+    @Override
+    public void setContentPackListView(final View view) {
+        contentPackList.setWidget(view.asWidget());
+    }
+
     /**
      * Called to add sub-components to this component.
      * @param slot Where to add the content
      * @param content The content to add in the slot
      */
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (ContentStorePresenter.CONTENT_PACK_LIST.equals(slot)) {
-            contentPackList.setWidget(content);
-        }
-    }
 
     @Override
     public SimplePanel getContentPackDetailsPanel() {

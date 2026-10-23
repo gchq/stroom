@@ -19,6 +19,7 @@ package stroom.activity.client;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -56,14 +57,6 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
         nameFilter.registerPopupTextProvider(this::getTooltipContent);
     }
 
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (ManageActivityPresenter.LIST.equals(slot)) {
-            dataGrid.setWidget(content);
-        }
-    }
-
     @Override
     public void focus() {
         nameFilter.forceFocus();
@@ -96,5 +89,10 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setListView(final View view) {
+        dataGrid.setWidget(view.asWidget());
     }
 }

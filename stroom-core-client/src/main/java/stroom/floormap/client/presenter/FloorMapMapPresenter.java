@@ -103,9 +103,6 @@ public class FloorMapMapPresenter
         extends DocPresenter<FloorMapMapView, FloorMapDoc>
         implements HasToolbar {
 
-    public static final Object MAP = new Object();
-    public static final Object DOCK = new Object();
-    public static final Object TIMELINE = new Object();
     private static final int HISTOGRAM_BINS = 100;
 
     private final FloorMapCanvasPresenter floorMapCanvasPresenter;
@@ -429,9 +426,9 @@ public class FloorMapMapPresenter
                 floorMapGroupsPresenter::addMember,
                 floorMapGroupsPresenter::createGroupWith);
 
-        setInSlot(MAP, floorMapCanvasPresenter);
-        setInSlot(DOCK, floorMapDockPresenter);
-        setInSlot(TIMELINE, floorMapTimelinePresenter);
+        getView().setMapView(floorMapCanvasPresenter.getView());
+        getView().setDockView(floorMapDockPresenter.getView());
+        getView().setTimelineView(floorMapTimelinePresenter.getView());
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
@@ -1790,6 +1787,21 @@ public class FloorMapMapPresenter
     }
 
     public interface FloorMapMapView extends View {
+
+        /// Shows the map canvas.
+        ///
+        /// @param view Its view.
+        void setMapView(View view);
+
+        /// Shows the right-hand dock beside the map.
+        ///
+        /// @param view Its view.
+        void setDockView(View view);
+
+        /// Shows the timeline below the map.
+        ///
+        /// @param view Its view.
+        void setTimelineView(View view);
 
         /// Shows or hides the right-hand dock, preserving its dragged width.
         ///

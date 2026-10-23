@@ -43,7 +43,6 @@ public class GlobalPropertyTabPresenter
         implements ManageGlobalPropertyUiHandlers {
 
     public static final String TAB_TYPE = "Caches";
-    public static final String LIST = "LIST";
 
     private final ManageGlobalPropertyListPresenter listPresenter;
     private final Provider<ManageGlobalPropertyEditPresenter> editProvider;
@@ -63,7 +62,7 @@ public class GlobalPropertyTabPresenter
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         view.setUiHandlers(this);
-        setInSlot(LIST, listPresenter);
+        getView().setListView(listPresenter.getView());
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
@@ -170,6 +169,11 @@ public class GlobalPropertyTabPresenter
 
 
     public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
+
+        /// Shows the list of properties.
+        ///
+        /// @param view Its view.
+        void setListView(View view);
 
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 

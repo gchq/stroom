@@ -19,6 +19,7 @@ package stroom.floormap.client.view;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.widget.layout.client.SplitPane;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -162,30 +163,29 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
         return outerSplitPane;
     }
 
-    /// Routes slot content into the correct panel — all five slots:
-    ///
-    /// - [FloorMapEditorPresenter#MAIN]       → canvas panel (centre of the top area)
-    /// - [FloorMapEditorPresenter#DOCK]       → right-hand dock, beside the canvas
-    /// - [FloorMapEditorPresenter#TIMELINE]   → timeline strip (north of the bottom
-    ///   strip, fixed height)
-    /// - [FloorMapEditorPresenter#FACT_LIST]  → bottom-left column
-    /// - [FloorMapEditorPresenter#TIME_LIST]  → bottom-right column (fills remaining
-    ///   space)
-    ///
-    /// Properties are shown as a modal dialog and have no slot.
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (FloorMapEditorPresenter.MAIN.equals(slot)) {
-            canvasPanel.setWidget(content);
-        } else if (FloorMapEditorPresenter.DOCK.equals(slot)) {
-            dockPanel.setWidget(content);
-        } else if (FloorMapEditorPresenter.TIMELINE.equals(slot)) {
-            timelinePanel.setWidget(content);
-        } else if (FloorMapEditorPresenter.FACT_LIST.equals(slot)) {
-            factListPanel.setWidget(content);
-        } else if (FloorMapEditorPresenter.TIME_LIST.equals(slot)) {
-            timeListPanel.setWidget(content);
-        }
+    public void setCanvasView(final View view) {
+        canvasPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDockView(final View view) {
+        dockPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTimelineView(final View view) {
+        timelinePanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setFactListView(final View view) {
+        factListPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTimeListView(final View view) {
+        timeListPanel.setWidget(view.asWidget());
     }
 
     @Override
