@@ -40,7 +40,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-/// Puts the content of workspace files into an MCP tool call's arguments, so the model can pass a large argument
+/// Puts the content of workspace files into a tool call's arguments, so the model can pass a large argument
 /// (e.g. a mapping it has saved to {@code /outputs/}) without writing it all out in the call.
 ///
 /// An argument value, at any depth, may be a reference to a file:

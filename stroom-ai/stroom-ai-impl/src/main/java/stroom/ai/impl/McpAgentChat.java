@@ -560,11 +560,12 @@ class McpAgentChat {
             runManager.markReadUntrustedServer(chatId);
         }
         final long startMs = System.currentTimeMillis();
-        // An MCP tool's arguments may name workspace files, whose content is put in before the call is sent, so the
-        // model need not write a large argument out. What the model wrote is what is stored and audited.
-        final WorkspaceArguments.Expansion expansion = isBuiltIn(toolRequest.name())
-                ? WorkspaceArguments.Expansion.unchanged(toolRequest.arguments())
-                : workspaceArguments.expand(chatId, toolRequest.arguments());
+        // A tool's arguments may name workspace files, whose content is put in before the call is made, so the
+        // model need not write a large argument out. What the model wrote is what is stored and audited. Stroom's
+        // own tools too: seen in Ask Stroom AI, build_translation_xslt (an MCP server's tool before it was ported)
+        // was given a 186 KB mapping saved to the workspace as {"$workspace": ...}, refused it, and the build
+        // stopped.
+        final WorkspaceArguments.Expansion expansion = workspaceArguments.expand(chatId, toolRequest.arguments());
         if (expansion.isExpanded()) {
             // As for any other read of the files.
             runManager.markTainted(chatId);
