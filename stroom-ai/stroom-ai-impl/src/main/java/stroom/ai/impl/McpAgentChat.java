@@ -1163,7 +1163,7 @@ class McpAgentChat {
             return null;
         }
         return grants.access(category).isPresent()
-                ? "Not run: the user's tool policies allow only the " + category.getDisplayValue() + " tools and "
+                ? "Not run: the user's tool policies allow the " + category.getDisplayValue() + " tools only for "
                   + "calls that cannot change anything, and this call would change something. Tell the user, who "
                   + "can ask an administrator for a policy that grants read and write."
                 : "Not run: the user's tool policies don't allow " + category.getDisplayValue() + " tools.";

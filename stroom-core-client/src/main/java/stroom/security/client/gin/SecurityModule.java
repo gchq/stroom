@@ -16,6 +16,9 @@
 
 package stroom.security.client.gin;
 
+import stroom.ai.client.AiToolAccessPresenter;
+import stroom.ai.client.AiToolAccessPresenter.AiToolAccessView;
+import stroom.ai.client.AiToolAccessViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
@@ -196,5 +199,10 @@ public class SecurityModule extends PluginModule {
                 EditApiKeyPresenter.class,
                 EditApiKeyPresenter.EditApiKeyView.class,
                 EditApiKeyViewImpl.class);
+        // A user's MCP Tools tab, and the MCP Tool Policies screen, show a user's effective MCP tool access.
+        bindPresenterWidget(
+                AiToolAccessPresenter.class,
+                AiToolAccessView.class,
+                AiToolAccessViewImpl.class);
     }
 }

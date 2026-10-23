@@ -22,7 +22,6 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
--- access: 0 = read-only, 1 = read and write (AiToolAccess).
 CREATE TABLE IF NOT EXISTS ai_tool_policy (
     id                    int NOT NULL AUTO_INCREMENT,
     version               int NOT NULL,
@@ -34,7 +33,6 @@ CREATE TABLE IF NOT EXISTS ai_tool_policy (
     description           varchar(1000) DEFAULT NULL,
     enabled               tinyint(1) NOT NULL DEFAULT 1,
     all_users             tinyint(1) NOT NULL DEFAULT 0,
-    access                tinyint NOT NULL,
     PRIMARY KEY           (id),
     UNIQUE KEY            idx_ai_tool_policy_name (name)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -50,11 +48,13 @@ CREATE TABLE IF NOT EXISTS ai_tool_policy_member (
     KEY                   idx_ai_tool_policy_member_user (user_uuid)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
--- The categories a policy grants (AiToolCategory). Deleted with their policy by the DAO.
+-- The categories a policy grants (AiToolCategory), each with its access: 0 = read-only,
+-- 1 = read and write (AiToolAccess). Deleted with their policy by the DAO.
 CREATE TABLE IF NOT EXISTS ai_tool_policy_category (
     id                    int NOT NULL AUTO_INCREMENT,
     fk_ai_tool_policy_id  int NOT NULL,
     category              tinyint NOT NULL,
+    access                tinyint NOT NULL,
     PRIMARY KEY           (id),
     UNIQUE KEY            idx_ai_tool_policy_category (fk_ai_tool_policy_id, category)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -64,24 +64,23 @@ CREATE TABLE IF NOT EXISTS ai_tool_policy_category (
 -- tools that change things need a policy an administrator writes.
 INSERT INTO ai_tool_policy (
     version, create_time_ms, create_user, update_time_ms, update_user,
-    name, description, enabled, all_users, access)
+    name, description, enabled, all_users)
 SELECT
     1,
     UNIX_TIMESTAMP() * 1000,
     'Flyway migration',
     UNIX_TIMESTAMP() * 1000,
     'Flyway migration',
-    'Everyone: read-only tools',
+    'Default read-only tool policy',
     'Made by the upgrade so that every user keeps the tools that only read. Tools that change things need '
         'a policy that grants read and write.',
     1,
-    1,
-    0
+    1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM ai_tool_policy);
 
-INSERT INTO ai_tool_policy_category (fk_ai_tool_policy_id, category)
-SELECT p.id, c.category
+INSERT INTO ai_tool_policy_category (fk_ai_tool_policy_id, category, access)
+SELECT p.id, c.category, 0
 FROM ai_tool_policy p
 CROSS JOIN (
     SELECT 0 AS category UNION ALL
@@ -90,7 +89,7 @@ CROSS JOIN (
     SELECT 3 UNION ALL
     SELECT 4 UNION ALL
     SELECT 5) c
-WHERE p.name = 'Everyone: read-only tools'
+WHERE p.name = 'Default read-only tool policy'
 AND NOT EXISTS (
     SELECT 1
     FROM ai_tool_policy_category pc

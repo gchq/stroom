@@ -19,6 +19,7 @@ package stroom.ai.shared;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.UserRef;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -100,4 +101,14 @@ public interface AiToolPolicyResource extends RestResource, DirectRestService, F
             summary = "Lists Stroom's own tools, with their categories",
             operationId = "listAiTools")
     List<AiToolSummary> listTools();
+
+    /// @param userRef A user or group.
+    /// @return What the enabled policies covering it (directly, through its groups, or as one for all users)
+    /// grant it together: one grant per category granted, by category, with the policies that grant it.
+    @POST
+    @Path("/effective")
+    @Operation(
+            summary = "Shows the tool access a user's or group's policies grant it together",
+            operationId = "fetchEffectiveAiToolGrants")
+    List<AiToolEffectiveGrant> effectiveGrants(@Parameter(description = "userRef", required = true) UserRef userRef);
 }

@@ -19,6 +19,8 @@ package stroom.ai.impl;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
+import stroom.ai.shared.AiToolEffectiveGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.ai.shared.AiToolSummary;
 import stroom.security.api.SecurityContext;
@@ -46,6 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -156,6 +159,48 @@ public class AiToolPolicyService implements CurrentToolGrants {
         return secured(() -> builtInToolsProvider.get().summaries());
     }
 
+    /// What a user's or group's tool policies grant it, and which policies grant it, for showing to an
+    /// administrator.
+    ///
+    /// @param userRef A user or group.
+    /// @return One grant per category granted, by category, with the names of the enabled policies covering the
+    /// user that grant it, by access, each list by name.
+    public List<AiToolEffectiveGrant> effectiveGrants(final UserRef userRef) {
+        return secured(() -> {
+            if (userRef == null) {
+                return List.of();
+            }
+            final Set<String> uuids = selfAndGroups(userRef);
+            final Map<AiToolCategory, Set<String>> readWriteBy = new EnumMap<>(AiToolCategory.class);
+            final Map<AiToolCategory, Set<String>> readOnlyBy = new EnumMap<>(AiToolCategory.class);
+            for (final AiToolPolicy policy : policies()) {
+                if (policy.isEnabled() && covers(policy, uuids)) {
+                    for (final AiToolCategoryGrant grant : policy.getGrants()) {
+                        if (grant.getCategory() != null) {
+                            final Map<AiToolCategory, Set<String>> byAccess =
+                                    grant.getAccess() == AiToolAccess.READ_WRITE
+                                            ? readWriteBy
+                                            : readOnlyBy;
+                            byAccess.computeIfAbsent(grant.getCategory(),
+                                            category -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))
+                                    .add(policy.getName());
+                        }
+                    }
+                }
+            }
+            final List<AiToolEffectiveGrant> grants = new ArrayList<>();
+            for (final AiToolCategory category : AiToolCategory.values()) {
+                if (readWriteBy.containsKey(category) || readOnlyBy.containsKey(category)) {
+                    grants.add(new AiToolEffectiveGrant(
+                            category,
+                            List.copyOf(readWriteBy.getOrDefault(category, Set.of())),
+                            List.copyOf(readOnlyBy.getOrDefault(category, Set.of()))));
+                }
+            }
+            return grants;
+        });
+    }
+
     /// What a user's tool policies grant them. Needs no permission: every run and MCP call asks it for its user.
     ///
     /// @param userRef A user.
@@ -168,8 +213,8 @@ public class AiToolPolicyService implements CurrentToolGrants {
         final Map<AiToolCategory, AiToolAccess> byCategory = new EnumMap<>(AiToolCategory.class);
         for (final AiToolPolicy policy : policies()) {
             if (policy.isEnabled() && covers(policy, uuids)) {
-                for (final AiToolCategory category : policy.getCategories()) {
-                    byCategory.merge(category, policy.getAccess(), AiToolAccess::or);
+                for (final AiToolCategoryGrant grant : policy.getGrants()) {
+                    byCategory.merge(grant.getCategory(), grant.getAccess(), AiToolAccess::or);
                 }
             }
         }
@@ -250,7 +295,8 @@ public class AiToolPolicyService implements CurrentToolGrants {
             throw new IllegalArgumentException("A policy's description may be at most " + MAX_DESCRIPTION_LENGTH
                                                + " characters.");
         }
-        if (policy.getCategories().isEmpty()) {
+        final List<AiToolCategoryGrant> grants = oneGrantPerCategory(policy.getGrants());
+        if (grants.isEmpty()) {
             throw new IllegalArgumentException("Choose at least one category of tools for the policy to grant.");
         }
         final boolean nameTaken = dao.list().stream()
@@ -277,8 +323,22 @@ public class AiToolPolicyService implements CurrentToolGrants {
                         ? null
                         : description)
                 .members(members)
-                .categories(policy.getCategories().stream().distinct().sorted().toList())
+                .grants(grants)
                 .build();
+    }
+
+    // The grants in category order, a category given more than once having the widest of its accesses, and any
+    // without a category left out.
+    private static List<AiToolCategoryGrant> oneGrantPerCategory(final List<AiToolCategoryGrant> grants) {
+        final Map<AiToolCategory, AiToolAccess> byCategory = new EnumMap<>(AiToolCategory.class);
+        for (final AiToolCategoryGrant grant : grants) {
+            if (grant != null && grant.getCategory() != null) {
+                byCategory.merge(grant.getCategory(), grant.getAccess(), AiToolAccess::or);
+            }
+        }
+        return byCategory.entrySet().stream()
+                .map(entry -> AiToolCategoryGrant.of(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     // The policy, with each member's name and whether it is a group, as far as they can be found.
