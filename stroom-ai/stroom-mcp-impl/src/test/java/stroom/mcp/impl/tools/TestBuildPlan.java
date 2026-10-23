@@ -256,6 +256,23 @@ class TestBuildPlan {
     }
 
     @Test
+    void theSamplesStepSendsEachFileFromTheUsersDiskNotItsText() {
+        // The Stroom MCP server's FINDINGS (0.16.18, VS Code): `next` after create_feed named upload_sample with
+        // sample="<one file's text>", and the agent read each file (cut at 2,000 characters) and uploaded its first
+        // two records. The plan's call is upload_sample with files=, a command per file for the user's terminal;
+        // sample= only for text the user pasted.
+        final Map<String, Object> status = plan.status("b", new DocRef("Feed", "f", "ACME"));
+        final Map<?, ?> next = (Map<?, ?>) status.get("next");
+        assertThat(next.get("step")).isEqualTo("samples");
+        assertThat(next.get("call")).isEqualTo(Map.of("tool", "upload_sample", "arguments", Map.of("feed", "ACME",
+                "files", List.of("<each sample file's path, as the user's terminal sees it>"))));
+        assertThat(String.valueOf(next.get("then")))
+                .contains("run each command it gives in the user's terminal")
+                .contains("sample= is only for text the user pasted into the chat")
+                .contains("From then on give tools stream_ids, not the text");
+    }
+
+    @Test
     void aJustCreatedDocCountsThoughTheListingLeavesItOut() {
         // Seen in the plan walk: create_feed's next named the feed step again, inviting a second feed.
         final Map<String, Object> status = plan.status("b", new DocRef("Feed", "f", "ACME"));

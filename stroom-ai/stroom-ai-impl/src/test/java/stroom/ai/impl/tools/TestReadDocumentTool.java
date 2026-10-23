@@ -22,6 +22,7 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.dictionary.api.WordListProvider;
@@ -140,6 +141,31 @@ class TestReadDocumentTool {
         Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(XSLT), Mockito.anyString());
         Mockito.verify(workspace, Mockito.never()).writeDocument(Mockito.anyInt(), Mockito.any(), Mockito.any(),
                 Mockito.any());
+    }
+
+    @Test
+    void anMcpSessionReadsDocumentsAsSaved() {
+        // Seen porting the Stroom MCP server's e2e_source_docs.py and e2e_restyle.py: over /mcp every read but a
+        // find failed, "read_document can only be used in a chat", where describe_document read the document. An
+        // MCP session has a workspace, but no tabs.
+        viewable.addAll(Set.of(XSLT.getUuid(), TOP.getUuid()));
+        xsltContent("<xsl:stylesheet/>");
+        dictionary(TOP, "1.1.1.1");
+        combined(TOP, List.of("1.1.1.1"), List.of(TOP));
+        final ToolCallContext mcp = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                .workspace(new SessionWorkspace(workspace, 99))
+                .userQuestions(UserQuestions.NONE)
+                .build();
+
+        final String xslt = tool.execute(new ToolCall(null, ReadDocumentTool.NAME, "{\"uuid\":\"xslt-uuid\"}"), mcp)
+                .text();
+        final String dictionary = tool.execute(new ToolCall(null, ReadDocumentTool.NAME, "{\"uuid\":\"top-uuid\"}"),
+                mcp).text();
+
+        assertThat(xslt).contains("## Part 'xsl'\n<xsl:stylesheet/>").doesNotContain("only be used in a chat");
+        assertThat(dictionary).contains("1.1.1.1").doesNotContain("only be used in a chat");
+        Mockito.verifyNoInteractions(tabSnapshots);
     }
 
     @Test
