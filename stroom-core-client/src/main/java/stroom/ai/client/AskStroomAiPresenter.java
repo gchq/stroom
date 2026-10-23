@@ -3471,8 +3471,14 @@ public class AskStroomAiPresenter
                         // polling brings the stored one.
                         removeMessageElementsFrom(messageId, false);
                         followBottom = true;
-                        // The edited question replaces this one, so has its attachments.
+                        // The edited question replaces this one, so has its attachments, and those attached since
+                        // (shown above the input box) are sent with it.
                         sendingAttachments = new ArrayList<>(sentAttachments.getOrDefault(messageId, List.of()));
+                        pendingAttachments.values().stream()
+                                .filter(pending -> !sendingAttachments.contains(pending))
+                                .forEach(sendingAttachments::add);
+                        pendingAttachments.clear();
+                        refreshAttachmentList();
                         appendPendingQuestion(newText);
                         scrollToBottom();
                         startPolling();
