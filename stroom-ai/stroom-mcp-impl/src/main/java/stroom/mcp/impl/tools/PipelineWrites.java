@@ -35,6 +35,7 @@ import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.shared.NullSafe;
@@ -256,6 +257,32 @@ class PipelineWrites {
                          final Layout template,
                          final String replaceParser,
                          final List<PropertyValue> properties) {
+        return fillOpenSlots(build, template, replaceParser, properties, null);
+    }
+
+    /// As [#fillOpenSlots(String, Layout, String, List)], for a new version: with no converter of its own, it reads
+    /// the feed with the one the pipeline it follows runs.
+    ///
+    /// @param build         The build.
+    /// @param template      The template, merged.
+    /// @param replaceParser The parser type to use in place of the template's, or null.
+    /// @param properties    The properties given.
+    /// @param previous      The pipeline the new one is the next version of, or null for a new source's.
+    /// @return The properties, what was filled, and what is still open.
+    /// @throws ToolRefusal if a converter is needed and neither the build nor the previous version has one, or a
+    /// slot has several candidates.
+    Filled fillOpenSlots(final String build,
+                         final Layout template,
+                         final String replaceParser,
+                         final List<PropertyValue> properties,
+                         final PipelineDoc previous) {
+        final Map<String, DocRef> prior = new LinkedHashMap<>();
+        ownProperties(previous).forEach(property -> {
+            final DocRef entity = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
+            if (entity != null) {
+                prior.put(property.getElement() + "." + property.getName(), entity);
+            }
+        });
         final Set<String> given = new HashSet<>();
         properties.forEach(property -> given.add(property.dotted()));
         final List<WriteGuard.BuildDoc> docs = guard.folderContents(build);
@@ -271,6 +298,14 @@ class PipelineWrites {
             final String docType;
             if ("textConverter".equals(slot.property())) {
                 candidates = docs.stream().filter(doc -> TextConverterDoc.TYPE.equals(doc.type())).toList();
+                final DocRef was = prior.get(slot.element() + ".textConverter");
+                if (candidates.isEmpty() && was != null && TextConverterDoc.TYPE.equals(was.getType())) {
+                    out.add(PropertyValue.document(slot.element(), "textConverter", was.getUuid(),
+                            TextConverterDoc.TYPE));
+                    filled.add(slot.element() + ".textConverter = " + was.getName() + " (as " + previous.getName()
+                               + " has it)");
+                    continue;
+                }
                 if (candidates.isEmpty()) {
                     throw new ToolRefusal("The template's " + slot.type() + " (" + slot.element() + ") needs a "
                                           + "text converter and build '" + build + "' has none: "
@@ -317,11 +352,35 @@ class PipelineWrites {
     /// @param allowed    True when the user said an existing document is the right one.
     /// @throws ToolRefusal if one isn't the build's.
     void ownDocuments(final String build, final List<PropertyValue> properties, final boolean allowed) {
+        ownDocuments(build, properties, allowed, null);
+    }
+
+    /// As [#ownDocuments(String, List, boolean)], for a new version, which may run the text converter the pipeline
+    /// it follows runs.
+    ///
+    /// @param build      The build.
+    /// @param properties The properties the child sets.
+    /// @param allowed    True when the user said an existing document is the right one.
+    /// @param previous   The pipeline the new one is the next version of, or null for a new source's.
+    /// @throws ToolRefusal if one isn't the build's.
+    void ownDocuments(final String build,
+                      final List<PropertyValue> properties,
+                      final boolean allowed,
+                      final PipelineDoc previous) {
         if (allowed) {
             return;
         }
+        final Set<String> prior = new HashSet<>();
+        ownProperties(previous).stream()
+                .filter(property -> "textConverter".equals(property.getName()))
+                .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity, DocRef::getUuid))
+                .filter(Objects::nonNull)
+                .forEach(prior::add);
         for (final PropertyValue property : properties) {
             if (!MergedPipeline.CODE_PROPERTIES.containsKey(property.name()) || property.docUuid() == null) {
+                continue;
+            }
+            if ("textConverter".equals(property.name()) && prior.contains(property.docUuid())) {
                 continue;
             }
             final DocRef ref = new DocRef(property.docType(), property.docUuid());
@@ -688,6 +747,93 @@ class PipelineWrites {
         return result;
     }
 
+    /// The previous version's own plain settings (addRootObject false, say: not documents) on elements the new one
+    /// has, that nothing sets already: a new version is configured as the one it follows.
+    ///
+    /// @param previous   The pipeline the new one is the next version of.
+    /// @param types      The new one's element types, by id.
+    /// @param properties What the new one sets already.
+    /// @return The settings to carry over.
+    static List<PropertyValue> plainSettings(final PipelineDoc previous,
+                                             final Map<String, String> types,
+                                             final List<PropertyValue> properties) {
+        final Set<String> setting = new HashSet<>();
+        properties.forEach(property -> setting.add(property.dotted()));
+        final List<PropertyValue> out = new ArrayList<>();
+        for (final PipelineProperty property : ownProperties(previous)) {
+            final PipelinePropertyValue held = property.getValue();
+            final Object scalar = scalar(held);
+            if (types.containsKey(property.getElement())
+                && !setting.contains(property.getElement() + "." + property.getName())
+                && scalar != null && held.getEntity() == null) {
+                out.add(PropertyValue.plain(property.getElement(), property.getName(), scalar));
+            }
+        }
+        return out;
+    }
+
+    /// The previous version's reference data for the new one, on the same element (the template's first XSLT step
+    /// if the new one has no element of that id), less those `references` gives already.
+    ///
+    /// @param template The new one's template, merged.
+    /// @param carried  The reference data the previous version loads itself.
+    /// @param given    Those the call gives.
+    /// @return The references to add, each once.
+    /// @throws ToolRefusal if the template has no XSLT step to attach them to.
+    static List<PipelineReference> carriedReferences(final Layout template,
+                                                     final List<PipelineReference> carried,
+                                                     final List<PipelineReference> given) {
+        final Map<String, String> types = template.elements();
+        final List<String> steps = template.chain().stream()
+                .filter(id -> XSLT_FILTER.equals(types.get(id)))
+                .toList();
+        final Set<String> seen = new HashSet<>();
+        given.forEach(reference -> seen.add(referenceKey(reference)));
+        final List<PipelineReference> out = new ArrayList<>();
+        for (final PipelineReference reference : carried) {
+            final String element = types.containsKey(reference.getElement())
+                    ? reference.getElement()
+                    : (steps.isEmpty()
+                            ? null
+                            : steps.getFirst());
+            if (element == null) {
+                throw new ToolRefusal("The template has no XSLT step to attach the previous version's reference "
+                                      + "data to");
+            }
+            final PipelineReference moved = new PipelineReference(element,
+                    NullSafe.nonBlankStringElse(reference.getName(), "pipelineReference"), reference.getPipeline(),
+                    reference.getFeed(), NullSafe.nonBlankStringElse(reference.getStreamType(), "Reference"));
+            if (seen.add(referenceKey(moved))) {
+                out.add(moved);
+            }
+        }
+        return out;
+    }
+
+    /// What the previous version sets itself that the new one doesn't (it is its template's child, with the build's
+    /// documents): shown to the user, who may want one set too (update_pipeline), or copy_pipeline instead.
+    ///
+    /// @param previous   The pipeline the new one is the next version of.
+    /// @param properties What the new one sets.
+    /// @return Each property as `element.name`, then each element it adds or removes.
+    static List<String> notCarried(final PipelineDoc previous, final List<PropertyValue> properties) {
+        final Set<String> setting = new HashSet<>();
+        properties.forEach(property -> setting.add(property.dotted()));
+        final List<String> out = new ArrayList<>();
+        ownProperties(previous).stream()
+                .map(property -> property.getElement() + "." + property.getName())
+                .filter(dotted -> !setting.contains(dotted))
+                .forEach(out::add);
+        final PipelineData data = previous.getPipelineData();
+        if (data != null) {
+            NullSafe.list(data.getAddedElements()).forEach(element -> out.add("element " + element.getId() + " ("
+                                                                              + element.getType() + ") added"));
+            NullSafe.list(data.getRemovedElements()).forEach(element -> out.add("element " + element.getId()
+                                                                                + " removed"));
+        }
+        return out;
+    }
+
     /// @param reference A pipeline reference.
     /// @return It in words: `<feed> via <loader pipeline> on <element>`.
     static String describe(final PipelineReference reference) {
@@ -709,6 +855,30 @@ class PipelineWrites {
     }
 
     // A plain value as the type Stroom declares for it.
+    // The properties a pipeline's own layer adds; none for no pipeline.
+    private static List<PipelineProperty> ownProperties(final PipelineDoc pipeline) {
+        return pipeline == null
+                ? List.of()
+                : PipelineDocs.addedProperties(pipeline);
+    }
+
+    // A plain value: its boolean, integer, long or string, as Stroom holds it; null for a document or none.
+    private static Object scalar(final PipelinePropertyValue held) {
+        if (held == null) {
+            return null;
+        }
+        if (held.getBoolean() != null) {
+            return held.getBoolean();
+        }
+        if (held.getInteger() != null) {
+            return held.getInteger();
+        }
+        if (held.getLong() != null) {
+            return held.getLong();
+        }
+        return held.getString();
+    }
+
     private static Object asDeclared(final PropertyValue property, final String kind) {
         Object value = property.value();
         switch (kind) {
