@@ -24,7 +24,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsListener;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
@@ -43,7 +42,6 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
@@ -247,14 +245,4 @@ public class ExplorerNodeEditTagsPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ExplorerNodeEditTagsListener {
-
-
-        @Inject
-        public ExplorerNodeEditTagsListener(final EventBus eventBus,
-                                         final Provider<ExplorerNodeEditTagsPresenter> presenter) {
-            eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event -> presenter.get().onCreate(event));
-        }
-    }
 }

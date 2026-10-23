@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.event.ShowFindEvent;
-import stroom.explorer.client.presenter.FindPresenter.FindListener;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -29,7 +28,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class FindPresenter
@@ -95,12 +93,4 @@ public class FindPresenter
         }
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindListener {
-
-        @Inject
-        public FindListener(final EventBus eventBus, final Provider<FindPresenter> presenter) {
-            eventBus.addHandler(ShowFindEvent.getType(), event -> presenter.get().onShow(event));
-        }
-    }
 }

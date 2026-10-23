@@ -18,7 +18,6 @@ package stroom.entity.client.presenter;
 
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
-import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentListener;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -31,7 +30,6 @@ import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -123,12 +121,4 @@ public class NameDocumentPresenter
         DialogEvent.fire(this, this, action);
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class NameDocumentListener {
-
-        @Inject
-        public NameDocumentListener(final EventBus eventBus, final Provider<NameDocumentPresenter> presenter) {
-            eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event -> presenter.get().onRename(event));
-        }
-    }
 }

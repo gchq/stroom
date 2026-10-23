@@ -30,6 +30,7 @@ import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiScreens;
 import stroom.ai.client.AskStroomAiViewImpl;
 import stroom.ai.client.DownloadChatPresenter;
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
@@ -40,11 +41,12 @@ public class AskStroomAIModule extends AbstractPresenterModule {
 
     @Override
     protected void configure() {
+        // Hear the app-wide events that open its screens, for the life of the app
+        bind(AskStroomAiScreens.class).asEagerSingleton();
         bindPresenter(
                 AskStroomAiPresenter.class,
                 AskStroomAiView.class,
-                AskStroomAiViewImpl.class,
-                AskStroomAiPresenter.AskStroomAiListener.class);
+                AskStroomAiViewImpl.class);
         bindPresenterWidget(
                 AskStroomAiConfigPresenter.class,
                 AskStroomAiConfigView.class,

@@ -17,7 +17,6 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationListener;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -34,7 +33,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class FindAnnotationPresenter
@@ -124,12 +122,4 @@ public class FindAnnotationPresenter
         }
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindAnnotationListener {
-
-        @Inject
-        public FindAnnotationListener(final EventBus eventBus, final Provider<FindAnnotationPresenter> presenter) {
-            eventBus.addHandler(ShowFindAnnotationEvent.getType(), event -> presenter.get().onShow(event));
-        }
-    }
 }

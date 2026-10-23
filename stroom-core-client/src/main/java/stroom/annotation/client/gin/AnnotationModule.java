@@ -51,7 +51,6 @@ import stroom.annotation.client.DurationPresenter;
 import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.annotation.client.DurationViewImpl;
 import stroom.annotation.client.FindAnnotationPresenter;
-import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationListener;
 import stroom.annotation.client.LinkedEventPresenter;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
@@ -93,7 +92,6 @@ public class AnnotationModule extends PluginModule {
         bind(MultiChooserPresenter.class);
 
         bindPresenter(
-                FindAnnotationPresenter.class,
-                FindAnnotationListener.class);
+                FindAnnotationPresenter.class);
     }
 }

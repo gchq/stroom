@@ -50,7 +50,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashSet;
@@ -225,13 +224,4 @@ public class ExportConfigPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ExportListener {
-
-
-        @Inject
-        public ExportListener(final EventBus eventBus, final Provider<ExportConfigPresenter> presenter) {
-            eventBus.addHandler(ExportConfigEvent.getType(), event -> presenter.get().onExport(event));
-        }
-    }
 }

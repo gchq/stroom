@@ -22,7 +22,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.CommonAlertPresenter;
+import stroom.alert.client.presenter.PromptPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
+import stroom.alert.client.view.PromptViewImpl;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.event.client.StaticEventBus;
@@ -239,7 +241,8 @@ public final class ScreenHarness {
         eventBus.addHandler(ConfirmEvent.getType(), event -> spy(CONFIRM_SPY, describe(event)));
         if (builder.realAlerts) {
             final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
-                    new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()));
+                    new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()),
+                    () -> new PromptPresenter(eventBus, new PromptViewImpl()));
         }
     }
 

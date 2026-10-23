@@ -38,7 +38,6 @@ import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
@@ -160,13 +159,4 @@ public class InfoDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class InfoDocumentListener {
-
-
-        @Inject
-        public InfoDocumentListener(final EventBus eventBus, final Provider<InfoDocumentPresenter> presenter) {
-            eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event -> presenter.get().onCreate(event));
-        }
-    }
 }

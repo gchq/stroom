@@ -62,7 +62,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -576,12 +575,4 @@ public class ImportConfigConfirmPresenter extends
         Widget getDataGridViewWidget();
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ImportConfirmListener {
-
-        @Inject
-        public ImportConfirmListener(final EventBus eventBus, final Provider<ImportConfigConfirmPresenter> presenter) {
-            eventBus.addHandler(ImportConfigConfirmEvent.getType(), event -> presenter.get().onConfirmImport(event));
-        }
-    }
 }

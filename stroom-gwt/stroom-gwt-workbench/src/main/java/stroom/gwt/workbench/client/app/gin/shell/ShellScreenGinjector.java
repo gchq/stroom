@@ -35,6 +35,7 @@ import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.dictionary.client.DictionaryPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.entity.client.DocumentDialogScreens;
 import stroom.entity.client.presenter.CopyDocumentPresenter;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
@@ -262,6 +263,9 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return Stroom's `NavigationPlugin`, registered as it is created.
     NavigationPlugin getNavigationPlugin();
+
+    /// @return The document dialogs' wiring, which Stroom's `EntityModule` makes eagerly.
+    DocumentDialogScreens getDocumentDialogScreens();
 
     /// @return Stroom's `HelpPlugin`, registered as it is created.
     HelpPlugin getHelpPlugin();

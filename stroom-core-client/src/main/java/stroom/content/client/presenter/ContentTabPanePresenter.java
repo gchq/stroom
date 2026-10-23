@@ -31,7 +31,6 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.presenter.RecentItems;
-import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
@@ -50,7 +49,6 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.History;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -243,19 +241,6 @@ public class ContentTabPanePresenter
     @Override
     protected void fireSelectedTabChange(final TabData tabData) {
         ContentTabSelectionChangeEvent.fire(this, tabData);
-    }
-
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ContentTabPaneListener {
-
-        @Inject
-        public ContentTabPaneListener(final EventBus eventBus, final Provider<ContentTabPanePresenter> presenter) {
-            eventBus.addHandler(OpenContentTabEvent.getType(), event -> presenter.get().onOpen(event));
-            eventBus.addHandler(CloseContentTabEvent.getType(), event -> presenter.get().onClose(event));
-            eventBus.addHandler(SelectContentTabEvent.getType(), event -> presenter.get().onSelect(event));
-            eventBus.addHandler(RefreshContentTabEvent.getType(), event -> presenter.get().onRefresh(event));
-            eventBus.addHandler(MoveContentTabEvent.getType(), event -> presenter.get().onMove(event));
-        }
     }
 
 

@@ -19,7 +19,6 @@ package stroom.entity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentListener;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
@@ -27,7 +26,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -36,7 +34,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -156,13 +153,4 @@ public class CopyDocumentPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class CopyDocumentListener {
-
-
-        @Inject
-        public CopyDocumentListener(final EventBus eventBus, final Provider<CopyDocumentPresenter> presenter) {
-            eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event -> presenter.get().onCopy(event));
-        }
-    }
 }

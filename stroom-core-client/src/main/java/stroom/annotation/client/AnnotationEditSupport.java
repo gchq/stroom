@@ -43,7 +43,8 @@ public class AnnotationEditSupport implements HasHandlers {
                                  final Provider<AnnotationPresenter> presenterProvider,
                                  final ContentManager contentManager,
                                  final AnnotationResourceClient annotationResourceClient,
-                                 final ClientSecurityContext securityContext) {
+                                 final ClientSecurityContext securityContext,
+                                 final Provider<FindAnnotationPresenter> findAnnotationPresenterProvider) {
         this.eventBus = eventBus;
         this.contentManager = contentManager;
         this.securityContext = securityContext;
@@ -74,6 +75,10 @@ public class AnnotationEditSupport implements HasHandlers {
                     // when its tab is closed
                     show(presenterProvider.get(), annotation), new DefaultTaskMonitorFactory(this));
         });
+
+        // The screens it opens, made when first asked for
+        eventBus.addHandler(ShowFindAnnotationEvent.getType(), event ->
+                findAnnotationPresenterProvider.get().onShow(event));
     }
 
     private void show(final AnnotationPresenter presenter,

@@ -26,27 +26,7 @@ import com.google.inject.Singleton;
 public abstract class AbstractPresenterModule extends AbstractGinModule {
 
     /// Binds a presenter made once, when first needed, and kept (e.g. a dialog opened from the main
-    /// menu), its view, and its listener: a class made when the application starts, which hears the
-    /// app-wide events the presenter handles and makes it on the first.
-    ///
-    /// @param presenter The presenter.
-    /// @param view      Its view's interface.
-    /// @param viewImpl  Its view.
-    /// @param listener  Its listener.
-    /// @param <P>       The presenter's type.
-    /// @param <V>       The view's type.
-    protected <P extends MyPresenterWidget<?>, V extends View> void bindPresenter(final Class<P> presenter,
-                                                                                  final Class<V> view,
-                                                                                  final Class<? extends V> viewImpl,
-                                                                                  final Class<?> listener) {
-        bind(presenter).in(Singleton.class);
-        bind(viewImpl).in(Singleton.class);
-        bind(view).to(viewImpl);
-        bind(listener).asEagerSingleton();
-    }
-
-    /// Binds a presenter made once, when first needed, and kept, that hears no app-wide events (it is
-    /// shown by whatever uses it), and its view.
+    /// menu, whose area's plugin hears the event that opens it), and its view.
     ///
     /// @param presenter The presenter.
     /// @param view      Its view's interface.
@@ -61,16 +41,12 @@ public abstract class AbstractPresenterModule extends AbstractGinModule {
         bind(view).to(viewImpl);
     }
 
-    /// Binds a presenter made once, when first needed, and kept, whose view is bound elsewhere, and
-    /// its listener.
+    /// Binds a presenter made once, when first needed, and kept, whose view is bound elsewhere.
     ///
     /// @param presenter The presenter.
-    /// @param listener  Its listener.
     /// @param <P>       The presenter's type.
-    protected <P extends MyPresenterWidget<?>> void bindPresenter(final Class<P> presenter,
-                                                                  final Class<?> listener) {
+    protected <P extends MyPresenterWidget<?>> void bindPresenter(final Class<P> presenter) {
         bind(presenter).in(Singleton.class);
-        bind(listener).asEagerSingleton();
     }
 
     /// Binds a presenter, made each time one is asked for, and its view.

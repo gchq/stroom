@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsListener;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -27,7 +26,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class RecentItemsPresenter
@@ -83,13 +81,4 @@ public class RecentItemsPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class RecentItemsListener {
-
-
-        @Inject
-        public RecentItemsListener(final EventBus eventBus, final Provider<RecentItemsPresenter> presenter) {
-            eventBus.addHandler(ShowRecentItemsEvent.getType(), event -> presenter.get().onShowRecentItems(event));
-        }
-    }
 }

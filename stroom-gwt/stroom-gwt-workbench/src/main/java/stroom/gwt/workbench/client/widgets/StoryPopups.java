@@ -18,7 +18,9 @@ package stroom.gwt.workbench.client.widgets;
 
 import stroom.alert.client.AlertPlugin;
 import stroom.alert.client.presenter.CommonAlertPresenter;
+import stroom.alert.client.presenter.PromptPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
+import stroom.alert.client.view.PromptViewImpl;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.widget.component.client.AppRoot;
@@ -108,7 +110,8 @@ public final class StoryPopups {
     /// @return This, for chaining.
     public StoryPopups withAlerts() {
         final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
-                new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()));
+                new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()),
+                () -> new PromptPresenter(eventBus, new PromptViewImpl()));
         return this;
     }
 

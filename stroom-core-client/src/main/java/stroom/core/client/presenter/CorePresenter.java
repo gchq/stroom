@@ -18,7 +18,6 @@ package stroom.core.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.core.client.presenter.CorePresenter.CoreListener;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -34,10 +33,8 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class CorePresenter extends MyPresenterWidget<CoreView>
@@ -120,18 +117,6 @@ public class CorePresenter extends MyPresenterWidget<CoreView>
             this.content = content;
             getView().setContentView(content.getView());
             RootPanel.get("logo").setVisible(false);
-        }
-    }
-
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class CoreListener {
-
-        @Inject
-        public CoreListener(final EventBus eventBus, final Provider<CorePresenter> presenter) {
-            eventBus.addHandler(TaskStartEvent.getType(), event -> presenter.get().onTaskStart(event));
-            eventBus.addHandler(TaskEndEvent.getType(), event -> presenter.get().onTaskEnd(event));
-            eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->
-                    presenter.get().onCurrentUserChanged(event));
         }
     }
 

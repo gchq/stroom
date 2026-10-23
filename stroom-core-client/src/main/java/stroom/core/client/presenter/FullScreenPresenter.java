@@ -18,14 +18,12 @@ package stroom.core.client.presenter;
 
 import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenListener;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.Window;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
@@ -65,20 +63,6 @@ public class FullScreenPresenter
         }
     }
 
-    /// Hears the app-wide events the screen handles, makes the screen when it is first needed, and
-    /// shows it in the page.
-    public static final class FullScreenListener {
-
-        @Inject
-        public FullScreenListener(final EventBus eventBus,
-                               final Provider<CorePresenter> core,
-                               final Provider<FullScreenPresenter> presenter) {
-            eventBus.addHandler(ShowFullScreenEvent.getType(), event -> {
-                presenter.get().onShowFullScreen(event);
-                core.get().setContent(presenter.get());
-            });
-        }
-    }
 
     public interface FullScreenView extends View {
 

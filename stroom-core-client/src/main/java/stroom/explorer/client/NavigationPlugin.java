@@ -26,10 +26,17 @@ import stroom.explorer.client.event.DeleteTabSessionEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.OpenTabSessionEvent;
 import stroom.explorer.client.event.SaveTabSessionEvent;
+import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
+import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
+import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.explorer.client.presenter.FindInContentPresenter;
+import stroom.explorer.client.presenter.FindPresenter;
+import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
@@ -38,6 +45,7 @@ import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -51,7 +59,12 @@ public class NavigationPlugin extends Plugin {
 
     @Inject
     public NavigationPlugin(final EventBus eventBus,
-                            final DocumentPluginRegistry documentPluginRegistry) {
+                            final DocumentPluginRegistry documentPluginRegistry,
+                            final Provider<ExplorerNodeEditTagsPresenter> explorerNodeEditTagsPresenterProvider,
+                            final Provider<ExplorerNodeRemoveTagsPresenter> explorerNodeRemoveTagsPresenterProvider,
+                            final Provider<FindInContentPresenter> findInContentPresenterProvider,
+                            final Provider<FindPresenter> findPresenterProvider,
+                            final Provider<RecentItemsPresenter> recentItemsPresenterProvider) {
         super(eventBus);
         // track the currently selected doc.
         getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
@@ -61,6 +74,17 @@ public class NavigationPlugin extends Plugin {
         getEventBus().addHandler(TabSessionChangeEvent.getType(), e -> {
             tabSessions = e.getTabSessions();
         });
+
+        // The screens it opens, made when first asked for
+        eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
+                explorerNodeEditTagsPresenterProvider.get().onCreate(event));
+        eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
+                explorerNodeRemoveTagsPresenterProvider.get().onCreate(event));
+        eventBus.addHandler(ShowFindInContentEvent.getType(), event ->
+                findInContentPresenterProvider.get().onShow(event));
+        eventBus.addHandler(ShowFindEvent.getType(), event -> findPresenterProvider.get().onShow(event));
+        eventBus.addHandler(ShowRecentItemsEvent.getType(), event ->
+                recentItemsPresenterProvider.get().onShowRecentItems(event));
     }
 
     @Override

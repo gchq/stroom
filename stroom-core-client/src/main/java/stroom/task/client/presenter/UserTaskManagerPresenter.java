@@ -21,7 +21,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
-import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerListener;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -235,13 +234,4 @@ public class UserTaskManagerPresenter
 
     // --------------------------------------------------------------------------------
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class UserTaskManagerListener {
-
-
-        @Inject
-        public UserTaskManagerListener(final EventBus eventBus, final Provider<UserTaskManagerPresenter> presenter) {
-            eventBus.addHandler(OpenUserTaskManagerEvent.getType(), event -> presenter.get().onOpen(event));
-        }
-    }
 }

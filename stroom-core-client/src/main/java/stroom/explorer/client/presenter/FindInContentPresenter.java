@@ -23,7 +23,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.event.ShowFindInContentEvent;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentListener;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -55,7 +54,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
@@ -284,15 +282,6 @@ public class FindInContentPresenter
 
     private void hide() {
         HidePopupRequestEvent.builder(this).fire();
-    }
-
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindInContentListener {
-
-        @Inject
-        public FindInContentListener(final EventBus eventBus, final Provider<FindInContentPresenter> presenter) {
-            eventBus.addHandler(ShowFindInContentEvent.getType(), event -> presenter.get().onShow(event));
-        }
     }
 
 

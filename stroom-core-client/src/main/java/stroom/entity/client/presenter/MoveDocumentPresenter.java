@@ -18,7 +18,6 @@ package stroom.entity.client.presenter;
 
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentListener;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
@@ -26,7 +25,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -34,7 +32,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -117,7 +114,6 @@ public class MoveDocumentPresenter
     // --------------------------------------------------------------------------------
 
 
-
     // --------------------------------------------------------------------------------
 
 
@@ -135,11 +131,4 @@ public class MoveDocumentPresenter
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
 
-    public static final class MoveDocumentListener {
-
-        @Inject
-        public MoveDocumentListener(final EventBus eventBus, final Provider<MoveDocumentPresenter> presenter) {
-            eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event -> presenter.get().onMove(event));
-        }
-    }
 }

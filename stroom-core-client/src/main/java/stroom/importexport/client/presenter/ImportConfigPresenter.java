@@ -35,7 +35,6 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -122,12 +121,4 @@ public class ImportConfigPresenter
         CustomFileUpload getFileUpload();
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ImportListener {
-
-        @Inject
-        public ImportListener(final EventBus eventBus, final Provider<ImportConfigPresenter> presenter) {
-            eventBus.addHandler(ImportConfigEvent.getType(), event -> presenter.get().onImport(event));
-        }
-    }
 }

@@ -18,7 +18,6 @@ package stroom.task.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.task.client.presenter.UserTaskManagerPresenter;
-import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerListener;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
 import stroom.task.client.presenter.UserTaskPresenter;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
@@ -29,8 +28,7 @@ public class TaskModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPresenter(UserTaskManagerPresenter.class, UserTaskManagerView.class, UserTaskManagerViewImpl.class,
-                UserTaskManagerListener.class);
+        bindPresenter(UserTaskManagerPresenter.class, UserTaskManagerView.class, UserTaskManagerViewImpl.class);
         bindPresenterWidget(UserTaskPresenter.class, UserTaskView.class, UserTaskViewImpl.class);
     }
 }

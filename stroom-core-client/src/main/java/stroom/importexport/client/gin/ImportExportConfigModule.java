@@ -21,7 +21,6 @@ import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.DependenciesInfoPresenter;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoListener;
 import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoView;
 import stroom.importexport.client.presenter.DependenciesInfoViewImpl;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
@@ -42,12 +41,10 @@ public class ImportExportConfigModule extends PluginModule {
     protected void configure() {
         // Import.
         bindPlugin(ImportConfigPlugin.class);
-        bind(ImportConfigPresenter.ImportListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ImportConfigPresenter.class,
                 ImportConfigView.class,
                 ImportConfigViewImpl.class);
-        bind(ImportConfigConfirmPresenter.ImportConfirmListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ImportConfigConfirmPresenter.class,
                 ImportConfigConfirmView.class,
@@ -55,7 +52,6 @@ public class ImportExportConfigModule extends PluginModule {
 
         // Export.
         bindPlugin(ExportConfigPlugin.class);
-        bind(ExportConfigPresenter.ExportListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ExportConfigPresenter.class,
                 ExportConfigView.class,
@@ -66,8 +62,7 @@ public class ImportExportConfigModule extends PluginModule {
         bindPresenter(
                 DependenciesInfoPresenter.class,
                 DependenciesInfoView.class,
-                DependenciesInfoViewImpl.class,
-                DependenciesInfoListener.class);
+                DependenciesInfoViewImpl.class);
 
         bindPresenterWidget(
                 DependenciesTabPresenter.class,

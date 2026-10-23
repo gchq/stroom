@@ -18,10 +18,9 @@ package stroom.dashboard.client.gin;
 
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.CorePresenter.CoreListener;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.presenter.CoreScreens;
 import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenListener;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
@@ -110,13 +109,14 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(DataDisplaySupport.class).asEagerSingleton();
 
         // Presenters
-        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreListener.class);
+        // Hear the app-wide events that open its screens, for the life of the app
+        bind(CoreScreens.class).asEagerSingleton();
+        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class);
 
         bindPresenter(
                 FullScreenPresenter.class,
                 FullScreenView.class,
-                FullScreenViewImpl.class,
-                FullScreenListener.class);
+                FullScreenViewImpl.class);
 
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);

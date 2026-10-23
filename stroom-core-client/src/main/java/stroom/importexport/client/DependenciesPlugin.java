@@ -20,8 +20,10 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
+import stroom.importexport.client.presenter.DependenciesInfoPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -46,7 +48,8 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
                               final ContentManager eventManager,
                               final Provider<DependenciesTabPresenter> presenterProvider,
                               final ClientSecurityContext securityContext,
-                              final DocumentPluginRegistry documentPluginRegistry) {
+                              final DocumentPluginRegistry documentPluginRegistry,
+                              final Provider<DependenciesInfoPresenter> dependenciesInfoPresenterProvider) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         // Open the Dependencies view, filtered by a particular DocRef
@@ -58,6 +61,10 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
                 presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
             });
         });
+
+        // The screens it opens, made when first asked for
+        eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event ->
+                dependenciesInfoPresenterProvider.get().onShow(event));
     }
 
     @Override

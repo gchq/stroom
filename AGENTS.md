@@ -189,7 +189,8 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 
 * **A document.** Extend `DocumentEditor<D>` (Save, Save As, read-only status and dirty state), add its tabs, and have its plugin's `createEditor()` return `new DocumentEditorHost<>(eventBus, editorProvider.get(), TYPE)`.
 
-* **App-wide screens.** A screen that opens on an app-wide event is a presenter with a small `public static final class ...Listener` at its bottom, bound with `bindPresenter(presenter, view, viewImpl, listener)`: an eager singleton that adds the event's handler and makes the screen through a GIN `Provider` when the event first fires.
+* **App-wide screens.** A screen that opens on an app-wide event (e.g. Find on `ShowFindEvent`) is made when the event first fires, through a GIN `Provider`, by its area's plugin, which adds the event's handler in its constructor: `eventBus.addHandler(ShowFindEvent.getType(), event -> findPresenterProvider.get().onShow(event))`.
+  An area with no plugin in its GIN module has one small eager class for this (`DocumentDialogScreens`, `AskStroomAiScreens`, `CoreScreens`, `MainScreens`); the screen itself is bound with `bindPresenter(presenter, view, viewImpl)`, and has no listener class.
   A dialog screen shows itself with a `show()` of its own (its `ShowPopupEvent`); nothing is "revealed".
   A presenter shows a child presenter through a setter on its view (`getView().setListView(listPresenter.getView())`); there are no slots.
   There is no code splitting: everything is in the initial download.

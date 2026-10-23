@@ -18,11 +18,9 @@ package stroom.main.client.presenter;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
-import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.presenter.CorePresenter;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.main.client.event.DockEvent;
@@ -58,7 +56,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -261,22 +258,6 @@ public class MainPresenter
     public native Object getParentIframe() /*-{
         return window.parent.frameElement;
     }-*/;
-
-    /// Shows the screen in the page, making it when it is first needed: once the user has logged
-    /// in, and for a document opened in a tab when it isn't shown (e.g. from the full screen view).
-    public static final class MainListener {
-
-        @Inject
-        public MainListener(final EventBus eventBus,
-                         final Provider<CorePresenter> core,
-                         final Provider<MainPresenter> presenter) {
-            eventBus.addHandler(ShowMainEvent.getType(), event -> {
-                core.get().setContent(presenter.get());
-                presenter.get().onShowMain(event);
-            });
-            eventBus.addHandler(OpenContentTabEvent.getType(), event -> core.get().setContent(presenter.get()));
-        }
-    }
 
 
     // --------------------------------------------------------------------------------

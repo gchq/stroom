@@ -25,34 +25,12 @@ import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.document.client.event.ShowCopyDocumentDialogEvent;
-import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.document.client.event.ShowRenameDocumentDialogEvent;
-import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentPresenter;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
-import stroom.explorer.client.event.ShowFindEvent;
-import stroom.explorer.client.event.ShowFindInContentEvent;
-import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.gwt.workbench.client.app.gin.shell.ShellScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.importexport.client.event.ExportConfigEvent;
-import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.help.client.presenter.HelpManager;
@@ -124,7 +102,6 @@ final class ShellScreen {
     void start(final DocRef initialDocRef) {
         harness.afterStartUp(() -> {
             registerPlugins();
-            registerDialogs();
             createMain();
             injector.getSplashPresenter().show(ok -> {
                 if (ok) {
@@ -145,7 +122,6 @@ final class ShellScreen {
                 harness.addContent(event.getPresenterWidget())));
         harness.afterStartUp(() -> {
             registerPlugins();
-            registerDialogs();
             OpenDocumentEvent.fire(harness.getHasHandlers(), docRef, true, true);
         });
     }
@@ -207,6 +183,9 @@ final class ShellScreen {
     private void registerPlugins() {
         injector.getDocumentPluginEventManager();
         injector.getTabSessionManager();
+        // The document dialogs (create, copy, move, rename, info), which the area's GIN module makes
+        // eagerly in Stroom (the explorer's and import/export's dialogs are their plugins')
+        injector.getDocumentDialogScreens();
 
         injector.getAboutPlugin();
         injector.getAnnotationBrowsePlugin();
@@ -258,46 +237,6 @@ final class ShellScreen {
         injector.getFolderPlugin();
         injector.getFolderFavouritesPlugin();
         injector.getFolderRootPlugin();
-    }
-
-    // The dialogs that Stroom's listeners create and show for their events
-    private void registerDialogs() {
-        final Lazy<FindPresenter> findPresenter = new Lazy<>(injector::getFindPresenter);
-        final Lazy<FindInContentPresenter> findInContentPresenter = new Lazy<>(injector::getFindInContentPresenter);
-        final Lazy<RecentItemsPresenter> recentItemsPresenter = new Lazy<>(injector::getRecentItemsPresenter);
-        final Lazy<CreateDocumentPresenter> createDocumentPresenter = new Lazy<>(injector::getCreateDocumentPresenter);
-        final Lazy<CopyDocumentPresenter> copyDocumentPresenter = new Lazy<>(injector::getCopyDocumentPresenter);
-        final Lazy<MoveDocumentPresenter> moveDocumentPresenter = new Lazy<>(injector::getMoveDocumentPresenter);
-        final Lazy<NameDocumentPresenter> nameDocumentPresenter = new Lazy<>(injector::getNameDocumentPresenter);
-        final Lazy<InfoDocumentPresenter> infoDocumentPresenter = new Lazy<>(injector::getInfoDocumentPresenter);
-        final Lazy<ExportConfigPresenter> exportConfigPresenter = new Lazy<>(injector::getExportConfigPresenter);
-        final Lazy<ExplorerNodeEditTagsPresenter> explorerNodeEditTagsPresenter = new Lazy<>(
-                injector::getExplorerNodeEditTagsPresenter);
-        final Lazy<ExplorerNodeRemoveTagsPresenter> explorerNodeRemoveTagsPresenter = new Lazy<>(
-                injector::getExplorerNodeRemoveTagsPresenter);
-        final EventBus eventBus = harness.getEventBus();
-        harness.addRegistration(eventBus.addHandler(ShowFindEvent.getType(), event ->
-                findPresenter.get().onShow(event)));
-        harness.addRegistration(eventBus.addHandler(ShowFindInContentEvent.getType(), event ->
-                findInContentPresenter.get().onShow(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRecentItemsEvent.getType(), event ->
-                recentItemsPresenter.get().onShowRecentItems(event)));
-        harness.addRegistration(eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event ->
-                createDocumentPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event ->
-                copyDocumentPresenter.get().onCopy(event)));
-        harness.addRegistration(eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event ->
-                moveDocumentPresenter.get().onMove(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event ->
-                nameDocumentPresenter.get().onRename(event)));
-        harness.addRegistration(eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event ->
-                infoDocumentPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ExportConfigEvent.getType(), event ->
-                exportConfigPresenter.get().onExport(event)));
-        harness.addRegistration(eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
-                explorerNodeEditTagsPresenter.get().onCreate(event)));
-        harness.addRegistration(eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
-                explorerNodeRemoveTagsPresenter.get().onCreate(event)));
     }
 
     // MainPresenter's refresh timer (it fires RefreshCurrentContentTabEvent every 30 seconds) is

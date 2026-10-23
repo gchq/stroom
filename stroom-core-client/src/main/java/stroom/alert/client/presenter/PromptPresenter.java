@@ -21,7 +21,6 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class PromptPresenter extends MyPresenterWidget<PromptPresenter.PromptView>
@@ -38,14 +37,6 @@ public class PromptPresenter extends MyPresenterWidget<PromptPresenter.PromptVie
         event.getCallback().onResult(result);
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class PromptListener {
-
-        @Inject
-        public PromptListener(final EventBus eventBus, final Provider<PromptPresenter> presenter) {
-            eventBus.addHandler(PromptEvent.getType(), event -> presenter.get().onPrompt(event));
-        }
-    }
 
     public interface PromptView extends View {
 

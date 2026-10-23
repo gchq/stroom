@@ -18,9 +18,12 @@ package stroom.alert.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.alert.client.event.PromptEvent;
 import stroom.alert.client.presenter.CommonAlertPresenter;
+import stroom.alert.client.presenter.PromptPresenter;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
@@ -29,12 +32,16 @@ public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
     private final CommonAlertPresenter alertPresenter;
 
     @Inject
-    public AlertPlugin(final EventBus eventBus, final CommonAlertPresenter alertPresenter) {
+    public AlertPlugin(final EventBus eventBus, final CommonAlertPresenter alertPresenter,
+                       final Provider<PromptPresenter> promptPresenterProvider) {
         this.eventBus = eventBus;
         this.alertPresenter = alertPresenter;
 
         getEventBus().addHandler(AlertEvent.getType(), this);
         getEventBus().addHandler(ConfirmEvent.getType(), this);
+
+        // The screens it opens, made when first asked for
+        eventBus.addHandler(PromptEvent.getType(), event -> promptPresenterProvider.get().onPrompt(event));
     }
 
     protected final EventBus getEventBus() {

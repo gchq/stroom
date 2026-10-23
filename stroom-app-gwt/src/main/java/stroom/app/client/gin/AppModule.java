@@ -17,15 +17,13 @@
 package stroom.app.client.gin;
 
 import stroom.content.client.presenter.ContentTabPanePresenter;
-import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneListener;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.LocationManager;
 import stroom.core.client.presenter.CorePresenter;
-import stroom.core.client.presenter.CorePresenter.CoreListener;
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.core.client.presenter.CoreScreens;
 import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenListener;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
@@ -41,20 +39,15 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTree
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsListener;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsListener;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.explorer.client.presenter.FindInContentPresenter;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentListener;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
-import stroom.explorer.client.presenter.FindPresenter.FindListener;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
-import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsListener;
 import stroom.explorer.client.presenter.TabSessionChooserPresenter;
 import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
@@ -76,8 +69,8 @@ import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.main.client.presenter.MainPresenter;
-import stroom.main.client.presenter.MainPresenter.MainListener;
 import stroom.main.client.presenter.MainPresenter.MainView;
+import stroom.main.client.presenter.MainScreens;
 import stroom.main.client.view.MainViewImpl;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -118,20 +111,22 @@ public class AppModule extends AbstractPresenterModule {
         bind(ContentManager.class).asEagerSingleton();
 
         // Presenters
-        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreListener.class);
+        // Hear the app-wide events that open its screens, for the life of the app
+        bind(CoreScreens.class).asEagerSingleton();
+        bind(MainScreens.class).asEagerSingleton();
+        bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class);
 
         bindPresenter(
                 FullScreenPresenter.class,
                 FullScreenView.class,
-                FullScreenViewImpl.class,
-                FullScreenListener.class);
+                FullScreenViewImpl.class);
 
-        bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainListener.class);
+        bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class);
         bindPresenter(
                 NavigationPresenter.class,
                 NavigationView.class,
                 NavigationViewImpl.class);
-        bindPresenter(ContentTabPanePresenter.class, ContentTabPaneListener.class);
+        bindPresenter(ContentTabPanePresenter.class);
 
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
 
@@ -145,25 +140,20 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(
                 ExplorerNodeEditTagsPresenter.class,
                 ExplorerNodeEditTagsView.class,
-                ExplorerNodeEditTagsViewImpl.class,
-                ExplorerNodeEditTagsListener.class);
+                ExplorerNodeEditTagsViewImpl.class);
         bindPresenter(
                 ExplorerNodeRemoveTagsPresenter.class,
                 ExplorerNodeRemoveTagsView.class,
-                ExplorerNodeRemoveTagsViewImpl.class,
-                ExplorerNodeRemoveTagsListener.class);
+                ExplorerNodeRemoveTagsViewImpl.class);
 
         bindPresenter(
                 FindInContentPresenter.class,
                 FindInContentView.class,
-                FindInContentViewImpl.class,
-                FindInContentListener.class);
+                FindInContentViewImpl.class);
         bindPresenter(
-                FindPresenter.class,
-                FindListener.class);
+                FindPresenter.class);
         bindPresenter(
-                RecentItemsPresenter.class,
-                RecentItemsListener.class);
+                RecentItemsPresenter.class);
 
         bind(TabSessionChooserPresenter.class);
 

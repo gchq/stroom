@@ -24,7 +24,6 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
@@ -64,14 +63,6 @@ public class DependenciesInfoPresenter
         show();
     }
 
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class DependenciesInfoListener {
-
-        @Inject
-        public DependenciesInfoListener(final EventBus eventBus, final Provider<DependenciesInfoPresenter> presenter) {
-            eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event -> presenter.get().onShow(event));
-        }
-    }
 
     public interface DependenciesInfoView extends View {
         void setInfo(String info);
