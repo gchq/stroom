@@ -1158,9 +1158,42 @@ works and its cells are covered by stories; these are the next steps, none urgen
   Smaller oddities). Check each grid's presenter has one, e.g. by a story that refreshes a list
   with a row selected.
 
+### No Cut, Copy, Paste or Select All on right-click (#5897)
+
+**Confirmed.** `app.html`'s `<body oncontextmenu="return false;">` (`UiConfig.oncontextmenu`)
+blocks the browser's own menu on every text field, password box, quick filter, spinner, date box
+and Ace editor, and nothing lets it through. A right-click on most fields does nothing; in a grid
+cell's input or header filter it shows the grid's menu (`DataGridWidget.onContextMenu`), in an
+expression term's field the expression menu (`DraggableTreePanel.onMouseUp` checks no tag), and in
+Ace, read-only or not, Editor Options (secondary mousedown in `EditorViewImpl`), none with Copy.
+Selected read-only text (alerts, help, info panes, markdown) and links outside grids get no menu
+either; iframes (vis, the Documentation preview) still get the browser's. The workbench pages have
+no such handler, so stories see the browser's menu where Stroom doesn't.
+
+Fixed in worktree `copy_and_paste` (2026-10-23, unstaged): `ContextMenuManager` replaces the body's
+handler (and `UiConfig.oncontextmenu`, removed) and shows Stroom's edit menu (`TextEditMenu`) on
+text fields and Ace (`CodeEditorText`); the grid, the expression tree and Ace put its items above
+their own; selected text gets Copy and links Open Link in New Tab and Copy Link Address; the Text
+Context Menu preference (Editor page) gives the browser's menu instead, as Shift+right-click always
+does. Stories `Widgets/Menu/TextContextMenu`, `AceEditor` `ContextMenu`, `DataGridWidget`
+`TextFieldContextMenu` and `ExpressionBuilder` `TermFieldContextMenu`; real input checks in
+`text-context-menu.mjs` (Chromium only). Still to do: Safari checked by hand (WebKit can't run on
+this host); Stroom links (`link` attributes) outside grids still have no menu; images (Copy Image)
+are a follow-up; the sign-in page has no Stroom menu (no GIN there), so shows the browser's. The
+old clipboard helpers are gone: `ClipboardUtil`, `DataGridDom.copyToClipboard` and the annotation
+editor's hidden copy box (and its `.annotationHistoryText` rule) use `Clipboard`; the workbench
+framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom dependency.
+
 ## Smaller oddities
 
 **Reported.**
+
+* ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
+  string to a template's `String` attribute, which escapes it again, so an apostrophe shows as
+  `&#39;` (found 2026-10-23 by `TestTextEditMenu`)~~ Fixed (worktree `copy_and_paste`): the menu's
+  and `HoverActionMenuCell`'s titles are the tooltip's text (`SafeHtmlUtil.toPlainText`);
+  `Widgets/Menu/MenuPanel` `Basic` checks an apostrophe. Other templates given
+  `SafeHtml.asString()` for a `title` may do the same (not checked).
 
 * ~~The quick filter help's longest lines (the `!abc` match type, the last examples) run past the
   popup's right border~~ Fixed: in a help popup an info table's last column wraps

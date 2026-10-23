@@ -25,6 +25,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -199,7 +200,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                     menuItem.getCommand() != null) {
                     // Single item with a command so no menu popup needed
                     final SafeHtml tooltip = NullSafe.getOrElse(menuItem, MenuItem::getTooltip, menuItem.getText());
-                    sb.append(Templates.divWithTitle(tooltip.asString(), icon));
+                    sb.append(Templates.divWithTitle(SafeHtmlUtil.toPlainText(tooltip), icon));
                 } else {
                     // Build the menu popup
                     sb.append(Templates.divWithTitle("Actions...", icon));

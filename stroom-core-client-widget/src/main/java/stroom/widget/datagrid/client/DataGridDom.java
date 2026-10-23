@@ -238,13 +238,6 @@ final class DataGridDom {
         return div.textContent || "";
     }-*/;
 
-    /// Put text on the clipboard.
-    ///
-    /// @param text The text.
-    static native void copyToClipboard(String text) /*-{
-        $wnd.navigator.clipboard.writeText(text);
-    }-*/;
-
     /// Offer some text to the user as a file download.
     ///
     /// @param fileName The file name.

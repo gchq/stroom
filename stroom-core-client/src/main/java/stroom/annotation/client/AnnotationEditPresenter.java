@@ -71,6 +71,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -88,7 +89,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -599,32 +599,21 @@ public class AnnotationEditPresenter
                 }
             });
 
-            final TextArea textCopy = new TextArea();
-            textCopy.setTabIndex(-2);
-            textCopy.setStyleName("annotationHistoryText");
-            // Only there to copy the history from, behind the history itself
-            textCopy.getElement().setAttribute("aria-hidden", "true");
-            textCopy.setText(text.toString());
+            final String historyText = text.toString();
 
             final Button copyToClipboard = new Button();
             copyToClipboard.setIcon(SvgImage.COPY);
             copyToClipboard.setText("Copy History");
             copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
-            copyToClipboard.addClickHandler(e -> {
-                textCopy.selectAll();
-                final boolean success = copy(textCopy.getElement());
-                if (!success) {
-                    AlertEvent.fireError(
-                            AnnotationEditPresenter.this,
-                            "Unable to copy",
-                            null);
-                }
-            });
+            copyToClipboard.addClickHandler(e -> Clipboard.writeText(historyText, () -> {
+            }, () -> AlertEvent.fireError(
+                    AnnotationEditPresenter.this,
+                    "Unable to copy",
+                    null)));
 
             final FlowPanel verticalPanel = new FlowPanel();
             verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
             verticalPanel.add(panel);
-            verticalPanel.add(textCopy);
             verticalPanel.add(copyToClipboard);
 
             getView().setHistoryView(verticalPanel);
@@ -1379,16 +1368,6 @@ public class AnnotationEditPresenter
             }
         }
     }
-
-    private static native boolean copy(final Element element) /*-{
-        var activeElement = $doc.activeElement;
-        element.focus();
-        var success = $doc.execCommand('copy');
-        if (activeElement) {
-            activeElement.focus();
-        }
-        return success;
-    }-*/;
 
     private static void link(final HtmlBuilder builder,
                              final AnnotationEntryType entryType,

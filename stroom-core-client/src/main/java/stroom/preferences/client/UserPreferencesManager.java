@@ -28,6 +28,8 @@ import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.ui.config.shared.UserPreferences.TextContextMenu;
+import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
 import stroom.widget.util.client.KeyBinding;
@@ -296,5 +298,7 @@ public class UserPreferencesManager {
         currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
         currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
         currentPreferences.setVisualisationPalette(userPreferences.getVisualisationPalette());
+        ContextMenuManager.setBrowserMenuForText(
+                userPreferences.getTextContextMenu() == TextContextMenu.BROWSER);
     }
 }

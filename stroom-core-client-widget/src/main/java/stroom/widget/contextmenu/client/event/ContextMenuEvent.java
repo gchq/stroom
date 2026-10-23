@@ -16,6 +16,7 @@
 
 package stroom.widget.contextmenu.client.event;
 
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -25,15 +26,37 @@ public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PopupPosition popupPosition;
+    private final TextEditTarget editTarget;
 
     protected ContextMenuEvent(final PopupPosition popupPosition) {
+        this(popupPosition, null);
+    }
+
+    /// @param popupPosition Where to show the menu.
+    /// @param editTarget    The text field or code editor the menu was opened on (see
+    ///                      [#getEditTarget]), or null.
+    protected ContextMenuEvent(final PopupPosition popupPosition, final TextEditTarget editTarget) {
         this.popupPosition = popupPosition;
+        this.editTarget = editTarget;
     }
 
     public static <I> void fire(final HasContextMenuHandlers source,
                                 final PopupPosition popupPosition) {
+        fire(source, popupPosition, null);
+    }
+
+    /// Asks for a widget's menu, opened on a text field or code editor in it, e.g. an expression
+    /// term's value.
+    ///
+    /// @param source        The widget.
+    /// @param popupPosition Where to show the menu.
+    /// @param editTarget    The text field or code editor the menu was opened on, whose edit items
+    ///                      should start the menu, or null.
+    public static void fire(final HasContextMenuHandlers source,
+                            final PopupPosition popupPosition,
+                            final TextEditTarget editTarget) {
         if (TYPE != null) {
-            source.fireEvent(new ContextMenuEvent(popupPosition));
+            source.fireEvent(new ContextMenuEvent(popupPosition, editTarget));
         }
     }
 
@@ -56,6 +79,12 @@ public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
 
     public PopupPosition getPopupPosition() {
         return popupPosition;
+    }
+
+    /// @return The text field or code editor the menu was opened on, whose edit items should start
+    /// the menu (see [stroom.widget.contextmenu.client.ContextMenuManager#withEditItems]), or null.
+    public TextEditTarget getEditTarget() {
+        return editTarget;
     }
 
     public interface Handler extends EventHandler {

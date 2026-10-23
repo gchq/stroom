@@ -17,12 +17,12 @@
 package stroom.data.client.presenter;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -150,7 +150,7 @@ public class CopyTextUtil {
                     final Element copy = ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
                     if (copy != null) {
                         keepSelection(e);
-                        ClipboardUtil.copy(text.trim());
+                        Clipboard.writeText(text.trim());
                     } else if (insertHandler != null) {
                         final Element insert = ElementUtil
                                 .findParent(element, CopyTextUtil.INSERT_CLASS_NAME, 5);
@@ -165,7 +165,7 @@ public class CopyTextUtil {
                             .priority(1)
                             .icon(SvgImage.COPY)
                             .text("Copy")
-                            .command(() -> ClipboardUtil.copy(text.trim()))
+                            .command(() -> Clipboard.writeText(text.trim()))
                             .build());
                     if (insertHandler != null) {
                         menuItems.add(new IconMenuItem.Builder()

@@ -24,11 +24,11 @@ import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.RowActions;
@@ -131,7 +131,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                 CopyTextUtil.keepSelection(event);
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
-                    ClipboardUtil.copy(text);
+                    Clipboard.writeText(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);

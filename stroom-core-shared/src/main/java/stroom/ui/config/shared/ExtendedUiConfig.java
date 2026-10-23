@@ -241,11 +241,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public String getOncontextmenu() {
-        return uiConfig.getOncontextmenu();
-    }
-
-    @JsonIgnore
     public SourceConfig getSource() {
         return uiConfig.getSource();
     }

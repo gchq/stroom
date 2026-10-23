@@ -60,9 +60,8 @@
     @BOOTSTRAP@
   </head>
 
-  <!-- Set this to true to enable the browser's context menu -->
-  <!-- <body class="stroom-body" oncontextmenu="return true;"> -->
-  <body class="stroom-body" oncontextmenu="@ON_CONTEXT_MENU@">
+  <!-- Right-clicks are handled by ContextMenuManager (Shift+right-click for the browser's menu) -->
+  <body class="stroom-body">
       <!-- Add history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
 
