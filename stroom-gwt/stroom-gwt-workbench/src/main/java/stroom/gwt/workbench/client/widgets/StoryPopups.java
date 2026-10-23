@@ -107,8 +107,6 @@ public final class StoryPopups {
     public StoryPopups withAlerts() {
         final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
                 new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()));
-        alertPlugin.bind();
-        cleanUps.add(alertPlugin::unbind);
         return this;
     }
 

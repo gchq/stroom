@@ -58,7 +58,7 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
         this.resultStorePresenterProvider = resultStorePresenterProvider;
         this.resultStoreModelProvider = resultStoreModelProvider;
 
-        registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
+        getEventBus().addHandler(ShowMainEvent.getType(), this);
 
         KeyBinding.addCommand(ACTION, resultStorePresenter::show);
     }

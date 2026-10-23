@@ -58,10 +58,10 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
         super(eventBus, eventManager, accountsPresenterProvider, securityContext, documentPluginRegistry);
         this.uiConfigCacheProvider = uiConfigCacheProvider;
 
-        registerHandler(getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
+        getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
             open(accountsPresenter ->
                     accountsPresenter.setFilterInput(buildFilterInput(event.getUserId())));
-        }));
+        });
     }
 
     private String buildFilterInput(final String userId) {

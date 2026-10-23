@@ -53,10 +53,10 @@ public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresent
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event -> {
+        getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event -> {
             open(appPermissionsPresenter ->
                     appPermissionsPresenter.showUser(event.getUserRef()));
-        }));
+        });
     }
 
     private String buildFilterInput(final UserRef userRef) {

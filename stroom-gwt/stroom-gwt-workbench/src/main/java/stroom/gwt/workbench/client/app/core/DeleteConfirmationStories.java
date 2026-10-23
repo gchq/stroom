@@ -308,8 +308,6 @@ public final class DeleteConfirmationStories {
                 new DocumentTypeCache(harness.getRestFactory()),
                 new DocumentPluginRegistry(),
                 harness.getSecurityContext());
-        manager.bind();
-        harness.addCleanUp(manager::unbind);
 
         final FlowPanel panel = new FlowPanel();
         for (final Case deleteCase : cases) {

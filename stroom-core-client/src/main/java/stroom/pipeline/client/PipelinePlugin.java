@@ -87,13 +87,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
         this.docRefSelectionPresenter = docRefSelectionPresenter;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
+        getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
             final Processor processor = event.getProcessorFilter().getProcessor();
             final String pipelineUuid = processor.getPipelineUuid();
             final DocRef docRef = new DocRef(PipelineDoc.TYPE, pipelineUuid);
@@ -107,9 +102,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
             pipelinePresenter.selectTab(PipelinePresenter.PROCESSORS);
             pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
-        }));
+        });
 
-        registerHandler(getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping));
+        getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping);
     }
 
     @Override

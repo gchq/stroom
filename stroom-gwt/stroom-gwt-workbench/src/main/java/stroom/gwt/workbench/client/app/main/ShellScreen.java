@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.content.client.event.CloseContentTabEvent;
@@ -58,7 +57,6 @@ import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.GWT;
@@ -203,68 +201,63 @@ final class ShellScreen {
         return harness.asWidget();
     }
 
-    // Stroom binds the plugins as eager singletons; getting them from the injector creates and
-    // registers them. They are unbound when the screen is closed, and bound again when it is opened
-    // again (by the leak check), as the injector gives the same ones
+    // Stroom makes the plugins as eager singletons; getting them from the injector makes them, and
+    // they register for their events then, for the injector's life (opening the screen again, as
+    // the leak check does, gets the same ones)
     private void registerPlugins() {
-        bindUntilCleanUp(injector.getDocumentPluginEventManager());
-        bindUntilCleanUp(injector.getTabSessionManager());
+        injector.getDocumentPluginEventManager();
+        injector.getTabSessionManager();
 
-        bindUntilCleanUp(injector.getAboutPlugin());
-        bindUntilCleanUp(injector.getAnnotationBrowsePlugin());
-        bindUntilCleanUp(injector.getAnnotationCreatePlugin());
-        bindUntilCleanUp(injector.getAnnotationCollectionPlugin());
-        bindUntilCleanUp(injector.getAnnotationCommentPlugin());
-        bindUntilCleanUp(injector.getAnnotationLabelPlugin());
-        bindUntilCleanUp(injector.getAnnotationStatusPlugin());
-        bindUntilCleanUp(injector.getCacheMonitoringPlugin());
-        bindUntilCleanUp(injector.getContentStorePlugin());
-        bindUntilCleanUp(injector.getCredentialsPlugin());
-        bindUntilCleanUp(injector.getManageFsVolumesPlugin());
-        bindUntilCleanUp(injector.getNavigationPlugin());
-        bindUntilCleanUp(injector.getHelpPlugin());
-        bindUntilCleanUp(injector.getDependenciesPlugin());
-        bindUntilCleanUp(injector.getExportConfigPlugin());
-        bindUntilCleanUp(injector.getImportConfigPlugin());
-        bindUntilCleanUp(injector.getManageIndexVolumesPlugin());
-        bindUntilCleanUp(injector.getDatabaseTablesMonitoringPlugin());
-        bindUntilCleanUp(injector.getExecutionScheduleManagerPlugin());
-        bindUntilCleanUp(injector.getJobListPlugin());
-        bindUntilCleanUp(injector.getNodeGroupsPlugin());
-        bindUntilCleanUp(injector.getNodeMonitoringPlugin());
-        bindUntilCleanUp(injector.getProcessorProfilePlugin());
-        bindUntilCleanUp(injector.getManageGlobalPropertiesPlugin());
-        bindUntilCleanUp(injector.getTracesPlugin());
-        bindUntilCleanUp(injector.getUserPreferencesPlugin());
-        bindUntilCleanUp(injector.getResultStorePlugin());
-        bindUntilCleanUp(injector.getContentTemplatePlugin());
-        bindUntilCleanUp(injector.getDataRetentionPlugin());
-        bindUntilCleanUp(injector.getReceiveDataRuleSetPlugin());
-        bindUntilCleanUp(injector.getApiKeysPlugin());
-        bindUntilCleanUp(injector.getAppPermissionsPlugin());
-        bindUntilCleanUp(injector.getDocumentPermissionsPlugin());
-        bindUntilCleanUp(injector.getLogoutPlugin());
-        bindUntilCleanUp(injector.getSigningKeyPlugin());
-        bindUntilCleanUp(injector.getSignOutOtherSessionsPlugin());
-        bindUntilCleanUp(injector.getUserAccessPlugin());
-        bindUntilCleanUp(injector.getUserPermissionsReportPlugin());
-        bindUntilCleanUp(injector.getUserPlugin());
-        bindUntilCleanUp(injector.getUsersAndGroupsPlugin());
-        bindUntilCleanUp(injector.getUsersPlugin());
-        bindUntilCleanUp(injector.getAccountsPlugin());
-        bindUntilCleanUp(injector.getChangePasswordPlugin());
-        bindUntilCleanUp(injector.getTaskManagerPlugin());
+        injector.getAboutPlugin();
+        injector.getAnnotationBrowsePlugin();
+        injector.getAnnotationCreatePlugin();
+        injector.getAnnotationCollectionPlugin();
+        injector.getAnnotationCommentPlugin();
+        injector.getAnnotationLabelPlugin();
+        injector.getAnnotationStatusPlugin();
+        injector.getCacheMonitoringPlugin();
+        injector.getContentStorePlugin();
+        injector.getCredentialsPlugin();
+        injector.getManageFsVolumesPlugin();
+        injector.getNavigationPlugin();
+        injector.getHelpPlugin();
+        injector.getDependenciesPlugin();
+        injector.getExportConfigPlugin();
+        injector.getImportConfigPlugin();
+        injector.getManageIndexVolumesPlugin();
+        injector.getDatabaseTablesMonitoringPlugin();
+        injector.getExecutionScheduleManagerPlugin();
+        injector.getJobListPlugin();
+        injector.getNodeGroupsPlugin();
+        injector.getNodeMonitoringPlugin();
+        injector.getProcessorProfilePlugin();
+        injector.getManageGlobalPropertiesPlugin();
+        injector.getTracesPlugin();
+        injector.getUserPreferencesPlugin();
+        injector.getResultStorePlugin();
+        injector.getContentTemplatePlugin();
+        injector.getDataRetentionPlugin();
+        injector.getReceiveDataRuleSetPlugin();
+        injector.getApiKeysPlugin();
+        injector.getAppPermissionsPlugin();
+        injector.getDocumentPermissionsPlugin();
+        injector.getLogoutPlugin();
+        injector.getSigningKeyPlugin();
+        injector.getSignOutOtherSessionsPlugin();
+        injector.getUserAccessPlugin();
+        injector.getUserPermissionsReportPlugin();
+        injector.getUserPlugin();
+        injector.getUsersAndGroupsPlugin();
+        injector.getUsersPlugin();
+        injector.getAccountsPlugin();
+        injector.getChangePasswordPlugin();
+        injector.getTaskManagerPlugin();
 
-        bindUntilCleanUp(injector.getDictionaryPlugin());
-        bindUntilCleanUp(injector.getFeedPlugin());
-        bindUntilCleanUp(injector.getFolderPlugin());
-        bindUntilCleanUp(injector.getFolderFavouritesPlugin());
-        bindUntilCleanUp(injector.getFolderRootPlugin());
-    }
-
-    private void bindUntilCleanUp(final HandlerContainerImpl plugin) {
-        plugin.bind();
-        harness.addCleanUp(plugin::unbind);
+        injector.getDictionaryPlugin();
+        injector.getFeedPlugin();
+        injector.getFolderPlugin();
+        injector.getFolderFavouritesPlugin();
+        injector.getFolderRootPlugin();
     }
 
     // The dialogs that Stroom's listeners create and show for their events
@@ -314,7 +307,6 @@ final class ShellScreen {
     }-*/;
 
     // --------------------------------------------------------------------------------
-
 
     /// Passes keys to Stroom's app-wide key handler until stopped (when the story renders again),
     /// as the main presenter's handlers on the page's body are never removed.

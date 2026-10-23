@@ -50,10 +50,10 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event -> {
+        getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event -> {
             open(userAndGroupsPresenter ->
                     userAndGroupsPresenter.showUser(event.getUserRef()));
-        }));
+        });
     }
 
     @Override

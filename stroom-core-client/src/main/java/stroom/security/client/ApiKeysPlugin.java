@@ -50,10 +50,10 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
                          final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
+        getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
             open(apiKeysPresenter ->
                     apiKeysPresenter.showOwner(event.getUserRef()));
-        }));
+        });
     }
 
     @Override

@@ -50,11 +50,6 @@ public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetPresenter>
     }
 
     @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
-    @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addAdministrationMenu(event.getMenuItems());

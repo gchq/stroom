@@ -37,9 +37,9 @@ public class ProcessorTaskPlugin extends AbstractTabPresenterPlugin<ProcessorFil
                                final Provider<ProcessorTaskPresenter> processorTaskPresenterProvider) {
         super(eventBus, contentManager, processorTaskPresenterProvider);
 
-        registerHandler(getEventBus().addHandler(OpenProcessorTaskEvent.getType(), event -> {
+        getEventBus().addHandler(OpenProcessorTaskEvent.getType(), event -> {
             open(event.getProcessorFilter(), true);
-        }));
+        });
     }
 
     public void open(final ProcessorFilter processorFilter, final boolean forceOpen) {

@@ -49,7 +49,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(
+        getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
                     final JobNode jobNode = openNodeEvent.getJobNode();
                     open(nodePresenter -> {
@@ -59,7 +59,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
                             nodePresenter.setSelected(openNodeEvent.getNodeName());
                         }
                     });
-                }));
+                });
     }
 
     @Override

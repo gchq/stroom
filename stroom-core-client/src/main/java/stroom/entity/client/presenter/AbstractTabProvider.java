@@ -18,13 +18,17 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.web.bindery.event.shared.HandlerRegistration;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
-        extends HandlerContainerImpl
         implements TabProvider<E> {
 
+    private final List<HandlerRegistration> registrations = new ArrayList<>();
     private P presenterWidget;
 
     public AbstractTabProvider() {
@@ -32,6 +36,22 @@ public abstract class AbstractTabProvider<E, P extends MyPresenterWidget<?>>
     }
 
     protected abstract P createPresenter();
+
+    /// Keeps a registration made with the presenter, e.g. of a handler on it, until the document is
+    /// disposed.
+    ///
+    /// @param registration The registration.
+    protected final void own(final HandlerRegistration registration) {
+        registrations.add(registration);
+    }
+
+    @Override
+    public void release() {
+        for (final HandlerRegistration registration : registrations) {
+            registration.removeHandler();
+        }
+        registrations.clear();
+    }
 
     @Override
     public final P getPresenter() {

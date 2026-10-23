@@ -17,25 +17,19 @@
 package stroom.core.client.presenter;
 
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
-public abstract class Plugin extends HandlerContainerImpl implements HasHandlers, BeforeRevealMenubarEvent.Handler {
+public abstract class Plugin implements HasHandlers, BeforeRevealMenubarEvent.Handler {
 
     private final EventBus eventBus;
 
     public Plugin(final EventBus eventBus) {
         this.eventBus = eventBus;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(BeforeRevealMenubarEvent.getType(), this));
+        // A plugin lasts as long as the application, and so does what it registers
+        getEventBus().addHandler(BeforeRevealMenubarEvent.getType(), this);
     }
 
     protected final EventBus getEventBus() {

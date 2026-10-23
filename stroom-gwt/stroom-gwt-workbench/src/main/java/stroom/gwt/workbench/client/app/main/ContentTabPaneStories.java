@@ -131,8 +131,8 @@ public final class ContentTabPaneStories {
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), pane));
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), pane));
-        // The tab menu
-        harness.addCleanUp(injector.getDocumentPluginEventManager()::unbind);
+        // The tab menu (getting the event manager makes it, and it registers for its events)
+        injector.getDocumentPluginEventManager();
         final ContentManager contentManager = injector.getContentManager();
         harness.fn(ON_OPEN_DOCUMENT);
         harness.addRegistration(eventBus.addHandler(OpenDocumentEvent.getType(), event ->

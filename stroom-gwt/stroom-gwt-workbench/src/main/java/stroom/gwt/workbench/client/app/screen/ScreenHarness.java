@@ -238,8 +238,6 @@ public final class ScreenHarness {
         if (builder.realAlerts) {
             final AlertPlugin alertPlugin = new AlertPlugin(eventBus,
                     new CommonAlertPresenter(eventBus, new CommonAlertViewImpl()));
-            alertPlugin.bind();
-            cleanUps.add(alertPlugin::unbind);
         }
     }
 

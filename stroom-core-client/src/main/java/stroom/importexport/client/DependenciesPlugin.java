@@ -48,21 +48,16 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
                               final ClientSecurityContext securityContext,
                               final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // Open the Dependencies view, filtered by a particular DocRef
-        registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
+        getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
             open(presenter -> {
                 final String field = DependencyType.DEPENDANT.equals(event.getDependencyType())
                         ? DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier()
                         : DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier();
                 presenter.setQuickFilterText(field + ":" + event.getDocRef().getUuid());
             });
-        }));
+        });
     }
 
     @Override

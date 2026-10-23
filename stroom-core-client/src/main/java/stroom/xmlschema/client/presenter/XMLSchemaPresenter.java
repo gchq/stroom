@@ -132,7 +132,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                 presenter.getFormatAction().setAvailable(!isReadOnly());
                 if (!isReadOnly()) {
                     // Enable controls based on user permission
-                    registerHandler(presenter.addValueChangeHandler(event -> {
+                    own(presenter.addValueChangeHandler(event -> {
                         onChange();
                         updateDiagram = true;
 

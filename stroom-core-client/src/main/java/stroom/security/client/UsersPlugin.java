@@ -50,10 +50,10 @@ public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
                        final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenUsersScreenEvent.getType(), event -> {
+        getEventBus().addHandler(OpenUsersScreenEvent.getType(), event -> {
             open(usersPresenter ->
                     usersPresenter.showUser(event.getUserRef()));
-        }));
+        });
     }
 
     @Override

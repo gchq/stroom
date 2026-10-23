@@ -77,26 +77,19 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
         this.restFactory = restFactory;
         this.tabSessionChooserPresenter = tabSessionChooserPresenter;
         this.textBoxPopupProvider = textBoxPopupProvider;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(OpenTabSessionEvent.getType(),
+        getEventBus().addHandler(OpenTabSessionEvent.getType(),
                 event -> {
                     checkDirtyTabsThenRun(() ->
                             chooseTabSessionThenAccept("Select Tab Session To Open:", this::openTabSession)
                     );
-                }));
+                });
 
-        registerHandler(getEventBus().addHandler(DeleteTabSessionEvent.getType(),
+        getEventBus().addHandler(DeleteTabSessionEvent.getType(),
                 event ->
-                        chooseTabSessionThenAccept("Select Tab Session To Delete:", this::delete)
-                ));
+                        chooseTabSessionThenAccept("Select Tab Session To Delete:", this::delete));
 
-
-        registerHandler(getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
+        getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
             final TextBoxPopup textBoxPopup = MyPresenterWidget.disposeWhenHidden(textBoxPopupProvider.get());
             textBoxPopup.show("Save New Tab Session", sessionName -> {
                 if (contains(userTabSessions, sessionName)) {
@@ -111,7 +104,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
                     getTabsAndSave(sessionName);
                 }
             });
-        }));
+        });
     }
 
     private void checkDirtyTabsThenRun(final Runnable runnable) {

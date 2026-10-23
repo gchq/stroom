@@ -41,13 +41,8 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
     public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
         super(eventBus);
         this.provider = provider;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(ShowAboutEvent.getType(), this));
+        getEventBus().addHandler(ShowAboutEvent.getType(), this);
     }
 
     @Override

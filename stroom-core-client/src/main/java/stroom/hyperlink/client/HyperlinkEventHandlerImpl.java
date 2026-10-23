@@ -40,7 +40,6 @@ import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -60,7 +59,7 @@ import java.util.Locale;
 import java.util.function.Function;
 
 @Singleton
-public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
+public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHandlers {
 
     private final EventBus eventBus;
     private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
@@ -77,7 +76,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.contentManager = contentManager;
 
-        registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
+        eventBus.addHandler(HyperlinkEvent.getType(), this);
     }
 
     private static native void nativeConsoleLog(String s) /*-{

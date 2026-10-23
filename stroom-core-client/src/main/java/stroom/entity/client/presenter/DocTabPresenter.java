@@ -97,7 +97,6 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         addEntry(commonTabsMap, CommonDocLinkTab.DOCUMENTATION, this::getDocumentationTab);
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
 
-        tabContentProvider.bind();
     }
 
     /// Makes the document's toolbar, with its Save and Save As buttons. A subclass may add its own
@@ -135,12 +134,6 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         if (tabData != null) {
             commonTabsMap.put(commonDocLinkTab, tabData);
         }
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        tabContentProvider.unbind();
     }
 
 

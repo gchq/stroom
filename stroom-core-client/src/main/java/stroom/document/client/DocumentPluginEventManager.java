@@ -212,23 +212,17 @@ public class DocumentPluginEventManager extends Plugin {
                 LocateDocEvent.fire(this, selectedDoc);
             }
         });
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                selectedTab = e.getTabData()));
+        getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData());
 
         // Add support to locate items in the explorer tree.
-        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+        getEventBus().addHandler(LocateDocEvent.getType(), e -> {
             if (e.getDocRef() != null) {
                 highlight(e.getDocRef(), explorerListener);
             }
-        }));
-
+        });
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -260,33 +254,32 @@ public class DocumentPluginEventManager extends Plugin {
         // }));
 
         // 4. Handle explorer events and open items as required.
-        registerHandler(
-                getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
-                    // Remember the selection model.
-                    if (event.getSelectionModel() != null) {
-                        selectionModel = event.getSelectionModel();
-                    }
+        getEventBus().addHandler(ExplorerTreeSelectEvent.getType(), event -> {
+            // Remember the selection model.
+            if (event.getSelectionModel() != null) {
+                selectionModel = event.getSelectionModel();
+            }
 
-                    if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
-                        final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
-                        if (explorerNode != null) {
-                            // Dont try to open the doc if we have a tab with the same docref already selected
-                            if (selectedTab instanceof final DocumentTabData documentTabData
-                                && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
-                                return;
-                            }
-                            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(
-                                    explorerNode.getType());
-                            if (plugin != null) {
-                                plugin.open(
-                                        explorerNode.getDocRef(),
-                                        event.getSelectionType().isDoubleSelect(),
-                                        false,
-                                        new DefaultTaskMonitorFactory(this));
-                            }
-                        }
+            if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
+                final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
+                if (explorerNode != null) {
+                    // Dont try to open the doc if we have a tab with the same docref already selected
+                    if (selectedTab instanceof final DocumentTabData documentTabData
+                        && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
+                        return;
                     }
-                }));
+                    final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(
+                            explorerNode.getType());
+                    if (plugin != null) {
+                        plugin.open(
+                                explorerNode.getDocRef(),
+                                event.getSelectionType().isDoubleSelect(),
+                                false,
+                                new DefaultTaskMonitorFactory(this));
+                    }
+                }
+            }
+        });
 
 //        clientPropertyCache.get()
 //                .onSuccess(uiConfig -> {
@@ -305,16 +298,16 @@ public class DocumentPluginEventManager extends Plugin {
 
 
         // 11. Handle entity reload events.
-        registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(event.getDocRef().getType());
             if (plugin != null) {
 //                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
             }
-        }));
+        });
 
         // 5. Handle save events.
-        registerHandler(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
             if (isDirty(event.getTabData())) {
                 final DocumentTabData entityTabData = event.getTabData();
                 final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(entityTabData.getType());
@@ -322,10 +315,10 @@ public class DocumentPluginEventManager extends Plugin {
                     plugin.save(entityTabData);
                 }
             }
-        }));
+        });
 
         // 6. Handle save as events.
-        registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             final DocumentTabData tabData = event.getTabData();
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(tabData.getType());
             if (plugin != null) {
@@ -345,14 +338,14 @@ public class DocumentPluginEventManager extends Plugin {
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
-        }));
+        });
 
         // ---------------------------------------------------------------------
         // START EXPLORER EVENTS
         // ---------------------------------------------------------------------/
 
         // 1. Handle entity creation events.
-        registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
+        getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
                 create(event.getDocType(),
                         event.getDocName(),
                         event.getDestinationFolder(),
@@ -366,10 +359,10 @@ public class DocumentPluginEventManager extends Plugin {
                             // The initiator of this event can now do what they want with the docref.
                             event.getNewDocConsumer().accept(explorerNode);
                         }, explorerListener,
-                        event.getHidePopupRequestEvent())));
+                        event.getHidePopupRequestEvent()));
 
         // 8.1. Handle entity open events.
-        registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
+        getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
                 open(event.getDocRef(),
                         event.isForceOpen(),
                         event.isFullScreen(),
@@ -378,15 +371,15 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getCallbackOnFailure().orElse(() -> {
                         }),
                         event.isDuplicate(),
-                        explorerListener)));
+                        explorerListener));
 
-        registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
             RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab, event.runOnClose(),
                     event.resizeTabBar());
-        }));
+        });
 
         // 8.2. Handle entity copy events.
-        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
+        getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
                 event.getExplorerNodes(),
                 event.getDestinationFolder(),
                 event.isAllowRename(),
@@ -406,10 +399,10 @@ public class DocumentPluginEventManager extends Plugin {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
-                event.getHidePopupRequestEvent())));
+                event.getHidePopupRequestEvent()));
 
         // 8.3. Handle entity move events.
-        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
+        getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
                     event.getHidePopupRequestEvent().hide();
@@ -425,10 +418,10 @@ public class DocumentPluginEventManager extends Plugin {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
-                event.getHidePopupRequestEvent())));
+                event.getHidePopupRequestEvent()));
 
         // 8.4. Handle entity delete events.
-        registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
             final Runnable action = () ->
                     delete(event.getDocRefs(), result ->
                             handleDeleteResult(result, event.getCallback()), explorerListener);
@@ -448,10 +441,10 @@ public class DocumentPluginEventManager extends Plugin {
             } else {
                 action.run();
             }
-        }));
+        });
 
         // 9. Handle entity rename events.
-        registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
             // Hide the rename document presenter.
             event.getHidePopupRequestEvent().hide();
 
@@ -459,10 +452,10 @@ public class DocumentPluginEventManager extends Plugin {
                 highlight(explorerNode);
                 RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
             }, explorerListener, event.getHidePopupRequestEvent());
-        }));
+        });
 
         // 10. Handle entity delete events.
-        registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
+        getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (NullSafe.hasItems(getSelectedItems())) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap -> {
                     final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
@@ -474,12 +467,12 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }, explorerListener);
             }
-        }));
+        });
 
         // Handle setting document as Favourite events
-        registerHandler(getEventBus().addHandler(SetDocumentAsFavouriteEvent.getType(), event -> {
+        getEventBus().addHandler(SetDocumentAsFavouriteEvent.getType(), event -> {
             setAsFavourite(event.getDocRef(), event.getSetFavourite(), explorerListener);
-        }));
+        });
 
         // ---------------------------------------------------------------------
         // END EXPLORER EVENTS
@@ -487,7 +480,7 @@ public class DocumentPluginEventManager extends Plugin {
 
 
         // Handle the display of the `New` item menu
-        registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection).onSuccess(children ->
@@ -498,10 +491,10 @@ public class DocumentPluginEventManager extends Plugin {
                                 .opener(event.getElement())
                                 .fire(this));
             }
-        }));
+        });
 
         // Handle key bind for creating a doc in the selected folder
-        registerHandler(getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
+        getEventBus().addHandler(CreateNewDocumentEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
             // TODO The CreateDocumentPresenter has an exp tree picker on it so debatable whether
             //  we should just show the dialog regardless of selection/perms and let the dialog
@@ -519,10 +512,10 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }, explorerListener);
             }
-        }));
+        });
 
         // Handle the display of the explorer item context menu
-        registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
@@ -530,11 +523,11 @@ public class DocumentPluginEventManager extends Plugin {
             if (!selectedItems.isEmpty() && !ExplorerConstants.isFavouritesNode(primarySelection)) {
                 showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
-        }));
+        });
 
         // Handle the keys for an explorer item's actions (e.g. F2 to rename it), which act as the
         // item's menu would
-        registerHandler(getEventBus().addHandler(ExplorerItemKeyEvent.getType(), event -> {
+        getEventBus().addHandler(ExplorerItemKeyEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
             if (!selectedItems.isEmpty()) {
                 fetchPermissions(selectedItems, documentPermissionMap -> {
@@ -549,10 +542,10 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }, explorerListener);
             }
-        }));
+        });
 
         // Handle the context menu for open tabs
-        registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
+        getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
             final List<Item> menuItems = new ArrayList<>();
             int priority = 0;
             menuItems.add(createCloseMenuItem(++priority, event.getTabData()));
@@ -588,7 +581,7 @@ public class DocumentPluginEventManager extends Plugin {
                     .items(menuItems)
                     .popupPosition(event.getPopupPosition())
                     .fire(this);
-        }));
+        });
     }
 
     private void showItemContextMenu(final ShowExplorerMenuEvent event,

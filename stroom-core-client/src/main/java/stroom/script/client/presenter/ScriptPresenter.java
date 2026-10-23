@@ -60,8 +60,8 @@ public class ScriptPresenter extends DocTabPresenter<LinkTabPanelView, ScriptDoc
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.JAVASCRIPT);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
-                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
+                own(editorPresenter.addValueChangeHandler(event -> onChange()));
+                own(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 

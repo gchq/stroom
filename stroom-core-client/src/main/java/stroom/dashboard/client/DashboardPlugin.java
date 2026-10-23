@@ -71,10 +71,10 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
         this.restFactory = restFactory;
 
-        registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
-                event -> openParameterisedDashboard(event.getContext(), event.getHref())));
-        registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
-                event -> reopen(event.getResultStoreInfo())));
+        eventBus.addHandler(ShowDashboardEvent.getType(),
+                event -> openParameterisedDashboard(event.getContext(), event.getHref()));
+        eventBus.addHandler(ReopenResultStoreEvent.getType(),
+                event -> reopen(event.getResultStoreInfo()));
     }
 
     @Override

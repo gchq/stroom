@@ -56,23 +56,18 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.editorProvider = editorProvider;
         this.feedClient = feedClient;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // Handle feed open events.
-        registerHandler(getEventBus().addHandler(OpenFeedEvent.getType(), event ->
+        getEventBus().addHandler(OpenFeedEvent.getType(), event ->
                 feedClient.getDocRefForName(event.getName(), docRef -> {
                     if (docRef != null) {
                         open(docRef, event.isForceOpen(),
                                 event.isFullScreen(),
                                 new DefaultTaskMonitorFactory(this));
                     }
-                }, new ExplorerTaskMonitorFactory(this))));
+                }, new ExplorerTaskMonitorFactory(this)));
 
-        registerHandler(getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
+        getEventBus().addHandler(CopyFeedUrlEvent.getType(), event ->
                 feedClient.getDocRefForName(event.getName(), docRef -> {
                     if (docRef != null) {
                         // Generate a URL that can be used to open a new Stroom window with the target document
@@ -85,7 +80,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                                 .buildString();
                         ClipboardUtil.copy(docUrl);
                     }
-                }, new ExplorerTaskMonitorFactory(this))));
+                }, new ExplorerTaskMonitorFactory(this)));
     }
 
     @Override

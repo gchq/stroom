@@ -19,12 +19,11 @@ package stroom.alert.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.presenter.CommonAlertPresenter;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class AlertPlugin extends HandlerContainerImpl implements AlertEvent.Handler, ConfirmEvent.Handler {
+public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
 
     private final EventBus eventBus;
     private final CommonAlertPresenter alertPresenter;
@@ -33,14 +32,9 @@ public class AlertPlugin extends HandlerContainerImpl implements AlertEvent.Hand
     public AlertPlugin(final EventBus eventBus, final CommonAlertPresenter alertPresenter) {
         this.eventBus = eventBus;
         this.alertPresenter = alertPresenter;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(AlertEvent.getType(), this));
-        registerHandler(getEventBus().addHandler(ConfirmEvent.getType(), this));
+        getEventBus().addHandler(AlertEvent.getType(), this);
+        getEventBus().addHandler(ConfirmEvent.getType(), this);
     }
 
     protected final EventBus getEventBus() {

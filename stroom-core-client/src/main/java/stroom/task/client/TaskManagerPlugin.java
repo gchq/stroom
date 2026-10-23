@@ -48,14 +48,14 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
                              final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
+        getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
             open(taskManagerPresenter -> {
                 taskManagerPresenter.changeNameFilter(
                         event.getNodeName(),
                         event.getTaskName(),
                         event.getUserName());
             });
-        }));
+        });
     }
 
     @Override

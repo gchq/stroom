@@ -122,9 +122,9 @@ public final class DocPluginStories {
                 .injector(injector)
                 .build();
         // Stroom's document plugin machinery: the event manager opens and saves documents with the
-        // plugin registered for their type
-        harness.addCleanUp(injector.getDocumentPluginEventManager()::unbind);
-        harness.addCleanUp(injector.getXMLSchemaPlugin()::unbind);
+        // plugin registered for their type (getting them makes them, and they register then)
+        injector.getDocumentPluginEventManager();
+        injector.getXMLSchemaPlugin();
         // The tab the plugin opens is shown as the story's content, as the tab pane would show it
         harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
             harness.addContent((MyPresenterWidget<?>) event.getLayer());

@@ -49,11 +49,10 @@ public class UserTabPlugin extends AbstractTabPresenterPlugin<UserRef, UserTabPr
         super(eventBus, contentManager, userTabPresenterProvider);
         this.securityContext = securityContext;
 
-        registerHandler(getEventBus().addHandler(OpenUserEvent.getType(), event -> {
+        getEventBus().addHandler(OpenUserEvent.getType(), event -> {
             GWT.log("handling event");
             open(event.getUserRef(), true);
-        }));
-
+        });
 
     }
 

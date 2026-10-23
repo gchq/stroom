@@ -117,7 +117,6 @@ public final class TabSessionChooserDialogStories {
         harness.addRegistration(harness.getEventBus().addHandler(GetCurrentTabsEvent.getType(), event ->
                 event.getCallback().accept(Collections.emptyList())));
         final TabSessionManager manager = injector.getTabSessionManager();
-        harness.addCleanUp(manager::unbind);
         harness.afterStartUp(() -> OpenTabSessionEvent.fire(harness.getHasHandlers()));
         return harness.asWidget();
     }

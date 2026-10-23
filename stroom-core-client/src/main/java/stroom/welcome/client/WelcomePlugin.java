@@ -37,7 +37,7 @@ public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements Sh
                          final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, presenterProvider, documentPluginRegistry);
 
-        registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
+        getEventBus().addHandler(ShowMainEvent.getType(), this);
     }
 
     @Override

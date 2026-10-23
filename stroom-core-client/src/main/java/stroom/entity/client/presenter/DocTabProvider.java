@@ -18,12 +18,10 @@ package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 
 import javax.inject.Provider;
 
 public class DocTabProvider<D>
-        extends HandlerContainerImpl
         implements TabProvider<D> {
 
     private final Provider<DocPresenter<?, D>> presenterWidgetProvider;

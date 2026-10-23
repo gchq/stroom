@@ -21,13 +21,11 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
-import stroom.widget.presenter.client.HandlerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /// Stroom's document plugin machinery for a story, as the app sets it up when its plugins start:
 /// what goes through a document's plugin (found by type in the `DocumentPluginRegistry`) works as in
@@ -58,8 +56,8 @@ public final class StoryDocumentPlugins {
         this.harness = harness;
     }
 
-    /// Registers the document plugins of a story: the event manager and the plugins (already
-    /// registered for their types by being created) are unbound when the story renders again.
+    /// Registers the document plugins of a story: the event manager and the plugins, which register
+    /// for their types and events when the injector makes them, and last as long as it does.
     ///
     /// @param harness      The story's harness.
     /// @param eventManager The injector's `DocumentPluginEventManager`.
@@ -69,8 +67,10 @@ public final class StoryDocumentPlugins {
                                                 final DocumentPluginEventManager eventManager,
                                                 final DocumentPlugin<?>... plugins) {
         Objects.requireNonNull(harness);
-        unbindOnCleanUp(harness::addCleanUp, eventManager);
-        unbindOnCleanUp(harness::addCleanUp, plugins);
+        Objects.requireNonNull(eventManager);
+        for (final DocumentPlugin<?> plugin : plugins) {
+            Objects.requireNonNull(plugin);
+        }
         return new StoryDocumentPlugins(harness);
     }
 
@@ -110,16 +110,5 @@ public final class StoryDocumentPlugins {
         Objects.requireNonNull(docJson);
         return builder.get(path, RestReply.json(docJson))
                 .put(path, request -> RestReply.json(request.getBody()));
-    }
-
-    /// Unbinds each handler container (e.g. a plugin) when the story renders again.
-    ///
-    /// @param addCleanUp Adds a clean up, e.g. `harness::addCleanUp`.
-    /// @param containers The containers.
-    static void unbindOnCleanUp(final Consumer<Runnable> addCleanUp, final HandlerContainer... containers) {
-        for (final HandlerContainer container : containers) {
-            Objects.requireNonNull(container);
-            addCleanUp.accept(container::unbind);
-        }
     }
 }

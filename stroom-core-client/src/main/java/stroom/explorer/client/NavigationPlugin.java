@@ -54,13 +54,13 @@ public class NavigationPlugin extends Plugin {
                             final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus);
         // track the currently selected doc.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+        getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
-        }));
+        });
 
-        registerHandler(getEventBus().addHandler(TabSessionChangeEvent.getType(), e -> {
+        getEventBus().addHandler(TabSessionChangeEvent.getType(), e -> {
             tabSessions = e.getTabSessions();
-        }));
+        });
     }
 
     @Override

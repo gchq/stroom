@@ -48,8 +48,7 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
         this.tracesPresenterProvider = tracesPresenterProvider;
         this.contentManager = contentManager;
 
-
-        registerHandler(getEventBus().addHandler(
+        getEventBus().addHandler(
                 ShowTracesEvent.getType(), showTracesEvent -> {
 
                     final TracesPresenter tracesPresenter = tracesPresenterProvider.get();
@@ -64,7 +63,7 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
 
                     // Tell the content manager to open the tab.
                     contentManager.open(closeHandler, tracesPresenter, tracesPresenter);
-                }));
+                });
 
 //        // TODO : TEMPORARY
 //        registerHandler(getEventBus().addHandler(CurrentUserChangedEvent.getType(), e -> {

@@ -75,8 +75,8 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.PROPERTIES);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
-                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
+                own(editorPresenter.addValueChangeHandler(event -> onChange()));
+                own(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 

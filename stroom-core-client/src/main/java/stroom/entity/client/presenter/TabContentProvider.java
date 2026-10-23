@@ -19,8 +19,6 @@ package stroom.entity.client.presenter;
 import stroom.docref.DocRef;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.HasComponentNode;
-import stroom.widget.presenter.client.HandlerContainer;
-import stroom.widget.presenter.client.HandlerContainerImpl;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -32,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class TabContentProvider<E>
-        extends HandlerContainerImpl
         implements
         HasDocumentRead<E>,
         HasDocumentWrite<E>,
@@ -47,39 +44,37 @@ public class TabContentProvider<E>
     private E entity;
     private int readCount;
     // What owns the tab presenters this makes (the document), so they are disposed with it, see
-    // its context and tell it of changes (Contexts.DIRTY). The owner must bind and unbind this
-    // along with itself, so its registrations and tab providers are released when the owner is
+    // its context and tell it of changes (Contexts.DIRTY). The tab providers are released when it is
     private final ComponentNode owner;
 
     /// @param eventBus The application's event bus.
     /// @param owner    What owns the tab presenters this makes, e.g. the document's presenter.
     public TabContentProvider(final EventBus eventBus, final HasComponentNode owner) {
         this.owner = owner.getComponentNode();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        for (final TabProvider<E> tabProvider : usedProviders) {
-            tabProvider.bind();
+        // Null only for a mock owner (e.g. Mockito's, in a test)
+        if (this.owner != null) {
+            this.owner.onDispose(this::release);
         }
     }
 
-    @Override
-    protected void onUnbind() {
-        super.onUnbind();
-        for (final TabProvider<E> tabProvider : usedProviders) {
-            tabProvider.unbind();
+    // Releases the providers that made a presenter, with the document
+    private void release() {
+        for (final TabProvider<E> tabProvider : presenterCache.values()) {
+            tabProvider.release();
         }
     }
 
     public interface TabProvider<E> extends
             HasDocumentRead<E>,
             HasDocumentWrite<E>,
-            HandlerContainer,
             HasClose {
 
         MyPresenterWidget<?> getPresenter();
+
+        /// Releases what the provider registered when it made its presenter, e.g. a handler on it,
+        /// when the document is disposed.
+        default void release() {
+        }
     }
 
     public void add(final TabData tab, final TabProvider<E> provider) {
@@ -105,7 +100,6 @@ public class TabContentProvider<E>
         if (currentTabProvider == null) {
             final TabProvider<E> provider = tabProviders.get(tab);
             if (provider != null) {
-                provider.bind();
                 currentTabProvider = provider;
                 presenterCache.put(tab, currentTabProvider);
             }

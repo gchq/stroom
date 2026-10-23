@@ -53,8 +53,8 @@ public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.XML);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
-                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
+                own(editorPresenter.addValueChangeHandler(event -> onChange()));
+                own(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
