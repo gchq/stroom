@@ -205,64 +205,66 @@ final class ShellScreen {
     }
 
     // Stroom binds the plugins as eager singletons; getting them from the injector creates and
-    // registers them
+    // registers them. They are unbound when the screen is closed, and bound again when it is opened
+    // again (by the leak check), as the injector gives the same ones
     private void registerPlugins() {
-        unbindOnCleanUp(injector.getDocumentPluginEventManager());
-        unbindOnCleanUp(injector.getTabSessionManager());
+        bindUntilCleanUp(injector.getDocumentPluginEventManager());
+        bindUntilCleanUp(injector.getTabSessionManager());
 
-        unbindOnCleanUp(injector.getAboutPlugin());
-        unbindOnCleanUp(injector.getAnnotationBrowsePlugin());
-        unbindOnCleanUp(injector.getAnnotationCreatePlugin());
-        unbindOnCleanUp(injector.getAnnotationCollectionPlugin());
-        unbindOnCleanUp(injector.getAnnotationCommentPlugin());
-        unbindOnCleanUp(injector.getAnnotationLabelPlugin());
-        unbindOnCleanUp(injector.getAnnotationStatusPlugin());
-        unbindOnCleanUp(injector.getCacheMonitoringPlugin());
-        unbindOnCleanUp(injector.getContentStorePlugin());
-        unbindOnCleanUp(injector.getCredentialsPlugin());
-        unbindOnCleanUp(injector.getManageFsVolumesPlugin());
-        unbindOnCleanUp(injector.getNavigationPlugin());
-        unbindOnCleanUp(injector.getHelpPlugin());
-        unbindOnCleanUp(injector.getDependenciesPlugin());
-        unbindOnCleanUp(injector.getExportConfigPlugin());
-        unbindOnCleanUp(injector.getImportConfigPlugin());
-        unbindOnCleanUp(injector.getManageIndexVolumesPlugin());
-        unbindOnCleanUp(injector.getDatabaseTablesMonitoringPlugin());
-        unbindOnCleanUp(injector.getExecutionScheduleManagerPlugin());
-        unbindOnCleanUp(injector.getJobListPlugin());
-        unbindOnCleanUp(injector.getNodeGroupsPlugin());
-        unbindOnCleanUp(injector.getNodeMonitoringPlugin());
-        unbindOnCleanUp(injector.getProcessorProfilePlugin());
-        unbindOnCleanUp(injector.getManageGlobalPropertiesPlugin());
-        unbindOnCleanUp(injector.getTracesPlugin());
-        unbindOnCleanUp(injector.getUserPreferencesPlugin());
-        unbindOnCleanUp(injector.getResultStorePlugin());
-        unbindOnCleanUp(injector.getContentTemplatePlugin());
-        unbindOnCleanUp(injector.getDataRetentionPlugin());
-        unbindOnCleanUp(injector.getReceiveDataRuleSetPlugin());
-        unbindOnCleanUp(injector.getApiKeysPlugin());
-        unbindOnCleanUp(injector.getAppPermissionsPlugin());
-        unbindOnCleanUp(injector.getDocumentPermissionsPlugin());
-        unbindOnCleanUp(injector.getLogoutPlugin());
-        unbindOnCleanUp(injector.getSigningKeyPlugin());
-        unbindOnCleanUp(injector.getSignOutOtherSessionsPlugin());
-        unbindOnCleanUp(injector.getUserAccessPlugin());
-        unbindOnCleanUp(injector.getUserPermissionsReportPlugin());
-        unbindOnCleanUp(injector.getUserPlugin());
-        unbindOnCleanUp(injector.getUsersAndGroupsPlugin());
-        unbindOnCleanUp(injector.getUsersPlugin());
-        unbindOnCleanUp(injector.getAccountsPlugin());
-        unbindOnCleanUp(injector.getChangePasswordPlugin());
-        unbindOnCleanUp(injector.getTaskManagerPlugin());
+        bindUntilCleanUp(injector.getAboutPlugin());
+        bindUntilCleanUp(injector.getAnnotationBrowsePlugin());
+        bindUntilCleanUp(injector.getAnnotationCreatePlugin());
+        bindUntilCleanUp(injector.getAnnotationCollectionPlugin());
+        bindUntilCleanUp(injector.getAnnotationCommentPlugin());
+        bindUntilCleanUp(injector.getAnnotationLabelPlugin());
+        bindUntilCleanUp(injector.getAnnotationStatusPlugin());
+        bindUntilCleanUp(injector.getCacheMonitoringPlugin());
+        bindUntilCleanUp(injector.getContentStorePlugin());
+        bindUntilCleanUp(injector.getCredentialsPlugin());
+        bindUntilCleanUp(injector.getManageFsVolumesPlugin());
+        bindUntilCleanUp(injector.getNavigationPlugin());
+        bindUntilCleanUp(injector.getHelpPlugin());
+        bindUntilCleanUp(injector.getDependenciesPlugin());
+        bindUntilCleanUp(injector.getExportConfigPlugin());
+        bindUntilCleanUp(injector.getImportConfigPlugin());
+        bindUntilCleanUp(injector.getManageIndexVolumesPlugin());
+        bindUntilCleanUp(injector.getDatabaseTablesMonitoringPlugin());
+        bindUntilCleanUp(injector.getExecutionScheduleManagerPlugin());
+        bindUntilCleanUp(injector.getJobListPlugin());
+        bindUntilCleanUp(injector.getNodeGroupsPlugin());
+        bindUntilCleanUp(injector.getNodeMonitoringPlugin());
+        bindUntilCleanUp(injector.getProcessorProfilePlugin());
+        bindUntilCleanUp(injector.getManageGlobalPropertiesPlugin());
+        bindUntilCleanUp(injector.getTracesPlugin());
+        bindUntilCleanUp(injector.getUserPreferencesPlugin());
+        bindUntilCleanUp(injector.getResultStorePlugin());
+        bindUntilCleanUp(injector.getContentTemplatePlugin());
+        bindUntilCleanUp(injector.getDataRetentionPlugin());
+        bindUntilCleanUp(injector.getReceiveDataRuleSetPlugin());
+        bindUntilCleanUp(injector.getApiKeysPlugin());
+        bindUntilCleanUp(injector.getAppPermissionsPlugin());
+        bindUntilCleanUp(injector.getDocumentPermissionsPlugin());
+        bindUntilCleanUp(injector.getLogoutPlugin());
+        bindUntilCleanUp(injector.getSigningKeyPlugin());
+        bindUntilCleanUp(injector.getSignOutOtherSessionsPlugin());
+        bindUntilCleanUp(injector.getUserAccessPlugin());
+        bindUntilCleanUp(injector.getUserPermissionsReportPlugin());
+        bindUntilCleanUp(injector.getUserPlugin());
+        bindUntilCleanUp(injector.getUsersAndGroupsPlugin());
+        bindUntilCleanUp(injector.getUsersPlugin());
+        bindUntilCleanUp(injector.getAccountsPlugin());
+        bindUntilCleanUp(injector.getChangePasswordPlugin());
+        bindUntilCleanUp(injector.getTaskManagerPlugin());
 
-        unbindOnCleanUp(injector.getDictionaryPlugin());
-        unbindOnCleanUp(injector.getFeedPlugin());
-        unbindOnCleanUp(injector.getFolderPlugin());
-        unbindOnCleanUp(injector.getFolderFavouritesPlugin());
-        unbindOnCleanUp(injector.getFolderRootPlugin());
+        bindUntilCleanUp(injector.getDictionaryPlugin());
+        bindUntilCleanUp(injector.getFeedPlugin());
+        bindUntilCleanUp(injector.getFolderPlugin());
+        bindUntilCleanUp(injector.getFolderFavouritesPlugin());
+        bindUntilCleanUp(injector.getFolderRootPlugin());
     }
 
-    private void unbindOnCleanUp(final HandlerContainerImpl plugin) {
+    private void bindUntilCleanUp(final HandlerContainerImpl plugin) {
+        plugin.bind();
         harness.addCleanUp(plugin::unbind);
     }
 

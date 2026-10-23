@@ -267,7 +267,7 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
   credential is meant to carry it too (then `CredentialEditPresenter` should set it).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
   full run, with 8 workers, and passes when run alone.
-* **Open** (found 22 October 2026, evening): 48 more stories fail with the leak check, and fail the
+* **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (47 open: `Embedded`, below, is fixed), and fail the
   same way when run at commit `0ca65724f4`, whose full run passed that afternoon, so something in
   the environment changed rather than the code (the browser and test runner are unchanged; a
   system font or layout change is a guess). They fail every time:
@@ -275,12 +275,21 @@ here before (`QuickFilterHistory` `AdvancedQueryUnconvertible` and `FilterReject
     `AnalyticRuleEditor`, `ReportEditor` and `QueryEditor`, plus `DataRetentionScreen`
     `ImpactAbort` and `QueryResultVis` `PauseButtonReportsUp`.
   * "the screen didn't open again within 15000 ms" (the leak check reopening the screen):
-    `AppShell` `Embedded`, `ContentTabPane` `NoDuplicateForSingleInstance`, `docPlugin`
+    `ContentTabPane` `NoDuplicateForSingleInstance`, `docPlugin`
     `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`, and `PipelineEditor`
     `FailedEmbeddedCreateKeepsDialogUsable` and `MultiDocumentSave`.
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
+* **Fixed** (23 October 2026): `AppShell` `Embedded` (the full screen view) failed the leak check's
+  reopen, for two reasons, neither the environment. The shell story unbound Stroom's plugins when
+  the screen closed, and the injector gave the same, unbound, plugins when it opened again, so
+  nothing heard `OpenDocumentEvent`; it now binds them each time it opens. And `DocumentPlugin`
+  remembered a document shown full screen for ever (no tab is closed for it), so opening it again
+  selected a tab that didn't exist; it now forgets it once its editor is disposed. In the app a full
+  screen editor lasts as long as the page, so only the second could matter there (it kept a
+  disposed editor). The other shell stories reopened without the plugins too, but passed, as the
+  main view is shown again by `ShowMainEvent`.
 * `App/Editors/DashboardEditor` `TableFilterDrivesQuery` (flaky): failed in two of four full runs
   with the leak check, and once in eight runs of its group, never alone (no "matched red" row). A
   guess: under load its second Run Query click lands while the first query still runs, when the

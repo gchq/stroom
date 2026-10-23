@@ -43,6 +43,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.ComponentNode;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -281,7 +282,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                         ((DocPresenter<?, D>) docPresenter).read(getDocRef(doc), doc);
                                         // Open the tab.
                                         if (fullScreen) {
-                                            showFullScreen(myPresenterWidget);
+                                            showFullScreen(docRef, tabData, myPresenterWidget);
                                         } else {
                                             contentManager.open(closeHandler,
                                                     tabData,
@@ -295,7 +296,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 } else {
                     // Open the tab.
                     if (fullScreen) {
-                        showFullScreen(myPresenterWidget);
+                        showFullScreen(docRef, tabData, myPresenterWidget);
                     } else {
                         contentManager.open(closeHandler, tabData, myPresenterWidget);
                     }
@@ -307,7 +308,15 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         load(docRef, loadConsumer, errorHandler, taskMonitorFactory);
     }
 
-    private void showFullScreen(final MyPresenterWidget<?> documentEditPresenter) {
+    private void showFullScreen(final DocRef docRef,
+                                final DocumentTabData tabData,
+                                final MyPresenterWidget<?> documentEditPresenter) {
+        // No tab is closed for a document shown full screen, so it is forgotten once its editor is
+        // disposed, else opening it again would select a tab that doesn't exist
+        final ComponentNode node = documentEditPresenter.getComponentNode();
+        if (node != null) {
+            node.add(() -> documentTabManager.remove(docRef, tabData));
+        }
         ShowFullScreenEvent.fire(this, documentEditPresenter);
     }
 
