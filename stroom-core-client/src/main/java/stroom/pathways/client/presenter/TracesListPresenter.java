@@ -139,6 +139,11 @@ public class TracesListPresenter
         view.setDataView(new SimpleView(dataPanel));
         view.setUiHandlers(this);
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
+
+        own(selectionModel.addSelectionHandler(event -> {
+
+        }));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private static final class SimpleView extends ViewImpl {
@@ -163,15 +168,6 @@ public class TracesListPresenter
     public void onFilterChange(final String text) {
         setFilter(text);
         refresh();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-
-        }));
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     public MultiSelectionModelImpl<TraceRoot> getSelectionModel() {

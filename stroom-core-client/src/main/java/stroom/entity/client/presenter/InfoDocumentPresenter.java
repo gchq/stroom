@@ -56,11 +56,8 @@ public class InfoDocumentPresenter
                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(getView().asWidget().addDomHandler(e ->
+        own(getView().asWidget().addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 

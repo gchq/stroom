@@ -101,14 +101,11 @@ public class ExportConfigPresenter
 
         // Only show the System node at the root for export
         treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM_TYPE);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(typeFilterPresenter.addSelectionListener(event -> treePresenter.setIncludedTypeSet(
+        own(typeFilterPresenter.addSelectionListener(event -> treePresenter.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));
 
-        registerHandler(filter.addClickHandler((e) ->
+        own(filter.addClickHandler((e) ->
                 showTypeFilter(filter.getElement())));
     }
 

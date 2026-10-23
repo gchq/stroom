@@ -85,11 +85,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
         criteria = new ExpressionCriteria();
         addColumns();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {

@@ -105,12 +105,8 @@ public class DatabaseTablesMonitoringPresenter
 
         criteria = new FindDBTableCriteria();
         refresh();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void refresh() {

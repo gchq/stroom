@@ -132,12 +132,8 @@ public class ContentTabPanePresenter
                 ignoreHistory = false;
             }
         }));
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().addShowTabMenuHandler(event -> getEventBus().fireEvent(event)));
+        own(getView().addShowTabMenuHandler(event -> getEventBus().fireEvent(event)));
     }
 
     @Override

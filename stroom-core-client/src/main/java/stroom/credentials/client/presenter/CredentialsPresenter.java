@@ -53,14 +53,6 @@ public class CredentialsPresenter
     }
 
     /**
-     * GWT callback.
-     */
-    @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
-    /**
      * @return the icon to display for the content.
      */
     @Override

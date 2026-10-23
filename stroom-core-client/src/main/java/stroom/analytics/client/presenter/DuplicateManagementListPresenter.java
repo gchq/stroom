@@ -102,6 +102,10 @@ public class DuplicateManagementListPresenter
                 }
             }
         };
+
+        own(selectionModel.addSelectionHandler(event -> {
+            enableButtons();
+        }));
     }
 
     private void updateColumns(final List<String> columnNames) {
@@ -134,15 +138,6 @@ public class DuplicateManagementListPresenter
         // Deleting rows changes what the rule will notify on, so isn't allowed if the document is read only
         final boolean enabled = !readOnly && NullSafe.hasItems(selectionModel.getSelectedItems());
         deleteButton.setEnabled(enabled);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            enableButtons();
-        }));
-
-        super.onBind();
     }
 
     /// Shows the duplicate check rows for a rule.

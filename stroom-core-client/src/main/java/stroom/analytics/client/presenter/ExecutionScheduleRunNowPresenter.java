@@ -43,11 +43,6 @@ public class ExecutionScheduleRunNowPresenter
         view.setUiHandlers(this);
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
     public void show() {
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size

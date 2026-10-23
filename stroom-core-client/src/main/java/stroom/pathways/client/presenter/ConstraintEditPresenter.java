@@ -63,12 +63,8 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
     @Inject
     public ConstraintEditPresenter(final EventBus eventBus, final ConstraintEditView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-//        registerHandler(getView().getDetails().addClickHandler(e -> {
+//        own(getView().getDetails().addClickHandler(e -> {
 //            final Element target = e.getNativeEvent().getEventTarget().cast();
 //            if (target != null) {
 //                final Element node = ElementUtil.findParent(target, element ->

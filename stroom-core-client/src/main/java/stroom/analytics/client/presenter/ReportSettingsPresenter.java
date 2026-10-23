@@ -57,12 +57,8 @@ public class ReportSettingsPresenter
         aiSummaryModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
         // Use, not View - a report needs to be able to ask the model, not to read its settings.
         aiSummaryModelPresenter.setRequiredPermissions(DocumentPermission.USE);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(aiSummaryModelPresenter.addSelectionListener(event -> onChange()));
+        own(aiSummaryModelPresenter.addSelectionListener(event -> onChange()));
     }
 
     @Override

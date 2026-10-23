@@ -201,6 +201,9 @@ public class FindInContentPresenter
                 };
         cellTable.addColumn(column);
         pagerView.setDataWidget(cellTable);
+
+        own(selectionModel.addSelectionChangeHandler(event ->
+                showHighlights(selectionModel.getSelected())));
     }
 
     private void resetFocus() {
@@ -208,12 +211,6 @@ public class FindInContentPresenter
             focusText = false;
             getView().focus();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(event ->
-                showHighlights(selectionModel.getSelected())));
     }
 
     private void showHighlights(final FindInContentResult selection) {

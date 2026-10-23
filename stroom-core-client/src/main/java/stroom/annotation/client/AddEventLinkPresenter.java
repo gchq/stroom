@@ -40,13 +40,8 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
     @Inject
     public AddEventLinkPresenter(final EventBus eventBus, final AddEventLinkView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
+        own(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 hide();
             }

@@ -321,6 +321,13 @@ public class EmbeddedQueryPresenter
 //        linkTabsLayoutView.getTabBar().addTab(TABLE);
 //        linkTabsLayoutView.getTabBar().addTab(VISUALISATION);
 //        setVisHidden(true);
+
+        own(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            queryModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
+//        own(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
+//                selectTab(e.getSelectedItem())));
     }
 
 //    private void setVisHidden(final boolean state) {
@@ -546,17 +553,6 @@ public class EmbeddedQueryPresenter
                 getView().setResultView(null);
             }
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
-            // If a user is even attempting to close the browser or browser tab then destroy the query.
-            queryModel.reset(DestroyReason.WINDOW_CLOSE);
-        }));
-//        registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
-//                selectTab(e.getSelectedItem())));
     }
 
 //    private void selectTab(final TabData tabData) {

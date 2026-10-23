@@ -61,17 +61,14 @@ public class QueryResultTableSplitPresenter
 
         view.setWidget(tablePresenter.getWidget());
         showSplit(false);
+
+        own(tablePresenter.getSelectionModel().addSelectionHandler(event ->
+                onSelection(tablePresenter.getSelectionModel().getSelected())));
     }
 
     @Override
     public void setQueryModel(final QueryModel queryModel) {
         tablePresenter.setQueryModel(queryModel);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(tablePresenter.getSelectionModel().addSelectionHandler(event ->
-                onSelection(tablePresenter.getSelectionModel().getSelected())));
     }
 
     private void onSelection(final TableRow tableRow) {

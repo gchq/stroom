@@ -47,13 +47,8 @@ public class RenameColumnPresenter
     @Inject
     public RenameColumnPresenter(final EventBus eventBus, final RenameColumnView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
+        own(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 HidePopupRequestEvent.builder(this).fire();
             }

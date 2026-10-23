@@ -74,12 +74,8 @@ public class AskStroomAiConfigPresenter
         addTab(TABLE_ANALYSIS, tableAnalysisPresenter);
         view.getTabBar().selectTab(GENERAL);
         switchTab(GENERAL);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(e ->
+        own(getView().getTabBar().addSelectionHandler(e ->
                 switchTab(e.getSelectedItem())));
     }
 

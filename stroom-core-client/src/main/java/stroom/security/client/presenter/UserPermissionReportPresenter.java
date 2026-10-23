@@ -132,17 +132,12 @@ public class UserPermissionReportPresenter
             docs = resultPage;
             batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+        own(permissionVisibility.addValueChangeHandler(e -> {
             documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
             documentPermissionsListPresenter.refresh();
         }));
-        registerHandler(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel()
                     .getSelected();
             docEdit.setEnabled(selected != null);

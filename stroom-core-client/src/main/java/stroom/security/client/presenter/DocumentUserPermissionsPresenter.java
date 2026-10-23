@@ -84,12 +84,8 @@ public class DocumentUserPermissionsPresenter
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
         documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(documentUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(documentUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final DocumentUserPermissions selected =
                     documentUserPermissionsListPresenter.getSelectionModel().getSelected();
             updateDetails();
@@ -98,7 +94,7 @@ public class DocumentUserPermissionsPresenter
                 onEdit();
             }
         }));
-        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+        own(permissionVisibility.addValueChangeHandler(e -> {
             documentUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             documentUserPermissionsListPresenter.refresh();
         }));

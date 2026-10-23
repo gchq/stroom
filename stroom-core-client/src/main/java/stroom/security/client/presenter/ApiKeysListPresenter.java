@@ -154,12 +154,8 @@ public class ApiKeysListPresenter
 //                dataProvider.refresh();
 //            }
 //        });
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     public MultiSelectionModelImpl<HashedApiKey> getSelectionModel() {

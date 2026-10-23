@@ -111,6 +111,37 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         // Must call this after initialising JobNodeListHelper
         initTable();
         refreshNodeStates();
+
+        // NodeLisPresenter may change a node
+        // Currently the node state does not affect how the job nodes are displayed
+        own(getEventBus().addHandler(
+                NodeChangeEvent.getType(), event -> {
+                    refreshNodeStates();
+                }));
+
+        // JobListPresenter may change a job
+        own(getEventBus().addHandler(
+                JobChangeEvent.getType(), event -> {
+                    // We are likely showing all jobs so just refresh
+                    internalRefresh();
+                }));
+
+        // JobNodeListPresenter may change one or more jobNodes
+        own(getEventBus().addHandler(
+                JobNodeChangeEvent.getType(), event -> {
+//                    GWT.log(NodeJobListPresenter.this.getClass().getSimpleName()
+//                            + " - jobNodes changed: " + event.getJobNodes().size());
+                    if (!Objects.equals(event.getSource().getClass(), NodeJobListPresenter.this.getClass())) {
+                        final Set<String> affectedNodes = event.getJobNodes()
+                                .stream()
+                                .map(JobNode::getNodeName)
+                                .collect(Collectors.toSet());
+                        final String currentNodeName = getNodeNameCriteria();
+                        if (currentNodeName != null && affectedNodes.contains(currentNodeName)) {
+                            internalRefresh();
+                        }
+                    }
+                }));
     }
 
     private void refreshNodeStates() {
@@ -128,42 +159,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         if (autoRefresh) {
             internalRefresh();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // NodeLisPresenter may change a node
-        // Currently the node state does not affect how the job nodes are displayed
-        registerHandler(getEventBus().addHandler(
-                NodeChangeEvent.getType(), event -> {
-                    refreshNodeStates();
-                }));
-
-        // JobListPresenter may change a job
-        registerHandler(getEventBus().addHandler(
-                JobChangeEvent.getType(), event -> {
-                    // We are likely showing all jobs so just refresh
-                    internalRefresh();
-                }));
-
-        // JobNodeListPresenter may change one or more jobNodes
-        registerHandler(getEventBus().addHandler(
-                JobNodeChangeEvent.getType(), event -> {
-//                    GWT.log(NodeJobListPresenter.this.getClass().getSimpleName()
-//                            + " - jobNodes changed: " + event.getJobNodes().size());
-                    if (!Objects.equals(event.getSource().getClass(), NodeJobListPresenter.this.getClass())) {
-                        final Set<String> affectedNodes = event.getJobNodes()
-                                .stream()
-                                .map(JobNode::getNodeName)
-                                .collect(Collectors.toSet());
-                        final String currentNodeName = getNodeNameCriteria();
-                        if (currentNodeName != null && affectedNodes.contains(currentNodeName)) {
-                            internalRefresh();
-                        }
-                    }
-                }));
     }
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(

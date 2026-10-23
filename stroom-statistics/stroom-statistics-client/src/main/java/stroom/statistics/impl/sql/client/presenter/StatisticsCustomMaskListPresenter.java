@@ -69,16 +69,8 @@ public class StatisticsCustomMaskListPresenter
         removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Roll-up Permutation",
                 this::onRemove);
         removeButton.setEnabled(false);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-
-
-
-        registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
+        own(selectionModel.addSelectionHandler(event -> enableButtons()));
     }
 
     private void enableButtons() {

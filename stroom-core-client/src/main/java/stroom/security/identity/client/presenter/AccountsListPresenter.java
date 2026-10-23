@@ -131,12 +131,8 @@ public class AccountsListPresenter
         view.setUiHandlers(this);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 AccountFields.QUICK_FILTER_CONTEXT, this, this));
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     /**

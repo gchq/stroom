@@ -75,11 +75,8 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
         deleteButton.setEnabled(false);
 
         view.setView(processorProfileListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(processorProfileListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(processorProfileListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();

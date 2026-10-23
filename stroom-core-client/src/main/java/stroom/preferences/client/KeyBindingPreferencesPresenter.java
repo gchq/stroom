@@ -93,12 +93,8 @@ public final class KeyBindingPreferencesPresenter
                 this::onResetAll);
         view.setList(pagerView);
         updateButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(selectionModel.addSelectionHandler(event -> {
             updateButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onChangeShortcut();

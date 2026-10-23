@@ -43,12 +43,8 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
         this.pathwayTreePresenter = pathwayTreePresenter;
         view.setTable(pathwayListPresenter.getView());
         view.setTree(pathwayTreePresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(pathwayListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final Pathway selected = pathwayListPresenter.getSelectionModel().getSelected();
             pathwayTreePresenter.read(getEntity(), selected);
         }));

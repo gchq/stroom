@@ -140,6 +140,12 @@ public class DataRetentionImpactPresenter
 
         dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshSourceData);
+
+        // Get the user's rules without our default one
+
+        // Get the user's rules without our default one
+
+        own(dataGrid.addColumnSortHandler(event -> refreshVisibleData()));
     }
 
     private void clearTable() {
@@ -267,18 +273,6 @@ public class DataRetentionImpactPresenter
     private void onCollapseAll() {
         treeAction.collapseAll();
         refreshVisibleData();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // Get the user's rules without our default one
-
-        // Get the user's rules without our default one
-
-
-        registerHandler(dataGrid.addColumnSortHandler(event -> refreshVisibleData()));
     }
 
     private void setTableNested(final boolean nested) {

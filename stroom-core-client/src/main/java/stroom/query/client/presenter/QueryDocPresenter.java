@@ -78,12 +78,8 @@ public class QueryDocPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
                 queryDocEditPresenter.onContentTabVisible(e.getTabData() == this)));
     }
 

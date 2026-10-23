@@ -129,11 +129,8 @@ public class DependenciesPresenter
         };
         dataProvider.addDataDisplay(dataGrid);
         initColumns();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> dataProvider.refresh()));
+        own(dataGrid.addColumnSortHandler(event -> dataProvider.refresh()));
     }
 
     private void initColumns() {

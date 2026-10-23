@@ -175,6 +175,8 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+
+        own(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private void onAutoRefreshToggled() {
@@ -182,13 +184,6 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         if (autoRefresh) {
             internalRefresh();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private void scheduleDataGridRedraw() {

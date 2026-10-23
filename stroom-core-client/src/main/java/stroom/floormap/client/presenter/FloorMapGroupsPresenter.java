@@ -155,14 +155,9 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         deleteButton = toolbar.button(SvgImage.DELETE, "Delete Group", this::onDeleteGroup);
         deleteButton.setEnabled(false);
         view.setToolbar(toolbar);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         //noinspection unused e
-        registerHandler(selectionModel.addSelectionChangeHandler(e -> {
+        own(selectionModel.addSelectionChangeHandler(e -> {
             final boolean hasSelection = selectionModel.getSelectedObject() != null;
             editButton.setEnabled(hasSelection);
             deleteButton.setEnabled(hasSelection);

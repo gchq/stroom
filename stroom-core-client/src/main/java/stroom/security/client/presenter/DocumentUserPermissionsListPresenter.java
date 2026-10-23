@@ -138,12 +138,8 @@ public class DocumentUserPermissionsListPresenter
 //                        UserFields.UNIQUE_ID.getFldName(),
 //                        false,
 //                        true)));
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     @Override

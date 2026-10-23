@@ -99,44 +99,15 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         FloorMapEditorHelp.addHelpButton(toolbar, "Time List help", "Time List", FloorMapEditorHelp.timeList());
 
         view.setToolbar(toolbar);
-    }
-
-    private void onEdit() {
-        if (editConsumer != null) {
-            final TemporalEntry selected = selectionModel.getSelectedObject();
-            if (selected != null) {
-                editConsumer.accept(selected);
-            }
-        }
-    }
-
-    private void onAdd() {
-        if (addConsumer != null) {
-            addConsumer.run();
-        }
-    }
-
-    private void onDelete() {
-        if (deleteConsumer != null) {
-            final TemporalEntry selected = selectionModel.getSelectedObject();
-            if (selected != null) {
-                deleteConsumer.accept(selected);
-            }
-        }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         // The Effective Time column is rendered from the user's date/time
         // preference, so a change to it has to redraw the rows already shown.
         //noinspection unused e
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(),
+        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(),
                 e -> dataGrid.redraw()));
 
         //noinspection unused
-        registerHandler(selectionModel.addSelectionChangeHandler(e -> {
+        own(selectionModel.addSelectionChangeHandler(e -> {
             final TemporalEntry selected = selectionModel.getSelectedObject();
             editButton.setEnabled(selected != null);
             deleteButton.setEnabled(selected != null);
@@ -166,6 +137,30 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
                 }
             }
         }));
+    }
+
+    private void onEdit() {
+        if (editConsumer != null) {
+            final TemporalEntry selected = selectionModel.getSelectedObject();
+            if (selected != null) {
+                editConsumer.accept(selected);
+            }
+        }
+    }
+
+    private void onAdd() {
+        if (addConsumer != null) {
+            addConsumer.run();
+        }
+    }
+
+    private void onDelete() {
+        if (deleteConsumer != null) {
+            final TemporalEntry selected = selectionModel.getSelectedObject();
+            if (selected != null) {
+                deleteConsumer.accept(selected);
+            }
+        }
     }
 
     // -----------------------------------------------------------------------

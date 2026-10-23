@@ -60,6 +60,8 @@ public class AnalyticStreamDestinationPresenter
 
         // Only an administrator can change a global property, so don't offer it to anyone else.
         view.setSetDefaultVisible(configDefaultSetter.isAllowed());
+
+        own(feedPresenter.addSelectionListener(e -> onChange()));
     }
 
     /**
@@ -68,11 +70,6 @@ public class AnalyticStreamDestinationPresenter
      */
     public void setConfigTarget(final ConfigTarget configTarget) {
         this.configTarget = configTarget;
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(feedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override

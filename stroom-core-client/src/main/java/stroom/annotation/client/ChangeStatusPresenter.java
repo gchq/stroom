@@ -69,6 +69,14 @@ public class ChangeStatusPresenter
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
 
         getView().setUiHandlers(this);
+
+        own(annotationStatusPresenter.addDataSelectionHandler(e -> {
+            final AnnotationTag selected = annotationStatusPresenter.getSelected();
+            if (!Objects.equals(currentStatus, selected)) {
+                changeStatus(selected);
+                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
+            }
+        }));
     }
 
     private FindAnnotationTagCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -77,19 +85,6 @@ public class ChangeStatusPresenter
         // than a term; the filter is the user's own text and goes to the server unparsed.
         // See FindAnnotationTagCriteria.
         return new FindAnnotationTagCriteria(annotationTagType, filter);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(annotationStatusPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = annotationStatusPresenter.getSelected();
-            if (!Objects.equals(currentStatus, selected)) {
-                changeStatus(selected);
-                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
-            }
-        }));
     }
 
     public void show(final List<Long> annotationIdList) {

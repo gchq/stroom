@@ -86,11 +86,8 @@ public class ContentTemplateEditPresenter
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         getView().setPipelineSelector(pipelineSelectionPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(getView().getTemplateTypeSelectionBox().addValueChangeHandler(event -> {
+        own(getView().getTemplateTypeSelectionBox().addValueChangeHandler(event -> {
             getView().setTemplateType(event.getValue());
         }));
     }

@@ -219,33 +219,29 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
 
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(MAP);
+
+        // Reacts to this *document's* content tab being fronted or backgrounded.
+        //
+        // afterSelectTab covers only this document's inner tabs, so without this a switch to a
+        // different Stroom document left whichever timeline was playing still playing, its result
+        // stores churning on a document nobody was looking at — and, on return, gave the Map no
+        // chance to catch up on facts or events that had arrived meanwhile.
+        //
+        // QueryDocPresenter and DashboardSuperPresenter — the other two document types that run
+        // searches — consume this event in exactly this shape.
+        //
+        // Both branches act on previousContent, the inner tab actually on screen, rather than on
+        // the Map unconditionally. Two tabs carry a timeline, so hiding must pause whichever one is
+        // showing; and refreshing a Map that is not the visible inner tab would issue reads for
+        // something the user cannot see. This mirrors afterSelectTab's own dispatch.
+        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                onContentTabVisible(e.getTabData() == this)));
     }
 
     /// {@inheritDoc}
     @Override
     protected void onRead(final DocRef docRef, final FloorMapDoc document) {
         super.onRead(docRef, document);
-    }
-
-    /// Reacts to this *document's* content tab being fronted or backgrounded.
-    ///
-    /// [#afterSelectTab] covers only this document's inner tabs, so without this a switch
-    /// to a different Stroom document left whichever timeline was playing still playing, its result
-    /// stores churning on a document nobody was looking at — and, on return, gave the Map no chance
-    /// to catch up on facts or events that had arrived meanwhile.
-    ///
-    /// `QueryDocPresenter` and `DashboardSuperPresenter` — the other two document
-    /// types that run searches — consume this event in exactly this shape.
-    ///
-    /// Both branches act on [#previousContent], the inner tab actually on screen, rather
-    /// than on the Map unconditionally. Two tabs carry a timeline, so hiding must pause whichever
-    /// one is showing; and refreshing a Map that is not the visible inner tab would issue reads for
-    /// something the user cannot see. This mirrors `afterSelectTab`'s own dispatch.
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                onContentTabVisible(e.getTabData() == this)));
     }
 
     private void onContentTabVisible(final boolean visible) {

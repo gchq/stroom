@@ -60,11 +60,6 @@ public class ChangePasswordPresenter extends MyPresenterWidget<ChangePasswordVie
         });
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
     public void show(final String caption, final Consumer<HidePopupRequestEvent> consumer) {
         restFactory
                 .create(RESOURCE)

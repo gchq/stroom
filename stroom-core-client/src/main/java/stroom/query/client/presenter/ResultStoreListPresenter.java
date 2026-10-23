@@ -143,6 +143,23 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);
+
+        own(getSelectionModel().addSelectionHandler(event -> {
+            final ResultStoreInfo selected = getSelectionModel().getSelected();
+            if (selected == null ||
+                SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
+                terminateButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+                settingsButton.setEnabled(false);
+            } else {
+                terminateButton.setEnabled(!selected.isComplete());
+                deleteButton.setEnabled(true);
+                settingsButton.setEnabled(true);
+            }
+            if (event.getSelectionType().isDoubleSelect()) {
+                edit();
+            }
+        }));
     }
 
     private void onTerminate() {
@@ -183,31 +200,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 }
             });
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-
-
-
-        registerHandler(getSelectionModel().addSelectionHandler(event -> {
-            final ResultStoreInfo selected = getSelectionModel().getSelected();
-            if (selected == null ||
-                SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
-                terminateButton.setEnabled(false);
-                deleteButton.setEnabled(false);
-                settingsButton.setEnabled(false);
-            } else {
-                terminateButton.setEnabled(!selected.isComplete());
-                deleteButton.setEnabled(true);
-                settingsButton.setEnabled(true);
-            }
-            if (event.getSelectionType().isDoubleSelect()) {
-                edit();
-            }
-        }));
     }
 
     private void edit() {

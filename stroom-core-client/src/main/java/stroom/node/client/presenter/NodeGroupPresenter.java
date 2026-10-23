@@ -71,11 +71,8 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
         view.setView(nodeGroupListPresenter.getView());
         refresh();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(nodeGroupListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(nodeGroupListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();

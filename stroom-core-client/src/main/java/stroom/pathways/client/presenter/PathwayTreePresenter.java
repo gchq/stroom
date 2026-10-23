@@ -89,6 +89,26 @@ public class PathwayTreePresenter
         html = new HTML();
         html.addStyleName("max");
         view.setDataWidget(html);
+
+        own(html.addClickHandler(e -> {
+            final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (target != null) {
+                final Element node = ElementUtil.findParent(target, element ->
+                        NullSafe.isNonBlankString(element.getAttribute("uuid")), 3);
+                if (node != null) {
+                    final String uuid = node.getAttribute("uuid");
+                    if (!Objects.equals(selected, node)) {
+                        if (selected != null) {
+                            selected.removeClassName("pathway-nodeName--selected");
+                        }
+                        selected = node;
+                        selected.addClassName("pathway-nodeName--selected");
+                        selectionModel.setSelected(nodeMap.get(uuid), true);
+                        enableButtons();
+                    }
+                }
+            }
+        }));
     }
 
     private void onViewTraces() {
@@ -126,30 +146,6 @@ public class PathwayTreePresenter
                 pathwaysDoc.getTracesDocRef(),
                 null,
                 pathway);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(html.addClickHandler(e -> {
-            final Element target = e.getNativeEvent().getEventTarget().cast();
-            if (target != null) {
-                final Element node = ElementUtil.findParent(target, element ->
-                        NullSafe.isNonBlankString(element.getAttribute("uuid")), 3);
-                if (node != null) {
-                    final String uuid = node.getAttribute("uuid");
-                    if (!Objects.equals(selected, node)) {
-                        if (selected != null) {
-                            selected.removeClassName("pathway-nodeName--selected");
-                        }
-                        selected = node;
-                        selected.addClassName("pathway-nodeName--selected");
-                        selectionModel.setSelected(nodeMap.get(uuid), true);
-                        enableButtons();
-                    }
-                }
-            }
-        }));
     }
 
     private void addToMap(final PathNode pathNode,

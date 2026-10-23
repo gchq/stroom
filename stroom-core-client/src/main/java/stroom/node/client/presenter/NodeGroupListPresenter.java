@@ -80,12 +80,8 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
+        own(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     /**

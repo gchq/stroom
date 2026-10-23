@@ -124,6 +124,15 @@ public class ProcessorPresenter
 
         view.setProcessorList(processorListPresenter.getView());
         view.setDetailsView(expressionPresenter.getView());
+
+        own(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            updateData();
+            if (event.getSelectionType().isDoubleSelect()) {
+                if (allowUpdate) {
+                    editProcessor();
+                }
+            }
+        }));
     }
 
     @Override
@@ -313,20 +322,6 @@ public class ProcessorPresenter
         if (allowUpdate) {
             removeProcessor();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(processorListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            updateData();
-            if (event.getSelectionType().isDoubleSelect()) {
-                if (allowUpdate) {
-                    editProcessor();
-                }
-            }
-        }));
     }
 
     private void updateData() {

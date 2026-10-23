@@ -85,12 +85,8 @@ public class DocumentCreatePermissionsListPresenter
             addColumns(documentTypes);
             refresh(documentTypes);
         }, this);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(e ->
+        own(selectionModel.addSelectionHandler(e ->
                 updateDetails()));
     }
 

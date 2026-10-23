@@ -93,15 +93,12 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         view.setClusterView(clusterPresenter.getView());
         view.setVectorGenerationModelView(vectorGenerationModelPresenter.getView());
         view.setRerankModelView(rerankModelPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
-        registerHandler(clusterPresenter.addSelectionListener(event -> onChange()));
-        registerHandler(vectorGenerationModelPresenter.addSelectionListener(event -> onChange()));
-        registerHandler(rerankModelPresenter.addSelectionListener(event -> onChange()));
-        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
+        own(clusterPresenter.addSelectionListener(event -> onChange()));
+        own(vectorGenerationModelPresenter.addSelectionListener(event -> onChange()));
+        own(rerankModelPresenter.addSelectionListener(event -> onChange()));
+        own(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

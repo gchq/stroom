@@ -54,13 +54,9 @@ public class DataGenSettingsPresenter
         destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
         destinationFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setDestinationFeed(destinationFeedPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(destinationFeedPresenter.addSelectionListener(e -> onChange()));
-        registerHandler(templatePresenter.addValueChangeHandler(e -> onChange()));
+        own(destinationFeedPresenter.addSelectionListener(e -> onChange()));
+        own(templatePresenter.addValueChangeHandler(e -> onChange()));
     }
 
     @Override

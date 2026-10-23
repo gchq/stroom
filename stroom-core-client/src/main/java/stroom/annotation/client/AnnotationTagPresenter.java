@@ -76,11 +76,8 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
         deleteButton.setEnabled(false);
 
         view.setView(annotationTagListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(annotationTagListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(annotationTagListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();

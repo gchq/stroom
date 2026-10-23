@@ -680,11 +680,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         textPresenter.setMode(mode);
     }
 
-    @Override
-    protected void onBind() {
-
-    }
-
     private boolean isCurrentDataSegmented() {
         return lastResult != null
                 && (DataType.SEGMENTED.equals(lastResult.getDataType())

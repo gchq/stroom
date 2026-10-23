@@ -144,6 +144,39 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         FloorMapEditorHelp.addHelpButton(toolbar, "Fact List help", "Fact List", FloorMapEditorHelp.factList());
 
         view.setToolbar(toolbar);
+
+        //noinspection unused e
+        own(selectionModel.addSelectionHandler(e -> {
+            final List<FactObject> selected = selectionModel.getSelectedItems();
+            final FactObject primary = selectionModel.getSelected();
+            updateEndButton();
+            deleteButton.setEnabled(!selected.isEmpty());
+            if (multiSelectionConsumer != null) {
+                multiSelectionConsumer.accept(selected);
+            }
+
+            if (primary != null) {
+                final List<FactObject> list = dataProvider.getList();
+                if (list != null) {
+                    final int index = list.indexOf(primary);
+                    if (index >= 0) {
+                        com.google.gwt.core.client.Scheduler.get().scheduleDeferred(() -> {
+                            if (index < dataGrid.getVisibleItemCount()) {
+                                try {
+                                    final com.google.gwt.dom.client.TableRowElement rowEl =
+                                            dataGrid.getRowElement(index);
+                                    if (rowEl != null) {
+                                        stroom.widget.util.client.ElementUtil.scrollIntoViewNearest(rowEl);
+                                    }
+                                } catch (final Exception ex) {
+                                    // Ignore - if the scroll doesn't work it doesn't matter
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }));
     }
 
     private void onShowAll(final boolean showAll) {
@@ -181,43 +214,6 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                 deleteConsumer.accept(selected.getKey());
             }
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        //noinspection unused e
-        registerHandler(selectionModel.addSelectionHandler(e -> {
-            final List<FactObject> selected = selectionModel.getSelectedItems();
-            final FactObject primary = selectionModel.getSelected();
-            updateEndButton();
-            deleteButton.setEnabled(!selected.isEmpty());
-            if (multiSelectionConsumer != null) {
-                multiSelectionConsumer.accept(selected);
-            }
-
-            if (primary != null) {
-                final List<FactObject> list = dataProvider.getList();
-                if (list != null) {
-                    final int index = list.indexOf(primary);
-                    if (index >= 0) {
-                        com.google.gwt.core.client.Scheduler.get().scheduleDeferred(() -> {
-                            if (index < dataGrid.getVisibleItemCount()) {
-                                try {
-                                    final com.google.gwt.dom.client.TableRowElement rowEl =
-                                            dataGrid.getRowElement(index);
-                                    if (rowEl != null) {
-                                        stroom.widget.util.client.ElementUtil.scrollIntoViewNearest(rowEl);
-                                    }
-                                } catch (final Exception ex) {
-                                    // Ignore - if the scroll doesn't work it doesn't matter
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-        }));
     }
 
     private void initGridColumns() {

@@ -98,6 +98,16 @@ public class ConstraintListPresenter
 
         addColumns();
         enableButtons();
+
+        own(selectionModel.addSelectionHandler(event -> {
+            if (!readOnly) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
+            }
+        }));
+//        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void onNew() {
@@ -116,21 +126,6 @@ public class ConstraintListPresenter
         if (!readOnly) {
             onRemove();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (!readOnly) {
-                enableButtons();
-                if (event.getSelectionType().isDoubleSelect()) {
-                    onEdit();
-                }
-            }
-        }));
-//        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
 //    @Override

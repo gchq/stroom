@@ -181,6 +181,17 @@ public class FloorMapSettingsPresenter
 
         view.setSchemaToolbar(toolbar);
         view.setSchemaGrid(schemaGrid);
+
+        //noinspection unused e
+        // No validation on selection: the picker only offers FloorMapEventStoreDoc, and that
+        // type fixes its own state type, so there is no longer a wrong store to choose.
+        //noinspection unused e
+        own(eventsStoreRefPresenter.addSelectionListener(e -> onChange()));
+        //noinspection unused e
+        own(factsStoreRefPresenter.addSelectionListener(e -> onChange()));
+        //noinspection unused e
+        own(schemaSelectionModel.addSelectionChangeHandler(
+                e -> removeButton.setEnabled(schemaSelectionModel.getSelectedObject() != null)));
     }
 
     /// Builds the accessible name for a control in the schema grid.
@@ -409,22 +420,6 @@ public class FloorMapSettingsPresenter
     private static native Element getActiveElement(Document doc) /*-{
         return doc.activeElement;
     }-*/;
-
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        //noinspection unused e
-        // No validation on selection: the picker only offers FloorMapEventStoreDoc, and that
-        // type fixes its own state type, so there is no longer a wrong store to choose.
-        //noinspection unused e
-        registerHandler(eventsStoreRefPresenter.addSelectionListener(e -> onChange()));
-        //noinspection unused e
-        registerHandler(factsStoreRefPresenter.addSelectionListener(e -> onChange()));
-        //noinspection unused e
-        registerHandler(schemaSelectionModel.addSelectionChangeHandler(
-                e -> removeButton.setEnabled(schemaSelectionModel.getSelectedObject() != null)));
-    }
 
     /// Handles the *Add* button click by creating a new
     /// [FloorMapFieldMapping] with role [Role#CUSTOM], a placeholder

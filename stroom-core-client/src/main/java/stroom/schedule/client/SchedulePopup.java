@@ -70,11 +70,8 @@ public class SchedulePopup
         this.scheduledTimeClient = scheduledTimeClient;
         this.dateTimeFormatter = dateTimeFormatter;
         view.setUiHandlers(this);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(getView().getCalculateButton().addClickHandler(event -> calcTimes()));
+        own(getView().getCalculateButton().addClickHandler(event -> calcTimes()));
     }
 
     public void setSchedule(final Schedule schedule,

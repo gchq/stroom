@@ -128,6 +128,34 @@ public class AnalyticDataShardListPresenter
                 fetchNodes(range, dataConsumer, errorHandler, view);
             }
         };
+
+//        own(selectionModel.addSelectionHandler(event -> {
+//            enableButtons();
+//            if (event.getSelectionType().isDoubleSelect()) {
+//                onEdit(selectionModel.getSelected());
+//            }
+//        }));
+//        if (newButton != null) {
+//            own(newButton.addClickHandler(event -> {
+//                if (MouseUtil.isPrimary(event)) {
+//                    onNew();
+//                }
+//            }));
+//        }
+//        if (openButton != null) {
+//            own(openButton.addClickHandler(event -> {
+//                if (MouseUtil.isPrimary(event)) {
+//                    onEdit(selectionModel.getSelected());
+//                }
+//            }));
+//        }
+//        if (deleteButton != null) {
+//            own(deleteButton.addClickHandler(event -> {
+//                if (MouseUtil.isPrimary(event)) {
+//                    onDelete();
+//                }
+//            }));
+//        }
     }
 
     private void update() {
@@ -217,39 +245,6 @@ public class AnalyticDataShardListPresenter
 //        newButton.setEnabled(!isReadOnly());
 //        openButton.setEnabled(enabled);
 //        deleteButton.setEnabled(enabled);
-    }
-
-    @Override
-    protected void onBind() {
-//        registerHandler(selectionModel.addSelectionHandler(event -> {
-//            enableButtons();
-//            if (event.getSelectionType().isDoubleSelect()) {
-//                onEdit(selectionModel.getSelected());
-//            }
-//        }));
-//        if (newButton != null) {
-//            registerHandler(newButton.addClickHandler(event -> {
-//                if (MouseUtil.isPrimary(event)) {
-//                    onNew();
-//                }
-//            }));
-//        }
-//        if (openButton != null) {
-//            registerHandler(openButton.addClickHandler(event -> {
-//                if (MouseUtil.isPrimary(event)) {
-//                    onEdit(selectionModel.getSelected());
-//                }
-//            }));
-//        }
-//        if (deleteButton != null) {
-//            registerHandler(deleteButton.addClickHandler(event -> {
-//                if (MouseUtil.isPrimary(event)) {
-//                    onDelete();
-//                }
-//            }));
-//        }
-
-        super.onBind();
     }
 
     private void initTableColumns() {

@@ -125,13 +125,8 @@ public class BatchDocumentPermissionsPresenter
             docs = resultPage;
             batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
         });
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-//        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
+//        own(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
 //            docEdit.setEnabled(documentListPresenter.getSelected() != null);
 //            if (e.getSelectionType().isDoubleSelect()) {
 //                onEdit();

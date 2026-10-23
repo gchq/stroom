@@ -188,6 +188,18 @@ public class MetaPresenter
         // Init the buttons
         setStreamListSelectableEnabled(null);
         setStreamRelationListSelectableEnabled(null);
+
+        own(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            metaRelationListPresenter.setSelectedStream(metaListPresenter.getSelected(), true,
+                    !Status.UNLOCKED.equals(MetaExpressionUtil.getSingleStatus(getCriteria())));
+            // showData() gets called by the metaRelationListPresenter selection handler
+        }));
+        own(metaListPresenter.addSelectionListener(selected ->
+                setStreamListSelectableEnabled(selected)));
+        own(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event ->
+                showData()));
+        own(metaRelationListPresenter.addSelectionListener(selected ->
+                setStreamRelationListSelectableEnabled(selected)));
     }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
@@ -260,23 +272,6 @@ public class MetaPresenter
                 .onShow(e -> presenter.focus())
                 .onHideRequest(HidePopupRequestEventHandler)
                 .fire();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            metaRelationListPresenter.setSelectedStream(metaListPresenter.getSelected(), true,
-                    !Status.UNLOCKED.equals(MetaExpressionUtil.getSingleStatus(getCriteria())));
-            // showData() gets called by the metaRelationListPresenter selection handler
-        }));
-        registerHandler(metaListPresenter.addSelectionListener(selected ->
-                setStreamListSelectableEnabled(selected)));
-        registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event ->
-                showData()));
-        registerHandler(metaRelationListPresenter.addSelectionListener(selected ->
-                setStreamRelationListSelectableEnabled(selected)));
     }
 
     private void setExpression(final ExpressionOperator expression) {

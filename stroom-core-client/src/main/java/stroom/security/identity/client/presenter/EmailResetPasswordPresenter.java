@@ -60,11 +60,6 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
         });
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-    }
-
     public void show() {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)

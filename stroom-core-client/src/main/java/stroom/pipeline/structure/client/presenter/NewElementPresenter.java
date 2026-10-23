@@ -39,13 +39,8 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
     @Inject
     public NewElementPresenter(final EventBus eventBus, final NewElementView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
+        own(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 if (handler != null) {
                     HidePopupRequestEvent.builder(this).fire();

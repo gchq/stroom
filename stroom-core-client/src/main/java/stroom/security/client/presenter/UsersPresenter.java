@@ -87,12 +87,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
         /// Initialise state.
         onSelection();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(userList.getSelectionModel().addSelectionHandler(e -> {
+        own(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
     }

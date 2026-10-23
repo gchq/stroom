@@ -75,11 +75,8 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();

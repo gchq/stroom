@@ -92,6 +92,14 @@ public class ApiKeysPresenter
 //                        uiConfig.getHelpUrlQuickFilter()));
 //            }
 //        }, this);
+
+        own(getSelectionModel().addSelectionHandler(e -> {
+            onSelection();
+            if (e.getSelectionType().isDoubleSelect()
+                && NullSafe.hasOneItem(getSelectedItems())) {
+                editSelectedKey();
+            }
+        }));
     }
 
     private void setButtonStates() {
@@ -103,18 +111,6 @@ public class ApiKeysPresenter
         } else {
             deleteButton.setTitle("Delete Selected API Key");
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getSelectionModel().addSelectionHandler(e -> {
-            onSelection();
-            if (e.getSelectionType().isDoubleSelect()
-                && NullSafe.hasOneItem(getSelectedItems())) {
-                editSelectedKey();
-            }
-        }));
     }
 
     private void onSelection() {

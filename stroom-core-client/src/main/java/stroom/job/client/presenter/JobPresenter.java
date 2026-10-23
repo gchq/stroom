@@ -49,13 +49,8 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
 
         getView().setJobListView(jobListPresenter.getView());
         getView().setJobNodeListView(jobNodeListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(jobListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(jobListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final Job row = NullSafe.get(
                     jobListPresenter,
                     JobListPresenter::getSelectionModel,

@@ -38,12 +38,8 @@ public class CurrentSelectionPresenter
     public CurrentSelectionPresenter(final EventBus eventBus,
                                      final CurrentSelectionView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getHtml().addDomHandler(e ->
+        own(getView().getHtml().addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this, insertHandler), MouseDownEvent.getType()));
     }
 

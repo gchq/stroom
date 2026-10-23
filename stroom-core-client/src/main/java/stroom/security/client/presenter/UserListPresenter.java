@@ -128,11 +128,8 @@ public class UserListPresenter
         userListView.setUiHandlers(this);
         userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 UserFields.QUICK_FILTER_CONTEXT, this, this));
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void setupColumns() {

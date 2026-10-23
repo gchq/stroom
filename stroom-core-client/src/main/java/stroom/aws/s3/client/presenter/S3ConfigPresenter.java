@@ -114,12 +114,8 @@ public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3Confi
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(CONFIG);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+        own(downloadButton.addClickHandler(clickEvent -> {
             restFactory
                     .create(S3_CONFIG_RESOURCE)
                     .method(res -> res.download(docRef))

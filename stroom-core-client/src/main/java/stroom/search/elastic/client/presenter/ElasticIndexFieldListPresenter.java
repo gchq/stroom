@@ -60,11 +60,7 @@ public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFie
         view.setDataGridView(pagerView);
 
         addColumns();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
     }
 
     private void addColumns() {

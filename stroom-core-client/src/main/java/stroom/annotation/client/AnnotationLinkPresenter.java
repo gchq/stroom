@@ -76,6 +76,8 @@ public class AnnotationLinkPresenter
         remove = listPresenter.getView().getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
         remove.setEnabled(false);
         remove.setVisible(false);
+
+        own(listPresenter.addSelectionHandler(e -> enableButtons()));
     }
 
     private void onRemove() {
@@ -87,13 +89,6 @@ public class AnnotationLinkPresenter
                 }
             });
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(listPresenter.addSelectionHandler(e -> enableButtons()));
     }
 
     private void link(final Annotation annotation) {

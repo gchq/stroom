@@ -101,6 +101,13 @@ public class IndexVolumeGroupEditPresenter
 
         view.setListView(volumeStatusListPresenter.getView());
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
+
+        own(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            enableButtons();
+            if (event.getSelectionType().isDoubleSelect()) {
+                edit();
+            }
+        }));
     }
 
     private void onRescan() {
@@ -119,16 +126,6 @@ public class IndexVolumeGroupEditPresenter
                 throwable -> {
                 },
                 volumeStatusListPresenter.getTaskListener());
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
-                edit();
-            }
-        }));
     }
 
     private void create() {

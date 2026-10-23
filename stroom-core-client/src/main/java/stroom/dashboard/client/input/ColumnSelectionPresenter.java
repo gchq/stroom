@@ -69,6 +69,8 @@ public class ColumnSelectionPresenter
         view.setDataWidget(dataGrid);
 
         addColumns();
+
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     public void setSelectedColumns(final Set<ColumnRef> selectedColumns) {
@@ -83,12 +85,6 @@ public class ColumnSelectionPresenter
 
     public Set<ColumnRef> getSelectedColumns() {
         return selectedColumns;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
 

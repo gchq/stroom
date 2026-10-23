@@ -135,18 +135,15 @@ public class ScheduledProcessListPresenter
                 },
                 throwable -> knownNodeNames.clear(),
                 view);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             // A read only document's schedules can't be edited, so double clicking does nothing
             if (event.getSelectionType().isDoubleSelect() && !readOnly) {
                 scheduledProcessingPresenter.edit();
             }
         }));
-        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
+        own(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     private void addColumns() {

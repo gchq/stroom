@@ -75,12 +75,8 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
         addColumns();
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit();

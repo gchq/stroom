@@ -46,13 +46,8 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
 
         getView().setTaskSummaryView(processorTaskSummaryPresenter.getView());
         getView().setTaskListView(processorTaskListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(processorTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(processorTaskSummaryPresenter.getSelectionModel().addSelectionHandler(event -> {
             // Clear the task list.
             processorTaskListPresenter.clear();
 

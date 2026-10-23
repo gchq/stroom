@@ -79,11 +79,8 @@ public class ProfilePeriodListPresenter
 
         addColumns();
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit(selectionModel.getSelected());

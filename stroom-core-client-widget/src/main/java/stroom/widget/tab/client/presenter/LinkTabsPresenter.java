@@ -37,6 +37,17 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     @Inject
     public LinkTabsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
+
+        own(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
+            @Override
+            public void onSelection(final SelectionEvent<TabData> event) {
+                final TabData tab = event.getSelectedItem();
+                if (tab != null && tab != selectedTab) {
+                    changeSelectedTab(tab);
+                }
+            }
+        }));
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public TabData addTab(final String text, final Layer layer) {
@@ -54,21 +65,6 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     public void removeTab(final TabData tab) {
         getView().getTabBar().removeTab(tab);
         changeSelectedTab(firstTab);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(new SelectionHandler<TabData>() {
-            @Override
-            public void onSelection(final SelectionEvent<TabData> event) {
-                final TabData tab = event.getSelectedItem();
-                if (tab != null && tab != selectedTab) {
-                    changeSelectedTab(tab);
-                }
-            }
-        }));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public void changeSelectedTab(final TabData tab) {

@@ -85,6 +85,21 @@ public class QueryFavouritesPresenter
         editButton.setEnabled(false);
         deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Favourite", this::onDelete);
         deleteButton.setEnabled(false);
+
+        own(selectionModel.addSelectionChangeHandler(event -> {
+            final StoredQuery query = selectionModel.getSelectedObject();
+
+            if (query == null || query.getQuery() == null) {
+                expressionPresenter.read(null);
+                editButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+            } else {
+                expressionPresenter.read(query.getQuery().getExpression());
+                editButton.setEnabled(true);
+                deleteButton.setEnabled(true);
+            }
+        }));
+        own(selectionModel.addDoubleSelectHandler(event -> hide()));
     }
 
     private void onCreate() {
@@ -120,24 +135,6 @@ public class QueryFavouritesPresenter
                         }
                     });
         }
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-            final StoredQuery query = selectionModel.getSelectedObject();
-
-            if (query == null || query.getQuery() == null) {
-                expressionPresenter.read(null);
-                editButton.setEnabled(false);
-                deleteButton.setEnabled(false);
-            } else {
-                expressionPresenter.read(query.getQuery().getExpression());
-                editButton.setEnabled(true);
-                deleteButton.setEnabled(true);
-            }
-        }));
-        registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
     }
 
     public void show(final QueryPresenter queryPresenter, final String dashboardUuid,

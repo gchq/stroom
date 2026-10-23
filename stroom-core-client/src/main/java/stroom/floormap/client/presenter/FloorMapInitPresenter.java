@@ -138,15 +138,11 @@ public class FloorMapInitPresenter
         eventsStorePresenter.setIncludedTypes(FloorMapEventStoreDoc.TYPE);
         eventsStorePresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setEventsStoreView(eventsStorePresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         //noinspection unused e
-        registerHandler(factsStorePresenter.addSelectionListener(e -> validate()));
+        own(factsStorePresenter.addSelectionListener(e -> validate()));
         //noinspection unused e
-        registerHandler(eventsStorePresenter.addSelectionListener(e -> validate()));
+        own(eventsStorePresenter.addSelectionListener(e -> validate()));
     }
 
     // -- Validation --

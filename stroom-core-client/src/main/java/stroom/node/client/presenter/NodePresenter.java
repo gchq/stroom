@@ -51,13 +51,8 @@ public class NodePresenter
 
         getView().setNodeListView(nodeStatusListPresenter.getView());
         getView().setNodeJobListView(nodeJobListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(nodeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(nodeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeStatusListPresenter.getSelectionModel().getSelected();
             final String nodeName = NullSafe.get(row, NodeStatusResult::getNode, Node::getName);
             nodeJobListPresenter.read(nodeName);

@@ -252,6 +252,26 @@ public class AnnotationEditPresenter
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
+
+        own(annotationStatusPresenter.addDataSelectionHandler(e -> {
+            final AnnotationTag selected = annotationStatusPresenter.getSelected();
+            if (!Objects.equals(currentStatus, selected)) {
+                changeStatus(selected);
+                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
+            }
+        }));
+        own(annotationLabelPresenter.addSelectionHandler(e -> {
+            final List<AnnotationTag> selected = annotationLabelPresenter.getSelectedItems();
+            changeAnnotationLabels(selected);
+        }));
+        own(annotationCollectionPresenter.addSelectionHandler(e -> {
+            final List<AnnotationTag> selected = annotationCollectionPresenter.getSelectedItems();
+            changeAnnotationCollections(selected);
+        }));
+        own(commentPresenter.addDataSelectionHandler(e -> {
+            final AnnotationTag selected = commentPresenter.getSelected();
+            changeComment(selected);
+        }));
     }
 
     private FindAnnotationTagCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -260,31 +280,6 @@ public class AnnotationEditPresenter
         // than a term; the filter is the user's own text and goes to the server unparsed.
         // See FindAnnotationTagCriteria.
         return new FindAnnotationTagCriteria(annotationTagType, filter);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(annotationStatusPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = annotationStatusPresenter.getSelected();
-            if (!Objects.equals(currentStatus, selected)) {
-                changeStatus(selected);
-                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
-            }
-        }));
-        registerHandler(annotationLabelPresenter.addSelectionHandler(e -> {
-            final List<AnnotationTag> selected = annotationLabelPresenter.getSelectedItems();
-            changeAnnotationLabels(selected);
-        }));
-        registerHandler(annotationCollectionPresenter.addSelectionHandler(e -> {
-            final List<AnnotationTag> selected = annotationCollectionPresenter.getSelectedItems();
-            changeAnnotationCollections(selected);
-        }));
-        registerHandler(commentPresenter.addDataSelectionHandler(e -> {
-            final AnnotationTag selected = commentPresenter.getSelected();
-            changeComment(selected);
-        }));
     }
 
     private void changeTitle(final String selected) {

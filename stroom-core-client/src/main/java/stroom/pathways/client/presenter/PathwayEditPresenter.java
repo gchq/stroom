@@ -54,17 +54,13 @@ public class PathwayEditPresenter extends MyPresenterWidget<PathwayEditView> {
         this.constraintListPresenter = constraintListPresenter;
         view.setTree(pathwayTreePresenter.getView());
         view.setConstraints(constraintListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(pathwayTreePresenter.getSelectionModel().addSelectionChangeHandler(e -> {
+        own(pathwayTreePresenter.getSelectionModel().addSelectionChangeHandler(e -> {
             final PathNode selected = pathwayTreePresenter.getSelectionModel().getSelectedObject();
             constraintListPresenter.setData(selected, readOnly);
         }));
 
-//        registerHandler(getView().getDetails().addClickHandler(e -> {
+//        own(getView().getDetails().addClickHandler(e -> {
 //            final Element target = e.getNativeEvent().getEventTarget().cast();
 //            if (target != null) {
 //                final Element node = ElementUtil.findParent(target, element ->

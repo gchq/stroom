@@ -95,6 +95,33 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
             obfuscatedFields = CIKey.setOf(extendedUiConfig.getObfuscatedFields());
             refresh();
         });
+
+//        own(upButton.addClickHandler(event -> {
+//            if (!isReadOnly()) {
+//                if (MouseUtil.isPrimary(event)) {
+//                    moveSelectedFieldUp();
+//                }
+//            }
+//        }));
+//        own(downButton.addClickHandler(event -> {
+//            if (!isReadOnly()) {
+//                if (MouseUtil.isPrimary(event)) {
+//                    moveSelectedFieldDown();
+//                }
+//            }
+//        }));
+        own(selectionModel.addSelectionHandler(event -> {
+            if (!isReadOnly()) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
+            }
+        }));
+        own(dataGrid.addColumnSortHandler(event -> {
+            GWT.log("Sort called");
+            refresh();
+        }));
     }
 
     private void onAddClicked() {
@@ -113,38 +140,6 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
         if (!isReadOnly()) {
             onRemove();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-//        registerHandler(upButton.addClickHandler(event -> {
-//            if (!isReadOnly()) {
-//                if (MouseUtil.isPrimary(event)) {
-//                    moveSelectedFieldUp();
-//                }
-//            }
-//        }));
-//        registerHandler(downButton.addClickHandler(event -> {
-//            if (!isReadOnly()) {
-//                if (MouseUtil.isPrimary(event)) {
-//                    moveSelectedFieldDown();
-//                }
-//            }
-//        }));
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (!isReadOnly()) {
-                enableButtons();
-                if (event.getSelectionType().isDoubleSelect()) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(dataGrid.addColumnSortHandler(event -> {
-            GWT.log("Sort called");
-            refresh();
-        }));
     }
 
     private void enableButtons() {

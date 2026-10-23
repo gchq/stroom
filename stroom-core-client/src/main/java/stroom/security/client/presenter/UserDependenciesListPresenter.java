@@ -99,11 +99,8 @@ public class UserDependenciesListPresenter
         dependenciesListView.setUiHandlers(this);
         dependenciesListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindUserDependenciesCriteria.QUICK_FILTER_CONTEXT, this, this));
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     @Override

@@ -40,12 +40,8 @@ public class TextConverterSettingsPresenter
         view.getConverterType().addItem(TextConverterType.NONE);
         view.getConverterType().addItem(TextConverterType.DATA_SPLITTER);
         view.getConverterType().addItem(TextConverterType.XML_FRAGMENT);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(
+        own(
                 getView().getConverterType().addValueChangeHandler(event -> onChange()));
     }
 

@@ -180,13 +180,9 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         showFactsButton.setPressed(showFacts);
 
         view.setToolbar(toolbar);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         //noinspection unused e
-        registerHandler(selectionModel.addSelectionChangeHandler(e -> {
+        own(selectionModel.addSelectionChangeHandler(e -> {
             final EntityEntry selected = selectionModel.getSelectedObject();
             stopTrackingButton.setEnabled(selected != null);
             addToGroupButton.setEnabled(selected != null && groupsSupplier != null);
@@ -198,7 +194,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         // Clicking the row that is already selected does not fire a
         // SelectionChangeEvent, but it must still re-invoke the consumer —
         // that is the "re-centre / resume following after a manual pan" gesture.
-        registerHandler(dataGrid.addCellPreviewHandler((final CellPreviewEvent<EntityEntry> e) -> {
+        own(dataGrid.addCellPreviewHandler((final CellPreviewEvent<EntityEntry> e) -> {
             if ("click".equals(e.getNativeEvent().getType())) {
                 final EntityEntry clicked = e.getValue();
                 if (clicked != null

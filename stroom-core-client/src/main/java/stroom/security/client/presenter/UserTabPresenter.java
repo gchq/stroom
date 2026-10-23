@@ -141,14 +141,10 @@ public class UserTabPresenter
         }
 
         selectTab(INFO_TAB);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+        own(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e ->
+        own(getView().getTabBar().addShowMenuHandler(e ->
                 getEventBus().fireEvent(e)));
     }
 

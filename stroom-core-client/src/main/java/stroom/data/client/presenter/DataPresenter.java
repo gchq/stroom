@@ -216,6 +216,12 @@ public class DataPresenter
         dataView.setNavigatorView(itemNavigatorPresenter.getView());
         dataView.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
+
+        own(dataView.getTabBar().addSelectionHandler(event ->
+                onNewTabSelected(event.getSelectedItem())));
+        own(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        own(htmlPresenter.getWidget().addDomHandler(e ->
+                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
     @Override
@@ -266,17 +272,6 @@ public class DataPresenter
     private void hideTab(final TabData tab, final boolean hide) {
         dataView.getTabBar()
                 .setTabHidden(tab, hide);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(dataView.getTabBar().addSelectionHandler(event ->
-                onNewTabSelected(event.getSelectedItem())));
-        registerHandler(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
-        registerHandler(htmlPresenter.getWidget().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
     private void onNewTabSelected(final TabData tab) {

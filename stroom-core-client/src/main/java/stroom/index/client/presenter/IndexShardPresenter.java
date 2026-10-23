@@ -122,12 +122,8 @@ public class IndexShardPresenter
 
         addColumns();
         delayedUpdate = new DelayedUpdate(this::refresh);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void enableButtons() {

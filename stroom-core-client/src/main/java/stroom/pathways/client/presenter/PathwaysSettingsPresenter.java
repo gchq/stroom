@@ -59,13 +59,9 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setInfoFeedView(feedPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(traceStorePresenter.addSelectionListener(e -> onChange()));
-        registerHandler(feedPresenter.addSelectionListener(e -> onChange()));
+        own(traceStorePresenter.addSelectionListener(e -> onChange()));
+        own(feedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override

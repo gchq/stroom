@@ -157,24 +157,20 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         /// Initialise state.
         onSelection();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(userList.getSelectionModel().addSelectionHandler(e -> {
+        own(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
 
         // Deal with Member Of Groups pane.
-        registerHandler(parentsList.getSelectionModel().addSelectionHandler(e -> {
+        own(parentsList.getSelectionModel().addSelectionHandler(e -> {
             final User user = userList.getSelectionModel().getSelected();
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
 
         // Deal with Members in Group pane.
-        registerHandler(childrenList.getSelectionModel().addSelectionHandler(e -> {
+        own(childrenList.getSelectionModel().addSelectionHandler(e -> {
             final User group = userList.getSelectionModel().getSelected();
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);

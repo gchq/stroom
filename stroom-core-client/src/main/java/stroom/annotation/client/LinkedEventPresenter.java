@@ -102,6 +102,8 @@ public class LinkedEventPresenter
                         .build(),
                 "Id",
                 ColumnSizeConstants.MEDIUM_COL);
+
+        own(selectionModel.addSelectionHandler(e -> onSelection()));
     }
 
     private void linkEvent(final EventId eventId) {
@@ -135,13 +137,6 @@ public class LinkedEventPresenter
 
             unlinkEvent(selected);
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(e -> onSelection()));
-
     }
 
     private void onAddEvent() {

@@ -129,19 +129,14 @@ public class FloorMapClusterPresenter
         trackButton.setEnabled(false);
 
         initGridColumns();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
 
         //noinspection unused e
-        registerHandler(selectionModel.addSelectionChangeHandler(e ->
+        own(selectionModel.addSelectionChangeHandler(e ->
                 trackButton.setEnabled(selectionModel.getSelectedObject() != null)));
 
         // Double-click is the shortcut for the button, so a member can be
         // followed without a second aim at the toolbar.
-        registerHandler(dataGrid.addCellPreviewHandler(
+        own(dataGrid.addCellPreviewHandler(
                 (final CellPreviewEvent<FloorMapClusterMember> e) -> {
                     if ("dblclick".equals(e.getNativeEvent().getType())) {
                         selectionModel.setSelected(e.getValue(), true);

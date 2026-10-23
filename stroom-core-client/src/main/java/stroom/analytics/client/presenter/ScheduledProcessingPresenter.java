@@ -68,12 +68,8 @@ public class ScheduledProcessingPresenter
         this.scheduledProcessEditPresenter = scheduledProcessEditPresenter;
         view.setScheduleList(scheduledProcessListPresenter.getView());
         view.setHistoryList(scheduledProcessHistoryListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(scheduledProcessListPresenter.addSelectionHandler(e -> {
+        own(scheduledProcessListPresenter.addSelectionHandler(e -> {
             scheduledProcessHistoryListPresenter.setExecutionSchedule(scheduledProcessListPresenter.getSelected());
         }));
     }

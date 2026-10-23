@@ -131,11 +131,8 @@ public class ManageGlobalPropertyListPresenter
         dataProvider = new ListDataProvider<>();
         dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshTable);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void resetLocalState() {

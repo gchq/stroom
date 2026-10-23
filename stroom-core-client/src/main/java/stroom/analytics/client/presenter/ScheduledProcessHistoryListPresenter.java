@@ -94,12 +94,9 @@ public class ScheduledProcessHistoryListPresenter
 
         addColumns();
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionHandler(ignored -> enableButtons()));
-        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
+        own(selectionModel.addSelectionHandler(ignored -> enableButtons()));
+        own(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     private void addColumns() {

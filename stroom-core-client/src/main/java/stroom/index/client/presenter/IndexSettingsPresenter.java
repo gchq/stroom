@@ -89,11 +89,8 @@ public class IndexSettingsPresenter
                         pipelinePickerPresenter::setQuickFilter);
             }
         }, this);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(pipelinePresenter.addSelectionListener(selection -> onChange()));
+        own(pipelinePresenter.addSelectionListener(selection -> onChange()));
     }
 
     @Override

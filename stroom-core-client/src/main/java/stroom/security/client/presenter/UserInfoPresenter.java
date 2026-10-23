@@ -50,13 +50,8 @@ public class UserInfoPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getIsEnabledTickBox().addValueChangeHandler(event -> {
+        own(getView().getIsEnabledTickBox().addValueChangeHandler(event -> {
             if (event.getValue() != null) {
                 onEnabledStateChange(event.getValue());
             }

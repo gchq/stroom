@@ -126,6 +126,43 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         // Must call this after initialising JobNodeListHelper
         initTable();
         refreshNodeStates();
+
+        // NodeListPresenter may change a node
+        own(getEventBus().addHandler(
+                NodeChangeEvent.getType(), event -> {
+                    // We are likely showing all jobs so just refresh
+                    refreshNodeStates();
+                }));
+
+        // JobListPresenter may change a job
+        own(getEventBus().addHandler(
+                JobChangeEvent.getType(), event -> {
+//                    GWT.log("Handling JobChangeEvent " + event);
+                    final String currentJobName = getJobNameCriteria();
+                    final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
+                    if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
+                        internalRefresh();
+                    }
+                }));
+
+        // NodeJobListPresenter may change a jobNode
+        own(getEventBus().addHandler(
+                JobNodeChangeEvent.getType(), event -> {
+//                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()
+//                            + " - jobNodes changed: " + event.getJobNodes().size());
+                    if (!Objects.equals(event.getSource().getClass(), JobNodeListPresenter.this.getClass())) {
+                        final Set<String> affectedJobNames = event.getJobNodes()
+                                .stream()
+                                .map(JobNode::getJobName)
+                                .collect(Collectors.toSet());
+                        final String currentJobName = getJobNameCriteria();
+                        if (currentJobName != null && affectedJobNames.contains(currentJobName)) {
+                            internalRefresh();
+                        }
+                    }
+                }));
+
+        own(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private void refreshNodeStates() {
@@ -143,48 +180,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         if (autoRefresh) {
             internalRefresh();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        // NodeListPresenter may change a node
-        registerHandler(getEventBus().addHandler(
-                NodeChangeEvent.getType(), event -> {
-                    // We are likely showing all jobs so just refresh
-                    refreshNodeStates();
-                }));
-
-        // JobListPresenter may change a job
-        registerHandler(getEventBus().addHandler(
-                JobChangeEvent.getType(), event -> {
-//                    GWT.log("Handling JobChangeEvent " + event);
-                    final String currentJobName = getJobNameCriteria();
-                    final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
-                    if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
-                        internalRefresh();
-                    }
-                }));
-
-        // NodeJobListPresenter may change a jobNode
-        registerHandler(getEventBus().addHandler(
-                JobNodeChangeEvent.getType(), event -> {
-//                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()
-//                            + " - jobNodes changed: " + event.getJobNodes().size());
-                    if (!Objects.equals(event.getSource().getClass(), JobNodeListPresenter.this.getClass())) {
-                        final Set<String> affectedJobNames = event.getJobNodes()
-                                .stream()
-                                .map(JobNode::getJobName)
-                                .collect(Collectors.toSet());
-                        final String currentJobName = getJobNameCriteria();
-                        if (currentJobName != null && affectedJobNames.contains(currentJobName)) {
-                            internalRefresh();
-                        }
-                    }
-                }));
-
-        registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(

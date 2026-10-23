@@ -57,17 +57,14 @@ public class BasicTableFilterSettingsPresenter
         this.columnSelectionPresenter = columnSelectionPresenter;
         view.setColumnList(columnSelectionPresenter.getView());
         view.setUiHandlers(this);
+
+        own(columnSelectionPresenter.addValueChangeHandler(e ->
+                multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns())));
     }
 
     @Override
     public void focus() {
         getView().focus();
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(columnSelectionPresenter.addValueChangeHandler(e ->
-                multiRulesPresenter.setSelectedColumns(columnSelectionPresenter.getSelectedColumns())));
     }
 
     @Override

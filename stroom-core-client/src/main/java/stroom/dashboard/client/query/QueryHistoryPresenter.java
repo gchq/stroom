@@ -69,11 +69,8 @@ public class QueryHistoryPresenter
 
         selectionModel = new MySingleSelectionModel<>();
         view.getCellList().setSelectionModel(selectionModel);
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+        own(selectionModel.addSelectionChangeHandler(event -> {
             final StoredQuery query = selectionModel.getSelectedObject();
 
             if (query == null || query.getQuery() == null) {
@@ -82,7 +79,7 @@ public class QueryHistoryPresenter
                 expressionPresenter.read(query.getQuery().getExpression());
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(event ->
+        own(selectionModel.addDoubleSelectHandler(event ->
                 HidePopupRequestEvent.builder(this).fire()));
     }
 

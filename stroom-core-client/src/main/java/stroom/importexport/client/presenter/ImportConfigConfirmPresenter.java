@@ -129,18 +129,8 @@ public class ImportConfigConfirmPresenter extends
         });
 
         addColumns();
-    }
 
-    private void setRootDocRef(final DocRef rootDocRef) {
-        importSettingsBuilder.rootDocRef(rootDocRef);
-        refresh();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(rootFolderPresenter.addSelectionListener(selected -> {
+        own(rootFolderPresenter.addSelectionListener(selected -> {
             if (selected != null &&
                 selected.compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
                 selected.getUuid().length() > 1) {
@@ -149,6 +139,11 @@ public class ImportConfigConfirmPresenter extends
                 setRootDocRef(null);
             }
         }));
+    }
+
+    private void setRootDocRef(final DocRef rootDocRef) {
+        importSettingsBuilder.rootDocRef(rootDocRef);
+        refresh();
     }
 
     @Override

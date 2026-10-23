@@ -86,14 +86,9 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Expression Item",
                 this::delete);
         deleteItemButton.setEnabled(false);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
-        registerHandler(expressionPresenter.addContextMenuHandler(event -> {
+        own(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
+        own(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());

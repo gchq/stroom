@@ -55,12 +55,8 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
         this.dateTimeFormatter = dateTimeFormatter;
 
         view.setListView(resultStoreListPresenter.getView());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(resultStoreListPresenter.getSelectionModel().addSelectionHandler(event -> {
+        own(resultStoreListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final TableBuilder tb = new TableBuilder();
             final ResultStoreInfo resultStoreInfo = resultStoreListPresenter.getSelectionModel().getSelected();
             if (resultStoreInfo != null) {

@@ -78,12 +78,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
             this.readOnly = readOnly;
             enableButtons();
         });
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        own(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void onAdd() {

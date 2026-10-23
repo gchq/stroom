@@ -60,23 +60,18 @@ public class AppPermissionsPresenter
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
         appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
+        own(appUserPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             editPermissions();
         }));
-        registerHandler(permissionVisibility.addValueChangeHandler(e -> {
+        own(permissionVisibility.addValueChangeHandler(e -> {
             appUserPermissionsListPresenter.setShowLevel(permissionVisibility.getValue());
             appUserPermissionsListPresenter.refresh();
         }));
-        registerHandler(appPermissionsEditPresenter.getSelectionModel()
+        own(appPermissionsEditPresenter.getSelectionModel()
                 .addSelectionHandler(e -> appPermissionsEditPresenter.updateDetails()));
 
-        registerHandler(appPermissionsEditPresenter.addValueChangeHandler(e -> {
+        own(appPermissionsEditPresenter.addValueChangeHandler(e -> {
             GWT.log("valueChange, isRefreshUsers: " + e.getValue().isRefreshUsers()
                     + ", isRefreshDetails: " + e.getValue().isRefreshDetails());
             if (e.getValue().isRefreshUsers()) {

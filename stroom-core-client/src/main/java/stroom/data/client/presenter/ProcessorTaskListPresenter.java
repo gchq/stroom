@@ -100,11 +100,8 @@ public class ProcessorTaskListPresenter
         criteria = new ExpressionCriteria();
         addColumns();
         OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget());
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {

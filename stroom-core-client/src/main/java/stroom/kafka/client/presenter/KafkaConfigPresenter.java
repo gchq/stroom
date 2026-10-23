@@ -114,12 +114,8 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(CONFIG);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+        own(downloadButton.addClickHandler(clickEvent -> {
             restFactory
                     .create(KAFKA_CONFIG_RESOURCE)
                     .method(res -> res.download(docRef))

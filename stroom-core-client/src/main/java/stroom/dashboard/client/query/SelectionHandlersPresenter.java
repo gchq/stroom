@@ -129,6 +129,19 @@ public class SelectionHandlersPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+
+        own(listPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
+            if (rule != null) {
+//                expressionPresenter.read(rule.getExpression());
+                if (event.getSelectionType().isDoubleSelect()) {
+                    edit(rule);
+                }
+            } else {
+//                expressionPresenter.read(null);
+            }
+            updateButtons();
+        }));
     }
 
     @Override
@@ -219,24 +232,6 @@ public class SelectionHandlersPresenter
                 setDirty(true);
             }
         });
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-//                expressionPresenter.read(rule.getExpression());
-                if (event.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-//                expressionPresenter.read(null);
-            }
-            updateButtons();
-        }));
-
-        super.onBind();
     }
 
     private void add() {

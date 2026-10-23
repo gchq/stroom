@@ -99,6 +99,15 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
         addColumns();
         enableButtons();
+
+        own(selectionModel.addSelectionHandler(event -> {
+            if (!isReadOnly()) {
+                enableButtons();
+                if (event.getSelectionType().isDoubleSelect()) {
+                    onEdit();
+                }
+            }
+        }));
     }
 
     private void onNew() {
@@ -117,20 +126,6 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         if (!isReadOnly()) {
             onRemove();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (!isReadOnly()) {
-                enableButtons();
-                if (event.getSelectionType().isDoubleSelect()) {
-                    onEdit();
-                }
-            }
-        }));
     }
 
     private void enableButtons() {

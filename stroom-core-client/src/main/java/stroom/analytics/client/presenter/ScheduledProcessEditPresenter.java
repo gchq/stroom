@@ -132,14 +132,10 @@ public class ScheduledProcessEditPresenter
                                 throwable.getMessage(),
                                 null),
                 this);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(errorFeedPresenter.addSelectionListener(e -> onChange()));
-        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
-        registerHandler(userRefSelectionBoxPresenter.addSelectionListener(e -> onChange()));
+        own(errorFeedPresenter.addSelectionListener(e -> onChange()));
+        own(getView().getScheduleBox().addValueChangeHandler(e -> onChange()));
+        own(userRefSelectionBoxPresenter.addSelectionListener(e -> onChange()));
     }
 
     public void show(final ExecutionSchedule executionSchedule,

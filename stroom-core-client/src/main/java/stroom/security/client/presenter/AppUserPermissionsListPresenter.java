@@ -126,12 +126,8 @@ public class AppUserPermissionsListPresenter
                 UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     @Override

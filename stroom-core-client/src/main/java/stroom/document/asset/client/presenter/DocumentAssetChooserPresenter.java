@@ -46,6 +46,17 @@ public class DocumentAssetChooserPresenter
         this.tree = new Tree(new AssetTreeResources(), true);
         this.tree.setStylePrimaryName("visualisation-asset-tree");
         view.setTree(tree);
+
+        own(tree.addSelectionHandler(event -> {
+            final TreeItem item = event.getSelectedItem();
+            if (item instanceof DocumentAssetTreeItem && ((DocumentAssetTreeItem) item).isLeaf()) {
+                selectedItem = (DocumentAssetTreeItem) item;
+                EnablePopupEvent.builder(this).action(DialogAction.OK).fire();
+            } else {
+                selectedItem = null;
+                DisablePopupEvent.builder(this).action(DialogAction.OK).fire();
+            }
+        }));
     }
 
     public void setDocument(final AbstractDoc document) {
@@ -64,22 +75,6 @@ public class DocumentAssetChooserPresenter
         if (document != null) {
             fetchDraftAssets();
         }
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(tree.addSelectionHandler(event -> {
-            final TreeItem item = event.getSelectedItem();
-            if (item instanceof DocumentAssetTreeItem && ((DocumentAssetTreeItem) item).isLeaf()) {
-                selectedItem = (DocumentAssetTreeItem) item;
-                EnablePopupEvent.builder(this).action(DialogAction.OK).fire();
-            } else {
-                selectedItem = null;
-                DisablePopupEvent.builder(this).action(DialogAction.OK).fire();
-            }
-        }));
     }
 
     private void fetchDraftAssets() {

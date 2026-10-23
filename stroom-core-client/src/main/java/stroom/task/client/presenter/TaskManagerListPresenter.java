@@ -205,6 +205,13 @@ public class TaskManagerListPresenter
 
         // Handle use of the expander column.
         dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
+
+        own(dataGrid.addColumnSortHandler(event -> {
+            // As we get data async from all nodes we can't be sure when we have finished so
+            // need to clear the expandAllRequestState prior to fetching
+            treeAction.resetExpandAllRequestState();
+            dataProvider.refresh();
+        }));
     }
 
     private void onAutoRefreshToggled() {
@@ -228,20 +235,6 @@ public class TaskManagerListPresenter
         treeAction.collapseAll();
         dataProvider.refresh();
         updateButtonStates();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-
-
-        registerHandler(dataGrid.addColumnSortHandler(event -> {
-            // As we get data async from all nodes we can't be sure when we have finished so
-            // need to clear the expandAllRequestState prior to fetching
-            treeAction.resetExpandAllRequestState();
-            dataProvider.refresh();
-        }));
     }
 
     private void showWarnings() {

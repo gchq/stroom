@@ -69,12 +69,8 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
 
         addButton.setEnabled(true);
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        own(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
     private void onAdd() {

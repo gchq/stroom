@@ -141,6 +141,31 @@ public class UserRefPopupPresenter
                 UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
+
+        own(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                if (selectionModel.getSelected() != null) {
+                    HidePopupRequestEvent.builder(this).fire();
+                }
+            } else {
+                NullSafe.consume(selectionModel.getSelected(), userRef ->
+                        getView().announce(userRef.getDisplayName() + " chosen"));
+            }
+        }));
+        // Enter on a row chooses that row (the one with the focus, which may not be chosen yet, e.g.
+        // after filtering) and closes the dialog, as OK does
+        own(dataGrid.addDomHandler(event -> {
+            final int row = dataGrid.getKeyboardSelectedRow();
+            final List<UserRef> rows = dataGrid.getVisibleItems();
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
+                && isInRows(event.getNativeEvent())
+                && row >= 0 && row < rows.size()) {
+                event.preventDefault();
+                selectionModel.setSelected(rows.get(row));
+                HidePopupRequestEvent.builder(this).fire();
+            }
+        }, KeyDownEvent.getType()));
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void setupColumns() {
@@ -181,35 +206,6 @@ public class UserRefPopupPresenter
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                if (selectionModel.getSelected() != null) {
-                    HidePopupRequestEvent.builder(this).fire();
-                }
-            } else {
-                NullSafe.consume(selectionModel.getSelected(), userRef ->
-                        getView().announce(userRef.getDisplayName() + " chosen"));
-            }
-        }));
-        // Enter on a row chooses that row (the one with the focus, which may not be chosen yet, e.g.
-        // after filtering) and closes the dialog, as OK does
-        registerHandler(dataGrid.addDomHandler(event -> {
-            final int row = dataGrid.getKeyboardSelectedRow();
-            final List<UserRef> rows = dataGrid.getVisibleItems();
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER
-                && isInRows(event.getNativeEvent())
-                && row >= 0 && row < rows.size()) {
-                event.preventDefault();
-                selectionModel.setSelected(rows.get(row));
-                HidePopupRequestEvent.builder(this).fire();
-            }
-        }, KeyDownEvent.getType()));
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     public void setSelectionChangeConsumer(final Consumer<UserRef> selectionChangeConsumer) {

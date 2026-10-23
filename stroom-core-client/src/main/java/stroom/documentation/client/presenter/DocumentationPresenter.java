@@ -87,12 +87,8 @@ public class DocumentationPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(DOCUMENTATION);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+        own(downloadButton.addClickHandler(clickEvent -> {
             restFactory
                     .create(DOCUMENTATION_RESOURCE)
                     .method(res -> res.download(docRef))

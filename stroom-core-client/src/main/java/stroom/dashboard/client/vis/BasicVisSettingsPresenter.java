@@ -77,21 +77,18 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         visualisationPresenter.setRequiredPermissions(DocumentPermission.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());
-    }
 
-    @Override
-    public void focus() {
-        getView().focus();
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(visualisationPresenter.addSelectionListener(event -> {
+        own(visualisationPresenter.addSelectionListener(event -> {
             if (!Objects.equals(currentVisualisation, visualisationPresenter.getSelectedEntityReference())) {
                 writeDynamicSettings(dynamicSettings);
                 loadVisualisation(visualisationPresenter.getSelectedEntityReference(), dynamicSettings);
             }
         }));
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     @Override
