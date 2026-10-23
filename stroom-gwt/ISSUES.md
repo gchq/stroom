@@ -296,7 +296,12 @@ run of 22 October 2026 (1,538 stories).
     for a chat's messages every second while a request was in flight and didn't stop when it was
     disposed, so a chat closed while working polled the server for ever, drawing into a detached
     panel (`AskAiChatPanel` `StopWhileWorking`); it now stops.
-  * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
+  * Fixed (23 October 2026), `AppShell` `ActivityChoosesOnStartup`: focusing the screen left the
+    focus outside it. The test runner checked for leaks before its other checks, and the leak
+    check's closing and opening the screen again lost what the play left (the focus, the dialog it
+    opened), which they look at; it now checks for leaks last. The same fixed master's
+    `AppShell` `KeyboardShortcuts`, `OpenedScreenTakesFocus` and `MovesBetweenAreas` and
+    `DashboardEditor` `TableFilterRow`, which fail only with the leak check.
 * **Fixed** (on master by `3c9ed072be` and `b3e7f34898`, found 23 October 2026, merging master into
   the remove_gwtp branch): the workbench's JVM tests `TestAllStories` and `TestPresenterCoverage`
   failed on master too, as
@@ -308,7 +313,9 @@ run of 22 October 2026 (1,538 stories).
   the workbench doesn't compile ("method fades() is already defined"); the remove_gwtp branch keeps
   one of them.
 * **Open** (found 23 October 2026, on master `9ddf5f0b07`, and the same after merging it into
-  remove_gwtp): these stories fail with the leak check on master itself:
+  remove_gwtp): these stories fail with the leak check on master itself (all fixed on the
+  remove_gwtp branch on 23 October 2026, in the test runner, the story harness and
+  `AskStroomAiPresenter`: see the entries on the leak check, the AI chat and the check order):
   * the five `AskAiChatPanel` stories `SendAndReceive`, `AttachmentReady`, `DeleteMessageConfirm`
     and `NewChatClears` (each close keeps 46 DOM nodes and 4 listeners) and `StopWhileWorking`;
   * `AppShell` `MovesBetweenAreas`: "Real input: the opened document has the focus";

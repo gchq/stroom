@@ -381,9 +381,6 @@ async function runStoryOnce(browser, story, options, attempt) {
       consoleErrors: result.consoleErrors,
       failOnConsole: options.failOnConsole,
     }));
-    if (options.leakCheck && result.status === 'PASS') {
-      await checkForLeak(page, story, options, result);
-    }
     if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
         && !unresponsive && !seen.crashed) {
       await checkRealInput(page, REAL_INPUT_CHECKS[story.id], options, result);
@@ -397,6 +394,11 @@ async function runStoryOnce(browser, story, options, attempt) {
     // After the screenshot, as it moves the focus
     if (result.status === 'PASS' && !unresponsive && !seen.crashed) {
       await checkContentFocus(page, options, result);
+    }
+    // Last, as it closes the screen and opens it again, losing what the play left, which the checks
+    // above look at (e.g. the focus, or the row a play chose)
+    if (options.leakCheck && result.status === 'PASS') {
+      await checkForLeak(page, story, options, result);
     }
   } catch (error) {
     // e.g. the page crashed, or the browser has gone
