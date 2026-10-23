@@ -19,7 +19,18 @@ jobs:
         # You must be a COLLABORATOR, MEMBER or OWNER to raise a PR, else it will be closed.
       - name: Close PRs from non-collaborators
         id: close_pr
-        if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        # Also allow PRs from dependabot
+        if: >-
+          ${{
+            !(
+              github.event.pull_request.user.login == 'dependabot[bot]' &&
+              github.event.pull_request.user.type == 'Bot'
+            ) &&
+            !contains(
+              fromJSON('["COLLABORATOR","MEMBER","OWNER"]'),
+              github.event.pull_request.author_association
+            )
+          }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}

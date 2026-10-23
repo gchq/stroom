@@ -58,6 +58,15 @@ public final class VisAccessibilityStories {
         // Static utility
     }
 
+    // What fades: the whole bar, or with a high contrast theme (forced colours) only its fill, so
+    // that its outline still shows. Asked when a play runs, in the browser, as the check is native
+    // and the stories are also built on the JVM (e.g. TestAllStories).
+    private static String fades() {
+        return StroomThemeDecorator.isForcedColours()
+                ? "fill-opacity"
+                : "opacity";
+    }
+
     /// Adds the stories to the registry.
     ///
     /// @param registry The registry to add to.
