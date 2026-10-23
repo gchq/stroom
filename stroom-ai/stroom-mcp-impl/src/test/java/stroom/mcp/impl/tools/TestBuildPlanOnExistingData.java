@@ -399,6 +399,25 @@ class TestBuildPlanOnExistingData {
         assertThat(String.valueOf(next(result).get("then"))).startsWith("this build works from");
     }
 
+    @Test
+    void aTranslationXsltSavedFromItsMappingStartsTheEventsStageWithoutASurvey() {
+        // The Stroom MCP server's plan.py counts a translation XSLT saved from a mapping as starting the events stage
+        // (tests/test_new_version.py: "Not surveyed first: the XSLT saved from its mapping is what starts the events
+        // stage"). Seen in its e2e: the XSLT saved, the plan still said to choose the work (stream_meta), and never
+        // reached its pipeline.
+        facts.docs = List.of(FakeBuildFacts.doc("XSLT", "x", "ACME-Events"));
+        facts.sources = List.of("ACME");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        final Map<String, Object> result = status();
+        assertThat(state(result, "translation")).isEqualTo("done");
+        assertThat(next(result).get("step")).isEqualTo("pipeline");
+        // A feed nothing translates: the best template, as for a new source.
+        assertThat(call(result)).isEqualTo(Map.of("tool", "find_pipeline_templates", "arguments",
+                Map.of("stage", "translation")));
+        assertThat(state(result, "stepped")).isEqualTo("to do");
+        assertThat(state(result, "feed")).isEqualTo("not needed");
+    }
+
     private void surveyedFeed() {
         facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),
                 FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events"), FakeBuildFacts.doc("XSLT", "x", "X"));

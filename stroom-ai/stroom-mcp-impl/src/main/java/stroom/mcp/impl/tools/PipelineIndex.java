@@ -157,11 +157,14 @@ class PipelineIndex {
     /// @param text  Text the documents' content must contain, e.g. `CEF:0`.
     /// @param limit The most matches asked of the content index.
     /// @return The documents of any type the user can view whose content contains it (any case), in the content
-    /// index's order; none while the index isn't ready, or if it can't be searched.
+    /// index's order; none while the index is still being built, or if it can't be searched. As the Stroom MCP
+    /// server's explorer content search did, the search itself starts the index's first build on this node (and
+    /// waits a moment for it), so a later call finds what it holds: seen in e2e, asked only once it was ready, an
+    /// index nothing else had started was never searched.
     List<DocRef> withContent(final String text, final int limit) {
         final ContentIndex contentIndex = contentIndexProvider.get();
         try {
-            if (contentIndex == null || !contentIndex.isReady()) {
+            if (contentIndex == null) {
                 return List.of();
             }
             final ResultPage<DocContentMatch> page = contentIndex.findInContent(new FindInContentRequest(
