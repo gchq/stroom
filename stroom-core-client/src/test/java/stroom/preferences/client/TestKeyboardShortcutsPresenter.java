@@ -53,6 +53,9 @@ class TestKeyboardShortcutsPresenter {
                 new ShortcutRow("Go to next tab", "Alt+PageDown", "General"),
                 new ShortcutRow("Show keyboard shortcuts", "Shift+/", "General"),
                 new ShortcutRow("Move up", "W, K, Up", "Lists"),
+                new ShortcutRow("Rename item", "F2", "Explorer"),
+                new ShortcutRow("Show item info", "Alt+Enter", "Explorer"),
+                new ShortcutRow("Close saved tabs", "Alt+Shift+S", "General"),
                 new ShortcutRow("Go to Properties", "G P", "Go to"),
                 // Enter once, not also its other key codes (MacEnter, a line feed)
                 new ShortcutRow("OK, or run a query", "Ctrl+Enter", KeyboardShortcutsPresenter.BUILT_IN),
@@ -60,9 +63,10 @@ class TestKeyboardShortcutsPresenter {
                 new ShortcutRow("Open", "Enter", KeyboardShortcutsPresenter.BUILT_IN));
         // An action with no shortcut isn't listed
         assertThat(rows).noneMatch(row -> row.action().equals(Action.GOTO_USERS.getDisplayName()));
-        // The groups in order: General, Lists, Go to, Create, then built in
+        // The groups in order: General, Lists, Explorer, Go to, Create, then built in
         assertThat(rows.stream().map(ShortcutRow::group).distinct())
-                .containsExactly("General", "Lists", "Go to", "Create", KeyboardShortcutsPresenter.BUILT_IN);
+                .containsExactly("General", "Lists", "Explorer", "Go to", "Create",
+                        KeyboardShortcutsPresenter.BUILT_IN);
     }
 
     @Test
