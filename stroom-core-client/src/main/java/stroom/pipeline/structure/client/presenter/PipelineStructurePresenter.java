@@ -173,6 +173,9 @@ public class PipelineStructurePresenter
             }
         });
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
+            // A right-click selects the element under the pointer just before the menu opens, and
+            // the selection change event comes later, so take the element from the selection model
+            selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (NullSafe.hasItems(menuItems)) {

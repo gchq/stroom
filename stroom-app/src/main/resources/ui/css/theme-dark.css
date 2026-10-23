@@ -67,7 +67,9 @@
     /* Stripes are overlays, so a table looks right on whatever it sits on (page, dialog or box) */
     --row__background-color--even: rgba(255, 255, 255, 0.04);
     --row__background-color--odd: transparent;
-    --row__background-color--hovered: #22262e;
+    /* A neutral grey, so a row under the mouse shows on the stripes (1.22:1, as #22262e was 1.00:1)
+       and is never taken for the blue of a selected one */
+    --row__background-color--hovered: #2f343e;
     --row__background-color--selected: rgb(0, 101, 167);
     /* A hovered or focused selected row darkens (as a pressed button does), keeping its text clear */
     --row__background-color--selected--hovered: #00568f;

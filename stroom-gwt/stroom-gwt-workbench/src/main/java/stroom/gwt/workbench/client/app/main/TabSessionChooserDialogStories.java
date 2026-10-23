@@ -82,6 +82,26 @@ public final class TabSessionChooserDialogStories {
                     play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("Pipeline Pipe A"));
                     play.expect(play.spy(ON_PICK)).not().toHaveBeenCalledWith("Feed Feed A");
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // The sessions are a list (listbox): the one with the focus is chosen, and Enter on
+                // it opens it, as a double click does
+                .story("ChooseByKeyboard", TabSessionChooserDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play sessions = screen.within(screen.findByRole("listbox", "Tab sessions"));
+                    play.expect(sessions.getAllByRole("option")).toHaveLength(2);
+                    play.click(sessions.getByRole("option", "Morning review"));
+                    play.expect(sessions.getByRole("option", "Morning review"))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{ArrowDown}");
+                    play.expect(sessions.getByRole("option", "Pipeline work")).toHaveFocus();
+                    play.expect(sessions.getByRole("option", "Pipeline work"))
+                            .toHaveAttribute("aria-selected", "true");
+                    play.expect(play.spy(ON_PICK)).not().toHaveBeenCalled();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("Pipeline Pipe A"));
+                    play.expect(play.spy(ON_PICK)).not().toHaveBeenCalledWith("Feed Feed A");
+                    ContentStorySupport.expectNoProblems(play);
                 });
     }
 

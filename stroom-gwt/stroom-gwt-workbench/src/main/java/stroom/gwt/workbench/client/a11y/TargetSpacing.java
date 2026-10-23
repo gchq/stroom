@@ -49,7 +49,7 @@ public final class TargetSpacing {
     public static Value<List<String>> crowding(final Query target) {
         final Value<Element> element = target.element();
         return Value.of(target.describe() + " targets within " + RADIUS_PX + "px", () -> {
-            final JsArray<Element> near = near(element.get(), RADIUS_PX);
+            final JsArray<Element> near = near(element.get(), RADIUS_PX, null);
             final List<String> names = new ArrayList<>();
             for (int i = 0; i < near.length(); i++) {
                 names.add(TabStops.nameOf(near.get(i)));
@@ -58,7 +58,28 @@ public final class TargetSpacing {
         });
     }
 
-    private static native JsArray<Element> near(Element target, double radius) /*-{
+    /// The targets too near a target, leaving out those in one element (e.g. a grid's rows beside a
+    /// splitter, which are accepted as full-width targets; see `ISSUES.md`).
+    ///
+    /// @param target   The target.
+    /// @param ignoring The element whose targets (itself included) are left out.
+    /// @return The names of the other targets within [#RADIUS_PX] of its centre, not in `ignoring`.
+    public static Value<List<String>> crowding(final Query target, final Query ignoring) {
+        final Value<Element> element = target.element();
+        final Value<Element> ignored = ignoring.element();
+        final String description = target.describe() + " targets within " + RADIUS_PX + "px, not in "
+                                   + ignoring.describe();
+        return Value.of(description, () -> {
+            final JsArray<Element> near = near(element.get(), RADIUS_PX, ignored.get());
+            final List<String> names = new ArrayList<>();
+            for (int i = 0; i < near.length(); i++) {
+                names.add(TabStops.nameOf(near.get(i)));
+            }
+            return names;
+        });
+    }
+
+    private static native JsArray<Element> near(Element target, double radius, Element ignoring) /*-{
         var box = target.getBoundingClientRect();
         var x = box.left + box.width / 2;
         var y = box.top + box.height / 2;
@@ -69,6 +90,7 @@ public final class TargetSpacing {
         for (var i = 0; i < candidates.length; i++) {
             var other = candidates[i];
             if (other === target || target.contains(other) || other.contains(target)
+                || (ignoring && ignoring.contains(other))
                 || other.closest('[inert]') || other.getClientRects().length === 0) {
                 continue;
             }

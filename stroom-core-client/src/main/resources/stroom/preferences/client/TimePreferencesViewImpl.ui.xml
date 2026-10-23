@@ -13,7 +13,7 @@
                         screenReaderText="Choose a format, or tick Custom to enter your own.">
             <item:SelectionBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Use your own pattern, entered in Custom Format, instead of one from Date and Time Format. Ticked automatically if your saved format is not in the list. Default is not ticked.">
             <tickbox:CustomCheckBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format"

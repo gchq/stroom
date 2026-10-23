@@ -50,7 +50,7 @@
                     <g:TextBox ui:field="nameBox" addStyleNames="stroom-control wide-control" />
                 </form:FormGroup>
 
-                <form:FormGroup label="Type" identity="floorMapObjectType">
+                <form:FormGroup label="Type" required="true" identity="floorMapObjectType">
                     <form:HelpHTML>
                         <p>The object's <strong>type</strong> — for example <code>gate</code>,
                             <code>camera</code> or <code>person</code>. The type drives the paint

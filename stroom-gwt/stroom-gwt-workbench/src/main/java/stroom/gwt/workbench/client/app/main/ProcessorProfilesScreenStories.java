@@ -157,7 +157,7 @@ public final class ProcessorProfilesScreenStories {
                             TextMatch.containing("Edit Processor Profile")).closest(StroomDom.DIALOG));
                     // p1 has no days, so its cell is empty: the row is found by position
                     // The row's first cell: GWT's grid handles the events of its cells
-                    final Query row = play.within(periodRow(play, profile)).querySelector("td");
+                    final Query row = play.within(periodRow(play, profile)).querySelector("td, [data-col]");
                     // Enter on the selected row must not open the editor
                     play.click(row);
                     play.keyboard("{Enter}");

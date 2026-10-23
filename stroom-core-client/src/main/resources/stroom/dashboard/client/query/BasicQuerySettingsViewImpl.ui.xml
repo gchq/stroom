@@ -16,10 +16,10 @@
                         helpText="Data source that the query searches, e.g. an index or the Stream Store. You need Use permission on it.">
             <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Runs the query automatically when the dashboard is opened. When not ticked, results appear only after you run the query. Default is not ticked.">
             <v:CustomCheckBox ui:field="queryOnOpen" identity="basicQuerySettingsQueryOnOpen" label="Query On Open"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Re-runs the query regularly while the dashboard is open, waiting Refresh Interval after each run finishes. The first run still needs Query On Open or a manual run. Default is not ticked.">
             <v:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"

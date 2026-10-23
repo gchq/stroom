@@ -112,7 +112,7 @@ public final class AppPermissionsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The menu omits a link back to App Permissions; open the user in API Keys
                     play.expect(screen.findByText("Show in API Keys")).toBeInTheDocument();
@@ -148,7 +148,7 @@ public final class AppPermissionsScreenStories {
 
     /// @return The 'Granted' tick box (a `TickBoxCell` div) of a permission's row, once it is shown.
     private static Query tickBox(final Play play, final String permission) {
-        return play.within(play.findByText(permission).closest("tr")).querySelector(".tick-box");
+        return play.within(play.findByText(permission).closest(StroomDom.GRID_ROW)).querySelector(".tick-box");
     }
 
     private static String page(final String rows) {

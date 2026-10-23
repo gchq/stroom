@@ -17,17 +17,18 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.data.client.presenter.FeedRefCell;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.feed.client.CopyFeedUrlEvent;
 import stroom.feed.client.OpenFeedEvent;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
+import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -57,6 +58,8 @@ public final class FeedRefCellStories {
     private static final String ON_COPY_LINK = "onCopyLink";
     // The class of the cell's copy button
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
+    // The class of the cell's open button
+    private static final String OPEN_CLASS_NAME = "docRefLinkOpen";
     private static final String NO_FEED_TEXT = "(no feed)";
     private static final int CELL_WIDTH_PX = 280;
 
@@ -89,6 +92,15 @@ public final class FeedRefCellStories {
                     play.click(play.within(menu).getByRole("menuitem", "Open Feed"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("TEST_FEED"));
                     play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                })
+                // In a grid, a press on the open icon (an SVG image) opens the feed. The grid's
+                // selection threw on an SVG element, so the cell never had the press
+                .story("OpenIconInGrid", FeedRefCellStories::grid)
+                .withPlay(play -> {
+                    play.findByText("TEST_FEED");
+                    final Query open = play.querySelector("." + OPEN_CLASS_NAME + " svg");
+                    play.fireEvent().mouseDown(open, EventInit.create().atCentreOf(open).buttons(1));
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("TEST_FEED"));
                 })
                 // With and without the feed type icon
                 .story("IconToggle", context -> StoryPanels.column(8,
@@ -136,7 +148,7 @@ public final class FeedRefCellStories {
         final Spy onOpen = context.fn(ON_OPEN);
         eventBus.addHandler(OpenFeedEvent.getType(), event -> onOpen.call(event.getName()));
         final FeedRefCell<String> cell = cell(eventBus, true);
-        final MyDataGrid<String> grid = new MyDataGrid<>(eventBus::fireEvent);
+        final DataGridWidget<String> grid = new DataGridWidget<>(eventBus::fireEvent);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

@@ -408,11 +408,6 @@
     white-space: nowrap;
 }
 
-.queryHistoryViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
-}
-
 .resizableAcceptRejectContent-button {
     margin: 0;
     padding: 2px 4px;
@@ -745,11 +740,6 @@
     display: flex;
 }
 
-.queryFavouritesViewImpl-cellList {
-    position: absolute;
-    min-width: 100%;
-}
-
 .editExpressionViewImpl-expressionTree {
     padding-left: 5px;
 }
@@ -949,6 +939,9 @@
     padding-left: 10px;
     padding-right: 3px;
     padding-top: 1px;
+    /* Keeps the toolbar below clear of the tabs: a tab under 24px high needs 12px from its centre to
+       its neighbours (WCAG 2.5.8), which the toolbar was half a pixel short of */
+    padding-bottom: 1px;
 }
 
 .dataRetentionViewImpl-tabBarInner {
@@ -1271,8 +1264,10 @@
     overflow: hidden;
 }
 
+/* A box holding a control in a form (a list, tree, grid or editor), or a read-only field's text:
+   filled as an input is, in either theme, so it stands apart from the dialog around it */
 .form-control-background {
-  background-color: var(--content-box__background-color);
+  background-color: var(--control__background-color);
 }
 
 .form-control {
@@ -1671,17 +1666,13 @@
 .cellTableSelectedRow .findCell-tags,
 .cellTableSelectedRow .findCell-path,
 .cellTableSelectedRow .findCell-uuid,
-.dataGridSelectedRow .findCell-tags,
-.dataGridSelectedRow .findCell-path,
-.dataGridSelectedRow .findCell-uuid {
+.data-grid__row--selected .findCell-tags,
+.data-grid__row--selected .findCell-path,
+.data-grid__row--selected .findCell-uuid {
     color: inherit;
 }
 
 .pipelineElementChooser-iconCell {
-}
-
-.pipelineElementChooser-textCell {
-    min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
@@ -1776,16 +1767,16 @@
 
 /* Shown on hover, and on the row with keyboard focus so keyboard users see them too; the same
    whether the row is disabled or not */
-.dataGridKeyboardSelectedRow:focus-within .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .docRefLinkContainer .svg-image.hoverIcon,
-.dataGridKeyboardSelectedRow:focus-within .commandLinkContainer .svg-image,
-.dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
-.dataGridCell:hover .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .docRefLinkContainer .svg-image.hoverIcon,
+.data-grid__row--keyboard:focus-within .commandLinkContainer .svg-image,
+.data-grid__cell:hover .userRefLinkContainer .svg-image.hoverIcon,
+.data-grid__cell:hover .docRefLinkContainer .svg-image.hoverIcon,
 .userRefLinkContainer:hover .svg-image.hoverIcon,
 .docRefLinkContainer:hover .svg-image.hoverIcon,
 .commandLinkContainer:hover .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .userRefLinkContainer .svg-image,
-.dataGridDisabledCell.dataGridCell:hover .docRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .userRefLinkContainer .svg-image,
+.dataGridDisabledCell.data-grid__cell:hover .docRefLinkContainer .svg-image,
 .dataGridDisabledCell .userRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .docRefLinkContainer:hover .svg-image.hoverIcon,
 .dataGridDisabledCell .commandLinkContainer:hover .svg-image {
@@ -1985,6 +1976,14 @@
     display: flex;
 }
 
+/* A pane that scrolls and takes the keyboard focus so that it can be scrolled with the keys (as
+   WCAG 2.1.1 asks of a scrolling region with nothing focusable in it); its focus ring is inset, as
+   it fills its space */
+.scroll-region:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}
+
 /* ==== Content store CSS ==== */
 .contentstore-details {
     display: flex;
@@ -2107,10 +2106,6 @@
 }
 
 /* --- */
-.multiChooser td {
-    vertical-align: middle;
-}
-
 .multiChooser .tick-box {
     cursor: pointer;
 }
@@ -2199,27 +2194,27 @@
     background-color: var(--row__background-color--hovered);
 }
 
-.dataGridWidget .dashboard-table-filter-cell {
+.data-grid .dashboard-table-filter-cell {
     display: none;
     position: relative;
     width: 100%;
 }
 
-.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+.data-grid.showValueFilters .dashboard-table-filter-cell {
     display: block;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text {
+.data-grid .dashboard-table-filter-cell-text {
     padding-right: 25px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+.data-grid .dashboard-table-filter-cell-text-disabled {
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }
 
-.dataGridWidget .dashboard-table-filter-cell-buttons {
+.data-grid .dashboard-table-filter-cell-buttons {
     position: absolute;
     display: flex;
     height: 100%;
@@ -2229,7 +2224,7 @@
     padding: 5px;
 }
 
-.dataGridWidget .dashboard-table-filter-cell-disable-button {
+.data-grid .dashboard-table-filter-cell-disable-button {
     display: flex;
     position: relative;
     width: 22px;

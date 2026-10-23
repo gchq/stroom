@@ -94,15 +94,15 @@ final class IdpPlays {
     }
 
     /// Waits for the strength meter to rate the password. Stroom's meter has no `meter` role; its
-    /// bar's class is `strength-meter-<score + 1>`, set as the password is typed (and when the
+    /// bar's class is `password-strength__bar--<score + 1>`, set as the password is typed (and when the
     /// field changes), with zxcvbn loaded by the page, so there is nothing to wait for but the class.
     ///
     /// @param play   The play.
     /// @param dialog The change password dialog.
     /// @param levels The bar's levels to wait for, as a character class, e.g. `1-5`.
     static void waitForStrengthScored(final Play play, final Play dialog, final String levels) {
-        play.waitFor(8000, () -> play.expect(dialog.querySelector(".strength-meter-bar").className())
-                .toMatch(TextMatch.regex("strength-meter-[" + levels + "]")));
+        play.waitFor(8000, () -> play.expect(dialog.querySelector(".password-strength__bar").className())
+                .toMatch(TextMatch.regex("password-strength__bar--[" + levels + "]")));
     }
 
     /// Clicks a dialog's OK button with the focus away from the field, as a user who clicks it after

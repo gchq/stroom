@@ -120,6 +120,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         // Set the width of the expander column so that all expanders
         // can be seen.
         dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
+        // Give any width the expander column gave up to the fill columns (the grid has sized its
+        // columns before the first rows), as TreeRowHandler does
+        dataGrid.resizeTableToFitColumns(true);
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }

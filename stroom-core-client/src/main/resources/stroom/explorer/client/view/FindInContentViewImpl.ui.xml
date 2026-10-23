@@ -25,7 +25,7 @@
             <g:SimplePanel ui:field="resultContainer"
                            styleName="max form-control-border form-control-background"/>
             <g:FlowPanel ui:field="textContainer" styleName="max form-control-border form-control-background">
-                <spinner:SpinnerLarge ui:field="spinner" addStyleNames="spinner-center" />
+                <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" />
             </g:FlowPanel>
         </l:SplitPane>
     </g:FlowPanel>

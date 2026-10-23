@@ -86,6 +86,7 @@ public class MarkdownEditPresenter
         this.markdownConverter = markdownConverter;
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
+        iFramePresenter.setAccessibleName("Preview");
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 //        view.setView(iFramePresenter.getView());
 

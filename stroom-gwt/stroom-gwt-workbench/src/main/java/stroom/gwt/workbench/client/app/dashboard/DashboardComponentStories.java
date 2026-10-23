@@ -100,6 +100,14 @@ public final class DashboardComponentStories {
     // The description of the 'Query + Table' dashboard's table, as the chat's context
     private static final String TABLE_CONTEXT = "Dashboard 'Query + Table' -> Table 'The Table'";
 
+    // A Query and a Table that shows its filter row
+    private static final String FILTER_ROW_DASHBOARD = DashboardDocs.doc("dash-filter-row", "Query + Table", null,
+            "\"designMode\": false",
+            DashboardDocs.split(0, DashboardDocs.sized(DashboardDocs.tabs(0, "q1"), 300, 100),
+                    DashboardDocs.sized(DashboardDocs.tabs(0, "t1"), 400, 100)),
+            DashboardDocs.THE_QUERY,
+            DashboardDocs.table("t1", "The Table", "q1", DashboardDocs.NAME_FIELD, ", \"showValueFilters\": true"));
+
     // The spy of the app's stepping event
     private static final String BEGIN_STEPPING = "beginStepping";
 
@@ -233,7 +241,8 @@ public final class DashboardComponentStories {
                     final Value<List<String>> labels = play.capture("labels",
                             screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents());
                     play.expect("the items' order", () -> inOrder(labels.get(), List.of("Rename", "Edit Expression",
-                            "Sort", "Group", "Format", "Filter", "Move Column to Start", "Move Column to End",
+                            "Sort", "Group", "Format", "Filter", "Filter Values", "Move Column to Start",
+                            "Move Column to End",
                             "Duplicate", "Hide Column", "Remove"))).toBe(true);
                     play.expect("index of Remove after Hide Column",
                                     () -> labels.get().indexOf("Remove") > labels.get().indexOf("Hide Column"))
@@ -283,6 +292,71 @@ public final class DashboardComponentStories {
                                     .toSpyMatcher()));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // The table's filter row: what is typed in a column's filter box is sent with the
+                // table's next search once the box loses the focus (or Enter is pressed, see
+                // real-input/dashboard-table.mjs), and the box's button turns the filter off and on,
+                // by mouse or keyboard. The header is drawn again each time, and the focus stays
+                // where it was
+                .story("TableFilterRow", DashboardSupport.story(FILTER_ROW_DASHBOARD, routes -> {
+                }))
+                .withPlay(play -> {
+                    final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+
+                    play.expect(filterBox(play)).toHaveAttribute("aria-label", "Filter Name");
+                    play.type(filterBox(play), "alp");
+                    play.tab();
+                    play.waitFor(() -> play.expect(requests).toHaveBeenCalledWith(DashboardSupport.SEARCH
+                            .withBody("t1's Name column filters on alp", body -> "alp".equals(nameFilter(body,
+                                    "filter")))
+                            .toSpyMatcher()));
+                    play.expect(filterBox(play)).toHaveValue("alp");
+                    play.expect(filterButton(play)).toHaveFocus();
+                    play.expect(filterButton(play)).toHaveAttribute("title", "Disable Filter");
+
+                    // Enter on the button turns the filter off, and the button keeps the focus
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(requests).toHaveBeenCalledWith(DashboardSupport.SEARCH
+                            .withBody("t1's Name column filter turned off", body -> Boolean.FALSE.equals(
+                                    nameFilter(body, "enabled")))
+                            .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(filterButton(play)).toHaveAttribute("title", "Enable Filter"));
+                    play.expect(filterButton(play)).toHaveFocus();
+                    play.expect(filterBox(play)).toHaveClass("dashboard-table-filter-cell-text-disabled");
+
+                    // A click turns it on again, without opening the column's menu
+                    DashboardPlays.clickHeader(play, filterButton(play));
+                    play.waitFor(() -> play.expect(filterButton(play)).toHaveAttribute("title", "Disable Filter"));
+                    play.expect(filterBox(play)).not().toHaveClass("dashboard-table-filter-cell-text-disabled");
+                    play.expect(play.screen().querySelector(StroomDom.MENU_ITEM_TEXT)).not().toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // The values filter by keyboard: from a cell, Up goes to the column's header, Enter
+                // opens its menu, and its Filter Values item opens the filter the header's icon does
+                .story("TableColumnValuesFilterByKeyboard", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> routes.route(COLUMN_VALUES_REQUEST, RestReply.json(COLUMN_VALUES))))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    // Right goes to the Name cell: the group expander's column (1px wide, no groups)
+                    // is no stop
+                    play.click(play.getByText("alpha"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(play.getByText("alpha").closest("[data-col]")).toHaveFocus());
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(DashboardPlays.headerCell(play, "Name")).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.click(screen.findByText("Filter Values", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            COLUMN_VALUES_REQUEST.toSpyMatcher()));
+                    play.expect(screen.findByText("Select None")).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A visualisation of a table fetches again when the table's column filter changes
                 .story("VisRefetchesOnColumnFilter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_VIS_SPLIT,
                         routes -> {
@@ -320,8 +394,9 @@ public final class DashboardComponentStories {
                     play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
                     // The grid's Enabled column has no header text, and the toolbar's buttons are
                     // SelectionHandlersPresenter's, each named for what it acts on
-                    play.waitFor(() -> play.expect(settings.getByText("Expression", "th")).toBeInTheDocument());
-                    play.expect(settings.querySelectorAll("th")).toHaveLength(2);
+                    play.waitFor(() -> play.expect(settings.getByText("Expression", "th, [data-hcol], [data-hcol] *"))
+                            .toBeInTheDocument());
+                    play.expect(settings.querySelectorAll("th, [data-hcol]")).toHaveLength(2);
                     for (final String title : List.of("New Selection Handler", "Edit Selected Selection Handler",
                             "Duplicate Selected Selection Handler", "Delete Selected Selection Handler",
                             "Move Selection Handler Up", "Move Selection Handler Down")) {
@@ -504,9 +579,9 @@ public final class DashboardComponentStories {
                                             DashboardPlays.componentRequest(body, "t1"),
                                             "tableSettings", "conditionalFormattingRules", 0, "id")))
                                     .toSpyMatcher()));
-                    // The rows are the grid's <tr>s
-                    play.expect(play.getByText("beta").closest("tr")).toHaveClass("cf-red");
-                    play.expect(play.getByText("alpha").closest("tr")).not().toHaveClass("cf-red");
+                    // The rows: a <tr> in MyDataGrid, a role="row" div in the new grid
+                    play.expect(play.getByText("beta").closest("tr, [role=\"row\"]")).toHaveClass("cf-red");
+                    play.expect(play.getByText("alpha").closest("tr, [role=\"row\"]")).not().toHaveClass("cf-red");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A custom conditional formatting rule colours the rows that match with its dark
@@ -521,7 +596,7 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(play.getByText("beta")).toBeInTheDocument());
                     // Stroom styles the row with a generated class, not inline, so the play checks
                     // the row's computed background: the rule's colour for the theme
-                    play.waitFor(() -> play.expect(play.getByText("beta").closest("tr"))
+                    play.waitFor(() -> play.expect(play.getByText("beta").closest("tr, [role=\"row\"]"))
                             .toHaveStyle("backgroundColor", StroomThemeDecorator.isDark()
                                     ? "rgb(200, 100, 50)"
                                     : "rgb(10, 20, 30)"));
@@ -536,8 +611,16 @@ public final class DashboardComponentStories {
                     // The Query's toolbar button is titled 'Show Query History'
                     play.click(play.getByRole("button", "Show Query History"));
                     final Play history = DashboardPlays.dialog(screen, "Query History");
-                    // The first query is selected as the dialog opens, so clicking it again chooses it
-                    play.click(history.findByText(TextMatch.containing("Name = alpha"), ".queryCell-expression"));
+                    // The queries are a list (listbox), the first chosen and focused as the dialog
+                    // opens; Enter on it (or a double click) opens it. A single click on the chosen
+                    // query once did too, as two choices of a row within the double click time
+                    final Play queries = screen.within(history.findByRole("listbox", "Query history"));
+                    final Query first = queries.getAllByRole("option").nth(0);
+                    play.expect(first).toHaveTextContent(TextMatch.containing("Name = alpha"));
+                    play.expect(first).toBeVisible();
+                    play.waitFor(() -> play.expect(first).toHaveFocus());
+                    play.expect(first).toHaveAttribute("aria-selected", "true");
+                    play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(screen.queryByText("Query History", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.waitFor(() -> play.expect(play.getByText("Name = alpha")).toBeInTheDocument());
@@ -595,7 +678,7 @@ public final class DashboardComponentStories {
         final Play screen = play.screen();
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-        DashboardPlays.clickHeader(play, play.within(DashboardPlays.header(play, "Name").closest("th"))
+        DashboardPlays.clickHeader(play, play.within(DashboardPlays.headerCell(play, "Name"))
                 .querySelector(".column-valueFilterIcon"));
         play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                 COLUMN_VALUES_REQUEST.toSpyMatcher()));
@@ -603,6 +686,23 @@ public final class DashboardComponentStories {
         // The popup's 'alpha' is after the table's on the page
         play.waitFor(() -> play.expect(screen.getAllByText("alpha")).toHaveLength(2));
         play.click(screen.getAllByText("alpha").nth(1));
+    }
+
+    // The Name column's filter box
+    private static Query filterBox(final Play play) {
+        return play.within(DashboardPlays.headerCell(play, "Name")).querySelector(".dashboard-table-filter-cell-text");
+    }
+
+    // The Name column's filter disable button
+    private static Query filterButton(final Play play) {
+        return play.within(DashboardPlays.headerCell(play, "Name"))
+                .querySelector(".dashboard-table-filter-cell-disable-button");
+    }
+
+    // A property of the Name column's filter in a dashboard search's request for t1
+    private static Object nameFilter(final String body, final String property) {
+        return DashboardPlays.at(DashboardPlays.componentRequest(body, "t1"),
+                "tableSettings", "fields", 0, "columnFilter", property);
     }
 
     // Whether a column value selection selects only 'alpha'

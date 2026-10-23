@@ -107,24 +107,31 @@ public class ExpanderCell extends AbstractCell<Expander> {
             final int padding = (depth * ICON_WIDTH) + initialOffset;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
             String className = "";
+            // What a press does, for the mouse. Assistive technology hears the row's own state
+            // (the grid gives a tree row aria-expanded), so the expander is hidden from it
+            final String title;
             final SvgImage expanderIcon;
             if (value.isLeaf()) {
                 expanderIcon = SvgImage.DOT;
+                title = "";
             } else if (value.isExpanded()) {
                 expanderIcon = SvgImage.ARROW_DOWN;
                 className += " active";
+                title = "Collapse";
             } else {
                 expanderIcon = SvgImage.ARROW_RIGHT;
                 className += " active";
+                title = "Expand";
             }
 
             final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                     expanderIcon,
                     "expanderIcon" + className);
-            sb.append(template.expander(
-                    "expanderCell",
-                    style,
-                    iconSafeHtml));
+            if (title.isEmpty()) {
+                sb.append(template.leaf("expanderCell", style, iconSafeHtml));
+            } else {
+                sb.append(template.expander("expanderCell", style, title, iconSafeHtml));
+            }
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
@@ -137,7 +144,10 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml expander(String expanderClass, SafeStyles styles, SafeHtml icon);
+        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\" aria-hidden=\"true\">{3}</div>")
+        SafeHtml expander(String expanderClass, SafeStyles styles, String title, SafeHtml icon);
+
+        @Template("<div class=\"{0}\" style=\"{1}\" aria-hidden=\"true\">{2}</div>")
+        SafeHtml leaf(String expanderClass, SafeStyles styles, SafeHtml icon);
     }
 }

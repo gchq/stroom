@@ -565,7 +565,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     // The values filter is opened by the filter icon of the column's header
-                    clickHeader(play, play.within(header(play, "Count").closest("th"))
+                    clickHeader(play, play.within(header(play, "Count").closest("th, [data-hcol]"))
                             .querySelector(".column-valueFilterIcon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD)
@@ -832,8 +832,8 @@ public final class QueryEditorStories {
                     // Stroom doesn't select the first annotation (the list only selects it when the
                     // filter changes), so OK with none selected warns and keeps the chooser open;
                     // the play then selects it
-                    play.expect(dialog.findByText("Existing incident").closest("tr"))
-                            .not().toHaveClass("cellTableSelectedRow");
+                    play.expect(dialog.findByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
@@ -843,8 +843,8 @@ public final class QueryEditorStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
                     play.click(dialog.getByText("Existing incident"));
-                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("tr"))
-                            .toHaveClass("cellTableSelectedRow"));
+                    play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/change").withJsonBodyContaining(
@@ -908,21 +908,20 @@ public final class QueryEditorStories {
                     play.expect(noText).toHaveTextContent("Data");
                     play.expect(play.getByRole("link", "example.com/docs"))
                             .toHaveTextContent("https://example.com/docs/");
-                    // Pressing a row's text gives the row the keyboard focus
+                    // Pressing a row's text gives the row the focus, and Right goes into its cells: a
+                    // link's cell gives its link the focus (the grid is one tab stop, so no link is
+                    // one)
                     play.click(play.getByText("first"));
-                    play.waitFor(() -> play.expect(open).toHaveAttribute("tabindex", "0"));
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(open).toHaveFocus());
+                    play.expect(open).toHaveAttribute("tabindex", "0");
                     play.expect(noText).toHaveAttribute("tabindex", "-1");
-                    play.tab();
-                    play.expect(open).toHaveFocus();
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
-                    // Back to the row, down to the next one, and on to its link
-                    play.tab(true);
+                    // Down goes to the same cell in the next row, its link
                     play.keyboard("{ArrowDown}");
-                    play.waitFor(() -> play.expect(noText).toHaveAttribute("tabindex", "0"));
-                    play.tab();
-                    play.expect(noText).toHaveFocus();
+                    play.waitFor(() -> play.expect(noText).toHaveFocus());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1002:4"));
@@ -1075,14 +1074,17 @@ public final class QueryEditorStories {
     /// buttons once the mouse has moved over it (it attaches a native preview handler after the
     /// move, and drops it when the mouse leaves), so the play moves the mouse over the header,
     /// waits, then presses and releases the button there without moving again (user-event's
-    /// click would move the mouse in from the page's body).
+    /// click would move the mouse in from the page's body). Pointer events go before the mouse
+    /// events, as a browser sends them: the new grid (DataGridWidget) reads the pointer events.
     ///
     /// @param play   The play.
     /// @param target The part of the header to click, e.g. its label or value filter icon.
     static void clickHeader(final Play play, final Query target) {
         play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
         play.sleep(200);
+        play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
+        play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().mouseUp(target, EventInit.create().atCentreOf(target));
         play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }

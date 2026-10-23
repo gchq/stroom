@@ -83,10 +83,12 @@
     --row__background-color--even: rgba(0, 0, 0, 0.027);
     --row__background-color--odd: transparent;
     --row__background-color--hovered: #e6f4ff;
-    --row__background-color--selected: rgba(129, 212, 250, .5);
-    --row__background-color--selected--hovered: rgba(129, 212, 250, 1);
-    --row__background-color--focussed: rgba(129, 212, 250, .6);
-    --row__background-color--selected--focussed: rgba(129, 212, 250, .8);
+    /* Selected colours are solid (the light blue at the strength it had over white), so the stripes
+       don't show through a selected row and a run of selected rows is one even block */
+    --row__background-color--selected: rgb(192, 234, 253);
+    --row__background-color--selected--hovered: rgb(129, 212, 250);
+    --row__background-color--focussed: rgb(179, 229, 252);
+    --row__background-color--selected--focussed: rgb(154, 221, 251);
     --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
     --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: #000;

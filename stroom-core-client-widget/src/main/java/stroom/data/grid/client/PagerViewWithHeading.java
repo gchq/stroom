@@ -20,7 +20,8 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 
-import com.google.gwt.user.cellview.client.AbstractHasData;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
 
 public interface PagerViewWithHeading extends View, TaskMonitorFactory {
@@ -40,7 +41,11 @@ public interface PagerViewWithHeading extends View, TaskMonitorFactory {
 
     RefreshButton getRefreshButton();
 
-    void setDataWidget(final AbstractHasData<?> widget);
+    /// Show a data widget, e.g. a grid, in the view and attach the pager to it.
+    ///
+    /// @param widget The data widget.
+    /// @param <W>    The widget's type.
+    <W extends Widget & HasRows> void setDataWidget(W widget);
 
     void setPagerVisible(boolean visible);
 }

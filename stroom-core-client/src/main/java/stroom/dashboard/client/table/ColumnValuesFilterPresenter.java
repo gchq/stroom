@@ -24,15 +24,16 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
+import stroom.widget.datagrid.client.DataGridProfile;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -40,19 +41,13 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.CheckListSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -76,8 +71,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         QuickFilterUiHandlers {
 
     private final PagerView pagerView;
-    private final CellTable<ColumnValue> cellTable;
-    private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
+    private final DataGridWidget<ColumnValue> list;
     private final ColumnValueRowStyles rowStyles;
 
     private Provider<Element> filterButtonProvider;
@@ -99,22 +93,26 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         this.pagerView = pagerView;
 
         rowStyles = new ColumnValueRowStyles(userPreferencesManager);
-        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menu");
-        cellTable.setRowStyles(rowStyles);
+        // A list of the column's values, each ticked or not: the arrows move, and Space, Enter or a
+        // press ticks or unticks the value with the focus, Ctrl+A all of them. Escape goes on to
+        // the popup, which closes
+        list = new DataGridWidget<>(this, DataGridWidget.DEFAULT_LIST_PAGE_SIZE);
+        list.setProfile(DataGridProfile.LISTBOX);
+        list.setAccessibleName("Values");
+        list.setRowStyles(rowStyles);
+        list.setRowChecked(value -> ColumnValueCell.stateOf(selection, value));
 
-        // Sink events.
-        final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
-        cellTable.sinkEvents(mouseMove);
 
-        cellTable.addColumn(getTickBoxColumn());
-        cellTable.setSkipRowHoverCheck(true);
+        list.addColumn(getTickBoxColumn(), "", 100);
 
-        final MySingleSelectionModel<ColumnValue> selectionModel = new MySingleSelectionModel<>();
-        typeFilterSelectionEventManager = new ColumnValueSelectionEventManager(cellTable);
-        cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
+        final DataGridWidgetSelectionEventManager<ColumnValue> selectionEventManager =
+                new DataGridWidgetSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        selectionEventManager.setChooser(this::toggle);
+        selectionEventManager.addSelectAllHandler(e -> onSelectAll());
+        // The ticks are the rows' own state, not a selection
+        list.setSelectionModel(null, selectionEventManager);
 
-        pagerView.setDataWidget(cellTable);
+        pagerView.setDataWidget(list);
         view.setDataView(pagerView);
     }
 
@@ -185,11 +183,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         HidePopupRequestEvent.builder(this).fire();
     }
 
-    private void hideSelf() {
-        HidePopupRequestEvent.builder(this)
-                .fire();
-    }
-
     public String getNameFilter() {
         return nameFilter;
     }
@@ -203,7 +196,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectAll() {
         if (NullSafe.isNonEmptyString(nameFilter)) {
             final ColumnValueSelection sel = selection.build();
-            for (final ColumnValue value : cellTable.getVisibleItems()) {
+            for (final ColumnValue value : list.getVisibleItems()) {
                 if (sel.isInvert()) {
                     selection.remove(value.getValue());
                 } else {
@@ -220,7 +213,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectNone() {
         if (NullSafe.isNonEmptyString(nameFilter)) {
             final ColumnValueSelection sel = selection.build();
-            for (final ColumnValue value : cellTable.getVisibleItems()) {
+            for (final ColumnValue value : list.getVisibleItems()) {
                 if (sel.isInvert()) {
                     selection.add(value.getValue());
                 } else {
@@ -238,12 +231,14 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     }
 
     private void setData(final List<ColumnValue> values) {
-        cellTable.setRowData(0, values);
-        cellTable.setRowCount(values.size());
+        list.setRowData(0, values);
+        list.setRowCount(values.size());
     }
 
     public void focus() {
-        typeFilterSelectionEventManager.selectFirstItem();
+        if (list.getVisibleItemCount() > 0) {
+            list.setKeyboardSelectedRow(0, true);
+        }
     }
 
     @Override
@@ -263,7 +258,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         if (filterCellManager != null) {
             final ColumnValueSelection columnValueSelection = selection.build();
             filterCellManager.setValueSelection(column, columnValueSelection);
-            cellTable.redraw();
+            list.redraw();
 
             final Element filterButton = filterButtonProvider.get();
             if (filterButton != null) {
@@ -309,7 +304,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                     }
                 }
             };
-            dataProvider.addDataDisplay(cellTable);
+            dataProvider.addDataDisplay(list);
         } else {
             dataProvider.refresh();
         }
@@ -326,28 +321,5 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         void setDataView(View view);
 
         void setText(String text, boolean fireEvents);
-    }
-
-    private class ColumnValueSelectionEventManager extends CheckListSelectionEventManager<ColumnValue> {
-
-        public ColumnValueSelectionEventManager(final AbstractHasData<ColumnValue> cellTable) {
-            super(cellTable);
-        }
-
-        @Override
-        protected void onToggle(final ColumnValue item) {
-            toggle(item);
-        }
-
-        @Override
-        protected boolean onClose(final CellPreviewEvent<ColumnValue> e) {
-            hideSelf();
-            return true;
-        }
-
-        @Override
-        protected void onSelectAll(final CellPreviewEvent<ColumnValue> e) {
-            ColumnValuesFilterPresenter.this.onSelectAll();
-        }
     }
 }

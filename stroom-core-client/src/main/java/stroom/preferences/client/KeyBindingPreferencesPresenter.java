@@ -17,7 +17,6 @@
 package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
@@ -28,6 +27,7 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.KeyShortcut;
@@ -56,7 +56,7 @@ public final class KeyBindingPreferencesPresenter
     private static final String NONE = "None";
 
     private final KeyShortcutRecorderPresenter keyShortcutRecorderPresenter;
-    private final MyDataGrid<KeyBindingRow> dataGrid;
+    private final DataGridWidget<KeyBindingRow> dataGrid;
     private final MultiSelectionModelImpl<KeyBindingRow> selectionModel;
     private final ButtonView addButton;
     private final ButtonView changeButton;
@@ -77,7 +77,7 @@ public final class KeyBindingPreferencesPresenter
         this.keyShortcutRecorderPresenter = keyShortcutRecorderPresenter;
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Keyboard Shortcuts");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);

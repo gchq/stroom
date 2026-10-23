@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="profileName" label="Profile Name"
+        <form:FormGroup identity="profileName" label="Profile Name" required="true"
                         helpText="A unique name for this processing profile. Processor filters refer to the profile by this name."
                         screenReaderText="Must be unique.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>

@@ -26,7 +26,7 @@
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationSubjectTemplate"
-                        label="Email Subject Template"
+                        label="Email Subject Template" required="true"
                         helpText="Jinja template for the email subject, e.g. Detector '{{{{ detectorName | escape }}' Alert. It must be a single line and cannot be blank. Select Test Template to see example output."
                         screenReaderText="Jinja template on one line. Required.">
             <g:FlowPanel styleName="dock-min form">
@@ -39,7 +39,7 @@
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationBodyTemplate"
-                        label="Email Body Template"
+                        label="Email Body Template" required="true"
                         helpText="Jinja template for the email body. If the output contains HTML tags the email is sent as HTML, otherwise as plain text. It cannot be blank; select Test Template to see example output."
                         screenReaderText="Jinja template. Required. Output containing HTML tags is sent as HTML.">
             <g:FlowPanel styleName="dock-min form">

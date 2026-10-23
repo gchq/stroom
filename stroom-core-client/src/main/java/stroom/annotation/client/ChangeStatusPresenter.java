@@ -66,6 +66,7 @@ public class ChangeStatusPresenter
                     new DefaultErrorHandler(this, null), this);
         });
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        annotationStatusPresenter.setAccessibleName("Statuses");
 
         getView().setUiHandlers(this);
     }

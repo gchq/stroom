@@ -47,6 +47,12 @@
     padding-right: 1em;
 }
 
+/* The descriptions wrap, so the table fits in the popup (an info table doesn't wrap); the example
+   inputs beside them stay on one line */
+.help-popup__content .infoTable td:last-child {
+    white-space: normal;
+}
+
 .help-popup--markdown .help-popup__content div,
 .help-popup--markdown .help-popup__content span,
 .help-popup--markdown .help-popup__content p,

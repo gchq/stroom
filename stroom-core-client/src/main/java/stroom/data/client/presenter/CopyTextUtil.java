@@ -121,6 +121,17 @@ public class CopyTextUtil {
                 : str;
     }
 
+    /// Stops a mouse press on an icon that acts on the press (copy, insert, open) starting a text
+    /// selection, which the slightest drag would stretch across the page (#5111). A key press is
+    /// left alone.
+    ///
+    /// @param event The event the icon acts on.
+    public static void keepSelection(final NativeEvent event) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
+            event.preventDefault();
+        }
+    }
+
     public static void onClick(final NativeEvent e,
                                final HasHandlers hasHandlers) {
         onClick(e, hasHandlers, null);
@@ -138,11 +149,13 @@ public class CopyTextUtil {
                 if (MouseUtil.isPrimary(e)) {
                     final Element copy = ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
                     if (copy != null) {
+                        keepSelection(e);
                         ClipboardUtil.copy(text.trim());
                     } else if (insertHandler != null) {
                         final Element insert = ElementUtil
                                 .findParent(element, CopyTextUtil.INSERT_CLASS_NAME, 5);
                         if (insert != null) {
+                            keepSelection(e);
                             insertHandler.accept(text.trim());
                         }
                     }

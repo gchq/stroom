@@ -40,6 +40,8 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.GlobalKeyHandler;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.GWT;
@@ -116,6 +118,9 @@ public class MainPresenter
         }));
         // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
         registerHandler(MenuRequest.relay(this));
+        // F6 and Shift+F6 (unless the user has changed them) move between the main areas
+        KeyBinding.addCommand(Action.FOCUS_NEXT_AREA, () -> getView().focusArea(false));
+        KeyBinding.addCommand(Action.FOCUS_PREVIOUS_AREA, () -> getView().focusArea(true));
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final ExtendedUiConfig uiConfig = event.getProperties();
@@ -275,6 +280,12 @@ public class MainPresenter
         void setBorderStyle(String style);
 
         void setBanner(String text);
+
+        /// Moves the focus to the next (or previous) main area that is shown: the main toolbar,
+        /// the explorer and the open content, going round.
+        ///
+        /// @param backwards Whether to go to the previous area.
+        void focusArea(boolean backwards);
 
         void setSelectedTabColour(String colour);
 

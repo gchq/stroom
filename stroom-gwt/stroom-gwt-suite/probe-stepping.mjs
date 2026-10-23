@@ -46,7 +46,7 @@ await page.waitForTimeout(1500);
 await page.locator('button[title="Stepping Mode"]').first().click();
 await page.waitForTimeout(6000);
 console.log('after enter — dialogs:', JSON.stringify(await dialogs()));
-console.log('meta rows:', await page.evaluate(() => [...document.querySelectorAll('.dataGridRow')].filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 90)).slice(0, 5)));
+console.log('meta rows:', await page.evaluate(() => [...document.querySelectorAll('.data-grid__row')].filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 90)).slice(0, 5)));
 console.log('location label:', await page.evaluate(() => [...document.querySelectorAll('.stepLocationLink')].map((e) => e.textContent)));
 console.log('step message:', await page.evaluate(() => [...document.querySelectorAll('[class*=stepping], [class*=Stepping]')].filter((e) => e.offsetWidth > 0).map((e) => e.className + ': ' + e.textContent.replace(/\s+/g, ' ').trim().slice(0, 80)).slice(0, 8)));
 console.log('api so far:', JSON.stringify(api, null, 1));
@@ -54,10 +54,10 @@ await closeDialogs(page);
 // how long does the meta list take, and what does selecting a stream do?
 const t0 = Date.now();
 let rows = [];
-while (Date.now() - t0 < 30000) { rows = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr')].filter((e) => e.offsetHeight > 0 && e.textContent.trim()).map((e) => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 90))); if (rows.length) break; await page.waitForTimeout(500); }
+while (Date.now() - t0 < 30000) { rows = await page.evaluate(() => [...document.querySelectorAll('.data-grid [role=row][data-row]')].filter((e) => e.offsetHeight > 0 && e.textContent.trim()).map((e) => e.textContent.replace(/\s+/g, ' ').trim().slice(0, 90))); if (rows.length) break; await page.waitForTimeout(500); }
 console.log('meta rows after', Date.now() - t0, 'ms:', rows.length, rows.slice(0, 3));
 api.length = 0;
-const cell = await page.evaluate(() => { const row = [...document.querySelectorAll('.dataGridWidget tbody tr')].find((r) => r.offsetHeight > 0 && /\bEvents\b/.test(r.textContent) && !/Error|Raw/.test(r.textContent)); console.log('picked', row.textContent.slice(0, 80)); const td = [...row.querySelectorAll('td')].find((c) => c.offsetWidth > 20 && c.textContent.trim()); const r = td.getBoundingClientRect(); return { x: r.x + Math.min(r.width / 2, 60), y: r.y + r.height / 2 }; });
+const cell = await page.evaluate(() => { const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')].find((r) => r.offsetHeight > 0 && /\bEvents\b/.test(r.textContent) && !/Error|Raw/.test(r.textContent)); console.log('picked', row.textContent.slice(0, 80)); const td = [...row.querySelectorAll('[role=gridcell]')].find((c) => c.offsetWidth > 20 && c.textContent.trim()); const r = td.getBoundingClientRect(); return { x: r.x + Math.min(r.width / 2, 60), y: r.y + r.height / 2 }; });
 await page.mouse.click(cell.x, cell.y);
 await page.waitForTimeout(8000);
 console.log('after select stream — dialogs:', JSON.stringify(await dialogs()));

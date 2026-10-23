@@ -37,9 +37,9 @@ import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
+import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.HasContextMenus;
 import stroom.data.grid.client.HeadingBuilder;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.client.DataGridComparatorFactory.Builder;
@@ -58,7 +58,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.web.bindery.event.shared.EventBus;
@@ -236,7 +235,7 @@ public class DataGridUtil {
 //    }
 
 
-    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addExpanderColumn(
+    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final TreeAction<T_ROW> treeAction,
@@ -248,7 +247,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addExpanderColumn(
+    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final int width) {
@@ -258,7 +257,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addStatusIconColumn(
+    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addStatusIconColumn(
             final T_VIEW view,
             final Function<T_ROW, CellIcon> statusIconExtractor) {
 
@@ -521,14 +520,14 @@ public class DataGridUtil {
     }
 
     public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
-                                               final MyDataGrid<T_ROW> dataGrid,
+                                               final DataGridView<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
         addDocRefColumn(eventBus, dataGrid, name, docRefExtractionFunction, true);
     }
 
     public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
-                                               final MyDataGrid<T_ROW> dataGrid,
+                                               final DataGridView<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction,
                                                final boolean hasOpenAndCopy) {
@@ -552,7 +551,7 @@ public class DataGridUtil {
     }
 
     public static <T_ROW> void addFeedColumn(final EventBus eventBus,
-                                             final MyDataGrid<T_ROW> dataGrid,
+                                             final DataGridView<T_ROW> dataGrid,
                                              final String name,
                                              final Function<T_ROW, String> nameExtractionFunction) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
@@ -687,7 +686,7 @@ public class DataGridUtil {
                 NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
     }
 
-    public static <T> Builder<T> comparatorFactoryBuilder(final DataGrid<T> dataGrid) {
+    public static <T> Builder<T> comparatorFactoryBuilder(final DataGridView<T> dataGrid) {
         return DataGridComparatorFactory.builder(dataGrid);
     }
 }

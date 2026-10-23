@@ -21,7 +21,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -46,6 +45,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -75,7 +75,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
 
-    private final MyDataGrid<JobNodeAndInfo> dataGrid;
+    private final DataGridWidget<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final ToolbarToggleButton showEnabledToggleBtn;
 
@@ -96,9 +96,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("Job Nodes");
-        this.dataGrid.addDefaultSelectionModel(true);
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
@@ -325,7 +324,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         .rightAligned()
                         .withToolTip("The number of the currently executing tasks on this node for this job")
                         .build(),
-                100);
+                // Room for the heading and the space before Last Executed
+                115);
 
         // Last executed.
         jobNodeListHelper.addLastExecutedColumn(dataGrid);

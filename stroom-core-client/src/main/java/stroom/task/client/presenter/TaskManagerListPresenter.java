@@ -30,7 +30,6 @@ import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -69,6 +68,7 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -85,6 +85,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -124,7 +125,7 @@ public class TaskManagerListPresenter
     private final Map<String, List<String>> errorMap = new HashMap<>();
     private final Set<String> enabledNodeNames = new HashSet<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
-    private final MyDataGrid<TaskProgress> dataGrid;
+    private final DataGridWidget<TaskProgress> dataGrid;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
@@ -157,11 +158,10 @@ public class TaskManagerListPresenter
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         this.feedClient = feedClient;
-        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid = new DataGridWidget<>(this, 1000);
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
@@ -360,14 +360,13 @@ public class TaskManagerListPresenter
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                 ColumnSizeConstants.DATE_COL);
 
-        // Age.
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
-                        .withSorting(FindTaskProgressCriteria.FIELD_AGE)
-                        .build(),
-                FindTaskProgressCriteria.FIELD_AGE,
-                ColumnSizeConstants.SMALL_COL);
+        // Age. The oldest first, unless another sort is chosen
+        final Column<TaskProgress, SafeHtml> ageColumn = DataGridUtil.htmlColumnBuilder(getColouredCellFunc(
+                        taskProgress -> ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                .withSorting(FindTaskProgressCriteria.FIELD_AGE)
+                .build();
+        dataGrid.addResizableColumn(ageColumn, FindTaskProgressCriteria.FIELD_AGE, ColumnSizeConstants.SMALL_COL);
+        dataGrid.setDefaultSort(new ColumnSortInfo(ageColumn, false));
 
         // Info
         dataGrid.addAutoResizableColumn(

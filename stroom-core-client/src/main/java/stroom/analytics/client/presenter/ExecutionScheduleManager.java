@@ -32,8 +32,6 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -47,7 +45,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -55,6 +52,8 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -64,6 +63,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -71,7 +71,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,7 +86,7 @@ public class ExecutionScheduleManager
 
     public static final String TAB_TYPE = "ExecutionScheduleManager";
 
-    private final MyDataGrid<ExecutionSchedule> dataGrid;
+    private final DataGridWidget<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -128,11 +127,11 @@ public class ExecutionScheduleManager
         this.expressionValidator = expressionValidator;
 
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
         dataGrid.setTableName("Execution Schedules");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
-            = new DataGridSelectionEventManager<>(
+        final DataGridWidgetSelectionEventManager<ExecutionSchedule> selectionEventManager
+            = new DataGridWidgetSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
                 true);
@@ -140,8 +139,7 @@ public class ExecutionScheduleManager
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionScheduleFields.NAME, true, true);
-        request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
+        request = ExecutionScheduleRequest.builder().build();
 
         createButtons();
 
@@ -262,17 +260,18 @@ public class ExecutionScheduleManager
     }
 
     private void createScheduleNameColumn() {
-        dataGrid.addResizableColumn(
-            new OrderByColumn<ExecutionSchedule, String>(
+        final OrderByColumn<ExecutionSchedule, String> nameColumn = new OrderByColumn<ExecutionSchedule, String>(
                 new TextCell(),
                 ExecutionScheduleFields.NAME,
-                false) {
-                @Override
-                public String getValue(final ExecutionSchedule row) {
-                    return row.getName();
-                }
-            }, ExecutionScheduleFields.SCHEDULE_NAME, ColumnSizeConstants.DATE_COL
-        );
+                true) {
+            @Override
+            public String getValue(final ExecutionSchedule row) {
+                return row.getName();
+            }
+        };
+        dataGrid.addResizableColumn(nameColumn, ExecutionScheduleFields.SCHEDULE_NAME, ColumnSizeConstants.DATE_COL);
+        // By name, A to Z, ignoring case, unless another sort is chosen
+        dataGrid.setDefaultSort(new ColumnSortInfo(nameColumn, true));
     }
 
     private void createEnabledColumn() {

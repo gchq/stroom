@@ -20,7 +20,6 @@ import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableLong;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -50,6 +49,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
@@ -305,7 +305,7 @@ public final class ViewStateStories {
     // A grid of jobs: enabled, name, maximum tasks and an action, editable or as read-only screens
     // draw it (a borderless tick, a plain number and a disabled action)
     private static Widget grid(final ScreenHarness harness, final boolean editable) {
-        final MyDataGrid<Job> grid = new MyDataGrid<>(new SimpleEventBus());
+        final DataGridWidget<Job> grid = new DataGridWidget<>(new SimpleEventBus());
         grid.addColumn(DataGridUtil.updatableTickBoxColumnBuilder(
                                 TickBoxState.createTickBoxFunc(Job::isEnabled), editable)
                         .enabledWhen(Job::isEnabled)

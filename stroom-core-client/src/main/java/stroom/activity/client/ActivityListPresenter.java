@@ -20,7 +20,6 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -29,6 +28,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -52,7 +52,7 @@ public class ActivityListPresenter
 
     private Consumer<String> filterErrorConsumer;
 
-    private final MyDataGrid<Activity> dataGrid;
+    private final DataGridWidget<Activity> dataGrid;
     private final MultiSelectionModelImpl<Activity> selectionModel;
     protected RestDataProvider<Activity, ResultPage<Activity>> dataProvider;
 
@@ -64,7 +64,9 @@ public class ActivityListPresenter
                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(this);
+        dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id: each refresh fetches new rows
+        dataGrid.setKeyProvider(Activity::getId);
         dataGrid.setTableName("Activities");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(true);

@@ -25,8 +25,6 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
@@ -67,6 +65,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -112,9 +112,9 @@ public abstract class AbstractMetaListPresenter
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
-    final MyDataGrid<MetaRow> dataGrid;
+    final DataGridWidget<MetaRow> dataGrid;
     private final MultiSelectionModelImpl<MetaRow> selectionModel;
-    private final DataGridSelectionEventManager<MetaRow> selectionEventManager;
+    private final DataGridWidgetSelectionEventManager<MetaRow> selectionEventManager;
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final PagerView view,
@@ -135,10 +135,10 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("Streams");
         selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        selectionEventManager = new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
 
         view.setDataWidget(dataGrid);

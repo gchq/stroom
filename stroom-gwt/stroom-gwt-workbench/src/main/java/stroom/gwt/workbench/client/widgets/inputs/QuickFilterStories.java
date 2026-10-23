@@ -31,9 +31,11 @@ import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -96,22 +98,7 @@ public final class QuickFilterStories {
                     play.expect(textBox).toHaveFocus();
                 })
                 // QuickFilter with the syntax-help popup populated. Click the ? button to open it.
-                .story("WithHelp", context -> {
-                    final QuickFilter quickFilter = quickFilter(context);
-                    // Stroom's screens register their help with this, e.g. TaskManagerPresenter
-                    quickFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                            "Server Tasks Quick Filter",
-                            tableBuilder -> tableBuilder
-                                    .row(TableCell.data("Matched tasks are shown in black.", 2))
-                                    .row(TableCell.data("Related tasks are shown in grey.", 2))
-                                    .row(),
-                            Arrays.asList(
-                                    FilterFieldDefinition.defaultField("Name", "name"),
-                                    FilterFieldDefinition.qualifiedField("Node", "node"),
-                                    FilterFieldDefinition.qualifiedField("Status", "status")),
-                            "https://gchq.github.io/stroom-docs/"));
-                    return InputWidgets.maxWidth(quickFilter, MAX_WIDTH);
-                })
+                .story("WithHelp", context -> InputWidgets.maxWidth(quickFilterWithHelp(context), MAX_WIDTH))
                 // The help ends with a link to the quick filter's documentation, which says what it
                 // is and, to screen readers, that it opens a new tab (gchq/stroom#5406)
                 .withPlay(play -> {
@@ -124,6 +111,9 @@ public final class QuickFilterStories {
                     final Query help = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
                     play.expect(help).toHaveClass("help-popup");
                     play.expect(help).not().toHaveClass("quickFilter-tooltip");
+                    // Its tables fit in it: the long descriptions wrap rather than run past its edge
+                    play.expect("how far the help's content runs past its right edge",
+                            () -> overflowRight(help.element().get())).toBe(0);
                     play.expect(helpButton).toHaveAttribute("aria-expanded", "true");
                     final Query docsLink = play.screen().findByRole("link",
                             "quick filter documentation (opens in new tab)");
@@ -137,6 +127,32 @@ public final class QuickFilterStories {
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
                     play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
+                    // Opened from the keyboard, the help takes the focus, so that a screen reader
+                    // reads it (#5400), and Escape gives it back to the button
+                    play.run("focus the help button", () -> helpButton.element().get().focus());
+                    play.keyboard("{Enter}");
+                    final Query popup = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
+                    play.waitFor(() -> play.expect(popup).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("dialog")).toBeNull());
+                    play.expect(helpButton).toHaveFocus();
+                })
+                // The help popup beside a frame, e.g. a document's markdown preview: a click in the
+                // frame closes it, as a click anywhere else does (#3550). The frame's click is its
+                // own document's, so only a real click can show it (real input check)
+                .story("WithHelpBesideFrame", context -> {
+                    final Frame frame = new Frame();
+                    frame.setTitle("Preview");
+                    frame.getElement().setAttribute("srcdoc", "<p>A document's markdown preview.</p>");
+                    frame.setSize("240px", "60px");
+                    // The frame in the window's bottom left corner, clear of the popup
+                    final Style style = frame.getElement().getStyle();
+                    style.setProperty("position", "fixed");
+                    style.setProperty("left", "0");
+                    style.setProperty("bottom", "0");
+                    return StoryPanels.column(8,
+                            InputWidgets.maxWidth(quickFilterWithHelp(context), MAX_WIDTH),
+                            frame);
                 })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {
@@ -247,6 +263,35 @@ public final class QuickFilterStories {
                     play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).not().toHaveBeenCalled();
                     play.expect(play.getByTitle("Quick Filter Syntax Help")).not().toHaveAttribute("aria-disabled");
                 });
+    }
+
+    // How many pixels the popup's widest content runs past its right edge (0 if none does)
+    private static native int overflowRight(Element popup) /*-{
+        var right = popup.getBoundingClientRect().right;
+        var most = 0;
+        var cells = popup.querySelectorAll('table, td, th');
+        for (var i = 0; i < cells.length; i++) {
+            most = Math.max(most, Math.ceil(cells[i].getBoundingClientRect().right - right));
+        }
+        return most;
+    }-*/;
+
+    // A quick filter with the syntax help popup populated, as Stroom's screens register it, e.g.
+    // TaskManagerPresenter
+    private static QuickFilter quickFilterWithHelp(final StoryContext context) {
+        final QuickFilter quickFilter = quickFilter(context);
+        quickFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                "Server Tasks Quick Filter",
+                tableBuilder -> tableBuilder
+                        .row(TableCell.data("Matched tasks are shown in black.", 2))
+                        .row(TableCell.data("Related tasks are shown in grey.", 2))
+                        .row(),
+                Arrays.asList(
+                        FilterFieldDefinition.defaultField("Name", "name"),
+                        FilterFieldDefinition.qualifiedField("Node", "node"),
+                        FilterFieldDefinition.qualifiedField("Status", "status")),
+                "https://gchq.github.io/stroom-docs/"));
+        return quickFilter;
     }
 
     // Gives the quick filter a context, with a stand-in for the server that accepts or rejects

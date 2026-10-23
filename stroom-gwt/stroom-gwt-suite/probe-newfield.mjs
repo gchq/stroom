@@ -41,7 +41,7 @@ const dump = (label) => page.evaluate((label) => {
   const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
   const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
-  const rows = [...document.querySelectorAll('.dataGridWidget tbody tr')].filter((r) => r.offsetHeight > 0 && norm(r.textContent)).map((r) => norm(r.textContent).slice(0, 60));
+  const rows = [...document.querySelectorAll('.data-grid [role=row][data-row]')].filter((r) => r.offsetHeight > 0 && norm(r.textContent)).map((r) => norm(r.textContent).slice(0, 60));
   return { label, dialogs: popups.map((p) => norm(p.querySelector('.dialog__title')?.textContent)),
     inputs: top ? [...top.querySelectorAll('input, select, textarea')].filter((i) => i.offsetWidth > 0).map((i) => `${i.tagName}.${i.className.split(' ')[0]}=${JSON.stringify(i.value)}`) : [],
     buttons: top ? [...top.querySelectorAll('button, .Button')].filter((b) => b.offsetWidth > 0).map((b) => norm(b.textContent || b.title) + (b.disabled ? '(d)' : '')) : [], rows: rows.length, first: rows[0] };

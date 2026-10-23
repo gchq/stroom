@@ -46,9 +46,9 @@ export function readRows(page) {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return [];
-    return [...grid.querySelectorAll('tbody tr, [role=row]')]
+    return [...grid.querySelectorAll('tbody tr, [role=row][data-row]')]
       .filter((r) => r.offsetHeight > 0 && n(r.textContent)).map((r) => n(r.textContent));
   }).catch(() => []);
 }
@@ -64,8 +64,8 @@ export function rowSignature(page, text) {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
-    const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const row = [...(grid?.querySelectorAll('tbody tr, [role=row][data-row]') ?? [])]
       .find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     const ticks = [...row.querySelectorAll('[class*=tick], [class*=Tick], input[type=checkbox]')]
@@ -192,8 +192,8 @@ export async function selectRow(page, text) {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
-    const row = [...(grid?.querySelectorAll('tbody tr, [role=row]') ?? [])]
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const row = [...(grid?.querySelectorAll('tbody tr, [role=row][data-row]') ?? [])]
       .find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     // A cell with a link or a tick box consumes the click; prefer a plain one. And one WITH TEXT, as
@@ -701,7 +701,7 @@ export async function runEditCycle(page, spec, { guard, settle, log = () => {} }
  */
 export function gridFilter(page) {
   return page.evaluate(() => {
-    const grid = [...document.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...document.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
     const g = grid.getBoundingClientRect();
     const boxes = [...document.querySelectorAll('.quick-filter__input')].filter((e) => e.offsetWidth > 0);
@@ -954,7 +954,7 @@ export async function chooseInSelectionBox(page, label, item, settle) {
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
+    const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
       .find((e) => e.offsetWidth > 0 && n(e.textContent) === wanted);
     if (!row) return null;
     const r = row.getBoundingClientRect();
@@ -982,15 +982,15 @@ export function readGridRow(page, text) {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const grid = [...scope.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
+    const grid = [...scope.querySelectorAll('.data-grid, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
-    const heads = [...grid.querySelectorAll('thead th')].map((h) => n(h.textContent).replace(/\s\d+$/, ''));
-    const row = [...grid.querySelectorAll('tbody tr')].find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
+    const heads = [...grid.querySelectorAll('thead th, [role=columnheader]')].map((h) => n(h.textContent).replace(/\s\d+$/, ''));
+    const row = [...grid.querySelectorAll('tbody tr, [role=row][data-row]')].find((r) => r.offsetHeight > 0 && n(r.textContent).includes(wanted));
     if (!row) return null;
     const said = (c) => n([...c.querySelectorAll('*:not(svg):not(svg *)')].filter((e) => !e.children.length)
       .map((e) => e.textContent).join(' '))
       || [...c.querySelectorAll('[title]:not(svg *)')].map((e) => n(e.getAttribute('title'))).filter(Boolean).join(', ');
-    return Object.fromEntries([...row.querySelectorAll('td')].map((c, i) => [heads[i] ?? `#${i}`, said(c)]));
+    return Object.fromEntries([...row.querySelectorAll('td, [role=gridcell]')].map((c, i) => [heads[i] ?? `#${i}`, said(c)]));
   }, text).catch(() => null);
 }
 
@@ -1050,8 +1050,8 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
     if (!(await clickButton(page, 'Set Document Create Permissions'))) throw new Error('no "Set Document Create Permissions" button');
     await settle(1500);
     await caption(page, 'Set Document Create Permissions');
-    const row = page.locator('.dialog').last().locator('tbody tr')
-      .filter({ has: page.locator('td:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
+    const row = page.locator('.dialog').last().locator('[role=row][data-row]')
+      .filter({ has: page.locator('[role=gridcell]:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
     await row.locator('.tick-box--cell').first().click({ timeout: 5_000 });
     await settle(400);
     if (!(await clickButton(page, 'OK'))) throw new Error('no OK in "Set Document Create Permissions"');
@@ -1407,7 +1407,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   /** TICK the row: a stream grid's batch buttons follow its tick boxes, not the row selection. */
   const tick = async () => {
     const box = await page.evaluate((text) => {
-      const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]')]
+      const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
         .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
       const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
@@ -1629,12 +1629,12 @@ export async function runProcessorBatchCycle(page, spec, { guard, settle, log = 
   };
   /** The filter rows' Enabled: a filter row is the one with a Run As User; its tick box is the state. */
   const enabled = () => page.evaluate(() => {
-    const g = [...document.querySelectorAll('.dataGridWidget')].find((e) => e.offsetWidth > 0);
+    const g = [...document.querySelectorAll('.data-grid')].find((e) => e.offsetWidth > 0);
     if (!g) return null;
-    const heads = [...g.querySelectorAll('thead th')].map((t) => t.textContent.trim());
+    const heads = [...g.querySelectorAll('[role=columnheader]')].map((t) => t.textContent.trim());
     const at = (h) => heads.indexOf(h);
-    return [...g.querySelectorAll('tbody tr')].filter((r) => r.offsetWidth > 0)
-      .map((r) => [...r.querySelectorAll('td')])
+    return [...g.querySelectorAll('[role=row][data-row]')].filter((r) => r.offsetWidth > 0)
+      .map((r) => [...r.querySelectorAll('[role=gridcell]')])
       .filter((tds) => tds[at('Run As User')]?.textContent.trim())
       .map((tds) => {
         const tick = tds[at('Enabled')]?.querySelector('.tick-box--cell');

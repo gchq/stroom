@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="indexSettingsMaxDocsPerShard" label="Max Docs Per Shard"
                         helpText="The maximum number of documents written to one index shard. When a shard is full a new one is created. Between 1,000 and 2,147,483,647. Default is 1,000,000,000."
@@ -44,8 +45,7 @@
                         helpText="The pipeline used to extract field values for search results when a query does not choose its own extraction pipeline.">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsResetData" label="Reset Data">
-            <g:Button ui:field="reset" text="Reset Data" styleName="Button" title="Deletes all index shards across all nodes in the cluster"/>
-        </form:FormGroup>
+        <b:Button ui:field="reset" addStyleNames="allow-focus" text="Reset Data"
+                  title="Deletes all index shards across all nodes in the cluster"/>
     </g:FlowPanel>
 </ui:UiBinder>

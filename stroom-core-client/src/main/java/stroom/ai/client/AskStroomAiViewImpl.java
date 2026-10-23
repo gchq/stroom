@@ -81,6 +81,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         widget = binder.createAndBindUi(this);
 
         message.getElement().setAttribute("placeholder", "How can I help?");
+        // Named for screen readers, as the placeholder is only a hint, lost once something is typed
+        message.getElement().setAttribute("aria-label", "Message");
     }
 
     @Override

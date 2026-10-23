@@ -519,13 +519,6 @@
     border-top: 1px solid var(--border-color);
 }
 
-.stroom-floormap-timeline-settings-show-all-button {
-    font-size: 0.85em;
-    padding: 3px 14px;
-    height: 26px;
-    white-space: nowrap;
-}
-
 /* -----------------------------------------------------------------------
    Canvas keyboard focus
 
@@ -1001,9 +994,16 @@
     width: 260px;
 }
 
-/* Whichever of the Shape / Image rows the current mode does not use. */
+/* Whichever of the Shape / Image rows the current mode does not use: its controls dimmed (they
+   are disabled), its label in the disabled text colour, which can still be read (faded by opacity,
+   it fell to 2.35:1) */
 .floormap-layer-style-row-dimmed td {
     opacity: 0.45;
+}
+
+.floormap-layer-style-dialog .floormap-layer-style-row-dimmed td:first-child {
+    opacity: 1;
+    color: var(--text-color--disabled);
 }
 
 /* Asset picker + Upload button on one line, picker taking the slack */

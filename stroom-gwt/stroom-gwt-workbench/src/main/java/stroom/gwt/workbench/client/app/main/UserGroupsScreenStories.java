@@ -37,6 +37,7 @@ import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -115,6 +116,12 @@ public final class UserGroupsScreenStories {
                     play.findByText("Members of group \"Administrators\":");
                     play.waitFor(() -> play.expect(play.getAllByText("Alice Anderson").count())
                             .toBeGreaterThanOrEqual(2));
+                    // The group is a member of none: its pager counts none ("0 to 0 of 0", once
+                    // "1 to 1 of 0")
+                    play.waitFor(() -> play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .toContain("0 to 0 of 0"));
+                    play.expect("the pagers' counts", UserGroupsScreenStories::pagerCounts)
+                            .not().toContain("1 to 1 of 0");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The runs of icon buttons, and the tab stops each costs, once a group is selected
@@ -150,18 +157,18 @@ public final class UserGroupsScreenStories {
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
-                    // first button), its toolbar and its pager (and its grid, a div), the master's,
-                    // then Member Of's, then Members', with the splitter (named by the pane it
-                    // resizes) between each. A grid's row with the keyboard focus is followed by
-                    // its row's open buttons (row actions)
+                    // first button), its toolbar and its pager, then its grid, the master's, then
+                    // Member Of's, then Members', with the splitter (named by the pane it resizes)
+                    // between each. A grid is one tab stop: the row with the keyboard focus (named
+                    // by its text; its row actions are reached with Right), or, with no rows, the
+                    // grid itself, so its headers can still be reached (named by its table name, Users)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            FILTER, "Show Recent Filters", "Create Group", "First", "div",
-                            "Open group Administrators",
+                            FILTER, "Show Recent Filters", "Create Group", "First", "Administrators",
                             "Users and groups",
-                            FILTER, "Show Recent Filters", "Add to Group", "First",
+                            FILTER, "Show Recent Filters", "Add to Group", "First", "Users",
                             "Members",
-                            FILTER, "Show Recent Filters", "Add Member to Group", "First", "div",
-                            "Open user Alice Anderson", "Open user Alice A Anderson"));
+                            FILTER, "Show Recent Filters", "Add Member to Group", "First",
+                            "Alice Anderson Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
@@ -174,12 +181,12 @@ public final class UserGroupsScreenStories {
                     // GWT's sortable headers have role="button", not "columnheader", so their names are
                     // read from the header cells' name holders
                     final Play master = masterGrid(play);
-                    final Value<List<String>> names = master.querySelectorAll(".dataGridSortableHeaderNameHolder")
+                    final Value<List<String>> names = master.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the first three column headings", () -> trimmed(names.get()).subList(0, 3))
                             .toEqual(List.of("/", "Display Name", "Full Name"));
-                    play.expect(master.getByText("Display Name").closest("th"))
-                            .toHaveClass("dataGridSortedHeaderAscending");
+                    play.expect(master.getByText("Display Name").closest(StroomDom.GRID_HEADER_CELL))
+                            .toHaveAttribute("aria-sort", "ascending");
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
@@ -214,7 +221,7 @@ public final class UserGroupsScreenStories {
                     final Play screen = play.screen();
                     play.findAllByText("Administrators");
                     // Master row: no link to the User Groups screen (we're on it)
-                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play masterRow = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(masterRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
                             "Show in Users"))).toBeVisible());
@@ -227,7 +234,8 @@ public final class UserGroupsScreenStories {
                     // The Members pane's rows have their own menu, which keeps the User Groups link
                     final Play members = play.within(play.getByText("Members of group \"Administrators\":")
                             .closest(".dock-container-vertical"));
-                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0).closest("tr"));
+                    final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0)
+                            .closest(StroomDom.GRID_ROW));
                     play.click(memberRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
                             "Show in User Groups"))).toBeVisible());
@@ -238,7 +246,7 @@ public final class UserGroupsScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
+                    final Play row = play.within(play.getByText("Alice Anderson").closest(StroomDom.GRID_ROW));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The item ends with three dots, not an ellipsis
                     play.click(screen.findByText("Copy User Groups and Permissions from..."));
@@ -271,6 +279,25 @@ public final class UserGroupsScreenStories {
         return "{\"values\": [" + String.join(", ", users) + "], \"pageResponse\": {\"offset\": 0, \"length\": "
                 + users.length + ", \"total\": " + users.length + ", \"exact\": true}}";
     }
+
+    // Each pager's count, e.g. "1 to 3 of 3"
+    private static List<String> pagerCounts() {
+        final List<String> counts = new ArrayList<>();
+        final JsArrayString texts = pagerTexts();
+        for (int i = 0; i < texts.length(); i++) {
+            counts.add(texts.get(i));
+        }
+        return counts;
+    }
+
+    private static native JsArrayString pagerTexts() /*-{
+        var texts = [];
+        var pagers = $doc.querySelectorAll(".pager-paging");
+        for (var i = 0; i < pagers.length; i++) {
+            texts.push(pagers[i].textContent.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim());
+        }
+        return texts;
+    }-*/;
 
     private static Widget render(final StoryContext context) {
         final SecurityScreenGinjector injector = GWT.create(SecurityScreenGinjector.class);

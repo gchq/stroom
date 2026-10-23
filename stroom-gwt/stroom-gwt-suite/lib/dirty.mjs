@@ -298,7 +298,7 @@ export async function nudge(page, f) {
   await page.waitForTimeout(500);
   const item = await page.evaluate((current) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const rows = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
+    const rows = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .data-grid__row')]
       .filter((e) => e.offsetWidth > 0 && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
     const other = rows.find((e) => norm(e.textContent) && norm(e.textContent) !== norm(current));
     if (!other) return null;

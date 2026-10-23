@@ -39,6 +39,10 @@ public class StroomThemeDecorator implements StoryDecorator {
     /// this off it, so that the page doesn't scroll.
     public static final int PADDING_PX = 24;
 
+    /// The height a story fills to fill the window: the window's less the frame's padding above and
+    /// below, so a full-screen screen ends at the window's bottom edge rather than below it.
+    public static final String CANVAS_HEIGHT = "calc(100vh - " + (2 * PADDING_PX) + "px)";
+
     private static final String PAGE_BACKGROUND = "var(--page__background-color, rgb(34, 37, 44))";
 
     // The theme applied to the page, one story being shown per page
@@ -86,6 +90,7 @@ public class StroomThemeDecorator implements StoryDecorator {
     public Widget decorate(final Widget story) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
+        // CANVAS_HEIGHT allows for this padding
         style.setProperty("padding", PADDING_PX + "px");
         style.setProperty("minHeight", "100vh");
         // The theme's page colour, which Stroom's panels and dialogs are drawn on (not the app's

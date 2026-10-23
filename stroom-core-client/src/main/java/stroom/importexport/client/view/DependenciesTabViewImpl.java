@@ -47,6 +47,8 @@ public class DependenciesTabViewImpl
     @Inject
     public DependenciesTabViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named for screen readers, as its placeholder is only a hint, lost once something is typed
+        quickFilter.setAccessibleName("Filter dependencies");
     }
 
 //    @Override

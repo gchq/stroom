@@ -74,7 +74,7 @@ public final class TableFilterSettingsStories {
                     // The tick boxes are a grid's (TickBoxCell), found by their column's row; the
                     // select-all tick box is the grid's header
                     play.waitFor(() -> play.expect(dialog.getByText("Count")).toBeInTheDocument());
-                    play.expect(dialog.querySelector("th .tick-box")).toBeInTheDocument();
+                    play.expect(dialog.querySelector("th .tick-box, [data-hcol] .tick-box")).toBeInTheDocument();
                     play.expect(tickBox(dialog, "Name")).toBeInTheDocument();
                     final Query count = tickBox(dialog, "Count");
                     play.expect(count).toHaveAttribute("aria-checked", "false");
@@ -94,7 +94,8 @@ public final class TableFilterSettingsStories {
 
     // The tick box of a column's row
     private static Query tickBox(final Play dialog, final String column) {
-        return dialog.within(dialog.getByText(column, "td *").closest("tr")).querySelector(".tick-box");
+        return dialog.within(dialog.getByText(column, StroomDom.GRID_CELL_TEXT).closest(StroomDom.GRID_ROW))
+                .querySelector(".tick-box");
     }
 
     // Whether a saved dashboard's Table Filter has the Count column

@@ -237,14 +237,17 @@ public final class DashboardDocs {
                     + "\"expression\": {\"type\": \"operator\", \"op\": \"AND\", \"children\": []}}]"));
 
     /// A Query and a Table with a custom conditional formatting rule
-    /// (`cfc`) with different light and dark background colours.
+    /// (`cfc`) with different light and dark background colours, each with a text colour that can be
+    /// read on it (4.5:1), as an author should choose.
     public static final String CF_CUSTOM_DASHBOARD = doc("dash-cfc", "CF Custom", null, null,
             tabs(0, "q1", "t1"),
             query("q1", "Q", ""),
             table("t1", "T", "q1", NAME_FIELD, ", \"conditionalFormattingRules\": [{\"id\": \"cfc\", "
                     + "\"enabled\": true, \"formattingType\": \"CUSTOM\", \"customStyle\": "
-                    + "{\"light\": {\"backgroundColour\": \"rgb(10, 20, 30)\"}, "
-                    + "\"dark\": {\"backgroundColour\": \"rgb(200, 100, 50)\"}}, "
+                    + "{\"light\": {\"backgroundColour\": \"rgb(10, 20, 30)\", "
+                    + "\"textColour\": \"rgb(255, 255, 255)\"}, "
+                    + "\"dark\": {\"backgroundColour\": \"rgb(200, 100, 50)\", "
+                    + "\"textColour\": \"rgb(0, 0, 0)\"}}, "
                     + "\"expression\": {\"type\": \"operator\", \"op\": \"AND\", \"children\": []}}]"));
 
     /// Three Text components in one tab layout, the first hidden and

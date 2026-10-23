@@ -128,6 +128,22 @@ public final class AnalyticRuleEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Processing Info")).toBeInTheDocument());
                     expectNoProblems(play);
                 })
+                // A table builder rule's Shards tab lists the shards found on every node, each node's
+                // own shard at a path another node also has
+                .story("Shards", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Scheduled Query"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
+                    openTab(play, "Shards");
+                    play.waitFor(() -> play.expect(play.getAllByText("rule-1/2023-11-14").count()).toBe(2));
+                    play.expect(play.getByText("rule-1/2023-11-15")).toBeInTheDocument();
+                    play.expect(play.getByText("node9")).toBeInTheDocument();
+                    expectNoProblems(play);
+                })
                 // Duplicate Management shows the columns of the duplicate checks found
                 .story("DuplicateManagement", context -> render(context, FIXTURES, UI_CONFIG))
                 .withPlay(play -> {
@@ -151,7 +167,8 @@ public final class AnalyticRuleEditorStories {
                     // added a row with none)
                     play.expect(destinationType(dialog)).toHaveValue("Stream");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("Stream", StroomDom.GRID_CELL_TEXT))
+                            .toBeInTheDocument());
                     expectNoProblems(play);
                 })
                 // The notification dialog: its maximum is always shown, and switching the
@@ -225,8 +242,10 @@ public final class AnalyticRuleEditorStories {
     static RestFixtures.Builder analyticRoutes(final RestFixtures.Builder builder) {
         return QueryFixtures.editorRoutes(DocumentEditors.ownerPermissions(builder
                 .route(QueryFixtures.SEARCH, RestReply.json(QueryFixtures.response(true, QueryEditorStories.TABLE)))
-                .route(RequestMatcher.post("/analyticDataShard/v1/find/" + RequestMatcher.PATH_WILDCARD),
-                        RestReply.json(EMPTY_PAGE))
+                .route(RequestMatcher.post("/analyticDataShard/v1/find").withQuery("nodeName=node1"),
+                        RestReply.json(NODE1_SHARDS))
+                .route(RequestMatcher.post("/analyticDataShard/v1/find").withQuery("nodeName=node9"),
+                        RestReply.json(NODE9_SHARDS))
                 .route(RequestMatcher.post("/duplicateCheck/v1/find"), RestReply.json(DUPLICATES))
                 .route(RequestMatcher.post("/executionSchedule/v1/fetchExecutionSchedule"),
                         RestReply.json(EMPTY_PAGE))
@@ -237,6 +256,17 @@ public final class AnalyticRuleEditorStories {
 
     private static final String EMPTY_PAGE =
             "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, \"total\": 0, \"exact\": true}}";
+
+    // A table builder rule's shards, found on each node; both nodes have a shard at the same path
+    private static final String NODE1_SHARDS = """
+            {"values": [
+              {"node": "node1", "path": "rule-1/2023-11-14", "createTimeMs": 1700000000000, "size": 2048},
+              {"node": "node1", "path": "rule-1/2023-11-15", "createTimeMs": 1700086400000, "size": 1048576}
+            ], "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
+    private static final String NODE9_SHARDS = """
+            {"values": [
+              {"node": "node9", "path": "rule-1/2023-11-14", "createTimeMs": 1700000000000, "size": 4096}
+            ], "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
     /// Runs the query, hides the Count column and checks that the document is dirty, i.e. that
     /// the table preferences are part of it. The play can't see the document the editor would

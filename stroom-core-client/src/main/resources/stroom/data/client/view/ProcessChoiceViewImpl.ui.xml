@@ -11,13 +11,13 @@
                         screenReaderText="1 to 100, higher runs first. Used unless automatic priority applies.">
             <v:ValueSpinner ui:field="priority"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Give the new filters the same priority as the pipeline's existing processor filter, preferring an enabled one (reprocess filters are ignored). If there is none, Priority is used. Default is ticked.">
             <tickbox:CustomCheckBox ui:field="autoPriority" identity="processChoiceAuto" label="Attempt to automatically set priority"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Process the selected data again through every pipeline that has already processed it, instead of choosing a pipeline. A reprocess filter is added to each of those pipelines. Default is not ticked.">
             <tickbox:CustomCheckBox ui:field="reprocess" identity="processChoiceReprocess" label="Reprocess data"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Create the new processor filters enabled, so processing starts straight away. Untick to create them disabled and enable them later on the Processors tab. Default is ticked.">
             <tickbox:CustomCheckBox ui:field="enabled" identity="processChoiceEnable" label="Enable new filters"/>
         </form:FormGroup>
         <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time"

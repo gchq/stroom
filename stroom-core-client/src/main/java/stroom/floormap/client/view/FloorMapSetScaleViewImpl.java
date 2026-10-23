@@ -77,6 +77,7 @@ public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetSca
 
         final Grid grid = new Grid(2, 2);
         grid.addStyleName("floormap-set-scale-fields");
+        FloorMapAria.layoutTable(grid);
         grid.setText(ROW_CURRENT, 0, "The line you measured is currently");
         grid.setWidget(ROW_CURRENT, 1, currentReading);
         grid.setText(ROW_DISTANCE, 0, "It is really");

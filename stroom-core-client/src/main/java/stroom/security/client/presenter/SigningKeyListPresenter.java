@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -27,6 +26,7 @@ import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -51,7 +51,7 @@ public class SigningKeyListPresenter extends MyPresenterWidget<PagerView> {
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
-    private final MyDataGrid<SigningKeyRow> dataGrid;
+    private final DataGridWidget<SigningKeyRow> dataGrid;
     private final MultiSelectionModelImpl<SigningKeyRow> selectionModel;
 
     @Inject
@@ -63,7 +63,9 @@ public class SigningKeyListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        this.dataGrid.setKeyProvider(SigningKeyRow::getId);
         this.dataGrid.setTableName("Signing Keys");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);

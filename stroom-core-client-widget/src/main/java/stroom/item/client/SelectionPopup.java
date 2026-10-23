@@ -91,6 +91,8 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         };
         selectionList = new SelectionList<>();
         selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        // As big as its options, within the popup's limits (selection-popup.css)
+        selectionList.setFitContent(true);
 
         final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
         simplePopupLayout.setContent(selectionList);

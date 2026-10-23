@@ -17,7 +17,6 @@
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.StoryPanels;
@@ -26,6 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -90,28 +90,22 @@ public final class DocRefCellStories {
                     play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline")).toBeNull();
                 })
                 // In a grid, as Stroom's lists show it: the open icon is a button, named for what it
-                // opens, which Tab reaches from its row (only the row with the keyboard focus has
-                // its buttons in the tab order) and Enter or Space presses. It was an icon that only
-                // a mouse could press
+                // opens, which the grid's keys reach (Right from the row into its cell, whose button
+                // takes the focus; Down to the same cell of the next row) and Enter or Space
+                // presses. It was an icon that only a mouse could press
                 .story("OpenByKeyboard", DocRefCellStories::grid)
                 .withPlay(play -> {
                     final Query openFeed = play.getByRole("button", "Open Feed TEST_FEED");
                     final Query openPipeline = play.getByRole("button", "Open Pipeline Event Processing");
-                    // Pressing a row's text gives the row the keyboard focus
+                    // Pressing a row's text gives the row the keyboard focus, and Right its button
                     play.click(play.getByText("TEST_FEED"));
-                    play.waitFor(() -> play.expect(openFeed).toHaveAttribute("tabindex", "0"));
-                    play.expect(openPipeline).toHaveAttribute("tabindex", "-1");
-                    play.tab();
-                    play.expect(openFeed).toHaveFocus();
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(openFeed).toHaveFocus());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("Feed TEST_FEED"));
-                    // Back to the row, down to the next one, and on to its open button
-                    play.tab(true);
+                    // Down to the same cell of the next row, whose button takes the focus
                     play.keyboard("{ArrowDown}");
-                    play.waitFor(() -> play.expect(openPipeline).toHaveAttribute("tabindex", "0"));
-                    play.expect(openFeed).toHaveAttribute("tabindex", "-1");
-                    play.tab();
-                    play.expect(openPipeline).toHaveFocus();
+                    play.waitFor(() -> play.expect(openPipeline).toHaveFocus());
                     play.keyboard(" ");
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN))
                             .toHaveBeenNthCalledWith(2, "Pipeline Event Processing"));
@@ -182,8 +176,8 @@ public final class DocRefCellStories {
                 .docRefFunction(docRef -> docRef)
                 .build();
 
-        // MyDataGrid takes a GWT event bus, not the cell's web bindery one
-        final MyDataGrid<DocRef> grid = new MyDataGrid<>(new com.google.gwt.event.shared.SimpleEventBus());
+        // The grid takes a GWT event bus, not the cell's web bindery one
+        final DataGridWidget<DocRef> grid = new DataGridWidget<>(new com.google.gwt.event.shared.SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

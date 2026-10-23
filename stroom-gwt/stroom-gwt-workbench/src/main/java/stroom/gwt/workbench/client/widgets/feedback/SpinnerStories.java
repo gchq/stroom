@@ -46,13 +46,25 @@ public final class SpinnerStories {
                 .layout(StoryLayout.CENTERED)
                 // The inline loading spinner (SpinnerSmall)
                 .story("Inline", context -> inline())
-                // The centred overlay spinner (SpinnerLarge with spinner-center)
+                // Hidden, it fades out and then stops spinning, so that an idle spinner (one on
+                // every tab) costs nothing and isn't read by screen readers (#5299); shown again,
+                // it spins at once
+                .withPlay(play -> {
+                    play.expect(play.querySelector(".busy-spinner--spinning")).toBeInTheDocument();
+                    play.click(play.getByRole("button", "Toggle"));
+                    play.waitFor(() -> play.expect(play.querySelector(".busy-spinner--spinning")).toBeNull());
+                    play.expect(play.querySelector(".busy-spinner--small")).not().toBeVisible();
+                    play.click(play.getByRole("button", "Toggle"));
+                    play.expect(play.querySelector(".busy-spinner--spinning.busy-spinner--active"))
+                            .toBeInTheDocument();
+                })
+                // The centred overlay spinner (SpinnerLarge with busy-spinner--centred)
                 .story("Overlay", context -> overlay());
     }
 
     private static Widget inline() {
         final SpinnerSmall spinner = new SpinnerSmall();
-        // SpinnerSmall shows while it has the `refreshing` style
+        // SpinnerSmall shows while it has the `busy-spinner--active` style
         spinner.setRefreshing(true);
         final InlineLabel text = StoryPanels.note("Inline loading spinner", "#ccc", "0.85rem");
         final FlowPanel spinnerRow = StoryPanels.row(12, spinner, text);
@@ -92,8 +104,8 @@ public final class SpinnerStories {
 
         // As Stroom's views add it in their UiBinder templates, e.g. DataViewImpl
         final SpinnerLarge spinner = new SpinnerLarge();
-        spinner.addStyleName("spinner-center");
-        // A new SpinnerLarge thinks it is visible but has no `spinner__visible` style, so is
+        spinner.addStyleName(SpinnerLarge.CENTRED);
+        // A new SpinnerLarge thinks it is visible but has no `busy-spinner--active` style, so is
         // transparent until its task monitor starts a task; hide it then show it, as when a task
         // starts after an earlier one ended
         spinner.setVisible(false);

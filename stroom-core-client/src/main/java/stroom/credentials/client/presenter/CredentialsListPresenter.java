@@ -24,7 +24,6 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
@@ -38,6 +37,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -74,7 +74,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * List of credentials
      */
-    private final MyDataGrid<CredentialWithPerms> dataGrid;
+    private final DataGridWidget<CredentialWithPerms> dataGrid;
 
     /**
      * What is selected in the list?
@@ -150,7 +150,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
 
-        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid = new DataGridWidget<>(this);
         this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
@@ -179,7 +179,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Initialise the columns in the data grid.
      */
-    private void initColumns(final MyDataGrid<CredentialWithPerms> grid) {
+    private void initColumns(final DataGridWidget<CredentialWithPerms> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName)
                         .build(),
                 DataGridUtil.headingBuilder("Name")

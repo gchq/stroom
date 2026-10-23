@@ -1,0 +1,136 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The states of the data grid's rows, cells and column headers
+   (stroom.widget.datagrid.client.DataGridWidget, whose parts and layout are
+   celltable/DataGridWidget.css's). Named BEM style (block, block__element, block--modifier).
+
+   data-grid                       the grid
+     data-grid__row                a row (role row)
+       data-grid__cell             a cell (role gridcell)
+     data-grid__header-cell        a column's header (role columnheader)
+
+   States come from ARIA attributes and pseudo-classes, not modifiers: a selected row is
+   [aria-selected="true"], and keyboard focus is :focus-visible on a row, cell, control or header
+   (DataGridKeyboard).
+
+   Rows are tight, so these differ from the menu's items (menu.css): full width with square corners
+   (a run of selected rows is one block), the focus ring drawn inside the row, cell or header (one
+   drawn outside would cover the rows next to it, and the scrolling box would cut it off at the top
+   and bottom), a mouse-over that fades in, and no pressed look (pressing a row selects it there and
+   then).
+
+   A cell's own styles (from its column) dataGridDisabledCell, for a row that is switched off, and
+   dataGridAlertText, for text that warns, are also given their colours here.
+*/
+
+/* Mouse over: a row that isn't selected fades into the hovered colour. A selected row shows no
+   mouse-over, as there is nothing more to choose */
+.data-grid .data-grid__row:not([aria-selected="true"]):hover {
+    background-color: var(--row__background-color--hovered);
+    transition: var(--hover__transition);
+}
+
+/* Selected, under the mouse or not */
+.data-grid .data-grid__row[aria-selected="true"] {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+/* Keyboard focus only: a click selects the row, which says where it is */
+.data-grid .data-grid__row:focus,
+.data-grid .data-grid__cell:focus,
+.data-grid .data-grid__header-cell:focus {
+    outline: none;
+}
+
+/* The focused row, cell or header: the focus ring and border every control has, in the same order
+   (the light ring outside, the 1px border inside it), but drawn inside the row, cell or header, as
+   one outside would cover its neighbours and be cut off by the scrolling box: a 2px band of the
+   ring's colour at its edge, then the border. A focused cell's row keeps its fill and has no ring
+   of its own */
+.data-grid .data-grid__row:focus-visible,
+.data-grid .data-grid__cell:focus-visible,
+.data-grid .data-grid__header-cell:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus-ring__color);
+    outline: 1px solid var(--focus-border);
+    outline-offset: -3px;
+}
+
+/* A selected row with the focus (on it or a cell) takes the selected-and-focused colour, which the
+   focus border stands out from by 3:1 in both themes (the plain selected colour is too near it in
+   the dark theme) */
+.data-grid .data-grid__row[aria-selected="true"]:has(:focus-visible),
+.data-grid .data-grid__row[aria-selected="true"]:focus-visible {
+    background-color: var(--row__background-color--selected--focussed);
+}
+
+/* A disabled row (an item switched off, e.g. a disabled rule, job or node) has its text greyed;
+   its tick boxes, spinners and icons still work, so are drawn as usual. A control that really
+   can't be used shows its own disabled look */
+.dataGridDisabledCell {
+    color: var(--text-color--disabled);
+}
+
+.data-grid__row--selected .dataGridDisabledCell {
+    color: var(--text-color--disabled--selected);
+}
+
+.dataGridAlertText {
+    color: var(--text-color--red);
+}
+
+.data-grid__row--selected .dataGridAlertText {
+    color: var(--row__text-color--red--selected);
+}
+
+/* Forced colours (e.g. Windows high contrast) replace the rows' fills with the page's colour and
+   drop box shadows, so neither the selection nor the focus would show. As the menu's items and
+   the calendar's days: a selected row takes the system's Highlight and HighlightText (kept, rather
+   than forced), its content too (cells' own colours, e.g. links, would otherwise stay); keyboard
+   focus is an outline inside the row, cell or header (in the text's colour, so HighlightText on a
+   selected row); and a dimmed cell is GrayText */
+@media (forced-colors: active) {
+    /* With the focus too, as the selected-and-focused colour (more specific) would show otherwise */
+    .data-grid .data-grid__row[aria-selected="true"],
+    .data-grid .data-grid__row[aria-selected="true"]:has(:focus-visible),
+    .data-grid .data-grid__row[aria-selected="true"]:focus-visible {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        color: HighlightText;
+    }
+
+    .data-grid .data-grid__row[aria-selected="true"] * {
+        color: HighlightText;
+    }
+
+    .data-grid .data-grid__row:focus-visible,
+    .data-grid .data-grid__cell:focus-visible,
+    .data-grid .data-grid__header-cell:focus-visible {
+        outline: 2px solid CanvasText;
+        outline-offset: -2px;
+    }
+
+    .data-grid .data-grid__row[aria-selected="true"]:focus-visible,
+    .data-grid .data-grid__row[aria-selected="true"] .data-grid__cell:focus-visible {
+        outline-color: HighlightText;
+    }
+
+    .data-grid .data-grid__row:not([aria-selected="true"]) .dataGridDisabledCell {
+        color: GrayText;
+    }
+}

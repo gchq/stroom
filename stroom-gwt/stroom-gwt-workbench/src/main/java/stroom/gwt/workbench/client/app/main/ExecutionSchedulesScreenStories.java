@@ -306,15 +306,16 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Daily digest");
                     expectNoErrors(play);
                 })
-                // The first fetch carries the default sort, Name descending ignoring case
-                .story("DefaultSortIsNameDescending", context -> render(context, FIXTURES, false))
+                // The first fetch carries the default sort, Name A to Z ignoring case
+                .story("DefaultSortIsNameAscending", context -> render(context, FIXTURES, false))
                 .withPlay(play -> {
                     play.findByText("Daily report");
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the first fetch's sort list", () -> firstSortList(requests))
-                            .toEqual(List.of(Map.of("id", "Name", "desc", true, "ignoreCase", true))));
-                    // A request default only: no header shows a sort icon
-                    play.expect(play.querySelector(".column-sortIcon")).toBeNull();
+                            .toEqual(List.of(Map.of("id", "Name", "desc", false, "ignoreCase", true))));
+                    // The grid's default (D10): the Schedule Name header shows it
+                    play.expect(play.getByText("Schedule Name", StroomDom.GRID_HEADER_TEXT)
+                            .closest(StroomDom.GRID_HEADER_CELL)).toHaveAttribute("aria-sort", "ascending");
                     expectNoErrors(play);
                 })
                 // A schedule naming a node that no longer exists

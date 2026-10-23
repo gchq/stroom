@@ -40,6 +40,8 @@ import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapInitStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapMapStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
 import stroom.gwt.workbench.client.app.editors.GitRepoEditorStories;
@@ -48,6 +50,7 @@ import stroom.gwt.workbench.client.app.editors.PathwaysEditorStories;
 import stroom.gwt.workbench.client.app.editors.PlanBEditorStories;
 import stroom.gwt.workbench.client.app.editors.QueryEditorStories;
 import stroom.gwt.workbench.client.app.editors.ReportEditorStories;
+import stroom.gwt.workbench.client.app.editors.SqlTemporalStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.StatisticStoreEditorStories;
 import stroom.gwt.workbench.client.app.editors.ViewEditorStories;
 import stroom.gwt.workbench.client.app.editors.VisualisationEditorStories;
@@ -112,6 +115,7 @@ import stroom.gwt.workbench.client.app.main.ProcessorFilterListStories;
 import stroom.gwt.workbench.client.app.main.ProcessorLimitsDialogStories;
 import stroom.gwt.workbench.client.app.main.ProcessorProfilesScreenStories;
 import stroom.gwt.workbench.client.app.main.ProcessorTaskListStories;
+import stroom.gwt.workbench.client.app.main.ProcessorTaskSummaryStories;
 import stroom.gwt.workbench.client.app.main.PropertiesScreenStories;
 import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
 import stroom.gwt.workbench.client.app.main.RecentItemsDialogStories;
@@ -262,6 +266,8 @@ public final class AppStories {
         ProcessorProfilesScreenStories.addTo(registry);
         // App/Main/ProcessorTaskList
         ProcessorTaskListStories.addTo(registry);
+        // App/Main/ProcessorTaskSummary
+        ProcessorTaskSummaryStories.addTo(registry);
         // App/Main/PropertiesScreen
         PropertiesScreenStories.addTo(registry);
         // App/Main/RecentItemsDialog
@@ -320,6 +326,10 @@ public final class AppStories {
         FloorMapSettingsStories.addTo(registry);
         // App/Editors/FloorMapForms
         FloorMapFormsStories.addTo(registry);
+        // App/Editors/FloorMapInit
+        FloorMapInitStories.addTo(registry);
+        // App/Editors/FloorMapMap
+        FloorMapMapStories.addTo(registry);
         // App/Editors/FolderEditor
         FolderEditorStories.addTo(registry);
         // App/Editors/GitRepoEditor
@@ -385,6 +395,8 @@ public final class AppStories {
         ElasticIndexEditorStories.addTo(registry);
         // App/Index/IndexEditor
         IndexEditorStories.addTo(registry);
+        // App/Editors/SqlTemporalStoreSettings
+        SqlTemporalStoreSettingsStories.addTo(registry);
         // App/Index/SolrIndexEditor
         SolrIndexEditorStories.addTo(registry);
         // App/Feed/FeedEditor

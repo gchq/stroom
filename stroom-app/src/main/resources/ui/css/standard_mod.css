@@ -24,7 +24,9 @@ body,table td,select {
 	box-sizing: border-box;
 }
 
-.dataGridWidget button {
+/* Not a row action (.rowAction, components.css), a button that looks as the icon it holds: this
+   look would make its rows 5px taller. :where() keeps the specificity as it was */
+.data-grid button:where(:not(.rowAction)) {
 	margin: 0;
 	padding: 2px 4px;
 	text-decoration: none;

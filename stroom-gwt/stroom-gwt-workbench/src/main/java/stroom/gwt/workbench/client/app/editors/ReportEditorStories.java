@@ -141,7 +141,8 @@ public final class ReportEditorStories {
                     // Stream
                     final Play dialog = AnalyticRuleEditorStories.dialog(screen, "Add Notification");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("Stream", StroomDom.GRID_CELL_TEXT))
+                            .toBeInTheDocument());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Opening the Notifications tab doesn't make the document dirty

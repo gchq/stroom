@@ -21,16 +21,26 @@ import stroom.document.asset.client.presenter.DocumentAssetChooserPresenter.Docu
 import stroom.document.asset.client.view.DocumentAssetChooserViewImpl;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
+import stroom.floormap.client.presenter.FloorMapClusterPresenter;
+import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
 import stroom.floormap.client.presenter.FloorMapDockPresenter;
 import stroom.floormap.client.presenter.FloorMapDockPresenter.FloorMapDockView;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactListView;
+import stroom.floormap.client.presenter.FloorMapGroupEditPresenter;
+import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
+import stroom.floormap.client.presenter.FloorMapGroupsPresenter;
+import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsView;
+import stroom.floormap.client.presenter.FloorMapInitPresenter;
+import stroom.floormap.client.presenter.FloorMapInitPresenter.FloorMapInitView;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter;
 import stroom.floormap.client.presenter.FloorMapLayerStylePresenter.FloorMapLayerStyleView;
 import stroom.floormap.client.presenter.FloorMapLayersPresenter;
 import stroom.floormap.client.presenter.FloorMapLayersPresenter.FloorMapLayersView;
+import stroom.floormap.client.presenter.FloorMapMapPresenter;
+import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.client.presenter.FloorMapSetScalePresenter;
@@ -43,24 +53,34 @@ import stroom.floormap.client.presenter.FloorMapTimelinePresenter;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
 import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter;
 import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorMapTimelineSettingsView;
+import stroom.floormap.client.presenter.FloorMapTrackingPresenter;
+import stroom.floormap.client.presenter.FloorMapTrackingPresenter.FloorMapTrackingView;
 import stroom.floormap.client.view.FloorMapCanvasViewImpl;
+import stroom.floormap.client.view.FloorMapClusterViewImpl;
 import stroom.floormap.client.view.FloorMapDockViewImpl;
 import stroom.floormap.client.view.FloorMapEditorViewImpl;
 import stroom.floormap.client.view.FloorMapFactListViewImpl;
+import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
+import stroom.floormap.client.view.FloorMapGroupsViewImpl;
+import stroom.floormap.client.view.FloorMapInitViewImpl;
 import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapLayersViewImpl;
+import stroom.floormap.client.view.FloorMapMapViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
 import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimeListViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineViewImpl;
+import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FloorMapModule`
 /// (`stroom/floormap/client/gin/FloorMapModule.java`) that a floor map's Editor tab
-/// ([FloorMapEditorPresenter]) and Settings tab ([FloorMapSettingsPresenter]) need, and the document
+/// ([FloorMapEditorPresenter]), Map tab ([FloorMapMapPresenter], with its Tracking, Groups and
+/// cluster member lists) and Settings tab ([FloorMapSettingsPresenter]) need, the dialog that
+/// initialises a new floor map ([FloorMapInitPresenter]), and the document
 /// asset chooser its asset boxes open
 /// (`stroom/document/asset/client/gin/DocumentAssetModule.java`), without their plugins and app
 /// services.
@@ -105,6 +125,24 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapSettingsPresenter.class,
                 FloorMapSettingsView.class,
                 FloorMapSettingsViewImpl.class);
+        bindPresenterWidget(FloorMapMapPresenter.class,
+                FloorMapMapView.class,
+                FloorMapMapViewImpl.class);
+        bindPresenterWidget(FloorMapTrackingPresenter.class,
+                FloorMapTrackingView.class,
+                FloorMapTrackingViewImpl.class);
+        bindPresenterWidget(FloorMapGroupsPresenter.class,
+                FloorMapGroupsView.class,
+                FloorMapGroupsViewImpl.class);
+        bindPresenterWidget(FloorMapGroupEditPresenter.class,
+                FloorMapGroupEditView.class,
+                FloorMapGroupEditViewImpl.class);
+        bindPresenterWidget(FloorMapClusterPresenter.class,
+                FloorMapClusterView.class,
+                FloorMapClusterViewImpl.class);
+        bindPresenterWidget(FloorMapInitPresenter.class,
+                FloorMapInitView.class,
+                FloorMapInitViewImpl.class);
         bindPresenterWidget(DocumentAssetChooserPresenter.class,
                 DocumentAssetChooserView.class,
                 DocumentAssetChooserViewImpl.class);

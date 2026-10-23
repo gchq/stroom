@@ -51,6 +51,8 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     @Inject
     public QueryHelpViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // A list must be named; its quick filter is then named for it too
+        selectionList.setAccessibleName("Help contents");
     }
 
     @Override

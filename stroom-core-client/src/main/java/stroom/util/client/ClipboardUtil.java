@@ -28,6 +28,7 @@ public final class ClipboardUtil {
      * @return Whether the copy was successful
      */
     public static boolean copy(final String text) {
+        final Element focused = getFocusedElement();
         final BodyElement body = Document.get().getBody();
         final TextArea textArea = new TextArea();
         final Element textAreaElement = textArea.getElement();
@@ -38,9 +39,22 @@ public final class ClipboardUtil {
 
         final boolean result = copy();
         body.removeChild(textAreaElement);
+        // Copying selects the text area's text, which takes the focus; without this, removing the
+        // text area left the focus on the page itself
+        refocus(focused);
 
         return result;
     }
+
+    private static native Element getFocusedElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    private static native void refocus(final Element element) /*-{
+        if (element && element !== $doc.body && element.isConnected && element.focus) {
+            element.focus({preventScroll: true});
+        }
+    }-*/;
 
     private static native boolean copy() /*-{
         var textArea = $doc.getElementsByClassName('clipboardCopy')[0];

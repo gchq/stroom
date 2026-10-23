@@ -110,7 +110,7 @@ public final class CachesScreenStories {
                             .toBeGreaterThan(0));
                     // Clear on node1 (the bottom grid). The icon button column is GWT's SvgCell, a
                     // clickable div
-                    play.click(play.within(play.getByText("node1").closest("tr"))
+                    play.click(play.within(play.getByText("node1").closest("tr, [role=\"row\"]"))
                             .getByTitle("Clear and rebuild cache"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.delete("/cache/v1")

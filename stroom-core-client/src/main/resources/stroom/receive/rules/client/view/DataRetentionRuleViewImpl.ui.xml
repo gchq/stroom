@@ -11,7 +11,7 @@
                         screenReaderText="For your reference only.">
                 <g:TextBox ui:field="name" />
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Keep data matching this rule for ever. When ticked, Retain For is ignored. Default is ticked for a new rule.">
             <tickbox:CustomCheckBox ui:field="forever" identity="dataRetentionRuleKeepForever" label="Keep Forever"/>
         </form:FormGroup>
         <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For"

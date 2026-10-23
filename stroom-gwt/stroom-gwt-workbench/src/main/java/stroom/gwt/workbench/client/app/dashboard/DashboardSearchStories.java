@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
@@ -269,12 +270,19 @@ public final class DashboardSearchStories {
                     final Play screen = play.screen();
                     // The Table Filter is a list of the column's values to tick
                     // (ColumnValuesFilterPresenter), so the play chooses 'red' and 'green' there;
-                    // the values are the table's, so the query is run first
+                    // the values are the table's, so the query is run first. Each step waits for the
+                    // one before to take effect (under load a click could land while the list was
+                    // still being refreshed by the first query's results)
                     DashboardPlays.runQuery(play, 0);
-                    play.waitFor(() -> play.expect(play.getByText("red")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByText("blue")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+                            .toHaveLength(0));
                     play.click(play.getByText("Select None"));
+                    play.waitFor(() -> play.expect(valueTick(play, "red")).toHaveAttribute("aria-checked", "false"));
                     play.click(play.getByText("red"));
+                    play.waitFor(() -> play.expect(valueTick(play, "red")).toHaveAttribute("aria-checked", "true"));
                     play.click(play.getByText("green"));
+                    play.waitFor(() -> play.expect(valueTick(play, "green")).toHaveAttribute("aria-checked", "true"));
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("matched red")).toBeInTheDocument());
                     play.expect(screen.queryByText(TextMatch.containing("Error"))).toBeNull();
@@ -365,6 +373,11 @@ public final class DashboardSearchStories {
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
         expectSearchesComplete(play);
+    }
+
+    // A value in a Table Filter's list: an option that says whether it is ticked (aria-checked)
+    private static Query valueTick(final Play play, final String value) {
+        return play.getByRole("option", value);
     }
 
     // No Query is still searching: each Query's own button is back to 'Execute Query' (it is

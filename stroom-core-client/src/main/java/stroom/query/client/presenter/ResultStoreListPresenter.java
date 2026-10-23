@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
@@ -34,6 +33,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGridWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -68,7 +68,9 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
-        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>(this);
+        final DataGridWidget<ResultStoreInfo> dataGrid = new DataGridWidget<>(this);
+        // Rows keyed by id, so a row whose values change is still the same row
+        dataGrid.setKeyProvider(ResultStoreInfo::getQueryKey);
         dataGrid.setTableName("Result Stores");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

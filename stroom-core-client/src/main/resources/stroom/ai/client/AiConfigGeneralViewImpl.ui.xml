@@ -36,7 +36,7 @@
                         screenReaderText="Messages, 1 to 500. Default is 200.">
             <v:ValueSpinner ui:field="maxHistorySafetyCapMessages" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Add a Request detail entry to the chat for each question, showing the messages sent to the AI model and its reply. Useful for working out why an answer went wrong. Currently only the value saved with Set As Default is used. Default is ticked.">
             <tickbox:CustomCheckBox ui:field="enableDebugDetail"
                                     identity="enableDebugDetail"
                                     label="Enable Debug Detail"/>

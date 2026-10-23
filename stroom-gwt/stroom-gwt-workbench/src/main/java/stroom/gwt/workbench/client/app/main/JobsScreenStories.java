@@ -165,6 +165,11 @@ public final class JobsScreenStories {
                     // Select the job: the bottom per-node grid loads
                     showDataRetentionNodes(play);
                     play.findByText("node2");
+                    // Current Tasks, a count, has three times the usual space before Last Executed, a
+                    // date, in its header and its cells, so the two don't run together (#4442)
+                    final Query currentTasks = play.getByText("Current Tasks").closest("[data-hcol]");
+                    play.expect("the Current Tasks header's and first cell's right padding, in left paddings",
+                            () -> paddingRatios(currentTasks.element().get())).toBe("3 3");
                     // Types render; the CRON node has a schedule, the DISTRIBUTED node has no Run Now
                     play.expect(play.getByText("Cron")).toBeInTheDocument();
                     play.expect(play.getByText("Distributed")).toBeInTheDocument();
@@ -187,12 +192,12 @@ public final class JobsScreenStories {
                 // GWT's JobListPresenter.changeData inserts an empty row before the first advanced job
                 .story("AdvancedGap", context -> render(context, FIXTURES))
                 .withPlay(play -> {
-                    final Query firstAdvanced = play.findByText("Property Cache Reload").closest("tr");
+                    final Query firstAdvanced = play.findByText("Property Cache Reload").closest(StroomDom.GRID_ROW);
                     // The inserted row is a real row with no job in it
                     play.expect("the text of the row above", () -> previousRowText(firstAdvanced.element().get()))
                             .toBe("");
                     // The non-advanced jobs above it still carry their text
-                    final Query above = play.getByText("Data Retention").closest("tr");
+                    final Query above = play.getByText("Data Retention").closest(StroomDom.GRID_ROW);
                     play.expect("the text of the 'Data Retention' row", () -> rowText(above.element().get()))
                             .not().toBe("");
                     expectNoProblems(play);
@@ -204,8 +209,7 @@ public final class JobsScreenStories {
                     showDataRetentionNodes(play);
                     play.findByText("node3");
                     // Multi-select the two CRON nodes: select node1, then Ctrl-mousedown node3.
-                    // A selected row has GWT's 'dataGridSelectedRow' class, not
-                    // aria-selected="true"
+                    // A selected row has the grid's 'data-grid__row--selected' class
                     play.fireEvent().mouseDown(play.getByText("node1"));
                     play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
                     play.fireEvent().mouseDown(play.getByText("node3"), EventInit.create().ctrlKey());
@@ -247,7 +251,8 @@ public final class JobsScreenStories {
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
                     // The row's action menu: GWT's buildActionMenu yields four items in this order.
                     // The menu is named for its job and node, and takes the focus
-                    play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(0));
+                    // The button is named for its job and node too
+                    play.click(play.getByTitle("Actions for job 'Data Retention' on node 'node1'"));
                     screen.findByRole("menu", "Actions for job 'Data Retention' on node 'node1'");
                     play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
                     play.expect(screen.getByText("Run Job on 'node1' Now")).toBeInTheDocument();
@@ -257,6 +262,17 @@ public final class JobsScreenStories {
                     // Tasks screen (TaskManagerPresenter.changeNameFilter)
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_TASKS))
                             .toHaveBeenCalledWith("node=node1, task=Data Retention"));
+
+                    // The keyboard reaches the button, the row's last cell, and Enter opens the menu
+                    // (the button was a picture that only a mouse press used)
+                    play.click(play.within(row(play, "node1")).getByText("Enabled"));
+                    play.keyboard("{ArrowRight}{End}");
+                    play.expect(play.getByRole("button", "Actions for job 'Data Retention' on node 'node1'"))
+                            .toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     expectNoProblems(play);
                 })
                 // Clicking a Schedule link opens the editor; OK saves the edited schedule
@@ -289,23 +305,26 @@ public final class JobsScreenStories {
                     final Play screen = play.screen();
                     showDataRetentionNodes(play);
                     play.findByText("0 0 * * ?");
-                    // Pressing a row's text gives its row the keyboard focus
+                    // Pressing a row's text gives its row the focus. The grid is one tab stop: its
+                    // buttons aren't tab stops, but are reached with Right from the row, a cell
+                    // holding a button giving the button the focus
                     play.click(play.getByText("node1"));
                     play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
                     final Query openNode = play.getByRole("button", OPEN_NODE1);
                     final Query editSchedule = play.getByRole("button", editSchedule("node1"));
-                    play.expect(openNode).toHaveAttribute("tabindex", "0");
-                    play.expect(editSchedule).toHaveAttribute("tabindex", "0");
-                    // Another row's buttons are reached by moving to the row first
-                    play.expect(play.getByRole("button",
-                                    "Open node 'node2' and job 'Data Retention' on the Nodes screen."))
-                            .toHaveAttribute("tabindex", "-1");
-                    play.tab();
-                    play.expect(openNode).toHaveFocus();
+                    play.expect(openNode).toHaveAttribute("tabindex", "-1");
+                    play.expect(editSchedule).toHaveAttribute("tabindex", "-1");
+                    // Enabled's tick box, then the Node column's Open button
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(openNode).toHaveFocus());
                     play.keyboard(" ");
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
-                    play.tab();
-                    play.expect(editSchedule).toHaveFocus();
+                    // On past Node State and Type to the Schedule column's Edit button
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(editSchedule).toHaveFocus());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());
                     // The keys pressed a button, so the row's selection is unchanged
@@ -324,7 +343,7 @@ public final class JobsScreenStories {
     // GWT's grid rows are <tr> elements with no role attribute (their role is
     // implicit), so a cell's row is its closest <tr>, not its closest [role="row"]
     private static Query row(final Play play, final String text) {
-        return play.getByText(text).closest("tr");
+        return play.getByText(text).closest(StroomDom.GRID_ROW);
     }
 
     // Selects Data Retention and waits for its nodes, with their states. The enabled nodes are a
@@ -340,11 +359,24 @@ public final class JobsScreenStories {
     // Runs node1's job now from its row's action menu, and waits for the confirmation
     private static void runNow(final Play play) {
         final Play screen = play.screen();
-        play.click(play.within(row(play, "node1")).getByTitle(StroomDom.ACTIONS_TITLE));
+        play.click(play.within(row(play, "node1")).getByTitle(TextMatch.regex("^Actions for job ")));
         play.click(screen.findByText("Run Job on 'node1' Now"));
         play.waitFor(() -> play.expect(screen.getByText(
                 TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());
     }
+
+    // The right padding of a column's header and its first cell's, each over its left padding,
+    // e.g. "3 3"
+    private static native String paddingRatios(Element header) /*-{
+        var grid = header.closest('[role="grid"], [role="treegrid"]');
+        var column = header.getAttribute('data-hcol');
+        var cell = grid.querySelector('[role="row"][data-row] [data-col="' + column + '"]');
+        var ratio = function (element) {
+            var style = $wnd.getComputedStyle(element.firstElementChild);
+            return Math.round(parseFloat(style.paddingRight) / parseFloat(style.paddingLeft));
+        };
+        return ratio(header) + ' ' + ratio(cell);
+    }-*/;
 
     private static String rowText(final Element row) {
         return row.getInnerText().trim();

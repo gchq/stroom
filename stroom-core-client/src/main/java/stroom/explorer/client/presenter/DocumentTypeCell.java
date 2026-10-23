@@ -28,13 +28,13 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class DocumentTypeCell extends AbstractCell<DocumentType> {
 
+    private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
+
     private final DocumentTypeSelectionModel selectionModel;
-    private final TickBoxCell tickBoxCell;
 
     public DocumentTypeCell(final DocumentTypeSelectionModel selectionModel) {
 //        super("click");
         this.selectionModel = selectionModel;
-        tickBoxCell = TickBoxCell.create(true, false);
     }
 
 //    @Override
@@ -68,16 +68,12 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
                     SafeHtmlUtils.fromString(item.getDisplayType()));
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
-            tickBoxCell.render(context, selectionModel.getState(item), content);
+            // The tick box is a picture: the list's option says whether it is ticked
+            content.append(TICK_BOX.getPicture(selectionModel.getState(item)));
             content.append(iconHtml);
             content.append(textHtml);
 
             sb.append(Templates.div("explorerCell", content.toSafeHtml()));
-
-            // Possibly a bit hacky as the <hr> is part of the selected item, so it looks a bit odd.
-            if (TypeFilterPresenter.SELECT_ALL_OR_NONE_DOCUMENT_TYPE.equals(item)) {
-                sb.appendHtmlConstant("<hr>");
-            }
         }
     }
 }

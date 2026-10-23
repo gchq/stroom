@@ -333,3 +333,9 @@
 	background-color: var(--code-editor__background-color--fatal);
 	opacity: 0.75;
 }
+
+/* Ace's search box's "1 of 3" counter, darker than Ace's #666, which was 4.22:1 on the box's #ddd
+   (WCAG 1.4.3 asks 4.5:1): #555 is 5.5:1 */
+.ace_editor .ace_search_counter {
+    color: #555;
+}
