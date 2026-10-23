@@ -36,6 +36,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -43,6 +44,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.AbstractTab;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 import stroom.widget.util.client.ContentFocus;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.History;
@@ -93,6 +96,9 @@ public class ContentTabPanePresenter
                 }));
 
         getView().setRightIndent(32);
+
+        KeyBinding.addCommand(Action.NEXT_TAB, () -> selectAdjacentTab(1));
+        KeyBinding.addCommand(Action.PREVIOUS_TAB, () -> selectAdjacentTab(-1));
 
         // Handle the history
         own(History.addValueChangeHandler(event -> {
@@ -215,6 +221,23 @@ public class ContentTabPanePresenter
         }
 
         super.selectTab(tabData);
+    }
+
+    // Selects the tab after the selected one (step 1) or before it (-1), going round from one end
+    // to the other, and takes the focus into it, as opening a tab does
+    private void selectAdjacentTab(final int step) {
+        final List<TabData> tabs = getTabs();
+        if (tabs.isEmpty()) {
+            return;
+        }
+        final int index = tabs.indexOf(getSelectedTab());
+        final int adjacent = index < 0
+                ? 0
+                : (index + step + tabs.size()) % tabs.size();
+        final TabData tabData = tabs.get(adjacent);
+        selectTab(tabData);
+        final Layer layer = getLayer(tabData);
+        Scheduler.get().scheduleDeferred(() -> ContentFocus.focus(layer));
     }
 
     @Override

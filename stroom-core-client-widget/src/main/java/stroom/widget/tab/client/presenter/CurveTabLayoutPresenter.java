@@ -118,5 +118,11 @@ public abstract class CurveTabLayoutPresenter extends MyPresenterWidget<CurveTab
         return getView().getTabBar().getSelectedTab();
     }
 
+    /// @param tabData A tab.
+    /// @return What the tab shows, or null if it isn't one of this layout's tabs.
+    protected Layer getLayer(final TabData tabData) {
+        return tabContentMap.get(tabData);
+    }
+
     protected abstract void fireSelectedTabChange(TabData tabData);
 }

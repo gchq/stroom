@@ -21,6 +21,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -34,14 +35,18 @@ import javax.inject.Singleton;
 public class UserPreferencesPlugin extends Plugin {
 
     private final Provider<UserPreferencesPresenter> preferencesPresenterProvider;
+    private final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider;
 
     @Inject
     public UserPreferencesPlugin(final EventBus eventBus,
-                                 final Provider<UserPreferencesPresenter> preferencesPresenterProvider) {
+                                 final Provider<UserPreferencesPresenter> preferencesPresenterProvider,
+                                 final Provider<KeyboardShortcutsPresenter> keyboardShortcutsPresenterProvider) {
         super(eventBus);
         this.preferencesPresenterProvider = preferencesPresenterProvider;
+        this.keyboardShortcutsPresenterProvider = keyboardShortcutsPresenterProvider;
 
         KeyBinding.addCommand(getOpenAction(), this::open);
+        KeyBinding.addCommand(Action.SHOW_KEY_BINDS, this::showKeyboardShortcuts);
     }
 
     private Action getOpenAction() {
@@ -50,6 +55,11 @@ public class UserPreferencesPlugin extends Plugin {
 
     private void open() {
         preferencesPresenterProvider.get().show();
+    }
+
+    private void showKeyboardShortcuts() {
+        // Made for one use, and disposed once it is closed
+        MyPresenterWidget.disposeWhenHidden(keyboardShortcutsPresenterProvider.get()).show();
     }
 
     @Override
@@ -64,6 +74,14 @@ public class UserPreferencesPlugin extends Plugin {
                         .text("Preferences")
                         .action(getOpenAction())
                         .command(this::open)
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
+                new IconMenuItem.Builder()
+                        .priority(11)
+                        .icon(SvgImage.HELP_OUTLINE)
+                        .text("Keyboard Shortcuts")
+                        .action(Action.SHOW_KEY_BINDS)
+                        .command(this::showKeyboardShortcuts)
                         .build());
     }
 }

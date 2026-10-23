@@ -266,6 +266,12 @@
 	white-space: nowrap;
 }
 
+/* The space between a past query's time and its expression, for copying; the time's padding
+   spaces them */
+.queryCell-gap {
+	font-size: 0;
+}
+
 .fieldGroupList {
 	background-color: white;
 	border: 1px solid #4d5055;

@@ -22,6 +22,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.DirtyTracker;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -73,6 +74,8 @@ public abstract class DocumentEditor<D> extends TabbedComponent<D> {
         provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
 
         saveButton = getToolbar().button(SvgImage.SAVE, "Save", this::save);
+        // Its tooltip shows the save shortcut, as a document tab's does
+        saveButton.setShortcut(Action.ITEM_SAVE);
         saveButton.setEnabled(false);
         saveAsButton = getToolbar().button(SvgImage.SAVEAS, "Save As", this::saveAs);
         saveAsButton.setEnabled(false);

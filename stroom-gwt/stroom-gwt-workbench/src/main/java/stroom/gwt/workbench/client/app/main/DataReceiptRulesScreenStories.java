@@ -150,7 +150,7 @@ public final class DataReceiptRulesScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Drop everything else");
                     // Save -> PUT the whole document with the new rule, inserted at the top as rule 1
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -184,7 +184,7 @@ public final class DataReceiptRulesScreenStories {
                     play.type(dialog.querySelector("#fieldEditName"), "Environment");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Environment");
-                    final Query save = play.getByTitle(SAVE);
+                    final Query save = play.getByRole("button", SAVE);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -215,7 +215,7 @@ public final class DataReceiptRulesScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("New Field", StroomDom.DIALOG_TITLE))
                             .toBeNull());
-                    play.expect(play.getByTitle(SAVE)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", SAVE)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Cancel on the rule dialog (a component) keeps the rule as it was
@@ -231,7 +231,7 @@ public final class DataReceiptRulesScreenStories {
                             .toBeNull());
                     play.expect(play.getByText("Reject test feeds")).toBeInTheDocument();
                     play.expect(play.queryByText(TextMatch.containing("(changed)"))).toBeNull();
-                    play.expect(play.getByTitle(SAVE)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", SAVE)).toHaveAttribute("aria-disabled", "true");
                     expectNoProblems(play);
                 })
                 // Duplicating a rule is a change, so it can be saved (it wasn't, before the Rules
@@ -241,7 +241,8 @@ public final class DataReceiptRulesScreenStories {
                     play.click(play.findByText("Reject test feeds"));
                     play.click(play.getByTitle("Duplicate Selected Rule"));
                     play.waitFor(() -> play.expect(play.getAllByText("Reject test feeds")).toHaveLength(2));
-                    play.waitFor(() -> play.expect(play.getByTitle(SAVE)).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", SAVE))
+                            .not().toHaveAttribute("aria-disabled"));
                     expectNoProblems(play);
                 })
                 // Deleting the one rule selected asks about 'this rule' (it asked about 'the selected
@@ -256,7 +257,8 @@ public final class DataReceiptRulesScreenStories {
                     play.waitFor(() -> play.expect(play.queryByText("Reject test feeds")).toBeNull());
                     play.expect(play.getByTitle("Edit Selected Rule")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle("Delete Selected Rules")).toHaveAttribute("aria-disabled", "true");
-                    play.waitFor(() -> play.expect(play.getByTitle(SAVE)).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", SAVE))
+                            .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Read only from what shows it (here the story, through context): no rule can be

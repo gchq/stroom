@@ -39,6 +39,9 @@ import stroom.preferences.client.KeyBindingPreferencesViewImpl;
 import stroom.preferences.client.KeyShortcutRecorderPresenter;
 import stroom.preferences.client.KeyShortcutRecorderPresenter.KeyShortcutRecorderView;
 import stroom.preferences.client.KeyShortcutRecorderViewImpl;
+import stroom.preferences.client.KeyboardShortcutsPresenter;
+import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
+import stroom.preferences.client.KeyboardShortcutsViewImpl;
 import stroom.preferences.client.ThemePreferencesPresenter;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.preferences.client.ThemePreferencesViewImpl;
@@ -102,6 +105,9 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(KeyShortcutRecorderPresenter.class,
                 KeyShortcutRecorderView.class,
                 KeyShortcutRecorderViewImpl.class);
+        bindPresenterWidget(KeyboardShortcutsPresenter.class,
+                KeyboardShortcutsView.class,
+                KeyboardShortcutsViewImpl.class);
 
         // WelcomeModule
         bindPresenterWidget(WelcomePresenter.class,

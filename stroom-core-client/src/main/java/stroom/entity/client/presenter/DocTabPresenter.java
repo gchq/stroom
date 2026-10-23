@@ -36,6 +36,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.Scheduler;
@@ -106,6 +107,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     protected Toolbar createToolbar() {
         final Toolbar toolbar = new Toolbar("Document actions");
         saveButton = toolbar.button(SvgImage.SAVE, "Save", this::save);
+        saveButton.setShortcut(Action.ITEM_SAVE);
         saveButton.setEnabled(false);
         saveAsButton = toolbar.button(SvgImage.SAVEAS, "Save As", this::saveAs);
         saveAsButton.setEnabled(false);

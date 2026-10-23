@@ -51,6 +51,7 @@ import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.LazyValue;
 
 import com.google.gwt.core.client.GWT;
@@ -123,6 +124,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         hasSaveRegistry.register(this);
         toolbar = new Toolbar("Document actions");
         saveButton = toolbar.button(SvgImage.SAVE, "Save Rules", this::save);
+        saveButton.setShortcut(Action.ITEM_SAVE);
         saveButton.setEnabled(false);
         uiConfigCache.get(extendedUiConfig -> {
             addWarningButton(extendedUiConfig.getReceiptCheckMode());

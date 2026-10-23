@@ -24,6 +24,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.datagrid.client.model.SelectionRules;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Selection;
@@ -170,7 +171,10 @@ public class DataGridWidgetSelectionEventManager<T>
         // A character typed on a row goes to the typed handler (e.g. a picker's filter box), or, in a
         // list, to the next row starting with what is typed
         final boolean list = !dataGrid.getProfile().hasCells();
-        if ((typedHandler != null || list) && !isInControl(nativeEvent)) {
+        // A key that runs a command (e.g. '?', the keyboard shortcuts) is left for it
+        if ((typedHandler != null || list)
+            && !isInControl(nativeEvent)
+            && !KeyBinding.isCommandShortcut(nativeEvent)) {
             final String key = TypedKey.keyOf(nativeEvent);
             if (TypedKey.isTypedCharacter(nativeEvent, key) && !" ".equals(key)) {
                 nativeEvent.preventDefault();

@@ -284,12 +284,16 @@ run of 22 October 2026 (1,538 stories).
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
-* **Open** (found 23 October 2026, merging master into the remove_gwtp branch): the workbench's
-  JVM tests `TestAllStories` and `TestPresenterCoverage` fail on master too, as
+* **Fixed** (on master by `3c9ed072be` and `b3e7f34898`, found 23 October 2026, merging master into
+  the remove_gwtp branch): the workbench's JVM tests `TestAllStories` and `TestPresenterCoverage`
+  failed on master too, as
   `VisAccessibilityStories` (from `ba4815dce9`) works out a constant from
   `StroomThemeDecorator.isForcedColours()`, a JSNI method, in its static initialiser, which the JVM
   can't run (`UnsatisfiedLinkError`), so making the story list fails. Fix: look it up when a story
   renders, not when the class loads.
+  Both commits added the same `fades()` method, so with master's merge of the two (`959104f6bc`)
+  the workbench doesn't compile ("method fades() is already defined"); the remove_gwtp branch keeps
+  one of them.
 * **Open** (found 23 October 2026, on master `9ddf5f0b07`, and the same after merging it into
   remove_gwtp): these stories fail with the leak check on master itself:
   * the five `AskAiChatPanel` stories `SendAndReceive`, `AttachmentReady`, `DeleteMessageConfirm`
@@ -298,6 +302,10 @@ run of 22 October 2026 (1,538 stories).
   * `DashboardEditor` `TableFilterRow`: "Enter sets the filter, and the header drawn again keeps
     the focus and caret in the box: expected the focus on box alpha 5 new, found box ha 2 new";
   * `QueryEditor` `HyperlinksByKeyboard` (flaky, above).
+  * and on master `959104f6bc` (with its duplicate `fades()` removed, below, so that it compiles):
+    `AppShell` `KeyboardShortcuts`, in its real input check ("Colours is selected"), and
+    `AppShell` `OpenedScreenTakesFocus`, in its real input check ("locator.click: Timeout 5000ms
+    exceeded").
 * **Open** (found 23 October 2026): the workbench's `build.gradle` (line 901 on master) fails with
   `No signature of method: java.lang.String.positive()` when there are no built visualisations:
   the `println` message's second line starts with `+`, which Groovy reads as a new statement. Fix:
