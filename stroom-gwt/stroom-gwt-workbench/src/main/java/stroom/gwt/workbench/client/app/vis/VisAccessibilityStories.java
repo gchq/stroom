@@ -53,14 +53,18 @@ public final class VisAccessibilityStories {
     private static final String BAR = "rect.vis-bar-chart__bar";
     // How faded the bars that aren't highlighted or selected are
     private static final String FADED = "0.2";
-    // What fades: the whole bar, or with a high contrast theme (forced colours) only its fill, so
-    // that its outline still shows
-    private static final String FADES = StroomThemeDecorator.isForcedColours()
-            ? "fill-opacity"
-            : "opacity";
 
     private VisAccessibilityStories() {
         // Static utility
+    }
+
+    // What fades: the whole bar, or with a high contrast theme (forced colours) only its fill, so
+    // that its outline still shows. Asked when a play runs, in the browser, as the check is native
+    // and the stories are also built on the JVM (e.g. TestAllStories).
+    private static String fades() {
+        return StroomThemeDecorator.isForcedColours()
+                ? "fill-opacity"
+                : "opacity";
     }
 
     /// Adds the stories to the registry.
@@ -132,11 +136,11 @@ public final class VisAccessibilityStories {
                     VisStories.focusTabStop(play);
                     play.waitFor(() -> play.expect(tooltip).toBeVisible());
                     // The other bars fade while one is highlighted
-                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(FADES)).toBe(FADED));
+                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(fades())).toBe(FADED));
 
                     VisStories.press(play, "{Escape}");
                     play.waitFor(() -> play.expect(tooltip).not().toBeVisible());
-                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(FADES)).toBe("1"));
+                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(fades())).toBe("1"));
                     expectFocusOn(play, DB_01_OK);
 
                     VisStories.press(play, "{ArrowRight}");
@@ -155,19 +159,19 @@ public final class VisAccessibilityStories {
                     VisStories.focusTabStop(play);
                     VisStories.press(play, "{Enter}");
                     VisStories.press(play, "{Tab}");
-                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(FADES)).toBe(FADED));
-                    play.expect(bars.first().computedStyle(FADES)).toBe("1");
+                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(fades())).toBe(FADED));
+                    play.expect(bars.first().computedStyle(fades())).toBe("1");
                     play.expect(bars.first().attribute("aria-label")).toMatch(", selected");
                     VisStories.focusTabStop(play);
                     VisStories.press(play, "{Enter}");
                     VisStories.press(play, "{Tab}");
-                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(FADES)).toBe("1"));
+                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(fades())).toBe("1"));
                     play.expect(bars.first().attribute("aria-label")).not().toMatch(", selected");
                     VisStories.focusTabStop(play);
                     VisStories.press(play, "{Enter}");
                     VisStories.press(play, "{Escape}");
                     VisStories.press(play, "{Tab}");
-                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(FADES)).toBe("1"));
+                    play.waitFor(() -> play.expect(bars.nth(1).computedStyle(fades())).toBe("1"));
                     play.expect(bars.first().attribute("aria-label")).not().toMatch(", selected");
                     VisStories.expectNoProblems(play);
                 })
