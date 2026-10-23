@@ -27,9 +27,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 /**
  * The Settings tab: picks the destination feed and edits the template that will be sent to it.
@@ -48,7 +47,7 @@ public class DataGenSettingsPresenter
         super(eventBus, view);
         own(destinationFeedPresenter);
         this.destinationFeedPresenter = destinationFeedPresenter;
-        this.templatePresenter = own(editorPresenterProvider.get());
+        this.templatePresenter = make(editorPresenterProvider);
 
         view.setTemplateEditor(templatePresenter.getView());
         destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);

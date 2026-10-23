@@ -26,9 +26,8 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
 

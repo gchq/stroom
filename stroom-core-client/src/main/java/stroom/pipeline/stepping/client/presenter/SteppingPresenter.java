@@ -181,7 +181,7 @@ public class SteppingPresenter
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
-        this.steppingMetaListPresenter = own(metaListPresenterProvider.get());
+        this.steppingMetaListPresenter = make(metaListPresenterProvider);
         this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
         this.expressionValidator = expressionValidator;
 
@@ -313,7 +313,7 @@ public class SteppingPresenter
     }
 
     private void onStreamListFilter() {
-        final ExpressionPresenter presenter = ownUntilHidden(streamListFilterPresenterProvider.get());
+        final ExpressionPresenter presenter = makeDialog(streamListFilterPresenterProvider);
 
         final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
             if (e.isOk()) {
@@ -533,7 +533,7 @@ public class SteppingPresenter
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                final ElementPresenter presenter = own(elementPresenterProvider.get());
+                final ElementPresenter presenter = make(elementPresenterProvider);
                 presenter.setPipelineModel(pipelineModel);
                 presenter.setElement(element);
                 presenter.setProperties(properties);

@@ -166,7 +166,7 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 * **Make one.** Extend `Component`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
   A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
 
-* **Own what you show.** Whoever shows a component or presenter owns it: `own(child)` for one injected or made with `provider.get()`, `release(child)` for one replaced early.
+* **Own what you show.** Whoever shows a component or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
   Disposing an owner disposes everything it owns, depth first; never call `dispose()` yourself except on a root.
   Unowned components are counted in development builds, and the workbench leak check names them.
 

@@ -73,6 +73,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
@@ -84,7 +85,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
@@ -592,7 +592,7 @@ public abstract class AbstractMetaListPresenter
     public void process() {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
-            final ProcessChoicePresenter processChoicePresenter = ownUntilHidden(processChoicePresenterProvider.get());
+            final ProcessChoicePresenter processChoicePresenter = makeDialog(processChoicePresenterProvider);
             final ProcessChoiceUiHandler processChoiceUiHandler = choice -> {
                 if (choice.isReprocess()) {
                     doReprocess(choice);
@@ -666,7 +666,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final DocSelectionPopup chooser = ownUntilHidden(pipelineSelection.get());
+        final DocSelectionPopup chooser = makeDialog(pipelineSelection);
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.VIEW);
@@ -861,7 +861,7 @@ public abstract class AbstractMetaListPresenter
                              final String caption,
                              final boolean reprocess,
                              final Runnable runnable) {
-        ownUntilHidden(selectionSummaryPresenterProvider.get()).show(
+        makeDialog(selectionSummaryPresenterProvider).show(
                 criteria,
                 permission,
                 postAction,

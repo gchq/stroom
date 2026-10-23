@@ -112,7 +112,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         if (isReadOnly()) {
             return;
         }
-        final AnalyticNotificationEditPresenter presenter = ownUntilHidden(editPresenterProvider.get());
+        final AnalyticNotificationEditPresenter presenter = makeDialog(editPresenterProvider);
         // A new notification goes to a stream unless the user chooses otherwise; without a
         // destination type it would be added with none
         presenter.read(docRef, analyticProcessType, NotificationConfig.builder()
@@ -138,7 +138,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     private void edit() {
         final NotificationConfig selected = selectionModel.getSelected();
         if (selected != null && !isReadOnly()) {
-            final AnalyticNotificationEditPresenter presenter = ownUntilHidden(editPresenterProvider.get());
+            final AnalyticNotificationEditPresenter presenter = makeDialog(editPresenterProvider);
             presenter.read(docRef, analyticProcessType, selected);
             ShowPopupEvent
                     .builder(presenter)

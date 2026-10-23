@@ -83,7 +83,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                                   final RestFactory restFactory) {
         super(eventBus, view);
         own(createUserPresenter);
-        this.userList = own(userListPresenterProvider.get());
+        this.userList = make(userListPresenterProvider);
         this.userList.setMode(Mode.USERS_AND_GROUPS);
         this.userList.getView().setLabel(UsersAndGroupsPlugin.SCREEN_NAME + ":");
         this.userList.getView().setHelpText(HtmlBuilder.builder()
@@ -101,13 +101,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 onSelection());
         this.userList.setCopyPermissionsPopupFunction(this::getCopyPermissionsPopup);
 
-        this.parentsList = own(userListPresenterProvider.get());
+        this.parentsList = make(userListPresenterProvider);
         // A parent can only be a group
         this.parentsList.setMode(Mode.GROUPS_ONLY);
         this.parentsList.setName("parentsList");
         this.parentsList.setValidUserScreensForActionMenu(UserScreen.all());
 
-        this.childrenList = own(userListPresenterProvider.get());
+        this.childrenList = make(userListPresenterProvider);
         this.childrenList.setMode(Mode.USERS_AND_GROUPS);
         this.childrenList.setName("childrenList");
         this.childrenList.setValidUserScreensForActionMenu(UserScreen.all());
@@ -181,7 +181,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void onAddMemberOf() {
         final User user = userList.getSelectionModel().getSelected();
         if (user != null) {
-            final UserRefPopupPresenter userRefPopupPresenter = ownUntilHidden(userRefPopupPresenterProvider.get());
+            final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
             userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
                     .builder()
                     .field(UserFields.IS_GROUP.getFldName())
@@ -206,7 +206,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void onAddMembersIn() {
         final User group = userList.getSelectionModel().getSelected();
         if (group != null) {
-            final UserRefPopupPresenter userRefPopupPresenter = ownUntilHidden(userRefPopupPresenterProvider.get());
+            final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
             userRefPopupPresenter.show("Add User Or Group", userRef -> {
                 if (userRef != null) {
                     addUserToGroup(userRef, group.asRef(), childrenList, userRef);
@@ -405,7 +405,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private UserRefPopupPresenter getCopyPermissionsPopup(final UserRef toUser) {
-        final UserRefPopupPresenter userRefPopupPresenter = ownUntilHidden(userRefPopupPresenterProvider.get());
+        final UserRefPopupPresenter userRefPopupPresenter = makeDialog(userRefPopupPresenterProvider);
         userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
                 .builder()
                 .field(UserFields.IS_GROUP.getFldName())

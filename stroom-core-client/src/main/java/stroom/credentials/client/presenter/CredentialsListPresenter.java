@@ -371,7 +371,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void handleAddButtonClick() {
         credentialClient.createDocRef(docRef -> {
-            ownUntilHidden(credentialEditPresenterProvider.get())
+            makeDialog(credentialEditPresenterProvider)
                     .show(docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
         }, this);
     }
@@ -424,7 +424,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Check that the user can edit these credentials
         if (cwp.isEdit()) {
-            ownUntilHidden(credentialEditPresenterProvider.get()).show(cwp.getCredential().asDocRef(),
+            makeDialog(credentialEditPresenterProvider).show(cwp.getCredential().asDocRef(),
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);
@@ -437,7 +437,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Check that the user can edit these credentials
         if (cwp != null && cwp.isEdit()) {
-            ownUntilHidden(replaceSecretPresenterProvider.get()).show(cwp.getCredential(), this::afterEdit);
+            makeDialog(replaceSecretPresenterProvider).show(cwp.getCredential(), this::afterEdit);
         }
     }
 }

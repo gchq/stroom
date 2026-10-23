@@ -178,7 +178,7 @@ public class FeedDependencyListPresenter
     private void showEditor(final FeedDependency feedDependency,
                             final boolean isNew) {
         if (feedDependency != null) {
-            final EditFeedDependencyPresenter editor = ownUntilHidden(newFeedDependencyPresenter.get());
+            final EditFeedDependencyPresenter editor = makeDialog(newFeedDependencyPresenter);
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
                     final FeedDependency updated = editor.write();

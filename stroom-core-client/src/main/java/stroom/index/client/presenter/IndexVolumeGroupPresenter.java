@@ -108,7 +108,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 //    }
 
     private void add() {
-        final NewIndexVolumeGroupPresenter presenter = ownUntilHidden(newIndexVolumeGroupPresenterProvider.get());
+        final NewIndexVolumeGroupPresenter presenter = makeDialog(newIndexVolumeGroupPresenterProvider);
         presenter.show("", indexVolumeGroup -> {
             edit(indexVolumeGroup);
             refresh();
@@ -128,7 +128,7 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
-        final IndexVolumeGroupEditPresenter editor = ownUntilHidden(editProvider.get());
+        final IndexVolumeGroupEditPresenter editor = makeDialog(editProvider);
         editor.show(indexVolumeGroup,
                 "Edit Index Volume Group - " + indexVolumeGroup.getName(),
                 result -> refresh());

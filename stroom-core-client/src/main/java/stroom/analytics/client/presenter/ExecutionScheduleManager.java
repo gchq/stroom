@@ -582,7 +582,7 @@ public class ExecutionScheduleManager
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = ownUntilHidden(expressionPresenterProvider.get());
+        final ExpressionPresenter presenter = makeDialog(expressionPresenterProvider);
         final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
             if (e.isOk()) {
                 final ExpressionOperator expression = presenter.write();

@@ -131,7 +131,7 @@ public class GlobalPropertyTabPresenter
     public void onEdit(final ConfigProperty e) {
         if (e != null) {
             if (editProvider != null) {
-                final ManageGlobalPropertyEditPresenter editor = ownUntilHidden(editProvider.get());
+                final ManageGlobalPropertyEditPresenter editor = makeDialog(editProvider);
                 editor.showEntity(e, listPresenter::refresh);
             }
         }

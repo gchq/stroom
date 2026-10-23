@@ -138,7 +138,7 @@ public class TableFilterPresenter
                     label.addStyleName("table-filter-label");
 
                     final ColumnValuesFilterPresenter columnValuesFilterPresenter =
-                            own(columnValuesFilterPresenterProvider.get());
+                            make(columnValuesFilterPresenterProvider);
                     columnFilterPresenters.put(column.getId(), columnValuesFilterPresenter);
 
                     final List<ConditionalFormattingRule> rules =

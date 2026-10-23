@@ -127,7 +127,7 @@ public class ApiKeysPresenter
 
     private void createNewKey() {
         final boolean allowOwnerSelection = owner == null;
-        ownUntilHidden(editApiKeyPresenterProvider.get()).showCreateDialog(
+        makeDialog(editApiKeyPresenterProvider).showCreateDialog(
                 Mode.PRE_CREATE,
                 listPresenter::refresh,
                 allowOwnerSelection);
@@ -135,7 +135,7 @@ public class ApiKeysPresenter
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = getSelectionModel().getSelected();
-        ownUntilHidden(editApiKeyPresenterProvider.get()).showEditDialog(apiKey, Mode.EDIT, listPresenter::refresh);
+        makeDialog(editApiKeyPresenterProvider).showEditDialog(apiKey, Mode.EDIT, listPresenter::refresh);
     }
 
     private void deleteSelectedKeys() {

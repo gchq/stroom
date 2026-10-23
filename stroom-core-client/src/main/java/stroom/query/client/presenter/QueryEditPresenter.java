@@ -55,6 +55,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -67,7 +68,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
@@ -311,7 +311,7 @@ public class QueryEditPresenter
 
     private void createNewVis() {
         destroyCurrentVis();
-        currentVisPresenter = own(visPresenterProvider.get());
+        currentVisPresenter = make(visPresenterProvider);
         currentVisPresenter.setQueryModel(queryModel);
         queryResultPresenter.setQueryResultVisPresenter(currentVisPresenter);
         if (VISUALISATION.equals(linkTabsLayoutView.getTabBar().getSelectedTab())) {
@@ -531,7 +531,6 @@ public class QueryEditPresenter
     }
 
     // --------------------------------------------------------------------------------
-
 
     public interface QueryEditView extends View {
 

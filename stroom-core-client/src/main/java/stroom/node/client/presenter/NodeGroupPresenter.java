@@ -81,7 +81,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        final NewNodeGroupPresenter presenter = ownUntilHidden(newNodeGroupPresenterProvider.get());
+        final NewNodeGroupPresenter presenter = makeDialog(newNodeGroupPresenterProvider);
         presenter.show("", nodeGroup -> {
             edit(nodeGroup);
             refresh();
@@ -96,7 +96,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final NodeGroup nodeGroup) {
-        final NodeGroupEditPresenter editor = ownUntilHidden(editProvider.get());
+        final NodeGroupEditPresenter editor = makeDialog(editProvider);
         editor.show(nodeGroup, "Edit Node Group - " + nodeGroup.getName(), result -> refresh());
     }
 

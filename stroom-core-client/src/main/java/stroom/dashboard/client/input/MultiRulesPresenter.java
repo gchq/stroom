@@ -93,7 +93,7 @@ public class MultiRulesPresenter extends AbstractSettingsTabPresenter<MultiRules
 
                 final RulesPresenter rulesPresenter = rulesPresenterMap
                         .computeIfAbsent(column.getId(), k -> {
-                            final RulesPresenter presenter = ownUntilHidden(rulesPresenterProvider.get());
+                            final RulesPresenter presenter = makeDialog(rulesPresenterProvider);
                             presenter.setOnDirtyChange(() -> setDirty(true));
                             return presenter;
                         });

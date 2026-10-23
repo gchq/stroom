@@ -135,13 +135,13 @@ public class FloorMapSettingsPresenter
 
         view.setUiHandlers(this);
 
-        this.eventsStoreRefPresenter = own(docSelectionBoxPresenterProvider.get());
+        this.eventsStoreRefPresenter = make(docSelectionBoxPresenterProvider);
         this.eventsStoreRefPresenter.setCaption("Choose Events Store");
         this.eventsStoreRefPresenter.setIncludedTypes(FloorMapEventStoreDoc.TYPE);
         this.eventsStoreRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setEventsStoreRefView(this.eventsStoreRefPresenter.getView());
 
-        this.factsStoreRefPresenter = own(docSelectionBoxPresenterProvider.get());
+        this.factsStoreRefPresenter = make(docSelectionBoxPresenterProvider);
         this.factsStoreRefPresenter.setCaption("Choose Facts Store");
         this.factsStoreRefPresenter.setIncludedTypes(SqlTemporalStoreDoc.TYPE);
         this.factsStoreRefPresenter.setRequiredPermissions(DocumentPermission.USE);

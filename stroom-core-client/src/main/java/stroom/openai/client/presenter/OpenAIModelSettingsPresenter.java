@@ -139,7 +139,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
     @Override
     public void onSetHttpClientConfiguration() {
         final HttpClientConfigPresenter httpClientSettingsPresenter =
-                ownUntilHidden(httpClientSettingsPresenterProvider.get());
+                makeDialog(httpClientSettingsPresenterProvider);
         httpClientSettingsPresenter.show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;

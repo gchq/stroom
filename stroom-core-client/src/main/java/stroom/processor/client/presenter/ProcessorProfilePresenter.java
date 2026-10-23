@@ -86,7 +86,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     private void add() {
         final ProcessorProfile processorProfile = ProcessorProfile.builder().name("New Profile").build();
-        final ProcessorProfileEditPresenter editor = ownUntilHidden(editProvider.get());
+        final ProcessorProfileEditPresenter editor = makeDialog(editProvider);
         editor.show(processorProfile, "Create Processor Profile", result -> refresh());
     }
 
@@ -98,7 +98,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
     }
 
     private void edit(final ProcessorProfile processorProfile) {
-        final ProcessorProfileEditPresenter editor = ownUntilHidden(editProvider.get());
+        final ProcessorProfileEditPresenter editor = makeDialog(editProvider);
         editor.show(processorProfile, "Edit Processor Profile - " + processorProfile.getName(), result -> refresh());
     }
 

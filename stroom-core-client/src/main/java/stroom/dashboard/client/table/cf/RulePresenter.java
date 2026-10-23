@@ -57,7 +57,7 @@ public class RulePresenter
 
     @Override
     public void onEditCustomStyle() {
-        final CustomRowStylePresenter customRowStylePresenter = ownUntilHidden(customRowStylePresenterProvider.get());
+        final CustomRowStylePresenter customRowStylePresenter = makeDialog(customRowStylePresenterProvider);
         final TextAttributes textAttributes = writeTextAttributes();
         customRowStylePresenter.read(customConditionalFormattingStyle, textAttributes);
         customRowStylePresenter.show(e -> {

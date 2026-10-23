@@ -165,7 +165,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     private void initRawPresenter() {
         if (rawPresenter == null) {
-            rawPresenter = own(rawPresenterProvider.get());
+            rawPresenter = make(rawPresenterProvider);
             rawPresenter.setReadOnly(true);
             rawPresenter.getLineNumbersOption().setOn(false);
             rawPresenter.getLineWrapOption().setOn(true);
@@ -174,7 +174,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     private void initHtmlPresenter() {
         if (htmlPresenter == null) {
-            htmlPresenter = own(htmlPresenterProvider.get());
+            htmlPresenter = make(htmlPresenterProvider);
             htmlPresenter.getWidget().addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");

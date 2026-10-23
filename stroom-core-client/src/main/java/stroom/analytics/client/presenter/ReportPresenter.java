@@ -29,10 +29,10 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
-import javax.inject.Provider;
 
 public class ReportPresenter
         extends DocTabPresenter<LinkTabPanelView, ReportDoc> {
@@ -61,12 +61,12 @@ public class ReportPresenter
         own(reportQueryEditPresenter);
         this.reportQueryEditPresenter = reportQueryEditPresenter;
 
-        final ReportProcessingPresenter analyticProcessingPresenter = own(processPresenterProvider.get());
+        final ReportProcessingPresenter analyticProcessingPresenter = make(processPresenterProvider);
         analyticProcessingPresenter.setDocumentEditPresenter(this);
 
         // Created up front rather than by the tab provider, so it can be told the processing type whether or
         // not the tab has been opened.
-        this.reportNotificationPresenter = own(notificationPresenterProvider.get());
+        this.reportNotificationPresenter = make(notificationPresenterProvider);
 
         addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
         addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));

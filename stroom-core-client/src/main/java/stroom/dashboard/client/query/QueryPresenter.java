@@ -463,7 +463,7 @@ public class QueryPresenter
                 .timeRange(dashboardContext.getResolvedTimeRange())
                 .build();
 
-        final DocSelectionPopup chooser = ownUntilHidden(pipelineSelection.get());
+        final DocSelectionPopup chooser = makeDialog(pipelineSelection);
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

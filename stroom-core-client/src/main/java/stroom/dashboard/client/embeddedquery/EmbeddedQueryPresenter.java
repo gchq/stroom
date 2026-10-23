@@ -367,7 +367,7 @@ public class EmbeddedQueryPresenter
             OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
         } else {
             final QueryDoc doc = getQueryDoc();
-            final QueryDocPresenter queryDocPresenter = own(queryDocPresenterProvider.get());
+            final QueryDocPresenter queryDocPresenter = make(queryDocPresenterProvider);
             queryDocPresenter.setSaveInterceptor(() -> {
                 final QueryDoc embeddedQueryDoc = queryDocPresenter.write(doc);
                 final EmbeddedQueryComponentSettings settings = getQuerySettings();
@@ -489,7 +489,7 @@ public class EmbeddedQueryPresenter
 
     private void createNewTable() {
         if (currentTablePresenter == null) {
-            currentTablePresenter = own(tablePresenterProvider.get());
+            currentTablePresenter = make(tablePresenterProvider);
             currentTablePresenter.setDashboardContext(getDashboardContext());
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes
@@ -530,7 +530,7 @@ public class EmbeddedQueryPresenter
             visSelectionModel.addSelectionHandler(event ->
                     getDashboardContext().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
 
-            currentVisPresenter = own(visPresenterProvider.get());
+            currentVisPresenter = make(visPresenterProvider);
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
 

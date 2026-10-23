@@ -281,7 +281,7 @@ public class DataRetentionImpactPresenter
     }
 
     private void openFilterPresenter() {
-        final EditExpressionPresenter editExpressionPresenter = ownUntilHidden(editExpressionPresenterProvider.get());
+        final EditExpressionPresenter editExpressionPresenter = makeDialog(editExpressionPresenterProvider);
         editExpressionPresenter.read(criteria.getExpression());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(FILTERABLE_FIELDS);

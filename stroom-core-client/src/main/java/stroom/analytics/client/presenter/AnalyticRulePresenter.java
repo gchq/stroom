@@ -30,10 +30,10 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
-import javax.inject.Provider;
 
 public class AnalyticRulePresenter
         extends DocTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
@@ -70,9 +70,9 @@ public class AnalyticRulePresenter
         // Created up front rather than by the tab provider, as the notifications tab has to be told when the
         // processing type changes on the execution tab, which can happen before the tab is ever opened.
         // Assigned before the change handler below is registered, as that handler reads it.
-        this.analyticNotificationPresenter = own(notificationPresenterProvider.get());
+        this.analyticNotificationPresenter = make(notificationPresenterProvider);
 
-        final AnalyticProcessingPresenter analyticProcessingPresenter = own(processPresenterProvider.get());
+        final AnalyticProcessingPresenter analyticProcessingPresenter = make(processPresenterProvider);
         analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.setOnProcessingTypeChange(this::setRuleType);
 

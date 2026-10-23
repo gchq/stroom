@@ -28,9 +28,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 /**
  * Editor for a data generator, presenting Settings (destination feed and template), Execution
@@ -53,7 +52,7 @@ public class DataGenPresenter
                             final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        final DataGenProcessingPresenter dataGenProcessingPresenter = own(dataGenProcessingPresenterProvider.get());
+        final DataGenProcessingPresenter dataGenProcessingPresenter = make(dataGenProcessingPresenterProvider);
         dataGenProcessingPresenter.setDocumentEditPresenter(this);
 
         addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));

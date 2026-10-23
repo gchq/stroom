@@ -190,7 +190,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
-        ownUntilHidden(httpClientConfigPresenterProvider.get()).show(httpClientConfiguration, updated -> {
+        makeDialog(httpClientConfigPresenterProvider).show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();

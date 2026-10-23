@@ -359,7 +359,7 @@ public class PropertyListPresenter
             final PipelineProperty editing = PipelineProperty.builder(localProperty).build();
             final Source source = getSource(editing);
 
-            final NewPropertyPresenter editor = ownUntilHidden(newPropertyPresenter.get());
+            final NewPropertyPresenter editor = makeDialog(newPropertyPresenter);
             editor.edit(
                     currentElement,
                     pipelinePropertyType,

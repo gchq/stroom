@@ -179,7 +179,7 @@ public class UserTaskManagerPresenter
                     // If there isn't one then create a new one and add it to
                     // the display.
                     if (taskPresenter == null) {
-                        taskPresenter = own(taskPresenterProvider.get());
+                        taskPresenter = make(taskPresenterProvider);
                         taskPresenter.setUiHandlers(this);
                         taskPresenter.setTaskProgress(taskProgress);
                         taskPresenter.setTerminateVisible(true);

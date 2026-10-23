@@ -124,7 +124,7 @@ public class PlanBSettingsPresenter
         switch (stateType) {
             case STATE: {
                 final StateSettingsPresenter presenter =
-                        own(stateSettingsPresenterProvider.get());
+                        make(stateSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -134,7 +134,7 @@ public class PlanBSettingsPresenter
             }
             case TEMPORAL_STATE: {
                 final TemporalStateSettingsPresenter presenter =
-                        own(temporalStateSettingsPresenterProvider.get());
+                        make(temporalStateSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -145,7 +145,7 @@ public class PlanBSettingsPresenter
             }
             case RANGED_STATE: {
                 final RangeStateSettingsPresenter presenter =
-                        own(rangeStateSettingsPresenterProvider.get());
+                        make(rangeStateSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -155,7 +155,7 @@ public class PlanBSettingsPresenter
             }
             case TEMPORAL_RANGED_STATE: {
                 final TemporalRangeStateSettingsPresenter presenter =
-                        own(temporalRangeStateSettingsPresenterProvider.get());
+                        make(temporalRangeStateSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -166,7 +166,7 @@ public class PlanBSettingsPresenter
             }
             case SESSION: {
                 final SessionSettingsPresenter presenter =
-                        own(sessionSettingsPresenterProvider.get());
+                        make(sessionSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -177,7 +177,7 @@ public class PlanBSettingsPresenter
             }
             case HISTOGRAM: {
                 final HistogramSettingsPresenter presenter =
-                        own(histogramSettingsPresenterProvider.get());
+                        make(histogramSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -187,7 +187,7 @@ public class PlanBSettingsPresenter
             }
             case METRIC: {
                 final MetricSettingsPresenter presenter =
-                        own(metricSettingsPresenterProvider.get());
+                        make(metricSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
@@ -197,7 +197,7 @@ public class PlanBSettingsPresenter
             }
             case TRACE: {
                 final TraceSettingsPresenter presenter =
-                        own(traceSettingsPresenterProvider.get());
+                        make(traceSettingsPresenterProvider);
                 presenter.getView().setMaxStoreSize(maxStoreSize);
                 presenter.getView().setRetention(retention);
                 settingsPresenter = presenter;

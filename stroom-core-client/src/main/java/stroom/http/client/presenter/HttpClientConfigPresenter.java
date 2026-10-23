@@ -75,7 +75,7 @@ public class HttpClientConfigPresenter
 
     @Override
     public void onSetHttpTlsConfig() {
-        final HttpTlsConfigPresenter httpTlsConfigPresenter = ownUntilHidden(httpTlsConfigPresenterProvider.get());
+        final HttpTlsConfigPresenter httpTlsConfigPresenter = makeDialog(httpTlsConfigPresenterProvider);
         httpTlsConfigPresenter.show(httpTlsConfig, updated -> {
             if (!Objects.equals(httpTlsConfig, updated)) {
                 httpTlsConfig = updated;

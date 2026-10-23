@@ -536,7 +536,7 @@ public class ElementPresenter
 
     private EditorPresenter getCodePresenter(final PipelineElement element) {
         if (codePresenter == null) {
-            codePresenter = own(editorProvider.get());
+            codePresenter = make(editorProvider);
             presenterMap.put(IndicatorType.CODE, codePresenter);
             setCommonEditorOptions(codePresenter);
 
@@ -595,7 +595,7 @@ public class ElementPresenter
 
     private View getInputView() {
         if (inputPresenter == null) {
-            inputPresenter = own(editorProvider.get());
+            inputPresenter = make(editorProvider);
             presenterMap.put(IndicatorType.INPUT, inputPresenter);
             setCommonEditorOptions(inputPresenter);
             setReadOnlyEditorOptions(inputPresenter);
@@ -608,7 +608,7 @@ public class ElementPresenter
 
     private View getOutputView() {
         if (outputPresenter == null) {
-            outputPresenter = own(editorProvider.get());
+            outputPresenter = make(editorProvider);
             presenterMap.put(IndicatorType.OUTPUT, outputPresenter);
             setCommonEditorOptions(outputPresenter);
             setReadOnlyEditorOptions(outputPresenter);
@@ -630,7 +630,7 @@ public class ElementPresenter
 //        GWT.log("Getting console view");
         if (logPresenter == null) {
 //            GWT.log("Creating consolePresenter");
-            logPresenter = own(editorProvider.get());
+            logPresenter = make(editorProvider);
             setCommonEditorOptions(logPresenter);
             setReadOnlyEditorOptions(logPresenter);
             logPresenter.getLineNumbersOption().setOff();

@@ -112,11 +112,11 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.ruleSetSettings = own(ruleSetSettings);
         ruleSetSettingsLayer = new ComponentLayer(ruleSetSettings);
         ruleSetSettings.setOnChange(this::onChange);
-        fieldListPresenter = own(fieldListPresenterProvider.get());
+        fieldListPresenter = make(fieldListPresenterProvider);
         ruleSetSettings.setFields(fieldListPresenter::getFields);
         this.lazyMarkdownEditPresenter = new LazyValue<>(
                 // Made when its tab is first shown, in this screen's scope so it is released with it
-                (Supplier<MarkdownEditPresenter>) () -> own(markdownEditPresenterProvider.get()),
+                (Supplier<MarkdownEditPresenter>) () -> make(markdownEditPresenterProvider),
                 this::setDescriptionOnPresenter);
         this.restFactory = restFactory;
 

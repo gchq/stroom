@@ -110,7 +110,7 @@ public class MenuPresenter
                         // if it is open.
                         hideChildren(false, false);
 
-                        final MenuPresenter presenter = ownUntilHidden(menuPresenterProvider.get());
+                        final MenuPresenter presenter = makeDialog(menuPresenterProvider);
                         presenter.setParent(MenuPresenter.this, menuItem);
                         // Named by the text of its parent item. Not by reference to the item's
                         // element, which loses any id it is given when the menu redraws its rows

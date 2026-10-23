@@ -298,7 +298,7 @@ public class AskStroomAiPresenter
         askStroomAiClient.getConfig(config -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
                 final AskStroomAiConfigPresenter askStroomAiConfigPresenter =
-                        MyPresenterWidget.disposeWhenHidden(askStroomAiConfigPresenterProvider.get());
+                        makeDialog(askStroomAiConfigPresenterProvider);
                 askStroomAiConfigPresenter.show(
                         config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
             });
@@ -932,7 +932,7 @@ public class AskStroomAiPresenter
 
     @Override
     public void onShowHistory() {
-        MyPresenterWidget.disposeWhenHidden(aiChatHistoryPresenterProvider.get()).show(this::loadChat);
+        makeDialog(aiChatHistoryPresenterProvider).show(this::loadChat);
     }
 
     @Override
@@ -940,8 +940,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final DownloadChatPresenter dlPresenter = MyPresenterWidget.disposeWhenHidden(
-                downloadChatPresenterProvider.get());
+        final DownloadChatPresenter dlPresenter = makeDialog(downloadChatPresenterProvider);
         ShowPopupEvent.builder(dlPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Download Options")
@@ -965,8 +964,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final AiAttachmentDataPresenter presenter = MyPresenterWidget.disposeWhenHidden(
-                aiAttachmentDataPresenterProvider.get());
+        final AiAttachmentDataPresenter presenter = makeDialog(aiAttachmentDataPresenterProvider);
         presenter.show(currentChat.getId(), attachmentId, description);
     }
 

@@ -29,9 +29,8 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class SteppingMetaListPresenter extends AbstractMetaListPresenter {
 

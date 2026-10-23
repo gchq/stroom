@@ -35,12 +35,12 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Provider;
 
 public class DataRetentionPresenter
         extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
@@ -187,11 +187,10 @@ public class DataRetentionPresenter
 
     private DataRetentionImpactPresenter getOrCreateImpactPresenter() {
         if (dataRetentionImpactPresenter == null) {
-            dataRetentionImpactPresenter = own(dataRetentionImpactPresenterProvider.get());
+            dataRetentionImpactPresenter = make(dataRetentionImpactPresenterProvider);
         }
         return dataRetentionImpactPresenter;
     }
-
 
     @Override
     public void onCloseRequest(final CloseContentEvent event) {
@@ -219,9 +218,7 @@ public class DataRetentionPresenter
         return TAB_TYPE;
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     public interface DataRetentionView extends LinkTabsLayoutView {
 

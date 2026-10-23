@@ -114,22 +114,10 @@ public class MyPresenterWidget<V extends View>
         }
     }
 
-    /// Owns a presenter made for one use, e.g. a dialog made when a button is pressed, until it is
-    /// hidden: it is then disposed (once the popup manager has hidden it), rather than kept until
-    /// this presenter is. A dialog this presenter shows again must be owned with
-    /// [#own(HasComponentNode)] instead.
-    ///
-    /// @param dialog The presenter, just made, e.g. `ownUntilHidden(editPresenterProvider.get())`.
-    /// @param <P>    Its type.
-    /// @return The presenter.
-    protected final <P extends MyPresenterWidget<?>> P ownUntilHidden(final P dialog) {
-        return disposeWhenHidden(own(dialog));
-    }
-
     /// Disposes a presenter made for one use as a popup, e.g. a dialog, once it is hidden (after
     /// the popup manager has hidden it), for code that makes dialogs but can't own them, such as
-    /// an app-wide helper. A presenter can use [#ownUntilHidden(MyPresenterWidget)] instead, which
-    /// also disposes the dialog if it is disposed first.
+    /// an app-wide helper. A component makes its dialogs with [Component#makeDialog(com.google.inject.Provider)]
+    /// instead, which also disposes the dialog if the component is disposed first.
     ///
     /// @param dialog The presenter, just made, e.g. `disposeWhenHidden(dialogProvider.get())`.
     /// @param <P>    Its type.

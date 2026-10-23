@@ -273,7 +273,7 @@ public class SelectionHandlersPresenter
     private void edit(final ComponentSelectionHandler existingRule,
                       final String caption,
                       final Consumer<ComponentSelectionHandler> consumer) {
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = ownUntilHidden(editRulePresenterProvider.get());
+        final SelectionHandlerPresenter editSelectionHandlerPresenter = makeDialog(editRulePresenterProvider);
         editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
 
         final DashboardContext dashboardContext = getDashboardContext();

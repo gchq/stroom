@@ -18,6 +18,7 @@ package stroom.widget.component.client;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -158,6 +159,26 @@ class TestComponent {
     }
 
     @Test
+    void aMadeComponentIsOwnedAndDisposedWithItsMaker() {
+        final Parent parent = new Parent(null);
+
+        final Child made = parent.makeChild(Child::new);
+
+        assertThat(parent.getComponentNode().childCount()).isEqualTo(2);
+        parent.dispose();
+        assertThat(made.isDisposed()).isTrue();
+    }
+
+    @Test
+    void makingFromANullProviderFails() {
+        final Parent parent = new Parent(null);
+
+        assertThatThrownBy(() -> parent.makeChild(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("provider");
+    }
+
+    @Test
     void ownedRegistrationsAreRemovedOnDispose() {
         final Parent parent = new Parent(null);
         final HandlerRegistration registration = Mockito.mock(HandlerRegistration.class);
@@ -179,6 +200,10 @@ class TestComponent {
             if (eventBus != null) {
                 listen(TestEvent.TYPE, event -> events.add("heard " + event.name));
             }
+        }
+
+        Child makeChild(final Provider<Child> provider) {
+            return make(provider);
         }
 
         void replaceChild() {

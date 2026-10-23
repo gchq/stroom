@@ -86,7 +86,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
     private CharacterRangeSelectionPresenter getCharacterRangeSelectionPresenter() {
         if (characterRangeSelectionPresenter == null) {
-            characterRangeSelectionPresenter = own(characterRangeSelectionPresenterProvider.get());
+            characterRangeSelectionPresenter = make(characterRangeSelectionPresenterProvider);
         }
         return characterRangeSelectionPresenter;
     }

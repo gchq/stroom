@@ -24,7 +24,6 @@ import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ResetPasswordRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -92,7 +91,7 @@ public class ResetPasswordPresenter extends SignInPagePresenter<ResetPasswordVie
         // Reuse the normal change password form so that the password policy, strength meter and
         // validation are identical to changing a password from within the application.
         final ChangePasswordPresenter changePasswordPresenter =
-                MyPresenterWidget.disposeWhenHidden(changePasswordPresenterProvider.get());
+                makeDialog(changePasswordPresenterProvider);
         changePasswordPresenter.show("Reset Password", event -> {
             if (event.isOk()) {
                 if (changePasswordPresenter.validate()) {

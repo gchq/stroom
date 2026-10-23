@@ -223,7 +223,7 @@ class TestMyPresenterWidget {
         }
 
         TestPresenter ownDialog(final TestPresenter dialog) {
-            return ownUntilHidden(dialog);
+            return makeDialog(() -> dialog);
         }
 
         void listenToTest(final Runnable handler) {

@@ -496,7 +496,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 true,
                 ExpressionOperator.builder().build());
 
-        final DataRetentionRulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
+        final DataRetentionRulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
         editRulePresenter.read(newRule);
 
         final PopupSize popupSize = PopupSize.resizable(800, 600);
@@ -520,7 +520,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void edit(final DataRetentionRule existingRule) {
-        final DataRetentionRulePresenter editRulePresenter = ownUntilHidden(editRulePresenterProvider.get());
+        final DataRetentionRulePresenter editRulePresenter = makeDialog(editRulePresenterProvider);
         editRulePresenter.read(existingRule);
 
         final PopupSize popupSize = PopupSize.resizable(800, 600);

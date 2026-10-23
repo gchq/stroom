@@ -56,6 +56,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
@@ -66,7 +67,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import javax.inject.Provider;
 
 /**
  * Shows the Assets - images, css etc - associated with the Visualisation.
@@ -202,7 +202,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         this.uploadFileDialog = uploadFileDialog;
         this.addItemDialog = addItemDialog;
         this.editAssetDialog = editAssetDialog;
-        this.editorPresenter = own(editorPresenterProvider.get());
+        this.editorPresenter = make(editorPresenterProvider);
 
         tree.addSelectionHandler(event -> {
             DocumentAssetPresenter.this.onSelectionChange();

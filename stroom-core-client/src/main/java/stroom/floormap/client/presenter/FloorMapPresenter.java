@@ -32,11 +32,11 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import javax.inject.Provider;
 
 /// Top-level document tab presenter for a [FloorMapDoc].
 ///
@@ -97,7 +97,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         this.documentAssetPresenter = documentAssetPresenter;
 
         addTab(MAP, new DocTabProvider<>(() -> {
-            floorMapMapPresenter = own(floorMapMapPresenterProvider.get());
+            floorMapMapPresenter = make(floorMapMapPresenterProvider);
             // Its events' types surface as provisional layers in the Editor's Layers panel
             floorMapMapPresenter.setOnEventData(objects -> {
                 if (floorMapEditorPresenter != null) {
@@ -116,7 +116,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }));
 
         addTab(EDITOR, new DocTabProvider<>(() -> {
-            floorMapEditorPresenter = own(floorMapEditorPresenterProvider.get());
+            floorMapEditorPresenter = make(floorMapEditorPresenterProvider);
             // Adopt the Map tab's initial zoom + translation, if it has fitted
             // already, so the Editor opens on the same view. If the Editor is
             // opened first this is null and it fits its own content locally.
@@ -188,7 +188,7 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         });
 
         addTab(SETTINGS, new DocTabProvider<>(() -> {
-            floorMapSettingsPresenter = own(floorMapSettingsPresenterProvider.get());
+            floorMapSettingsPresenter = make(floorMapSettingsPresenterProvider);
             if (areaSupportEnabled) {
                 // Area support was enabled before this tab was first opened —
                 // keep its grid patched (idempotent; also re-applied on read).

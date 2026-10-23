@@ -158,12 +158,12 @@ public class AccountsListPresenter
     }
 
     private void createNewAccount() {
-        ownUntilHidden(editAccountPresenterProvider.get()).showCreateDialog(dataProvider::refresh);
+        makeDialog(editAccountPresenterProvider).showCreateDialog(dataProvider::refresh);
     }
 
     private void editSelectedAccount() {
         final Account account = selectionModel.getSelected();
-        ownUntilHidden(editAccountPresenterProvider.get()).showEditDialog(account, dataProvider::refresh);
+        makeDialog(editAccountPresenterProvider).showEditDialog(account, dataProvider::refresh);
     }
 
     private void deleteSelectedAccount() {

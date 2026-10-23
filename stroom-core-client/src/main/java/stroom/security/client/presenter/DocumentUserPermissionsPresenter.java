@@ -36,6 +36,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Comparator;
@@ -46,7 +47,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DocumentUserPermissionsPresenter
         extends ContentTabPresenter<DocumentUserPermissionsView> {
@@ -104,7 +104,7 @@ public class DocumentUserPermissionsPresenter
         final DocumentUserPermissions selected =
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            ownUntilHidden(documentUserPermissionsEditPresenterProvider.get()).show(
+            makeDialog(documentUserPermissionsEditPresenterProvider).show(
                     docRef, selected, documentUserPermissionsListPresenter::refresh, this);
         }
     }
@@ -286,7 +286,6 @@ public class DocumentUserPermissionsPresenter
         }
     }
 
-
     private String toDisplayValue(final DocumentPermission documentPermission) {
         return NullSafe.get(documentPermission,
                 DocumentPermission::getDisplayValue,
@@ -309,7 +308,6 @@ public class DocumentUserPermissionsPresenter
     }
 
     // --------------------------------------------------------------------------------
-
 
     public interface DocumentUserPermissionsView extends View {
 

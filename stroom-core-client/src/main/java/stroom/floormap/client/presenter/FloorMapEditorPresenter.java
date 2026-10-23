@@ -68,6 +68,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -79,9 +80,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import javax.inject.Provider;
-
-
 
 /// Presenter for the FloorMap **Editor** tab.
 ///
@@ -229,21 +227,21 @@ public class FloorMapEditorPresenter
 
         // Each child is obtained via Provider so GIN creates a fresh instance
         // for this presenter rather than sharing singletons used elsewhere.
-        this.floorMapCanvasPresenter = own(canvasProvider.get());
-        this.floorMapTimelinePresenter = own(timelineProvider.get());
-        this.floorMapFactListPresenter = own(factListProvider.get());
-        this.floorMapTimeListPresenter = own(timeListProvider.get());
-        this.floorMapObjectEditPresenter = own(propertiesProvider.get());
+        this.floorMapCanvasPresenter = make(canvasProvider);
+        this.floorMapTimelinePresenter = make(timelineProvider);
+        this.floorMapFactListPresenter = make(factListProvider);
+        this.floorMapTimeListPresenter = make(timeListProvider);
+        this.floorMapObjectEditPresenter = make(propertiesProvider);
         // Let the properties dialog state an image's real-world size: the canvas
         // has already measured any image it has drawn, so this needs no second
         // load.
         this.floorMapObjectEditPresenter.setAspectRatioResolver(
                 floorMapCanvasPresenter::getImageAspectRatio);
-        final FloorMapDockPresenter floorMapDockPresenter = own(dockProvider.get());
-        this.floorMapSetScalePresenter = own(setScaleProvider.get());
-        this.floorMapLayersPresenter = own(layersProvider.get());
+        final FloorMapDockPresenter floorMapDockPresenter = make(dockProvider);
+        this.floorMapSetScalePresenter = make(setScaleProvider);
+        this.floorMapLayersPresenter = make(layersProvider);
         this.floorMapLayersPresenter.setEditorMode(true);
-        this.floorMapLayerStylePresenter = own(layerStyleProvider.get());
+        this.floorMapLayerStylePresenter = make(layerStyleProvider);
 
         // Always in edit mode, with the grid overlay shown as an editing aid.
         floorMapCanvasPresenter.setEditMode(true);
@@ -309,10 +307,8 @@ public class FloorMapEditorPresenter
         // ---- Timeline events ------------------------------------------------
         floorMapTimelinePresenter.setOnTimeChange(this::onTimeChange);
 
-
         // ---- Canvas context menu --------------------------------------------
         floorMapCanvasPresenter.setOnContextMenu(this::onCanvasContextMenu);
-
 
         // ---- Fact List selection + Show All toggle --------------------------
         floorMapFactListPresenter.setMultiSelectionConsumer(this::onFactListSelectionChanged);
@@ -1071,7 +1067,6 @@ public class FloorMapEditorPresenter
         }
         refreshCanvasOnly();
     }
-
 
     /// Refreshes the canvas by re-applying pending changes and reparsing,
     /// without reloading the Fact List (which would clear its selection

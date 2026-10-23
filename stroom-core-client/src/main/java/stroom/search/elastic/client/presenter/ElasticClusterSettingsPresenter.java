@@ -105,7 +105,7 @@ public class ElasticClusterSettingsPresenter
     @Override
     public void onSetHttpClientConfiguration() {
         // Read only as this document is, through its context
-        ownUntilHidden(httpClientConfigPresenterProvider.get()).show(httpClientConfiguration, updated -> {
+        makeDialog(httpClientConfigPresenterProvider).show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();

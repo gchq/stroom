@@ -48,11 +48,11 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DocumentUserPermissionsEditPresenter
         extends MyPresenterWidget<DocumentUserPermissionsEditView>
@@ -152,7 +152,7 @@ public class DocumentUserPermissionsEditPresenter
 
     @Override
     public void onEditCreatePermissions(final TaskMonitorFactory taskMonitorFactory) {
-        ownUntilHidden(documentUserCreatePermissionsEditPresenterProvider.get()).show(relatedDoc, relatedUser, () -> {
+        makeDialog(documentUserCreatePermissionsEditPresenterProvider).show(relatedDoc, relatedUser, () -> {
         }, taskMonitorFactory);
     }
 

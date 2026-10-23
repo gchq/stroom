@@ -16,10 +16,13 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.presenter.client.MyPresenterWidget;
+
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -31,7 +34,8 @@ import java.util.function.Consumer;
 /// setters, outputs go back through callbacks its owner gives it, and values many layers need
 /// (read-only, the task monitor) come from context (see [Contexts]).
 ///
-/// Whoever shows a component owns it ([#own(HasComponentNode)]), and disposing a component
+/// Whoever shows a component owns it ([#make(Provider)], or [#own(HasComponentNode)] for one
+/// injected), and disposing a component
 /// disposes everything it owns, along with every registration made through it. Screen authors
 /// never call [#dispose()]: only roots are disposed (an open document's tab, a dialog, a workbench
 /// story).
@@ -130,11 +134,39 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         });
     }
 
+    /// Makes a component (or presenter) and owns it until this one is disposed, e.g. a tab, a list
+    /// or a settings panel: `final FieldList list = make(fieldListProvider);`.
+    ///
+    /// @param provider What makes it, e.g. a GIN provider.
+    /// @param <C>      Its type.
+    /// @return The component, made and owned.
+    protected final <C extends HasComponentNode> C make(final Provider<C> provider) {
+        Objects.requireNonNull(provider, "provider");
+        return own(provider.get());
+    }
+
+    /// Makes a dialog for one use, e.g. when a button is pressed, and owns it until it is hidden:
+    /// it is then disposed (once the popup manager has hidden it), or with this one if this is
+    /// disposed first. A dialog shown again is made with [#make(Provider)] instead.
+    ///
+    /// ```java
+    /// makeDialog(editPresenterProvider).show(field, updated -> ...);
+    /// ```
+    ///
+    /// @param provider What makes it, e.g. a GIN provider.
+    /// @param <P>      Its type.
+    /// @return The dialog, made and owned, ready to show.
+    protected final <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
+        Objects.requireNonNull(provider, "provider");
+        return MyPresenterWidget.disposeWhenHidden(make(provider));
+    }
+
     /// Owns a component, which is then disposed with this one and sees this one's context.
     ///
-    /// @param child The component, e.g. one just made by a GIN provider.
+    /// @param child The component, e.g. one injected into the constructor (one made here is made
+    ///              with [#make(Provider)]).
     /// @param <C>   Its type.
-    /// @return The component, so it can be owned as it is made: `own(editorProvider.get())`.
+    /// @return The component.
     protected final <C extends HasComponentNode> C own(final C child) {
         final ComponentNode childNode = child.getComponentNode();
         // Null only for a mock (e.g. Mockito's, in a test), which has no node to own

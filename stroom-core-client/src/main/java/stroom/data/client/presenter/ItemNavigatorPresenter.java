@@ -62,7 +62,7 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
 
     private ItemSelectionPresenter getItemSelectionPresenter() {
         if (itemSelectionPresenter == null) {
-            itemSelectionPresenter = own(itemSelectionPresenterProvider.get());
+            itemSelectionPresenter = make(itemSelectionPresenterProvider);
         }
         return itemSelectionPresenter;
     }

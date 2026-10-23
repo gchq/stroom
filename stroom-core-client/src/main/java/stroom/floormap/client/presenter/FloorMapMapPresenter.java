@@ -392,12 +392,12 @@ public class FloorMapMapPresenter
         super(eventBus, view);
 
         this.floorMapClusterPresenter = floorMapClusterPresenter;
-        this.floorMapCanvasPresenter = own(floorMapCanvasPresenterProvider.get());
-        this.floorMapTimelinePresenter = own(floorMapTimelinePresenterProvider.get());
-        this.floorMapTrackingPresenter = own(floorMapEntityListPresenterProvider.get());
-        this.floorMapLayersPresenter = own(floorMapLayersPresenterProvider.get());
-        this.floorMapGroupsPresenter = own(floorMapGroupsPresenterProvider.get());
-        final FloorMapDockPresenter floorMapDockPresenter = own(floorMapDockPresenterProvider.get());
+        this.floorMapCanvasPresenter = make(floorMapCanvasPresenterProvider);
+        this.floorMapTimelinePresenter = make(floorMapTimelinePresenterProvider);
+        this.floorMapTrackingPresenter = make(floorMapEntityListPresenterProvider);
+        this.floorMapLayersPresenter = make(floorMapLayersPresenterProvider);
+        this.floorMapGroupsPresenter = make(floorMapGroupsPresenterProvider);
+        final FloorMapDockPresenter floorMapDockPresenter = make(floorMapDockPresenterProvider);
 
         // Default initial time
         this.selectedTime = System.currentTimeMillis();
@@ -519,7 +519,7 @@ public class FloorMapMapPresenter
         // under the tenth could be counted and named but never got at.
         floorMapCanvasPresenter.setOnClusterSelected(cluster -> {
             if (cluster != null) {
-                ownUntilHidden(floorMapClusterPresenter.get()).show(
+                makeDialog(floorMapClusterPresenter).show(
                         cluster,
                         this::entityDisplayName,
                         lastAreaMembership,

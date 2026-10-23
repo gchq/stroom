@@ -86,7 +86,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void add() {
-        ownUntilHidden(createProvider.get()).open(annotationTagType, annotationTag -> refresh());
+        makeDialog(createProvider).open(annotationTagType, annotationTag -> refresh());
     }
 
     private void edit() {
@@ -97,7 +97,7 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit(final AnnotationTag annotationTag) {
-        final AnnotationTagEditPresenter editor = ownUntilHidden(editProvider.get());
+        final AnnotationTagEditPresenter editor = makeDialog(editProvider);
         final String name = annotationTag.getName();
         final String caption = "Edit " + annotationTagType.getDisplayValue() + " - " + annotationTag.getName();
 

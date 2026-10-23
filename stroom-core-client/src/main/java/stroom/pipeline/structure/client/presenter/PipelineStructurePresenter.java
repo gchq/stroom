@@ -580,7 +580,7 @@ public class PipelineStructurePresenter
                     "You must save changes to this pipeline before you can view the source",
                     null);
         } else {
-            final EditorPresenter jsonEditor = ownUntilHidden(jsonEditorProvider.get());
+            final EditorPresenter jsonEditor = makeDialog(jsonEditorProvider);
             jsonEditor.setMode(AceEditorMode.JSON);
 //            jsonEditor.getIndicatorsOption().setAvailable(false);
 //            jsonEditor.getIndicatorsOption().setOn(false);

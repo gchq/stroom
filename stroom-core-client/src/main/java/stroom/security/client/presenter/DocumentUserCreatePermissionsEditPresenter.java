@@ -46,12 +46,12 @@ import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DocumentUserCreatePermissionsEditPresenter
         extends MyPresenterWidget<DocumentUserCreatePermissionsEditView>
@@ -98,7 +98,7 @@ public class DocumentUserCreatePermissionsEditPresenter
                         final Runnable onClose) {
         final PopupSize popupSize;
         if (ExplorerConstants.isFolderOrSystem(relatedDoc)) {
-            documentCreatePermissionsListPresenter = own(documentCreatePermissionsListPresenterProvider.get());
+            documentCreatePermissionsListPresenter = make(documentCreatePermissionsListPresenterProvider);
             documentCreatePermissionsListPresenter.setup(report);
             getView().setDocumentTypeView(documentCreatePermissionsListPresenter.getView());
             popupSize = PopupSize.builder()

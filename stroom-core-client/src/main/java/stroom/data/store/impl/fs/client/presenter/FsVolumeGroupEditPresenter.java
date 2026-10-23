@@ -134,7 +134,7 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void editVolume(final FsVolume fsVolume, final String caption) {
-        final FsVolumeEditPresenter editor = ownUntilHidden(editProvider.get());
+        final FsVolumeEditPresenter editor = makeDialog(editProvider);
         editor.show(fsVolume, caption, result -> {
             if (result != null) {
                 volumeStatusListPresenter.refresh();

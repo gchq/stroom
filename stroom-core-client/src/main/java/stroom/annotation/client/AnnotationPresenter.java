@@ -33,9 +33,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class AnnotationPresenter
         extends DocTabPresenter<LinkTabPanelView, Annotation> {
@@ -79,14 +78,13 @@ public class AnnotationPresenter
         linkFrom.setParent(this);
         linkFrom.setFrom(true);
 
-
         addTab(ANNOTATION, new DocTabProvider<>(() -> annotationEditPresenter));
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
         addTab(LINK_TO, new DocTabProvider<>(() -> linkTo));
         addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(() -> {
             if (markdownEditPresenter == null) {
-                markdownEditPresenter = own(markdownEditPresenterProvider.get());
+                markdownEditPresenter = make(markdownEditPresenterProvider);
                 markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
                     saveButton = markdownToolbar.button(SvgImage.SAVE, "Save Annotation Description",
                             this::saveDescription);

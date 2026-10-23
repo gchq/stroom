@@ -44,11 +44,11 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class UserPermissionReportPresenter
         extends MyPresenterWidget<UserPermissionReportView>
@@ -127,7 +127,6 @@ public class UserPermissionReportPresenter
                 this::onBatchEdit);
         batchEdit.setEnabled(false);
 
-
         documentPermissionsListPresenter.setCurrentResultHandler(resultPage -> {
             docs = resultPage;
             batchEdit.setEnabled(resultPage.getPageResponse().getTotal() > 0);
@@ -148,7 +147,7 @@ public class UserPermissionReportPresenter
     }
 
     private void onFilter() {
-        final ExpressionPresenter presenter = ownUntilHidden(docFilterPresenterProvider.get());
+        final ExpressionPresenter presenter = makeDialog(docFilterPresenterProvider);
         final HidePopupRequestEvent.Handler handler = e -> {
             if (e.isOk()) {
                 filterExpression = presenter.write();
@@ -177,7 +176,7 @@ public class UserPermissionReportPresenter
         final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
             final DocumentUserPermissionsEditPresenter presenter =
-                    ownUntilHidden(documentUserPermissionsEditPresenterProvider.get());
+                    makeDialog(documentUserPermissionsEditPresenterProvider);
             presenter.show(selected.getFindResult().getDocRef(),
                     selected.getPermissions(),
                     documentPermissionsListPresenter::refresh,
@@ -187,7 +186,7 @@ public class UserPermissionReportPresenter
 
     private void onBatchEdit() {
         final BatchDocumentPermissionsEditPresenter presenter =
-                ownUntilHidden(batchDocumentPermissionsEditPresenterProvider.get());
+                makeDialog(batchDocumentPermissionsEditPresenterProvider);
         presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
         presenter.show(combinedExpression,
                 NullSafe.get(docs, ResultPage::getPageResponse),
@@ -304,9 +303,7 @@ public class UserPermissionReportPresenter
 //        return "DocumentPermissionReport";
 //    }
 
-
     // --------------------------------------------------------------------------------
-
 
     public interface UserPermissionReportView extends View {
 

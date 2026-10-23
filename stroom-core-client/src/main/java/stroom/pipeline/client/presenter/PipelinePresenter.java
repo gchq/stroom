@@ -48,12 +48,12 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Provider;
 
 public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, PipelineDoc> {
 
@@ -120,8 +120,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             defaultTab = DATA;
         }
 
-        steppingPresenter = own(steppingPresenterProvider.get());
-        pipelineStructurePresenter = own(structurePresenterProvider.get());
+        steppingPresenter = make(steppingPresenterProvider);
+        pipelineStructurePresenter = make(structurePresenterProvider);
 
         steppingTabProvider = new AbstractTabProvider<PipelineDoc, SteppingPresenter>() {
             @Override
