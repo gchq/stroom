@@ -414,6 +414,32 @@ class TestEventTools {
                 .noneMatch(entry -> entry.path().path().contains("/pipeline/"));
     }
 
+    @Test
+    void fetchEventsWritesAStreamsRecordsToOutInsteadOfReturningThem() {
+        // Seen: an agent asked five times for 100 records of a stream in a file, to count keys with grep; each time
+        // they came back in the result, which the chat moved out of its context, and no file was written.
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.readRecords(73145L, 0, 2, null, FetchEventsTool.MAX_MAX_CHARS))
+                .thenReturn(new StreamReader.Records(List.of("<Event>1</Event>", "<Event>2</Event>"),
+                        new StreamReader.Fetched("ACME", "Raw Events", null, true, 1000L, List.of(), List.of())));
+        final FetchEventsTool tool = new FetchEventsTool(workspace, () -> store, () -> securityContext,
+                new AiAuditLog(() -> eventLoggingService), streamReader);
+
+        final String result = run(tool, "{\"streamId\":73145,\"recordCount\":2,\"out\":\"/outputs/sample.xml\"}");
+
+        assertThat(read("/outputs/sample.xml")).isEqualTo("<Event>1</Event>\n<Event>2</Event>\n");
+        assertThat(result)
+                .contains("\"records_read\":2")
+                .contains("\"out\":\"/outputs/sample.xml\"")
+                .contains("\"total_records\":1000")
+                .doesNotContain("<Event>1</Event>");
+        // Without out, they come back as before, and nothing is written.
+        Mockito.when(streamReader.readRecords(73145L, 0, 2, null, FetchEventsTool.DEFAULT_MAX_CHARS))
+                .thenReturn(new StreamReader.Records(List.of("<Event>1</Event>"),
+                        new StreamReader.Fetched("ACME", "Raw Events", null, true, 1000L, List.of(), List.of())));
+        assertThat(run(tool, "{\"streamId\":73145,\"recordCount\":2}")).contains("<Event>1</Event>");
+    }
+
     private FetchEventsTool fetchTool() {
         return new FetchEventsTool(workspace, () -> store, () -> securityContext,
                 new AiAuditLog(() -> eventLoggingService), Mockito.mock(StreamReader.class));

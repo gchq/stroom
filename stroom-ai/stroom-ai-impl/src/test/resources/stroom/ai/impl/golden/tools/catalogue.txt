@@ -543,7 +543,7 @@ Fetches the source events behind the rows of a table with StreamId and EventId c
       "type" : "integer"
     },
     "out" : {
-      "description" : "The file in /outputs/ to write the events to (default /outputs/events.xml).",
+      "description" : "The file in /outputs/ to write the events to (default /outputs/events.xml). With streamId, the records are written there, one after another, instead of being returned (none is written without it).",
       "type" : "string"
     },
     "path" : {
