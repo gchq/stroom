@@ -380,7 +380,7 @@ public class FormGroup extends Composite implements HasWidgets {
                 : groupElement;
         if (target != null && (helpButton.hasHelpContent() || !description.isEmpty())) {
             describedControl = target;
-            final String shortcut = getAriaHelpShortcut();
+            final String shortcut = KeyBinding.getAriaShortcut(Action.HELP);
             if (helpButton.hasHelpContent() && shortcut != null) {
                 describedControl.setAttribute(ARIA_KEY_SHORTCUTS, shortcut);
             }
@@ -506,16 +506,6 @@ public class FormGroup extends Composite implements HasWidgets {
             helpButton.setTitle(label + " - " + clickForHelp);
             helpButton.setHelpContentHeading(label);
         }
-    }
-
-    // The shortcut that shows help as the user has bound it (Keyboard Shortcuts preferences), in
-    // the form aria-keyshortcuts takes, e.g. F1 or Alt+H; null if there is none, or if it is a key
-    // sequence (e.g. "G H"), which the attribute can't express (a space separates alternatives)
-    private static String getAriaHelpShortcut() {
-        final String shortcut = KeyBinding.getShortcut(Action.HELP);
-        return shortcut == null || shortcut.contains(" ")
-                ? null
-                : shortcut;
     }
 
     private String getTickBoxLabel() {

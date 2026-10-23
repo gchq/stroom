@@ -21,6 +21,8 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -42,6 +44,9 @@ public class RefreshButton
     private static final String PAUSABLE = BLOCK + "--pausable";
     private static final String PAUSED = BLOCK + "--paused";
 
+    // Whether the refresh shortcut's command has been added (see the constructor)
+    private static boolean commandAdded;
+
     private int taskCount;
     private boolean allowPause;
     private boolean paused;
@@ -52,7 +57,14 @@ public class RefreshButton
     /// paused) choose which are shown (see refresh-button.css): refresh; a spinner turning; a static
     /// circle; and pause.
     public RefreshButton() {
+        // The shortcut works wherever there is a Refresh button, so the first one made adds it
+        if (!commandAdded) {
+            commandAdded = true;
+            KeyBinding.addCommand(Action.REFRESH, RefreshButton::refreshNearFocus);
+        }
         addStyleName(BLOCK);
+        // A shortcut presses it (see #refreshNearFocus)
+        setShortcut(Action.REFRESH);
         setTitle("Refresh");
 
         final Element element = getElement();
@@ -91,6 +103,10 @@ public class RefreshButton
     public void setAllowPause(final boolean allowPause) {
         this.allowPause = allowPause;
         setStyleName(PAUSABLE, allowPause);
+        // The refresh shortcut doesn't pause, so the tooltip doesn't offer it
+        setShortcut(allowPause
+                ? null
+                : Action.REFRESH);
         if (allowPause) {
             setEnabled(false);
         }
@@ -151,4 +167,24 @@ public class RefreshButton
             setTitle("Refresh");
         }
     }
+
+    /// Presses the Refresh button of the list that has the focus ([Action#REFRESH]): the first one
+    /// found going out from the focused element, so a list's own pager wins over another list's in
+    /// the same screen. Buttons that pause and resume updates (e.g. a dashboard table's) aren't
+    /// pressed, nor hidden or disabled ones. Nothing happens if nothing has the focus or no list
+    /// around it has a Refresh button.
+    public static native void refreshNearFocus() /*-{
+        var selector = '.refresh-button:not(.refresh-button--pausable):not([aria-disabled="true"])';
+        var element = $doc.activeElement;
+        while (element && element !== $doc.body && element !== $doc.documentElement) {
+            var buttons = element.querySelectorAll(selector);
+            for (var i = 0; i < buttons.length; i++) {
+                if (buttons[i].offsetParent !== null) {
+                    buttons[i].click();
+                    return;
+                }
+            }
+            element = element.parentElement;
+        }
+    }-*/;
 }

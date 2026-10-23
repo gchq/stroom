@@ -20,6 +20,7 @@ import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,6 +45,8 @@ public class QueryButtons
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
         start.setSvg(SvgImage.PLAY);
+        // Ctrl+Enter runs a dashboard's or a query's search, as the button does
+        start.setShortcut(Action.OK);
     }
 
     @Override
@@ -64,11 +67,14 @@ public class QueryButtons
             start.addStyleName("QueryButtons-button stop");
             start.removeStyleName("QueryButtons-button play");
             start.setSvg(SvgImage.STOP);
+            // Escape stops a dashboard's or a query's search, as Ctrl+Enter starts it
+            start.setShortcut(Action.CLOSE);
             start.setTitle("Stop Query");
         } else {
             start.addStyleName("QueryButtons-button play");
             start.removeStyleName("QueryButtons-button stop");
             start.setSvg(SvgImage.PLAY);
+            start.setShortcut(Action.OK);
             start.setTitle("Execute Query");
         }
     }

@@ -561,7 +561,7 @@ public final class AppShellStories {
                             + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                             "Main Menu: 1 tab stop",
                             "Hide Sidebar: 1 tab stop",
@@ -657,21 +657,25 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     // Freshly loaded: Save is disabled
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     // Remove an import (confirmed), which makes the document dirty
                     play.click(play.getByText("Imports", StroomDom.LINK_TAB_LABEL));
                     removeImport(play, "Alpha");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // Save: the server echoes, so the document is clean again
-                    play.click(play.getByTitle("Save"));
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
+                    play.click(play.getByRole("button", "Save"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "dict-countries")
                                     .withJsonBodyContaining("{\"imports\": [{\"name\": \"Beta\"}]}")
                                     .toSpyMatcher());
                     // Edit again, then close: the unsaved changes are confirmed
                     removeImport(play, "Beta");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // The tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
                                     .closest(".tab-bar__tab"))
@@ -771,6 +775,47 @@ public final class AppShellStories {
                     play.click(menuItem(screen, "Close Other Tabs"));
                     play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
                     play.expect(tabs(play).nth(0)).toHaveTextContent(TextMatch.containing("Countries"));
+                    expectNoProblems(play);
+                })
+                // #2278: a toolbar button that a shortcut also presses shows the shortcut in its
+                // tooltip, and the User menu's Keyboard Shortcuts lists the shortcuts, which a filter
+                // narrows. The runner's real input check (test-runner/lib/real-input/shortcuts.mjs)
+                // presses '?' to show the list, and Alt+PageUp and Alt+PageDown to move between the
+                // two tabs, as a play's keys have no key codes for the key bindings to read
+                .story("KeyboardShortcuts", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play nav = navTree(play);
+                    play.dblClick(nav.getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    // Save is still named 'Save'; its tooltip and aria-keyshortcuts give Ctrl+S
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("title", "Save (Ctrl+S)");
+                    play.expect(save).toHaveAttribute("aria-keyshortcuts", "Ctrl+S");
+                    play.dblClick(nav.getByText("Colours"));
+                    play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
+
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "User")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "User"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Keyboard Shortcuts")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).toContain("Shift+/");
+                    play.click(menuItem(screen, "Keyboard Shortcuts"));
+                    final Play dialog = screen.within(screen.findByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText("Refresh list")).toBeInTheDocument());
+                    play.expect(dialog.getByText("Alt+R")).toBeInTheDocument();
+                    play.expect(dialog.getByText("OK, or run a query")).toBeInTheDocument();
+                    // The filter takes the focus, and narrows the list to the matching shortcuts
+                    final Query filter = dialog.getByLabelText("Filter keyboard shortcuts");
+                    play.waitFor(() -> play.expect(filter).toHaveFocus());
+                    play.type(filter, "alt+page");
+                    play.waitFor(() -> play.expect(dialog.queryByText("Refresh list")).toBeNull());
+                    play.expect(dialog.getByText("Go to next tab")).toBeInTheDocument();
+                    play.expect(dialog.getByText("Go to previous tab")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                     expectNoProblems(play);
                 })
                 // From the keyboard: Shift+F10 or the context menu key opens a focused tab's menu

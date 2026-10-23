@@ -104,7 +104,7 @@ public final class DocPluginStories {
                     play.findByDisplayValue("keep-my-spaces");
                     // Save: onWrite runs, so the server gets the trimmed text and namespace URI, and
                     // the system id as typed
-                    play.click(play.getByTitle("Save"));
+                    play.click(play.getByRole("button", "Save"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(PATH)
                                     .withJsonBodyContaining("{\"data\": \"<xs:schema/>\", "
