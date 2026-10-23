@@ -21,10 +21,12 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.pipeline.shared.data.PipelineReference;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -295,6 +297,118 @@ class TestCreatePipelineTool {
         assertThat(pipelines.copyTool().confirmsItself()).isTrue();
         assertThat(pipelines.updateTool().confirmsItself()).isFalse();
         assertThat(tool.definition().description()).startsWith("Onboarding step 5 of 15 (pipeline): ");
+    }
+
+    @Test
+    void aVersionOfAPipelineWithReferenceDataAsksWhetherToKeepThem() {
+        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 of a Fortigate feed drafted from
+        // the sample lost V1.2's IP lookups, and nothing said so.
+        textTemplate();
+        previousVersion(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
+
+        final ToolResult asked = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"version_of\": "
+                                      + "\"v12\"}", PortedToolCalls.context());
+        final ToolResult stray = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"template\": \""
+                                      + TEMPLATE + "\", \"keep_references\": true}", PortedToolCalls.context());
+
+        assertThat(asked.isError()).isTrue();
+        assertThat(asked.text()).isEqualTo("'FG-V1.2' loads reference data for its lookups: ['GEO-IP via Reference "
+                                           + "Loader on translationFilter']. Ask the user whether the new version "
+                                           + "keeps them (its XSLT looks them up only if its mapping does), then "
+                                           + "call again with keep_references=true or false.");
+        assertThat(stray.text()).isEqualTo("keep_references is for a new version (version_of=): other reference "
+                                           + "data go in references");
+        assertThat(pipelines.world.created).isEmpty();
+    }
+
+    @Test
+    void aVersionOfAPipelineOfNoTemplateIsACopy() {
+        previousVersion(null);
+
+        final ToolResult refused = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"version_of\": "
+                                        + "\"v12\", \"keep_references\": false}", PortedToolCalls.context());
+
+        assertThat(refused.text()).isEqualTo("'FG-V1.2' inherits from no template, so a new version can't be its "
+                                             + "template's child: copy_pipeline source_uuid='v12' copies it as it is "
+                                             + "(with set_properties for the build's XSLT), or give template.");
+    }
+
+    @Test
+    void aNextVersionIsAChildOfTheSameTemplateWithThePreviousConverterSettingsAndReferenceData() {
+        textTemplate();
+        previousVersion(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
+        pipelines.xslt("x13", "FG-Events-V1.3", Map.of());
+
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"FG-V1.3\", \"version_of\": \"v12\", "
+                                                                 + "\"keep_references\": true}", user.context()));
+
+        assertThat(user.forms()).singleElement().satisfies(form -> assertThat((Map<Object, Object>) form.get("details"))
+                .containsEntry("new version of", "FG-V1.2")
+                .containsEntry("set in FG-V1.2, not here", "element extraFilter (XSLTFilter) added")
+                .containsEntry("reference data", "GEO-IP via Reference Loader on translationFilter"));
+        assertThat(made).containsEntry("version_of", "FG-V1.2")
+                .containsEntry("template", "Event Data (Text)")
+                .containsEntry("set_in_FG-V1.2_not_here", List.of("element extraFilter (XSLTFilter) added"))
+                .containsEntry("filled_from_build", List.of(
+                        "dsParser.textConverter = FG-V1.2 (as FG-V1.2 has it)",
+                        "translationFilter.xslt = FG-Events-V1.3 (the build's only XSLT)",
+                        "streamAppender.streamType = Events-V2 (as FG-V1.2 has it)"))
+                .containsEntry("reference_data", List.of("GEO-IP via Reference Loader"));
+        final PipelineDoc doc = pipelines.pipelineNamed("FG-V1.3");
+        assertThat(doc.getParentPipeline()).isEqualTo(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
+        assertThat(PipelineDocs.addedProperties(doc)).contains(
+                new PipelineProperty("dsParser", "textConverter", new PipelinePropertyValue(new DocRef(
+                        "TextConverter", "tc12", "FG-V1.2"))),
+                new PipelineProperty("streamAppender", "streamType", new PipelinePropertyValue("Events-V2")));
+        assertThat(doc.getPipelineData().getAddedPipelineReferences()).singleElement()
+                .satisfies(reference -> assertThat(reference.getElement()).isEqualTo("translationFilter"));
+        // Recorded as the next version, its XSLT of the previous XSLT, so promotion puts them beside them; the
+        // previous version's converter runs where it is, in production.
+        assertThat(pipelines.world.records().entry(BUILD, doc.getUuid())).containsEntry("version_of", "v12");
+        assertThat(pipelines.world.records().entry(BUILD, "x13")).containsEntry("version_of", "x12");
+        assertThat(pipelines.world.documentAccess.path(new DocRef("TextConverter", "tc12")))
+                .contains("/Feeds/FG").doesNotContain(BUILD);
+    }
+
+    @Test
+    void aNextVersionLeavesOutTheReferenceDataTheUserDrops() {
+        textTemplate();
+        previousVersion(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
+        pipelines.xslt("x13", "FG-Events-V1.3", Map.of());
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"FG-V1.3\", \"version_of\": \"v12\", "
+                                                                 + "\"keep_references\": false}",
+                PortedToolCalls.answering(Map.of())));
+
+        assertThat(made).doesNotContainKey("reference_data").containsEntry("version_of", "FG-V1.2");
+        assertThat(pipelines.pipelineNamed("FG-V1.3").getPipelineData().getAddedPipelineReferences()).isEmpty();
+    }
+
+    // FG-V1.2 in production, a child of the template given (or of none): its own converter, XSLT and stream type,
+    // reference data for its lookups, and an element of its own.
+    private void previousVersion(final DocRef template) {
+        final String folder = pipelines.world.folder("System/Feeds/FG").uuid;
+        pipelines.world.add("TextConverter", "FG-V1.2", folder, "tc12");
+        pipelines.world.add("XSLT", "FG-Events-V1.2", folder, "x12");
+        pipelines.world.add("Feed", "GEO-IP", folder, "geo");
+        pipelines.world.add(PipelineDoc.TYPE, "FG-V1.2", folder, "v12");
+        final PipelineLayers layer = PipelineLayers.layer("v12")
+                .element("extraFilter", "XSLTFilter")
+                .property("dsParser", "textConverter", new DocRef("TextConverter", "tc12", "FG-V1.2"))
+                .property("translationFilter", "xslt", new DocRef("XSLT", "x12", "FG-Events-V1.2"))
+                .property("streamAppender", "streamType", "Events-V2");
+        final PipelineDoc doc = PipelineDoc.builder().uuid("v12").name("FG-V1.2").version("v0")
+                .parentPipeline(template)
+                .pipelineData(new PipelineDataBuilder(layer.data())
+                        .addPipelineReference(new PipelineReference("translationFilter", "pipelineReference",
+                                new DocRef(PipelineDoc.TYPE, PipelineWorld.LOADER, "Reference Loader"),
+                                new DocRef("Feed", "geo", "GEO-IP"), "Reference"))
+                        .build())
+                .build();
+        pipelines.world.docs.put("v12", doc);
     }
 
     private void textTemplate() {

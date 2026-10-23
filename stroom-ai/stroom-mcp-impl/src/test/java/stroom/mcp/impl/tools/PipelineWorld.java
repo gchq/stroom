@@ -74,7 +74,7 @@ final class PipelineWorld {
     /// @return create_pipeline, on this world.
     CreatePipelineTool createTool() {
         return new CreatePipelineTool(writes, pipelineDocs, world.pipelineShapes, world.guard(), feeds.consent,
-                feeds.plan);
+                feeds.plan, world.records());
     }
 
     /// @return copy_pipeline, on this world.

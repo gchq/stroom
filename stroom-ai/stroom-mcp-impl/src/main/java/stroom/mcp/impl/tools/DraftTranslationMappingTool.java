@@ -44,6 +44,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,16 +81,19 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     private final SampleStreamTexts sampleStreamTexts;
     private final TranslationBuilds builds;
     private final SampleProfiling sampleProfiling;
+    private final CurrentTranslations currentTranslations;
 
     @Inject
     DraftTranslationMappingTool(final EventVersions eventVersions,
                                 final SampleStreamTexts sampleStreamTexts,
                                 final TranslationBuilds builds,
-                                final SampleProfiling sampleProfiling) {
+                                final SampleProfiling sampleProfiling,
+                                final CurrentTranslations currentTranslations) {
         this.eventVersions = eventVersions;
         this.sampleStreamTexts = sampleStreamTexts;
         this.builds = builds;
         this.sampleProfiling = sampleProfiling;
+        this.currentTranslations = currentTranslations;
     }
 
     @Override
@@ -203,6 +207,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
         settled.ifPresent(text -> result.put("schema_version_settled", text));
+        currentTranslation(build, result);
         // Kept for this session, so the first save sends only what changes (seen in testing: a 50 KB draft, written
         // out whole in one call, never reached the server).
         SentMappings.remember(context, SentMappings.DRAFT + NullSafe.string(build), mapping);
@@ -218,6 +223,20 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element.");
         return result;
+    }
+
+    // A next version drafted from the sample: what the current XSLT looks up is in neither (seen in testing: V1.3
+    // drafted for a feed V1.2 translates, and its IP lookups were gone, though the user meant to keep them).
+    private void currentTranslation(final String build, final Map<String, Object> result) {
+        final Map<String, Object> current = build == null
+                ? null
+                : currentTranslations.current(build).orElse(null);
+        if (CurrentTranslations.lookupsOf(current)) {
+            result.put("current_translation", current);
+            final List<Object> notes = new ArrayList<>(NullSafe.list((List<?>) result.get("notes")));
+            notes.add(CurrentTranslations.lookupsNote(current));
+            result.put("notes", notes);
+        }
     }
 
     private Map<String, Object> drafted(final Map<String, String> samples,
