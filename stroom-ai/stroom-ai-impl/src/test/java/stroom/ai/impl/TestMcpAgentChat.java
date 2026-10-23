@@ -826,6 +826,45 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void aWorkspaceFileNamedInABuiltInToolsArgumentsIsPutInToo(@TempDir final Path tempDir) throws IOException {
+        // As build_translation_xslt was given a mapping saved to the workspace, once it was one of Stroom's own.
+        final Path mapping = Files.writeString(tempDir.resolve("mapping.json"), "{\"input\":\"xml_fragments\"}");
+        final WorkspacePath path = WorkspacePath.parse("/outputs/mapping.json");
+        Mockito.when(chatWorkspace.size(7, path)).thenReturn(Files.size(mapping));
+        Mockito.when(chatWorkspace.localFile(7, path)).thenReturn(mapping);
+        final dev.langchain4j.agent.tool.ToolSpecification build = dev.langchain4j.agent.tool.ToolSpecification
+                .builder()
+                .name("build_translation_xslt")
+                .build();
+        final List<String> given = new ArrayList<>();
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(build, (request, memoryId) -> {
+            given.add(request.arguments());
+            return "saved";
+        }));
+        final String arguments = "{\"build\":\"b\",\"mapping\":{\"$workspace\":\"/outputs/mapping.json\"}}";
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("build_translation_xslt")
+                        .arguments(arguments)
+                        .build())),
+                AiMessage.from("Saved."));
+
+        agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // The tool is given the file's JSON, as an object.
+        assertThat(given).singleElement()
+                .satisfies(sent -> assertThat(JsonUtil.readValue(sent, Map.class))
+                        .isEqualTo(Map.of("build", "b", "mapping", Map.of("input", "xml_fragments"))));
+        // The audit keeps the reference the model wrote, with the size of what was given.
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "build_translation_xslt", arguments,
+                (long) given.getFirst().length(), "Run", true, false);
+        // As for any other read of the file.
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
     void aWorkspaceFileThatCantBePutInIsTheCallsErrorAndTheServerIsNotCalled() {
         final WorkspacePath path = WorkspacePath.parse("/outputs/gone.json");
         Mockito.when(chatWorkspace.size(7, path))
