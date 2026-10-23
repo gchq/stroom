@@ -83,7 +83,7 @@ public class ContextAssembler {
             workspace, or eval in a StroomQL query. Both use Stroom's expression language.
             - A large tool result is saved to a workspace file, and you are given a preview and its path. Query \
             the file with the workspace tools rather than reading it all.
-            - To pass a workspace file as an argument of an MCP server's tool (e.g. a large mapping you saved), give \
+            - To pass a workspace file as a tool's argument (e.g. a large mapping you saved), give \
             {"$workspace": "<path>"} as the value (with "jq": "<query>" for part of it), or "$workspace:<path>" for a \
             text argument, rather than writing it out; Stroom puts the file's content in.
             - Before calling tools, say in a sentence what you are about to do and why; the user sees it as \
