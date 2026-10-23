@@ -62,12 +62,8 @@ public abstract class AbstractSettingsPresenter<V extends SettingsView, D extend
         getView().setErrorFeedView(errorFeedPresenter.getView());
         // Only an administrator can change a global property, so don't offer it to anyone else.
         getView().setSetDefaultVisible(configDefaultSetter.isAllowed());
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(errorFeedPresenter.addSelectionListener(e -> onChange()));
+        own(errorFeedPresenter.addSelectionListener(e -> onChange()));
     }
 
     @Override

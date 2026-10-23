@@ -35,22 +35,17 @@ public abstract class CurveTabLayoutPresenter extends MyPresenterWidget<CurveTab
     @Inject
     public CurveTabLayoutPresenter(final EventBus eventBus, final CurveTabLayoutView view) {
         super(eventBus, view);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+        own(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
 
-        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event ->
+        own(getView().getTabBar().addRequestCloseTabHandler(event ->
                 RequestCloseTabEvent.fire(
                         CurveTabLayoutPresenter.this,
                         event.getTabData(),
                         event.isForce())));
 
-        registerHandler(getView().getTabBar().addShowMenuHandler(event ->
+        own(getView().getTabBar().addShowMenuHandler(event ->
                 getEventBus().fireEvent(event)));
     }
 

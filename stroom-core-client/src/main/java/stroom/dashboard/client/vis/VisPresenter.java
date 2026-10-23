@@ -153,6 +153,15 @@ public class VisPresenter
         view.setVisFrame(visFrame);
 
         RootPanel.get().add(visFrame);
+
+        visFunctionCache.bind();
+        scriptCache.bind();
+        visFrame.bind();
+
+        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
+                visFrame.setClassName(getClassName(event.getTheme()))));
+
+        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
 
     /*****************
@@ -195,23 +204,19 @@ public class VisPresenter
     @Override
     protected void onDispose() {
         super.onDispose();
+        cleanupSearchModelAssociation();
+        if (currentFunction != null) {
+            currentFunction.removeStatusHandler(this);
+        }
+        currentFunction = null;
+
+        visFunctionCache.unbind();
+        scriptCache.unbind();
+        visFrame.unbind();
+
         // The frame is on the page's root, so closing a dashboard, which doesn't remove its
         // components, would otherwise leave it (and through it the whole dashboard) loaded
         RootPanel.get().remove(visFrame);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        visFunctionCache.bind();
-        scriptCache.bind();
-        visFrame.bind();
-
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
-
-        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
 
     private void setPause(final boolean pause,
@@ -226,20 +231,6 @@ public class VisPresenter
 
     private String getClassName(final String theme) {
         return "vis " + Theme.getClassName(theme);
-    }
-
-    @Override
-    protected void onUnbind() {
-        super.onUnbind();
-        cleanupSearchModelAssociation();
-        if (currentFunction != null) {
-            currentFunction.removeStatusHandler(this);
-        }
-        currentFunction = null;
-
-        visFunctionCache.unbind();
-        scriptCache.unbind();
-        visFrame.unbind();
     }
 
     @Override

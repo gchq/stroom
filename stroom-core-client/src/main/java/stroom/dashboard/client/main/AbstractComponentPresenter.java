@@ -167,12 +167,12 @@ public abstract class AbstractComponentPresenter<V extends View>
 
     @Override
     public void onClose() {
-        unbind();
+        // Disposed with its dashboard
     }
 
     @Override
     public void onRemove() {
-        unbind();
+        // Disposed by its dashboard (Components.remove), which owns it
     }
 
     @Override

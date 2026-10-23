@@ -96,11 +96,8 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
         addColumns();
         enableButtons();
-    }
 
-    @Override
-    protected void onBind() {
-        registerHandler(selectionModel.addSelectionHandler(event -> {
+        own(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             // A read only document can't be edited, so double clicking does nothing
             if (event.getSelectionType().isDoubleSelect() && !isReadOnly()) {

@@ -116,6 +116,15 @@ public class QueryResultVisPresenter
         RootPanel.get().add(visFrame);
 
         this.context = new JSONObject().getJavaScriptObject();
+
+        visFunctionCache.bind();
+        scriptCache.bind();
+        visFrame.bind();
+
+        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
+                visFrame.setClassName(getClassName(event.getTheme()))));
+
+        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
 
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
@@ -172,20 +181,6 @@ public class QueryResultVisPresenter
         RootPanel.get().remove(visFrame);
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        visFunctionCache.bind();
-        scriptCache.bind();
-        visFrame.bind();
-
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                visFrame.setClassName(getClassName(event.getTheme()))));
-
-        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
-    }
-
     private void setPause(final boolean pause,
                           final boolean refresh) {
         // If currently paused then refresh if we are allowed.
@@ -201,8 +196,8 @@ public class QueryResultVisPresenter
     }
 
     @Override
-    protected void onUnbind() {
-        super.onUnbind();
+    protected void onDispose() {
+        super.onDispose();
         cleanupSearchModelAssociation();
         if (currentFunction != null) {
             currentFunction.removeStatusHandler(this);

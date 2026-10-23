@@ -313,6 +313,38 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         pagerView.getRefreshButton().setAllowPause(true);
         annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
+
+        own(selectionModel.addSelectionHandler(event -> {
+            getDashboardContext().fireComponentChangeEvent(this);
+            if (event.getSelectionType().isDoubleSelect()) {
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
+                }
+            }
+        }));
+        own(dataGrid.addRangeChangeHandler(event -> {
+            final Range range = event.getNewRange();
+            tableResultRequest = tableResultRequest
+                    .copy()
+                    .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
+                    .build();
+            if (!ignoreRangeChange) {
+                refresh();
+            }
+        }));
+        own(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
+
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
+
+        own(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        own(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     private void toggle(final TableRow row) {
@@ -360,47 +392,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     // The menu opens below the button
     private void showAnnotationMenu() {
         annotationManager.showAnnotationMenu(annotateButton.getElement(), selectionModel.getSelectedItems());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            getDashboardContext().fireComponentChangeEvent(this);
-            if (event.getSelectionType().isDoubleSelect()) {
-                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
-                        selectionModel.getSelectedItems());
-                if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.iterator().next());
-                }
-            }
-        }));
-        registerHandler(dataGrid.addRangeChangeHandler(event -> {
-            final Range range = event.getNewRange();
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
-                    .build();
-            if (!ignoreRangeChange) {
-                refresh();
-            }
-        }));
-        registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
-                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
-
-
-
-
-
-
-        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
-
-        registerHandler(getEventBus().addHandler(
-                AnnotationChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
-        registerHandler(getEventBus().addHandler(
-                AnnotationTagNameChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {
@@ -492,8 +483,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    protected void onUnbind() {
-        super.onUnbind();
+    protected void onDispose() {
+        super.onDispose();
         cleanupSearchModelAssociation();
     }
 

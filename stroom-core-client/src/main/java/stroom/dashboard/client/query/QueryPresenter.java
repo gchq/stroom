@@ -228,6 +228,21 @@ public class QueryPresenter
         searchModel.setTaskMonitorFactory(this);
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
+
+        own(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
+        own(expressionPresenter.addContextMenuHandler(event -> {
+            final List<Item> menuItems = addExpressionActionsToMenu();
+            if (!menuItems.isEmpty()) {
+                showMenu(menuItems, event.getPopupPosition());
+            }
+        }));
+        own(indexLoader.addChangeListener(loader ->
+                loadedDataSource(loader.getLoadedDataSourceRef())));
+
+        own(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            searchModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
     }
 
     private void onHistory() {
@@ -243,27 +258,6 @@ public class QueryPresenter
                 getQuerySettings().getDataSource(),
                 root);
 
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(expressionPresenter.addSelectionListener(event -> setButtonsEnabled()));
-        registerHandler(expressionPresenter.addContextMenuHandler(event -> {
-            final List<Item> menuItems = addExpressionActionsToMenu();
-            if (!menuItems.isEmpty()) {
-                showMenu(menuItems, event.getPopupPosition());
-            }
-        }));
-        registerHandler(indexLoader.addChangeListener(loader ->
-                loadedDataSource(loader.getLoadedDataSourceRef())));
-
-
-        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
-            // If a user is even attempting to close the browser or browser tab then destroy the query.
-            searchModel.reset(DestroyReason.WINDOW_CLOSE);
-        }));
     }
 
     @Override

@@ -83,15 +83,10 @@ public class DataRetentionPresenter
         addTab(RULES_TAB);
         addTab(IMPACT_SUMMARY_TAB);
         selectTab(RULES_TAB);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+        own(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     protected void getContent(final TabData tab, final ContentCallback callback) {
@@ -206,10 +201,8 @@ public class DataRetentionPresenter
                 ConfirmEvent.fire(this,
                         "There are unsaved changes. Are you sure you want to close this tab?",
                         result -> {
+                            // Closing the tab disposes this
                             event.getCallback().closeTab(result);
-                            if (result) {
-                                unbind();
-                            }
                         });
             } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
                 // Do nothing
@@ -218,7 +211,6 @@ public class DataRetentionPresenter
             }
         } else {
             event.getCallback().closeTab(true);
-            unbind();
         }
     }
 

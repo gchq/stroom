@@ -215,6 +215,13 @@ public class DashboardPresenter
 //        dashboardPresenter.setParamsFromLink(params);
 //        dashboardPresenter.setEmbedded(embedded);
 //        dashboardPresenter.setQueryOnOpen(queryOnOpen);
+
+        queryToolbarPresenter.setOnStart(this::toggleStart);
+        queryToolbarPresenter.setOnTimeRangeChange(() -> {
+            onChange();
+            dashboardContext.fireContextChangeEvent();
+            start();
+        });
     }
 
     public void setParentContext(final DashboardContext parent) {
@@ -231,17 +238,6 @@ public class DashboardPresenter
         return Collections.singletonList(queryToolbarPresenter.getWidget());
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        queryToolbarPresenter.setOnStart(this::toggleStart);
-        queryToolbarPresenter.setOnTimeRangeChange(() -> {
-            onChange();
-            dashboardContext.fireContextChangeEvent();
-            start();
-        });
-    }
-
     private void onMaximiseTabs() {
         maximiseTabs(null);
         // The button swaps for Restore, so focus goes with it rather than being lost
@@ -254,8 +250,8 @@ public class DashboardPresenter
     }
 
     @Override
-    protected void onUnbind() {
-        super.onUnbind();
+    protected void onDispose() {
+        super.onDispose();
 
         // Remove all components. This should have been done already in the
         // onClose() method.

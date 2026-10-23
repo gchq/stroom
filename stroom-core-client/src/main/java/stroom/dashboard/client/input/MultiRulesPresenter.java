@@ -64,7 +64,8 @@ public class MultiRulesPresenter extends AbstractSettingsTabPresenter<MultiRules
     }
 
     @Override
-    protected void onUnbind() {
+    protected void onDispose() {
+        super.onDispose();
         reset();
     }
 

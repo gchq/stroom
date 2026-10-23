@@ -53,11 +53,6 @@ public class TracesSettingsPresenter
         this.planBSettingsPresenter = planBSettingsPresenter;
         planBSettingsPresenter.setStateTypeLocked(true);
         view.setSettingsView(planBSettingsPresenter.getView());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
         planBSettingsPresenter.setOnChange(this::onChange);
     }
 

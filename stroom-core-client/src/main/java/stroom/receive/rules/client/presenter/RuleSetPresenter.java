@@ -143,6 +143,17 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                         null))
                 .taskMonitorFactory(this)
                 .exec();
+
+        own(getView().getTabBar().addSelectionHandler(event ->
+                selectTab(event.getSelectedItem())));
+        own(getView().getTabBar().addShowMenuHandler(event ->
+                getEventBus().fireEvent(event)));
+
+        own(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+            if (isDirty(event.getTabData())) {
+                save();
+            }
+        }));
     }
 
     @Override
@@ -174,21 +185,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private void setDescriptionOnPresenter(final MarkdownEditPresenter markdownEditPresenter) {
         markdownEditPresenter.setText(receiveDataRules.getDescription());
         markdownEditPresenter.setReadOnly(false);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
-                selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler(event ->
-                getEventBus().fireEvent(event)));
-
-        registerHandler(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
-            if (isDirty(event.getTabData())) {
-                save();
-            }
-        }));
     }
 
     public void addTab(final TabData tab) {
@@ -331,10 +327,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 ConfirmEvent.fire(this,
                         "There are unsaved changes. Are you sure you want to close this tab?",
                         result -> {
+                            // Closing the tab disposes this
                             event.getCallback().closeTab(result);
-                            if (result) {
-                                unbind();
-                            }
                         });
             } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
                 // Do nothing
@@ -343,7 +337,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
             }
         } else {
             event.getCallback().closeTab(true);
-            unbind();
         }
     }
 

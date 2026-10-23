@@ -95,6 +95,8 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         commonTabsMap = new EnumMap<>(CommonDocLinkTab.class);
         addEntry(commonTabsMap, CommonDocLinkTab.DOCUMENTATION, this::getDocumentationTab);
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
+
+        tabContentProvider.bind();
     }
 
     /// Makes the document's toolbar, with its Save and Save As buttons. A subclass may add its own
@@ -134,14 +136,8 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    protected void onBind() {
-        super.onBind();
-        tabContentProvider.bind();
-    }
-
-    @Override
-    protected void onUnbind() {
-        super.onUnbind();
+    protected void onDispose() {
+        super.onDispose();
         tabContentProvider.unbind();
     }
 

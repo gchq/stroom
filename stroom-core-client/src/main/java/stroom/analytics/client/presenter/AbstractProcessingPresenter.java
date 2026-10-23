@@ -66,17 +66,13 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
+
+        tableBuilderProcessingPresenter.setOnChange(this::onChange);
     }
 
     public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
         streamingProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        tableBuilderProcessingPresenter.setOnChange(this::onChange);
     }
 
     @Override

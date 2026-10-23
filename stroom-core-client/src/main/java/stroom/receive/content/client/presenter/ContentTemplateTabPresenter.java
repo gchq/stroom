@@ -149,6 +149,19 @@ public class ContentTemplateTabPresenter
         updateButtons();
 
         initialiseTemplates(restFactory);
+
+        addSaveButtonHandler();
+        addAddAboveButtonHandler();
+        addAddBelowButtonHandler();
+        addEditButtonHandler();
+        addCopyButtonHandler();
+        addDeleteButtonHandler();
+        addMoveUpButtonHandler();
+        addMoveDownButtonHandler();
+        addListSelectionHandler();
+        addEnabledClickHandler();
+
+        listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
     }
 
     private void initialiseTemplates(final RestFactory restFactory) {
@@ -240,24 +253,6 @@ public class ContentTemplateTabPresenter
             final ContentTemplate contentTemplate = getSelected();
             moveRuleDown(contentTemplate);
         }
-    }
-
-    @Override
-    protected void onBind() {
-        addSaveButtonHandler();
-        addAddAboveButtonHandler();
-        addAddBelowButtonHandler();
-        addEditButtonHandler();
-        addCopyButtonHandler();
-        addDeleteButtonHandler();
-        addMoveUpButtonHandler();
-        addMoveDownButtonHandler();
-        addListSelectionHandler();
-        addEnabledClickHandler();
-
-        listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
-
-        super.onBind();
     }
 
     private List<Item> buildActionMenuItems(final ContentTemplate contentTemplate) {
@@ -703,10 +698,8 @@ public class ContentTemplateTabPresenter
                 ConfirmEvent.fire(this,
                         "There are unsaved changes. Are you sure you want to close this tab?",
                         result -> {
+                            // Closing the tab disposes this
                             event.getCallback().closeTab(result);
-                            if (result) {
-                                unbind();
-                            }
                         });
             } else if (DirtyMode.SKIP_DIRTY == dirtyMode) {
                 // Do nothing
@@ -715,7 +708,6 @@ public class ContentTemplateTabPresenter
             }
         } else {
             event.getCallback().closeTab(true);
-            unbind();
         }
     }
 

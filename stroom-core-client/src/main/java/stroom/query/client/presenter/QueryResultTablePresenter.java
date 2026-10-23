@@ -248,6 +248,43 @@ public class QueryResultTablePresenter
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
 
         annotationManager.setColumnSupplier(() -> currentColumns);
+
+        own(dataGrid.addRangeChangeHandler(event -> {
+            final com.google.gwt.view.client.Range range = event.getNewRange();
+            requestedRange = new OffsetRange(range.getStart(), range.getLength());
+            if (!ignoreRangeChange) {
+                refresh();
+            }
+        }));
+        own(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
+
+//        own(dataGrid.addColumnSortHandler(event -> {
+//            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+//                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+//                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+//                refresh();
+//            }
+//        }));
+
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
+
+        own(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
+                }
+            }
+        }));
+
+        own(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        own(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     public DashboardContext getDashboardContext() {
@@ -322,52 +359,6 @@ public class QueryResultTablePresenter
     // The menu opens below the button
     private void showAnnotationMenu() {
         annotationManager.showAnnotationMenu(annotateButton.getElement(), selectionModel.getSelectedItems());
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addRangeChangeHandler(event -> {
-            final com.google.gwt.view.client.Range range = event.getNewRange();
-            requestedRange = new OffsetRange(range.getStart(), range.getLength());
-            if (!ignoreRangeChange) {
-                refresh();
-            }
-        }));
-        registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
-                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
-
-//        registerHandler(dataGrid.addColumnSortHandler(event -> {
-//            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-//                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-//                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-//                refresh();
-//            }
-//        }));
-
-        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
-
-
-
-
-
-
-
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
-                        selectionModel.getSelectedItems());
-                if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.iterator().next());
-                }
-            }
-        }));
-
-        registerHandler(getEventBus().addHandler(
-                AnnotationChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
-        registerHandler(getEventBus().addHandler(
-                AnnotationTagNameChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {

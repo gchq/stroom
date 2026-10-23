@@ -75,8 +75,8 @@ public class TableFilterPresenter
     }
 
     @Override
-    protected void onUnbind() {
-        super.onUnbind();
+    protected void onDispose() {
+        super.onDispose();
         registrations.forEach(HandlerRegistration::removeHandler);
         registrations.clear();
     }

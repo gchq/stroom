@@ -190,15 +190,12 @@ public abstract class AbstractMetaListPresenter
                 super.changeData(onProcessData(data));
             }
         };
+
+        own(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     void setTableName(final String tableName) {
         dataGrid.setTableName(tableName);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     /// @param onResult What to run with each page of data the list fetches.

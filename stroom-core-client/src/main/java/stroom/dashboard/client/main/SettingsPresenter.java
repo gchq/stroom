@@ -46,6 +46,14 @@ public class SettingsPresenter
     public SettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
         getWidget().getElement().addClassName("default-min-sizes");
+
+        own(getView().getTabBar().addSelectionHandler(event -> {
+            final TabData tab = event.getSelectedItem();
+            if (tab != null && tab != selectedTab) {
+                changeSelectedTab(tab);
+            }
+        }));
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     @Override
@@ -79,18 +87,6 @@ public class SettingsPresenter
     public void removeTab(final TabData tab) {
         getView().getTabBar().removeTab(tab);
         changeSelectedTab(firstTab);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> {
-            final TabData tab = event.getSelectedItem();
-            if (tab != null && tab != selectedTab) {
-                changeSelectedTab(tab);
-            }
-        }));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public void setDashboardContext(final DashboardContext dashboardContext) {

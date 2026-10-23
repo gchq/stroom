@@ -61,18 +61,14 @@ public class TableFilterPresenter
         final TabData tabData = addTab("Filter", columnFilterPresenter);
         addTab("Include Exclude", includeExcludeFilterPresenter);
         changeSelectedTab(tabData);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> {
+        own(getView().getTabBar().addSelectionHandler(event -> {
             final TabData tab = event.getSelectedItem();
             if (tab != null && tab != selectedTab) {
                 changeSelectedTab(tab);
             }
         }));
-        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        own(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public void show(final Column column,

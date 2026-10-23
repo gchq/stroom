@@ -42,17 +42,13 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
         super(eventBus, queryEditPresenter.getView());
         own(queryEditPresenter);
         this.queryEditPresenter = queryEditPresenter;
+
+        queryEditPresenter.setOnChange(this::onChange);
     }
 
     @Override
     public List<Widget> getToolbars() {
         return queryEditPresenter.getToolbars();
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        queryEditPresenter.setOnChange(this::onChange);
     }
 
     @Override

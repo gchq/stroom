@@ -146,15 +146,11 @@ public class AskStroomAiPresenter
 
         // Initiate the selection box presenter with the default model if one is set.
         readModel();
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(docSelectionBoxPresenter.addSelectionListener(event ->
+        own(docSelectionBoxPresenter.addSelectionListener(event ->
                 writeModel()));
 
-        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+        own(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 final Element button = ElementUtil.findParent(target, element ->
@@ -200,7 +196,7 @@ public class AskStroomAiPresenter
         }, ClickEvent.getType()));
 
         // Listen for dock splitter resize events to persist the new size.
-        addRegisteredHandler(DockResizeEvent.getType(), event -> {
+        listen(DockResizeEvent.getType(), event -> {
             if (docked) {
                 getDockBehaviourFromPrefs(dockBehaviour -> {
                     final Size newSize = event.getNewSize();

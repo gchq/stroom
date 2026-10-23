@@ -65,13 +65,9 @@ public class PipelineTreePresenter
         };
         view.setSelectionModel(selectionModel);
         view.setUiHandlers(this);
-    }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
         if (selectionModel != null) {
-            registerHandler(selectionModel.addSelectionChangeHandler(event -> getView().refresh()));
+            own(selectionModel.addSelectionChangeHandler(event -> getView().refresh()));
         }
     }
 
