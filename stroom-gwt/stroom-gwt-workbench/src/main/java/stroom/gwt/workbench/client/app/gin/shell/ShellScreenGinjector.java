@@ -161,7 +161,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     // The shell
 
-    /// @return The explorer (Stroom's navigation panel), shown in the main view's explorer slot.
+    /// @return The explorer (Stroom's navigation panel), shown in the main view.
     NavigationPresenter getNavigationPresenter();
 
     /// @return The main view (the menu bar and the explorer and content split), for the story's `MainPresenter`.
@@ -170,7 +170,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's app-wide key handler (keyboard shortcuts), which the story gives its `MainPresenter`.
     GlobalKeyHandlerImpl getGlobalKeyHandlerImpl();
 
-    /// @return The document tab pane, shown in the main view's content slot.
+    /// @return The document tab pane, shown in the main view.
     ContentTabPanePresenter getContentTabPanePresenter();
 
     /// @return The content manager (a singleton), which opens tabs in the tab pane.

@@ -16,7 +16,6 @@
 
 package stroom.widget.presenter.client.gin;
 
-import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -35,7 +34,7 @@ public abstract class AbstractPresenterModule extends AbstractGinModule {
     /// @param proxy     Its proxy.
     /// @param <P>       The screen's type.
     /// @param <V>       The view's type.
-    protected <P extends MyPresenter<?>, V extends View> void bindPresenter(final Class<P> presenter,
+    protected <P extends MyPresenterWidget<?>, V extends View> void bindPresenter(final Class<P> presenter,
                                                                             final Class<V> view,
                                                                             final Class<? extends V> viewImpl,
                                                                             final Class<?> proxy) {
@@ -53,7 +52,7 @@ public abstract class AbstractPresenterModule extends AbstractGinModule {
     /// @param viewImpl  Its view.
     /// @param <P>       The screen's type.
     /// @param <V>       The view's type.
-    protected <P extends MyPresenter<?>, V extends View> void bindPresenter(final Class<P> presenter,
+    protected <P extends MyPresenterWidget<?>, V extends View> void bindPresenter(final Class<P> presenter,
                                                                             final Class<V> view,
                                                                             final Class<? extends V> viewImpl) {
         bind(presenter).in(Singleton.class);
@@ -66,7 +65,7 @@ public abstract class AbstractPresenterModule extends AbstractGinModule {
     /// @param presenter The screen.
     /// @param proxy     Its proxy.
     /// @param <P>       The screen's type.
-    protected <P extends MyPresenter<?>> void bindPresenter(final Class<P> presenter, final Class<?> proxy) {
+    protected <P extends MyPresenterWidget<?>> void bindPresenter(final Class<P> presenter, final Class<?> proxy) {
         bind(presenter).in(Singleton.class);
         bind(proxy).asEagerSingleton();
     }

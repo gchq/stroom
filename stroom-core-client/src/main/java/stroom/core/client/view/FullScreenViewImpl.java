@@ -17,6 +17,7 @@
 package stroom.core.client.view;
 
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,8 +46,8 @@ public class FullScreenViewImpl extends ViewImpl implements FullScreenView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        contentPanel.setWidget(content);
+    public void setContentView(final View view) {
+        contentPanel.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, FullScreenViewImpl> {

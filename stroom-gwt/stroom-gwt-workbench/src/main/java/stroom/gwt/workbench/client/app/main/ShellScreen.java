@@ -72,9 +72,9 @@ import java.util.function.Supplier;
 
 /// Stroom's app shell, put together for the `App/Main/AppShell` stories as Stroom's GIN modules and
 /// start-up put it together: the main view ([MainPresenter], with the main menu button), the
-/// explorer ([NavigationPresenter]) in its explorer slot and the document tabs
-/// ([ContentTabPanePresenter]) in its content slot, every plugin that adds to the main menu (and
-/// binds keyboard shortcuts), the Dictionary, Feed and Folder document plugins, the
+/// explorer ([NavigationPresenter]) and the document tabs ([ContentTabPanePresenter]) in it, every
+/// plugin that adds to the main menu (and binds keyboard shortcuts), the Dictionary, Feed and Folder
+/// document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
 /// the dialogs that the proxies would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
@@ -152,8 +152,8 @@ final class ShellScreen {
         });
     }
 
-    // The main view, with the explorer and the document tabs in its slots. Stroom shows it (and the
-    // explorer) for ShowMainEvent, once the user has logged in
+    // The main view, with the explorer and the document tabs. Stroom shows it (and the explorer) for
+    // ShowMainEvent, once the user has logged in
     private void createMain() {
         final EventBus eventBus = harness.getEventBus();
 
@@ -164,36 +164,29 @@ final class ShellScreen {
         harness.addRegistration(eventBus.addHandler(SelectContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(MoveContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(RefreshContentTabEvent.getType(), tabPane));
-        harness.unbindOnCleanUp(tabPane);
 
-        // The main view, with the app's keyboard shortcuts
+        final NavigationPresenter navigation = injector.getNavigationPresenter();
+
+        // The main view, with the app's keyboard shortcuts, which owns the tabs and the explorer
         final StoryKeyHandler keyHandler = new StoryKeyHandler(injector.getGlobalKeyHandlerImpl());
         harness.addCleanUp(keyHandler::stop);
         final MainPresenter main = new MainPresenter(eventBus,
                 injector.getMainView(),
                 new MenuItems(),
                 harness.getUiConfigCache(),
-                keyHandler);
+                keyHandler,
+                navigation,
+                tabPane);
         main.bind();
         harness.unbindOnCleanUp(main);
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
-        // As Stroom shows them for ShowMainEvent, once the user has logged in: the main view (made
-        // visible as the root presenter would make it) with the tab pane in its content slot,
-        // then the explorer, which shows itself (NavigationPresenter.onShowMain, registered as its
-        // proxy would be), and is put in the main view's explorer slot as the main view's
-        // proxy would do for the explorer's RevealContentEvent
-        final NavigationPresenter navigation = injector.getNavigationPresenter();
-        harness.unbindOnCleanUp(navigation);
+        // As Stroom shows it for ShowMainEvent, once the user has logged in: its proxy puts it in the
+        // page (here, the story's), then it shows the explorer
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event -> {
-            main.setInSlot(MainPresenter.CONTENT, tabPane);
             harness.addContent(main);
-            reveal(main);
-            harness.addCleanUp(() -> unreveal(main));
+            main.onShowMain(event);
         }));
-        harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), navigation));
-        harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event ->
-                main.setInSlot(MainPresenter.EXPLORER, navigation)));
     }
 
     /// @return The shell's injector.
@@ -312,20 +305,6 @@ final class ShellScreen {
         harness.addRegistration(eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event ->
                 explorerNodeRemoveTagsPresenter.get().onCreate(event)));
     }
-
-    // Makes the main presenter count as the page, as Stroom's root presenter does when it shows it
-    // (the story has no root presenter: it has its own page), so the screens in its slots are on the
-    // page too. A tab pane on the page keeps its tabs when it is asked to reveal itself for each tab
-    private static native void reveal(MainPresenter presenter) /*-{
-        @stroom.widget.presenter.client.RootPresenter::rootContent = presenter;
-    }-*/;
-
-    // The next story starts with no page
-    private static native void unreveal(MainPresenter presenter) /*-{
-        if (@stroom.widget.presenter.client.RootPresenter::rootContent === presenter) {
-            @stroom.widget.presenter.client.RootPresenter::rootContent = null;
-        }
-    }-*/;
 
     // MainPresenter's refresh timer (it fires RefreshCurrentContentTabEvent every 30 seconds) is
     // never cancelled by Stroom, which has one main presenter for the page's life

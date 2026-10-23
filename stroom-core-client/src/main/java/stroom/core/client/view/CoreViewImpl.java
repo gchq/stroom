@@ -17,6 +17,7 @@
 package stroom.core.client.view;
 
 import stroom.core.client.presenter.CorePresenter.CoreView;
+import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Element;
@@ -45,8 +46,8 @@ public class CoreViewImpl extends ViewImpl implements CoreView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        appPanel.setWidget(content);
+    public void setContentView(final View view) {
+        appPanel.setWidget(view.asWidget());
     }
 
     @Override

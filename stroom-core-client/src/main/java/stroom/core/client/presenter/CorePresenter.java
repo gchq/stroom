@@ -31,13 +31,13 @@ import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
 import stroom.widget.presenter.client.MyPresenter;
-import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.RevealRootContentEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,11 +45,10 @@ import com.google.web.bindery.event.shared.EventBus;
 public class CorePresenter extends MyPresenter<CoreView>
         implements TaskStartHandler, TaskEndHandler, CurrentUserChangedHandler {
 
-    public static final GwtEvent.Type<RevealContentEvent.Handler> CORE = new GwtEvent.Type<>();
-
     private final ClientSecurityContext securityContext;
     private final UrlParameters urlParameters;
     private int taskCount;
+    private MyPresenterWidget<?> content;
 
     @Inject
     public CorePresenter(final EventBus eventBus, final CoreView view,
@@ -114,13 +113,24 @@ public class CorePresenter extends MyPresenter<CoreView>
         }
     }
 
+    /// Shows a screen in the page (in place of the loading message), in place of the one before:
+    /// the main screen or the full screen view.
+    ///
+    /// @param content The screen.
+    public void setContent(final MyPresenterWidget<?> content) {
+        if (content != this.content) {
+            this.content = content;
+            getView().setContentView(content.getView());
+            RootPanel.get("logo").setVisible(false);
+        }
+    }
+
     @Override
     protected void revealInParent() {
         RevealRootContentEvent.fire(this, this);
     }
 
-    /// Hears the app-wide events the screen handles, making the screen when it is first needed, and
-    /// shows the screens asked for in its slots, showing it first.
+    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
     public static final class CoreProxy {
 
         @Inject
@@ -129,8 +139,6 @@ public class CorePresenter extends MyPresenter<CoreView>
             eventBus.addHandler(TaskEndEvent.getType(), event -> presenter.get().onTaskEnd(event));
             eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->
                     presenter.get().onCurrentUserChanged(event));
-            RevealContentEvent.showIn(eventBus, CORE, presenter::get);
-
         }
     }
 
@@ -139,6 +147,11 @@ public class CorePresenter extends MyPresenter<CoreView>
 
 
     public interface CoreView extends View {
+
+        /// Shows a screen in the page.
+        ///
+        /// @param view Its view.
+        void setContentView(View view);
 
         void showWorking(final String message);
 

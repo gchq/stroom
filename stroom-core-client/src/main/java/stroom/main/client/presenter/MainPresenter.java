@@ -18,11 +18,15 @@ package stroom.main.client.presenter;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
+import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.main.client.event.DockEvent;
+import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.view.MainToolbar;
 import stroom.main.client.view.Spinner;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -36,8 +40,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.presenter.client.MyPresenter;
-import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.TabData;
@@ -50,7 +53,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -62,14 +64,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class MainPresenter
-        extends MyPresenter<MainPresenter.MainView>
+        extends MyPresenterWidget<MainPresenter.MainView>
         implements MainUiHandlers {
 
-    public static final GwtEvent.Type<RevealContentEvent.Handler> EXPLORER = new GwtEvent.Type<>();
-    public static final GwtEvent.Type<RevealContentEvent.Handler> CONTENT = new GwtEvent.Type<>();
     private final Timer refreshTimer;
     private boolean click;
     private final MenuItems menuItems;
+    private final NavigationPresenter navigation;
     private int taskCount;
     private boolean showingAi;
     private String baseTitle = "Stroom";
@@ -80,9 +81,15 @@ public class MainPresenter
                          final MainView view,
                          final MenuItems menuItems,
                          final UiConfigCache uiConfigCache,
-                         final GlobalKeyHandler globalKeyHandler) {
+                         final GlobalKeyHandler globalKeyHandler,
+                         final NavigationPresenter navigation,
+                         final ContentTabPanePresenter contentTabPane) {
         super(eventBus, view);
         this.menuItems = menuItems;
+        this.navigation = navigation;
+        // The content first: the view lays the explorer out beside it
+        view.setContentView(own(contentTabPane).getView());
+        view.setExplorerView(own(navigation).getView());
         view.getMainToolBar().setMainUiHandlers(this);
 
         // Handle key presses
@@ -175,6 +182,13 @@ public class MainPresenter
         startAutoRefresh();
     }
 
+    /// Shows the explorer, once the user has logged in, and the document asked for, if any.
+    ///
+    /// @param event The event.
+    public void onShowMain(final ShowMainEvent event) {
+        navigation.onShowMain(event);
+    }
+
     private void updatePageTitle() {
         Window.setTitle(PageTitle.build(baseTitle, selectedTabLabel));
     }
@@ -241,23 +255,23 @@ public class MainPresenter
         refreshTimer.cancel();
     }
 
-    @Override
-    protected void revealInParent() {
-        RevealContentEvent.fire(this, CorePresenter.CORE, this);
-        RootPanel.get("logo").setVisible(false);
-    }
-
     public native Object getParentIframe() /*-{
         return window.parent.frameElement;
     }-*/;
 
-    /// Shows the screens asked for in its slots, showing it first.
+    /// Shows the screen in the page, making it when it is first needed: once the user has logged
+    /// in, and for a document opened in a tab when it isn't shown (e.g. from the full screen view).
     public static final class MainProxy {
 
         @Inject
-        public MainProxy(final EventBus eventBus, final Provider<MainPresenter> presenter) {
-            RevealContentEvent.showIn(eventBus, EXPLORER, presenter::get);
-            RevealContentEvent.showIn(eventBus, CONTENT, presenter::get);
+        public MainProxy(final EventBus eventBus,
+                         final Provider<CorePresenter> core,
+                         final Provider<MainPresenter> presenter) {
+            eventBus.addHandler(ShowMainEvent.getType(), event -> {
+                core.get().setContent(presenter.get());
+                presenter.get().onShowMain(event);
+            });
+            eventBus.addHandler(OpenContentTabEvent.getType(), event -> core.get().setContent(presenter.get()));
         }
     }
 
@@ -266,6 +280,16 @@ public class MainPresenter
 
 
     public interface MainView extends View {
+
+        /// Shows the explorer.
+        ///
+        /// @param view Its view.
+        void setExplorerView(View view);
+
+        /// Shows the document tabs.
+        ///
+        /// @param view Its view.
+        void setContentView(View view);
 
         MainToolbar getMainToolBar();
 

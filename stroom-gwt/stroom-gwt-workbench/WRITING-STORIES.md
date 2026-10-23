@@ -599,12 +599,10 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   which shows the main view and the explorer and opens the initial document (a deep link).
   `startFullScreen(docRef)` is Stroom's embedded view instead. Reuse it for any story about the
   shell, the explorer, the main menu or opening documents from the explorer.
-  `ContentTabPanePresenter.onOpen` calls `forceReveal()`, whose `revealInParent()` clears every
-  tab, so a tab pane that isn't visible keeps only the last tab opened; the shell makes the main
-  view count as revealed, as `RootPresenter` would (JSNI, setting its root content), with the tab pane
-  already in its content slot, and puts the explorer in its slot after
-  `NavigationPresenter.onShowMain`; stories that only need one tab can use
-  `harness.addContent(tabPane)` instead. Its ginjector adds `ShellAppScreenModule` (the main view,
+  The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
+  adds it to the story, as its proxy puts it in the page, and it shows the explorer
+  (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.addContent(tabPane)`
+  instead. Its ginjector adds `ShellAppScreenModule` (the main view,
   `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
   cancels `MainPresenter`'s 30 second refresh timer on re-render. `MainPresenter` adds `GlobalKeyHandler` DOM handlers to the
   page's body and never removes them, so the shell passes keys to Stroom's real

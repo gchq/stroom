@@ -52,7 +52,6 @@ import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
@@ -133,8 +132,7 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(
                 NavigationPresenter.class,
                 NavigationView.class,
-                NavigationViewImpl.class,
-                NavigationProxy.class);
+                NavigationViewImpl.class);
         bindPresenter(ContentTabPanePresenter.class, ContentTabPaneProxy.class);
 
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);

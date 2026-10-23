@@ -18,12 +18,11 @@ package stroom.widget.presenter.client;
 
 import com.google.web.bindery.event.shared.EventBus;
 
-/// An application screen: a presenter the application makes once, when first needed, and keeps,
-/// e.g. the main screen or a dialog opened from the main menu. Its proxy (a class bound as an eager
-/// singleton beside it, see `AbstractPresenterModule.bindPresenter`) passes it the app-wide events
-/// it handles, making it on first use, and shows the screens that go in its slots
-/// ([RevealContentEvent#showIn]). It is disposed only where it is made again, e.g. by a workbench
-/// story.
+/// An application screen that shows itself: a presenter the application makes once, when first
+/// needed, and keeps, e.g. the sign in page or a dialog opened from the main menu. Its proxy (a
+/// class bound as an eager singleton beside it, see `AbstractPresenterModule.bindPresenter`) passes
+/// it the app-wide events it handles, making it on first use. It is disposed only where it is made
+/// again, e.g. by a workbench story.
 ///
 /// @param <V> The view's type.
 public abstract class MyPresenter<V extends View> extends MyPresenterWidget<V> {
@@ -32,15 +31,11 @@ public abstract class MyPresenter<V extends View> extends MyPresenterWidget<V> {
         super(eventBus, view);
     }
 
-    /// Shows this screen ([#revealInParent()]) unless it is already on the page through slots
-    /// ([#isRevealed()]).
+    /// Shows this screen ([#revealInParent()]).
     public final void forceReveal() {
-        if (!isRevealed()) {
-            revealInParent();
-        }
+        revealInParent();
     }
 
-    /// Shows this screen: in the slot of the screen that holds it ([RevealContentEvent]), as the
-    /// whole page ([RevealRootContentEvent]) or as a dialog.
+    /// Shows this screen: as the whole page ([RevealRootContentEvent]) or as a dialog.
     protected abstract void revealInParent();
 }

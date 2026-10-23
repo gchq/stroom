@@ -31,13 +31,11 @@ import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler
 import stroom.data.table.client.Refreshable;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.presenter.RecentItems;
-import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
-import stroom.widget.presenter.client.RevealContentEvent;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
@@ -148,19 +146,7 @@ public class ContentTabPanePresenter
     }
 
     @Override
-    protected void revealInParent() {
-        // Make sure there are no tabs displayed.
-        clear();
-
-        // Now display this presenter.
-        RevealContentEvent.fire(this, MainPresenter.CONTENT, this);
-    }
-
-    @Override
     public void onOpen(final OpenContentTabEvent event) {
-        // Make sure this tab pane is revealed before we try and reveal child
-        // tabs.
-        forceReveal();
         add(event.getTabData(), event.getLayer());
 
         event.runCallbackOnOpen();

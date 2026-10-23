@@ -59,7 +59,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @UiField
     MainToolbar mainToolbar;
 
-    // Persistent content widgets — set via setInSlot, never destroyed.
+    // Persistent content widgets — set by setExplorerView and setContentView, never destroyed.
     private Widget westWidget;
     private Widget centerWidget;
 
@@ -85,16 +85,15 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (slot == MainPresenter.EXPLORER) {
-            westWidget = content;
-            rebuildLayout();
-        } else if (slot == MainPresenter.CONTENT) {
-            centerWidget = content;
-            rebuildLayout();
-        } else {
-            super.setInSlot(slot, content);
-        }
+    public void setExplorerView(final View view) {
+        westWidget = view.asWidget();
+        rebuildLayout();
+    }
+
+    @Override
+    public void setContentView(final View view) {
+        centerWidget = view.asWidget();
+        rebuildLayout();
     }
 
     @Override

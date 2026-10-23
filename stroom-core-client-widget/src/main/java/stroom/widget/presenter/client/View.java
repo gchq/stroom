@@ -17,30 +17,8 @@
 package stroom.widget.presenter.client;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
 
-/// A presenter's view: the widget it shows. A view with slots (places another presenter's widget
-/// goes, see [MyPresenterWidget#setInSlot(Object, MyPresenterWidget)]) overrides the slot methods.
+/// A presenter's view: the widget it shows. A view that shows another presenter has a setter for
+/// that presenter's view, e.g. `setListView(View view)`, which its presenter calls.
 public interface View extends IsWidget {
-
-    /// Adds a widget to a slot that holds several.
-    ///
-    /// @param slot    The slot.
-    /// @param content The widget.
-    default void addToSlot(final Object slot, final Widget content) {
-    }
-
-    /// Removes a widget from a slot.
-    ///
-    /// @param slot    The slot.
-    /// @param content The widget.
-    default void removeFromSlot(final Object slot, final Widget content) {
-    }
-
-    /// Shows a widget in a slot, in place of what was there.
-    ///
-    /// @param slot    The slot.
-    /// @param content The widget, or null to empty the slot.
-    default void setInSlot(final Object slot, final Widget content) {
-    }
 }

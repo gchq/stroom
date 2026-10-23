@@ -92,26 +92,14 @@ class TestMyPresenter {
     }
 
     @Test
-    void forceRevealShowsAScreenNotOnThePage() {
+    void forceRevealShowsTheScreenEachTime() {
+        // e.g. a dialog opened from the main menu, once per click
         final TestPresenter presenter = new TestPresenter(eventBus);
 
         presenter.forceReveal();
+        presenter.forceReveal();
 
-        assertThat(presenter.reveals).isEqualTo(1);
-    }
-
-    @Test
-    void forceRevealLeavesAScreenAlreadyOnThePage() {
-        // e.g. the tab pane, whose revealInParent() would close every tab
-        final TestPresenter presenter = new TestPresenter(eventBus);
-        RootPresenter.setRootContent(presenter);
-        try {
-            presenter.forceReveal();
-        } finally {
-            RootPresenter.setRootContent(null);
-        }
-
-        assertThat(presenter.reveals).isZero();
+        assertThat(presenter.reveals).isEqualTo(2);
     }
 
     // --------------------------------------------------------------------------------

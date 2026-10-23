@@ -27,9 +27,6 @@ import com.google.web.bindery.event.shared.EventBus;
 @Singleton
 public class RootPresenter {
 
-    // The screen that is the whole page, for MyPresenterWidget#isRevealed
-    private static MyPresenterWidget<?> rootContent;
-
     @Inject
     public RootPresenter(final EventBus eventBus) {
         eventBus.addHandler(RevealRootContentEvent.getType(), event -> show(event.getContent()));
@@ -38,20 +35,8 @@ public class RootPresenter {
     private static void show(final MyPresenterWidget<?> content) {
         RootLayoutPanel.get().clear();
         RootPanel.get().clear();
-        setRootContent(content);
         if (content != null) {
             RootPanel.get().add(content.getWidget());
         }
-    }
-
-    // Also for tests, which can't show a page
-    static void setRootContent(final MyPresenterWidget<?> content) {
-        rootContent = content;
-    }
-
-    /// @param presenter A presenter.
-    /// @return Whether it is the whole page.
-    static boolean isRootContent(final MyPresenterWidget<?> presenter) {
-        return presenter != null && presenter == rootContent;
     }
 }

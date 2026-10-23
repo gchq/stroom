@@ -17,7 +17,7 @@
 package stroom.widget.tab.client.presenter;
 
 import stroom.widget.presenter.client.Layer;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import com.google.inject.Inject;
@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class CurveTabLayoutPresenter extends MyPresenter<CurveTabLayoutView> {
+public abstract class CurveTabLayoutPresenter extends MyPresenterWidget<CurveTabLayoutView> {
 
     private final Map<TabData, Layer> tabContentMap = new HashMap<>();
 

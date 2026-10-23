@@ -44,7 +44,6 @@ import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -52,7 +51,6 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.main.client.event.ShowMainEvent;
-import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -79,8 +77,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
-import stroom.widget.presenter.client.RevealContentEvent;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -98,7 +95,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class NavigationPresenter extends MyPresenter<NavigationView>
+public class NavigationPresenter extends MyPresenterWidget<NavigationView>
         implements NavigationUiHandlers,
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
@@ -126,6 +123,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView>
     private final ToolbarToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
+    private boolean shown;
     private final DocumentPluginRegistry documentPluginRegistry;
     private DocRef selectedDoc;
 
@@ -419,7 +417,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView>
         explorerTree.getTreeModel().setIncludedTypeSet(null);
 
         // Show the tree.
-        forceReveal();
+        if (!shown) {
+            shown = true;
+            explorerTree.getTreeModel().refresh();
+            getView().setNavigationWidget(explorerTree);
+            explorerTree.setFilterErrorConsumer(getView()::setFilterError);
+            getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                    ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
+        }
 
         if (event.getInitialDocRef() != null) {
             OpenDocumentEvent.fire(this, event.getInitialDocRef(), true);
@@ -444,16 +449,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView>
     }
 
     @Override
-    protected void revealInParent() {
-        explorerTree.getTreeModel().refresh();
-        getView().setNavigationWidget(explorerTree);
-        explorerTree.setFilterErrorConsumer(getView()::setFilterError);
-        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
-                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
-        RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
-    }
-
-    @Override
     public void onFocusExplorerFilter(final FocusExplorerFilterEvent event) {
         getView().focusQuickFilter();
     }
@@ -461,15 +456,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView>
     @Override
     public void onFocusExplorerTree(final FocusExplorerTreeEvent event) {
         explorerTree.focus();
-    }
-
-    /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class NavigationProxy {
-
-        @Inject
-        public NavigationProxy(final EventBus eventBus, final Provider<NavigationPresenter> presenter) {
-            eventBus.addHandler(ShowMainEvent.getType(), event -> presenter.get().onShowMain(event));
-        }
     }
 
 
