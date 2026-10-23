@@ -1,5 +1,7 @@
 === Stub given to the model ===
-The result was too large to show in full (5152 characters, 47 lines), so it has been saved to the workspace file /outputs/turn-3/call-42.txt. It starts with these 14 line(s):
+The result was too large to show in full (5152 characters, 47 lines), so it has been saved to the workspace file /outputs/turn-3/call-42.txt. The result says what to do next, which the lines below may not reach. Its next: {"step":"promoted"} 
+
+It starts with these 14 line(s):
 
 {
   "build" : "twitter-onboard",

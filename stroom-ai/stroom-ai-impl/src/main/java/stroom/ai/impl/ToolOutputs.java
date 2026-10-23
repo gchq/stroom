@@ -36,6 +36,9 @@ import java.util.Set;
 /// `needs_review`, `needs_confirmation` or `needs_approval` reply, see [#mustShowInFull(String)]) is given to the
 /// model in full up to [#MAX_SHOWN_IN_FULL_CHARS]: a stub would leave the model nothing to show. Above that it is
 /// stubbed too, and the stub says plainly what the user must be shown and how to get it.
+///
+/// A JSON result's `next` and `hint`, which say what to do next and which a tool often puts last, are repeated in
+/// its stub: the preview, from its start, would not reach them.
 final class ToolOutputs {
 
     /// Outputs longer than this are saved to the workspace and the model is given a stub.
@@ -57,8 +60,12 @@ final class ToolOutputs {
     /// The fields of such a result that are for the agent, not to be shown to the user, in the order looked for.
     static final List<String> ID_FIELDS = List.of("review_id", "confirmation_id", "approval_id");
     static final String HINT_FIELD = "hint";
-    /// The most characters of such a result's hint repeated in its stub.
+    /// The field of a result that gives the call to make next.
+    static final String NEXT_FIELD = "next";
+    /// The most characters of a result's hint repeated in its stub.
     static final int MAX_HINT_CHARS = 2_000;
+    /// The most characters of a result's `next` repeated in its stub.
+    static final int MAX_NEXT_CHARS = 1_500;
     // Numbers are kept as they were written.
     private static final ObjectMapper MAPPER = JsonMapper.builder()
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
@@ -143,6 +150,9 @@ final class ToolOutputs {
                + (json != null && json.isObject() && isShownToUser(json)
                 ? shownToUserNote(json, path)
                 : "")
+               + (json != null && json.isObject()
+                ? nextSteps(json)
+                : "")
                + "It starts with these " + shown + " line(s):\n\n"
                + preview.toString().stripTrailing()
                + "\n\n" + jsonShape(json)
@@ -191,16 +201,36 @@ final class ToolOutputs {
                 break;
             }
         }
+        return sb.append("\n\n").toString();
+    }
+
+    // The result's next call and hint, which the preview may not reach (seen in Ask Stroom AI: a large draft's
+    // next, its last field, was cut from the stub, and the agent asked the user what to do instead of doing it).
+    private static String nextSteps(final JsonNode json) {
+        final JsonNode next = json.get(NEXT_FIELD);
         final JsonNode hint = json.get(HINT_FIELD);
-        if (hint != null && hint.isTextual()) {
-            final String text = hint.asText();
-            sb.append("Its hint: ")
-                    .append(text.length() > MAX_HINT_CHARS
-                            ? text.substring(0, MAX_HINT_CHARS) + "…"
-                            : text)
-                    .append(' ');
+        final boolean hasNext = next != null && !next.isNull();
+        final boolean hasHint = hint != null && hint.isTextual();
+        if (!hasNext && !hasHint) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("The result says what to do next, which the lines below may not "
+                                                   + "reach. ");
+        if (hasNext) {
+            sb.append("Its next: ").append(capped(next.isTextual()
+                    ? next.asText()
+                    : next.toString(), MAX_NEXT_CHARS)).append(' ');
+        }
+        if (hasHint) {
+            sb.append("Its hint: ").append(capped(hint.asText(), MAX_HINT_CHARS)).append(' ');
         }
         return sb.append("\n\n").toString();
+    }
+
+    private static String capped(final String text, final int maxChars) {
+        return text.length() > maxChars
+                ? text.substring(0, maxChars) + "…"
+                : text;
     }
 
     // Says what JSON holds at its top level, so the parts needed can be picked out without reading it all.
