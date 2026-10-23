@@ -158,7 +158,7 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
     /// @return The dialog, made and owned, ready to show.
     protected final <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
         Objects.requireNonNull(provider, "provider");
-        return MyPresenterWidget.disposeWhenHidden(make(provider));
+        return ComponentDialog.disposeWhenHidden(make(provider));
     }
 
     /// Owns a component, which is then disposed with this one and sees this one's context.

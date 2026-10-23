@@ -21,6 +21,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
@@ -86,7 +87,8 @@ public final class StoryPopups {
     ///
     /// @return This, for chaining.
     public StoryPopups withMenus() {
-        new Menu(eventBus, this::createMenuPresenter);
+        // Its menus are owned until hidden, as by Stroom's app root
+        new Menu(eventBus, this::createMenuPresenter, new AppRoot());
         return this;
     }
 

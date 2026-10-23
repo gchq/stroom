@@ -24,6 +24,7 @@ import stroom.quickfilter.shared.QuickFilterHistoryKey;
 import stroom.quickfilter.shared.QuickFilterHistoryResource;
 import stroom.quickfilter.shared.RecordQuickFilterUseRequest;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -33,7 +34,6 @@ import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -70,10 +70,14 @@ public class QuickFilterContextHandlerFactory {
     private final RestFactory restFactory;
     private final Provider<AdvancedQuickFilterPresenter> advancedQuickFilterPresenterProvider;
 
+    private final AppRoot appRoot;
+
     @Inject
     public QuickFilterContextHandlerFactory(final RestFactory restFactory,
                                             final Provider<AdvancedQuickFilterPresenter>
-                                                    advancedQuickFilterPresenterProvider) {
+                                                    advancedQuickFilterPresenterProvider,
+                                            final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.restFactory = restFactory;
         this.advancedQuickFilterPresenterProvider = advancedQuickFilterPresenterProvider;
     }
@@ -157,8 +161,7 @@ public class QuickFilterContextHandlerFactory {
                         .priority(items.size())
                         .text("Advanced Query...")
                         .tooltip("Build this filter as an expression tree")
-                        .command(() -> MyPresenterWidget
-                                .disposeWhenHidden(advancedQuickFilterPresenterProvider.get())
+                        .command(() -> appRoot.makeDialog(advancedQuickFilterPresenterProvider)
                                 .show(context,
                                         quickFilter.getText(),
                                         // OK writes the text back through the same path as picking

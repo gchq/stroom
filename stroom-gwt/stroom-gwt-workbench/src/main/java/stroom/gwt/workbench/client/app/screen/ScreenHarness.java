@@ -43,6 +43,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
@@ -165,6 +166,7 @@ public final class ScreenHarness {
     private final boolean probe;
     // The scope of the presenters made while opening the screen, for the probe to dispose
     // Owns the components the story shows (see addComponent), made when first needed
+    private final AppRoot appRoot = new AppRoot();
     private ComponentNode componentRoot;
     private Component shownComponent;
     private MyPresenterWidget<?> shownContent;
@@ -227,7 +229,7 @@ public final class ScreenHarness {
         // DateTimeBox not given a dialog provider), as in Stroom
         new StaticEventBus(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
-        new Menu(eventBus, this::createMenuPresenter);
+        new Menu(eventBus, this::createMenuPresenter, appRoot);
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
         // MainPresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
@@ -464,6 +466,16 @@ public final class ScreenHarness {
             throw new IllegalStateException("The story shows no component");
         }
         shown.componentRoot.dispose();
+    }
+
+    /// The owner of the dialogs of what the story makes itself rather than through an injector
+    /// (e.g. Stroom's `Menu` or `CurrentUser`), as the injected `AppRoot` is in Stroom. It lasts as
+    /// long as the harness, as Stroom's does the page: its dialogs are disposed when hidden, and
+    /// the story's clean ups hide them.
+    ///
+    /// @return The app root.
+    public AppRoot getAppRoot() {
+        return appRoot;
     }
 
     /// The story's root in the ownership tree, as an open document's tab is in Stroom: it owns the

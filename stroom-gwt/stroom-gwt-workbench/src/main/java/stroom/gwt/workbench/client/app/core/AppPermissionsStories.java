@@ -78,7 +78,7 @@ public final class AppPermissionsStories {
                     // throwing.
                     // The CurrentUser before sign in, and after it is cleared, stand for a missing
                     // permission list
-                    expectHolds(play, "not signed in / SHARDS", () -> new CurrentUser(null, null, null, null),
+                    expectHolds(play, "not signed in / SHARDS", () -> new CurrentUser(null, null, null, null, null),
                             SHARDS, false);
                     expectHolds(play, "cleared / SHARDS", AppPermissionsStories::clearedUser, SHARDS, false);
                 })
@@ -123,7 +123,7 @@ public final class AppPermissionsStories {
         for (final AppPermission permission : permissions) {
             set.add(permission);
         }
-        final CurrentUser user = new CurrentUser(null, null, null, null);
+        final CurrentUser user = new CurrentUser(null, null, null, null, null);
         user.setUserAndPermissions(new AppUserPermissions(
                 new UserRef("u-1", "user", "User", null, false, true), set), false);
         return user;

@@ -36,7 +36,6 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
@@ -317,7 +316,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     public void showRename(final Column column) {
         final RenameColumnPresenter renameColumnPresenter =
-                MyPresenterWidget.disposeWhenHidden(renameColumnPresenterProvider.get());
+                renameColumnPresenterProvider.get();
         renameColumnPresenter.show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.onChange();
@@ -327,7 +326,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     public void showExpression(final Column column) {
         final ColumnFunctionEditorPresenter expressionPresenter =
-                MyPresenterWidget.disposeWhenHidden(expressionPresenterProvider.get());
+                expressionPresenterProvider.get();
         expressionPresenter.show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
             tablePresenter.onChange();

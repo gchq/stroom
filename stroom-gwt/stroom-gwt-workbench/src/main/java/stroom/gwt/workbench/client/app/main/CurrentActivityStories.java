@@ -118,7 +118,7 @@ public final class CurrentActivityStories {
         harness.afterStartUp(() -> {
             for (final String name : CASES) {
                 final CurrentActivity currentActivity = new CurrentActivity(harness.getEventBus(), () -> null,
-                        harness.getRestFactory());
+                        harness.getRestFactory(), harness.getAppRoot());
                 final QueryInfoPresenter presenter = new QueryInfoPresenter(harness.getEventBus(),
                         new QueryInfoViewImpl(GWT.create(QueryInfoViewImpl.Binder.class)),
                         harness.getUiConfigCache(),

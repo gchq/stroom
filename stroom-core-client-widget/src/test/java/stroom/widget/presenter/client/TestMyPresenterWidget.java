@@ -22,7 +22,6 @@ import stroom.task.client.TaskStartEvent;
 import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,7 +31,6 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,30 +70,6 @@ class TestMyPresenterWidget {
         parent.dispose();
 
         assertThat(events).containsExactly("child disposed", "parent disposed");
-    }
-
-    @Test
-    void aDialogOwnedUntilHiddenIsDisposedOnceHidden() {
-        final Consumer<Runnable> scheduler = MyPresenterWidget.deferred;
-        final List<Runnable> deferred = new ArrayList<>();
-        MyPresenterWidget.deferred = deferred::add;
-        try {
-            final TestPresenter opener = new TestPresenter("opener");
-            final TestPresenter dialog = opener.ownDialog(new TestPresenter("dialog"));
-            assertThat(dialog.getComponentNode().parent()).isSameAs(opener.getComponentNode());
-
-            HidePopupEvent.builder(dialog).fire();
-            // Not until the popup manager has hidden it
-            assertThat(dialog.isDisposed()).isFalse();
-            deferred.forEach(Runnable::run);
-
-            assertThat(dialog.isDisposed()).isTrue();
-            assertThat(opener.isDisposed()).isFalse();
-            assertThat(opener.getComponentNode().childCount()).isZero();
-            assertThat(events).containsExactly("dialog disposed");
-        } finally {
-            MyPresenterWidget.deferred = scheduler;
-        }
     }
 
     @Test
@@ -201,7 +175,6 @@ class TestMyPresenterWidget {
     }
 
     // --------------------------------------------------------------------------------
-
 
     private class TestPresenter extends MyPresenterWidget<View> {
 

@@ -98,7 +98,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     }
 
     private void onEditUserOrGroup() {
-        UserAndGroupHelper.onEditUserOrGroup(userList, createNewGroupPresenterProvider, this);
+        // The edit dialog is this one's, made for one use
+        UserAndGroupHelper.onEditUserOrGroup(userList, () -> makeDialog(createNewGroupPresenterProvider), this);
     }
 
     private void onDelete() {

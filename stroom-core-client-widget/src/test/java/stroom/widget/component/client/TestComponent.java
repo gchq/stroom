@@ -16,6 +16,10 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.presenter.client.View;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.inject.Provider;
@@ -179,6 +183,32 @@ class TestComponent {
     }
 
     @Test
+    void aDialogIsOwnedUntilHiddenThenDisposed() {
+        final Consumer<Runnable> scheduler = ComponentDialog.deferred;
+        final List<Runnable> deferred = new ArrayList<>();
+        ComponentDialog.deferred = deferred::add;
+        try {
+            final EventBus eventBus = new SimpleEventBus();
+            final Parent opener = new Parent(null);
+            final MyPresenterWidget<View> dialog = opener.makeDialogChild(() ->
+                    new MyPresenterWidget<>(eventBus, Mockito.mock(View.class)));
+            assertThat(dialog.getComponentNode().parent()).isSameAs(opener.getComponentNode());
+
+            HidePopupEvent.builder(dialog).fire();
+            // Not until the popup manager has hidden it
+            assertThat(dialog.isDisposed()).isFalse();
+            deferred.forEach(Runnable::run);
+
+            assertThat(dialog.isDisposed()).isTrue();
+            assertThat(opener.isDisposed()).isFalse();
+            // Only the child it made itself is left
+            assertThat(opener.getComponentNode().childCount()).isEqualTo(1);
+        } finally {
+            ComponentDialog.deferred = scheduler;
+        }
+    }
+
+    @Test
     void ownedRegistrationsAreRemovedOnDispose() {
         final Parent parent = new Parent(null);
         final HandlerRegistration registration = Mockito.mock(HandlerRegistration.class);
@@ -204,6 +234,10 @@ class TestComponent {
 
         Child makeChild(final Provider<Child> provider) {
             return make(provider);
+        }
+
+        MyPresenterWidget<View> makeDialogChild(final Provider<MyPresenterWidget<View>> provider) {
+            return makeDialog(provider);
         }
 
         void replaceChild() {

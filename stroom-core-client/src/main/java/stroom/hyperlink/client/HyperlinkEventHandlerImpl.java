@@ -36,11 +36,11 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -66,11 +66,15 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
 
+    private final AppRoot appRoot;
+
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFramePresenter> iFramePresenterProvider,
                                      final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
-                                     final ContentManager contentManager) {
+                                     final ContentManager contentManager,
+                                     final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.eventBus = eventBus;
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
@@ -273,7 +277,7 @@ public class HyperlinkEventHandlerImpl implements HyperlinkEvent.Handler, HasHan
 
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        final IFramePresenter presenter = MyPresenterWidget.disposeWhenHidden(iFramePresenterProvider.get());
+        final IFramePresenter presenter = appRoot.makeDialog(iFramePresenterProvider);
         presenter.setOnTitleChange(() ->
                 RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());

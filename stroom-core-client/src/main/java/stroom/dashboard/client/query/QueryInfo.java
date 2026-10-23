@@ -17,23 +17,28 @@
 package stroom.dashboard.client.query;
 
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.AppRoot;
+
+import com.google.inject.Provider;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class QueryInfo {
 
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private String message;
 
+    private final AppRoot appRoot;
+
     @Inject
-    public QueryInfo(final Provider<QueryInfoPresenter> queryInfoPresenterProvider) {
+    public QueryInfo(final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
+                     final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
     }
 
     public void prompt(final Runnable runnable, final TaskMonitorFactory taskMonitorFactory) {
-        MyPresenterWidget.disposeWhenHidden(queryInfoPresenterProvider.get()).show(message, state -> {
+        appRoot.makeDialog(queryInfoPresenterProvider).show(message, state -> {
             if (state.isOk()) {
                 message = state.getQueryInfo();
                 runnable.run();

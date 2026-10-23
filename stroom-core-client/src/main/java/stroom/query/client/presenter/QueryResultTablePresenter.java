@@ -198,10 +198,11 @@ public class QueryResultTablePresenter
 
         tableView.setTableView(pagerView);
 
+        // Its dialogs are this one's, each made for one use
         columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
                 formatPresenter,
-                rulesPresenterProvider,
+                () -> makeDialog(rulesPresenterProvider),
                 columnFilterPresenter,
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);

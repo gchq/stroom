@@ -36,11 +36,11 @@ import stroom.explorer.shared.TabSessionResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.TextBoxPopup;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -68,12 +68,16 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
     private final Provider<TextBoxPopup> textBoxPopupProvider;
     private List<TabSession> userTabSessions;
 
+    private final AppRoot appRoot;
+
     @Inject
     public TabSessionManager(final EventBus eventBus,
                              final RestFactory restFactory,
                              final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter,
-                             final Provider<TextBoxPopup> textBoxPopupProvider) {
+                             final Provider<TextBoxPopup> textBoxPopupProvider,
+                             final AppRoot appRoot) {
         super(eventBus);
+        this.appRoot = appRoot;
         this.restFactory = restFactory;
         this.tabSessionChooserPresenter = tabSessionChooserPresenter;
         this.textBoxPopupProvider = textBoxPopupProvider;
@@ -90,7 +94,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
                         chooseTabSessionThenAccept("Select Tab Session To Delete:", this::delete));
 
         getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
-            final TextBoxPopup textBoxPopup = MyPresenterWidget.disposeWhenHidden(textBoxPopupProvider.get());
+            final TextBoxPopup textBoxPopup = appRoot.makeDialog(textBoxPopupProvider);
             textBoxPopup.show("Save New Tab Session", sessionName -> {
                 if (contains(userTabSessions, sessionName)) {
                     ConfirmEvent.fire(this,

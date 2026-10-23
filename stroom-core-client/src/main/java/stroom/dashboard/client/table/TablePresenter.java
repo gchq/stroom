@@ -270,10 +270,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Ask AI
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
 
+        // Its dialogs are this one's, each made for one use
         columnsManager = new ColumnsManager(eventBus,
                 this,
-                renameColumnPresenterProvider,
-                expressionPresenterProvider,
+                () -> makeDialog(renameColumnPresenterProvider),
+                () -> makeDialog(expressionPresenterProvider),
                 formatPresenter,
                 tableFilterPresenter,
                 columnValuesFilterPresenter);

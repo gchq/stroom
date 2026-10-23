@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // Showing and hiding need a browser (the popup manager), so these tests cover what is shown and
-// who owns it; disposal once hidden is MyPresenterWidget.disposeWhenHidden's (TestMyPresenterWidget)
+// who owns it; disposal once hidden is tested with Component.makeDialog (TestComponent)
 class TestComponentDialog {
 
     private final EventBus eventBus = new SimpleEventBus();

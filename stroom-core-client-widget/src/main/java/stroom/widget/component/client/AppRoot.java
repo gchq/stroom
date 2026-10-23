@@ -1,0 +1,66 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.widget.component.client;
+
+import stroom.widget.presenter.client.MyPresenterWidget;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+
+import java.util.Objects;
+
+/// The owner of what lasts as long as the page and isn't part of a screen: the dialogs of the
+/// plugins, the managers (e.g. `TabSessionManager`) and the app-wide helpers (e.g. `CurrentUser`),
+/// which are singletons rather than components. Inject it, and make a dialog with
+/// [#makeDialog(Provider)]:
+///
+/// ```java
+/// appRoot.makeDialog(keyboardShortcutsPresenterProvider).show();
+/// ```
+///
+/// A dialog left open is then still owned, so it shows in the ownership tree's leak counts, rather
+/// than being an unowned component.
+@Singleton
+public final class AppRoot implements HasComponentNode {
+
+    private final ComponentNode node = ComponentNode.root("App");
+
+    /// Makes the app root; GIN makes one per injector.
+    @Inject
+    public AppRoot() {
+        // Nothing to set up: the root is made with the field
+    }
+
+    @Override
+    public ComponentNode getComponentNode() {
+        return node;
+    }
+
+    /// Makes a dialog for one use, owned by the app root until it is hidden, then disposed (once the
+    /// popup manager has hidden it).
+    ///
+    /// @param provider What makes it, e.g. a GIN provider.
+    /// @param <P>      Its type.
+    /// @return The dialog, made and owned, ready to show.
+    public <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
+        Objects.requireNonNull(provider, "provider");
+        final P dialog = provider.get();
+        node.adopt(dialog.getComponentNode());
+        return ComponentDialog.disposeWhenHidden(dialog);
+    }
+}

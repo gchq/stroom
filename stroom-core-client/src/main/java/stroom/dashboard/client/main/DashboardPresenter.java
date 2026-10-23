@@ -166,7 +166,8 @@ public class DashboardPresenter
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
         queryToolbarPresenter.setParamValues(dashboardContext);
 
-        final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
+        // Its rename dialog is this one's, made for one use
+        final TabManager tabManager = new TabManager(components, () -> makeDialog(renameTabPresenterProvider), this);
         flexLayout.setTabManager(tabManager);
 
         flexLayout.setChangeHandler(this);

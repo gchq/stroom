@@ -20,7 +20,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -45,10 +45,14 @@ public class CurrentActivity implements HasHandlers {
     private Activity currentActivity;
     private boolean fetched;
 
+    private final AppRoot appRoot;
+
     @Inject
     public CurrentActivity(final EventBus eventBus,
                            final Provider<ManageActivityPresenter> manageActivityPresenterProvider,
-                           final RestFactory restFactory) {
+                           final RestFactory restFactory,
+                           final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.eventBus = eventBus;
         this.manageActivityPresenterProvider = manageActivityPresenterProvider;
         this.restFactory = restFactory;
@@ -86,7 +90,7 @@ public class CurrentActivity implements HasHandlers {
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
         final ManageActivityPresenter chooser =
-                MyPresenterWidget.disposeWhenHidden(manageActivityPresenterProvider.get());
+                appRoot.makeDialog(manageActivityPresenterProvider);
         chooser.showInitial(activity -> {
             // Told whether or not the chooser was shown (it isn't if activities aren't chosen on
             // startup), so released here too, once whatever is handling this is done
@@ -96,7 +100,7 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void showActivityChooser() {
-        MyPresenterWidget.disposeWhenHidden(manageActivityPresenterProvider.get()).show(a -> {
+        appRoot.makeDialog(manageActivityPresenterProvider).show(a -> {
         });
     }
 

@@ -44,7 +44,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
@@ -790,7 +789,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .command(() -> {
                     final QueryTablePreferences queryTablePreferences = tablePresenter.getQueryTablePreferences();
                     final RulesPresenter rulesPresenter =
-                            MyPresenterWidget.disposeWhenHidden(rulesPresenterProvider.get());
+                            rulesPresenterProvider.get();
                     rulesPresenter.read(queryTablePreferences);
 
                     final PopupSize popupSize = PopupSize.resizable(800, 650);

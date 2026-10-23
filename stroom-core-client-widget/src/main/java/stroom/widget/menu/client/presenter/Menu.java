@@ -16,17 +16,17 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.InputModality;
 
 import com.google.gwt.core.client.GWT;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -37,9 +37,13 @@ public class Menu {
     private MenuPresenter menuPresenter;
     private List<Item> currentItems;
 
+    private final AppRoot appRoot;
+
     @Inject
     public Menu(final EventBus eventBus,
-                final Provider<MenuPresenter> menuPresenterProvider) {
+                final Provider<MenuPresenter> menuPresenterProvider,
+                final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.menuPresenterProvider = menuPresenterProvider;
         // So that a menu knows whether it was opened with the keyboard (and shows its focus ring)
         InputModality.install();
@@ -54,7 +58,7 @@ public class Menu {
         } else {
             hide(false, false);
 
-            menuPresenter = MyPresenterWidget.disposeWhenHidden(menuPresenterProvider.get());
+            menuPresenter = appRoot.makeDialog(menuPresenterProvider);
             menuPresenter.setData(event.getItems());
             menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
             setName(menuPresenter, event);

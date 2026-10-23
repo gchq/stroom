@@ -30,7 +30,7 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.UserRef;
-import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.component.client.AppRoot;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -57,11 +57,15 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private UserRef userRef;
     private Set<AppPermission> permissions;
 
+    private final AppRoot appRoot;
+
     @Inject
     public CurrentUser(final EventBus eventBus,
                        final RestFactory restFactory,
                        final Provider<SplashPresenter> splashPresenterProvider,
-                       final CurrentActivity currentActivity) {
+                       final CurrentActivity currentActivity,
+                       final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.splashPresenterProvider = splashPresenterProvider;
@@ -146,7 +150,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     private void showSplash() {
-        final SplashPresenter splash = MyPresenterWidget.disposeWhenHidden(splashPresenterProvider.get());
+        final SplashPresenter splash = appRoot.makeDialog(splashPresenterProvider);
         splash.show(ok -> {
             // Told whether or not the splash screen was shown (it isn't unless it is enabled), so
             // released here too, once whatever is handling this is done

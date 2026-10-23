@@ -167,6 +167,7 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
   A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
 
 * **Own what you show.** Whoever shows a component or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
+  Something that isn't a component (a plugin, a manager, an app-wide helper) injects `AppRoot` and makes its dialogs with `appRoot.makeDialog(provider)`; a helper a presenter makes is given `() -> makeDialog(provider)` by it.
   Disposing an owner disposes everything it owns, depth first; never call `dispose()` yourself except on a root.
   Unowned components are counted in development builds, and the workbench leak check names them.
 

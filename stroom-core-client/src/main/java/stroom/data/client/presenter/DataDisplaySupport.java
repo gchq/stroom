@@ -19,6 +19,7 @@ package stroom.data.client.presenter;
 import stroom.data.client.DataPreviewTabPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -26,9 +27,8 @@ import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Provider;
 
 public class DataDisplaySupport {
 
@@ -38,12 +38,16 @@ public class DataDisplaySupport {
     private final Provider<SourcePresenter> sourcePresenterProvider;
     private final Provider<SourceTabPlugin> sourceTabPluginProvider;
 
+    private final AppRoot appRoot;
+
     @Inject
     public DataDisplaySupport(final EventBus eventBus,
                               final Provider<DataPresenter> dataPresenterProvider,
                               final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
                               final Provider<SourcePresenter> sourcePresenterProvider,
-                              final Provider<SourceTabPlugin> sourceTabPluginProvider) {
+                              final Provider<SourceTabPlugin> sourceTabPluginProvider,
+                              final AppRoot appRoot) {
+        this.appRoot = appRoot;
 
         this.dataPresenterProvider = dataPresenterProvider;
         this.dataPreviewTabPluginProvider = dataPreviewTabPluginProvider;
@@ -83,7 +87,7 @@ public class DataDisplaySupport {
         final Focus focus;
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
                 DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
-            final DataPresenter dataPresenter = MyPresenterWidget.disposeWhenHidden(dataPresenterProvider.get());
+            final DataPresenter dataPresenter = appRoot.makeDialog(dataPresenterProvider);
             dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
             dataPresenter.setInitDataViewType(showDataEvent.getDataViewType());
             dataPresenter.fetchData(sourceLocation);
@@ -92,7 +96,7 @@ public class DataDisplaySupport {
                     + sourceLocation.getIdentifierString();
             focus = dataPresenter;
         } else {
-            final SourcePresenter sourcePresenter = MyPresenterWidget.disposeWhenHidden(sourcePresenterProvider.get());
+            final SourcePresenter sourcePresenter = appRoot.makeDialog(sourcePresenterProvider);
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
             presenter = sourcePresenter;
             // Convert to one based for UI;

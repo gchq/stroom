@@ -66,7 +66,7 @@ public final class SelectorWidgets {
     public static QuickFilterContextHandlerFactory quickFilterContextHandlerFactory(final ScreenHarness harness) {
         return new QuickFilterContextHandlerFactory(harness.getRestFactory(), () -> {
             throw new UnsupportedOperationException("Advanced Query is not available in the workbench");
-        });
+        }, harness.getAppRoot());
     }
 
     /// Creates a document selection box: Stroom's [DocSelectionBoxPresenter] with its

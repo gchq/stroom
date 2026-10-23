@@ -16,10 +16,14 @@
 
 package stroom.widget.component.client;
 
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
+import com.google.gwt.core.client.Scheduler;
+
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /// Shows a component as a dialog, for one use: the dialog is owned by its opener while it is shown,
 /// so it sees the opener's context (e.g. [Contexts#READ_ONLY]), and disposed once it is hidden, or
@@ -39,6 +43,10 @@ import java.util.Objects;
 /// The popup manager shows presenters, so the component is shown through a small presenter that
 /// owns it; the hide request handler's event (`e.hide()`, `e.reset()`) works as for any dialog.
 public final class ComponentDialog {
+
+    // Runs something once the event being handled is done (replaced in JVM tests, which have no
+    // GWT scheduler)
+    static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
     private ComponentDialog() {
         // Static utility
@@ -60,8 +68,21 @@ public final class ComponentDialog {
         }
         final DialogHost host = new DialogHost(dialog);
         opener.getComponentNode().adopt(host.getComponentNode());
-        MyPresenterWidget.disposeWhenHidden(host);
+        disposeWhenHidden(host);
         return ShowPopupEvent.builder(host);
+    }
+
+    // Disposes a presenter shown as a popup for one use once it is hidden, after the popup manager
+    // has hidden it (see Component.makeDialog and AppRoot.makeDialog)
+    static <P extends MyPresenterWidget<?>> P disposeWhenHidden(final P dialog) {
+        final ComponentNode dialogNode = dialog.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
+        if (dialogNode != null) {
+            // A registration of the dialog's, so it goes when the dialog is disposed
+            dialogNode.add(dialog.getEventBus().addHandlerToSource(HidePopupEvent.getType(), dialog, event ->
+                    deferred.accept(dialogNode::dispose)));
+        }
+        return dialog;
     }
 
 

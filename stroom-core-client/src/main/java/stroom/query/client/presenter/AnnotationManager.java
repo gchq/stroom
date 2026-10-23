@@ -40,18 +40,19 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
+import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
-import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
@@ -62,7 +63,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class AnnotationManager implements HasHandlers {
 
@@ -72,18 +72,21 @@ public class AnnotationManager implements HasHandlers {
     private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
-
     private List<TableRow> selectedItems;
 
     private Supplier<List<Column>> columnSupplier;
     private TaskMonitorFactory taskMonitorFactory;
+
+    private final AppRoot appRoot;
 
     @Inject
     public AnnotationManager(final EventBus eventBus,
                              final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
                              final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider,
                              final AnnotationResourceClient annotationResourceClient,
-                             final ClientSecurityContext securityContext) {
+                             final ClientSecurityContext securityContext,
+                             final AppRoot appRoot) {
+        this.appRoot = appRoot;
         this.eventBus = eventBus;
         this.changeStatusPresenterProvider = changeStatusPresenterProvider;
         this.changeAssignedToPresenterProvider = changeAssignedToPresenterProvider;
@@ -422,13 +425,13 @@ public class AnnotationManager implements HasHandlers {
     private void changeStatus(final List<Long> annotationIdList) {
         if (enabled) {
             // One per use, released once it is hidden
-            MyPresenterWidget.disposeWhenHidden(changeStatusPresenterProvider.get()).show(annotationIdList);
+            appRoot.makeDialog(changeStatusPresenterProvider).show(annotationIdList);
         }
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
         if (enabled) {
-            MyPresenterWidget.disposeWhenHidden(changeAssignedToPresenterProvider.get()).show(annotationIdList);
+            appRoot.makeDialog(changeAssignedToPresenterProvider).show(annotationIdList);
         }
     }
 
