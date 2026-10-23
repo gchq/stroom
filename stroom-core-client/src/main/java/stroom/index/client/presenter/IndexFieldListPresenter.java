@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -40,7 +39,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -65,7 +65,7 @@ public class IndexFieldListPresenter
 
     private final PagerView pagerView;
     private final RestFactory restFactory;
-    private final DataGridWidget<IndexFieldImpl> dataGrid;
+    private final DataGrid<IndexFieldImpl> dataGrid;
     private final MultiSelectionModelImpl<IndexFieldImpl> selectionModel;
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
@@ -93,7 +93,7 @@ public class IndexFieldListPresenter
         view.setUiHandlers(this);
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by name, unique in an index
         dataGrid.setKeyProvider(IndexFieldImpl::getFldName);
         dataGrid.setTableName("Index Fields");

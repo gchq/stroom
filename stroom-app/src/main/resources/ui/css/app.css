@@ -46,11 +46,8 @@
 @import url("Login.css");
 @import url("refresh-button.css");
 
-@import url("celltable/DefaultCellTable.css");
-@import url("celltable/ExplorerTree.css");
+@import url("explorer-tree.css");
 @import url("menu.css");
-@import url("celltable/DataGrid.css");
-@import url("celltable/DataGridWidget.css");
 @import url("data-grid.css");
 @import url("calendar.css");
 @import url("date-time-view.css");

@@ -18,20 +18,16 @@ package stroom.widget.util.client;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class MultiSelectionModelImpl<T>
         extends AbstractSelectionModel<T>
-        implements MultiSelectionModel<T>, HasSelection<T> {
+        implements MultiSelectionModel<T> {
 
     private final HandlerManager handlerManager;
     private Selection<T> selection = new Selection<>();
-    private final Set<T> changes = new HashSet<>();
 
     public MultiSelectionModelImpl() {
         super(null);
@@ -45,19 +41,14 @@ public final class MultiSelectionModelImpl<T>
 
     @Override
     public void setSelection(final Selection<T> selection, final SelectionType selectionType) {
-        selection.getSelectedItems().forEach(selected -> {
-            if (!this.selection.isSelected(selected)) {
-                changes.add(selected);
-            }
-        });
-        this.selection.getSelectedItems().forEach(selected -> {
-            if (!selection.isSelected(selected)) {
-                changes.add(selected);
-            }
-        });
+        // Whether an item is selected that wasn't, or isn't that was
+        final boolean changed = selection.getSelectedItems().stream()
+                                        .anyMatch(selected -> !this.selection.isSelected(selected))
+                                || this.selection.getSelectedItems().stream()
+                                        .anyMatch(selected -> !selection.isSelected(selected));
         this.selection = selection;
 
-        if (!changes.isEmpty()) {
+        if (changed) {
             fireSelectionChangeEvent();
             fireChange(selectionType);
         } else if (selectionType.isDoubleSelect() || selectionType.isRightClick()) {
@@ -123,16 +114,6 @@ public final class MultiSelectionModelImpl<T>
         } else {
             final boolean currentlySelected = isSelected(item);
             if (!currentlySelected || selection.size() != 1) {
-                final List<T> items = selection.getSelectedItems();
-
-                // Mark changes.
-                if (currentlySelected) {
-                    items.stream().filter(t -> !t.equals(item)).forEach(changes::add);
-                } else {
-                    changes.addAll(items);
-                    changes.add(item);
-                }
-
                 selection.setSelected(item);
 
                 fireSelectionChangeEvent();
@@ -162,7 +143,6 @@ public final class MultiSelectionModelImpl<T>
             final boolean currentlySelected = isSelected(item);
             selection.setSelected(item, selected);
             if (currentlySelected != selected) {
-                changes.add(item);
                 fireSelectionChangeEvent();
                 if (fireEvents) {
                     fireChange(selectionType);
@@ -190,7 +170,6 @@ public final class MultiSelectionModelImpl<T>
     @Override
     public void clear(final boolean fireEvents) {
         if (selection.size() > 0) {
-            changes.addAll(selection.getSelectedItems());
             selection.clear();
             fireSelectionChangeEvent();
             if (fireEvents) {
@@ -206,10 +185,5 @@ public final class MultiSelectionModelImpl<T>
 
     private void fireChange(final SelectionType selectionType) {
         MultiSelectEvent.fire(handlerManager, selectionType);
-    }
-
-    @Override
-    public boolean hasSelectionChanged(final T item) {
-        return changes.remove(item);
     }
 }

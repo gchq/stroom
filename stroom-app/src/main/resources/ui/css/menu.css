@@ -15,30 +15,25 @@
  */
 
 /*
-   The menu (stroom.widget.menu.client.presenter.MenuViewImpl, its rows drawn by MenuItemCell).
+   The menu (stroom.widget.menu.client.presenter.Menu, its items drawn by MenuItemCell).
    Named BEM style (block, block__element, block--modifier).
 
-   menu__viewport          the scrolling box holding the table, with room for a focus ring
-   menu                    the table (role menu); --fixed-width for a menu given a width
-     menu__item            an item's row, inside the element with its role (menuitem or
-                           menuitemcheckbox) and aria-disabled, which gives the disabled look;
-                           --highlight for an item drawn bold, --info for an information row
-       menu__icon, menu__text, menu__shortcut, menu__arrow (it has a sub menu)
-     menu__separator, menu__group-heading
+   menu__viewport          the scrolling box holding the menu, with room for a focus ring
+   menu                    the menu (role menu); --fixed-width for a menu given a width,
+                           --keyboard while the keyboard is in use
+     menu__row             an item's row, with its role (menuitem, menuitemcheckbox, separator or
+                           none) and aria-disabled, which gives the disabled look; --active for the
+                           item the keyboard or the mouse is on
+       menu__item          an item: --highlight for an item drawn bold, --info for an information row
+         menu__icon, menu__text, menu__shortcut, menu__arrow (it has a sub menu)
+       menu__separator, menu__group-heading
 
-   --fixed-width, --keyboard, --highlight and --info are modifiers with no ARIA attribute.
-   The type filter and column values filter lists borrow the block for their table (the grids
-   session), as do the cell table's own classes here (cellTableCell).
+   --fixed-width, --keyboard, --active, --highlight and --info are modifiers with no ARIA attribute.
 */
 
-.menu .cellTableCell > div {
-    padding: 0;
-}
-
-/* The cell's focusable element (with the item's role) doesn't clip the item's focus ring; the item
-   cuts its own text short */
-.menu__viewport .menu .cellTableCell > div {
-    overflow: visible;
+/* A row holds its separator's margins, rather than letting them through to the rows round it */
+.menu__row {
+    display: flow-root;
 }
 
 /* Room round the items for the focus ring (it is 5px), which the scrolling would otherwise clip.
@@ -50,15 +45,6 @@
 .popup:has(> .popupContent > .menu__viewport) {
     padding: 0;
     border-radius: var(--menu__border-radius);
-}
-
-/* The table's rows show nothing themselves (not the cell table's selected, hover or focus looks):
-   each item draws its own, with rounded corners */
-.menu__viewport .menu tr,
-.menu__viewport .menu tr:hover,
-.menu__viewport .menu tr:focus-within {
-    background-color: transparent;
-    box-shadow: none;
 }
 
 .menu__separator {
@@ -91,19 +77,19 @@
 
 /* The highlighted item (the one the keyboard or the mouse is on). The mouse over it changes
    nothing more */
-.menu__viewport .cellTableSelectedRow .menu__item {
+.menu__row--active > .menu__item {
     background-color: var(--row__background-color--selected);
     color: var(--row__text-color--selected);
 }
 
 /* Pressed: the mouse button held down on the item (it is chosen when let go over it) */
-.menu__viewport .cellTableSelectedRow [role]:not([aria-disabled="true"]) > .menu__item:active {
+.menu__row--active:not([aria-disabled="true"]) > .menu__item:active {
     background-color: var(--row__background-color--selected--hovered);
 }
 
 /* Keyboard focus: the focus border and ring used elsewhere (as a tree item's), over the items
    next to it. Only while the keyboard is in use (menu--keyboard, a modifier with no ARIA
-   attribute, set by MenuViewImpl): the menu moves the focus itself as the mouse moves, so the
+   attribute, set by Menu): the menu moves the focus itself as the mouse moves, so the
    browser's :focus-visible can't tell */
 .menu__viewport [role]:focus {
     outline: none;
@@ -152,11 +138,7 @@
 }
 
 /* A menu given a fixed width (ShowMenuEvent.Builder.width), e.g. a quick filter's recent filters:
-   laid out to that width, with text too long for it cut short (its tooltip has the whole text) */
-.menu--fixed-width {
-    table-layout: fixed;
-}
-
+   text too long for it is cut short (its tooltip has the whole text) */
 .menu--fixed-width .menu__text {
     min-width: 0;
     overflow: hidden;
@@ -194,15 +176,15 @@
         border-color: Canvas;
     }
 
-    .menu__viewport .cellTableSelectedRow .menu__item,
-    .menu__viewport .cellTableSelectedRow [role]:not([aria-disabled="true"]) > .menu__item:active {
+    .menu__row--active > .menu__item,
+    .menu__row--active:not([aria-disabled="true"]) > .menu__item:active {
         forced-color-adjust: none;
         background-color: Highlight;
         border-color: Highlight;
         color: HighlightText;
     }
 
-    .menu__viewport .cellTableSelectedRow .menu__item * {
+    .menu__row--active > .menu__item * {
         color: HighlightText;
     }
 

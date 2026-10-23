@@ -18,8 +18,6 @@ package stroom.dictionary.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dictionary.shared.Word;
 import stroom.dictionary.shared.WordList;
@@ -30,7 +28,9 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -56,7 +56,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
     private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
 
     private final RestFactory restFactory;
-    private final DataGridWidget<Word> dataGrid;
+    private final DataGrid<Word> dataGrid;
     private final MultiSelectionModelImpl<Word> selectionModel;
     private WordList wordList = WordList.EMPTY;
     // The docRef of the dictionary we are presenting
@@ -77,7 +77,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
         super(eventBus, view);
 
         this.restFactory = restFactory;
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(Word::getWord);
         dataGrid.setTableName("Words");

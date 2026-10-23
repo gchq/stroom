@@ -25,7 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// Which of a [DataGridWidget]'s rows are drawn again when its rows change, as Stroom's screens change
+/// Which of a [DataGrid]'s rows are drawn again when its rows change, as Stroom's screens change
 /// them: a row drawn again has its cells replaced, so a control in it loses its focus and anything
 /// typed in it but not yet saved. (The old grid, `MyDataGrid`, since removed, drew every row again.)
 ///
@@ -318,7 +318,7 @@ public final class DataGridRowUpdateStories {
 
     private static final class NewGrid implements Grid {
 
-        private final DataGridWidget<Row> grid = new DataGridWidget<>(new SimpleEventBus());
+        private final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
 
         @Override
         public void addColumns(final Updater<TickBoxState> enabledUpdater, final Updater<String> pathUpdater) {

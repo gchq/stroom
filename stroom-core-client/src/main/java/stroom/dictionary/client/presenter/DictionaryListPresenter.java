@@ -17,7 +17,6 @@
 package stroom.dictionary.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.WrapperView;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeEvent;
@@ -30,6 +29,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;

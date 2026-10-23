@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -47,7 +47,7 @@ import java.util.function.IntSupplier;
 /// The behaviour baseline of design Phase 0, as stories with plays: what happens to the keyboard
 /// row, the focus and the scroll position when new data arrives (R-S12, R-D7).
 ///
-/// Each story is shown for [DataGridWidget] in natural ("New") and virtual ("Virtual") mode, with
+/// Each story is shown for [DataGrid] in natural ("New") and virtual ("Virtual") mode, with
 /// the same play. The behaviour was measured on the old grid (`MyDataGrid`, since removed) first;
 /// the plays record it, so the grid is still held to it.
 ///
@@ -423,7 +423,7 @@ public final class BehaviourStories {
 
     private static final class NewGrid implements GridAdapter {
 
-        private final DataGridWidget<Person> grid = new DataGridWidget<>(new SimpleEventBus(), ROWS);
+        private final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus(), ROWS);
 
         private NewGrid(final boolean virtual, final boolean padded) {
             grid.setWidth("100%");

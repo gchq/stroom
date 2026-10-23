@@ -27,7 +27,7 @@ import stroom.util.client.JSONUtil;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONObject;
@@ -59,7 +59,7 @@ import java.util.function.Predicate;
 /// is selected. Clicks are reported via consumers that the Editor presenter sets.
 public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeListView> {
 
-    private final DataGridWidget<TemporalEntry> dataGrid;
+    private final DataGrid<TemporalEntry> dataGrid;
     private final ListDataProvider<TemporalEntry> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<TemporalEntry> selectionModel = new SingleSelectionModel<>();
 
@@ -82,7 +82,7 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Fact Times");
         // The list holds one fact's entries, one per time
         dataGrid.setKeyProvider(TemporalEntry::getEffectiveTimeMs);

@@ -25,7 +25,6 @@ import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
-import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -44,6 +43,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.widget.datagrid.client.WrapperViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.view.ProgressViewImpl;
 
@@ -225,7 +225,7 @@ public final class SourceViewerStories {
     private static Widget render(final StoryContext context,
                                  final RestFixtures fixtures,
                                  final SourceLocation sourceLocation) {
-        // Stroom's Menu (for the data's context menus) is the harness's
+        // Stroom's MenuManager (for the data's context menus) is the harness's
         final ScreenHarness harness = ScreenHarness.create(context, fixtures);
         final DataPresenter presenter = dataPresenter(harness);
         // As GWTP does when the presenter is revealed

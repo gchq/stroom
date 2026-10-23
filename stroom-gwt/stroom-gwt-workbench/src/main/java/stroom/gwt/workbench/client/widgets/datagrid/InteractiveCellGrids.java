@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -53,9 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Grids with Stroom's interactive cells, for the `Widgets/Data Grid/DataGridWidget` stories.
+/// Grids with Stroom's interactive cells, for the `Widgets/Data Grid/DataGrid` stories.
 ///
-/// They check that [DataGridWidget] works with Stroom's existing GWT cells unchanged: the cells get
+/// They check that [DataGrid] works with Stroom's existing GWT cells unchanged: the cells get
 /// their events, their field updaters fire, a click on a control in a cell does not select the row,
 /// a cell that redraws itself is put right when the row is sent again, and a cell being edited keeps
 /// the focus while its row is redrawn. The columns are built as Stroom's presenters build them.
@@ -96,7 +96,7 @@ final class InteractiveCellGrids {
         final Set<String> ticked = new LinkedHashSet<>();
         ticked.add("Bob Smith");
 
-        final DataGridWidget<Person> grid = grid();
+        final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(true);
         final Column<Person, TickBoxState> column = new Column<Person, TickBoxState>(
                 TickBoxCell.create(new TickBoxCell.DefaultAppearance(), false, false, true)) {
@@ -163,7 +163,7 @@ final class InteractiveCellGrids {
         }
         final int[] polls = {0};
 
-        final DataGridWidget<Person> grid = grid();
+        final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
         grid.addColumn(DataGridUtil.valueSpinnerColumnBuilder("Max Tasks",
@@ -210,7 +210,7 @@ final class InteractiveCellGrids {
                 new TreeRow("Bob Smith", 1, true));
         final Set<String> expanded = new HashSet<>();
 
-        final DataGridWidget<TreeRow> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<TreeRow> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
@@ -253,7 +253,7 @@ final class InteractiveCellGrids {
 
     static Widget commandLinkGrid(final StoryContext context) {
         final Spy onOpen = context.fn(ON_OPEN);
-        final DataGridWidget<Person> grid = grid();
+        final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.commandLinkColumnBuilder((Person person) -> new CommandLink(
                                 person.getName(),
@@ -272,7 +272,7 @@ final class InteractiveCellGrids {
     static Widget actionMenuGrid(final StoryContext context) {
         final Spy onAction = context.fn(ON_ACTION);
         final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final DataGridWidget<Person> grid = grid();
+        final DataGrid<Person> grid = grid();
         grid.addDefaultSelectionModel(false);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(Person::getName).build(), "Name", 200);
         final ActionMenuCell<Person> cell = new ActionMenuCell<>(person -> {
@@ -302,8 +302,8 @@ final class InteractiveCellGrids {
         return play.getByText(text).closest(".data-grid__row");
     }
 
-    private static DataGridWidget<Person> grid() {
-        final DataGridWidget<Person> grid = new DataGridWidget<>(new SimpleEventBus());
+    private static DataGrid<Person> grid() {
+        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         return grid;

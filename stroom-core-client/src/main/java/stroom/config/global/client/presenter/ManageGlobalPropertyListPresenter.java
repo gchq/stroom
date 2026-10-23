@@ -22,7 +22,6 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.util.client.DataGridUtil;
@@ -31,7 +30,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -74,7 +74,7 @@ public class ManageGlobalPropertyListPresenter
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
-    private final DataGridWidget<ConfigPropertyRow> dataGrid;
+    private final DataGrid<ConfigPropertyRow> dataGrid;
     private final MultiSelectionModelImpl<ConfigPropertyRow> selectionModel;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
@@ -114,7 +114,7 @@ public class ManageGlobalPropertyListPresenter
                                              final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by name: each node's reply rebuilds the rows
         dataGrid.setKeyProvider(ConfigPropertyRow::getNameAsString);
         dataGrid.setTableName("Properties");

@@ -21,9 +21,9 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -51,7 +51,7 @@ public class MultiChooserPresenter<T>
     private static final TickBoxCell.DefaultAppearance TICK_BOX = new TickBoxCell.DefaultAppearance();
 
     private final MultiSelectionModel<T> selectionModel = new MultiSelectionModelImpl<>();
-    private final DataGridWidget<T> list;
+    private final DataGrid<T> list;
     private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
@@ -66,13 +66,13 @@ public class MultiChooserPresenter<T>
         // A list of values, each ticked or not: the arrows move, and Space, Enter or a press ticks or
         // unticks the value with the focus. As high as its values, up to the chooser's height, then
         // scrolling. Escape goes on to the popup, which closes
-        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setFitContent(true);
         list.addStyleName("multiChooser");
         list.setRowChecked(this::getState);
-        final DataGridWidgetSelectionEventManager<T> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        final DataGridSelectionEventManager<T> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
         selectionEventManager.setChooser(this::toggle);
         // The ticks are the rows' own state, not the list's selection
         list.setSelectionModel(null, selectionEventManager);

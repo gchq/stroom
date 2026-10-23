@@ -20,10 +20,10 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.grid.client.WrapperView;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

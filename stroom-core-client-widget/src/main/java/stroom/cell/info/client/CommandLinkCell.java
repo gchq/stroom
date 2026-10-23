@@ -16,9 +16,9 @@
 
 package stroom.cell.info.client;
 
-import stroom.data.grid.client.EventCell;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.EventCell;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.RowActions;

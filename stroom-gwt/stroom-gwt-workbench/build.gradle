@@ -897,8 +897,9 @@ def runTestRunner = { String testUrl ->
     }
     if (!visualisationsContentDir.isDirectory()) {
         // Before workbenchTestArgs, so that its --skip-tags wins
-        println "No visualisations in ${visualisationsContentDir} (build them with 'npm run build', and see "
-                + "-PworkbenchVisualisationsDir), so the stories tagged '${visualisationsTag}' are skipped"
+        // The + ends the first line: one starting the second would be read as a unary plus
+        println "No visualisations in ${visualisationsContentDir} (build them with 'npm run build', and see " +
+                "-PworkbenchVisualisationsDir), so the stories tagged '${visualisationsTag}' are skipped"
         command += ['--skip-tags', "skip-test,${visualisationsTag}".toString()]
     }
     if (findProperty('workbenchTestArgs')) {

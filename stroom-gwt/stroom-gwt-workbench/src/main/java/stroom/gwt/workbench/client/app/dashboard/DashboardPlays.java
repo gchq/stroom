@@ -180,7 +180,7 @@ final class DashboardPlays {
         play.fireEvent().mouseMove(target, EventInit.create().atCentreOf(target));
         play.sleep(200);
         // Pointer events before mouse events, as a browser sends them: the new grid
-        // (DataGridWidget) reads the pointer events, MyDataGrid the mouse events
+        // (DataGrid) reads the pointer events, MyDataGrid the mouse events
         play.fireEvent().pointerDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().mouseDown(target, EventInit.create().atCentreOf(target).buttons(1));
         play.fireEvent().pointerUp(target, EventInit.create().atCentreOf(target));

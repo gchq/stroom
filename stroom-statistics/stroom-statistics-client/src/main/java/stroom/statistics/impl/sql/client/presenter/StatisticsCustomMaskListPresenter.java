@@ -20,7 +20,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
@@ -29,7 +28,8 @@ import stroom.statistics.impl.sql.client.presenter.State.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -43,7 +43,7 @@ import java.util.List;
 public class StatisticsCustomMaskListPresenter
         extends DocPresenter<PagerView, StatisticStoreDoc> {
 
-    private final DataGridWidget<Mask> dataGrid;
+    private final DataGrid<Mask> dataGrid;
     private final MultiSelectionModelImpl<Mask> selectionModel;
 
     private final ButtonView newButton;
@@ -58,7 +58,7 @@ public class StatisticsCustomMaskListPresenter
                                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Statistics Custom Masks");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

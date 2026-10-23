@@ -49,10 +49,10 @@ final class GridRows<R> {
     private static final String KEYBOARD_CELL_CLASS_NAME = "data-grid__cell--keyboard";
     private static final double FALLBACK_ROW_HEIGHT = 24;
     // Natural pages with more rows than this let the browser skip laying out the rows out of view
-    // (data-grid--contain, see DataGridWidget.css)
+    // (data-grid--contain, see data-grid.css)
     private static final int CONTAIN_ROW_THRESHOLD = 200;
 
-    private final DataGridWidget<R> grid;
+    private final DataGrid<R> grid;
     private final PageState<R> pageState;
     private final ColumnModel<Column<R, ?>> columnModel;
     private final GridHtml<R> html;
@@ -70,7 +70,7 @@ final class GridRows<R> {
     private double measuredRowHeight;
     private final TypeAhead typeAhead = new TypeAhead();
 
-    GridRows(final DataGridWidget<R> grid,
+    GridRows(final DataGrid<R> grid,
              final PageState<R> pageState,
              final ColumnModel<Column<R, ?>> columnModel,
              final GridHtml<R> html,
@@ -241,7 +241,7 @@ final class GridRows<R> {
             // The keyboard cell's class is set on the element below, not written in the HTML, so the
             // focus coming and going never rewrites a row (which would lose a click's target, or a
             // control's open list, e.g. a selection box's, whose focus has left the grid).
-            final DataGridWidget.RowSpans<R> rowSpans = grid.getRowSpans();
+            final DataGrid.RowSpans<R> rowSpans = grid.getRowSpans();
             final Map<Integer, Integer> spans = rowSpans != null && row != null
                     ? rowSpans.getSpans(row, absIndex)
                     : Collections.emptyMap();
@@ -352,7 +352,7 @@ final class GridRows<R> {
         }
         final Element cellElement = grid.findAncestorWithAttribute(active, GridHtml.DATA_COL);
         return cellElement != null
-                ? DataGridWidget.parseInt(cellElement.getAttribute(GridHtml.DATA_COL))
+                ? DataGrid.parseInt(cellElement.getAttribute(GridHtml.DATA_COL))
                 : -1;
     }
 

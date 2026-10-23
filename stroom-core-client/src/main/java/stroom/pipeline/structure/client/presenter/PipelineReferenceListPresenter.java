@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,7 +36,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -77,7 +77,7 @@ public class PipelineReferenceListPresenter
     private static final String RESTORE_TITLE = "Restore Selected Pipeline Reference";
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    private final DataGridWidget<PipelineReference> dataGrid;
+    private final DataGrid<PipelineReference> dataGrid;
     private final MultiSelectionModelImpl<PipelineReference> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -103,7 +103,7 @@ public class PipelineReferenceListPresenter
                                           final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Pipeline References");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

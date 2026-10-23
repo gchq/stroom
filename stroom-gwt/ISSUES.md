@@ -318,6 +318,47 @@ the camera to settle rather than checking once.
 * `stroom-gwt/stroom-gwt-workbench/test-runner/run.mjs` (`--screenshots`, `--settle`)
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/vis/`
 
+### Some other stories' screenshots differ from run to run, and one fails
+
+**Confirmed** (full screenshot runs of master and data_grid2, 2 workers, 23 October 2026, then
+each story re-run against both builds with the same runner options):
+
+* `App/Main/TopBar` `Keyboard`: the real-input check ends with a click on Show Main Menu and
+  Escape. In some runs the screenshot shows the button with its focus ring and "Show Main Menu"
+  tooltip, in others without either, and master and data_grid2 each gave both. The same run.mjs
+  options against both builds gave identical screenshots. A fix: the check ends by moving the focus
+  somewhere fixed (or the runner waits for the tooltip) before the screenshot.
+* `App/Main/AppShell` `ContextMenu`: the focus ends on Save in one run and on the Words tab in
+  another.
+* `App/Editors/QueryEditor` `AddToAnnotation`: in a full run the Annotate Selected Rows button,
+  which gets the focus back once the chooser closes, can show its focus ring; run on its own it
+  doesn't. Like TopBar `Keyboard`, whether a focus put back by code draws the ring depends on
+  what the browser last saw.
+* `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`: the Polled column counts the polls, so its
+  number depends on how long the story ran. A fix: the screenshot is taken with polling stopped,
+  or the column shows something that doesn't count.
+* `Widgets/Menu/MenuPanel` `TypeAhead` failed in every run with screenshots, on both builds
+  (`expect(<div>).toHaveFocus() failed` after typing "re"). **Fixed** (data_grid2): those runs fix
+  the page's `Date` (`--fixed-time`), and `TypeAhead` timed the pause between keys with it, so the
+  pause never ended and "s", "s", "re" was read as "ssre". It now uses `performance.now()`.
+
+### The workbench's stories fail in a checkout that hasn't run gwtCompile
+
+**Confirmed** (a copy of master made with `git archive`, 23 October 2026). `workbenchTest` failed 591
+of 1,545 stories: every story with a code editor stopped with `Cannot read properties of undefined
+(reading 'require')`, or timed out, because `/ui/stroom/ace/ace.js` was a 404. The workbench serves
+Ace from `stroom-app/src/main/resources/ui/stroom/ace`, which is git-ignored and only filled by the
+app's full `gwtCompile` (Ace is a public resource of the `acegwt` module). A fresh clone or a CI job
+that runs only the workbench tasks gets the same. A fix: the workbench serves Ace from
+`acegwt/public/ace` itself, or `workbenchTest` depends on a task that copies it.
+
+Without the visualisations checkout beside the copy, the same task also failed on a script error:
+the "No visualisations" message's `+` began a line, so Groovy read it as a unary plus on a string.
+Fixed in data_grid2.
+
+* `stroom-gwt/stroom-gwt-workbench/build.gradle` (`workbenchServe`'s roots, `runTestRunner`)
+* `stroom-core-client-widget/src/main/java/edu/ycp/cs/dh/acegwt/public/ace/`
+
 ### A visualisation's selection offers only Name and Value to selection handlers
 
 **Confirmed.** A visualisation can send any keys in its selection (`stroom.select`), and Stroom
@@ -597,9 +638,8 @@ last closed dialog for a moment only.
   it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
   once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
   list (or tree, as they nest), which would also let a row be selected without a mouse.
-* `HoverActionMenuCell` shows its "..." only on a mouse over and opens its menu only on a mouse
-  press. Nothing uses it (`UserListPresenter`'s use is commented out); if anything does again, it
-  wants the `ActionMenuCell` treatment (see Fixed: a grid row's action buttons).
+* `HoverActionMenuCell` showed its "..." only on a mouse over and opened its menu only on a mouse
+  press. Nothing used it, and it was deleted (data_grid2, 23 October 2026).
 * A grid's spinner doesn't repeat while a finger is held on an arrow (a tap steps once): it steps
   on the mouse events the browser makes after a touch, and takes no touch or pointer events
   (`ValueSpinnerCell`; the `ValueSpinner` widget does repeat). The new grid hands a cell its
@@ -999,8 +1039,7 @@ their cells have no name, and the quick filter's help button is 22px (under WCAG
 
 **Fixed**: buttons that open menus say so and whether the menu is open (`ShowMenuEvent.Builder.opener`
 with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a grid row,
-`RowActions.menuButton`). Left: the hover action menus (`HoverActionMenuCell`, unused), and the row
-action menus of the data retention rules (`DataRetentionPolicyListPresenter`) and content templates
+`RowActions.menuButton`). Left: the row action menus of the data retention rules (`DataRetentionPolicyListPresenter`) and content templates
 (`ContentTemplateListPresenter`), whose `showActionMenu` is never called (dead code).
 
 ### Controls with no accessible name
@@ -1126,32 +1165,36 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 ### The data grid's follow-ups
 
-**Deferred** (October 2026, after the switch to `DataGridWidget`; for a later session). The grid
+**Deferred** (October 2026, after the switch to `DataGrid`; for a later session). The grid
 works and its cells are covered by stories; these are the next steps, none urgent.
 
-* **A cell contract for cells holding a control.** The grid kept GWT's `Cell` contract (a cell
+* **A row update replaces a focused control.** The grid keeps GWT's `Cell` contract (a cell
   renders an HTML string and keeps no element of its own; `ViewData`, `isEditing` and `resetFocus`)
-  so that every cell and presenter worked unchanged. When a row changes, the grid replaces its HTML
-  and asks the focused cell to take the focus back, so a cell holding a control has to rebuild what
-  only the browser held (typed text, the caret, the focus, an open list). The grid spinner's lost
-  typing in polling lists came from this (see Fixed). Proposal: keep HTML strings for display
-  cells (text, dates, icons, links: cheap, and suited to virtual rows), and add a second kind for
-  interactive cells (`ValueSpinnerCell`, text fields, `TickBoxCell`, `SelectionBoxCell`,
-  `ActionCell`/`ActionMenuCell`) that owns an element: created once when its row is drawn, told
-  each new value and updating itself in place, left alone while it has the focus, disposed of when
-  its row goes. The grid then never replaces a focused control, so this kind of bug can't happen.
-  If `DataGridUtil`'s column builders hide which kind a cell is, presenters don't change; the work
-  is in the grid's row update and the five or six interactive cells. Do it before a new interactive
-  cell is written, or at the next bug of this kind.
-* **The row update renders every visible row's HTML to tell whether it changed** (`DataGridWidget`
+  so that every cell and presenter works unchanged. When a row changes, `GridRows.update` replaces
+  the whole row's HTML and asks the focused cell to take the focus back, so a cell holding a control
+  has to rebuild what only the browser held (typed text, the caret, the focus, an open list). The
+  grid spinner's lost typing in polling lists came from this (see Fixed). Agreed (2026-10-23): keep
+  the contract and the HTML strings, and leave the focused cell's element alone. `GridHtml` renders
+  each cell to its own string; a row update with the focus inside a cell's content writes the row's
+  other changed cells one by one and leaves that cell as it is, and with the focus on a cell's own
+  element (cell navigation) writes only its content; when the focus leaves, the row is drawn again.
+  Only a change to the row's cells (columns or spans) still writes the whole row and calls
+  `resetFocus`. This holds one element at a time, where cells that each owned an element (the first
+  proposal) would hold one for every interactive cell in every drawn row, every row once virtual
+  mode is off. Presenters and cells don't change. Design: "Data Grid Completion Design"
+  (https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW). Do it before a new interactive cell is
+  written, or at the next bug of this kind.
+* **The row update renders every visible row's HTML to tell whether it changed** (`DataGrid`
   `updateRow`, comparing strings), and a cell event reads the cell's `innerHTML` before and after
   (`dispatchEvent`). The DOM is only written for rows that changed, but the rendering is paid on
   every update, which a very wide grid that polls often would feel. Measure with the
-  `Widgets/Data Grid` Benchmark stories before changing it; the cell contract above would let an
-  interactive cell skip it.
-* **`DataGridWidget.java` is 2,274 lines**, over checkstyle's 2,000 (a warning). Split the row
-  rendering out, as the keyboard (`DataGridKeyboard`), column interactions (`ColumnInteractions`)
-  and context menu (`DataGridContextMenu`) are; best done with the cell contract change.
+  `Widgets/Data Grid` Benchmark stories before changing it; the per-cell strings above let a row
+  update compare and write cell by cell.
+* **`DataGrid.java` is 2,009 lines**, over checkstyle's 2,000 (a warning), though the row
+  drawing is now in `GridRows`. Move the event dispatch out (`onBrowserEvent` to `onHeaderEvent`,
+  about 190 lines) into a `GridEvents`, as the keyboard (`DataGridKeyboard`), column interactions
+  (`ColumnInteractions`) and context menu (`DataGridContextMenu`) are; best done with the focused
+  cell change.
 * **A grid's selection depends on its rows' keys.** A presenter whose rows are fetched again as new
   objects needs a key provider (or rows equal by identity), or its selection is lost on refresh:
   the floor map, the task summary and the processor profile periods were cases (see Fixed and
@@ -2154,7 +2197,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   replaced, so it didn't read as expanded and its list was placed off to one side (the floor map
   settings' Value Schema). `Widgets/Data Grid/DataGridKeyboard` `SelectionBoxStaysPut` checks it.
 * **Grids had no grid semantics** (`MyDataGrid`: no `grid` role, selection only a class, sortable
-  headers `role="button"`, no `aria-sort`). The new grid (`DataGridWidget`) is a `grid` (or
+  headers `role="button"`, no `aria-sort`). The new grid (`DataGrid`) is a `grid` (or
   `treegrid`), with `aria-selected` rows, `columnheader`s and `aria-sort`.
 * **A grid's spinners couldn't be reached from the keyboard.** With the new grid, Right goes into
   a row's cells, and Enter or F2 edits a spinner (`Widgets/Data Grid/DataGridKeyboard` `Editing`,
@@ -2166,7 +2209,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   status). `App/Main/ProcessorTaskSummary` `RefreshWithChangedCount` checks it.
 * **A tree grid's expander had no name or title.** It now has a title, Expand or Collapse, for the
   mouse, and is hidden from assistive technology, which hears the row's `aria-expanded`
-  (`ExpanderCell`). `Widgets/Data Grid/DataGridWidget` `TreeKeys` checks it.
+  (`ExpanderCell`). `Widgets/Data Grid/DataGrid` `TreeKeys` checks it.
 * **Rows' action buttons were all named "Actions...".** An `ActionCell` can be named for its row,
   as its menu is: Dependencies ("Actions for <type> '<name>'"), content templates, data retention
   rules and job nodes. Their screens' stories find the buttons by those names.
@@ -2194,7 +2237,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `42`). And a value typed and then drawn again wasn't committed by Enter, which relied on the
   browser's change event, which a field drawn again doesn't fire. The cell now records the text on
   every `input` event (which the grid now hands its cells) and commits when the field loses the
-  focus. This was the flaky `Widgets/Data Grid/DataGridWidget` `ValueSpinnerColumn`, which now polls
+  focus. This was the flaky `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`, which now polls
   every 10ms, so a poll comes between each of its steps (it failed every time so before the fix),
   and checks that a rejection survives the polls.
 * **`App/Editors/DashboardEditor` `TableFilterDrivesQuery` failed now and then under load** ("matched

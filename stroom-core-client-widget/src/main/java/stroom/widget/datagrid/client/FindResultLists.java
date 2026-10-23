@@ -48,13 +48,13 @@ public final class FindResultLists {
     /// @param onUpFromFirst  What Up on the first result does, e.g. focusing the filter, or null.
     /// @param <T>            The type of a result.
     /// @return The list.
-    public static <T> DataGridWidget<T> create(final HasHandlers eventBus,
+    public static <T> DataGrid<T> create(final HasHandlers eventBus,
                                                final String name,
                                                final Cell<T> cell,
                                                final MultiSelectionModelImpl<T> selectionModel,
                                                final Consumer<T> onOpen,
                                                final Runnable onUpFromFirst) {
-        final DataGridWidget<T> list = new DataGridWidget<>(eventBus, PAGE_SIZE);
+        final DataGrid<T> list = new DataGrid<>(eventBus, PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(name);
         list.setStriped(true);
@@ -64,8 +64,8 @@ public final class FindResultLists {
                 return result;
             }
         }, "", 200);
-        final DataGridWidgetSelectionEventManager<T> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false);
+        final DataGridSelectionEventManager<T> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, selectionModel, false);
         selectionEventManager.setMoveUpFromFirst(onUpFromFirst);
         selectionEventManager.setLeftRightPage(true);
         list.setSelectionModel(selectionModel, selectionEventManager);

@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
-/// Builds the HTML of [DataGridWidget]'s header and rows from its columns, headers and sort list,
+/// Builds the HTML of [DataGrid]'s header and rows from its columns, headers and sort list,
 /// with the class names `MyDataGrid` uses (design R-H5 and R-R1), and gets the text cells and
 /// headers show, for copying, exporting and asking AI (R-M3, R-M4).
 ///

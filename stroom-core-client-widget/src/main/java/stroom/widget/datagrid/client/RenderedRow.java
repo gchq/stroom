@@ -18,7 +18,7 @@ package stroom.widget.datagrid.client;
 
 import com.google.gwt.dom.client.Element;
 
-/// A row [DataGridWidget] has rendered, with what it was last rendered from, so the row's DOM is
+/// A row [DataGrid] has rendered, with what it was last rendered from, so the row's DOM is
 /// only written again when something it shows has changed.
 final class RenderedRow {
 

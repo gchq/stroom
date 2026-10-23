@@ -18,13 +18,13 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.processor.shared.FeedDependency;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,7 +48,7 @@ public class FeedDependencyListPresenter
     private static final String REMOVE_TITLE = "Remove Selected Feed Dependency";
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
-    private final DataGridWidget<FeedDependency> dataGrid;
+    private final DataGrid<FeedDependency> dataGrid;
     private final MultiSelectionModelImpl<FeedDependency> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -65,7 +65,7 @@ public class FeedDependencyListPresenter
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Feed Dependencies");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

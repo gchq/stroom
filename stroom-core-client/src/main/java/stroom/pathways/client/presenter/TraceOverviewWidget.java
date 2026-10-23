@@ -18,8 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.data.client.presenter.CopyTextUtil;
-import stroom.data.grid.client.DefaultResources;
-import stroom.data.grid.client.Glass;
 import stroom.data.pager.client.Pager;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
@@ -39,6 +37,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.StringUtil;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.Glass;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -159,7 +158,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
                    Consumer<TraceSpanPage> onLoaded);
     }
 
-    public TraceOverviewWidget(final HasHandlers hasHandlers, final DefaultResources resources) {
+    public TraceOverviewWidget(final HasHandlers hasHandlers) {
         this.hasHandlers = hasHandlers;
         // A vertical stack: the pager bar (top, right-aligned, above the timeline) then the trace content.
         final FlowPanel root = new FlowPanel();
@@ -194,7 +193,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
             }
         });
 
-        glass = new Glass(resources.dataGridStyle().resizeGlass());
+        glass = new Glass("resizeGlass");
 
         panel.addMouseDownHandler(e -> {
 
@@ -363,7 +362,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 //
 //
 //                if (glass == null) {
-//                    glass = new Glass(resources.dataGridStyle().resizeGlass());
+//                    glass = new Glass("resizeGlass");
 //                }
 //                glass.show();
 //                resizing = true;

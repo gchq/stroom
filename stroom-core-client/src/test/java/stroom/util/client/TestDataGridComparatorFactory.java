@@ -16,8 +16,8 @@
 
 package stroom.util.client;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.OrderByColumn;
+import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.user.cellview.client.ColumnSortList;

@@ -28,14 +28,14 @@ import com.google.gwt.user.cellview.client.Column;
 /// @param <R> The type of the grid's rows.
 final class GridHeader<R> {
 
-    private final DataGridWidget<R> grid;
+    private final DataGrid<R> grid;
     private final ColumnModel<Column<R, ?>> columnModel;
     private final GridHtml<R> html;
     private final DataGridKeyboard<R> keyboard;
     private final Element head;
     private final Element headerRow;
 
-    GridHeader(final DataGridWidget<R> grid,
+    GridHeader(final DataGrid<R> grid,
                final ColumnModel<Column<R, ?>> columnModel,
                final GridHtml<R> html,
                final DataGridKeyboard<R> keyboard,
@@ -89,7 +89,7 @@ final class GridHeader<R> {
             }
         } else if (controlIndex >= 0) {
             // As does a control in it, with its caret, e.g. a filter box after Enter set the filter
-            final Element cell = getCellElement(DataGridWidget.parseInt(
+            final Element cell = getCellElement(DataGrid.parseInt(
                     controlHeader.getAttribute(GridHtml.DATA_HCOL)));
             final Element control = cell != null
                     ? DataGridDom.controlAt(cell, controlIndex)

@@ -17,7 +17,6 @@
 package stroom.script.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.WrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
@@ -29,6 +28,7 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;

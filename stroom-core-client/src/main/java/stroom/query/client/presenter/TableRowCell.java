@@ -16,8 +16,8 @@
 
 package stroom.query.client.presenter;
 
-import stroom.data.grid.client.HasContextMenus;
 import stroom.query.api.Column;
+import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.util.client.SafeHtmlUtil;
 

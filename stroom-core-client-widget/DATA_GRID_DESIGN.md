@@ -3,7 +3,7 @@
 **Status:** done (2026-10-21). Phases 0 to 2 were done in the `datagrid` worktree, and continued in
 the components session 4 worktree (`session4_grids`, 2026-10-20), where the agreed row looks and
 keyboard were added (`stroom-gwt/COMPONENT_MODEL_DESIGN.md`, Data grid). Those supersede R-S7 to R-S9,
-R-A2 and R-T1 below, as each says. Phase 3 switched every screen to `DataGridWidget`, and phase 4
+R-A2 and R-T1 below, as each says. Phase 3 switched every screen to `DataGrid`, and phase 4
 removed `MyDataGrid` and its classes and applied the §8 fixes (§9). What is left to do is in
 `stroom-gwt/ISSUES.md`: The data grid's follow-ups, and the grid's entries under Controls that can't
 be reached with the keyboard.
@@ -14,7 +14,7 @@ UI regression suite is run to find visual and behavioural differences.
 
 **Sources.** This document draws on four sources:
 
-* the current GWT grid (`stroom.data.grid.client.MyDataGrid` and the forked GWT `cellview` classes);
+* the current GWT grid (`stroom.widget.datagrid.client.MyDataGrid` and the forked GWT `cellview` classes);
 * every place it is used (78 `new MyDataGrid` sites, about 83 screens);
 * the React port's `DataGrid` (`stroom-ui-react/src/widgets/DataGrid/`);
 * the React port's research notes (`stroom-ui-react/porting/grid-widget-design.md`,
@@ -162,8 +162,8 @@ Usage falls into eight categories:
 
 ### 4.1 Package and naming
 
-Package `stroom.widget.datagrid.client`, main class `DataGridWidget<R>` (decided, §10). During
-switch-over both `DataGridWidget` and `MyDataGrid` implement a `DataGridView<R>` interface.
+Package `stroom.widget.datagrid.client`, main class `DataGrid<R>` (decided, §10). During
+switch-over both `DataGrid` and `MyDataGrid` implement a `DataGridView<R>` interface.
 
 * The pure-Java model classes go in `stroom.widget.datagrid.client.model`, in
   `stroom-core-client-widget` (decided, §10).
@@ -596,7 +596,7 @@ exists.
   already has a workbench story: the query and dashboard tables, the meta browser, Server Tasks and
   the import dialog.
 * **Behaviour:** the `Widgets/Data Grid/Behaviour` stories run the same plays against `MyDataGrid`
-  and against `DataGridWidget` in both modes. The plays click rows, move the focus away, send the
+  and against `DataGrid` in both modes. The plays click rows, move the focus away, send the
   same, changed and fewer rows, rebuild the columns, and check the keyboard row, the focus and the
   scroll position. The rules they hold the new grid to are in R-S12 and R-D7.
   * Measuring them found five differences in the new grid, all now fixed. A click didn't focus
@@ -628,7 +628,7 @@ exists.
   tests.
 * DOM renderer with both engines.
 * `HasData`, `Cell` and `Header` compatibility.
-* Workbench stories, `Widgets/Data Grid/DataGridWidget` (`DataGridWidgetStories` in
+* Workbench stories, `Widgets/Data Grid/DataGrid` (`DataGridStories` in
   `stroom-gwt/stroom-gwt-workbench`). They share their names, rows and frame sizes with the
   existing `Widgets/Data Grid/DataGrid` stories for `MyDataGrid`, so each scenario can be compared
   side by side, and their play functions check the new grid's behaviour. Run them with
@@ -715,9 +715,9 @@ interactive header cells, the context menu, copy, export and AI.
     key or click. Its handler is now wrapped in `$entry`, which every resize listener gets. A play
     can't show it (its own steps run the pending work), so the regression check is a real-input
     one, on `Widgets/Data Grid/Behaviour/RowsFollowDensityVirtual`.
-* **The interface** (2026-10-21): `stroom.data.grid.client.DataGridView<R>`, which `MyDataGrid` and
-  `DataGridWidget` both implement. It holds the §5.12 methods both grids have, plus
-  `addColumn(ColSpec)` (new to `DataGridWidget`, sized by `ColumnSizing.fromColSettings`) and
+* **The interface** (2026-10-21): `stroom.widget.datagrid.client.DataGridView<R>`, which `MyDataGrid` and
+  `DataGrid` both implement. It holds the §5.12 methods both grids have, plus
+  `addColumn(ColSpec)` (new to `DataGrid`, sized by `ColumnSizing.fromColSettings`) and
   `getHeaderCellElement` (new to `MyDataGrid`). The code several screens share takes it rather
   than `MyDataGrid`: `DataGridUtil`'s column helpers (`addExpanderColumn`, `addStatusIconColumn`,
   `addDocRefColumn`, `addFeedColumn`) and `JobNodeListHelper`, so the job and node screens can
@@ -762,7 +762,7 @@ interactive header cells, the context menu, copy, export and AI.
     value spinner, so the editable category.
   * `UserRefPopupPresenter` (the user picker): it uses `DataGridSelectionEventManager`'s
     selection-follows-focus, Up from the first row to the filter and typing into the filter, which
-    `DataGridWidgetSelectionEventManager` doesn't have yet; a step of its own.
+    `DataGridSelectionEventManager` doesn't have yet; a step of its own.
   * `AnalyticDataShardListPresenter`: no story opens its grid (needs one first, as do the floor
     map's three lists).
 * In the workbench, a full-screen app screen is 48px taller than the window
@@ -810,8 +810,8 @@ interactive header cells, the context menu, copy, export and AI.
   * `PercentBarCell`'s bar `div` wasn't closed (see `ISSUES.md`, Fixed).
   * The user picker's keys play waited for the filter's first result, not its last, so Down went to
     a row of a list still being filtered (`MyDataGrid`, drawing later, hid it).
-  * The picker uses `DataGridWidgetSelectionEventManager`'s `setMoveUpFromFirst` and
-    `setTypedHandler` (new, as the old manager's) and `DataGridWidget.isInRows`; the selection
+  * The picker uses `DataGridSelectionEventManager`'s `setMoveUpFromFirst` and
+    `setTypedHandler` (new, as the old manager's) and `DataGrid.isInRows`; the selection
     following the focus it had asked for is every single-choice grid's.
 
 * **Editable lists** (2026-10-21): 15 grids with tick boxes, spinners and select-all headers, switched
@@ -869,7 +869,7 @@ interactive header cells, the context menu, copy, export and AI.
     row (else enters the cells), and Left collapses an expanded one (else goes to its parent row).
     The grid expands and collapses through the expander column's own `FieldUpdater`, so each
     presenter's tree logic is unchanged, as is the expander column's look.
-    `Widgets/Data Grid/DataGridWidget` `TreeKeys` shows it.
+    `Widgets/Data Grid/DataGrid` `TreeKeys` shows it.
   * The marker list's summary rows span five columns with `setRowSpans` (the presenter used to set a
     `td`'s colspan after drawing) and are keyed by severity.
   * Found: `TreeRowHandler` narrows the expander column once rows arrive. `MyDataGrid` filled its
@@ -931,10 +931,10 @@ interactive header cells, the context menu, copy, export and AI.
   * **The old grid.** `MyDataGrid`, `ResizeHandle`, `MoveHandle`, `MyDataGridAiSupport` and
     `DataGridSelectionEventManager` are gone. The page size constant the cell tables borrowed is
     `MyCellTable.DEFAULT_LIST_PAGE_SIZE`. The workbench's `Widgets/Data Grid/DataGrid` stories (the
-    old grid's own, each with a `DataGridWidget` counterpart) went with it; the stories that set the
+    old grid's own, each with a `DataGrid` counterpart) went with it; the stories that set the
     two grids side by side (Behaviour's `…Old`, Row Updates' `CurrentGrid`, Row States' current
     grid, the benchmark's `old` kind) keep only the new grid's half; the cell renderer, view state
-    and split pane stories use `DataGridWidget`, their plays its keys (a row's buttons are reached
+    and split pane stories use `DataGrid`, their plays its keys (a row's buttons are reached
     with Right, not Tab). `DataGridView` stays, with one implementation, as the shared helpers take
     it. None of the forked `cellview` classes could go: `MyCellTable` and the selection models
     still use them all.
@@ -942,8 +942,8 @@ interactive header cells, the context menu, copy, export and AI.
     throughout: rows `data-grid__row--even`, `--odd`, `--selected`, `--keyboard`; header cells
     `--sortable`, with a sortable header's title `data-grid__sort` and `data-grid__sort-name`; the
     keyboard's cell `data-grid__cell--keyboard`; the grid's `data-grid--multiline` and
-    `--header-selection`. The rules `celltable/DataGrid.css` gave the old names (padding, header
-    text, stripes, the sortable header's title) are `DataGridWidget.css`'s under these; the
+    `--header-selection`. The rules `cell-table.css` gave the old names (padding, header
+    text, stripes, the sortable header's title) are `data-grid.css`'s under these; the
     disabled and alert text colours (`dataGridDisabledCell`, `dataGridAlertText`, a column's own
     cell styles, unchanged) are `data-grid.css`'s; and the cell styles that keyed off the old row
     classes (percent bar, red and green text, SVG icons, a disabled spinner, the find cell, the
@@ -967,9 +967,9 @@ interactive header cells, the context menu, copy, export and AI.
     (`TestDataGridComparatorFactory`).
   * **D7 and D10** (2026-10-21), together: D7 alone would send an empty sort on a screen's first
     fetch too, dropping the default sorts presenters put only on the request.
-    * `DataGridWidget.setDefaultSort` shows the default from the start (no event) and puts it back,
+    * `DataGrid.setDefaultSort` shows the default from the start (no event) and puts it back,
       with an event, when a click leaves nothing sorted (`SortCycle.orDefault`).
-      `Widgets/Data Grid/DataGridWidget` `DefaultSort`.
+      `Widgets/Data Grid/DataGrid` `DefaultSort`.
     * `CriteriaUtil.setSortList` always sets the grid's list, empty too.
     * Of the 16 screens that call it, six had a default, and now declare it on the grid with the
       same order: Server Tasks (Age, descending), scheduled processes and the execution schedule
@@ -986,7 +986,7 @@ interactive header cells, the context menu, copy, export and AI.
 
 | # | Question | Decision |
 | --- | --- | --- |
-| 1 | Naming and package | `DataGridWidget<R>` in `stroom.widget.datagrid.client`, with a `DataGridView<R>` interface implemented by both grids during switch-over (§4.1). |
+| 1 | Naming and package | `DataGrid<R>` in `stroom.widget.datagrid.client`, with a `DataGridView<R>` interface implemented by both grids during switch-over (§4.1). |
 | 2 | Scrollbars | Custom overlay thumbs that float over the grid as they do today. The implementation is a native scroller with its scrollbar hidden, plus overlay thumbs, with CSS scroll-driven animations as an enhancement (§4.2, D1). |
 | 3 | Live resize | Live reflow; persist on release (R-CR2, D8). |
 | 4 | Column minimum width | Per column, default 30px (R-CR7, D9). |
@@ -1005,7 +1005,7 @@ interactive header cells, the context menu, copy, export and AI.
 
 ## 11. Lists and trees on the grid (2026-10-22)
 
-**Decision.** Stroom's lists and row trees are built on `DataGridWidget`, not on a separate list
+**Decision.** Stroom's lists and row trees are built on `DataGrid`, not on a separate list
 widget: a cell table, a list or a tree is rows, as the grid's are, and the grid already has what
 they need, tested and measured (row rendering that writes only what changed, virtual rows, paging,
 row keys, the selection rules, the focus kept through redraws, the agreed row looks, tree rows). The
@@ -1046,14 +1046,14 @@ and a typed character to the filter where the host has one, else type-ahead.
 | Explorer, folder picker, document picker, tick tree | `MyCellTable` of flattened open nodes, `ExplorerCell`, no tree roles | tree (tick tree: `aria-checked`) |
 | Asset tree and asset chooser | GWT `Tree` | tree |
 
-**What doesn't:** the menus (`MenuViewImpl`, a `MyCellTable` with menu roles, done in session 3),
+**What doesn't:** the menus (`MenuViewImpl`, then a `MyCellTable` with menu roles, done in session 3; since 23 October 2026 their own `Menu` widget),
 and the drawn trees (the pipeline tree and bar, the expression tree, pathways), which are layouts
 with their own agreed keys (`DraggableTreePanel`, `TreeKeyboard`). While the menus are on
 `MyCellTable`, the forked `cellview` classes stay; moving the menus onto the grid too is for later.
 
 **Order:**
 
-1. Split `DataGridWidget` (2,274 lines) into the grid and its parts (row rendering first), and add
+1. Split `DataGrid` (2,274 lines) into the grid and its parts (row rendering first), and add
    the profile with the grid's as the only one: no change to any grid (every story passes, and the
    screenshots are unchanged).
 2. The listbox profile and type-ahead, with the small lists: the choosers, query history and
@@ -1061,14 +1061,16 @@ with their own agreed keys (`DraggableTreePanel`, `TreeKeyboard`). While the men
 3. The tree profile, with the explorer trees (standard WAI-ARIA tree keys) and the asset trees.
 4. `SelectionList`.
 5. Delete what nothing uses: `FindCellTable`, `CustomCellList`, the selection event managers, and
-   `MyCellTable` if the menus have moved by then.
+   `MyCellTable` once the menus have moved. Done 23 October 2026: the menus are on their own `Menu`
+   widget, and these, `HoverActionMenuCell`, the `Widgets/CellList` stories and the forked
+   `cellview` classes are deleted.
 
 Each list keeps its looks in the row states agreed for lists (`list-row-states`: the grid's rows,
 keyboard focus drawn inside the row) and has its stories switched with it, as the grid's were.
 
 **Progress.**
 
-* **Step 1** (2026-10-22): `DataGridWidget` (2,274 lines) is split into the grid, its rows
+* **Step 1** (2026-10-22): `DataGrid` (2,274 lines) is split into the grid, its rows
   (`GridRows`: drawing the rows, keeping them by key, the focus kept through a redraw, the row
   height), its tree rows (`TreeRows`) and its header (`GridHeader`), with no change to any grid:
   every story passes and every screenshot is as it was.
@@ -1107,7 +1109,7 @@ keyboard focus drawn inside the row) and has its stories switched with it, as th
     (`setStriped`), the result with the focus chosen, Enter or a double click opening it, Up on the
     first back to the filter, Left and Right changing page as they did (`setLeftRightPage`, through
     the keyboard's `Selector.onLeft` and `onRight` for a list).
-  * `DataGridWidget.java` stays under 2,000 lines: type-ahead is `GridRows`'.
+  * `DataGrid.java` stays under 2,000 lines: type-ahead is `GridRows`'.
 * **Step 3, the explorer trees** (2026-10-22): the tree profile (`DataGridProfile.TREE`): a `tree`
   of `treeitem`s, each with `aria-level`, `aria-expanded` and its place among its siblings
   (`aria-posinset`, `aria-setsize`, worked out by `model.TreePositions`, unit tested), its rows'

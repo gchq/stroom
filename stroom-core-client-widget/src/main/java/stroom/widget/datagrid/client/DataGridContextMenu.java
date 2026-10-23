@@ -18,7 +18,6 @@ package stroom.widget.datagrid.client;
 
 import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.grid.client.HasContextMenus;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
@@ -44,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-/// The menu [DataGridWidget] shows on a right-click (design R-M1 to R-M6), replicating
+/// The menu [DataGrid] shows on a right-click (design R-M1 to R-M6), replicating
 /// `MyDataGrid`'s: the cell's own items, link items, Copy, Export Table and Ask Stroom AI About.
 ///
 /// Cell text comes from rendering the row data, not from the DOM, so a virtual grid copies and
@@ -55,10 +54,10 @@ final class DataGridContextMenu<R> {
 
     private static final String CSV_FILE_NAME = "table.csv";
 
-    private final DataGridWidget<R> grid;
+    private final DataGrid<R> grid;
 
     /// @param grid The grid the menu is for.
-    DataGridContextMenu(final DataGridWidget<R> grid) {
+    DataGridContextMenu(final DataGrid<R> grid) {
         this.grid = grid;
     }
 

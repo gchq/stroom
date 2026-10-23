@@ -16,8 +16,6 @@
 
 package stroom.widget.util.client;
 
-import com.google.gwt.core.client.Duration;
-
 import java.util.Locale;
 import java.util.function.IntFunction;
 
@@ -41,8 +39,14 @@ public final class TypeAhead {
     /// @param labelOf Gives a row's label, or null for a row that can't be gone to (e.g. a separator).
     /// @return The row to go to, or -1 if none matches (the focus stays where it is).
     public int next(final String text, final int current, final int count, final IntFunction<String> labelOf) {
-        return next(text, Duration.currentTimeMillis(), current, count, labelOf);
+        return next(text, now(), current, count, labelOf);
     }
+
+    // The time in milliseconds by the page's monotonic clock, which neither a change to the
+    // computer's clock nor a fixed Date (e.g. a test's) affects
+    private static native double now() /*-{
+        return $wnd.performance.now();
+    }-*/;
 
     /// As [#next(String, int, int, IntFunction)], at a given time (for tests).
     ///

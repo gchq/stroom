@@ -31,8 +31,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -54,7 +54,7 @@ public class DocumentCreatePermissionsListPresenter
         extends MyPresenterWidget<DocumentCreatePermissionsListView> {
 
     private final ClientSecurityContext securityContext;
-    private final DataGridWidget<DocumentType> dataGrid;
+    private final DataGrid<DocumentType> dataGrid;
     private final MultiSelectionModelImpl<DocumentType> selectionModel;
 
     private final DocumentTypeCache documentTypeCache;
@@ -72,11 +72,11 @@ public class DocumentCreatePermissionsListPresenter
         this.documentTypeCache = documentTypeCache;
         this.securityContext = securityContext;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Document Create Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridWidgetSelectionEventManager<DocumentType> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setTable(dataGrid);
 

@@ -16,10 +16,10 @@
 
 package stroom.data.client.presenter;
 
-import stroom.data.grid.client.OrderByColumn;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;

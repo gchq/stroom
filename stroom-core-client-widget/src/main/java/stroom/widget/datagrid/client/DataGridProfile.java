@@ -16,7 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
-/// What a [DataGridWidget] is to assistive technology, and so how it is drawn and which keys it has
+/// What a [DataGrid] is to assistive technology, and so how it is drawn and which keys it has
 /// (`DATA_GRID_DESIGN.md` §11). The rows, their rendering, paging, selection and focus are the same
 /// for every profile; a list is not told as a grid of one column.
 public enum DataGridProfile {
@@ -33,7 +33,7 @@ public enum DataGridProfile {
 
     /// A tree (`tree`) of rows (`treeitem`s, each saying its level, whether it is expanded, and its
     /// place among its siblings), with no header and no cells to move into. Its rows come from a
-    /// function (see [DataGridWidget#setTreeRows]); Right and Left expand and collapse, or move to
+    /// function (see [DataGrid#setTreeRows]); Right and Left expand and collapse, or move to
     /// the first child and the parent, and `*` expands every sibling. Typing goes to the next row
     /// starting with what is typed.
     TREE("tree", "treeitem", null, false);

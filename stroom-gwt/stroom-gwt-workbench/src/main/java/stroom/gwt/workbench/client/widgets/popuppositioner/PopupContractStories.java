@@ -63,11 +63,11 @@ public final class PopupContractStories {
     private static final String QUICK_FILTER_PANEL = ".help-popup:not(.help-popup--markdown)";
     // A quick filter's help button
     private static final String QUICK_FILTER_HELP = ".quick-filter__toolbar button[title='Quick Filter Syntax Help']";
-    // Stroom's menus and submenus are each a `popup` (`SimplePopup`) holding a cell table of
+    // Stroom's menus and submenus are each a `popup` (`SimplePopup`) holding a `Menu` of
     // `menu__item` rows
     private static final String MENU_PANEL = ".popup--floating:has(.menu__item)";
-    private static final String MENU_ROW = ".menu > tbody > tr";
-    // A row's content, which the menu's cell table handles mouse events on (not on the row)
+    private static final String MENU_ROW = ".menu > .menu__row";
+    // A row's content, which the menu handles mouse events on
     private static final String MENU_ITEM = ".menu__item";
     private static final String MENU_TEXT = ".menu__text";
     private static final String OUTER_PANEL = ".popup--floating:has(.cascade-outer-panel)";
@@ -524,7 +524,7 @@ public final class PopupContractStories {
     /// Open the root menu and the submenu of its parent row.
     private static void openSubmenu(final Play play) {
         openPopup(play, MENU_CASE);
-        // Stroom's Menu focuses the root's first row when it is shown, so one ArrowDown reaches
+        // Stroom's `MenuManager` focuses the root's first row when it is shown, so one ArrowDown reaches
         // "Parent", and moving onto a parent row opens its submenu at once. ArrowRight then moves
         // the focus into the submenu, which can only take it once it is shown, so the keys are
         // pressed one at a time.

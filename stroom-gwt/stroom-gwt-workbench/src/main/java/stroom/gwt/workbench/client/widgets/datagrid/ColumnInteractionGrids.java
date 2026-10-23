@@ -18,8 +18,6 @@ package stroom.gwt.workbench.client.widgets.datagrid;
 
 import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.grid.client.Heading;
-import stroom.data.grid.client.HeadingListener;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRows.Person;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -29,7 +27,9 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.Heading;
+import stroom.widget.datagrid.client.HeadingListener;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/// Grids for the `Widgets/Data Grid/DataGridWidget` stories of the header's pointer interactions
+/// Grids for the `Widgets/Data Grid/DataGrid` stories of the header's pointer interactions
 /// and the built-in context menu (design sections 5.3 to 5.5 and 5.8), with their plays.
 ///
 /// The plays drive the grid with pointer events, as a user's mouse would, and check what the grid
@@ -91,7 +91,7 @@ final class ColumnInteractionGrids {
     /// The people grid with a heading listener that records what the grid tells it. ID, Name, Role
     /// and Age can be resized and moved; Active is fixed.
     static Widget resizeAndReorder(final StoryContext context) {
-        final DataGridWidget<Person> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         addColumns(grid);
@@ -182,7 +182,7 @@ final class ColumnInteractionGrids {
     /// The same grid with resizing and moving switched off, as the dashboard does outside design
     /// mode.
     static Widget resizeAndReorderDisabled(final StoryContext context) {
-        final DataGridWidget<Person> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         addColumns(grid);
@@ -215,7 +215,7 @@ final class ColumnInteractionGrids {
     /// header's cell, a change fires its updater, and the grid neither takes the focus nor treats
     /// the keys as its own.
     static Widget headerInput(final StoryContext context) {
-        final DataGridWidget<Person> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<Person> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);
@@ -248,7 +248,7 @@ final class ColumnInteractionGrids {
         play.expect(play.spy(ON_FILTER_CHANGE)).toHaveBeenCalledTimes(1);
     }
 
-    private static void addColumns(final DataGridWidget<Person> grid) {
+    private static void addColumns(final DataGrid<Person> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
                         .rightAligned()
                         .build(),
@@ -275,7 +275,7 @@ final class ColumnInteractionGrids {
     /// send: the text comes from the row data, so rows that are not rendered are included.
     static Widget contextMenu(final StoryContext context) {
         final SimpleEventBus eventBus = new SimpleEventBus();
-        final DataGridWidget<Person> grid = new DataGridWidget<>(eventBus);
+        final DataGrid<Person> grid = new DataGrid<>(eventBus);
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setVirtual(true);
