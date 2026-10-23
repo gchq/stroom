@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The pipeline write tools' helpers (the Stroom MCP server's `tools/pipeline_writes.py`, and its tests in
@@ -366,6 +367,17 @@ class TestPipelineWrites {
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageStartingWith("['schemaFilter'] validate the pipeline's output against its schema")
                 .hasMessageContaining("Fix the output instead");
+    }
+
+    @Test
+    void aPropertyOfAnElementTheTemplateDoesNotHaveIsNotValidation() {
+        // As create_pipeline replace_parser='XMLFragmentParser' sets the new parser's text converter: seen in the
+        // evaluation set's XML fragment cases, the element's missing type failed the call.
+        final Map<String, String> types = Map.of("dsParser", "DSParser", "schemaFilter", "SchemaFilter");
+
+        assertThatCode(() -> PipelineWrites.keepValidation(types, List.of(
+                PropertyValue.document("xmlFragmentParser", "textConverter", "tc", "TextConverter"))))
+                .doesNotThrowAnyException();
     }
 
     @Test
