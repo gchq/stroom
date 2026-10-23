@@ -24,14 +24,18 @@ import jakarta.inject.Provider;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /// Asks the user of a Stroom AI chat questions as a form in the chat ([McpElicitations]), as long as they are
 /// watching it: while they are away (an unattended run) nothing is asked.
+///
+/// One is made for each tool call, so it can tell whether the call asked the run to stop.
 public final class ChatUserQuestions implements UserQuestions {
 
     private final int chatId;
     private final Provider<McpElicitations> elicitationsProvider;
     private final Provider<AiChatRunManager> runManagerProvider;
+    private volatile AiChatRunManager.WaitingForUserException waitingForUser;
 
     /// @param chatId               The chat.
     /// @param elicitationsProvider Shows forms in the chat and waits for the answers.
@@ -65,6 +69,16 @@ public final class ChatUserQuestions implements UserQuestions {
                             final String callId,
                             final String intro,
                             final Map<String, Object> form) {
-        return elicitationsProvider.get().askUser(chatId, toolName, callId, intro, form);
+        try {
+            return elicitationsProvider.get().askUser(chatId, toolName, callId, intro, form);
+        } catch (final AiChatRunManager.WaitingForUserException e) {
+            waitingForUser = e;
+            throw e;
+        }
+    }
+
+    @Override
+    public Optional<AiChatRunManager.WaitingForUserException> waitingForUser() {
+        return Optional.ofNullable(waitingForUser);
     }
 }

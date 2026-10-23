@@ -17,9 +17,11 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiToolCategory;
 
@@ -29,7 +31,9 @@ import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +41,8 @@ import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 class TestLangChain4jTools {
 
@@ -161,6 +167,38 @@ class TestLangChain4jTools {
     }
 
     @Test
+    void theRunStopsForAFormTheToolAskedEvenIfTheToolTookTheStopForAFailure() {
+        // As get_field_conventions did: its catch-all gave the stop as a refusal, the agent called again, and the
+        // chat's forms stacked up.
+        final AiChatRunManager.WaitingForUserException stop = new AiChatRunManager.WaitingForUserException(
+                "Questions in chat 4 need answers", AiChatRunStopReason.NEEDS_ANSWERS);
+        final McpElicitations elicitations = Mockito.mock(McpElicitations.class);
+        Mockito.when(elicitations.askUser(anyInt(), any(), any(), any(), any())).thenThrow(stop);
+
+        assertThatThrownBy(() -> LangChain4jTools.executor(tool(TestLangChain4jTools::askTakingFailuresAsRefusals),
+                askingContexts(elicitations)::forMemoryId).result(request("{}"), 4))
+                .isSameAs(stop);
+    }
+
+    @Test
+    void aFormAnsweredAlreadyDoesNotStopTheRun() {
+        final McpElicitations elicitations = Mockito.mock(McpElicitations.class);
+        Mockito.when(elicitations.askUser(anyInt(), any(), any(), any(), any()))
+                .thenReturn(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("q", "Lucene")));
+
+        assertThat(LangChain4jTools.executor(tool(TestLangChain4jTools::askTakingFailuresAsRefusals),
+                askingContexts(elicitations)::forMemoryId).result(request("{}"), 4).text())
+                .isEqualTo("answered ACCEPT");
+    }
+
+    @Test
+    void aToolThatAsksNothingDoesNotStopTheRun() {
+        assertThat(LangChain4jTools.executor(tool((call, context) -> ToolResult.error("refused: no")),
+                askingContexts(Mockito.mock(McpElicitations.class))::forMemoryId).result(request("{}"), 4).text())
+                .isEqualTo("refused: no");
+    }
+
+    @Test
     void theExecutorGivesTheWholeResultToTheAgentLoopAndOnlyItsTextToLangChain4j() {
         final ToolUserAction action = new ToolUserAction("create-query-1", "create_query", Map.of("name", "n"));
         final ToolResult offered = ToolResult.text("offered").withUserAction(action);
@@ -179,6 +217,23 @@ class TestLangChain4jTools {
                     assertThat(result.text()).isEqualTo("Error running built-in tool 't': kaboom");
                     assertThat(result.userActions()).isEmpty();
                 });
+    }
+
+    // Asks the user, and gives any failure as a refusal, as many tools' catch-alls do.
+    private static ToolResult askTakingFailuresAsRefusals(final ToolCall call, final ToolCallContext context) {
+        try {
+            final ElicitResult answer = context.userQuestions().ask("t", call.id(), "Which?", Map.of());
+            return ToolResult.text("answered " + answer.action());
+        } catch (final RuntimeException e) {
+            return ToolResult.error("refused: " + e.getMessage());
+        }
+    }
+
+    // Contexts in which the user is watching, and asked with the forms given.
+    private static ChatToolCallContexts askingContexts(final McpElicitations elicitations) {
+        final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+        Mockito.when(runManager.isUnattended(anyInt())).thenReturn(false);
+        return new ChatToolCallContexts(Mockito.mock(ChatWorkspace.class), () -> elicitations, () -> runManager);
     }
 
     private static StroomTool tool(final BiFunction<ToolCall, ToolCallContext, ToolResult> run) {
