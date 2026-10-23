@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -476,10 +477,13 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     // For a document that is the tab the user attached with unsaved changes, a note that what was read is as saved,
     // and where the tab's content as edited is.
     private String savedVersionNote(final ToolCallContext context, final DocRef docRef) {
-        if (tabSnapshots == null) {
+        // Only a chat has tabs the user attached: an MCP session (which has a workspace, but is no chat) reads
+        // documents as saved, as the Stroom MCP server's describe_document did.
+        final OptionalInt chatId = context.session().chatId();
+        if (tabSnapshots == null || chatId.isEmpty()) {
             return "";
         }
-        return tabSnapshots.forLatestQuestion(context.session().requireChatId(NAME))
+        return tabSnapshots.forLatestQuestion(chatId.getAsInt())
                 .filter(TabSnapshots.StoredTabSnapshot::dirty)
                 .filter(snapshot -> snapshot.docRef() != null
                                     && docRef.getUuid().equals(snapshot.docRef().getUuid()))
@@ -635,9 +639,12 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             return "A dictionary has no part '" + part + "'. Leave part out for its words combined with its "
                    + "imports', or give part 'own' for only its own words.";
         }
-        // While the dictionary is the tab the user attached with unsaved changes, its own words are as edited there.
-        final UnsavedPart unsaved = NullSafe.get(tabSnapshots, snapshots ->
-                snapshots.unsavedPart(context.session().requireChatId(NAME), docRef,
+        // While the dictionary is the tab the user attached with unsaved changes, its own words are as edited there
+        // (only a chat has tabs: an MCP session reads it as saved).
+        final OptionalInt chatId = context.session().chatId();
+        final UnsavedPart unsaved = chatId.isEmpty()
+                ? null
+                : NullSafe.get(tabSnapshots, snapshots -> snapshots.unsavedPart(chatId.getAsInt(), docRef,
                         AiTabSnapshotPart.DATA).orElse(null));
         final boolean useUnsaved = unsaved != null && !unsaved.cut();
         final List<String> ownWords = words(useUnsaved

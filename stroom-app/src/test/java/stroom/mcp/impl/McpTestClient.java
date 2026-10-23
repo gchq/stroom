@@ -48,7 +48,7 @@ import java.util.function.Function;
 /// user, under the user's real tool policies and permissions. Only the transport is left out: the client's
 /// requests are made on [McpTools] directly, and the forms Stroom shows the user (MCP elicitation) are answered by a
 /// stand-in for the user, who agrees to everything unless told otherwise.
-final class McpTestClient {
+public final class McpTestClient {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpTestClient.class);
 
@@ -84,19 +84,19 @@ final class McpTestClient {
     }
 
     /// @param user How the user answers each form from now on.
-    void answeringWith(final Function<ElicitFormRequest, ElicitResult> user) {
+    public void answeringWith(final Function<ElicitFormRequest, ElicitResult> user) {
         this.user = user;
     }
 
     /// @return Every form the user has been shown, in order.
-    List<ElicitFormRequest> forms() {
+    public List<ElicitFormRequest> forms() {
         synchronized (forms) {
             return List.copyOf(forms);
         }
     }
 
     /// @return The tools the session is offered (`tools/list`).
-    List<String> toolNames() {
+    public List<String> toolNames() {
         return securityContext.asUserResult(session.owner(), () -> mcpTools.list(session)).stream()
                 .map(Tool::name)
                 .toList();
@@ -107,7 +107,7 @@ final class McpTestClient {
     /// @param tool      The tool's name.
     /// @param arguments Its arguments.
     /// @return Its result.
-    CallToolResult call(final String tool, final Map<String, Object> arguments) {
+    public CallToolResult call(final String tool, final Map<String, Object> arguments) {
         final CallToolRequest request = new CallToolRequest(tool, arguments);
         final CallToolResult result = securityContext.asUserResult(session.owner(),
                 () -> mcpTools.call(session, exchange, request));
@@ -121,7 +121,7 @@ final class McpTestClient {
     /// @param arguments Its arguments.
     /// @return Its result, as JSON.
     @SuppressWarnings("unchecked")
-    Map<String, Object> json(final String tool, final Map<String, Object> arguments) {
+    public Map<String, Object> json(final String tool, final Map<String, Object> arguments) {
         final CallToolResult result = call(tool, arguments);
         final String text = text(result);
         if (Boolean.TRUE.equals(result.isError())) {
@@ -139,7 +139,7 @@ final class McpTestClient {
 
     /// @param result A tool's result.
     /// @return Its text.
-    static String text(final CallToolResult result) {
+    public static String text(final CallToolResult result) {
         final StringBuilder sb = new StringBuilder();
         for (final Object content : NullSafe.list(result.content())) {
             if (content instanceof final TextContent text) {
@@ -154,7 +154,7 @@ final class McpTestClient {
     ///
     /// @param form The form.
     /// @return The user's answer.
-    static ElicitResult agree(final ElicitFormRequest form) {
+    public static ElicitResult agree(final ElicitFormRequest form) {
         final Map<String, Object> content = new LinkedHashMap<>();
         final Object properties = NullSafe.map(form.requestedSchema()).get("properties");
         if (properties instanceof final Map<?, ?> fields) {
@@ -172,7 +172,7 @@ final class McpTestClient {
     ///
     /// @param form The form.
     /// @return The user's answer.
-    static ElicitResult decline(final ElicitFormRequest form) {
+    public static ElicitResult decline(final ElicitFormRequest form) {
         return new ElicitResult(ElicitResult.Action.DECLINE, null, null);
     }
 

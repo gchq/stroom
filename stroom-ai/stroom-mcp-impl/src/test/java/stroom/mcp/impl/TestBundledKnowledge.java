@@ -104,6 +104,25 @@ class TestBundledKnowledge {
     }
 
     @Test
+    void theBuildInstructionsKeepTheAgentWorkingWithoutAskingFirst() {
+        // The Stroom MCP server's design ("The plan lives in the server, with state"): every write's result carries
+        // next, and done false until promotion, and the instructions tell the agent to keep going; the user is asked
+        // in the server's forms, or for what only they can give, not in the chat first. The chat is given the same
+        // text as an MCP client, so the rules hold whichever runs the model.
+        final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
+        assertThat(text)
+                .contains("One tool call is never the whole job: every write tool's result carries `next`, the "
+                          + "plan's next step, and `done: false` until promotion")
+                .contains("Keep going until `next` says promote.")
+                .contains("end your turn only for the user (a form, a paste, `user_actions`, promotion)")
+                .contains("propose it by calling the tool, not by asking in the chat first")
+                .contains("Ask only what you can't decide from the result, the standing instructions or what the "
+                          + "user has said, and not what a form from this server will ask; then carry on with "
+                          + "their answers.");
+        assertThat(new BundledKnowledge().buildInstructions()).contains(BundledKnowledge.serverInstructions());
+    }
+
+    @Test
     void noMergedToolIsATool() {
         // Each is now a built-in tool's part: find_documents is folder_contents name= (find_in_content for
         // content), describe_document is read_document (with document_links and document_documentation),
