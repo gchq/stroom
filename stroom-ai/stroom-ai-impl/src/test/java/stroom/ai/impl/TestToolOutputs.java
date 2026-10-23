@@ -197,6 +197,54 @@ class TestToolOutputs {
         assertThat(stub).doesNotContain("IMPORTANT").doesNotContain("must be shown");
     }
 
+    @Test
+    void theStubOfAResultRepeatsTheNextAndHintItEndsWith() {
+        // As draft_translation_mapping gives it: a large mapping, then what to do next, last.
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", Map.of("events", "x".repeat(5_000)));
+        for (int i = 0; i < 50; i++) {
+            result.put("field" + i, "value " + i);
+        }
+        result.put("next", Map.of("tool", "build_translation_xslt", "args", Map.of("build", "b1")));
+        result.put("hint", "Save the mapping with build_translation_xslt, then step the sample.");
+        final String saved = ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false));
+
+        final String stub = ToolOutputs.stub(saved, "/outputs/turn-1/call-2.txt");
+
+        // Beyond the preview's lines.
+        assertThat(saved.indexOf("\"next\"")).isGreaterThan(ToolOutputs.PREVIEW_CHARS);
+        assertThat(stub)
+                .contains("Its next: {")
+                .contains("\"tool\":\"build_translation_xslt\"")
+                .contains("\"build\":\"b1\"")
+                .contains("Its hint: Save the mapping with build_translation_xslt, then step the sample.")
+                .doesNotContain("IMPORTANT")
+                .hasSizeLessThan(ToolOutputs.MAX_INLINE_CHARS);
+    }
+
+    @Test
+    void aLongNextOrHintIsCutInTheStub() {
+        final String output = reply("ok", "data", "x".repeat(5_000), "next", "n".repeat(5_000),
+                "hint", "h".repeat(5_000));
+
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(output), "/p");
+
+        assertThat(stub)
+                .contains("Its next: " + "n".repeat(ToolOutputs.MAX_NEXT_CHARS) + "…")
+                .contains("Its hint: " + "h".repeat(ToolOutputs.MAX_HINT_CHARS) + "…")
+                .doesNotContain("n".repeat(ToolOutputs.MAX_NEXT_CHARS + 1))
+                .doesNotContain("h".repeat(ToolOutputs.MAX_HINT_CHARS + 1));
+    }
+
+    @Test
+    void theStubOfAResultWithoutNextOrHintSaysNothingOfThem() {
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(reply("ok", "data", "x".repeat(5_000))), "/p");
+
+        assertThat(stub).doesNotContain("Its next:").doesNotContain("Its hint:").doesNotContain("what to do next");
+        assertThat(ToolOutputs.stub("[\"next\", \"" + "x".repeat(5_000) + "\"]", "/p"))
+                .doesNotContain("Its next:");
+    }
+
     // A JSON object of the given status and field name/value pairs, on one line, as an MCP server gives it.
     private static String reply(final String status, final String... namesAndValues) {
         final Map<String, String> fields = new LinkedHashMap<>();
