@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsProxy;
+import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsListener;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
@@ -248,11 +248,11 @@ public class ExplorerNodeEditTagsPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ExplorerNodeEditTagsProxy {
+    public static final class ExplorerNodeEditTagsListener {
 
 
         @Inject
-        public ExplorerNodeEditTagsProxy(final EventBus eventBus,
+        public ExplorerNodeEditTagsListener(final EventBus eventBus,
                                          final Provider<ExplorerNodeEditTagsPresenter> presenter) {
             eventBus.addHandler(ShowEditNodeTagsDialogEvent.getType(), event -> presenter.get().onCreate(event));
         }

@@ -137,7 +137,7 @@ return harness.asWidget();
 ```
 
 A screen opened by an event is shown by registering the presenter as the event's handler and
-firing the event, as its proxy would; a tab's content (not a popup) is added with
+firing the event, as its listener would; a tab's content (not a popup) is added with
 `harness.addContent(presenter)`, which fills the canvas (the full page height, as Stroom's content
 pane does) and unbinds the presenter on re-render.
 
@@ -476,8 +476,8 @@ RestFixtures.builder()
   area's comment. Its modules mirror Stroom's GIN modules (`XxxScreenModule` for
   `stroom...gin.XxxModule`) with the `bindPresenterWidget`/`bindSharedView`/`bind(X)` lines
   copied, plugins (`bindPlugin`), eager singletons and app services (`ClientSecurityContext`,
-  `LoginManager`) left out, and each `bindPresenter(P, V, VImpl, Proxy)` turned into
-  `bindPresenterWidget(P, V, VImpl)` plus a `@Provides` method returning a null proxy (the story
+  `LoginManager`) left out, and each `bindPresenter(P, V, VImpl, Listener)` turned into
+  `bindPresenterWidget(P, V, VImpl)` (the story
   registers the presenter as its event's handler instead). Shared widgets (pager views, menus, tool
   tips, editors, expression trees, the explorer drop-downs, date pickers) are bound once, in
   `ScreenViewsModule`.
@@ -593,13 +593,13 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `create(context, fixtures, options)` builds the harness (with `realAlerts()`);
   `start(initialDocRef)` then logs in as Stroom does: every main menu plugin, the
   Dictionary/Feed/Folder document plugins and `DocumentPluginEventManager` are created, the dialogs
-  their proxies would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
+  their listeners would show are registered lazily (Find, Recent Items, New, Copy, Move, Rename, Info,
   Export, Edit Tags), then the splash screen, the initial activity chooser and `ShowMainEvent`,
   which shows the main view and the explorer and opens the initial document (a deep link).
   `startFullScreen(docRef)` is Stroom's embedded view instead. Reuse it for any story about the
   shell, the explorer, the main menu or opening documents from the explorer.
   The main view is made with the explorer and the tab pane in it; for `ShowMainEvent` the shell
-  adds it to the story, as its proxy puts it in the page, and it shows the explorer
+  adds it to the story, as its listener puts it in the page, and it shows the explorer
   (`MainPresenter.onShowMain`). Stories that only need tabs can use `harness.addContent(tabPane)`
   instead. Its ginjector adds `ShellAppScreenModule` (the main view,
   `NavigationPresenter`, About, User Preferences, Welcome, current password and Feed), and it
@@ -641,7 +641,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat
   with `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`. It creates the
-  presenter on the first event, as its proxy does, i.e. after start-up.
+  presenter on the first event, as its listener does, i.e. after start-up.
 
 ## Play functions
 

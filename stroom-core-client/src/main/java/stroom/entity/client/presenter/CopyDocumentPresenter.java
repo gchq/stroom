@@ -19,7 +19,7 @@ package stroom.entity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
+import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentListener;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
@@ -157,11 +157,11 @@ public class CopyDocumentPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class CopyDocumentProxy {
+    public static final class CopyDocumentListener {
 
 
         @Inject
-        public CopyDocumentProxy(final EventBus eventBus, final Provider<CopyDocumentPresenter> presenter) {
+        public CopyDocumentListener(final EventBus eventBus, final Provider<CopyDocumentPresenter> presenter) {
             eventBus.addHandler(ShowCopyDocumentDialogEvent.getType(), event -> presenter.get().onCopy(event));
         }
     }

@@ -25,49 +25,52 @@ import com.google.inject.Singleton;
 /// A GIN module that binds presenters and their views.
 public abstract class AbstractPresenterModule extends AbstractGinModule {
 
-    /// Binds an application screen, made once when first needed and kept, its view, and its proxy,
-    /// which is made when the application starts so that it hears the events the screen handles.
+    /// Binds a presenter made once, when first needed, and kept (e.g. a dialog opened from the main
+    /// menu), its view, and its listener: a class made when the application starts, which hears the
+    /// app-wide events the presenter handles and makes it on the first.
     ///
-    /// @param presenter The screen.
+    /// @param presenter The presenter.
     /// @param view      Its view's interface.
     /// @param viewImpl  Its view.
-    /// @param proxy     Its proxy.
-    /// @param <P>       The screen's type.
+    /// @param listener  Its listener.
+    /// @param <P>       The presenter's type.
     /// @param <V>       The view's type.
     protected <P extends MyPresenterWidget<?>, V extends View> void bindPresenter(final Class<P> presenter,
-                                                                            final Class<V> view,
-                                                                            final Class<? extends V> viewImpl,
-                                                                            final Class<?> proxy) {
+                                                                                  final Class<V> view,
+                                                                                  final Class<? extends V> viewImpl,
+                                                                                  final Class<?> listener) {
         bind(presenter).in(Singleton.class);
         bind(viewImpl).in(Singleton.class);
         bind(view).to(viewImpl);
-        bind(proxy).asEagerSingleton();
+        bind(listener).asEagerSingleton();
     }
 
-    /// Binds an application screen that hears no app-wide events (it is shown by whatever uses it),
-    /// made once when first needed and kept, and its view.
+    /// Binds a presenter made once, when first needed, and kept, that hears no app-wide events (it is
+    /// shown by whatever uses it), and its view.
     ///
-    /// @param presenter The screen.
+    /// @param presenter The presenter.
     /// @param view      Its view's interface.
     /// @param viewImpl  Its view.
-    /// @param <P>       The screen's type.
+    /// @param <P>       The presenter's type.
     /// @param <V>       The view's type.
     protected <P extends MyPresenterWidget<?>, V extends View> void bindPresenter(final Class<P> presenter,
-                                                                            final Class<V> view,
-                                                                            final Class<? extends V> viewImpl) {
+                                                                                  final Class<V> view,
+                                                                                  final Class<? extends V> viewImpl) {
         bind(presenter).in(Singleton.class);
         bind(viewImpl).in(Singleton.class);
         bind(view).to(viewImpl);
     }
 
-    /// Binds an application screen whose view is bound elsewhere, and its proxy.
+    /// Binds a presenter made once, when first needed, and kept, whose view is bound elsewhere, and
+    /// its listener.
     ///
-    /// @param presenter The screen.
-    /// @param proxy     Its proxy.
-    /// @param <P>       The screen's type.
-    protected <P extends MyPresenterWidget<?>> void bindPresenter(final Class<P> presenter, final Class<?> proxy) {
+    /// @param presenter The presenter.
+    /// @param listener  Its listener.
+    /// @param <P>       The presenter's type.
+    protected <P extends MyPresenterWidget<?>> void bindPresenter(final Class<P> presenter,
+                                                                  final Class<?> listener) {
         bind(presenter).in(Singleton.class);
-        bind(proxy).asEagerSingleton();
+        bind(listener).asEagerSingleton();
     }
 
     /// Binds a presenter, made each time one is asked for, and its view.

@@ -17,23 +17,23 @@
 package stroom.entity.client.gin;
 
 import stroom.entity.client.presenter.CopyDocumentPresenter;
-import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
+import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentListener;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.entity.client.presenter.CreateDocumentPresenter;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentListener;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
 import stroom.entity.client.presenter.InfoDocumentPresenter;
-import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentProxy;
+import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentListener;
 import stroom.entity.client.presenter.InfoDocumentPresenter.InfoDocumentView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.entity.client.presenter.MarkdownPreviewPresenter;
 import stroom.entity.client.presenter.MarkdownPreviewPresenter.MarkdownPreviewView;
 import stroom.entity.client.presenter.MoveDocumentPresenter;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
+import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentListener;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.entity.client.presenter.NameDocumentPresenter;
-import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
+import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentListener;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.entity.client.view.CopyDocumentViewImpl;
 import stroom.entity.client.view.CreateDocumentViewImpl;
@@ -51,19 +51,19 @@ public class EntityModule extends AbstractPresenterModule {
         bindPresenter(CreateDocumentPresenter.class,
                 CreateDocumentView.class,
                 CreateDocumentViewImpl.class,
-                CreateDocumentProxy.class);
+                CreateDocumentListener.class);
         bindPresenter(CopyDocumentPresenter.class,
                 CopyDocumentView.class,
                 CopyDocumentViewImpl.class,
-                CopyDocumentProxy.class);
+                CopyDocumentListener.class);
         bindPresenter(MoveDocumentPresenter.class,
                 MoveDocumentView.class,
                 MoveDocumentViewImpl.class,
-                MoveDocumentProxy.class);
+                MoveDocumentListener.class);
         bindPresenter(InfoDocumentPresenter.class,
                 InfoDocumentView.class,
                 InfoDocumentViewImpl.class,
-                InfoDocumentProxy.class);
+                InfoDocumentListener.class);
         bindPresenterWidget(MarkdownEditPresenter.class,
                 MarkdownEditView.class,
                 MarkdownEditViewImpl.class);
@@ -72,6 +72,6 @@ public class EntityModule extends AbstractPresenterModule {
                 MarkdownPreviewViewImpl.class);
 
         bindSharedView(NameDocumentView.class, NameDocumentViewImpl.class);
-        bindPresenter(NameDocumentPresenter.class, NameDocumentProxy.class);
+        bindPresenter(NameDocumentPresenter.class, NameDocumentListener.class);
     }
 }

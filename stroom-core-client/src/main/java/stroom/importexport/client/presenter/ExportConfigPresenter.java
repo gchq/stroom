@@ -229,11 +229,11 @@ public class ExportConfigPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ExportProxy {
+    public static final class ExportListener {
 
 
         @Inject
-        public ExportProxy(final EventBus eventBus, final Provider<ExportConfigPresenter> presenter) {
+        public ExportListener(final EventBus eventBus, final Provider<ExportConfigPresenter> presenter) {
             eventBus.addHandler(ExportConfigEvent.getType(), event -> presenter.get().onExport(event));
         }
     }

@@ -18,7 +18,7 @@ package stroom.entity.client.presenter;
 
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
-import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
+import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentListener;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
@@ -135,10 +135,10 @@ public class MoveDocumentPresenter
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
 
-    public static final class MoveDocumentProxy {
+    public static final class MoveDocumentListener {
 
         @Inject
-        public MoveDocumentProxy(final EventBus eventBus, final Provider<MoveDocumentPresenter> presenter) {
+        public MoveDocumentListener(final EventBus eventBus, final Provider<MoveDocumentPresenter> presenter) {
             eventBus.addHandler(ShowMoveDocumentDialogEvent.getType(), event -> presenter.get().onMove(event));
         }
     }

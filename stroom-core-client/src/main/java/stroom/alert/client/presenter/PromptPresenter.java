@@ -39,10 +39,10 @@ public class PromptPresenter extends MyPresenterWidget<PromptPresenter.PromptVie
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class PromptProxy {
+    public static final class PromptListener {
 
         @Inject
-        public PromptProxy(final EventBus eventBus, final Provider<PromptPresenter> presenter) {
+        public PromptListener(final EventBus eventBus, final Provider<PromptPresenter> presenter) {
             eventBus.addHandler(PromptEvent.getType(), event -> presenter.get().onPrompt(event));
         }
     }

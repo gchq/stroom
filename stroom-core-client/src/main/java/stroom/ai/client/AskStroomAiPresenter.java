@@ -381,10 +381,10 @@ public class AskStroomAiPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class AskStroomAiProxy {
+    public static final class AskStroomAiListener {
 
         @Inject
-        public AskStroomAiProxy(final EventBus eventBus, final Provider<AskStroomAiPresenter> presenter) {
+        public AskStroomAiListener(final EventBus eventBus, final Provider<AskStroomAiPresenter> presenter) {
             eventBus.addHandler(AskStroomAiEvent.getType(), event -> presenter.get().onAsk(event));
             eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> presenter.get().onShow(event));
         }

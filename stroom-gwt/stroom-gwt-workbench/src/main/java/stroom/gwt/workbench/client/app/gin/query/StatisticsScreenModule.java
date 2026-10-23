@@ -27,8 +27,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `StatisticsModule`
 /// (`stroom/statistics/impl/sql/client/gin/StatisticsModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the listener would.
 public class StatisticsScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

@@ -18,7 +18,7 @@ package stroom.core.client.presenter;
 
 import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
-import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
+import stroom.core.client.presenter.FullScreenPresenter.FullScreenListener;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -67,10 +67,10 @@ public class FullScreenPresenter
 
     /// Hears the app-wide events the screen handles, makes the screen when it is first needed, and
     /// shows it in the page.
-    public static final class FullScreenProxy {
+    public static final class FullScreenListener {
 
         @Inject
-        public FullScreenProxy(final EventBus eventBus,
+        public FullScreenListener(final EventBus eventBus,
                                final Provider<CorePresenter> core,
                                final Provider<FullScreenPresenter> presenter) {
             eventBus.addHandler(ShowFullScreenEvent.getType(), event -> {

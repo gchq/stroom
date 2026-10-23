@@ -34,8 +34,8 @@ import com.google.inject.Singleton;
 
 /// The presenter and view bindings of Stroom's `DashboardModule`
 /// (`stroom/dashboard/client/gin/DashboardModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the listener would.
 ///
 /// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
 /// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`

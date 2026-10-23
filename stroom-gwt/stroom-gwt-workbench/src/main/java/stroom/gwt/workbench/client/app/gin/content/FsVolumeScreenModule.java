@@ -26,8 +26,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FsVolumeModule`
 /// (`stroom/data/store/impl/fs/client/gin/FsVolumeModule.java`), without its plugins and app services.
-/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the listener would.
 public class FsVolumeScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

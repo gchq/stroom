@@ -43,8 +43,8 @@ import java.util.Arrays;
 ///
 /// In Stroom the explorer's Info menu item (`DocumentPluginEventManager`) fetches the document's
 /// `ExplorerNodeInfo` with `POST /explorer/v2/info` and fires `ShowInfoDocumentDialogEvent`, which
-/// the presenter's proxy passes on to it; the story does both, with a fixture as the reply,
-/// and registers the presenter (from GIN) as the event's handler in place of the proxy.
+/// the presenter's listener passes on to it; the story does both, with a fixture as the reply,
+/// and registers the presenter (from GIN) as the event's handler in place of the listener.
 public final class DocInfoDialogStories {
 
     private static final DocRef DOC_REF = new DocRef("Dictionary", "dict-uuid-1", "Countries");
@@ -144,7 +144,7 @@ public final class DocInfoDialogStories {
                 .injector(injector)
                 .build();
 
-        // As the presenter's proxy would
+        // As the presenter's listener would
         final InfoDocumentPresenter presenter = injector.getInfoDocumentPresenter();
         harness.addRegistration(harness.getEventBus()
                 .addHandler(ShowInfoDocumentDialogEvent.getType(), presenter));

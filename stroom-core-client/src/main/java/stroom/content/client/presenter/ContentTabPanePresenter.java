@@ -227,10 +227,10 @@ public class ContentTabPanePresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ContentTabPaneProxy {
+    public static final class ContentTabPaneListener {
 
         @Inject
-        public ContentTabPaneProxy(final EventBus eventBus, final Provider<ContentTabPanePresenter> presenter) {
+        public ContentTabPaneListener(final EventBus eventBus, final Provider<ContentTabPanePresenter> presenter) {
             eventBus.addHandler(OpenContentTabEvent.getType(), event -> presenter.get().onOpen(event));
             eventBus.addHandler(CloseContentTabEvent.getType(), event -> presenter.get().onClose(event));
             eventBus.addHandler(SelectContentTabEvent.getType(), event -> presenter.get().onSelect(event));

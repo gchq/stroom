@@ -246,7 +246,7 @@ public final class AskStroomAiDialogStories {
         return CHATS.replace("CHATS", chats).replace("COUNT", String.valueOf(count));
     }
 
-    // As the AI toolbar button does: the presenter handles ShowAskStroomAiEvent (its proxy event)
+    // As the AI toolbar button does: the presenter handles ShowAskStroomAiEvent (its listener event)
     private static AskStroomAiPresenter showPresenter(final ScreenHarness harness,
                                                       final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();

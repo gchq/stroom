@@ -76,7 +76,7 @@ import java.util.function.Supplier;
 /// plugin that adds to the main menu (and binds keyboard shortcuts), the Dictionary, Feed and Folder
 /// document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
-/// the dialogs that the proxies would show for their events (Find, Recent Items, New, Copy, Move,
+/// the dialogs that the listeners would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
 ///
 /// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CorePresenter` do once the harness has
@@ -157,7 +157,7 @@ final class ShellScreen {
     private void createMain() {
         final EventBus eventBus = harness.getEventBus();
 
-        // The document tabs, registered for the content events as their proxy would be
+        // The document tabs, registered for the content events as their listener would be
         final ContentTabPanePresenter tabPane = injector.getContentTabPanePresenter();
         harness.addRegistration(eventBus.addHandler(OpenContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(CloseContentTabEvent.getType(), tabPane));
@@ -181,7 +181,7 @@ final class ShellScreen {
         harness.unbindOnCleanUp(main);
         harness.addCleanUp(() -> cancelRefreshTimer(main));
 
-        // As Stroom shows it for ShowMainEvent, once the user has logged in: its proxy puts it in the
+        // As Stroom shows it for ShowMainEvent, once the user has logged in: its listener puts it in the
         // page (here, the story's), then it shows the explorer
         harness.addRegistration(eventBus.addHandler(ShowMainEvent.getType(), event -> {
             harness.addContent(main);
@@ -266,7 +266,7 @@ final class ShellScreen {
         harness.addCleanUp(plugin::unbind);
     }
 
-    // The dialogs that Stroom's proxies create and show for their events
+    // The dialogs that Stroom's listeners create and show for their events
     private void registerDialogs() {
         final Lazy<FindPresenter> findPresenter = new Lazy<>(injector::getFindPresenter);
         final Lazy<FindInContentPresenter> findInContentPresenter = new Lazy<>(injector::getFindInContentPresenter);
@@ -347,7 +347,7 @@ final class ShellScreen {
 
     // --------------------------------------------------------------------------------
 
-    /// Creates a value when it is first asked for, as a proxy creates its presenter when its
+    /// Creates a value when it is first asked for, as a listener creates its presenter when its
     /// event first fires, and gives the same one after that.
     private static final class Lazy<T> implements Supplier<T> {
 

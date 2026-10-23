@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// The stories answer `POST /explorer/v2/findInContent` and `POST /explorer/v2/fetchHighlights`
 /// (one reply per document, routed by the request's document). The dialog is shown by firing
 /// `ShowFindInContentEvent`, with the presenter (from GIN) as its handler in place of its
-/// proxy.
+/// listener.
 public final class FindInContentDialogStories {
 
     private static final String FIND_IN_CONTENT_PATH = "/explorer/v2/findInContent";
@@ -154,7 +154,7 @@ public final class FindInContentDialogStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As the presenter's proxy would
+            // As the presenter's listener would
             final FindInContentPresenter presenter = harness.unbindOnCleanUp(injector.getFindInContentPresenter());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
                     presenter::onShow));

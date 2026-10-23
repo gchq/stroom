@@ -44,7 +44,7 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AskStroomAiPresenter.class,
                 AskStroomAiView.class,
                 AskStroomAiViewImpl.class,
-                AskStroomAiPresenter.AskStroomAiProxy.class);
+                AskStroomAiPresenter.AskStroomAiListener.class);
         bindPresenterWidget(
                 AskStroomAiConfigPresenter.class,
                 AskStroomAiConfigView.class,

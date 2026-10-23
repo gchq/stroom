@@ -46,7 +46,7 @@ import java.util.Map;
 ///
 /// `POST /explorer/v2/find` is answered by a handler that filters a small fixed set by the
 /// request's `nameFilter`. The dialog is shown by firing `ShowFindEvent`, with the presenter (from
-/// GIN) registered as its handler in place of its proxy.
+/// GIN) registered as its handler in place of its listener.
 public final class FindDialogStories {
 
     // {type, uuid, name, path}
@@ -124,7 +124,7 @@ public final class FindDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        // As the presenter's proxy would
+        // As the presenter's listener would
         final FindPresenter presenter = injector.getFindPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindEvent.getType(), presenter));
         harness.afterStartUp(() -> ShowFindEvent.fire(harness.getHasHandlers()));

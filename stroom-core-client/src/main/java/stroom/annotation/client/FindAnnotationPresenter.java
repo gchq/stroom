@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationProxy;
+import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationListener;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -125,10 +125,10 @@ public class FindAnnotationPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindAnnotationProxy {
+    public static final class FindAnnotationListener {
 
         @Inject
-        public FindAnnotationProxy(final EventBus eventBus, final Provider<FindAnnotationPresenter> presenter) {
+        public FindAnnotationListener(final EventBus eventBus, final Provider<FindAnnotationPresenter> presenter) {
             eventBus.addHandler(ShowFindAnnotationEvent.getType(), event -> presenter.get().onShow(event));
         }
     }

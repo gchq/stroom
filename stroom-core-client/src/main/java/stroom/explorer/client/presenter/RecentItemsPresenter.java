@@ -17,7 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.event.ShowRecentItemsEvent;
-import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
+import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsListener;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -84,11 +84,11 @@ public class RecentItemsPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class RecentItemsProxy {
+    public static final class RecentItemsListener {
 
 
         @Inject
-        public RecentItemsProxy(final EventBus eventBus, final Provider<RecentItemsPresenter> presenter) {
+        public RecentItemsListener(final EventBus eventBus, final Provider<RecentItemsPresenter> presenter) {
             eventBus.addHandler(ShowRecentItemsEvent.getType(), event -> presenter.get().onShowRecentItems(event));
         }
     }

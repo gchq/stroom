@@ -261,10 +261,10 @@ public class MainPresenter
 
     /// Shows the screen in the page, making it when it is first needed: once the user has logged
     /// in, and for a document opened in a tab when it isn't shown (e.g. from the full screen view).
-    public static final class MainProxy {
+    public static final class MainListener {
 
         @Inject
-        public MainProxy(final EventBus eventBus,
+        public MainListener(final EventBus eventBus,
                          final Provider<CorePresenter> core,
                          final Provider<MainPresenter> presenter) {
             eventBus.addHandler(ShowMainEvent.getType(), event -> {

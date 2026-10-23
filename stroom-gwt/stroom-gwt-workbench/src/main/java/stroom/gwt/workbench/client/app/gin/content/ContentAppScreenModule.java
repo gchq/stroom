@@ -33,8 +33,8 @@ import com.google.inject.Singleton;
 /// The bindings of Stroom's app-wide `AppModule` (`stroom-app-gwt`,
 /// `stroom/app/client/gin/AppModule.java`) that the `content` batch's screens need: the Find and
 /// Find In Content dialogs, the tab session chooser, the content tab pane and the content manager.
-/// Presenters that Stroom binds with a proxy are bound with a null proxy: a story shows one by
-/// registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a listener are bound here without one: a story shows one by
+/// registering it as the handler of its event, as the listener would.
 public class ContentAppScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

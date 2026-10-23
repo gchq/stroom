@@ -17,7 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.event.ShowFindEvent;
-import stroom.explorer.client.presenter.FindPresenter.FindProxy;
+import stroom.explorer.client.presenter.FindPresenter.FindListener;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
@@ -96,10 +96,10 @@ public class FindPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindProxy {
+    public static final class FindListener {
 
         @Inject
-        public FindProxy(final EventBus eventBus, final Provider<FindPresenter> presenter) {
+        public FindListener(final EventBus eventBus, final Provider<FindPresenter> presenter) {
             eventBus.addHandler(ShowFindEvent.getType(), event -> presenter.get().onShow(event));
         }
     }

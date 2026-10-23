@@ -19,7 +19,7 @@ package stroom.entity.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
+import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentListener;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
@@ -186,11 +186,11 @@ public class CreateDocumentPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class CreateDocumentProxy {
+    public static final class CreateDocumentListener {
 
 
         @Inject
-        public CreateDocumentProxy(final EventBus eventBus, final Provider<CreateDocumentPresenter> presenter) {
+        public CreateDocumentListener(final EventBus eventBus, final Provider<CreateDocumentPresenter> presenter) {
             eventBus.addHandler(ShowCreateDocumentDialogEvent.getType(), event -> presenter.get().onCreate(event));
         }
     }

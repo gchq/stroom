@@ -128,10 +128,10 @@ public class ImportConfigPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ImportProxy {
+    public static final class ImportListener {
 
         @Inject
-        public ImportProxy(final EventBus eventBus, final Provider<ImportConfigPresenter> presenter) {
+        public ImportListener(final EventBus eventBus, final Provider<ImportConfigPresenter> presenter) {
             eventBus.addHandler(ImportConfigEvent.getType(), event -> presenter.get().onImport(event));
         }
     }

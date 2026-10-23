@@ -65,10 +65,10 @@ public class DependenciesInfoPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class DependenciesInfoProxy {
+    public static final class DependenciesInfoListener {
 
         @Inject
-        public DependenciesInfoProxy(final EventBus eventBus, final Provider<DependenciesInfoPresenter> presenter) {
+        public DependenciesInfoListener(final EventBus eventBus, final Provider<DependenciesInfoPresenter> presenter) {
             eventBus.addHandler(ShowDependenciesInfoDialogEvent.getType(), event -> presenter.get().onShow(event));
         }
     }

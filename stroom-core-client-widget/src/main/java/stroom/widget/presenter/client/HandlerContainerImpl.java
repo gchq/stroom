@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// Registers handlers in [#onBind()] and removes them when unbound. One made by GIN is bound once it
-/// is made (as GWTP's was); one made with `new` is bound by whoever makes it.
+/// is made; one made with `new` is bound by whoever makes it.
 public class HandlerContainerImpl implements HandlerContainer {
 
     private final List<HandlerRegistration> registrations = new ArrayList<>();

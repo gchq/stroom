@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.event.ShowFindInContentEvent;
-import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProxy;
+import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentListener;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -311,10 +311,10 @@ public class FindInContentPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class FindInContentProxy {
+    public static final class FindInContentListener {
 
         @Inject
-        public FindInContentProxy(final EventBus eventBus, final Provider<FindInContentPresenter> presenter) {
+        public FindInContentListener(final EventBus eventBus, final Provider<FindInContentPresenter> presenter) {
             eventBus.addHandler(ShowFindInContentEvent.getType(), event -> presenter.get().onShow(event));
         }
     }

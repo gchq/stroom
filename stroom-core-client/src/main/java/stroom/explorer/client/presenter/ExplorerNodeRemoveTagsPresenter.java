@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
-import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsListener;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
@@ -193,11 +193,11 @@ public class ExplorerNodeRemoveTagsPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ExplorerNodeRemoveTagsProxy {
+    public static final class ExplorerNodeRemoveTagsListener {
 
 
         @Inject
-        public ExplorerNodeRemoveTagsProxy(final EventBus eventBus,
+        public ExplorerNodeRemoveTagsListener(final EventBus eventBus,
                                            final Provider<ExplorerNodeRemoveTagsPresenter> presenter) {
             eventBus.addHandler(ShowRemoveNodeTagsDialogEvent.getType(), event -> presenter.get().onCreate(event));
         }

@@ -65,8 +65,8 @@ import stroom.widget.progress.client.view.ProgressViewImpl;
 /// The presenter and view bindings of Stroom's `StreamStoreModule`
 /// (`stroom/data/client/gin/StreamStoreModule.java`), without its plugins, app services and the
 /// shared widgets that `ScreenViewsModule` binds.
-/// Presenters that Stroom binds with a proxy are bound here as presenter widgets without one: a
-/// story shows one by registering it as the handler of its event, as the proxy would.
+/// Presenters that Stroom binds with a listener are bound here as presenter widgets without one: a
+/// story shows one by registering it as the handler of its event, as the listener would.
 public class StreamStoreScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

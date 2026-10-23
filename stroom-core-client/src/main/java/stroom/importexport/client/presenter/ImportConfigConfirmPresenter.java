@@ -580,10 +580,10 @@ public class ImportConfigConfirmPresenter extends
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class ImportConfirmProxy {
+    public static final class ImportConfirmListener {
 
         @Inject
-        public ImportConfirmProxy(final EventBus eventBus, final Provider<ImportConfigConfirmPresenter> presenter) {
+        public ImportConfirmListener(final EventBus eventBus, final Provider<ImportConfigConfirmPresenter> presenter) {
             eventBus.addHandler(ImportConfigConfirmEvent.getType(), event -> presenter.get().onConfirmImport(event));
         }
     }

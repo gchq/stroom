@@ -18,7 +18,7 @@ package stroom.core.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.core.client.presenter.CorePresenter.CoreProxy;
+import stroom.core.client.presenter.CorePresenter.CoreListener;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -124,10 +124,10 @@ public class CorePresenter extends MyPresenterWidget<CoreView>
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class CoreProxy {
+    public static final class CoreListener {
 
         @Inject
-        public CoreProxy(final EventBus eventBus, final Provider<CorePresenter> presenter) {
+        public CoreListener(final EventBus eventBus, final Provider<CorePresenter> presenter) {
             eventBus.addHandler(TaskStartEvent.getType(), event -> presenter.get().onTaskStart(event));
             eventBus.addHandler(TaskEndEvent.getType(), event -> presenter.get().onTaskEnd(event));
             eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->

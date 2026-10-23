@@ -21,7 +21,7 @@ import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
 import stroom.importexport.client.presenter.DependenciesInfoPresenter;
-import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoProxy;
+import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoListener;
 import stroom.importexport.client.presenter.DependenciesInfoPresenter.DependenciesInfoView;
 import stroom.importexport.client.presenter.DependenciesInfoViewImpl;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
@@ -42,12 +42,12 @@ public class ImportExportConfigModule extends PluginModule {
     protected void configure() {
         // Import.
         bindPlugin(ImportConfigPlugin.class);
-        bind(ImportConfigPresenter.ImportProxy.class).asEagerSingleton();
+        bind(ImportConfigPresenter.ImportListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ImportConfigPresenter.class,
                 ImportConfigView.class,
                 ImportConfigViewImpl.class);
-        bind(ImportConfigConfirmPresenter.ImportConfirmProxy.class).asEagerSingleton();
+        bind(ImportConfigConfirmPresenter.ImportConfirmListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ImportConfigConfirmPresenter.class,
                 ImportConfigConfirmView.class,
@@ -55,7 +55,7 @@ public class ImportExportConfigModule extends PluginModule {
 
         // Export.
         bindPlugin(ExportConfigPlugin.class);
-        bind(ExportConfigPresenter.ExportProxy.class).asEagerSingleton();
+        bind(ExportConfigPresenter.ExportListener.class).asEagerSingleton();
         bindPresenterWidget(
                 ExportConfigPresenter.class,
                 ExportConfigView.class,
@@ -67,7 +67,7 @@ public class ImportExportConfigModule extends PluginModule {
                 DependenciesInfoPresenter.class,
                 DependenciesInfoView.class,
                 DependenciesInfoViewImpl.class,
-                DependenciesInfoProxy.class);
+                DependenciesInfoListener.class);
 
         bindPresenterWidget(
                 DependenciesTabPresenter.class,

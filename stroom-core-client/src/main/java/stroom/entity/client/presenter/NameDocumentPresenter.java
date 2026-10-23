@@ -18,7 +18,7 @@ package stroom.entity.client.presenter;
 
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
-import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
+import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentListener;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -124,10 +124,10 @@ public class NameDocumentPresenter
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class NameDocumentProxy {
+    public static final class NameDocumentListener {
 
         @Inject
-        public NameDocumentProxy(final EventBus eventBus, final Provider<NameDocumentPresenter> presenter) {
+        public NameDocumentListener(final EventBus eventBus, final Provider<NameDocumentPresenter> presenter) {
             eventBus.addHandler(ShowRenameDocumentDialogEvent.getType(), event -> presenter.get().onRename(event));
         }
     }

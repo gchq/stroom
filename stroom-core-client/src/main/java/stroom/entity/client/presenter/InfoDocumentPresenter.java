@@ -164,11 +164,11 @@ public class InfoDocumentPresenter
     // --------------------------------------------------------------------------------
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.
-    public static final class InfoDocumentProxy {
+    public static final class InfoDocumentListener {
 
 
         @Inject
-        public InfoDocumentProxy(final EventBus eventBus, final Provider<InfoDocumentPresenter> presenter) {
+        public InfoDocumentListener(final EventBus eventBus, final Provider<InfoDocumentPresenter> presenter) {
             eventBus.addHandler(ShowInfoDocumentDialogEvent.getType(), event -> presenter.get().onCreate(event));
         }
     }
