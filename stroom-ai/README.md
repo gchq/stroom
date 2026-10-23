@@ -601,10 +601,10 @@ with an external identity provider, through MCP's OAuth sign-in, which the endpo
 `/.well-known/oauth-protected-resource` point it to). Each request runs as that user.
 
 * The user needs the _Use MCP Tools_ permission, and is offered only the tools their MCP tool policies grant
-  (Administration > MCP Tool Policies, which needs _Manage MCP Tool Policies_). The policies govern the chat too:
-  categories (Core, Search, Content, Indexing, Processing, Administration), read-only or read and write, the union
+  (Security > MCP Tool Policies, which needs _Manage MCP Tool Policies_). The policies govern the chat too:
+  categories (Core, Search, Content, Indexing, Processing, Administration), each read-only or read and write, the union
   of every enabled policy covering the user or a group they are in; none means no tools. The upgrade adds one
-  policy, _Everyone: read-only tools_. When a policy changes, open sessions are told to list their tools again.
+  policy, _Default read-only tool policy_. When a policy changes, open sessions are told to list their tools again.
 * A call that changes something needs an MCP client that can show forms (MCP elicitation: one that declares the
   `elicitation` capability when it connects), and asks the user in a form first. A tool that asks the user itself
   before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once. What

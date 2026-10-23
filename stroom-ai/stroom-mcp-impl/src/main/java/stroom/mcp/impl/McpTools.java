@@ -162,8 +162,8 @@ class McpTools {
         final boolean readOnlyCall = tool.isReadOnly(toolCall);
         if (!grants.allowsCall(tool.category(), readOnlyCall)) {
             audit(session, name, arguments, "Not allowed by tool policy", false);
-            return text("Not run: your tool policies allow only the " + tool.category().getDisplayValue()
-                        + " tools and calls that cannot change anything, and this call would change something. "
+            return text("Not run: your tool policies allow the " + tool.category().getDisplayValue()
+                        + " tools only for calls that cannot change anything, and this call would change something. "
                         + "Ask an administrator for a policy that grants read and write.");
         }
         // A change needs the user's agreement in a form: without one, nothing is changed (no id is given to pass

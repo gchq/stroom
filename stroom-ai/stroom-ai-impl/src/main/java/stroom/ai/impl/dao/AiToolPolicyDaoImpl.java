@@ -21,6 +21,7 @@ import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.jooq.tables.records.AiToolPolicyRecord;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.db.util.JooqUtil;
 import stroom.util.exception.DataChangedException;
@@ -63,16 +64,18 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                     .fetch()
                     .forEach(row -> members.computeIfAbsent(row.value1(), id -> new ArrayList<>())
                             .add(userRef(row.value2())));
-            final Map<Integer, List<AiToolCategory>> categories = new HashMap<>();
-            context.select(AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID, AI_TOOL_POLICY_CATEGORY.CATEGORY)
+            final Map<Integer, List<AiToolCategoryGrant>> grants = new HashMap<>();
+            context.select(AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID,
+                            AI_TOOL_POLICY_CATEGORY.CATEGORY,
+                            AI_TOOL_POLICY_CATEGORY.ACCESS)
                     .from(AI_TOOL_POLICY_CATEGORY)
                     .fetch()
-                    .forEach(row -> categories.computeIfAbsent(row.value1(), id -> new ArrayList<>())
-                            .add(AiToolCategory.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(row.value2())));
+                    .forEach(row -> grants.computeIfAbsent(row.value1(), id -> new ArrayList<>())
+                            .add(grant(row.value2(), row.value3())));
             return records.stream()
                     .map(record -> toPolicy(record,
                             members.getOrDefault(record.getId(), List.of()),
-                            categories.getOrDefault(record.getId(), List.of())))
+                            grants.getOrDefault(record.getId(), List.of())))
                     .toList();
         });
     }
@@ -83,7 +86,7 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                 .selectFrom(AI_TOOL_POLICY)
                 .where(AI_TOOL_POLICY.ID.eq(id))
                 .fetchOptional()
-                .map(record -> toPolicy(record, members(context, id), categories(context, id))));
+                .map(record -> toPolicy(record, members(context, id), grants(context, id))));
     }
 
     @Override
@@ -100,7 +103,6 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                     .set(AI_TOOL_POLICY.DESCRIPTION, policy.getDescription())
                     .set(AI_TOOL_POLICY.ENABLED, policy.isEnabled())
                     .set(AI_TOOL_POLICY.ALL_USERS, policy.isAllUsers())
-                    .set(AI_TOOL_POLICY.ACCESS, policy.getAccess().getPrimitiveValue())
                     .returning(AI_TOOL_POLICY.ID)
                     .fetchOne(AI_TOOL_POLICY.ID);
             writeMembersAndCategories(context, newId, policy);
@@ -121,7 +123,6 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                     .set(AI_TOOL_POLICY.DESCRIPTION, policy.getDescription())
                     .set(AI_TOOL_POLICY.ENABLED, policy.isEnabled())
                     .set(AI_TOOL_POLICY.ALL_USERS, policy.isAllUsers())
-                    .set(AI_TOOL_POLICY.ACCESS, policy.getAccess().getPrimitiveValue())
                     .where(AI_TOOL_POLICY.ID.eq(id))
                     .and(AI_TOOL_POLICY.VERSION.eq(policy.getVersion()))
                     .execute();
@@ -154,12 +155,11 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                         .set(AI_TOOL_POLICY_MEMBER.FK_AI_TOOL_POLICY_ID, id)
                         .set(AI_TOOL_POLICY_MEMBER.USER_UUID, uuid)
                         .execute());
-        policy.getCategories().stream()
-                .distinct()
-                .forEach(category -> context.insertInto(AI_TOOL_POLICY_CATEGORY)
-                        .set(AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID, id)
-                        .set(AI_TOOL_POLICY_CATEGORY.CATEGORY, category.getPrimitiveValue())
-                        .execute());
+        policy.getGrants().forEach(grant -> context.insertInto(AI_TOOL_POLICY_CATEGORY)
+                .set(AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID, id)
+                .set(AI_TOOL_POLICY_CATEGORY.CATEGORY, grant.getCategory().getPrimitiveValue())
+                .set(AI_TOOL_POLICY_CATEGORY.ACCESS, grant.getAccess().getPrimitiveValue())
+                .execute());
     }
 
     private static void deleteMembersAndCategories(final DSLContext context, final int id) {
@@ -182,15 +182,18 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                 .toList();
     }
 
-    private static List<AiToolCategory> categories(final DSLContext context, final int id) {
-        return context.select(AI_TOOL_POLICY_CATEGORY.CATEGORY)
+    private static List<AiToolCategoryGrant> grants(final DSLContext context, final int id) {
+        return context.select(AI_TOOL_POLICY_CATEGORY.CATEGORY, AI_TOOL_POLICY_CATEGORY.ACCESS)
                 .from(AI_TOOL_POLICY_CATEGORY)
                 .where(AI_TOOL_POLICY_CATEGORY.FK_AI_TOOL_POLICY_ID.eq(id))
-                .fetch(AI_TOOL_POLICY_CATEGORY.CATEGORY)
-                .stream()
-                .map(AiToolCategory.PRIMITIVE_VALUE_CONVERTER::fromPrimitiveValue)
-                .sorted(Comparator.naturalOrder())
-                .toList();
+                .fetch()
+                .map(row -> grant(row.value1(), row.value2()));
+    }
+
+    private static AiToolCategoryGrant grant(final Byte category, final Byte access) {
+        return AiToolCategoryGrant.of(
+                AiToolCategory.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(category),
+                AiToolAccess.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(access));
     }
 
     private static UserRef userRef(final String uuid) {
@@ -199,7 +202,7 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
 
     private static AiToolPolicy toPolicy(final AiToolPolicyRecord record,
                                          final List<UserRef> members,
-                                         final List<AiToolCategory> categories) {
+                                         final List<AiToolCategoryGrant> grants) {
         return AiToolPolicy.builder()
                 .id(record.getId())
                 .version(record.getVersion())
@@ -212,8 +215,9 @@ public class AiToolPolicyDaoImpl implements AiToolPolicyDao {
                 .enabled(Boolean.TRUE.equals(record.getEnabled()))
                 .allUsers(Boolean.TRUE.equals(record.getAllUsers()))
                 .members(members)
-                .categories(categories.stream().sorted(Comparator.naturalOrder()).toList())
-                .access(AiToolAccess.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.getAccess()))
+                .grants(grants.stream()
+                        .sorted(Comparator.comparing(AiToolCategoryGrant::getCategory))
+                        .toList())
                 .build();
     }
 }

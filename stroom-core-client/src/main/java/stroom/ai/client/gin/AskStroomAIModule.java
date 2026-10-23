@@ -38,6 +38,9 @@ import stroom.ai.client.AiToolPoliciesViewImpl;
 import stroom.ai.client.AiToolPolicyEditPresenter;
 import stroom.ai.client.AiToolPolicyEditPresenter.AiToolPolicyEditView;
 import stroom.ai.client.AiToolPolicyEditViewImpl;
+import stroom.ai.client.AiToolPolicyMembersPresenter;
+import stroom.ai.client.AiToolPolicyMembersPresenter.AiToolPolicyMembersView;
+import stroom.ai.client.AiToolPolicyMembersViewImpl;
 import stroom.ai.client.AskStroomAiConfigPresenter;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
@@ -94,7 +97,7 @@ public class AskStroomAIModule extends PluginModule {
                 AiToolApprovalsView.class,
                 AiToolApprovalsViewImpl.class);
 
-        // Administration > MCP Tool Policies
+        // Security > MCP Tool Policies
         bindPlugin(AiToolPoliciesPlugin.class);
         bindPresenterWidget(
                 AiToolPoliciesPresenter.class,
@@ -104,5 +107,9 @@ public class AskStroomAIModule extends PluginModule {
                 AiToolPolicyEditPresenter.class,
                 AiToolPolicyEditView.class,
                 AiToolPolicyEditViewImpl.class);
+        bindPresenterWidget(
+                AiToolPolicyMembersPresenter.class,
+                AiToolPolicyMembersView.class,
+                AiToolPolicyMembersViewImpl.class);
     }
 }

@@ -20,19 +20,28 @@ import stroom.ai.client.AiToolPoliciesPresenter.AiToolPoliciesView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/// The MCP Tool Policies screen: the list of tool policies.
+/// The MCP Tool Policies screen: above, the list of tool policies beside the categories the selected one grants;
+/// below, the users and groups it covers (in the [AiToolPoliciesPresenter#MEMBERS] slot), and below them the
+/// tool access a chosen user has (in the [AiToolPoliciesPresenter#EFFECTIVE] slot).
 public class AiToolPoliciesViewImpl extends ViewImpl implements AiToolPoliciesView {
 
     private final Widget widget;
 
     @UiField
     SimplePanel listContainer;
+    @UiField
+    SimplePanel categoriesContainer;
+    @UiField
+    SimplePanel membersContainer;
+    @UiField
+    SimplePanel effectiveContainer;
 
     /// @param binder Binds the view's fields to its UiBinder template.
     @Inject
@@ -43,6 +52,20 @@ public class AiToolPoliciesViewImpl extends ViewImpl implements AiToolPoliciesVi
     @Override
     public void setList(final View view) {
         listContainer.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setCategories(final IsWidget categories) {
+        categoriesContainer.setWidget(categories);
+    }
+
+    @Override
+    public void setInSlot(final Object slot, final Widget content) {
+        if (AiToolPoliciesPresenter.MEMBERS.equals(slot)) {
+            membersContainer.setWidget(content);
+        } else if (AiToolPoliciesPresenter.EFFECTIVE.equals(slot)) {
+            effectiveContainer.setWidget(content);
+        }
     }
 
     @Override

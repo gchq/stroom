@@ -19,6 +19,7 @@ package stroom.test;
 import stroom.ai.impl.AiToolPolicyService;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.AiToolCategoryGrant;
 import stroom.ai.shared.AiToolPolicy;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.SecurityContext;
@@ -34,7 +35,6 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -89,8 +89,9 @@ public abstract class AbstractAiIntegrationTest extends StroomIntegrationTest {
         final AiToolPolicy policy = AiToolPolicy.builder()
                 .name(name)
                 .members(Arrays.asList(members))
-                .categories(List.of(AiToolCategory.values()))
-                .access(access)
+                .grants(Arrays.stream(AiToolCategory.values())
+                        .map(category -> AiToolCategoryGrant.of(category, access))
+                        .toList())
                 .build();
         return asUser(administrator(), () -> toolPolicyService.create(policy));
     }

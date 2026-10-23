@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolSummaries;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolSummary;
 import stroom.mcp.impl.tools.PortedToolsModule;
@@ -88,6 +89,10 @@ class TestRealAiToolInjection extends AbstractAiIntegrationTest {
         assertThat(builtInTools.summaries())
                 .extracting(AiToolSummary::getName)
                 .containsExactlyInAnyOrderElementsOf(names);
+        // Each is shown in the MCP Tool Policies screen with its summary, not the description its agent is given.
+        assertThat(ToolSummaries.toolNames()).containsExactlyInAnyOrderElementsOf(names);
+        assertThat(builtInTools.summaries()).allSatisfy(summary -> assertThat(summary.getDescription())
+                .isEqualTo(ToolSummaries.of(summary.getName()).orElseThrow()));
         // The build tools' instructions come with them, from the knowledge McpModule bundles.
         assertThat(builtInTools.buildInstructions(Set.copyOf(names))).isPresent();
     }

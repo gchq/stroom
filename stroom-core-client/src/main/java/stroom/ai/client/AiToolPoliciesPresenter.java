@@ -28,15 +28,22 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
+import stroom.util.shared.string.CaseType;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -47,8 +54,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/// The MCP Tool Policies screen: the tool policies, by name, to add, edit and delete. A tool policy grants the
-/// users and groups it covers the tools in its categories, in the "Ask Stroom AI" chat and over MCP.
+/// The MCP Tool Policies screen: the tool policies, by name, to add, edit and delete, beside the categories the
+/// selected one grants (each opening to its tools); below them the users and groups it covers, and below those the
+/// tool access the policies give a user looked up. A tool policy grants the users and groups it covers the tools in
+/// its categories, in the "Ask Stroom AI" chat and over MCP.
 public class AiToolPoliciesPresenter
         extends ContentTabPresenter<AiToolPoliciesView>
         implements Refreshable {
@@ -57,11 +66,21 @@ public class AiToolPoliciesPresenter
     public static final String TAB_TYPE = "McpToolPolicies";
     /// The screen's name, as its menu item and tab show it.
     public static final String SCREEN_NAME = "MCP Tool Policies";
+    /// The slot holding the users and groups the selected policy covers.
+    public static final String MEMBERS = "MEMBERS";
+    /// The slot holding the effective tool access of a user looked up.
+    public static final String EFFECTIVE = "EFFECTIVE";
 
     private static final AiToolPolicyResource RESOURCE = GWT.create(AiToolPolicyResource.class);
 
     private final RestFactory restFactory;
     private final Provider<AiToolPolicyEditPresenter> editPresenterProvider;
+    private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
+    private final AiToolPolicyMembersPresenter membersPresenter;
+    private final AiToolAccessPanel categoriesPanel;
+    private final AiToolAccessPresenter effectivePresenter;
+    private final InlineSvgButton lookUpButton = new InlineSvgButton();
+    private final Label lookedUp = new Label();
     private final MyDataGrid<AiToolPolicy> dataGrid;
     private final MultiSelectionModelImpl<AiToolPolicy> selectionModel;
     private final ListDataProvider<AiToolPolicy> dataProvider = new ListDataProvider<>();
@@ -70,20 +89,44 @@ public class AiToolPoliciesPresenter
     private final ButtonView deleteButton;
     private final ButtonView refreshButton;
 
-    /// @param eventBus              The event bus.
-    /// @param view                  The screen's view.
-    /// @param pagerView             Holds the list of policies and its buttons.
-    /// @param restFactory           For calling the tool policy API.
-    /// @param editPresenterProvider Provides the dialog for creating and editing a policy.
+    /// @param eventBus                      The event bus.
+    /// @param view                          The screen's view.
+    /// @param pagerView                     Holds the list of policies and its buttons.
+    /// @param restFactory                   For calling the tool policy API.
+    /// @param editPresenterProvider         Provides the dialog for creating and editing a policy.
+    /// @param membersPresenter              The users and groups the selected policy covers.
+    /// @param userRefPopupPresenterProvider Provides the picker for looking up a user's tool access.
+    /// @param effectivePresenter            The effective tool access of a user looked up.
     @Inject
     public AiToolPoliciesPresenter(final EventBus eventBus,
                                    final AiToolPoliciesView view,
                                    final PagerView pagerView,
                                    final RestFactory restFactory,
-                                   final Provider<AiToolPolicyEditPresenter> editPresenterProvider) {
+                                   final Provider<AiToolPolicyEditPresenter> editPresenterProvider,
+                                   final AiToolPolicyMembersPresenter membersPresenter,
+                                   final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider,
+                                   final AiToolAccessPresenter effectivePresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.editPresenterProvider = editPresenterProvider;
+        this.membersPresenter = membersPresenter;
+        this.userRefPopupPresenterProvider = userRefPopupPresenterProvider;
+        categoriesPanel = AiToolAccessPanel.forPolicy(this);
+        view.setCategories(categoriesPanel);
+        this.effectivePresenter = effectivePresenter;
+        effectivePresenter.setHeading("Effective access");
+        lookUpButton.setSvg(SvgImage.SEARCH);
+        lookUpButton.setTitle("Look up a user to find their effective tool permissions");
+        lookedUp.setStyleName("aiToolAccess-lookedUp");
+        final FlowPanel lookUpRow = new FlowPanel();
+        lookUpRow.setStyleName("aiToolAccess-lookUp");
+        lookUpRow.add(lookUpButton);
+        lookUpRow.add(lookedUp);
+        effectivePresenter.addRow(lookUpRow);
+        setInSlot(EFFECTIVE, effectivePresenter);
+        showLookedUp();
+        setInSlot(MEMBERS, membersPresenter);
+        membersPresenter.setOnSaved(saved -> refresh());
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName(SCREEN_NAME);
@@ -100,6 +143,7 @@ public class AiToolPoliciesPresenter
         dataProvider.addDataDisplay(dataGrid);
         enableButtons();
         refresh();
+        fetchTools();
     }
 
     @Override
@@ -120,6 +164,11 @@ public class AiToolPoliciesPresenter
                 onDelete();
             }
         }));
+        registerHandler(lookUpButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onLookUp();
+            }
+        }));
         registerHandler(refreshButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 refresh();
@@ -127,6 +176,7 @@ public class AiToolPoliciesPresenter
         }));
         registerHandler(selectionModel.addSelectionHandler(e -> {
             enableButtons();
+            showSelected();
             if (e.getSelectionType().isDoubleSelect()) {
                 onEdit();
             }
@@ -152,31 +202,6 @@ public class AiToolPoliciesPresenter
                         .withToolTip("Whether the policy grants anything. A disabled policy grants nothing.")
                         .build(),
                 80);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(AiToolPolicyText::covers)
-                        .enabledWhen(AiToolPolicy::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Covers")
-                        .withToolTip("The users and groups the policy covers, or all users.")
-                        .build(),
-                250);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(AiToolPolicyText::categories)
-                        .enabledWhen(AiToolPolicy::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Categories")
-                        .withToolTip("The categories of tools the policy grants.")
-                        .build(),
-                250);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((AiToolPolicy policy) -> policy.getAccess().getDisplayValue())
-                        .enabledWhen(AiToolPolicy::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Access")
-                        .withToolTip("Whether the policy grants only the tools that cannot change anything, "
-                                     + "or all of them.")
-                        .build(),
-                120);
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.textWithTooltipColumnBuilder(AiToolPolicy::getDescription)
                         .enabledWhen(AiToolPolicy::isEnabled)
@@ -199,6 +224,8 @@ public class AiToolPoliciesPresenter
                     dataProvider.setCompleteList(sorted);
                     reselect(selected, sorted);
                     enableButtons();
+                    showSelected();
+                    effectivePresenter.refresh();
                 })
                 .onFailure(restError -> AlertEvent.fireError(
                         this, "Error fetching MCP tool policies: " + restError.getMessage(), null))
@@ -216,6 +243,49 @@ public class AiToolPoliciesPresenter
                     .findFirst()
                     .ifPresent(selectionModel::setSelected);
         }
+    }
+
+    private void fetchTools() {
+        restFactory
+                .create(RESOURCE)
+                .method(AiToolPolicyResource::listTools)
+                .onSuccess(tools -> categoriesPanel.setTools(NullSafe.list(tools)))
+                .onFailure(restError -> AlertEvent.fireError(
+                        this, "Error fetching the tools: " + restError.getMessage(), null))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    // Shows the selected policy's categories and members, or none.
+    private void showSelected() {
+        final AiToolPolicy selected = selectionModel.getSelected();
+        if (selected == null) {
+            categoriesPanel.setHeading("Tool categories: select a policy");
+            categoriesPanel.setGrants(null);
+        } else {
+            categoriesPanel.setHeading("Tool categories granted by '" + selected.getName() + "'"
+                                       + (selected.isEnabled()
+                    ? ""
+                    : " (disabled, so it grants nothing)"));
+            categoriesPanel.setGrants(selected.getGrants());
+        }
+        membersPresenter.setPolicy(selected);
+    }
+
+    private void onLookUp() {
+        userRefPopupPresenterProvider.get().show("Look Up A User", userRef -> {
+            if (userRef != null) {
+                effectivePresenter.setUserRef(userRef);
+                showLookedUp();
+            }
+        });
+    }
+
+    private void showLookedUp() {
+        final UserRef userRef = effectivePresenter.getUserRef();
+        lookedUp.setText(userRef == null
+                ? "Look up a user to see the tools every enabled policy covering them permits."
+                : "Effective access for " + userRef.getType(CaseType.LOWER) + ": " + userRef.toDisplayString());
     }
 
     private void enableButtons() {
@@ -289,5 +359,9 @@ public class AiToolPoliciesPresenter
 
         /// @param view The list of policies, with its buttons.
         void setList(View view);
+
+        /// @param categories The categories the selected policy grants.
+        void setCategories(IsWidget categories);
+
     }
 }

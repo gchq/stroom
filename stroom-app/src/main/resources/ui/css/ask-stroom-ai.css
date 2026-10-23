@@ -2551,3 +2551,59 @@ a.ai-stroom-link::after {
 .askStroomAiViewImpl--showingOverview .askStroomAiViewImpl-taskList {
     display: none !important;
 }
+
+/* The MCP Tool Policies screen: a heading above each panel. */
+.aiToolPolicies-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiToolPolicies-headingText {
+    flex: 1 1 auto;
+    font-weight: bold;
+}
+
+/* The tool search, in a panel's heading row. */
+.aiToolAccess-search {
+    flex: 0 1 260px;
+}
+
+/* A grid of tool access: a row per category, opening to a row per tool. */
+.aiToolAccess-category {
+    font-weight: bold;
+}
+
+.aiToolAccess-access {
+    color: var(--text-color--secondary);
+}
+
+.aiToolAccess-tool {
+    padding-left: 16px;
+}
+
+/* The effective access panel's row for looking up a user. */
+.aiToolAccess-lookUp {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiToolAccess-lookedUp {
+    color: var(--text-color--secondary);
+}
+
+/* A cross in the Read or Write column: not permitted. */
+.aiToolAccess-denied .svgCell-icon svg {
+    color: var(--icon-colour__red);
+}
+
+/* The tool policy dialog's categories: a row each, with the access boxes lined up. */
+.aiToolPolicyEdit-categories td {
+    padding: 2px 12px 2px 0;
+    vertical-align: middle;
+}

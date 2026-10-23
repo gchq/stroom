@@ -1199,7 +1199,7 @@ class TestMcpAgentChat {
         Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_RESULT),
                 results.capture());
         assertThat(JsonUtil.readValue(results.getValue(), ToolResultRecord.class).text())
-                .startsWith("Not run: the user's tool policies allow only the Core tools and calls that cannot "
+                .startsWith("Not run: the user's tool policies allow the Core tools only for calls that cannot "
                             + "change anything");
         Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "memory", "{\"command\":\"write\"}",
                 "Not allowed by tool policy", false, false);

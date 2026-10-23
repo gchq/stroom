@@ -125,7 +125,7 @@ class TestMcpToolsWithRealPolicies extends AbstractAiIntegrationTest {
         // Its call that would save is refused, without asking the user.
         final CallToolResult save = client.call("build_data_splitter", Map.of("sample", SAMPLE, "save_as", "X",
                 "build", BUILD));
-        assertThat(McpTestClient.text(save)).startsWith("Not run: your tool policies allow only the");
+        assertThat(McpTestClient.text(save)).startsWith("Not run: your tool policies allow the");
         // A tool that only writes isn't there at all.
         assertThat(McpTestClient.text(client.call("create_feed", Map.of("build", BUILD, "name", FEED))))
                 .startsWith("Error: there is no tool 'create_feed'");

@@ -103,11 +103,6 @@ public class AiToolPolicy extends TableImpl<AiToolPolicyRecord> {
      */
     public final TableField<AiToolPolicyRecord, Boolean> ALL_USERS = createField(DSL.name("all_users"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
-    /**
-     * The column <code>stroom.ai_tool_policy.access</code>.
-     */
-    public final TableField<AiToolPolicyRecord, Byte> ACCESS = createField(DSL.name("access"), SQLDataType.TINYINT.nullable(false), this, "");
-
     private AiToolPolicy(Name alias, Table<AiToolPolicyRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
