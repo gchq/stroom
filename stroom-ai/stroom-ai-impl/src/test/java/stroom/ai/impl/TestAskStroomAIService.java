@@ -557,6 +557,37 @@ class TestAskStroomAIService {
     }
 
     @Test
+    void testEditMessage_keepsWhatWasAttachedSinceTheLastMessageForTheEditedQuestion() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 10, "sent with q1", 0, null),
+                message(2, AiMessageType.USER_MESSAGE, "q1"),
+                message(3, AiMessageType.AI_RESPONSE, "a1"),
+                message(4, AiMessageType.USER_MESSAGE, "q2"),
+                message(5, AiMessageType.AI_RESPONSE, "a2"),
+                // Attached while the user was editing, so not sent yet.
+                new AiChatMessage(6, 1, 0L, AiMessageType.ATTACHMENT, 60, "attached since", 0, null)));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
+            try {
+                work.accept(null);
+            } catch (final RuntimeException e) {
+                // The answer cannot be worked out with mocks, which is fine here.
+            }
+            return null;
+        });
+
+        service().editMessage(new EditAiMessageRequest(chat, null, 4, "q2 edited", null));
+
+        Mockito.verify(aiService).deleteMessage(4);
+        Mockito.verify(aiService).deleteMessage(5);
+        // Neither attachment goes: one belongs to an earlier question, the other to the edited one.
+        Mockito.verify(aiService, Mockito.never()).deleteAttachment(Mockito.anyInt());
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(6);
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q2 edited");
+    }
+
+    @Test
     void testEditMessage_retryKeepsTheText() {
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(message(1, AiMessageType.USER_MESSAGE, "q1")));
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());

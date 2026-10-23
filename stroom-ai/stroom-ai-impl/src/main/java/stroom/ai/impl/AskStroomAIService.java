@@ -407,9 +407,17 @@ public class AskStroomAIService {
 
         stopAndWait(chatId, AiChatRunStopReason.EDITED);
 
-        // Only what is there now is removed: anything added once the new run has started belongs to it.
+        // Only what is there now is removed: anything added once the new run has started belongs to it. Tables and
+        // documents attached since the user's last message (e.g. while editing this one) haven't been sent yet, so
+        // are sent with the edited question rather than removed with what it replaces.
+        final int lastSentId = messages.stream()
+                .filter(AskStroomAIService::sendsAttachments)
+                .mapToInt(AiChatMessage::getId)
+                .max()
+                .orElse(0);
         final List<AiChatMessage> toRemove = messages.stream()
                 .filter(msg -> msg.getId() >= question.getId())
+                .filter(msg -> msg.getMessageType() != AiMessageType.ATTACHMENT || msg.getId() < lastSentId)
                 .toList();
         final AskStroomAiRequest edited = new AskStroomAiRequest(request.getAiChat(), request.getConfig(), null,
                 newText);
@@ -699,6 +707,13 @@ public class AskStroomAIService {
                 aiService.deleteMessage(message.getId());
             }
         }
+    }
+
+    // True if the message is one the user sent, which takes with it the tables and documents attached before it.
+    private static boolean sendsAttachments(final AiChatMessage message) {
+        return message.getMessageType() == AiMessageType.USER_MESSAGE
+               || message.getMessageType() == AiMessageType.STEER_MESSAGE
+               || message.getMessageType().isQueuedSteer();
     }
 
     /// @return True if the message is the one an attachment belongs to, so goes with it. A question, or a message
