@@ -171,7 +171,8 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                                            + "more, for long records; up to 200,000.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
                                 .chatOnly("The file in /outputs/ to write the events to (default " + DEFAULT_OUT
-                                          + ").")
+                                          + "). With streamId, the records are written there, one after "
+                                          + "another, instead of being returned (none is written without it).")
                                 .build())
                         .build())
                 .build();
@@ -248,9 +249,19 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         final int recordCount = Math.max(1, Math.min(MAX_RECORD_COUNT,
                 Objects.requireNonNullElse(intArg(request, RECORD_COUNT_ARG), DEFAULT_RECORD_COUNT)));
         final String childType = stringArg(request, CHILD_TYPE_ARG);
+        // Records written to a file take nothing from the conversation, so as many are read as may be.
+        final WorkspacePath out = outArg(request);
+        final SessionWorkspace workspace = out != null
+                ? sessionWorkspace(context)
+                : null;
+        if (workspace != null) {
+            workspace.checkWritable(out);
+        }
         final Integer maxChars = intArg(request, MAX_CHARS_ARG);
         final int limit = maxChars == null
-                ? DEFAULT_MAX_CHARS
+                ? (out != null
+                        ? MAX_MAX_CHARS
+                        : DEFAULT_MAX_CHARS)
                 : Math.max(MIN_MAX_CHARS, Math.min(MAX_MAX_CHARS, maxChars));
         final Map<String, Object> result;
         try {
@@ -261,7 +272,28 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             auditLog.streamsViewed(context.session(), List.of(streamId), "Read records of stream " + streamId
                                                                          + " with the " + NAME + " tool");
         }
+        if (workspace != null) {
+            writeRecords(workspace, out, result);
+        }
         return ToolResult.text(JsonUtil.writeValueAsString(result, false)).withStructuredContent(result);
+    }
+
+    // Writes the records read to the file, one after another, in place of them in the result, which says where
+    // they are.
+    private static void writeRecords(final SessionWorkspace workspace,
+                                     final WorkspacePath out,
+                                     final Map<String, Object> result) {
+        final List<String> records = result.get("records") instanceof final List<?> list
+                ? list.stream().map(String::valueOf).toList()
+                : List.of();
+        workspace.write(out, String.join("\n", records) + (records.isEmpty()
+                ? ""
+                : "\n"), null);
+        result.remove("records");
+        result.put("records_read", records.size());
+        result.put("out", out.toString());
+        result.put("note", "The records are in " + out + ", one after another: use grep, read_file, xpath or "
+                           + "search_events on it.");
     }
 
     /// @return The records, with where to read on, as read_stream gave them.
