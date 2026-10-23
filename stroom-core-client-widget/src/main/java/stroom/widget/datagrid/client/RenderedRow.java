@@ -26,8 +26,11 @@ final class RenderedRow {
     final Element element;
     /// The row value it was rendered from.
     Object value;
-    /// The cells' HTML it was last written with, or `null` to force the next write.
-    String html;
+    /// The cells it was last written with, each by its HTML, or `null` to write the whole row next
+    /// time. A cell left out of date while it had the focus keeps the HTML it had.
+    GridHtml.RowCells cells;
+    /// The position of the cell left out of date because the focus was inside it, or `-1`.
+    int staleCell = -1;
     /// The class names it was last given.
     String className;
     /// Its page-relative index, or `-1`.

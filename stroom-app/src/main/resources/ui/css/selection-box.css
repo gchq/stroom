@@ -49,8 +49,11 @@
     background-color: var(--control__background-color);
 }
 
-/* The text box: the named control, and what is typed in a box that can be typed in */
-.selection-box__input {
+/* The text box: the named control, and what is typed in a box that can be typed in. It has no border
+   of its own, not even the focus border a text field gets (text-field.css), which would make the box
+   2px taller while it has the keyboard's focus: the box draws its own */
+.selection-box__input,
+.selection-box__input:focus-visible {
     position: relative;
     border-width: 0 !important;
 }

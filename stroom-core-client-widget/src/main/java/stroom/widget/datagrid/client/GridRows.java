@@ -20,12 +20,15 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.datagrid.client.model.PageState;
+import stroom.widget.datagrid.client.model.RowWritePlan;
 import stroom.widget.datagrid.client.model.VirtualWindow;
 import stroom.widget.util.client.TypeAhead;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.RowStyles;
@@ -105,15 +108,50 @@ final class GridRows<R> {
                 : null;
     }
 
-    /// Forgets the HTML a row was drawn with, so it is written again the next time the rows are
-    /// drawn: for a cell that rewrote its own DOM (e.g. a tick box showing its new tick at once).
+    /// Forgets the HTML a cell was drawn with, so it is written again the next time its row is
+    /// drawn (once the focus has left it, if it has the focus): for a cell that rewrote its own DOM
+    /// (e.g. a tick box showing its new tick at once).
     ///
     /// @param indexOnPage The page-relative row index.
-    void forgetHtml(final int indexOnPage) {
+    /// @param column      The cell's column.
+    void forgetCell(final int indexOnPage, final int column) {
         final RenderedRow rendered = renderedRowsByIndex.get(indexOnPage);
-        if (rendered != null) {
-            rendered.html = null;
+        if (rendered != null && rendered.cells != null) {
+            final int position = rendered.cells.positionOf(column);
+            rendered.cells = position >= 0
+                    ? rendered.cells.withHtml(position, null)
+                    : null;
         }
+    }
+
+    /// Draws a row again once the focus leaves the cell of it that was left out of date while the
+    /// focus was inside it (see [RowWritePlan]), so the cell shows its latest value. A move within
+    /// the cell (e.g. from a spinner's field to its arrows) leaves it as it is.
+    ///
+    /// @param event The `focusout` event.
+    void onFocusOut(final NativeEvent event) {
+        if (!Element.is(event.getEventTarget())) {
+            return;
+        }
+        final Element target = Element.as(event.getEventTarget());
+        final Element rowElement = grid.findAncestorWithAttribute(target, GridHtml.DATA_ROW);
+        if (rowElement == null) {
+            return;
+        }
+        final int index = DataGrid.parseInt(rowElement.getAttribute(GridHtml.DATA_ROW));
+        final RenderedRow rendered = renderedRowsByIndex.get(index);
+        if (rendered == null || rendered.element != rowElement || rendered.staleCell < 0) {
+            return;
+        }
+        final Element cellElement = cellElementAt(rowElement, rendered.staleCell);
+        if (cellElement == null || !cellElement.isOrHasChild(target)) {
+            return;
+        }
+        final EventTarget related = event.getRelatedEventTarget();
+        if (related != null && Element.is(related) && cellElement.isOrHasChild(Element.as(related))) {
+            return;
+        }
+        grid.redrawRow(pageState.getPageStart() + index);
     }
 
     /// Draws the rows.
@@ -245,15 +283,7 @@ final class GridRows<R> {
             final Map<Integer, Integer> spans = rowSpans != null && row != null
                     ? rowSpans.getSpans(row, absIndex)
                     : Collections.emptyMap();
-            final String cellsHtml = html.cells(row, absIndex, spans).asString();
-            if (!cellsHtml.equals(rendered.html)) {
-                final int focusedColumn = getFocusedColumn(rendered.element);
-                rendered.element.setInnerHTML(cellsHtml);
-                rendered.html = cellsHtml;
-                if (focusedColumn >= 0) {
-                    resetFocus(rendered.element, row, absIndex, focusedColumn);
-                }
-            }
+            writeCells(rendered, html.rowCells(row, absIndex, spans), row, absIndex);
         }
         final Element firstCell = rendered.element.getFirstChildElement();
         if (firstCell != null) {
@@ -344,16 +374,103 @@ final class GridRows<R> {
         rendered.even = even;
     }
 
-    // The column of the cell holding the focus within a row, or -1 if the focus is elsewhere.
-    private int getFocusedColumn(final Element rowElement) {
+    // Writes a row's cells that changed, as RowWritePlan says: the whole row when the focus isn't in
+    // its cells (or its columns changed), otherwise cell by cell, leaving a control that has the
+    // focus in place, out of date until the focus leaves it (onFocusOut).
+    private void writeCells(final RenderedRow rendered,
+                            final GridHtml.RowCells cells,
+                            final R row,
+                            final int absIndex) {
+        final Element rowElement = rendered.element;
+        final GridHtml.RowCells before = rendered.cells;
+
+        // The cell in use: the one holding the focus, else one whose control has its list or menu
+        // open (aria-expanded), as a selection box does with the focus in its popup
+        int focusedColumn = -1;
+        int focusedCell = -1;
+        boolean focusOnCell = false;
         final Element active = DataGridDom.getActiveElement();
-        if (active == null || active == rowElement || !rowElement.isOrHasChild(active)) {
-            return -1;
+        Element inUse = null;
+        if (active != null && active != rowElement && rowElement.isOrHasChild(active)) {
+            inUse = grid.findAncestorWithAttribute(active, GridHtml.DATA_COL);
+            if (inUse != null) {
+                focusedColumn = DataGrid.parseInt(inUse.getAttribute(GridHtml.DATA_COL));
+                focusOnCell = active == inUse;
+            }
+        } else {
+            final Element expanded = findExpanded(rowElement);
+            if (expanded != null) {
+                inUse = grid.findAncestorWithAttribute(expanded, GridHtml.DATA_COL);
+            }
         }
-        final Element cellElement = grid.findAncestorWithAttribute(active, GridHtml.DATA_COL);
-        return cellElement != null
-                ? DataGrid.parseInt(cellElement.getAttribute(GridHtml.DATA_COL))
-                : -1;
+        if (inUse != null && before != null) {
+            focusedCell = before.positionOf(DataGrid.parseInt(inUse.getAttribute(GridHtml.DATA_COL)));
+        }
+
+        final RowWritePlan plan = RowWritePlan.plan(
+                before != null
+                        ? before.getHtml()
+                        : null,
+                before != null
+                        ? before.getColumns()
+                        : null,
+                cells.getHtml(),
+                cells.getColumns(),
+                focusedCell,
+                focusOnCell);
+
+        if (plan.isWholeRow()) {
+            rowElement.setInnerHTML(cells.joined());
+            rendered.cells = cells;
+            rendered.staleCell = -1;
+            // The element that had the focus is gone, so let its cell take the focus back
+            if (focusedColumn >= 0) {
+                resetFocus(rowElement, row, absIndex, focusedColumn);
+            }
+            return;
+        }
+
+        for (final int position : plan.getCells()) {
+            final Element cellElement = cellElementAt(rowElement, position);
+            if (cellElement != null) {
+                rowElement.replaceChild(toElement(cells.getHtml().get(position)), cellElement);
+            }
+        }
+        final int contentOnly = plan.getContentOnly();
+        if (contentOnly >= 0) {
+            // The cell's own element has the focus (moving between cells), so it stays
+            final Element cellElement = cellElementAt(rowElement, contentOnly);
+            if (cellElement != null) {
+                cellElement.setClassName(cells.getClasses(contentOnly));
+                cellElement.setInnerHTML(cells.getContent(contentOnly));
+            }
+        }
+        final int stale = plan.getLeftStale();
+        rendered.cells = stale >= 0
+                ? cells.withHtml(stale, before.getHtml().get(stale))
+                : cells;
+        rendered.staleCell = stale;
+    }
+
+    // A control in a row's cells with its list or menu open, or null for none
+    private static native Element findExpanded(Element rowElement) /*-{
+        return rowElement.querySelector('[data-col] [aria-expanded="true"]');
+    }-*/;
+
+    // The cell element at a position in a row, or null if there is none
+    private static Element cellElementAt(final Element rowElement, final int position) {
+        Element cell = rowElement.getFirstChildElement();
+        for (int i = 0; i < position && cell != null; i++) {
+            cell = cell.getNextSiblingElement();
+        }
+        return cell;
+    }
+
+    // An element made from a cell's HTML
+    private static Element toElement(final String cellHtml) {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerHTML(cellHtml);
+        return holder.getFirstChildElement();
     }
 
     // After a row is rewritten, let the cell that had the focus take it back, as GWT's

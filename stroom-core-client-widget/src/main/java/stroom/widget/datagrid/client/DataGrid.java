@@ -31,13 +31,11 @@ import stroom.widget.util.client.InputModality;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -104,10 +102,6 @@ public class DataGrid<R> extends Widget
     /// The page size for grids that show a very large list on one page.
     public static final int MASSIVE_LIST_PAGE_SIZE = 100000;
 
-    private static final String DATA_ROW = GridHtml.DATA_ROW;
-    private static final String DATA_COL = GridHtml.DATA_COL;
-    private static final String DATA_HCOL = GridHtml.DATA_HCOL;
-
     private final HasHandlers globalEventBus;
 
     // The column model holds sizing; headers and wrapping are kept alongside it by column.
@@ -135,6 +129,7 @@ public class DataGrid<R> extends Widget
 
     // The rows drawn, and the tree they make if the grid has an expander column
     private final GridRows<R> gridRows;
+    private final GridEvents<R> events;
     private final GridHeader<R> gridHeader;
     private final TreeRows<R> tree;
 
@@ -245,6 +240,8 @@ public class DataGrid<R> extends Widget
         tree = new TreeRows<>(this);
         gridHeader = new GridHeader<>(this, columnModel, html, keyboard, head, headerRow);
         gridRows = new GridRows<>(this, pageState, columnModel, html, tree, keyboard, scroller, content, body);
+        events = new GridEvents<>(this, pageState, columnModel, gridRows, keyboard, contextMenu, scrollbars,
+                columnInteractions);
 
         setElement(root);
         sinkEvents(Event.ONCLICK
@@ -663,7 +660,11 @@ public class DataGrid<R> extends Widget
         }
     }
 
-    private void onHeaderSortClick(final Column<R, ?> column, final boolean ctrl) {
+    /// Sorts by a header's column, as a click on the header does.
+    ///
+    /// @param column The column.
+    /// @param ctrl   Whether Ctrl was held, which adds the column to the sort.
+    void onHeaderSortClick(final Column<R, ?> column, final boolean ctrl) {
         final List<SortEntry<Column<?, ?>>> current = new ArrayList<>();
         for (int i = 0; i < sortList.size(); i++) {
             final ColumnSortInfo info = sortList.get(i);
@@ -1703,7 +1704,7 @@ public class DataGrid<R> extends Widget
         // Thumbs that follow the scroll by themselves are also placed once each scroll ends
         nativeListeners.add(DataGridDom.addListener(scroller, "scrollend", false, e -> updateScrollbars()));
         nativeListeners.add(DataGridDom.addListener(getElement(), BrowserEvents.FOCUS, true,
-                this::dispatchEvent));
+                events::dispatch));
         nativeListeners.add(DataGridDom.addListener(getElement(), "focusin", false, e -> {
             if (Element.is(e.getEventTarget())) {
                 keyboard.onFocusIn(Element.as(e.getEventTarget()));
@@ -1711,14 +1712,17 @@ public class DataGrid<R> extends Widget
             }
             updateHasFocus();
         }));
-        nativeListeners.add(DataGridDom.addListener(getElement(), "focusout", false,
-                e -> Scheduler.get().scheduleDeferred(this::updateHasFocus)));
+        nativeListeners.add(DataGridDom.addListener(getElement(), "focusout", false, e -> {
+            // A cell left out of date while it had the focus shows its latest value once it hasn't
+            gridRows.onFocusOut(e);
+            Scheduler.get().scheduleDeferred(this::updateHasFocus);
+        }));
         nativeListeners.add(DataGridDom.addListener(getElement(), BrowserEvents.BLUR, true,
-                this::dispatchEvent));
+                events::dispatch));
         // A cell's field changing as it is typed in, pasted into or cleared, which a cell that keeps
         // its field's text when its row is drawn again (ValueSpinnerCell) records
         nativeListeners.add(DataGridDom.addListener(getElement(), "input", false,
-                this::dispatchEvent));
+                events::dispatch));
         scrollbars.attach();
         columnInteractions.attach();
         GlobalResizeObserver.addListener(getElement(), element -> onResize());
@@ -1774,191 +1778,7 @@ public class DataGrid<R> extends Widget
     @Override
     public void onBrowserEvent(final Event event) {
         super.onBrowserEvent(event);
-        dispatchEvent(event);
-    }
-
-    private void dispatchEvent(final NativeEvent event) {
-        if (gridRows.isWriting()) {
-            return;
-        }
-        final EventTarget eventTarget = event.getEventTarget();
-        if (!Element.is(eventTarget)) {
-            return;
-        }
-        final Element target = Element.as(eventTarget);
-        if (scrollbars.contains(target) || columnInteractions.contains(target)) {
-            return;
-        }
-        if (BrowserEvents.KEYDOWN.equals(event.getType())) {
-            if (keyboard.onKeyDown(event)) {
-                return;
-            }
-        }
-        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-            keyboard.onMouseDown(target);
-        }
-        if (BrowserEvents.CONTEXTMENU.equals(event.getType())) {
-            onContextMenu(event, target);
-            return;
-        }
-
-        final Element headerCell = findAncestorWithAttribute(target, DATA_HCOL);
-        if (headerCell != null) {
-            onHeaderEvent(event, target, headerCell);
-            return;
-        }
-
-        final String type = event.getType();
-        final Element rowElement = findAncestorWithAttribute(target, DATA_ROW);
-        int rowIndex = rowElement != null
-                ? parseInt(rowElement.getAttribute(DATA_ROW))
-                : -1;
-        if (rowIndex == -1 && isKeyEvent(type)) {
-            rowIndex = keyboardSelectedRow;
-        }
-        if (rowIndex < 0 || rowIndex >= pageState.getRowDataSize()) {
-            if (isKeyEvent(type) && pageState.getRowDataSize() > 0) {
-                // Let the selection manager handle keys when nothing is selected yet.
-                firePreview(event, 0, -1, null);
-            }
-            return;
-        }
-
-        final Element cellElement = findAncestorWithAttribute(target, DATA_COL);
-        final int columnIndex = cellElement != null
-                ? parseInt(cellElement.getAttribute(DATA_COL))
-                : 0;
-        final Element cellContent = cellElement != null
-                ? cellElement.getFirstChildElement()
-                : null;
-        final R value = pageState.getRow(rowIndex);
-        final Context context = new Context(pageState.getPageStart() + rowIndex,
-                columnIndex,
-                getKey(value, pageState.getPageStart() + rowIndex));
-
-        final boolean canceled = firePreview(event, rowIndex, columnIndex, cellContent);
-        if (!canceled && cellContent != null && columnIndex < columnModel.size()) {
-            final Column<R, ?> column = columnModel.getColumn(columnIndex);
-            if (consumesEvent(column.getCell(), type)) {
-                final String before = cellContent.getInnerHTML();
-                column.onBrowserEvent(context, cellContent, value, event);
-                // A cell may rewrite its own DOM when it handles an event (e.g. TickBoxCell shows
-                // the new tick at once), so the stored HTML no longer matches the row. Forget it,
-                // so the row is written again the next time it is rendered, as GWT would redraw it.
-                // Only if it did: a cell that just took the focus (a selection box) would otherwise
-                // be replaced by the redraw the focus brings, taking the focus with it.
-                if (!before.equals(cellContent.getInnerHTML())) {
-                    gridRows.forgetHtml(rowIndex);
-                }
-            }
-        }
-    }
-
-    private void onContextMenu(final NativeEvent event, final Element target) {
-        // As MyDataGrid: the browser's own menu is never shown, and the grid's only if enabled.
-        event.preventDefault();
-        event.stopPropagation();
-        if (!hasContextMenu) {
-            return;
-        }
-        int rowIndex = -1;
-        int columnIndex = -1;
-        final Element cellElement = findAncestorWithAttribute(target, DATA_COL);
-        final Element rowElement = findAncestorWithAttribute(target, DATA_ROW);
-        if (cellElement != null && rowElement != null) {
-            rowIndex = parseInt(rowElement.getAttribute(DATA_ROW));
-            columnIndex = parseInt(cellElement.getAttribute(DATA_COL));
-            if (rowIndex >= pageState.getRowDataSize() || columnIndex >= columnModel.size()) {
-                rowIndex = -1;
-                columnIndex = -1;
-            }
-        }
-        contextMenu.show(event.getClientX(), event.getClientY(), rowIndex, columnIndex, target);
-    }
-
-    private boolean firePreview(final NativeEvent event,
-                                final int rowIndex,
-                                final int columnIndex,
-                                final Element cellContent) {
-        final R value = pageState.getRow(rowIndex);
-        final int absIndex = pageState.getPageStart() + rowIndex;
-        final Context context = new Context(absIndex, Math.max(0, columnIndex), getKey(value, absIndex));
-        boolean isEditing = false;
-        if (cellContent != null && columnIndex >= 0 && columnIndex < columnModel.size() && value != null) {
-            isEditing = isCellEditing(columnModel.getColumn(columnIndex), context, cellContent, value);
-        }
-        final CellPreviewEvent<R> preview = CellPreviewEvent.fire(this,
-                event,
-                this,
-                context,
-                value,
-                isEditing,
-                false);
-        return preview.isCanceled();
-    }
-
-    @SuppressWarnings("unchecked")
-    private <C> boolean isCellEditing(final Column<R, C> column,
-                                      final Context context,
-                                      final Element parent,
-                                      final R row) {
-        return column.getCell().isEditing(context, parent, column.getValue(row));
-    }
-
-    private void onHeaderEvent(final NativeEvent event, final Element target, final Element headerCell) {
-        final int columnIndex = parseInt(headerCell.getAttribute(DATA_HCOL));
-        if (columnIndex < 0 || columnIndex >= columnModel.size()) {
-            return;
-        }
-        final Column<R, ?> column = columnModel.getColumn(columnIndex);
-        final Header<?> header = headers.get(column);
-        final String type = event.getType();
-        // The element the header was rendered into, as GWT's grid passes it: the name holder of a
-        // sortable header, otherwise the header cell. Cells such as FilterCell find their input in it.
-        final Element outer = headerCell.getFirstChildElement();
-        final Element headerContent = column.isSortable() && outer != null && outer.getFirstChildElement() != null
-                ? outer.getFirstChildElement()
-                : headerCell;
-        final Context context = new Context(0, columnIndex, header != null
-                ? header.getKey()
-                : null);
-
-        if (header != null && consumesEvent(header.getCell(), type)) {
-            header.onBrowserEvent(context, headerContent, event);
-        }
-
-        final boolean isSortClick = BrowserEvents.CLICK.equals(type);
-        if (isSortClick && column.isSortable() && !isEditableTarget(target)) {
-            boolean shouldSort = true;
-            if (header != null) {
-                shouldSort = header.onPreviewColumnSortEvent(context, headerContent, event);
-            }
-            if (shouldSort) {
-                onHeaderSortClick(column, DataGridDom.isCtrl(event));
-            }
-        }
-    }
-
-    private static boolean consumesEvent(final Cell<?> cell, final String type) {
-        if (cell == null) {
-            return false;
-        }
-        final Set<String> consumed = cell.getConsumedEvents();
-        return consumed != null && consumed.contains(type);
-    }
-
-    private static boolean isKeyEvent(final String type) {
-        return BrowserEvents.KEYDOWN.equals(type)
-               || BrowserEvents.KEYUP.equals(type)
-               || BrowserEvents.KEYPRESS.equals(type);
-    }
-
-    private static boolean isEditableTarget(final Element target) {
-        final String tag = target.getTagName();
-        return "input".equalsIgnoreCase(tag)
-               || "textarea".equalsIgnoreCase(tag)
-               || "select".equalsIgnoreCase(tag)
-               || "button".equalsIgnoreCase(tag);
+        events.dispatch(event);
     }
 
     /// @param start     An element.

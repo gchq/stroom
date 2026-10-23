@@ -31,6 +31,9 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentC
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -145,8 +148,23 @@ final class GridHtml<R> {
     SafeHtml cells(final R row,
                    final int absIndex,
                    final Map<Integer, Integer> spans) {
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        return SafeHtmlUtils.fromTrustedString(rowCells(row, absIndex, spans).joined());
+    }
+
+    /// @param row      The row, or `null` for a placeholder.
+    /// @param absIndex The row's absolute index.
+    /// @param spans    Column index to the number of columns that cell spans (R-R9).
+    /// @return The row's cells, each on its own, so that a row update can compare and write them one
+    /// by one (see [RowCells]). As [#cells], they don't depend on the row's state.
+    RowCells rowCells(final R row,
+                      final int absIndex,
+                      final Map<Integer, Integer> spans) {
         final int count = columnModel.size();
+        final List<String> cellHtml = new ArrayList<>(count);
+        final List<String> cellClasses = new ArrayList<>(count);
+        final List<String> cellContents = new ArrayList<>(count);
+        final int[] columns = new int[count];
+        int cellCount = 0;
         int skipUntil = -1;
         for (int i = 0; i < count; i++) {
             if (i < skipUntil) {
@@ -164,6 +182,16 @@ final class GridHtml<R> {
                 }
             }
 
+            final SafeHtmlBuilder content = new SafeHtmlBuilder();
+            content.appendHtmlConstant("<div>");
+            if (row != null) {
+                final SafeHtmlBuilder cell = new SafeHtmlBuilder();
+                column.render(context, row, cell);
+                content.append(nameTickBoxes(cell.toSafeHtml(), i));
+            }
+            content.appendHtmlConstant("</div>");
+
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
             sb.appendHtmlConstant("<div class=\"")
                     .appendEscaped(classes.toString())
                     .appendHtmlConstant("\" " + cellRoleAttribute + DATA_COL + "=\"" + i + "\"");
@@ -174,15 +202,16 @@ final class GridHtml<R> {
                                       + clamped + "\"");
                 skipUntil = i + clamped;
             }
-            sb.appendHtmlConstant("><div>");
-            if (row != null) {
-                final SafeHtmlBuilder cell = new SafeHtmlBuilder();
-                column.render(context, row, cell);
-                sb.append(nameTickBoxes(cell.toSafeHtml(), i));
-            }
-            sb.appendHtmlConstant("</div></div>");
+            sb.appendHtmlConstant(">");
+            sb.append(content.toSafeHtml());
+            sb.appendHtmlConstant("</div>");
+
+            cellHtml.add(sb.toSafeHtml().asString());
+            cellClasses.add(classes.toString());
+            cellContents.add(content.toSafeHtml().asString());
+            columns[cellCount++] = i;
         }
-        return sb.toSafeHtml();
+        return new RowCells(cellHtml, Arrays.copyOf(columns, cellCount), cellClasses, cellContents);
     }
 
     // A tick box in a cell with no name of its own (e.g. its row's, from
@@ -291,6 +320,82 @@ final class GridHtml<R> {
             classes.append(" data-grid__cell--valign-bottom");
         } else if (HasVerticalAlignment.ALIGN_MIDDLE.equals(vertical)) {
             classes.append(" data-grid__cell--valign-middle");
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// A row's cells as drawn, one entry per cell element (a cell spanning columns is one): its
+    /// HTML, the column it starts at, its classes and its content (the wrapper inside it). A cell's
+    /// HTML is null once forgotten, so it is written again (see [GridRows#forgetCell]).
+    static final class RowCells {
+
+        private final List<String> html;
+        private final int[] columns;
+        private final List<String> classes;
+        private final List<String> contents;
+
+        RowCells(final List<String> html,
+                 final int[] columns,
+                 final List<String> classes,
+                 final List<String> contents) {
+            this.html = html;
+            this.columns = columns;
+            this.classes = classes;
+            this.contents = contents;
+        }
+
+        /// @return Each cell's HTML, in order; an entry is null if forgotten.
+        List<String> getHtml() {
+            return html;
+        }
+
+        /// @return The column each cell starts at, in order.
+        int[] getColumns() {
+            return columns;
+        }
+
+        /// @param position A cell's position in the row.
+        /// @return The cell's classes.
+        String getClasses(final int position) {
+            return classes.get(position);
+        }
+
+        /// @param position A cell's position in the row.
+        /// @return The cell's content: the wrapper inside its element, and what the column drew in it.
+        String getContent(final int position) {
+            return contents.get(position);
+        }
+
+        /// @param column A column index.
+        /// @return The position of the cell that starts at the column, or -1 if none does (it is
+        /// spanned by another).
+        int positionOf(final int column) {
+            for (int i = 0; i < columns.length; i++) {
+                if (columns[i] == column) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /// @param position A cell's position in the row.
+        /// @param cellHtml The HTML to record for it, e.g. what it was last written with, or null to
+        ///                 forget it.
+        /// @return A copy with that cell's HTML replaced.
+        RowCells withHtml(final int position, final String cellHtml) {
+            final List<String> copy = new ArrayList<>(html);
+            copy.set(position, cellHtml);
+            return new RowCells(copy, columns, classes, contents);
+        }
+
+        /// @return The cells' HTML joined, as the row's content.
+        String joined() {
+            final StringBuilder sb = new StringBuilder();
+            for (final String cell : html) {
+                sb.append(cell);
+            }
+            return sb.toString();
         }
     }
 }

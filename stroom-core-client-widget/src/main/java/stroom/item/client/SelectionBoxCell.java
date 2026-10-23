@@ -204,6 +204,11 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                     : model.unwrap(selected);
             opened.hide();
             if (!Objects.equals(chosen, value) && valueUpdater != null) {
+                // The box shows the choice at once: it has the focus again, so the grid leaves its
+                // cell as it is until the focus leaves it (as a tick box shows its new tick)
+                showChoice(combobox, chosen == null
+                        ? null
+                        : model.wrap(chosen));
                 valueUpdater.update(chosen);
                 // The grid draws the row again, which replaces the box that had the focus
                 refocusAfterRedraw(combobox, grid, rowId);
@@ -213,6 +218,22 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
             opened.show(combobox, typed);
         } else {
             opened.showAtFirstOrLast(combobox, atLast);
+        }
+    }
+
+    // Shows a choice in a row's box, as render draws it: its picture, and its text for screen readers
+    private static void showChoice(final Element combobox, final SelectionItem item) {
+        combobox.setPropertyString("value", item == null
+                ? ""
+                : item.getLabel());
+        final Element control = combobox.getParentElement();
+        final Element shown = control != null
+                ? control.getFirstChildElement()
+                : null;
+        if (shown != null && shown.hasClassName("selection-box__value")) {
+            shown.setInnerSafeHtml(item == null
+                    ? SafeHtmlUtils.EMPTY_SAFE_HTML
+                    : item.getRenderedLabel());
         }
     }
 

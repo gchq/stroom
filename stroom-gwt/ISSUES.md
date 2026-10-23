@@ -646,6 +646,14 @@ last closed dialog for a moment only.
   events as they happen, so the cell could now take pointer events and hold the touch itself.
   Whether Page Up and Page Down in its field still scroll the grid hasn't been checked with the new
   grid.
+* **Confirmed** (master and data_grid2, 23 October 2026): in a grid that polls (`Widgets/Data
+  Grid/DataGrid` `ValueSpinnerColumn`, every 10ms), pressing a spinner's arrow with the mouse,
+  when the field hasn't the focus, steps the value (42 to 43), then the focus falls to the page and
+  the next poll puts the old value back. The arrow takes no focus, so the press leaves it on the
+  cell; the stepped value isn't saved until the press ends, and the poll draws the cell again in
+  between. A press in the field itself, then typing, keeps the field, its text and its caret
+  through the polls (`real-input/data-grid.mjs`). A fix: a press on an arrow focuses the field, so
+  the grid leaves the cell alone while the arrow is held (data grid completion design, item 1).
 
 ### Toolbars are a tab stop per button
 
@@ -1186,19 +1194,28 @@ works and its cells are covered by stories; these are the next steps, none urgen
   `resetFocus`. This holds one element at a time, where cells that each owned an element (the first
   proposal) would hold one for every interactive cell in every drawn row, every row once virtual
   mode is off. Presenters and cells don't change. Design: "Data Grid Completion Design"
-  (https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW). Do it before a new interactive cell is
-  written, or at the next bug of this kind.
+  (https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW).
+  **Fixed** (data_grid2, 23 October 2026): as agreed, with the rules in `RowWritePlan`
+  (`TestRowWritePlan`), the per-cell strings in `GridHtml.RowCells`, and the redraw once the focus
+  leaves in `GridRows.onFocusOut`. A cell whose control has its list or menu open (`aria-expanded`,
+  e.g. a selection box with the focus in its popup) counts as in use too, and a selection box shows
+  a choice at once, as a tick box does, since its cell is left until the focus leaves. A cell that
+  rewrites its own DOM forgets only its own HTML (`GridRows.forgetCell`). Stories:
+  `Widgets/Data Grid/DataGridRowUpdates` (`NewGrid`, `TickBoxChangedBehindItsFocus`,
+  `ColumnAddedWhileAFieldHasTheFocus`, `SelectionBoxOpenThroughPolls`), and a real input check that
+  a field's caret survives the `ValueSpinnerColumn` story's polls. Left: a press on a spinner's
+  arrow in a polling grid (see Accessibility).
 * **The row update renders every visible row's HTML to tell whether it changed** (`DataGrid`
   `updateRow`, comparing strings), and a cell event reads the cell's `innerHTML` before and after
-  (`dispatchEvent`). The DOM is only written for rows that changed, but the rendering is paid on
-  every update, which a very wide grid that polls often would feel. Measure with the
-  `Widgets/Data Grid` Benchmark stories before changing it; the per-cell strings above let a row
-  update compare and write cell by cell.
-* **`DataGrid.java` is 2,009 lines**, over checkstyle's 2,000 (a warning), though the row
-  drawing is now in `GridRows`. Move the event dispatch out (`onBrowserEvent` to `onHeaderEvent`,
-  about 190 lines) into a `GridEvents`, as the keyboard (`DataGridKeyboard`), column interactions
-  (`ColumnInteractions`) and context menu (`DataGridContextMenu`) are; best done with the focused
-  cell change.
+  (`dispatchEvent`). **Measured** (Benchmark harness, 23 October 2026, medians of 15 runs): a refresh
+  of 200 rows that changes nothing takes 2.4ms (3.6ms with the per-cell strings), one that changes
+  every row 15.4ms, and a virtual grid of 5,000 rows under 5ms for any refresh. That is too little
+  to be worth more work; the cell event's `innerHTML` comparison goes with the Stroom cell contract
+  (the design's item 15).
+* **`DataGrid.java` was 2,009 lines**, over checkstyle's 2,000. **Fixed** (data_grid2, 23 October
+  2026): the event dispatch is `GridEvents`, as the keyboard (`DataGridKeyboard`), column
+  interactions (`ColumnInteractions`) and context menu (`DataGridContextMenu`) are, and the grid is
+  1,829 lines.
 * **A grid's selection depends on its rows' keys.** A presenter whose rows are fetched again as new
   objects needs a key provider (or rows equal by identity), or its selection is lost on refresh:
   the floor map, the task summary and the processor profile periods were cases (see Fixed and
