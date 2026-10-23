@@ -66,7 +66,8 @@ public interface AiChatRunDao {
     /// @return The chat's active run (one that has not ended), if there is one.
     Optional<AiChatRun> getActive(int chatId);
 
-    /// Changes a run's status, but only if it is currently one of the expected statuses.
+    /// Changes a run's status, but only if it is currently one of the expected statuses. A change to an active
+    /// status also updates its heartbeat, as whoever made it is working on it now.
     ///
     /// @param runId        The run's id.
     /// @param expected     The statuses the run must have for the change to be made.
