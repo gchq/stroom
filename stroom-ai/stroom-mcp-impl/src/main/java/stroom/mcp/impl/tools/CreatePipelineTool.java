@@ -319,7 +319,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         toSet.addAll(addedTyped.properties());
         references.forEach(data::addPipelineReference);
         final PipelineDoc doc = guard.createFilled(PipelineDoc.TYPE, name, build, ref -> {
-            if (WriteGuard.SOURCE_ROLES.contains(role)) {
+            if (role != null && WriteGuard.SOURCE_ROLES.contains(role)) {
                 // The build's text converter and XSLT it runs, made before it, go where it went: Events or Records.
                 for (final PropertyValue property : toSet) {
                     if ((TextConverterDoc.TYPE.equals(property.docType()) || XsltDoc.TYPE.equals(property.docType()))

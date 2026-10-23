@@ -254,6 +254,26 @@ class TestCreatePipelineTool {
     }
 
     @Test
+    void aTemplateOfNoRoleSubfolderIsAChildAllTheSame() {
+        // Seen in e2e_cef: a CEF pipeline written by hand, writing lines of text (XMLParser, XSLTFilter, TextWriter),
+        // used as the template the AGENTS doc named. Its stage gives no role subfolder, and create_pipeline failed
+        // with a NullPointerException where the Stroom MCP server (`role in SOURCE_ROLES`) went on.
+        pipelines.template(TEMPLATE, "CEF to file", PipelineLayers.layer(TEMPLATE).chain("Source", "Source",
+                "xmlParser", "XMLParser", "xsltFilter", "XSLTFilter", "textWriter", "TextWriter", "streamAppender",
+                "StreamAppender"));
+        pipelines.xslt("cef", "Acme-CEF-Text", null);
+
+        final ToolResult made = call("{\"build\": \"acme-v1\", \"name\": \"Acme-CEF-Text\", \"template_uuid\": \""
+                                     + TEMPLATE + "\", \"set_properties\": [{\"element\": \"xsltFilter\", "
+                                     + "\"name\": \"xslt\", \"doc_uuid\": \"cef\", \"doc_type\": \"XSLT\"}]}",
+                PortedToolCalls.answering(Map.of()));
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(pipelines.pipelineNamed("Acme-CEF-Text").getParentPipeline())
+                .isEqualTo(new DocRef(PipelineDoc.TYPE, TEMPLATE, "CEF to file"));
+    }
+
+    @Test
     void theBuildIsTheSessionsWhenTheCallNamesNone() {
         final ToolResult refused = call("{\"name\": \"P\", \"template_uuid\": \"" + TEMPLATE + "\"}",
                 PortedToolCalls.context());
