@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -146,6 +147,27 @@ class TestBuildTranslationXsltTool {
 
         assertThat(world.call(tool, Map.of("mapping", TranslationWorld.mapping(), "build", "acme-v1")).get("error"))
                 .asString().contains("give name");
+    }
+
+    @Test
+    void aSaveThatKeepsNoneOfTheCurrentTranslationsLookupsWarnsNamingThem() {
+        // The Stroom MCP server's FINDINGS (0.18.41): a next version written anew lost the lookups, and nothing said
+        // so. Unless the user chose to drop them, the save says what the current translation looks up.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+
+        assertThat(saved).containsKey("saved");
+        assertThat(String.valueOf(saved.get("warnings")))
+                .contains("This mapping keeps none of the current translation's lookups. The feed is translated now "
+                          + "by 'FG-V1.2' (v12)");
+        // Nothing to keep: no warning.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(Map.of("pipeline",
+                Map.of("name", "FG-V1.2", "uuid", "v12"))));
+        assertThat(String.valueOf(world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events-2")).get("warnings")))
+                .doesNotContain("keeps none of the current translation's lookups");
     }
 
     @Test
@@ -666,5 +688,15 @@ class TestBuildTranslationXsltTool {
     @SuppressWarnings("unchecked")
     private static List<Object> list(final Object value) {
         return (List<Object>) value;
+    }
+
+    // A feed translated now by FG-V1.2, whose XSLT looks up GEOIP and loads its reference data.
+    private static Map<String, Object> currentTranslation() {
+        final Map<String, Object> current = new LinkedHashMap<>();
+        current.put("pipeline", Map.of("name", "FG-V1.2", "uuid", "v12"));
+        current.put("xslt", List.of(Map.of("name", "FG-Events-V1.2", "uuid", "x12")));
+        current.put("reference_data", List.of("GEO-IP via Reference Loader on translationFilter"));
+        current.put("lookup_maps", List.of("GEOIP"));
+        return current;
     }
 }

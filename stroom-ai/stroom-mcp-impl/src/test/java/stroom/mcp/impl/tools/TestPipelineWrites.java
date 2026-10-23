@@ -31,7 +31,9 @@ import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.junit.jupiter.api.Test;
@@ -478,6 +480,101 @@ class TestPipelineWrites {
                 .stream()
                 .map(Slot::dotted)
                 .toList();
+    }
+
+    @Test
+    void thePreviousVersionsReferencesComeOnTheSameElementOnce() {
+        // The Stroom MCP server's tests/test_new_version.py: a next version, its translation written anew, loads the
+        // reference data the one it follows loads, when the user keeps them.
+        final Layout merged = Layout.of(List.of(textTemplate()));
+        final PipelineReference reference = previousReference("translationFilter");
+
+        assertThat(PipelineWrites.carriedReferences(merged, List.of(reference), List.of()))
+                .containsExactly(reference);
+        // Its element gone from the new template: the first XSLT step does the lookups.
+        assertThat(PipelineWrites.carriedReferences(merged, List.of(previousReference("oldFilter")), List.of()))
+                .singleElement()
+                .satisfies(moved -> assertThat(moved.getElement()).isEqualTo("translationFilter"));
+        // One references gives is not doubled.
+        assertThat(PipelineWrites.carriedReferences(merged, List.of(reference), List.of(reference))).isEmpty();
+        // Nowhere to put them: refused.
+        final Layout noXslt = Layout.of(List.of(layer("x", PipelineLayers.layer("x").chain("xmlParser",
+                "XMLParser", "streamAppender", "StreamAppender").data())));
+        assertThatThrownBy(() -> PipelineWrites.carriedReferences(noXslt, List.of(reference), List.of()))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessage("The template has no XSLT step to attach the previous version's reference data to");
+    }
+
+    @Test
+    void thePreviousVersionsPlainSettingsAreKeptAndTheRestNamed() {
+        final Layout merged = Layout.of(List.of(textTemplate()));
+
+        final List<PropertyValue> kept = PipelineWrites.plainSettings(previousVersion(), merged.elements(),
+                List.of());
+
+        assertThat(kept).containsExactly(PropertyValue.plain("translationFilter", "warnOnly", true));
+        // What the new version sets already is not overwritten.
+        assertThat(PipelineWrites.plainSettings(previousVersion(), merged.elements(), List.of(
+                PropertyValue.plain("translationFilter", "warnOnly", false)))).isEmpty();
+        final List<PropertyValue> properties = new ArrayList<>(kept);
+        properties.add(PropertyValue.document("translationFilter", "xslt", "x13", XsltDoc.TYPE));
+        properties.add(PropertyValue.document("dsParser", "textConverter", "tc12", "TextConverter"));
+        assertThat(PipelineWrites.notCarried(previousVersion(), properties))
+                .containsExactly("gone.flag", "element extraFilter (XSLTFilter) added");
+    }
+
+    @Test
+    void aVersionWithNoConverterOfItsOwnReadsTheFeedWithThePreviousOnes() {
+        pipelines.xslt("x13", "FG-Events-V1.3", null);
+        final Layout merged = Layout.of(List.of(textTemplate()));
+
+        final Filled filled = writes.fillOpenSlots(BUILD, merged, null, List.of(), previousVersion());
+
+        assertThat(filled.properties()).containsExactly(
+                PropertyValue.document("dsParser", "textConverter", "tc12", "TextConverter"),
+                PropertyValue.document("translationFilter", "xslt", "x13", XsltDoc.TYPE));
+        assertThat(filled.filled().getFirst()).isEqualTo("dsParser.textConverter = FG-V1.2 (as FG-V1.2 has it)");
+        assertThat(filled.stillOpen()).isEmpty();
+        // Not for a new source: the build needs a converter of its own.
+        assertThatThrownBy(() -> writes.fillOpenSlots(BUILD, merged, null, List.of()))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("needs a text converter");
+    }
+
+    @Test
+    void aVersionMayRunThePreviousVersionsConverterButNoOtherDocumentFromOutsideTheBuild() {
+        pipelines.world.add("TextConverter", "FG-V1.2", pipelines.world.folder("System/Feeds/FG").uuid, "tc12");
+        final List<PropertyValue> converter = List.of(PropertyValue.document("dsParser", "textConverter", "tc12",
+                "TextConverter"));
+
+        writes.ownDocuments(BUILD, converter, false, previousVersion());
+
+        assertThatThrownBy(() -> writes.ownDocuments(BUILD, converter, false))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("is not a document of build 'acme-v1'");
+    }
+
+    // FG-V1.2, as the Python test's PREVIOUS: its converter and XSLT, a plain setting, a setting on an element the
+    // template lacks, reference data for its lookups, and an element of its own.
+    private static PipelineDoc previousVersion() {
+        final PipelineDataBuilder data = new PipelineDataBuilder()
+                .addProperty(new PipelineProperty("dsParser", "textConverter", new PipelinePropertyValue(
+                        new DocRef("TextConverter", "tc12", "FG-V1.2"))))
+                .addProperty(new PipelineProperty("translationFilter", "xslt", new PipelinePropertyValue(
+                        new DocRef(XsltDoc.TYPE, "x12", "FG-Events-V1.2"))))
+                .addProperty(new PipelineProperty("translationFilter", "warnOnly", new PipelinePropertyValue(true)))
+                .addProperty(new PipelineProperty("gone", "flag", new PipelinePropertyValue(true)))
+                .addPipelineReference(previousReference("translationFilter"))
+                .addElement(new PipelineElement("extraFilter", "XSLTFilter"));
+        return PipelineDoc.builder().uuid("v12").name("FG-V1.2")
+                .parentPipeline(new DocRef(PipelineDoc.TYPE, "text", "Event Data (Text)"))
+                .pipelineData(data.build())
+                .build();
+    }
+
+    private static PipelineReference previousReference(final String element) {
+        return new PipelineReference(element, "pipelineReference", new DocRef(PipelineDoc.TYPE, "loader",
+                "Reference Loader"), new DocRef("Feed", "geo", "GEO-IP"), "Reference");
     }
 
     private static PipelineLayer textTemplate() {

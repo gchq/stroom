@@ -238,7 +238,7 @@ class TestBuildPlanOnExistingData {
         assertThat(next(result).get("step")).isEqualTo("index_template");
         // Raw streams: refused with one.
         final BuildPlan.NextCall call = BuildPlan.nextCall("indexed", new BuildPlan.CallArgs("b", List.of("RAW"),
-                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null));
+                List.of(1L), List.of(1L), null, "dp", null, null, List.of(), true, null, null, null, null));
         assertThat(((Map<?, ?>) call.call().get("arguments")).containsKey("source_pipeline_uuid")).isFalse();
     }
 
@@ -416,6 +416,53 @@ class TestBuildPlanOnExistingData {
                 Map.of("stage", "translation")));
         assertThat(state(result, "stepped")).isEqualTo("to do");
         assertThat(state(result, "feed")).isEqualTo("not needed");
+    }
+
+    @Test
+    void anExistingFeedsNextVersionIsMadeFromThePipelineTranslatingIt() {
+        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 of a Fortigate feed, its XSLT
+        // saved, and the plan's pipeline step said to find the best template, so the agent offered copying V1.2 or a
+        // pipeline unlike it, and the user asked why.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "FG - Survey"),
+                FakeBuildFacts.doc("XSLT", "x13", "FG-Events-V1.3"));
+        facts.sources = List.of("FG");
+        facts.survey = survey(true, null, List.of(5L), null, "json array");
+        facts.mappings = Map.of("x13", FakeBuildFacts.kept("translation", Map.of()));
+        facts.translating = List.of(Map.of("name", "FG-V1.2", "uuid", "v12"));
+        Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("pipeline");
+        assertThat(call(result)).isEqualTo(Map.of("tool", "create_pipeline", "arguments", Map.of("build", "b",
+                "version_of", "v12", "name", "<the new version's name ('FG-V1.2' with its new version)>")));
+        assertThat(String.valueOf(next(result).get("then"))).contains("keep_references");
+
+        // Not surveyed first: the XSLT saved from its mapping is what starts the events stage.
+        facts.docs = List.of(FakeBuildFacts.doc("XSLT", "x13", "FG-Events-V1.3"));
+        facts.survey = null;
+        result = status();
+        assertThat(next(result).get("step")).isEqualTo("pipeline");
+        assertThat(call(result).get("tool")).isEqualTo("create_pipeline");
+
+        // A feed nothing translates: the best template, as for a new source.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "FG - Survey"),
+                FakeBuildFacts.doc("XSLT", "x13", "FG-Events-V1.3"));
+        facts.survey = survey(true, null, List.of(5L), null, "json array");
+        facts.translating = List.of();
+        assertThat(call(status()).get("tool")).isEqualTo("find_pipeline_templates");
+    }
+
+    @Test
+    void theExistingDataAdviceGivesBothRoutesToANextVersion() {
+        // The Stroom MCP server's FINDINGS (0.18.41): the copy for a change of parts, the next version written anew
+        // through create_pipeline version_of=, and the user asked which.
+        facts.sources = List.of("FG");
+        facts.translating = List.of(Map.of("name", "FG-V1.2-Events", "uuid", "prod-ev"));
+        assertThat(String.valueOf(next(status()).get("then")))
+                .contains("Or, its translation written anew (a new schema version, say): survey_feed, "
+                          + "draft_translation_mapping (its notes say what the current XSLT looks up")
+                .contains("then create_pipeline version_of=<it>: a child of the same template with the new XSLT, "
+                          + "and its reference data if the user keeps them. Ask the user which. This build works "
+                          + "from data already in Stroom")
+                .doesNotContain("are for an events pipeline written anew");
     }
 
     private void surveyedFeed() {
