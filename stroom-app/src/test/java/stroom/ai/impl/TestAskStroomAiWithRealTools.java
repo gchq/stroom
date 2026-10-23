@@ -114,13 +114,14 @@ class TestAskStroomAiWithRealTools extends AbstractAiIntegrationTest {
                 AiAgentMode.AGENT)));
         final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
 
-        // The model's answer is kept, after its calls and their results.
+        // The model's answer is kept, after its calls and their results, with the feed its tools gave linked.
         assertThat(messages)
                 .filteredOn(message -> message.getMessageType() == AiMessageType.AI_RESPONSE)
                 .extracting(AiChatMessage::getMessage)
                 .singleElement()
                 .asString()
-                .contains("ACME-CHAT has one Raw Events stream.");
+                .contains("[ACME-CHAT](?action=open-doc&docType=Feed&docUuid=" + feed.getUuid()
+                          + ") has one Raw Events stream.");
         final List<ToolResultRecord> results = messages.stream()
                 .filter(message -> message.getMessageType() == AiMessageType.TOOL_RESULT)
                 .map(message -> JsonUtil.readValue(message.getMessage(), ToolResultRecord.class))
