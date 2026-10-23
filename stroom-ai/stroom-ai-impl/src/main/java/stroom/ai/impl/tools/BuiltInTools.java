@@ -160,14 +160,15 @@ public class BuiltInTools {
         return readOnlyCallToolNames.contains(toolName);
     }
 
-    /// @return Every built-in tool, as an administrator choosing what a tool policy grants sees it, by name.
+    /// @return Every built-in tool, as an administrator choosing what a tool policy grants sees it, by name: what
+    /// it does in a line ([ToolSummaries]), not the description its agent is given.
     public List<AiToolSummary> summaries() {
         return toolsByName.values().stream()
                 .map(tool -> {
                     final ToolDefinition general = tool.definition().general();
                     return new AiToolSummary(general.name(), tool.category(), tool.isReadOnly(),
                             !tool.isReadOnly() && tool.hasReadOnlyCalls(),
-                            general.description());
+                            ToolSummaries.of(general.name()).orElseGet(general::description));
                 })
                 .sorted(Comparator.comparing(AiToolSummary::getName))
                 .toList();

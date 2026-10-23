@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 
-/// Adds Administration > MCP Tool Policies, for those with the Manage MCP Tool Policies permission.
+/// Adds Security > MCP Tool Policies, for those with the Manage MCP Tool Policies permission.
 @Singleton
 public class AiToolPoliciesPlugin extends MonitoringPlugin<AiToolPoliciesPresenter> {
 
@@ -55,8 +55,8 @@ public class AiToolPoliciesPlugin extends MonitoringPlugin<AiToolPoliciesPresent
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            MenuKeys.addAdministrationMenu(event.getMenuItems());
-            event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU, createMenuItem());
+            MenuKeys.addSecurityMenu(event.getMenuItems());
+            event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, createMenuItem());
         }
     }
 
@@ -73,7 +73,7 @@ public class AiToolPoliciesPlugin extends MonitoringPlugin<AiToolPoliciesPresent
 
     private MenuItem createMenuItem() {
         return new IconMenuItem.Builder()
-                .priority(57)
+                .priority(75)
                 .icon(SvgPresets.AI)
                 .text(AiToolPoliciesPresenter.SCREEN_NAME)
                 .command(this::open)

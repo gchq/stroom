@@ -62,6 +62,20 @@ public class AiToolPolicyCategoryRecord extends UpdatableRecordImpl<AiToolPolicy
         return (Byte) get(2);
     }
 
+    /**
+     * Setter for <code>stroom.ai_tool_policy_category.access</code>.
+     */
+    public void setAccess(Byte value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_tool_policy_category.access</code>.
+     */
+    public Byte getAccess() {
+        return (Byte) get(3);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -85,12 +99,13 @@ public class AiToolPolicyCategoryRecord extends UpdatableRecordImpl<AiToolPolicy
     /**
      * Create a detached, initialised AiToolPolicyCategoryRecord
      */
-    public AiToolPolicyCategoryRecord(Integer id, Integer fkAiToolPolicyId, Byte category) {
+    public AiToolPolicyCategoryRecord(Integer id, Integer fkAiToolPolicyId, Byte category, Byte access) {
         super(AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY);
 
         setId(id);
         setFkAiToolPolicyId(fkAiToolPolicyId);
         setCategory(category);
+        setAccess(access);
         resetTouchedOnNotNull();
     }
 }

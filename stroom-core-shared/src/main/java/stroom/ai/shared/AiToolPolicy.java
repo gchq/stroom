@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Objects;
 
 /// A tool policy: which categories of Stroom's tools the users and groups it covers may use, in the "Ask Stroom AI"
-/// chat and over MCP, and whether only the tools (and calls) that cannot change anything, or all of them. A user
-/// gets the union of the enabled policies that name them, a group they are in, or all users; with none, they get no
-/// tools. A policy only narrows: each tool still checks the user's other permissions.
+/// chat and over MCP, and for each, whether only the tools (and calls) that cannot change anything, or all of them.
+/// A user gets the union of the enabled policies that name them, a group they are in, or all users; with none, they
+/// get no tools. A policy only narrows: each tool still checks the user's other permissions.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class AiToolPolicy {
@@ -60,9 +60,7 @@ public class AiToolPolicy {
     @JsonProperty
     private final List<UserRef> members;
     @JsonProperty
-    private final List<AiToolCategory> categories;
-    @JsonProperty
-    private final AiToolAccess access;
+    private final List<AiToolCategoryGrant> grants;
 
     /// @param id           The policy's id, or null for one not yet saved.
     /// @param version      Its version, for optimistic locking, or null for one not yet saved.
@@ -75,8 +73,7 @@ public class AiToolPolicy {
     /// @param enabled      False if it grants nothing for now.
     /// @param allUsers     True if it covers every user, whatever its members.
     /// @param members      The users and groups it covers.
-    /// @param categories   The categories of tools it grants.
-    /// @param access       Whether it grants only the tools that cannot change anything, or all of them.
+    /// @param grants       The categories of tools it grants, each with how much of it.
     @JsonCreator
     public AiToolPolicy(@JsonProperty("id") final Integer id,
                         @JsonProperty("version") final Integer version,
@@ -89,8 +86,7 @@ public class AiToolPolicy {
                         @JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("allUsers") final Boolean allUsers,
                         @JsonProperty("members") final List<UserRef> members,
-                        @JsonProperty("categories") final List<AiToolCategory> categories,
-                        @JsonProperty("access") final AiToolAccess access) {
+                        @JsonProperty("grants") final List<AiToolCategoryGrant> grants) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -102,8 +98,7 @@ public class AiToolPolicy {
         this.enabled = enabled == null || enabled;
         this.allUsers = allUsers != null && allUsers;
         this.members = NullSafe.list(members);
-        this.categories = NullSafe.list(categories);
-        this.access = Objects.requireNonNullElse(access, AiToolAccess.READ_ONLY);
+        this.grants = NullSafe.list(grants);
     }
 
     /// @return A builder for a new policy.
@@ -171,14 +166,19 @@ public class AiToolPolicy {
         return members;
     }
 
-    /// @return The categories of tools it grants.
-    public List<AiToolCategory> getCategories() {
-        return categories;
+    /// @return The categories of tools it grants, each with how much of it.
+    public List<AiToolCategoryGrant> getGrants() {
+        return grants;
     }
 
-    /// @return Whether it grants only the tools that cannot change anything, or all of them.
-    public AiToolAccess getAccess() {
-        return access;
+    /// @param category A category of tools.
+    /// @return How much of it the policy grants, or null if it doesn't grant it.
+    public AiToolAccess accessTo(final AiToolCategory category) {
+        return grants.stream()
+                .filter(grant -> grant.getCategory() == category)
+                .map(AiToolCategoryGrant::getAccess)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -194,13 +194,12 @@ public class AiToolPolicy {
                && Objects.equals(name, that.name)
                && Objects.equals(description, that.description)
                && Objects.equals(members, that.members)
-               && Objects.equals(categories, that.categories)
-               && access == that.access;
+               && Objects.equals(grants, that.grants);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, name, description, enabled, allUsers, members, categories, access);
+        return Objects.hash(id, version, name, description, enabled, allUsers, members, grants);
     }
 
     @Override
@@ -211,8 +210,7 @@ public class AiToolPolicy {
                ", enabled=" + enabled +
                ", allUsers=" + allUsers +
                ", members=" + members +
-               ", categories=" + categories +
-               ", access=" + access +
+               ", grants=" + grants +
                '}';
     }
 
@@ -234,8 +232,7 @@ public class AiToolPolicy {
         private boolean enabled = true;
         private boolean allUsers;
         private List<UserRef> members = new ArrayList<>();
-        private List<AiToolCategory> categories = new ArrayList<>();
-        private AiToolAccess access = AiToolAccess.READ_ONLY;
+        private List<AiToolCategoryGrant> grants = new ArrayList<>();
 
         private Builder() {
         }
@@ -252,8 +249,7 @@ public class AiToolPolicy {
             this.enabled = policy.enabled;
             this.allUsers = policy.allUsers;
             this.members = new ArrayList<>(policy.members);
-            this.categories = new ArrayList<>(policy.categories);
-            this.access = policy.access;
+            this.grants = new ArrayList<>(policy.grants);
         }
 
         /// @param id See [AiToolPolicy#getId()].
@@ -333,24 +329,17 @@ public class AiToolPolicy {
             return this;
         }
 
-        /// @param categories See [AiToolPolicy#getCategories()].
+        /// @param grants See [AiToolPolicy#getGrants()].
         /// @return This builder.
-        public Builder categories(final List<AiToolCategory> categories) {
-            this.categories = new ArrayList<>(NullSafe.list(categories));
-            return this;
-        }
-
-        /// @param access See [AiToolPolicy#getAccess()].
-        /// @return This builder.
-        public Builder access(final AiToolAccess access) {
-            this.access = access;
+        public Builder grants(final List<AiToolCategoryGrant> grants) {
+            this.grants = new ArrayList<>(NullSafe.list(grants));
             return this;
         }
 
         /// @return The policy.
         public AiToolPolicy build() {
             return new AiToolPolicy(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name,
-                    description, enabled, allUsers, members, categories, access);
+                    description, enabled, allUsers, members, grants);
         }
     }
 }

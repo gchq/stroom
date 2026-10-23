@@ -43,7 +43,7 @@ public class AiToolSummary {
     /// @param name        The tool's name.
     /// @param category    Its category.
     /// @param readOnly    True if it cannot change anything, so a read-only policy grants it.
-    /// @param description What it does, as a client outside the chat is told.
+    /// @param description What it does, in a line, for an administrator.
     public AiToolSummary(final String name,
                          final AiToolCategory category,
                          final boolean readOnly,
@@ -56,7 +56,7 @@ public class AiToolSummary {
     /// @param readOnly      True if it cannot change anything, so a read-only policy grants it. Null is false.
     /// @param readOnlyCalls True if it can change things but some of its calls cannot, so a read-only policy
     ///                      grants it for those calls only (e.g. memory's list and read). Null is false.
-    /// @param description   What it does, as a client outside the chat is told.
+    /// @param description   What it does, in a line, for an administrator.
     @JsonCreator
     public AiToolSummary(@JsonProperty("name") final String name,
                          @JsonProperty("category") final AiToolCategory category,
@@ -91,7 +91,7 @@ public class AiToolSummary {
         return readOnlyCalls;
     }
 
-    /// @return What it does, as a client outside the chat is told.
+    /// @return What it does, in a line, for an administrator.
     public String getDescription() {
         return description;
     }
