@@ -1,0 +1,48 @@
+name: In-house access log (fields separated by ' ~ ', no header)
+template: Event Data (Text)
+capabilities: [delimiters]
+# A home-grown application's log, 500 lines: fields separated by a space, a tilde and a space, no header. The traps:
+# the separator is several characters (the CSV sniffer tries single ones only, and such a file was unknown text); the
+# columns have no names (col1 ... until named); and a result of OK or FAIL is the logon's outcome.
+request: >
+  Onboard our in-house app's access log (the file is on my disk). Index the events.
+expected:
+  records: 500
+  event_types: [Authenticate]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+files:
+  - {name: access-2026-10-11.log, generate: {kind: tilde_audit, records: 500, seed: 10}}
+reference:
+  splitter: {kind: delimited, delimiter: ' ~ ', header: [time, user, action, result, ip]}
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: 'yyyy-MM-dd HH:mm:ss', timezone: UTC}
+      - {path: EventSource/System/Name, value: Access Portal}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: access-portal}
+      - {path: EventSource/Device/HostName, value: portal01}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventSource/Client/IPAddress, field: ip}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: logon
+        when: [{field: action, equals: LOGIN}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {OK: 'true', FAIL: 'false'}}
+      - name: logoff
+        when: [{field: action, equals: LOGOUT}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: password
+        when: [{field: action, equals: PASSWORD_CHANGE}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {OK: 'true', FAIL: 'false'}}

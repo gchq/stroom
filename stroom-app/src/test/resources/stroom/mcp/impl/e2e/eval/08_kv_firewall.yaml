@@ -1,0 +1,52 @@
+name: Firewall connections (key=value)
+template: Event Data (Text)
+capabilities: [format_recognition, delimiters]
+request: >
+  Onboard these firewall logs: a timestamp and firewall name, then key=value pairs for the action (allow or deny),
+  source and destination address, destination port and protocol. Each line is a connection attempt. Index them.
+expected:
+  records: 3
+  event_types: [Network]
+  # Allow and deny are as well modelled by Network/Permit and /Deny as by Open with an outcome.
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/Network/*/Source/Device/IPAddress]
+sample: |
+  2026-09-28T15:00:00Z fw01 action=allow src=10.0.0.5 dst=93.184.216.34 dport=443 proto=tcp
+  2026-09-28T15:00:03Z fw01 action=deny src=203.0.113.77 dst=10.0.0.10 dport=3389 proto=tcp
+  2026-09-28T15:01:12Z fw02 action=allow src=10.0.1.8 dst=8.8.8.8 dport=53 proto=udp
+reference:
+  converter: |
+    <?xml version="1.1" encoding="UTF-8"?>
+    <dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+      <split delimiter="\n">
+        <group>
+          <regex pattern="^(\S+) (\S+) (.*)$">
+            <data name="time" value="$1" /><data name="host" value="$2" />
+            <group value="$3">
+              <split delimiter=" ">
+                <group>
+                  <regex pattern="^([^=]+)=(.*)$"><data name="$1" value="$2" /></regex>
+                </group>
+              </split>
+            </group>
+          </regex>
+        </group>
+      </split>
+    </dataSplitter>
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Perimeter Firewall}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: firewall}
+      - {path: EventSource/Device/HostName, field: host}
+    events:
+      - name: connection
+        fields:
+          - {path: EventDetail/TypeId, field: action}
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
+          - {path: EventDetail/Network/Open/Destination/Port, field: dport}
+          - {path: EventDetail/Network/Open/Destination/TransportProtocol, field: proto, map: {tcp: TCP, udp: UDP}}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: action, map: {allow: "true", deny: "false"}}

@@ -1,0 +1,75 @@
+name: Billing service application log (Java, logback, entries with stack traces over several lines)
+template: Event Data (Text)
+capabilities: [multiline, event_boundaries]
+# A Spring Boot service's log, 2,000 entries in a file on the user's disk: each entry starts with its time, and an
+# ERROR's stack trace runs over the lines after it ('at ...', 'Caused by ...', '... n more'). The traps: a record is
+# not a line (read a line at a time, every stack frame became a record of its own); the kind of event is in the
+# logger and the message; and the first 1,200 entries are logins, logouts and invoices only, failed logins, payment
+# errors and configuration changes coming after.
+request: >
+  Onboard our billing service's application log (the file on my disk). Index the events.
+expected:
+  records: 2000
+  event_types: [Authenticate, Create, Alert, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob]
+files:
+  - {name: billing-service.log, generate: {kind: java_app_log, records: 2000, seed: 7}}
+reference:
+  splitter:
+    kind: regex
+    record_start: '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+    pattern: '(?s)^(\S+ \S+) +(\w+) +\[([^\]]*)\] (\S+) - (.*)$'
+    names: [time, level, thread, logger, message]
+  mapping:
+    input: data_splitter
+    extract:
+      - {field: message, regex: '^User (\S+) logged.*$', names: [user]}
+      - {field: message, regex: '^Login failed for user (\S+) from ([\d.]+).*$', names: [failed_user, failed_from]}
+      - {field: message, regex: '^.*?\(customer (\S+)\)[\s\S]*$', names: [customer]}
+      - {field: message, regex: '^Setting (\S+) changed from (\S+) to (\S+) by (\S+).*$', names: [setting, old_value, new_value, admin]}
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: 'yyyy-MM-dd HH:mm:ss,SSS', timezone: UTC}
+      - {path: EventSource/System/Name, value: Billing Service}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: logger}
+      - {path: EventSource/Device/HostName, value: billing01}
+      - {path: EventSource/User/Id, any_of: [user, failed_user, customer, admin]}
+      - {path: EventDetail/TypeId, field: logger}
+    events:
+      - name: logon
+        when: [{field: message, matches: '^User \S+ logged in'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: logoff
+        when: [{field: message, matches: '^User \S+ logged out'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: logon-failed
+        when: [{field: message, matches: '^Login failed'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: failed_user}
+          - {path: EventDetail/Authenticate/Outcome/Success, value: 'false'}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: message}
+      - name: invoice
+        when: [{field: message, matches: '^Invoice \d+ created'}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: Invoice}
+          - {path: EventDetail/Create/Object/Description, field: message}
+      - name: payment-error
+        when: [{field: level, equals: ERROR}]
+        fields:
+          - {path: EventDetail/Alert/Type, value: Error}
+          - {path: EventDetail/Alert/Description, field: message}
+      - name: config
+        when: [{field: message, matches: '^Setting '}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Setting}
+          - {path: EventDetail/Update/After/Object/Id, field: setting}
+          - {path: EventDetail/Update/Data, data_name: old_value, field: old_value}
+          - {path: EventDetail/Update/Data, data_name: new_value, field: new_value}

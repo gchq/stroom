@@ -1,0 +1,51 @@
+name: Blue Coat web proxy access log (W3C extended format, columns named by a #Fields directive)
+template: Event Data (Text)
+capabilities: [delimiters, format_evolution, timestamps]
+# As the user showed one, at a day's size: 3,000 requests in a file on the user's disk. Directive lines say the
+# software (#Software), the device (#Remark: serial, "name", "address", "realm") and the columns (#Fields:); quoted
+# values hold spaces. The traps: there is no first-line header, so the columns come from the #Fields directive; the
+# device name is only in #Remark; and at the 2,000th request the proxy is upgraded and the log restarts with new
+# directives, its columns reordered and one added (x-virus-id), so a header read once from the top misreads the last
+# third. Asked for by the user: a generic answer for directive-named columns (W3C, IIS, Zeek...), not one limited to
+# Blue Coat.
+request: >
+  Onboard our Blue Coat proxy's access log (the file on my disk). Index the requests.
+expected:
+  records: 3000
+  event_types: [Network]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Device/HostName, EventDetail/TypeId]
+  values:
+    EventSource/Device/HostName: [proxy01]
+    EventSource/User/Id: [jsmith, guest]
+files:
+  - {name: bluecoat-access-2026-10-11.log, generate: {kind: bluecoat_access, records: 3000, seed: 5}}
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    extract:
+      - {field: '#Remark', regex: '^\S+ "([^"]*)" "([^"]*)".*$', names: [proxy_name, proxy_ip]}
+    common:
+      - {path: EventTime/TimeCreated, xpath: "concat(data[@name='date']/@value, 'T', data[@name='time']/@value, 'Z')", time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Blue Coat ProxySG}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: '#Software'}
+      - {path: EventSource/Device/HostName, field: proxy_name}
+      - {path: EventSource/Device/IPAddress, field: proxy_ip}
+      - {path: EventSource/User/Id, field: cs-username}
+      - {path: EventSource/Client/IPAddress, field: c-ip}
+      - {path: EventDetail/TypeId, field: s-action}
+    events:
+      - name: request
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: c-ip}
+          - {path: EventDetail/Network/Open/Destination/Device/HostName, field: cs-host}
+          - {path: EventDetail/Network/Open/Destination/Port, field: cs-uri-port}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: path, field: cs-uri-path}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: cs-categories}
+          - {path: EventDetail/Network/Open/Data, data_name: method, field: cs-method}
+          - {path: EventDetail/Network/Open/Data, data_name: status, field: sc-status}
+          - {path: EventDetail/Network/Open/Data, data_name: bytes_sent, field: sc-bytes}
+          - {path: EventDetail/Network/Open/Data, data_name: virus, field: x-virus-id}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: sc-filter-result, map: {OBSERVED: 'true', DENIED: 'false'}}
