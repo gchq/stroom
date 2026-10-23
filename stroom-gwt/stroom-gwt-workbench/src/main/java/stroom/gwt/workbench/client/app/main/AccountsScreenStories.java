@@ -150,6 +150,10 @@ public final class AccountsScreenStories {
                     play.findByText("locked.user");
                     final Play row = play.within(play.getByText("locked.user").closest(StroomDom.GRID_ROW));
                     play.expect(row.getByText(TextMatch.startingWith("Locked until "))).toBeInTheDocument();
+                    // Its sign in failures, a count, are right-aligned, as their heading is (#4442)
+                    play.expect(row.getByText("3").closest(".data-grid__cell"))
+                            .toHaveClass("data-grid__cell--align-right");
+                    play.expect(play.getByText("Sign In Failures").closest("[data-hcol]")).toHaveClass("right-align");
                     // The unlocked account's Locked cell stays blank
                     final Play adminRow = play.within(play.getByText("admin").closest(StroomDom.GRID_ROW));
                     play.expect(adminRow.queryByText(TextMatch.startingWith("Locked"))).toBeNull();

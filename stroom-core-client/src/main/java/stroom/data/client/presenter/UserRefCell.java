@@ -128,11 +128,13 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
+                CopyTextUtil.keepSelection(event);
                 OpenUserEvent.fire(this, userRef);
             }
         }

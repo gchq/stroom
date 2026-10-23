@@ -165,6 +165,11 @@ public final class JobsScreenStories {
                     // Select the job: the bottom per-node grid loads
                     showDataRetentionNodes(play);
                     play.findByText("node2");
+                    // Current Tasks, a count, has three times the usual space before Last Executed, a
+                    // date, in its header and its cells, so the two don't run together (#4442)
+                    final Query currentTasks = play.getByText("Current Tasks").closest("[data-hcol]");
+                    play.expect("the Current Tasks header's and first cell's right padding, in left paddings",
+                            () -> paddingRatios(currentTasks.element().get())).toBe("3 3");
                     // Types render; the CRON node has a schedule, the DISTRIBUTED node has no Run Now
                     play.expect(play.getByText("Cron")).toBeInTheDocument();
                     play.expect(play.getByText("Distributed")).toBeInTheDocument();
@@ -359,6 +364,19 @@ public final class JobsScreenStories {
         play.waitFor(() -> play.expect(screen.getByText(
                 TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());
     }
+
+    // The right padding of a column's header and its first cell's, each over its left padding,
+    // e.g. "3 3"
+    private static native String paddingRatios(Element header) /*-{
+        var grid = header.closest('[role="grid"], [role="treegrid"]');
+        var column = header.getAttribute('data-hcol');
+        var cell = grid.querySelector('[role="row"][data-row] [data-col="' + column + '"]');
+        var ratio = function (element) {
+            var style = $wnd.getComputedStyle(element.firstElementChild);
+            return Math.round(parseFloat(style.paddingRight) / parseFloat(style.paddingLeft));
+        };
+        return ratio(header) + ' ' + ratio(cell);
+    }-*/;
 
     private static String rowText(final Element row) {
         return row.getInnerText().trim();

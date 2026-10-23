@@ -318,6 +318,10 @@ and fails the story if the page doesn't behave as it should. A story driven this
 no play of its own (e.g. `Widgets/Buttons/Toolbar` `RealInput`, a toolbar crossed with real Tab,
 arrow, Home, End and Escape keys, and clicked with the mouse).
 
+A check is keyed by its story's id, and a check whose id matches no story (misspelt, or its story
+renamed) stops the run before any story runs, as it would otherwise never run.
+`--skip-real-input` skips the checks, and that test.
+
 ## Coverage
 
 `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` reports which of Stroom's

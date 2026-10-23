@@ -41,7 +41,7 @@ import {
 } from './lib/outcome.mjs';
 import { judgeLeak, measureLeak, withLeakProbe } from './lib/leak-check.mjs';
 import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } from './lib/a11y-check.mjs';
-import { REAL_INPUT_CHECKS } from './lib/real-input/index.mjs';
+import { REAL_INPUT_CHECKS, unknownCheckIds } from './lib/real-input/index.mjs';
 import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 
@@ -130,6 +130,9 @@ Options:
   --skip-a11y              Don't check accessibility. Otherwise, after each story passes, axe-core
                            checks its page with the WCAG 2.x A and AA rules and fails it if it
                            breaks a rule not listed for it in a11y-baseline.json
+  --skip-real-input        Don't run the real input checks (see lib/real-input/). Otherwise, after
+                           a story with one passes, real key presses and clicks check it, and
+                           a check for a story that doesn't exist is an error
   --update-a11y-baseline   Rewrite a11y-baseline.json with the rules the stories run break now,
                            rather than failing them (stories not run keep their entries)
   --headed                 Show the browser
@@ -187,6 +190,7 @@ function parseOptions() {
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
+      'skip-real-input': { type: 'boolean', default: false },
       'update-a11y-baseline': { type: 'boolean', default: false },
       headed: { type: 'boolean', default: false },
       list: { type: 'boolean', default: false },
@@ -223,6 +227,7 @@ function parseOptions() {
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
+    realInput: !values['skip-real-input'],
     updateA11yBaseline: values['update-a11y-baseline'],
     headed: values.headed,
     list: values.list,
@@ -379,7 +384,8 @@ async function runStoryOnce(browser, story, options, attempt) {
     if (options.leakCheck && result.status === 'PASS') {
       await checkForLeak(page, story, options, result);
     }
-    if (REAL_INPUT_CHECKS[story.id] && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+    if (options.realInput && REAL_INPUT_CHECKS[story.id] && result.status === 'PASS'
+        && !unresponsive && !seen.crashed) {
       await checkRealInput(page, REAL_INPUT_CHECKS[story.id], options, result);
     }
     if (options.a11y && result.status === 'PASS' && !unresponsive && !seen.crashed) {
@@ -800,6 +806,13 @@ async function main() {
         return cancelledExitCode(cancelledBy);
       }
       console.error(`Unable to read the stories from the workbench: ${firstLine(error)}`);
+      return EXIT_RUN_FAILED;
+    }
+    // A real input check keyed by an id that matches no story would never run
+    const unknownChecks = options.realInput ? unknownCheckIds(REAL_INPUT_CHECKS, allStories) : [];
+    if (unknownChecks.length > 0) {
+      console.error('Real input checks for stories that don\'t exist (see lib/real-input/): '
+        + unknownChecks.join(', '));
       return EXIT_RUN_FAILED;
     }
     const stories = selectStories(allStories, options);

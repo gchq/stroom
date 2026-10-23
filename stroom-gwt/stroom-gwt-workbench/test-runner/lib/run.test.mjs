@@ -115,10 +115,12 @@ after(async () => {
 });
 
 // Starts the runner with the arguments, returning {child, done}, where done resolves to
-// {code, output, results} once it exits.
+// {code, output, results} once it exits. The fake workbench has none of the stories the real input
+// checks are for, so they are skipped.
 function startRunner(name, args) {
   const outputDir = path.join(outputRoot, name);
-  const child = spawn(process.execPath, [RUNNER, '--url', baseUrl, '--output-dir', outputDir, ...args],
+  const child = spawn(process.execPath,
+    [RUNNER, '--url', baseUrl, '--output-dir', outputDir, '--skip-real-input', ...args],
     { stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '';
   child.stdout.on('data', (data) => {

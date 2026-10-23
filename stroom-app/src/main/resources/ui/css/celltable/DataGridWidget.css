@@ -323,6 +323,13 @@
     text-align: center;
 }
 
+/* A right-aligned column followed by a left-aligned one, e.g. a count then a date: more space
+   between them so the two don't read as one (#4442) */
+.data-grid__cell--align-right:has(+ .data-grid__cell:not(.data-grid__cell--align-right, .data-grid__cell--align-center)) > div,
+.data-grid__header-cell.right-align:has(+ .data-grid__header-cell:not(.right-align, .center-align)) > div {
+    padding-right: calc(var(--row__padding--horizontal) * 3);
+}
+
 .data-grid--selectable .data-grid__row {
     cursor: pointer;
 }

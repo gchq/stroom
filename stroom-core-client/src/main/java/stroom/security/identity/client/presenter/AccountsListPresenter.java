@@ -281,9 +281,11 @@ public class AccountsListPresenter
                                 "" + account.getFailureCount())
                         .enabledWhen(Account::isEnabled)
                         .withSorting(AccountFields.FIELD_NAME_FAILURE_COUNT)
+                        .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Sign In Failures")
                         .withToolTip("The number of sign in failures since the last successful sign in.")
+                        .rightAligned()
                         .build(),
                 130);
 

@@ -1162,6 +1162,20 @@ works and its cells are covered by stories; these are the next steps, none urgen
 
 **Reported.**
 
+* ~~The quick filter help's longest lines (the `!abc` match type, the last examples) run past the
+  popup's right border~~ Fixed: in a help popup an info table's last column wraps
+  (`help-popup.css`); `Widgets/Inputs/QuickFilter` `WithHelp` checks nothing runs past the edge.
+* ~~The workbench runner silently skips a real input check whose story id matches no story (the
+  copy icon check was first keyed `widgets-cellrenderers-…`, not `widgets-cell-renderers-…`, and
+  "passed")~~ Fixed: such a check stops the run before any story runs (`unknownCheckIds`);
+  `--skip-real-input` skips the checks and that test (the runner's own tests use it).
+
+* Server Tasks as a tree (`App/Main/ServerTasksScreen` `TaskTree`): the grid is 20px wider than its
+  pane, so the last column's resize handle starts off screen; the tree's expander column is 45px
+  (6px flat) and the widths aren't fitted again.
+* A tick box column 22px wide at Default density holds 28px (a 16px box and 6px padding each side),
+  so the box is clipped flush left rather than centred.
+
 * In the light theme, `Widgets/Date & Time` "Calendar Toolbars In The Dialog" and "Shortcuts Are
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
   the suite's default, passes them.

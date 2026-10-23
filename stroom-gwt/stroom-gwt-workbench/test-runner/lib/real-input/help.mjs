@@ -19,6 +19,8 @@
 // focus, so that a screen reader reads it (#5400), and Escape gives it back; help opened with a real
 // mouse click leaves the focus where it was. A play's F1 can't open help (its key event has no key
 // code for the key bindings to read), and the browser can't tell a play's keys from its clicks.
+// A real click in a frame beside the help closes it, as a click anywhere else does (#3550); the
+// frame's click is its own document's, which a play can't make.
 
 import assert from 'node:assert/strict';
 
@@ -85,5 +87,12 @@ export const CHECKS = {
     assert.equal(await helpShowing(page), true);
     await page.keyboard.press('Escape');
     await waitForHelp(page, false);
+  },
+  'widgets-inputs-quickfilter--with-help-beside-frame': async (page) => {
+    await page.getByTitle('Quick Filter Syntax Help', { exact: true }).click();
+    await waitForHelp(page, true);
+    await page.locator('iframe[title="Preview"]').click({ timeout: 5000 });
+    await waitForHelp(page, false);
+    assert.equal(await helpShowing(page), false, 'a click in the frame closes the help');
   },
 };

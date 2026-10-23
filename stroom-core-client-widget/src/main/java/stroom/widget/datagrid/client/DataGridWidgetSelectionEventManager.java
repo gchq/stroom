@@ -23,6 +23,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.datagrid.client.model.SelectionRules;
 import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Selection;
@@ -351,8 +352,10 @@ public class DataGridWidgetSelectionEventManager<T>
         return false;
     }
 
+    // ElementUtil's, as the element may be an SVG one (e.g. a cell's copy icon), whose className
+    // isn't a string, so Element.hasClassName threw and a press on the icon did nothing
     private static boolean isCell(final Element element) {
-        return element.hasClassName("data-grid__cell");
+        return ElementUtil.hasClassName(element, "data-grid__cell");
     }
 
     private void doSelect(final T row, final SelectionType selectionType) {

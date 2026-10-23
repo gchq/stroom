@@ -324,7 +324,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         .rightAligned()
                         .withToolTip("The number of the currently executing tasks on this node for this job")
                         .build(),
-                100);
+                // Room for the heading and the space before Last Executed
+                115);
 
         // Last executed.
         jobNodeListHelper.addLastExecutedColumn(dataGrid);

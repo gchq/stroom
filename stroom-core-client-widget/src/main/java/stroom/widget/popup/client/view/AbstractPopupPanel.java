@@ -20,6 +20,7 @@ import stroom.data.grid.client.Glass;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -35,6 +36,9 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     private final Glass dragGlass = new Glass(
             "popupPanel-dragGlass",
             "popupPanel-dragGlassVisible");
+    // While an auto-hide popup shows, the window's blur listener that closes it when the focus goes
+    // into a frame
+    private JavaScriptObject frameFocusListener;
 
     public AbstractPopupPanel(final DialogActionUiHandlers dialogActionHandler,
                               final boolean autoHide,
@@ -89,7 +93,46 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     protected void onUnload() {
         super.onUnload();
         abandonDrag();
+        if (frameFocusListener != null) {
+            removeFrameFocusListener(frameFocusListener);
+            frameFocusListener = null;
+        }
     }
+
+    /// An auto-hide popup closes on a click outside it, but a click in a frame (e.g. a markdown
+    /// preview or a visualisation) is the frame's own event, which the page never sees. The page's
+    /// window loses the focus to the frame instead, so the popup closes on that (#3550).
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        if (isAutoHideEnabled() && frameFocusListener == null) {
+            frameFocusListener = addFrameFocusListener();
+        }
+    }
+
+    // The focus went into a frame: close, as a click outside would, unless the frame is in the popup
+    private void onFocusInFrame(final Element frame) {
+        if (isShowing() && isAutoHideEnabled() && !getElement().isOrHasChild(frame)) {
+            hide(true);
+        }
+    }
+
+    private native JavaScriptObject addFrameFocusListener() /*-{
+        var self = this;
+        var listener = function () {
+            // The window also loses the focus to another window or tab, which leaves the popup open
+            var active = $doc.activeElement;
+            if (active && active.tagName === 'IFRAME') {
+                self.@stroom.widget.popup.client.view.AbstractPopupPanel::onFocusInFrame(*)(active);
+            }
+        };
+        $wnd.addEventListener('blur', listener);
+        return listener;
+    }-*/;
+
+    private static native void removeFrameFocusListener(JavaScriptObject listener) /*-{
+        $wnd.removeEventListener('blur', listener);
+    }-*/;
 
     /// Notifies the popup when Escape or Ctrl+Enter is pressed: Escape closes it (through its
     /// Close or Cancel button, where it has one) and Ctrl+Enter is OK.
