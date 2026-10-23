@@ -656,7 +656,8 @@ class PipelineWrites {
     static void keepValidation(final Map<String, String> types, final List<PropertyValue> properties) {
         final List<String> touched = sorted(properties.stream()
                 .map(PropertyValue::element)
-                .filter(element -> VALIDATION.contains(types.get(element)))
+                // An element the template doesn't have (a replacement parser's) is no schema filter.
+                .filter(element -> types.get(element) != null && VALIDATION.contains(types.get(element)))
                 .toList());
         if (!touched.isEmpty()) {
             throw new ToolRefusal(PyText.list(touched) + " validate the pipeline's output against "
