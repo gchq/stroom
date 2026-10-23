@@ -62,6 +62,30 @@ class TestKeyBinding {
     }
 
     @Test
+    void hasTheDefaultShortcutsForExplorerItemsAndClosingSavedTabs() {
+        assertThat(KeyBinding.getShortcut(Action.EXPLORER_RENAME)).isEqualTo("F2");
+        assertThat(KeyBinding.getShortcut(Action.EXPLORER_INFO)).isEqualTo("Alt+Enter");
+        assertThat(KeyBinding.getShortcut(Action.ITEM_CLOSE_SAVED)).isEqualTo("Alt+Shift+S");
+        assertThat(Action.EXPLORER_RENAME.getCategory()).isEqualTo(KeyBinding.Category.EXPLORER);
+        assertThat(Action.EXPLORER_INFO.getCategory()).isEqualTo(KeyBinding.Category.EXPLORER);
+        assertThat(KeyBinding.getConfigurableActions())
+                .contains(Action.EXPLORER_RENAME, Action.EXPLORER_INFO, Action.ITEM_CLOSE_SAVED);
+    }
+
+    @Test
+    void explorerItemsAndClosingSavedTabsClashWithNothing() {
+        final Map<Action, List<KeyShortcut>> bindings = KeyBinding.getDefaultBindings();
+
+        for (final Action action : List.of(Action.EXPLORER_RENAME, Action.EXPLORER_INFO, Action.ITEM_CLOSE_SAVED)) {
+            for (final KeyShortcut shortcut : bindings.get(action)) {
+                assertThat(KeyBinding.findClashes(bindings, action, shortcut)).isEmpty();
+                // Alt+Enter isn't Enter, which opens an item
+                assertThat(KeyBinding.findFixedClash(shortcut)).isNull();
+            }
+        }
+    }
+
+    @Test
     void showsTheShortcutListWithACharacterKey() {
         // So it is turned off with the other character key shortcuts, and ignored in a text field
         assertThat(KeyShortcut.parse("Shift+/").isCharacterKeyShortcut()).isTrue();

@@ -270,6 +270,7 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
             delete.setEnabled(enabled);
         }));
         own(explorerTree.addContextMenuHandler(event -> getEventBus().fireEvent(event)));
+        own(explorerTree.addItemKeyHandler(event -> getEventBus().fireEvent(event)));
 
         own(activityButton.addClickHandler(event -> currentActivity.showActivityChooser()));
     }
