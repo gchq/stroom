@@ -28,6 +28,7 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,6 +196,11 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                         ? null
                         : now)
                 .set(AI_CHAT_RUN.UPDATE_TIME_MS, now)
+                // A run carried on after waiting for the user sent no heartbeats while it waited, so it would
+                // otherwise be taken for lost until its node's next heartbeat.
+                .set(AI_CHAT_RUN.HEARTBEAT_MS, newStatus.isActive()
+                        ? DSL.val(now)
+                        : AI_CHAT_RUN.HEARTBEAT_MS)
                 .set(AI_CHAT_RUN.VERSION, AI_CHAT_RUN.VERSION.plus(1))
                 .where(AI_CHAT_RUN.ID.eq(runId))
                 .and(AI_CHAT_RUN.STATUS.in(expectedValues))
