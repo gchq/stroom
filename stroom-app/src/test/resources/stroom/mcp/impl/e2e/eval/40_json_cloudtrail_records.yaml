@@ -1,0 +1,72 @@
+name: AWS CloudTrail log file (one JSON object whose Records array holds the events)
+template: Event Data (JSON)
+capabilities: [nesting, event_boundaries, format_recognition, type_inference]
+# As CloudTrail delivers it: one pretty-printed JSON object, {"Records": [...]}, 800 events. Seen refused as "starts as
+# JSON but isn't valid JSON" when read a line at a time; it is one record for the JSONParser, and for_each makes an
+# Event of each item. The traps: the events are nested (userIdentity.userName), the kind of event is eventName, the
+# first 500 are console logins and S3 reads only (object deletes, user creation and policy changes come after), a
+# failure is an errorCode or a ConsoleLogin response of Failure, and sourceIPAddress is sometimes an AWS service's
+# name rather than an address.
+request: >
+  Onboard our AWS CloudTrail logs (a CloudTrail file is on my disk). Index the events.
+expected:
+  records: 800
+  event_types: [Authenticate, View, Delete, Create, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+files:
+  - {name: 123456789012_CloudTrail_us-east-1_20261011T0800Z.json, generate: {kind: cloudtrail, records: 800, seed: 6}}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    for_each: Records
+    # sourceIPAddress is an address, or an AWS service's name for calls a service made: each where it belongs.
+    extract:
+      - {field: sourceIPAddress, regex: '^(\d{1,3}(?:\.\d{1,3}){3})$', names: [source_ip]}
+      - {field: sourceIPAddress, regex: '^([a-z][\w.-]*\.amazonaws\.com)$', names: [source_service]}
+    common:
+      - {path: EventTime/TimeCreated, field: eventTime, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: AWS CloudTrail}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: eventSource}
+      - {path: EventSource/Device/HostName, field: awsRegion}
+      - {path: EventSource/User/Id, field: userIdentity.userName}
+      - {path: EventSource/Client/IPAddress, field: source_ip}
+      - {path: EventSource/Client/HostName, field: source_service}
+      - {path: EventDetail/TypeId, field: eventName}
+    events:
+      - name: console-login
+        when: [{field: eventName, equals: ConsoleLogin}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: userIdentity.userName}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: responseElements.ConsoleLogin, map: {Success: 'true', Failure: 'false'}}
+      - name: object-read
+        when: [{field: eventName, equals: GetObject}]
+        fields:
+          - {path: EventDetail/View/Object/Type, value: S3 object}
+          - {path: EventDetail/View/Object/Id, field: requestParameters.key}
+          - {path: EventDetail/View/Data, data_name: bucket, field: requestParameters.bucketName}
+          - {path: EventDetail/View/Data, data_name: error, field: errorCode}
+      - name: object-delete
+        when: [{field: eventName, equals: DeleteObject}]
+        fields:
+          - {path: EventDetail/Delete/Object/Type, value: S3 object}
+          - {path: EventDetail/Delete/Object/Id, field: requestParameters.key}
+          - {path: EventDetail/Delete/Data, data_name: bucket, field: requestParameters.bucketName}
+          - {path: EventDetail/Delete/Data, data_name: error, field: errorCode}
+      - name: user-create
+        when: [{field: eventName, equals: CreateUser}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: IAM user}
+          - {path: EventDetail/Create/Object/Id, field: requestParameters.userName}
+          - {path: EventDetail/Create/Data, data_name: error, field: errorCode}
+      - name: policy-change
+        when: [{field: eventName, equals: PutBucketPolicy}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: S3 bucket policy}
+          - {path: EventDetail/Update/After/Object/Id, field: requestParameters.bucketName}
+          - {path: EventDetail/Update/Data, data_name: error, field: errorCode}
