@@ -19,8 +19,10 @@
 // KeyboardShortcuts); '?' shows the list of shortcuts, but not while typing in a field; and Alt+R
 // presses the Refresh button of the list that has the focus, not another list's (App/Main/AppShell
 // OpenedScreenTakesFocus, the User Groups screen's lists). Both need the app's global key handler,
-// which a screen's story on its own doesn't have. A play's keys have no key codes for the key
-// bindings to read.
+// which a screen's story on its own doesn't have. In the explorer, F2 renames the item with the
+// focus and Alt+Enter shows its info (#4293), a screen reader being told when they can't, and
+// Alt+Shift+S closes the saved tabs (#4163) (App/Main/AppShell ExplorerItemKeys). A play's keys have
+// no key codes for the key bindings to read.
 
 import assert from 'node:assert/strict';
 
@@ -52,7 +54,65 @@ function shortcutsShowing(page) {
       && dialog.querySelector('[aria-label="Filter keyboard shortcuts"]') !== null));
 }
 
+// The number of main tabs open
+function tabCount(page) {
+  return page.evaluate(() => document.querySelectorAll('.tab-bar--curved [role="tab"]').length);
+}
+
+// What the explorer last told screen reader users
+function explorerStatus(page) {
+  return page.evaluate(() => {
+    const status = document.querySelector('[role="navigation"] [role="status"]');
+    return status ? status.textContent : null;
+  });
+}
+
+// Whether a dialog with the given title is showing
+function dialogShowing(page, title) {
+  return page.evaluate((text) => [...document.querySelectorAll('[role="dialog"]')]
+    .some((dialog) => dialog.getAttribute('aria-label') === text
+      || [...dialog.querySelectorAll('*')].some((element) => element.children.length === 0
+        && element.textContent.trim() === text)), title);
+}
+
+// Puts the focus on the explorer's item with the given name
+async function focusItem(page, name) {
+  await page.locator('[role="navigation"] [role="treeitem"]', { hasText: name }).first().focus();
+}
+
 export const CHECKS = {
+  'app-main-appshell--explorer-item-keys': async (page) => {
+    await waitFor(page, async () => (await tabCount(page)) === 2, 'the play leaves two saved tabs open');
+
+    // F2 renames the item with the focus; Escape cancels
+    await focusItem(page, 'Colours');
+    await page.keyboard.press('F2');
+    await waitFor(page, () => page.getByLabel('Name', { exact: true }).isVisible(), 'F2 shows the Rename dialog');
+    await page.keyboard.press('Escape');
+    await waitFor(page, async () => !(await page.getByLabel('Name', { exact: true }).isVisible()),
+      'Escape closes it');
+
+    // Alt+Enter shows its info
+    await focusItem(page, 'Colours');
+    await page.keyboard.press('Alt+Enter');
+    await waitFor(page, () => page.getByText('UUID', { exact: true }).isVisible(), 'Alt+Enter shows the info');
+    assert.equal(await tabCount(page), 2, 'Alt+Enter doesn\'t open the item');
+    await page.keyboard.press('Escape');
+    await waitFor(page, async () => !(await page.getByText('UUID', { exact: true }).isVisible()),
+      'Escape closes the info');
+
+    // A feed can't be renamed: no dialog, and a screen reader is told why
+    await focusItem(page, 'EVENTS');
+    await page.keyboard.press('F2');
+    await waitFor(page, async () => (await explorerStatus(page)) === 'Feeds can\'t be renamed',
+      'F2 on a feed tells screen reader users it can\'t be renamed');
+    assert.equal(await page.getByLabel('Name', { exact: true }).isVisible(), false, 'no Rename dialog for a feed');
+
+    // Alt+Shift+S closes the saved tabs
+    await page.keyboard.press('Alt+Shift+S');
+    await waitFor(page, async () => (await tabCount(page)) === 0, 'Alt+Shift+S closes the saved tabs');
+  },
+
   'app-main-appshell--keyboard-shortcuts': async (page) => {
     // The play leaves 'Colours' (the tab opened last) selected
     await waitFor(page, async () => (await tabState(page)).tab === 'Colours', 'Colours is selected');

@@ -111,6 +111,7 @@ public class KeyBinding {
         addDefault(Action.ITEM_SAVE_ALL, "Ctrl+Shift+S");
         addDefault(Action.ITEM_CLOSE, "Alt+W");
         addDefault(Action.ITEM_CLOSE_ALL, "Alt+Shift+W");
+        addDefault(Action.ITEM_CLOSE_SAVED, "Alt+Shift+S");
 
         addDefault(Action.FIND, "Alt+Shift+F", "Shift Shift");
         addDefault(Action.FIND_IN_CONTENT, "Ctrl+Shift+F");
@@ -128,6 +129,11 @@ public class KeyBinding {
         // '?', as many web applications use
         addDefault(Action.SHOW_KEY_BINDS, "Shift+/");
         addDefault(Action.FOCUS_EXPLORER_FILTER, "Ctrl+/");
+
+        // Keys for the explorer's item with the focus, as Windows Explorer has them. (Not key
+        // sequences, as the explorer's typing goes to the item starting with what is typed)
+        addDefault(Action.EXPLORER_RENAME, "F2");
+        addDefault(Action.EXPLORER_INFO, "Alt+Enter");
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
         addDefault(Action.GOTO_APP_PERMS, "G A");
@@ -673,6 +679,7 @@ public class KeyBinding {
     public enum Category {
         GENERAL("General"),
         LISTS("Lists"),
+        EXPLORER("Explorer"),
         GO_TO("Go to"),
         CREATE("Create");
 
@@ -726,6 +733,7 @@ public class KeyBinding {
         ITEM_SAVE_ALL("Save all", Category.GENERAL),
         ITEM_CLOSE("Close tab", Category.GENERAL),
         ITEM_CLOSE_ALL("Close all tabs", Category.GENERAL),
+        ITEM_CLOSE_SAVED("Close saved tabs", Category.GENERAL),
         FIND("Find", Category.GENERAL),
         FIND_IN_CONTENT("Find in content", Category.GENERAL),
         RECENT_ITEMS("Recent items", Category.GENERAL),
@@ -747,6 +755,10 @@ public class KeyBinding {
         PREVIOUS_TAB("Go to previous tab", Category.GENERAL),
         // Presses the Refresh button of the list that has the focus
         REFRESH("Refresh list", Category.GENERAL),
+
+        // Explorer item keys, while the explorer has the focus
+        EXPLORER_RENAME("Rename item", Category.EXPLORER),
+        EXPLORER_INFO("Show item info", Category.EXPLORER),
         SETTINGS("Settings", null),
 
         // GOTO key sequences

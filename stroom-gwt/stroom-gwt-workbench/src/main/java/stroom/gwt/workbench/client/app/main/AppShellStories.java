@@ -762,8 +762,8 @@ public final class AppShellStories {
                             "Add to Favourites")) {
                         play.expect(menuItem(screen, name)).toBeInTheDocument();
                     }
-                    for (final String accelerator : List.of("Alt+W", "Alt+Shift+W", "Ctrl+S", "Ctrl+Shift+S",
-                            "Alt+L")) {
+                    for (final String accelerator : List.of("Alt+W", "Alt+Shift+W", "Alt+Shift+S", "Ctrl+S",
+                            "Ctrl+Shift+S", "Alt+L")) {
                         play.expect(shortcuts(play)).toContain(accelerator);
                     }
                     play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveAttribute("aria-disabled", "true");
@@ -816,6 +816,28 @@ public final class AppShellStories {
                     play.click(dialog.getByRole("button", StroomDom.button("Close")));
                     play.waitFor(() -> play.expect(screen.queryByText("Keyboard Shortcuts", StroomDom.DIALOG_TITLE))
                             .toBeNull());
+                    expectNoProblems(play);
+                })
+                // #4293: in the explorer, F2 renames the item with the focus and Alt+Enter shows its
+                // info, which its menu shows beside Rename and Show Info; a screen reader is told when
+                // they can't (a feed can't be renamed). #4163: Alt+Shift+S closes the saved tabs. The
+                // runner's real input check (test-runner/lib/real-input/shortcuts.mjs) presses the
+                // keys, as a play's keys have no key codes for the key bindings to read
+                .story("ExplorerItemKeys", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play nav = navTree(play);
+                    rightClick(play, nav.getByText("Colours"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Rename")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).toContain("F2");
+                    play.expect(shortcuts(play)).toContain("Alt+Enter");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Rename", StroomDom.MENU_ITEM_TEXT)).toBeNull());
+                    // Two saved tabs for Alt+Shift+S to close
+                    play.dblClick(nav.getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.dblClick(nav.getByText("Colours"));
+                    play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
                     expectNoProblems(play);
                 })
                 // From the keyboard: Shift+F10 or the context menu key opens a focused tab's menu

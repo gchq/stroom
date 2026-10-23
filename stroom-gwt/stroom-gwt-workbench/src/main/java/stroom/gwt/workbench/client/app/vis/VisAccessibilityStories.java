@@ -223,13 +223,4 @@ public final class VisAccessibilityStories {
         final Query point = play.withinFrame(VisStories.frame(play)).getByRole("img", name);
         play.waitFor(() -> play.expect(point).toHaveFocus());
     }
-
-    // What fades: the whole bar, or with a high contrast theme (forced colours) only its fill, so
-    // that its outline still shows. Asked as a play runs, as it asks the browser: the JVM tests
-    // load this class (to list the stories) without one
-    private static String fades() {
-        return StroomThemeDecorator.isForcedColours()
-                ? "fill-opacity"
-                : "opacity";
-    }
 }
