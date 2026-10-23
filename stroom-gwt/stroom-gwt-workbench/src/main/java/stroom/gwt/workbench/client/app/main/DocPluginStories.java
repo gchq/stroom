@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -125,8 +126,10 @@ public final class DocPluginStories {
         harness.addCleanUp(injector.getDocumentPluginEventManager()::unbind);
         harness.addCleanUp(injector.getXMLSchemaPlugin()::unbind);
         // The tab the plugin opens is shown as the story's content, as the tab pane would show it
-        harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event ->
-                harness.addContent((MyPresenterWidget<?>) event.getLayer())));
+        harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
+            harness.addContent((MyPresenterWidget<?>) event.getLayer());
+            StoryDocumentPlugins.closeOnCleanUp(harness, event.getTabData());
+        }));
         // As the explorer does when the document is opened
         harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));
         return harness.asWidget();

@@ -139,14 +139,17 @@ public final class ActivityChooserStories {
         activityButton.addClickHandler(event -> currentActivity.showActivityChooser());
         harness.addRegistration(harness.getEventBus().addHandler(ActivityChangedEvent.getType(), event ->
                 updateSummary(activityButton, event.getActivity())));
-        harness.add(activityOuter);
-
-        harness.afterStartUp(() -> currentActivity.getActivity(activity -> {
-            updateSummary(activityButton, activity);
-            if (open) {
-                currentActivity.showActivityChooser();
-            }
-        }, new DefaultTaskMonitorFactory(harness.getHasHandlers())));
+        // The summary is the screen each opening shows (as the leak check opens it again); the play
+        // opens the chooser from it
+        harness.afterStartUp(() -> {
+            harness.add(activityOuter);
+            currentActivity.getActivity(activity -> {
+                updateSummary(activityButton, activity);
+                if (open) {
+                    currentActivity.showActivityChooser();
+                }
+            }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
+        });
         return harness.asWidget();
     }
 }

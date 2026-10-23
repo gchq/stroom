@@ -277,10 +277,16 @@ run of 22 October 2026 (1,538 stories).
   * Fixed on master: `target-size` (an element under 24px, not in the a11y baseline): 33 stories
     in `AnalyticRuleEditor`, `ReportEditor` and `QueryEditor`, plus `DataRetentionScreen`
     `ImpactAbort` and `QueryResultVis` `PauseButtonReportsUp`.
-  * "the screen didn't open again within 15000 ms" (the leak check reopening the screen):
-    `ContentTabPane` `NoDuplicateForSingleInstance`, `docPlugin`
-    `OnWriteTransformsAtSaveTime`, `Activity Chooser` `Default`, and `PipelineEditor`
-    `FailedEmbeddedCreateKeepsDialogUsable` and `MultiDocumentSave`.
+  * Fixed (23 October 2026), "the screen didn't open again within 15000 ms" (the leak check
+    reopening the screen), all story set up, not Stroom: `docPlugin` `OnWriteTransformsAtSaveTime`
+    and `PipelineEditor` `FailedEmbeddedCreateKeepsDialogUsable` and `MultiDocumentSave` showed the
+    tab a plugin opened but didn't close it when the screen closed, so the plugin still had the
+    document open and opening it again selected a tab that was gone; they now close it as Stroom
+    does (`StoryDocumentPlugins.closeOnCleanUp`). `ContentTabPane` `NoDuplicateForSingleInstance`
+    and `Activity Chooser` `Default` showed their screen (the tab pane, the activity summary) before
+    the screen opened, so only the menu or dialog their play opened counted as shown, and opening
+    again showed nothing new; they now show it as they open (and the tab pane's other story, and the
+    chooser's, are now leak checked too: before, they counted as showing nothing).
   * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
     and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.

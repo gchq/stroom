@@ -29,6 +29,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -37,6 +38,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.ComponentNode;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -107,14 +109,15 @@ public final class ContentTabPaneStories {
         return play.getAllByText(TextMatch.startingWith(name), ".tab-bar--curved .tab-bar__label");
     }
 
-    private static void open(final ContentManager contentManager,
-                             final EventBus eventBus,
-                             final DocRef docRef,
-                             final int instance) {
+    private static DocumentTab open(final ContentManager contentManager,
+                                    final EventBus eventBus,
+                                    final DocRef docRef,
+                                    final int instance) {
         final DocumentTab tab = "Dashboard".equals(docRef.getType())
                 ? new MultiInstanceDocumentTab(eventBus, docRef, instance)
                 : new DocumentTab(eventBus, docRef);
         contentManager.open(event -> event.getCallback().closeTab(true), tab, tab);
+        return tab;
     }
 
     private static Widget render(final StoryContext context, final DocRef docRef) {
@@ -135,8 +138,16 @@ public final class ContentTabPaneStories {
         harness.addRegistration(eventBus.addHandler(OpenDocumentEvent.getType(), event ->
                 harness.spy(ON_OPEN_DOCUMENT, event.getDocRef().getType() + " " + event.getDocRef().getUuid()
                         + " duplicate=" + event.isDuplicate())));
-        harness.addContent(pane);
-        harness.afterStartUp(() -> open(contentManager, eventBus, docRef, 0));
+        // The pane lasts for the story, as Stroom's main view keeps it, and is the screen each
+        // opening shows (as the leak check opens it again), with the document's tab, which is
+        // closed when the screen is
+        final ComponentNode paneOwner = ComponentNode.root("ContentTabPaneStories");
+        paneOwner.adopt(pane.getComponentNode());
+        harness.addCleanUp(paneOwner::dispose);
+        harness.afterStartUp(() -> {
+            harness.addContent(pane);
+            StoryDocumentPlugins.closeOnCleanUp(harness, open(contentManager, eventBus, docRef, 0));
+        });
         return harness.asWidget();
     }
 

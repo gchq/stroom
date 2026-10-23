@@ -23,6 +23,8 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.widget.presenter.client.HandlerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
+import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -67,19 +69,32 @@ public final class StoryDocumentPlugins {
                                                 final DocumentPluginEventManager eventManager,
                                                 final DocumentPlugin<?>... plugins) {
         Objects.requireNonNull(harness);
-        disposeOnCleanUp(harness::addCleanUp, eventManager);
-        disposeOnCleanUp(harness::addCleanUp, plugins);
+        unbindOnCleanUp(harness::addCleanUp, eventManager);
+        unbindOnCleanUp(harness::addCleanUp, plugins);
         return new StoryDocumentPlugins(harness);
     }
 
     /// Shows each tab a plugin opens (`OpenContentTabEvent`, which Stroom's content pane handles) as
-    /// the story's content, filling the canvas, as the content pane shows the selected tab.
+    /// the story's content, filling the canvas, as the content pane shows the selected tab. The tab
+    /// is closed, as Stroom closes a tab, when the story renders again or the leak probe closes it.
     ///
     /// @return This set up.
     public StoryDocumentPlugins showOpenedTabs() {
-        harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event ->
-                harness.addContent((MyPresenterWidget<?>) event.getLayer())));
+        harness.addRegistration(harness.getEventBus().addHandler(OpenContentTabEvent.getType(), event -> {
+            harness.addContent((MyPresenterWidget<?>) event.getLayer());
+            closeOnCleanUp(harness, event.getTabData());
+        }));
         return this;
+    }
+
+    /// Closes a tab, as Stroom does when the user closes it, when the story renders again or the leak
+    /// probe closes the screen: its content manager disposes its content, and its plugin forgets the
+    /// document, so opening it again opens it again.
+    ///
+    /// @param harness The story's harness.
+    /// @param tabData The tab, as opened.
+    public static void closeOnCleanUp(final ScreenHarness harness, final TabData tabData) {
+        harness.addCleanUp(() -> RequestCloseTabEvent.fire(harness.getHasHandlers(), tabData, true));
     }
 
     /// Adds the routes a document plugin loads and saves a document with: `GET` replies with the
@@ -101,7 +116,7 @@ public final class StoryDocumentPlugins {
     ///
     /// @param addCleanUp Adds a clean up, e.g. `harness::addCleanUp`.
     /// @param containers The containers.
-    static void disposeOnCleanUp(final Consumer<Runnable> addCleanUp, final HandlerContainer... containers) {
+    static void unbindOnCleanUp(final Consumer<Runnable> addCleanUp, final HandlerContainer... containers) {
         for (final HandlerContainer container : containers) {
             Objects.requireNonNull(container);
             addCleanUp.accept(container::unbind);
