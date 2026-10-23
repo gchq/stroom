@@ -181,6 +181,7 @@ public class VisPresenter
         });
 
         getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
+        onDispose(this::releaseVis);
     }
 
     /*****************
@@ -220,9 +221,7 @@ public class VisPresenter
         RootPanel.get().remove(visFrame);
     }
 
-    @Override
-    protected void onDispose() {
-        super.onDispose();
+    private void releaseVis() {
         cleanupSearchModelAssociation();
         if (currentFunction != null) {
             currentFunction.removeStatusHandler(this);

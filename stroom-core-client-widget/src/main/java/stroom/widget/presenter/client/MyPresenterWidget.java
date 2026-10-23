@@ -46,8 +46,6 @@ public class MyPresenterWidget<V extends View>
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus);
         this.view = view;
-        // Run after what it owns is disposed and its registrations are removed
-        onDispose(this::onDispose);
     }
 
     /// @return Its view.
@@ -90,11 +88,6 @@ public class MyPresenterWidget<V extends View>
         if (getWidget() instanceof RequiresResize) {
             ((RequiresResize) getWidget()).onResize();
         }
-    }
-
-    /// Releases anything else this presenter holds that would outlive it, e.g. a timer or a
-    /// JavaScript object with global listeners. Called once, by [#dispose()].
-    protected void onDispose() {
     }
 
     /// Gives this presenter a task monitor of its own, e.g. a list's pager spinner, rather than

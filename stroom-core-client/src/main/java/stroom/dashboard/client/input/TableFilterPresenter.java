@@ -72,13 +72,7 @@ public class TableFilterPresenter
                                 final Provider<ColumnValuesFilterPresenter> columnValuesFilterPresenterProvider) {
         super(eventBus, view, settingsPresenterProvider);
         this.columnValuesFilterPresenterProvider = columnValuesFilterPresenterProvider;
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        registrations.forEach(HandlerRegistration::removeHandler);
-        registrations.clear();
+        onDispose(this::removeTableListeners);
     }
 
     @Override
@@ -99,11 +93,15 @@ public class TableFilterPresenter
         currentColumns = Collections.emptyList();
     }
 
+    private void removeTableListeners() {
+        registrations.forEach(HandlerRegistration::removeHandler);
+        registrations.clear();
+    }
+
     private void update(final TableFilterComponentSettings settings) {
         reset();
 
-        registrations.forEach(HandlerRegistration::removeHandler);
-        registrations.clear();
+        removeTableListeners();
         if (settings.getTableId() != null) {
             final Component component = getDashboardContext()
                     .getComponents()

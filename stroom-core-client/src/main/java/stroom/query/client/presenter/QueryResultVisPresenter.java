@@ -149,6 +149,7 @@ public class QueryResultVisPresenter
         });
 
         getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
+        onDispose(this::releaseVis);
     }
 
     public void setVisSelectionModel(final VisSelectionModel visSelectionModel) {
@@ -217,12 +218,6 @@ public class QueryResultVisPresenter
 
     private String getClassName(final String theme) {
         return "vis " + Theme.getClassName(theme);
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        releaseVis();
     }
 
     private void releaseVis() {

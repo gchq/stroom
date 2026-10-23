@@ -347,6 +347,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         listen(
                 AnnotationTagNameChangeEvent.getType(),
                 ignored -> onAnnotationChange());
+        onDispose(this::cleanupSearchModelAssociation);
     }
 
     private void toggle(final TableRow row) {
@@ -482,12 +483,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
         this.pause = pause;
         pagerView.getRefreshButton().setPaused(this.pause);
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        cleanupSearchModelAssociation();
     }
 
     private void onAddColumn() {

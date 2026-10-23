@@ -159,6 +159,7 @@ class TestPresenterAdapter {
         private TestPresenter(final String name) {
             super(eventBus, Mockito.mock(View.class));
             this.name = name;
+            onDispose(() -> events.add(name + " disposed"));
         }
 
         void setReadOnly(final boolean readOnly) {
@@ -175,11 +176,6 @@ class TestPresenterAdapter {
 
         void fireTest() {
             getEventBus().fireEventFromSource(new TestEvent(), this);
-        }
-
-        @Override
-        protected void onDispose() {
-            events.add(name + " disposed");
         }
     }
 

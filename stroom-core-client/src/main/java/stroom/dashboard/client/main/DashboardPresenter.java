@@ -223,6 +223,8 @@ public class DashboardPresenter
             dashboardContext.fireContextChangeEvent();
             start();
         });
+        // Its components go with it (closing it should have removed them already)
+        onDispose(components::removeAll);
     }
 
     public void setParentContext(final DashboardContext parent) {
@@ -248,15 +250,6 @@ public class DashboardPresenter
     private void onRestoreTabs() {
         restoreTabs();
         maximiseTabsButton.setFocus(true);
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-
-        // Remove all components. This should have been done already in the
-        // onClose() method.
-        components.removeAll();
     }
 
     private void onConstraints() {

@@ -122,6 +122,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
         this.hasSaveRegistry = hasSaveRegistry;
         hasSaveRegistry.register(this);
+        // The registry is shared, so it would keep this closed screen (and Save All would save it)
+        onDispose(() -> hasSaveRegistry.unregister(this));
         toolbar = new Toolbar("Document actions");
         saveButton = toolbar.button(SvgImage.SAVE, "Save Rules", this::save);
         saveButton.setShortcut(Action.ITEM_SAVE);
@@ -156,13 +158,6 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 save();
             }
         });
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        // The registry is shared, so it would keep this closed screen (and Save All would save it)
-        hasSaveRegistry.unregister(this);
     }
 
     public final boolean isDirty() {

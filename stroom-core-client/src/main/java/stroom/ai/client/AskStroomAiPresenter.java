@@ -213,6 +213,8 @@ public class AskStroomAiPresenter
                 });
             }
         });
+        // A closed chat polls no more
+        onDispose(this::stopPolling);
     }
 
     @Override
@@ -303,6 +305,12 @@ public class AskStroomAiPresenter
                         config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
             });
         }, this);
+    }
+
+    private void stopPolling() {
+        if (pollTimer != null) {
+            pollTimer.cancel();
+        }
     }
 
     private void updateConfig(final AskStroomAiConfig config) {
@@ -471,14 +479,6 @@ public class AskStroomAiPresenter
         if (!polling) {
             polling = true;
             pollForNewMessages();
-        }
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        if (pollTimer != null) {
-            pollTimer.cancel();
         }
     }
 

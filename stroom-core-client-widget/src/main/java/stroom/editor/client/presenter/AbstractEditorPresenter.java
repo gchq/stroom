@@ -38,7 +38,6 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
         implements HasText, HasValueChangeHandlers<String> {
 
     private final DelegatingAceCompleter delegatingAceCompleter;
-    private boolean disposed;
     // The editor's ID once it has registered completion providers with the shared completer
     private String registeredEditorId;
 
@@ -61,12 +60,10 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
         listen(
                 ChangeCurrentPreferencesEvent.getType(),
                 this::handlePreferencesChange);
+        onDispose(this::releaseEditor);
     }
 
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        disposed = true;
+    private void releaseEditor() {
         // The completer is shared, so it would keep this editor's providers (and through them the
         // document) for good. An editor that was never shown has no ID and registered none.
         if (registeredEditorId != null) {
@@ -168,7 +165,7 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
         // scheduleDeferred to ensure editor is initialised before getId is called
         Scheduler.get().scheduleDeferred(() -> {
             // Not once disposed, or the completer would keep this editor
-            if (!disposed) {
+            if (!isDisposed()) {
                 registeredEditorId = getEditorId();
                 delegatingAceCompleter.registerCompletionProviders(
                         registeredEditorId, aceEditorMode, completionProviders);
@@ -183,7 +180,7 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
         // scheduleDeferred to ensure editor is initialised before getId is called
         Scheduler.get().scheduleDeferred(() -> {
             // Not once disposed, or the completer would keep this editor
-            if (!disposed) {
+            if (!isDisposed()) {
                 registeredEditorId = getEditorId();
                 delegatingAceCompleter.registerCompletionProviders(
                         registeredEditorId, completionProviders);

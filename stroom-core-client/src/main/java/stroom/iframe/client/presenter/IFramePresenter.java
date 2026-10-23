@@ -34,6 +34,9 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     public IFramePresenter(final EventBus eventBus, final IFrameView view) {
         super(eventBus, view);
         view.setUiHandlers(this);
+        // Stops the view's title poll, which would otherwise run every second, and keep this, for
+        // the life of the page (e.g. a closed document's Documentation tab)
+        onDispose(this::close);
     }
 
     public void setId(final String id) {
@@ -70,14 +73,6 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
 
     public void close() {
         getView().cleanup();
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        // Stops the view's title poll, which would otherwise run every second, and keep this, for
-        // the life of the page (e.g. a closed document's Documentation tab)
-        close();
     }
 
     @Override

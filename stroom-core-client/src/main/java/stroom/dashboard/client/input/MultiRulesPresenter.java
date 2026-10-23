@@ -61,12 +61,7 @@ public class MultiRulesPresenter extends AbstractSettingsTabPresenter<MultiRules
                                final Provider<RulesPresenter> rulesPresenterProvider) {
         super(eventBus, view);
         this.rulesPresenterProvider = rulesPresenterProvider;
-    }
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        reset();
+        onDispose(this::reset);
     }
 
     public void setAllColumns(final Map<ColumnRef, Column> allColumns) {
