@@ -287,8 +287,15 @@ run of 22 October 2026 (1,538 stories).
     the screen opened, so only the menu or dialog their play opened counted as shown, and opening
     again showed nothing new; they now show it as they open (and the tab pane's other story, and the
     chooser's, are now leak checked too: before, they counted as showing nothing).
-  * Leaks of about 155 DOM nodes and 58 listeners per close: the six `AskStroomAiDialog` stories
-    and `AskAiChatPanel` `StopWhileWorking` (41 nodes).
+  * Fixed (23 October 2026), leaks of about 155 DOM nodes and 58 listeners per close: the six
+    `AskStroomAiDialog` stories, and the `AskAiChatPanel` ones (master's too). Two were the leak
+    check's: `ScreenHarness.closeOnCleanUp` kept every opening's popup (now its close closes and
+    forgets them), and the probe's close and open ran outside a GWT entry point (`$entry`), so the
+    commands they scheduled to run once done (`scheduleFinally`, e.g. a data grid's redraw) waited,
+    keeping the closed screen, for the next event. One was Stroom's: `AskStroomAiPresenter` polled
+    for a chat's messages every second while a request was in flight and didn't stop when it was
+    disposed, so a chat closed while working polled the server for ever, drawing into a detached
+    panel (`AskAiChatPanel` `StopWhileWorking`); it now stops.
   * `AppShell` `ActivityChoosesOnStartup`: focusing the screen leaves the focus outside it.
 * **Fixed** (on master by `3c9ed072be` and `b3e7f34898`, found 23 October 2026, merging master into
   the remove_gwtp branch): the workbench's JVM tests `TestAllStories` and `TestPresenterCoverage`
@@ -312,6 +319,11 @@ run of 22 October 2026 (1,538 stories).
     `AppShell` `KeyboardShortcuts`, in its real input check ("Colours is selected"), and
     `AppShell` `OpenedScreenTakesFocus`, in its real input check ("locator.click: Timeout 5000ms
     exceeded").
+* **Open** (found 23 October 2026, with a heap snapshot): a REST resource held in a static field
+  (e.g. `AskStroomAiPresenter.RESOURCE`, made with `GWT.create`) keeps the callback of its last
+  request (`RestFactoryImpl$MethodCallbackImpl`), and through it the presenter that made it, after
+  that presenter is disposed, until the next request. It keeps only the latest one, so it doesn't
+  grow, but a closed screen stays in memory. Fix: clear the service's callback when a call ends.
 * **Open** (found 23 October 2026): the workbench's `build.gradle` (line 901 on master) fails with
   `No signature of method: java.lang.String.positive()` when there are no built visualisations:
   the `println` message's second line starts with `+`, which Groovy reads as a new statement. Fix:

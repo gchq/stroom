@@ -114,6 +114,8 @@ public class AskStroomAiPresenter
      */
     private boolean requestInFlight;
     private boolean polling;
+    // The next poll for the chat's messages, while it is waiting on them; cancelled when disposed
+    private com.google.gwt.user.client.Timer pollTimer;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -472,13 +474,25 @@ public class AskStroomAiPresenter
         }
     }
 
+    @Override
+    protected void onDispose() {
+        super.onDispose();
+        if (pollTimer != null) {
+            pollTimer.cancel();
+        }
+    }
+
     private void pollForNewMessages() {
-        if (currentChat == null) {
+        // A closed chat polls no more (its timer is cancelled too, but one may already be due)
+        if (currentChat == null || isDisposed()) {
             polling = false;
             return;
         }
         final int chatId = currentChat.getId();
         askStroomAiClient.pollMessages(chatId, lastSeenMessageId, response -> {
+            if (isDisposed()) {
+                return;
+            }
             if (currentChat == null || currentChat.getId() != chatId) {
                 // The user has moved to another chat since this poll was sent. Rendering the reply
                 // now would put one chat's messages into another's.
@@ -517,12 +531,13 @@ public class AskStroomAiPresenter
             // that would never end.
             if (requestInFlight || hasNewMessages || isDownloading(response.getAttachments())) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
-                new com.google.gwt.user.client.Timer() {
+                pollTimer = new com.google.gwt.user.client.Timer() {
                     @Override
                     public void run() {
                         pollForNewMessages();
                     }
-                }.schedule(1000);
+                };
+                pollTimer.schedule(1000);
             } else {
                 polling = false;
                 getView().setSendButtonLoadingState(false);

@@ -174,6 +174,9 @@ public final class ScreenHarness {
     // The number of widgets shown before the screen was opened, so that the probe's close removes
     // only those its opening added
     private int probeWidgetMark;
+    // The number of popups to close on clean up before the screen was opened, so that the probe's
+    // close closes, and forgets, those its opening registered
+    private int probeCloseOnCleanUpMark;
 
     private ScreenHarness(final Builder builder) {
         this.context = builder.context;
@@ -361,6 +364,7 @@ public final class ScreenHarness {
                             final Runnable open = () -> {
                                 probeCleanUpMark = cleanUps.size();
                                 probeWidgetMark = host.getWidgetCount();
+                                probeCloseOnCleanUpMark = closeOnCleanUp.size();
                                 action.run();
                             };
                             open.run();
@@ -540,6 +544,14 @@ public final class ScreenHarness {
     ///
     /// @param dispose Whether to dispose the screen's presenters and run its clean ups.
     void probeClose(final boolean dispose) {
+        // Popups that must be asked to close are, as their Close buttons would, and forgotten, else
+        // the list would keep each opening's popup
+        for (int i = closeOnCleanUp.size() - 1; i >= probeCloseOnCleanUpMark; i--) {
+            final MyPresenterWidget<?> popup = closeOnCleanUp.remove(i);
+            runSafely("closing a popup", () -> HidePopupRequestEvent.builder(popup)
+                    .action(DialogAction.CLOSE)
+                    .fire());
+        }
         // Popups (dialogs) are hidden as Stroom hides them, which unbinds their presenters
         for (final MyPresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
             HidePopupEvent.builder(popup).autoClose(true).ok(false).fire();

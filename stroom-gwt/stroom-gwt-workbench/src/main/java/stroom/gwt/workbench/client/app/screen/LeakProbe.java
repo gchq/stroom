@@ -82,14 +82,17 @@ final class LeakProbe {
         return String.join(",", ComponentChecks.unownedNames());
     }
 
+    // Close and open run as GWT entry points ($entry), as a browser event's handlers do, so that the
+    // commands they schedule to run when the event is done (Scheduler.scheduleFinally, e.g. a data
+    // grid's redraw) run, rather than waiting, keeping the closed screen, for the next GWT event
     private static native void export(LeakProbe probe) /*-{
         $wnd.__leakProbe = {
-            close: function (dispose) {
+            close: $entry(function (dispose) {
                 probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::close(Z)(!!dispose);
-            },
-            open: function () {
+            }),
+            open: $entry(function () {
                 probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::open()();
-            },
+            }),
             shown: function () {
                 return probe.@stroom.gwt.workbench.client.app.screen.LeakProbe::shown()();
             },
