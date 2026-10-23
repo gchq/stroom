@@ -127,14 +127,14 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         refreshNodeStates();
 
         // NodeListPresenter may change a node
-        own(getEventBus().addHandler(
+        listen(
                 NodeChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
                     refreshNodeStates();
-                }));
+                });
 
         // JobListPresenter may change a job
-        own(getEventBus().addHandler(
+        listen(
                 JobChangeEvent.getType(), event -> {
 //                    GWT.log("Handling JobChangeEvent " + event);
                     final String currentJobName = getJobNameCriteria();
@@ -142,10 +142,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                     if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
                         internalRefresh();
                     }
-                }));
+                });
 
         // NodeJobListPresenter may change a jobNode
-        own(getEventBus().addHandler(
+        listen(
                 JobNodeChangeEvent.getType(), event -> {
 //                    GWT.log(JobNodeListPresenter.this.getClass().getSimpleName()
 //                            + " - jobNodes changed: " + event.getJobNodes().size());
@@ -159,7 +159,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                             internalRefresh();
                         }
                     }
-                }));
+                });
 
         own(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }

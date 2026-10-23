@@ -177,7 +177,11 @@ public class ColumnSelectionPresenter
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        super.fireEvent(event);
-        handlerManager.fireEvent(event);
+        // Its value changes are for its own listeners; anything else (e.g. an alert) is app-wide
+        if (event instanceof ValueChangeEvent) {
+            handlerManager.fireEvent(event);
+        } else {
+            super.fireEvent(event);
+        }
     }
 }

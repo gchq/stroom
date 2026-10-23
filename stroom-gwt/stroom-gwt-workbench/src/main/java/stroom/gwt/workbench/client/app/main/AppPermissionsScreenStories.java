@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.security.SecurityScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -33,9 +34,16 @@ import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /// Stories of `App/Main/AppPermissionsScreen`, showing Stroom's real [AppPermissionsPresenter] (the
 /// 'Application Permissions' tab) with fake REST replies.
@@ -126,6 +134,18 @@ public final class AppPermissionsScreenStories {
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Without MANAGE_USERS the tick boxes are borderless and can't be changed
+                // A value change another screen fires on the app's bus (as a dashboard's column
+                // selection does) isn't this screen's: it once reached this screen's handler, which
+                // failed reading it as its own
+                .story("IgnoresOtherScreensValueChanges", context -> render(context,
+                        AppPermission.MANAGE_USERS_PERMISSION))
+                .withPlay(play -> {
+                    play.click(play.findByText("Alice Anderson"));
+                    play.findByText("Administrator");
+                    play.run("Another screen's value changes", () ->
+                            ValueChangeEvent.fire(new OtherScreen(), Collections.singleton("column")));
+                    play.expect(play.getByText("Administrator")).toBeInTheDocument();
+                })
                 .story("ReadOnlyWithoutManageUsers", context -> render(context))
                 .withPlay(play -> {
                     play.click(play.findByText("Alice Anderson"));
@@ -176,5 +196,23 @@ public final class AppPermissionsScreenStories {
             presenter.refresh();
         });
         return harness.asWidget();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Another screen with a value of its own, firing its changes on the app's bus
+    private static final class OtherScreen implements HasValueChangeHandlers<Set<String>> {
+
+        @Override
+        public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Set<String>> handler) {
+            throw new UnsupportedOperationException("Nothing listens to it directly");
+        }
+
+        @Override
+        public void fireEvent(final GwtEvent<?> event) {
+            StaticEventBus.getEventBus().fireEventFromSource(event, this);
+        }
     }
 }

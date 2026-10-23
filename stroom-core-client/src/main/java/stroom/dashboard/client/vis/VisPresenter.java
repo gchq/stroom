@@ -172,13 +172,13 @@ public class VisPresenter
         scriptCache.bind();
         visFrame.bind();
 
-        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
+        listen(ChangeCurrentPreferencesEvent.getType(), event -> {
             visFrame.setClassName(getClassName(event.getTheme()));
             // The visualisation asks for its values' colours again, in the new palette or theme
             visFrame.coloursChanged(VisPalette.fromDisplayValue(event.getVisualisationPalette()).getDisplayValue());
             // ...and shows times in the new time zone and date-time pattern
             visFrame.timeChanged(dateTimeFormatter.getVisTimeSettings());
-        }));
+        });
 
         getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }

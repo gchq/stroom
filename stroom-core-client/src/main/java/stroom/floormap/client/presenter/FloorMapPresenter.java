@@ -234,8 +234,8 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         // the Map unconditionally. Two tabs carry a timeline, so hiding must pause whichever one is
         // showing; and refreshing a Map that is not the visible inner tab would issue reads for
         // something the user cannot see. This mirrors afterSelectTab's own dispatch.
-        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                onContentTabVisible(e.getTabData() == this)));
+        listen(ContentTabSelectionChangeEvent.getType(), e ->
+                onContentTabVisible(e.getTabData() == this));
     }
 
     /// {@inheritDoc}

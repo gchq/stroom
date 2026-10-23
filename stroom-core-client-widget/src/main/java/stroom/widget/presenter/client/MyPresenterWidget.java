@@ -23,8 +23,6 @@ import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.Event;
@@ -62,17 +60,6 @@ public class MyPresenterWidget<V extends View>
         return view == null
                 ? null
                 : view.asWidget();
-    }
-
-    /// Adds a handler to the event bus.
-    ///
-    /// @param type    The event's type.
-    /// @param handler The handler.
-    /// @param <H>     The handler's type.
-    /// @return The registration, which the caller removes.
-    protected final <H extends EventHandler> HandlerRegistration addHandler(final GwtEvent.Type<H> type,
-                                                                            final H handler) {
-        return getEventBus().addHandler(type, handler);
     }
 
     /// @return Its view's widget, so a presenter can go where a component can, e.g. a tab of a

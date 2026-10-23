@@ -79,8 +79,8 @@ public class QueryDocPresenter
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
 
-        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                queryDocEditPresenter.onContentTabVisible(e.getTabData() == this)));
+        listen(ContentTabSelectionChangeEvent.getType(), e ->
+                queryDocEditPresenter.onContentTabVisible(e.getTabData() == this));
     }
 
     @Override

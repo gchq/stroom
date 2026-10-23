@@ -39,11 +39,7 @@ import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -53,11 +49,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AppPermissionsEditPresenter
-        extends MyPresenterWidget<AppPermissionsEditView>
-        implements HasValueChangeHandlers<ValueChange> {
+        extends MyPresenterWidget<AppPermissionsEditView> {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
@@ -70,6 +67,8 @@ public class AppPermissionsEditPresenter
     private List<AppPermission> allPermissions;
 
     private UserRef relatedUser;
+    private Consumer<ValueChange> onChange = change -> {
+    };
 
     @Inject
     public AppPermissionsEditPresenter(final EventBus eventBus,
@@ -115,7 +114,7 @@ public class AppPermissionsEditPresenter
         if (relatedUser == null) {
             currentPermissions = null;
             // Update details panel.
-            ValueChangeEvent.fire(this, new ValueChange(false, true));
+            onChange.accept(new ValueChange(false, true));
             final List<AppPermission> permissions = new ArrayList<>();
             dataGrid.setRowData(0, permissions);
             dataGrid.setRowCount(permissions.size(), true);
@@ -177,9 +176,7 @@ public class AppPermissionsEditPresenter
                         .onSuccess(result -> {
                             refresh();
                             // Refresh users pane.
-                            ValueChangeEvent.fire(
-                                    AppPermissionsEditPresenter.this,
-                                    new ValueChange(true, false));
+                            onChange.accept(new ValueChange(true, false));
                         })
                         .taskMonitorFactory(this)
                         .exec();
@@ -245,9 +242,11 @@ public class AppPermissionsEditPresenter
         return TickBoxState.UNTICK;
     }
 
-    @Override
-    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<ValueChange> valueChangeHandler) {
-        return new LegacyHandlerWrapper(addHandler(ValueChangeEvent.getType(), valueChangeHandler));
+    /// Sets what to run when a change means its owner should refresh the users or the details.
+    ///
+    /// @param onChange What to run with what to refresh.
+    public void setOnChange(final Consumer<ValueChange> onChange) {
+        this.onChange = Objects.requireNonNull(onChange, "onChange");
     }
 
     protected boolean isCurrentUserUpdate() {
@@ -322,9 +321,7 @@ public class AppPermissionsEditPresenter
         }
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     public interface AppPermissionsEditView extends View {
 
@@ -335,9 +332,7 @@ public class AppPermissionsEditPresenter
         void setUserRef(UserRef userRef);
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     @SuppressWarnings("ClassCanBeRecord") // GWT :-(
     public static class ValueChange {

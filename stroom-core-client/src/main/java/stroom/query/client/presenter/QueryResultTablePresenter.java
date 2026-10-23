@@ -158,6 +158,9 @@ public class QueryResultTablePresenter
 
     // Told when the table's columns or data change, e.g. a filter on it
     private final Listeners<Boolean> updateListeners = new Listeners<>();
+    // Run when a refresh is asked for with no search model (see setOnRefreshRequest)
+    private Runnable onRefreshRequest = () -> {
+    };
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -283,12 +286,12 @@ public class QueryResultTablePresenter
             }
         }));
 
-        own(getEventBus().addHandler(
+        listen(
                 AnnotationChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
-        own(getEventBus().addHandler(
+                ignored -> onAnnotationChange());
+        listen(
                 AnnotationTagNameChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
+                ignored -> onAnnotationChange());
     }
 
     public DashboardContext getDashboardContext() {
@@ -451,7 +454,7 @@ public class QueryResultTablePresenter
                 }
             });
         } else {
-            RefreshRequestEvent.fire(this);
+            onRefreshRequest.run();
         }
     }
 
@@ -475,7 +478,7 @@ public class QueryResultTablePresenter
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         } else {
-            RefreshRequestEvent.fire(this);
+            onRefreshRequest.run();
         }
     }
 
@@ -487,7 +490,6 @@ public class QueryResultTablePresenter
             queryResultVisPresenter.refresh();
         }
     }
-
 
 //    @Override
 //    protected void addColumns(final boolean allowSelectAll) {
@@ -548,7 +550,6 @@ public class QueryResultTablePresenter
 //
 //        addEndColumn();
 //    }
-
 
 //    @Override
 //    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
@@ -822,8 +823,12 @@ public class QueryResultTablePresenter
         return maxDepth;
     }
 
-    public HandlerRegistration addRefreshRequestHandler(final RefreshRequestEvent.Handler handler) {
-        return addHandler(RefreshRequestEvent.getType(), handler);
+    /// Sets what to run when the table is asked to refresh but has no search of its own to run
+    /// again, e.g. an analytic rule's shard data, which its owner fetches.
+    ///
+    /// @param onRefreshRequest What to run.
+    public void setOnRefreshRequest(final Runnable onRefreshRequest) {
+        this.onRefreshRequest = Objects.requireNonNull(onRefreshRequest, "onRefreshRequest");
     }
 
     public MultiSelectionModelImpl<TableRow> getSelectionModel() {
@@ -895,7 +900,6 @@ public class QueryResultTablePresenter
         currentColumns = columns;
         onChange();
 
-
         // Remove existing columns.
         removeAllColumns();
 
@@ -912,7 +916,6 @@ public class QueryResultTablePresenter
 
 //                dataGrid.redrawHeaders();
         dataGrid.resizeTableToFitColumns();
-
 
         fireColumnAndDataUpdate();
     }

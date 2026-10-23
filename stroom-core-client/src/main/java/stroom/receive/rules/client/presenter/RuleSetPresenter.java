@@ -151,11 +151,11 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         own(getView().getTabBar().addShowMenuHandler(event ->
                 getEventBus().fireEvent(event)));
 
-        own(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+        listen(SaveDocumentEvent.getType(), event -> {
             if (isDirty(event.getTabData())) {
                 save();
             }
-        }));
+        });
     }
 
     @Override

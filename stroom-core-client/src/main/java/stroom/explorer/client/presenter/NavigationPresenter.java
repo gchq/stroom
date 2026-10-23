@@ -228,31 +228,31 @@ public class NavigationPresenter extends MyPresenterWidget<NavigationView>
                 CreateNewDocumentEvent.fire(this, XsltDoc.TYPE));
 
         // track the currently selected doc.
-        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+        listen(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
             locate.setEnabled(selectedDoc != null);
-        }));
+        });
 
         // Register for refresh events.
-        own(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
+        listen(RefreshExplorerTreeEvent.getType(), this);
 
         // Register for changes to the current activity.
-        own(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary()));
+        listen(ActivityChangedEvent.getType(), event -> updateActivitySummary());
 
         // Register for highlight events.
-        own(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
+        listen(HighlightExplorerNodeEvent.getType(), this);
 
         // Register for events to focus the explorer tree filter
-        own(getEventBus().addHandler(FocusExplorerFilterEvent.getType(), this));
+        listen(FocusExplorerFilterEvent.getType(), this);
 
-        own(getEventBus().addHandler(FocusExplorerTreeEvent.getType(), this));
+        listen(FocusExplorerTreeEvent.getType(), this);
 
         // Deal with task listeners.
         final TaskMonitor taskMonitor = getView().getTaskListener().createTaskMonitor();
-        own(getEventBus().addHandler(ExplorerStartTaskEvent.getType(), e ->
-                taskMonitor.onStart(e.getTask())));
-        own(getEventBus().addHandler(ExplorerEndTaskEvent.getType(), e ->
-                taskMonitor.onEnd(e.getTask())));
+        listen(ExplorerStartTaskEvent.getType(), e ->
+                taskMonitor.onStart(e.getTask()));
+        listen(ExplorerEndTaskEvent.getType(), e ->
+                taskMonitor.onEnd(e.getTask()));
 
         own(typeFilterPresenter.addSelectionListener(event -> explorerTree.setIncludedTypeSet(
                 typeFilterPresenter.getIncludedTypes().orElse(null))));

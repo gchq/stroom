@@ -33,6 +33,7 @@ import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.planb.client.presenter.PlanBPresenter;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryDocPresenter;
+import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
 import stroom.view.client.presenter.ViewPresenter;
@@ -82,6 +83,9 @@ public interface QueryScreenGinjector extends ScreenGinjector {
 
     /// @return An analytic rule's editor tab, as `AnalyticsPlugin` creates it.
     AnalyticRulePresenter getAnalyticRulePresenter();
+
+    /// @return A query's result table, as a query pane or an analytic rule's Shards tab has.
+    QueryResultTablePresenter getQueryResultTablePresenter();
 
     /// @return A report's editor tab, as `ReportPlugin` creates it.
     ReportPresenter getReportPresenter();

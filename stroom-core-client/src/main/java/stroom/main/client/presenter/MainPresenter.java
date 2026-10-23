@@ -109,13 +109,13 @@ public class MainPresenter
             updateSpinnerState();
         });
         // Reflect the selected content tab in the browser page title
-        own(eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), event -> {
+        listen(ContentTabSelectionChangeEvent.getType(), event -> {
             final TabData tabData = event.getTabData();
             selectedTabLabel = tabData != null
                     ? tabData.getLabel()
                     : null;
             updatePageTitle();
-        }));
+        });
         // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
         own(MenuRequest.relay(this));
         // F6 and Shift+F6 (unless the user has changed them) move between the main areas
@@ -169,10 +169,10 @@ public class MainPresenter
                 getView().undock();
             }
         });
-        own(eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> {
+        listen(ShowAskStroomAiEvent.getType(), event -> {
             showingAi = event.isShow();
             getView().getMainToolBar().getShowAi().setState(showingAi);
-        }));
+        });
 
         refreshTimer = new Timer() {
             @Override

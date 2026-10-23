@@ -80,7 +80,7 @@ public class ContentTabPanePresenter
         this.recentItems = recentItems;
         view.setUiHandlers(this);
 
-        own(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
+        listen(RefreshCurrentContentTabEvent.getType(),
                 event -> {
                     final TabData selectedTab = getSelectedTab();
                     if (selectedTab instanceof Refreshable) {
@@ -88,12 +88,12 @@ public class ContentTabPanePresenter
                         final Refreshable refreshable = (Refreshable) selectedTab;
                         refreshable.refresh();
                     }
-                }));
+                });
 
-        own(eventBus.addHandler(GetCurrentTabsEvent.getType(),
+        listen(GetCurrentTabsEvent.getType(),
                 event -> {
                     event.getCallback().accept(getTabs());
-                }));
+                });
 
         getView().setRightIndent(32);
 

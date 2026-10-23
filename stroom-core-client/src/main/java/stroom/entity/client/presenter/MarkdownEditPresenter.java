@@ -94,8 +94,8 @@ public class MarkdownEditPresenter
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 //        view.setView(iFramePresenter.getView());
 
-        own(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
-                updateMarkdownOnIFramePresenter()));
+        listen(ChangeCurrentPreferencesEvent.getType(), event ->
+                updateMarkdownOnIFramePresenter());
 
         own(markdownPreviewPresenter.addValueChangeHandler(event -> setDirty(true)));
         own(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));

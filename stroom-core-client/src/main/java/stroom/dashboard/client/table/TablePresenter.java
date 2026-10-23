@@ -341,12 +341,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
-        own(getEventBus().addHandler(
+        listen(
                 AnnotationChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
-        own(getEventBus().addHandler(
+                ignored -> onAnnotationChange());
+        listen(
                 AnnotationTagNameChangeEvent.getType(),
-                ignored -> onAnnotationChange()));
+                ignored -> onAnnotationChange());
     }
 
     private void toggle(final TableRow row) {

@@ -190,7 +190,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         // does — they hold the colour they were painted with until something
         // repaints them. Same pattern the dashboard's visualisations use.
         //noinspection unused e
-        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), e -> {
+        listen(ChangeCurrentPreferencesEvent.getType(), e -> {
             getView().redrawHistogram();
             // Every time on the strip is rendered from the user's date/time
             // preference, so a change to it has to be re-applied to the ones
@@ -198,7 +198,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             // than waiting for the next thing that happens to move the time.
             updateDateLabels();
             updateProgress();
-        }));
+        });
 
         // Forward date changes from the settings popup back to the timeline.
         //noinspection unused, CodeBlock2Expr

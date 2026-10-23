@@ -71,16 +71,16 @@ public class AppPermissionsPresenter
         own(appPermissionsEditPresenter.getSelectionModel()
                 .addSelectionHandler(e -> appPermissionsEditPresenter.updateDetails()));
 
-        own(appPermissionsEditPresenter.addValueChangeHandler(e -> {
-            GWT.log("valueChange, isRefreshUsers: " + e.getValue().isRefreshUsers()
-                    + ", isRefreshDetails: " + e.getValue().isRefreshDetails());
-            if (e.getValue().isRefreshUsers()) {
+        appPermissionsEditPresenter.setOnChange(change -> {
+            GWT.log("valueChange, isRefreshUsers: " + change.isRefreshUsers()
+                    + ", isRefreshDetails: " + change.isRefreshDetails());
+            if (change.isRefreshUsers()) {
                 refresh();
             }
-            if (e.getValue().isRefreshDetails()) {
+            if (change.isRefreshDetails()) {
                 appPermissionsEditPresenter.updateDetails();
             }
-        }));
+        });
     }
 
     public void setFilterInput(final String filterInput) {

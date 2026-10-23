@@ -81,8 +81,8 @@ public class DashboardSuperPresenter
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(DASHBOARD);
 
-        own(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
-                dashboardPresenter.onContentTabVisible(e.getTabData() == this)));
+        listen(ContentTabSelectionChangeEvent.getType(), e ->
+                dashboardPresenter.onContentTabVisible(e.getTabData() == this));
     }
 
     public void setParentContext(final Object context) {

@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.widget.presenter.client.View;
@@ -53,6 +54,8 @@ public class AnalyticDataShardsPresenter
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private String analyticRuleUuid;
+    // The shard table's own preferences (e.g. a column's width), for as long as the tab is open
+    private QueryTablePreferences queryTablePreferences = QueryTablePreferences.builder().build();
 
     @Inject
     public AnalyticDataShardsPresenter(final EventBus eventBus,
@@ -73,11 +76,13 @@ public class AnalyticDataShardsPresenter
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         view.setListView(analyticDataShardListPresenter.getView());
         view.setTable(tablePresenter.getView());
+        tablePresenter.setQueryTablePreferencesSupplier(() -> queryTablePreferences);
+        tablePresenter.setQueryTablePreferencesConsumer(qtp -> queryTablePreferences = qtp);
 
         queryToolbarPresenter.setOnStart(this::update);
         queryToolbarPresenter.setOnTimeRangeChange(this::update);
         own(analyticDataShardListPresenter.getSelectionModel().addSelectionHandler(e -> update()));
-        own(tablePresenter.addRefreshRequestHandler(e -> update()));
+        tablePresenter.setOnRefreshRequest(this::update);
     }
 
     @Override
@@ -113,6 +118,8 @@ public class AnalyticDataShardsPresenter
                                 Collections.singletonList(new ErrorMessage(Severity.ERROR, t.getMessage())));
                         queryToolbarPresenter.onSearching(false);
                     })
+                    // Nothing is run if this is disposed (e.g. its tab closed) before the reply
+                    .owner(this)
                     .taskMonitorFactory(this)
                     .exec();
         }

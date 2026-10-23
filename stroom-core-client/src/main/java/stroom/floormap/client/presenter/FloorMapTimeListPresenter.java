@@ -106,8 +106,8 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         // The Effective Time column is rendered from the user's date/time
         // preference, so a change to it has to redraw the rows already shown.
         //noinspection unused e
-        own(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(),
-                e -> dataGrid.redraw()));
+        listen(ChangeCurrentPreferencesEvent.getType(),
+                e -> dataGrid.redraw());
 
         //noinspection unused
         own(selectionModel.addSelectionChangeHandler(e -> {

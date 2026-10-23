@@ -115,20 +115,20 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
         // NodeLisPresenter may change a node
         // Currently the node state does not affect how the job nodes are displayed
-        own(getEventBus().addHandler(
+        listen(
                 NodeChangeEvent.getType(), event -> {
                     refreshNodeStates();
-                }));
+                });
 
         // JobListPresenter may change a job
-        own(getEventBus().addHandler(
+        listen(
                 JobChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
                     internalRefresh();
-                }));
+                });
 
         // JobNodeListPresenter may change one or more jobNodes
-        own(getEventBus().addHandler(
+        listen(
                 JobNodeChangeEvent.getType(), event -> {
 //                    GWT.log(NodeJobListPresenter.this.getClass().getSimpleName()
 //                            + " - jobNodes changed: " + event.getJobNodes().size());
@@ -142,7 +142,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                             internalRefresh();
                         }
                     }
-                }));
+                });
     }
 
     private void refreshNodeStates() {

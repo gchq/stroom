@@ -199,6 +199,31 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
   tabs took any `FloorMapDataEvent` stamped with their document's UUID. The document now passes
   its own Events Query tab's data to its own tabs.
 
+**Fixed (23 October 2026), when the last presenter bus handlers became `listen`** (component
+model, Phase 7 step 3), two more:
+
+* The Application Permissions screen could fail when another screen changed a value: its edit
+  pane's `addValueChangeHandler` listened to every `ValueChangeEvent` on the app-wide bus, and a
+  dashboard's column selection (`ColumnSelectionPresenter`) put its changes on the bus too, so the
+  screen read a set of columns as its own `ValueChange` and threw. The edit pane now tells its
+  owner through `setOnChange`, and a column selection tells only its own listeners. Story:
+  `App/Main/AppPermissionsScreen` `IgnoresOtherScreensValueChanges`.
+* An analytic rule's Shards tab fetched its shard's data again whenever any query table with no
+  search of its own asked to be refreshed, e.g. another open rule's Shards tab:
+  `QueryResultTablePresenter.addRefreshRequestHandler` listened to every `RefreshRequestEvent`
+  on the bus. The table now asks its own owner (`setOnRefreshRequest`), and `RefreshRequestEvent`
+  is deleted. Story: `App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
+
+### An analytic rule's Shards tab couldn't show a shard's data
+
+**Fixed (23 October 2026); on master too.** Choosing a shard fetched its data, but showing it threw
+(an alert, `Cannot read properties of undefined`) and the table stayed empty:
+`AnalyticDataShardsPresenter` never gave its `QueryResultTablePresenter` the table preferences
+it reads (`setQueryTablePreferencesSupplier`), as every other owner of one does. It now keeps
+preferences of its own for as long as the tab is open, as `AbstractQueryDataPresenter` does. Its
+data request is also owned now, so a reply after the tab has closed is dropped. Story:
+`App/Editors/AnalyticRuleEditor` `ShardsRefreshOnlyTheirOwn`.
+
 ### UI config failures and annotation changes go nowhere
 
 **Confirmed.** `UiConfigCache` fires its events on a private event bus of its own, which has no
@@ -354,6 +379,11 @@ run of 22 October 2026 (1,538 stories).
   button stops it instead.
 * `App/Main/JobsScreen` `CrossNavigation` (flaky): failed once in a full run (the node link opened
   nothing) and passed alone.
+* `TestPresenterCoverage` (workbench unit test, flaky; found 23 October 2026): failed with
+  `NoSuchFileException` on a `stroom-core-client` test result file when the two modules' tests ran
+  in one Gradle build. It walks that module's `build/test-results` while that module's tests are
+  still writing and replacing their files. Passes when run alone. Fix: depend on the other
+  module's `test` task, or skip files that vanish while it walks.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 

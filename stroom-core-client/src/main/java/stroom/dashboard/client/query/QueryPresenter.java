@@ -239,10 +239,10 @@ public class QueryPresenter
         own(indexLoader.addChangeListener(loader ->
                 loadedDataSource(loader.getLoadedDataSourceRef())));
 
-        own(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+        listen(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             searchModel.reset(DestroyReason.WINDOW_CLOSE);
-        }));
+        });
     }
 
     private void onHistory() {

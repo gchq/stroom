@@ -58,9 +58,9 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
 
         own(view.addKeyDownHandler(globalKeyHandler::onKeyDown));
         own(view.addKeyUpHandler(globalKeyHandler::onKeyUp));
-        own(eventBus.addHandler(
+        listen(
                 ChangeCurrentPreferencesEvent.getType(),
-                this::handlePreferencesChange));
+                this::handlePreferencesChange);
     }
 
     @Override

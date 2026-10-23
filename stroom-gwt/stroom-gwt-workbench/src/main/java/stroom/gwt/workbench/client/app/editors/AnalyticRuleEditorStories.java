@@ -32,6 +32,7 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
@@ -84,6 +85,20 @@ public final class AnalyticRuleEditorStories {
 
     // NewRuleHidesTypeTabs: no process type
     private static final RestFixtures NEW_RULE_FIXTURES = fixtures(DOC.replace("PROCESS_TYPE", ""));
+
+    // The Shards story's spy of its shard data requests, and its other query table: its play can't
+    // reach its render's locals, so the story being shown sets them
+    private static final String SHARD_DATA = "shardData";
+    private static Runnable onShardData = () -> {
+    };
+    private static QueryResultTablePresenter otherTable;
+
+    private static final RestFixtures SHARD_FIXTURES = analyticRoutes(RestFixtures.builder()
+            .get("/analyticRule/v1/rule-1", RestReply.json(DOC.replace("PROCESS_TYPE", SCHEDULED)))
+            .route(RequestMatcher.post("/analyticDataShard/v1/getData"), request -> {
+                onShardData.run();
+                return RestReply.json(QueryEditorStories.TABLE);
+            })).build();
 
     private AnalyticRuleEditorStories() {
         // Static utility
@@ -142,6 +157,28 @@ public final class AnalyticRuleEditorStories {
                     play.waitFor(() -> play.expect(play.getAllByText("rule-1/2023-11-14").count()).toBe(2));
                     play.expect(play.getByText("rule-1/2023-11-15")).toBeInTheDocument();
                     play.expect(play.getByText("node9")).toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // A shard's data is shown in the Shards tab's table (which once had no table
+                // preferences to read, and threw), and refreshed for its own table, not when another
+                // query's table (with no search of its own) is asked to refresh: the request went
+                // over the app's bus, so every open rule's Shards tab fetched its data again
+                .story("ShardsRefreshOnlyTheirOwn", AnalyticRuleEditorStories::renderShards)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Execution");
+                    play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+                    play.click(play.getByDisplayValue("Scheduled Query"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
+                    openTab(play, "Shards");
+                    play.click(play.findByText("rule-1/2023-11-15"));
+                    play.waitFor(() -> play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1));
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    expectNoProblems(play);
+                    play.run("Another query's table asks to be refreshed", () -> otherTable.refresh());
+                    play.sleep(200);
+                    play.expect(play.spy(SHARD_DATA)).toHaveBeenCalledTimes(1);
                     expectNoProblems(play);
                 })
                 // Duplicate Management shows the columns of the duplicate checks found
@@ -375,6 +412,28 @@ public final class AnalyticRuleEditorStories {
         // Opened once Stroom has started, as AnalyticsPlugin opens a document
         harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
                 resource, res -> res.fetch(DOC_REF.getUuid())));
+        return harness.asWidget();
+    }
+
+    // The Shards story's: a table builder rule whose shards' data replies are spied on
+    private static Widget renderShards(final StoryContext context) {
+        final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, SHARD_FIXTURES)
+                .injector(injector)
+                .uiConfig(UI_CONFIG)
+                .build();
+        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        harness.fn(SHARD_DATA);
+        onShardData = () -> harness.spy(SHARD_DATA, "getData");
+        final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
+        harness.afterStartUp(() -> {
+            DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,
+                    resource, res -> res.fetch(DOC_REF.getUuid()));
+            // Another query's table, not shown, as another open rule's Shards tab has
+            final QueryResultTablePresenter table = injector.getQueryResultTablePresenter();
+            harness.getComponentRoot().adopt(table.getComponentNode());
+            otherTable = table;
+        });
         return harness.asWidget();
     }
 
