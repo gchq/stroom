@@ -42,7 +42,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -58,7 +58,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class ExportConfigPresenter
-        extends MyPresenter<ExportConfigPresenter.ExportConfigView>
+        extends MyPresenterWidget<ExportConfigPresenter.ExportConfigView>
         implements ExportConfigUiHandlers, ExportConfigEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
@@ -133,11 +133,10 @@ public class ExportConfigPresenter
             }
         }
 
-        forceReveal();
+        show();
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)

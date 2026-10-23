@@ -87,7 +87,6 @@ import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.presenter.TextBoxPopup;
 import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
 import stroom.widget.popup.client.view.TextBoxViewImpl;
-import stroom.widget.presenter.client.RootPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
@@ -108,7 +107,6 @@ public class AppModule extends AbstractPresenterModule {
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
         bind(StaticEventBus.class).asEagerSingleton();
 
-        bind(RootPresenter.class).asEagerSingleton();
         bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
 
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();

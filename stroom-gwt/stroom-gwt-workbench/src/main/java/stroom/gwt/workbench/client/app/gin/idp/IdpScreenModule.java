@@ -37,9 +37,8 @@ import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 /// `ChangePasswordModule` (`stroom/security/identity/client/gin/ChangePasswordModule.java`):
 /// the sign in page (`LoginPresenter`), the authentication error page, the password reset page and
 /// the change password and 'Reset Your Password' dialogs, without its plugins and the accounts
-/// screens. Presenters that Stroom binds with a proxy are bound as presenter widgets with a
-/// null proxy: Stroom's `App.onModuleLoad` reveals them with `forceReveal()`, which a story does by
-/// calling their `revealInParent()` (see `client.app.idp.IdpPage`).
+/// screens. The pages are bound as presenter widgets: Stroom's `App.onModuleLoad` shows them with
+/// `show()`, and a story adds one to itself and calls its `onShown()` (see `client.app.idp.IdpPage`).
 public class IdpScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.

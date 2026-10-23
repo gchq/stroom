@@ -85,7 +85,6 @@ import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
-import stroom.widget.presenter.client.RootPresenter;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
@@ -102,7 +101,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
     protected void configure() {
         // Default implementation of standard resources
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
-        bind(RootPresenter.class).asEagerSingleton();
         // For widgets with no event bus of their own (form help, date and time dialogs, the time
         // range), as the app's AppModule does
         bind(StaticEventBus.class).asEagerSingleton();

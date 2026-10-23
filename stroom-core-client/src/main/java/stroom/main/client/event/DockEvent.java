@@ -17,7 +17,7 @@
 package stroom.main.client.event;
 
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -28,12 +28,12 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final MyPresenter<?> presenter;
+    private final MyPresenterWidget<?> presenter;
     private final DockBehaviour dockBehaviour;
     private final Size size;
     private final DockAction action;
 
-    private DockEvent(final MyPresenter<?> presenter,
+    private DockEvent(final MyPresenterWidget<?> presenter,
                       final DockBehaviour dockBehaviour,
                       final Size size,
                       final DockAction action) {
@@ -44,14 +44,14 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers,
-                            final MyPresenter<?> presenter,
+                            final MyPresenterWidget<?> presenter,
                             final DockBehaviour dockBehaviour,
                             final Size size) {
         handlers.fireEvent(new DockEvent(presenter, dockBehaviour, size, DockAction.DOCK));
     }
 
     public static void fireUndock(final HasHandlers handlers,
-                                  final MyPresenter<?> presenter) {
+                                  final MyPresenterWidget<?> presenter) {
         handlers.fireEvent(new DockEvent(presenter, null, null, DockAction.UNDOCK));
     }
 
@@ -72,7 +72,7 @@ public class DockEvent extends GwtEvent<DockEvent.Handler> {
         handler.onDock(this);
     }
 
-    public MyPresenter<?> getPresenter() {
+    public MyPresenterWidget<?> getPresenter() {
         return presenter;
     }
 

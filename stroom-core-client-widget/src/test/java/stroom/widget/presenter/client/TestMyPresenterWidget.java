@@ -188,6 +188,22 @@ class TestMyPresenterWidget {
         assertThat(events).containsExactly("presenter disposed");
     }
 
+    @Test
+    void releasingAChildDisposesItAndLeavesTheOthers() {
+        // e.g. a task's row, once the task has finished
+        final TestPresenter presenter = new TestPresenter("presenter");
+        final TestPresenter finished = new TestPresenter("finished");
+        final TestPresenter running = new TestPresenter("running");
+        presenter.ownChild(finished);
+        presenter.ownChild(running);
+
+        presenter.releaseChild(finished);
+
+        assertThat(finished.isDisposed()).isTrue();
+        assertThat(running.isDisposed()).isFalse();
+        assertThat(presenter.getComponentNode().childCount()).isEqualTo(1);
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -204,6 +220,10 @@ class TestMyPresenterWidget {
 
         void ownChild(final TestPresenter child) {
             own(child);
+        }
+
+        void releaseChild(final TestPresenter child) {
+            release(child);
         }
 
         TestPresenter ownDialog(final TestPresenter dialog) {

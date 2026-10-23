@@ -30,9 +30,7 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.TaskStartEvent.TaskStartHandler;
-import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.RevealRootContentEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +40,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class CorePresenter extends MyPresenter<CoreView>
+public class CorePresenter extends MyPresenterWidget<CoreView>
         implements TaskStartHandler, TaskEndHandler, CurrentUserChangedHandler {
 
     private final ClientSecurityContext securityContext;
@@ -123,11 +121,6 @@ public class CorePresenter extends MyPresenter<CoreView>
             getView().setContentView(content.getView());
             RootPanel.get("logo").setVisible(false);
         }
-    }
-
-    @Override
-    protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.

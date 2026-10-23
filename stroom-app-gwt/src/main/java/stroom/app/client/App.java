@@ -19,6 +19,7 @@ package stroom.app.client;
 import stroom.app.client.gin.AppGinjectorUser;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.widget.presenter.client.Page;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -62,13 +63,13 @@ public class App implements EntryPoint {
         if (path.startsWith("/resetPassword")) {
             // A user following a password reset link cannot sign in, so this page is served and revealed
             // without authenticating, in the same way as the sign in page.
-            ginjector.getResetPasswordPresenter().get().forceReveal();
+            ginjector.getResetPasswordPresenter().get().show();
         } else if (path.startsWith("/signIn")) {
             final String error = Location.getParameter("error");
             if ("login_required".equals(error)) {
-                ginjector.getLoginPresenter().get().forceReveal();
+                ginjector.getLoginPresenter().get().show();
             } else {
-                ginjector.getAuthenticationErrorPresenter().get().forceReveal();
+                ginjector.getAuthenticationErrorPresenter().get().show();
             }
         } else {
             final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
@@ -76,7 +77,7 @@ public class App implements EntryPoint {
                 userPreferencesManager.setCurrentPreferences(preferences);
 
                 // Show the application panel.
-                ginjector.getCorePresenter().get().forceReveal();
+                Page.show(ginjector.getCorePresenter().get());
 
                 // Register all plugins that will respond to
 

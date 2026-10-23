@@ -19,7 +19,6 @@ package stroom.gwt.workbench.client.app.idp;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.security.identity.client.presenter.LoginPresenter;
-import stroom.widget.presenter.client.MyPresenter;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.DivElement;
@@ -46,9 +45,8 @@ import java.util.function.Consumer;
 ///   to the sign in page), which would navigate the story away. The story page's `navigate` events
 ///   (the browser's Navigation API) are cancelled and their URLs given to a listener, so a play can
 ///   check where Stroom would have gone;
-/// * revealing: Stroom's `App.onModuleLoad` reveals the page's presenter with `forceReveal()`, which
-///   needs the page to be the presenter's; [#reveal] calls the presenter's own `revealInParent()`
-///   instead, once its widget has been added to the story.
+/// * showing: Stroom's `App.onModuleLoad` shows the page's presenter with `show()`, which makes it
+///   the whole page; a story adds its widget to itself instead, then calls its `onShown()`.
 public final class IdpPage {
 
     /// The spy recording where Stroom would have navigated to, relative to the page's origin (e.g.
@@ -79,15 +77,6 @@ public final class IdpPage {
             }
         });
     }
-
-    /// Reveals a page as `forceReveal()` would, by calling its presenter's `revealInParent()`
-    /// (protected), which also does what the page does when it is shown (e.g. focusing the user
-    /// name, or the password reset page asking for the new password).
-    ///
-    /// @param presenter The page's presenter, whose widget has been added to the story.
-    public static native void reveal(MyPresenter<?> presenter) /*-{
-        presenter.@stroom.widget.presenter.client.MyPresenter::revealInParent()();
-    }-*/;
 
     /// Stroom's check of a post sign in redirect, `LoginPresenter.isSameOrigin` (private).
     ///

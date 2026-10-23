@@ -19,6 +19,7 @@ package stroom.dashboard.client;
 import stroom.dashboard.client.gin.DashboardAppGinjectorUser;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.widget.presenter.client.Page;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -40,7 +41,7 @@ public class DashboardApp implements EntryPoint {
             userPreferencesManager.setCurrentPreferences(preferences);
 
             // Show the application panel.
-            ginjector.getCorePresenter().get().forceReveal();
+            Page.show(ginjector.getCorePresenter().get());
 
             // Start the login manager. This will attempt to auto login with PKI and
             // will therefore start the rest of the application.

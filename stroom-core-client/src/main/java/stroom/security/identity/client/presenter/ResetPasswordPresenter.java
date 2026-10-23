@@ -24,9 +24,7 @@ import stroom.security.identity.shared.AuthenticationResource;
 import stroom.security.identity.shared.ResetPasswordRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.RevealRootContentEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -43,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
  * a new password using the same form as a normal password change and submits it along with the token from
  * the link. The user is not signed in as a result, they must sign in with the new password afterwards.
  */
-public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView> {
+public class ResetPasswordPresenter extends SignInPagePresenter<ResetPasswordView> {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
@@ -77,8 +75,7 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView> {
     }
 
     @Override
-    protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
+    public void onShown() {
         loading.getStyle().setOpacity(0);
         // Hidden, not just transparent, so screen readers stop reading "Loading..."
         loading.getStyle().setVisibility(Visibility.HIDDEN);

@@ -52,7 +52,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.ElementUtil;
@@ -78,7 +77,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AskStroomAiPresenter
-        extends MyPresenter<AskStroomAiView>
+        extends MyPresenterWidget<AskStroomAiView>
         implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
@@ -216,11 +215,6 @@ public class AskStroomAiPresenter
                 });
             }
         });
-    }
-
-    @Override
-    protected void revealInParent() {
-
     }
 
     @Override

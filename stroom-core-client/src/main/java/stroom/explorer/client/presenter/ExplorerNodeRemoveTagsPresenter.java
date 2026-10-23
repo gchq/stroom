@@ -36,7 +36,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  * See {@link ExplorerNodeRemoveTagsPresenter} for tag removal on multiple nodes.
  */
 public class ExplorerNodeRemoveTagsPresenter
-        extends MyPresenter<ExplorerNodeRemoveTagsView>
+        extends MyPresenterWidget<ExplorerNodeRemoveTagsView>
         implements ShowRemoveNodeTagsDialogEvent.Handler,
         HidePopupRequestEvent.Handler {
 
@@ -90,7 +90,7 @@ public class ExplorerNodeRemoveTagsPresenter
                     .method(res -> res.fetchExplorerNodeTags(docRefs))
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
-                        forceReveal();
+                        show();
                     })
                     .onFailure(t -> {
                         AlertEvent.fireError(
@@ -103,8 +103,7 @@ public class ExplorerNodeRemoveTagsPresenter
         }
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final String caption = "Remove Tags from "
                                + NullSafe.size(explorerNodes)
                                + " Documents";

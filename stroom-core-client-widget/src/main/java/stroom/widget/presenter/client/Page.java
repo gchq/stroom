@@ -18,25 +18,20 @@ package stroom.widget.presenter.client;
 
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.web.bindery.event.shared.EventBus;
 
-/// Shows the screen that is the whole page ([RevealRootContentEvent]), in place of the one before.
-/// An application binds it as an eager singleton.
-@Singleton
-public class RootPresenter {
+/// The browser page, which shows one screen: the app's core screen, or a sign in page.
+public final class Page {
 
-    @Inject
-    public RootPresenter(final EventBus eventBus) {
-        eventBus.addHandler(RevealRootContentEvent.getType(), event -> show(event.getContent()));
+    private Page() {
+        // Static utility
     }
 
-    private static void show(final MyPresenterWidget<?> content) {
+    /// Shows a screen as the whole page, in place of what the page held.
+    ///
+    /// @param content The screen.
+    public static void show(final MyPresenterWidget<?> content) {
         RootLayoutPanel.get().clear();
         RootPanel.get().clear();
-        if (content != null) {
-            RootPanel.get().add(content.getWidget());
-        }
+        RootPanel.get().add(content.getWidget());
     }
 }

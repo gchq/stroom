@@ -581,10 +581,9 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   run of the play checks fresh ones.
 * **Sign-in pages** (`client/app/gin/idp/IdpScreenGinjector` with `IdpScreenModule`,
   `client/app/idp/IdpPage`,
-  `SignInPages`): Stroom's `App.onModuleLoad` reveals `LoginPresenter`,
-  `AuthenticationErrorPresenter` and `ResetPasswordPresenter` with `forceReveal()`; a story adds
-  the presenter with `addContent` and calls its protected `revealInParent()` with JSNI
-  (`IdpPage.reveal`). They look up the host page's `#loading`/`#loadingText` elements when
+  `SignInPages`): Stroom's `App.onModuleLoad` shows `LoginPresenter`,
+  `AuthenticationErrorPresenter` and `ResetPasswordPresenter` with `show()`, which makes the page
+  the whole browser page; a story adds the presenter to itself and calls its `onShown()`. They look up the host page's `#loading`/`#loadingText` elements when
   created, which `IdpPage.setUp` adds. A screen that reads `Window.Location.getParameter`
   (`error`, `redirect_uri`, `token`) gets them added to the story page's URL with
   `history.replaceState`, restored on clean up. `Window.Location.replace(url)` (which a

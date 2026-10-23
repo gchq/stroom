@@ -35,7 +35,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -46,7 +46,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class CreateDocumentPresenter
-        extends MyPresenter<CreateDocumentView>
+        extends MyPresenterWidget<CreateDocumentView>
         implements ShowCreateDocumentDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
         DialogActionUiHandlers {
@@ -94,11 +94,10 @@ public class CreateDocumentPresenter
         }
         allowNullFolder = event.isAllowNullFolder();
 
-        forceReveal();
+        show();
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         getView().setName(name);
         getView().setNameValid();
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);

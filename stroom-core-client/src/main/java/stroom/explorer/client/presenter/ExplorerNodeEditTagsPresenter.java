@@ -37,7 +37,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * See {@link ExplorerNodeRemoveTagsPresenter} for tag removal on multiple nodes.
  */
 public class ExplorerNodeEditTagsPresenter
-        extends MyPresenter<ExplorerNodeEditTagsView>
+        extends MyPresenterWidget<ExplorerNodeEditTagsView>
         implements ShowEditNodeTagsDialogEvent.Handler,
         HidePopupRequestEvent.Handler {
 
@@ -97,7 +97,7 @@ public class ExplorerNodeEditTagsPresenter
                                     .method(res -> res.fetchExplorerNodeTags(docRefs))
                                     .onSuccess(nodeTags -> {
                                         getView().setData(docRefs, nodeTags, allTags);
-                                        forceReveal();
+                                        show();
                                     })
                                     .onFailure(this::handleFailure)
                                     .taskMonitorFactory(new ExplorerTaskMonitorFactory(this))
@@ -105,7 +105,7 @@ public class ExplorerNodeEditTagsPresenter
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
                             getView().setData(docRefs, Collections.emptySet(), allTags);
-                            forceReveal();
+                            show();
                         }
                     })
                     .onFailure(this::handleFailure)
@@ -126,8 +126,7 @@ public class ExplorerNodeEditTagsPresenter
         }
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final String caption = isSingleDocRef()
                 ? "Edit Tags on " + getNodeName()
                 : "Add Tags to " + getNodeName();

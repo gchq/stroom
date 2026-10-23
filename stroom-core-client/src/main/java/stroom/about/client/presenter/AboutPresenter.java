@@ -24,7 +24,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -33,7 +33,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class AboutPresenter
-        extends MyPresenter<AboutPresenter.AboutView> {
+        extends MyPresenterWidget<AboutPresenter.AboutView> {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
     private final RestFactory restFactory;
@@ -78,16 +78,12 @@ public class AboutPresenter
         }, this);
     }
 
-    @Override
-    protected void revealInParent() {
+    /// Shows the About dialog.
+    public void show() {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .caption("About")
                 .fire();
-    }
-
-    public void show() {
-        revealInParent();
     }
 
     public interface AboutView extends View {

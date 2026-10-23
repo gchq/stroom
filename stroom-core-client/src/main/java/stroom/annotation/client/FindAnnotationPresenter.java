@@ -29,7 +29,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -38,7 +38,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class FindAnnotationPresenter
-        extends MyPresenter<FindView>
+        extends MyPresenterWidget<FindView>
         implements ShowFindAnnotationEvent.Handler, FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private boolean showing;
@@ -102,11 +102,6 @@ public class FindAnnotationPresenter
                     .onHide(e -> showing = false)
                     .fire();
         }
-    }
-
-    @Override
-    protected void revealInParent() {
-
     }
 
     @Override

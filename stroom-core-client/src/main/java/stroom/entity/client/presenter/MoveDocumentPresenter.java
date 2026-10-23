@@ -30,7 +30,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
@@ -40,7 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class MoveDocumentPresenter
-        extends MyPresenter<MoveDocumentView>
+        extends MyPresenterWidget<MoveDocumentView>
         implements ShowMoveDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
@@ -80,11 +80,10 @@ public class MoveDocumentPresenter
         // We want to select the parent folder, so we have a default dest to move into.
         entityTreePresenter.setSelectParentIfNotFound(true);
 
-        forceReveal();
+        show();
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         String caption = "Move Multiple Items";
         if (explorerNodeList.size() == 1) {
             caption = "Move " + explorerNodeList.get(0).getDisplayValue();

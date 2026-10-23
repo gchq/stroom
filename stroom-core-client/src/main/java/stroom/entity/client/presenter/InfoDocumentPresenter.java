@@ -28,7 +28,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -44,7 +44,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Set;
 
 public class InfoDocumentPresenter
-        extends MyPresenter<InfoDocumentPresenter.InfoDocumentView>
+        extends MyPresenterWidget<InfoDocumentPresenter.InfoDocumentView>
         implements ShowInfoDocumentDialogEvent.Handler {
 
     private final DateTimeFormatter dateTimeFormatter;
@@ -64,8 +64,7 @@ public class InfoDocumentPresenter
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         // Popup is not modal so, allow the user to click Info for another doc
         // which will just update the view and not need a new show event.
         if (!isShowing) {
@@ -135,7 +134,7 @@ public class InfoDocumentPresenter
 
         getView().setInfo(hb.toSafeHtml());
 
-        forceReveal();
+        show();
     }
 
     private void appendLine(final String key, final String value, final HtmlBuilder hb) {

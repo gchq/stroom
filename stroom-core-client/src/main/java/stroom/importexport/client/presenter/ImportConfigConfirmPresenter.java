@@ -47,7 +47,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -73,7 +73,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ImportConfigConfirmPresenter extends
-        MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView>
+        MyPresenterWidget<ImportConfigConfirmPresenter.ImportConfigConfirmView>
         implements ImportConfigConfirmEvent.Handler, HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
@@ -156,11 +156,10 @@ public class ImportConfigConfirmPresenter extends
         resourceKey = event.getResponse().getResourceKey();
         confirmList = event.getResponse().getConfirmList();
         updateList();
-        forceReveal();
+        show();
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final PopupSize popupSize = PopupSize.resizable(
                 1200, 800,
                 380, 480);

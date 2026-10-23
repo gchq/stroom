@@ -59,7 +59,7 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
                         .priority(11)
                         .icon(SvgImage.OO)
                         .text("About")
-                        .command(() -> provider.get().forceReveal())
+                        .command(() -> provider.get().show())
                         .build());
     }
 

@@ -32,7 +32,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
@@ -42,7 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class CopyDocumentPresenter
-        extends MyPresenter<CopyDocumentView>
+        extends MyPresenterWidget<CopyDocumentView>
         implements ShowCopyDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
@@ -95,11 +95,10 @@ public class CopyDocumentPresenter
         // We want to select the parent folder, so we have a default dest to copy into.
         entityTreePresenter.setSelectParentIfNotFound(true);
 
-        forceReveal();
+        show();
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         String caption = "Copy Multiple Items";
         if (singleItemMode) {
             caption = "Copy " + firstChild.getDisplayValue();

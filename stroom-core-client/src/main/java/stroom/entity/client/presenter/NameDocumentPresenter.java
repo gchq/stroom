@@ -28,7 +28,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -37,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 public class NameDocumentPresenter
-        extends MyPresenter<NameDocumentView>
+        extends MyPresenterWidget<NameDocumentView>
         implements ShowRenameDocumentDialogEvent.Handler,
         HidePopupRequestEvent.Handler,
         HidePopupEvent.Handler,
@@ -61,7 +61,7 @@ public class NameDocumentPresenter
     private void renameNextEntity() {
         entity = getNextEntity();
         if (entity != null) {
-            forceReveal();
+            show();
         }
     }
 
@@ -72,8 +72,7 @@ public class NameDocumentPresenter
         return null;
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final String caption = "Rename " + entity.getDisplayValue();
         getView().setName(entity.getDisplayValue());
         getView().setNameValid();

@@ -21,7 +21,7 @@ import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Provider;
@@ -30,7 +30,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Inject;
 
 public class DependenciesInfoPresenter
-        extends MyPresenter<DependenciesInfoPresenter.DependenciesInfoView>
+        extends MyPresenterWidget<DependenciesInfoPresenter.DependenciesInfoView>
         implements ShowDependenciesInfoDialogEvent.Handler {
 
     @Inject
@@ -39,8 +39,7 @@ public class DependenciesInfoPresenter
         super(eventBus, view);
     }
 
-    @Override
-    protected void revealInParent() {
+    private void show() {
         final PopupSize popupSize = PopupSize.resizable(400, 200);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
@@ -62,7 +61,7 @@ public class DependenciesInfoPresenter
         sb.append(docRef.getName());
 
         getView().setInfo(sb.toString());
-        forceReveal();
+        show();
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.

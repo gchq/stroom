@@ -27,9 +27,7 @@ import stroom.security.identity.shared.LoginRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.client.RedirectUrlUtil;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
 import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.RevealRootContentEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +40,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class LoginPresenter extends MyPresenter<LoginView> implements LoginUiHandlers {
+public class LoginPresenter extends SignInPagePresenter<LoginView> implements LoginUiHandlers {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
@@ -170,8 +168,7 @@ public class LoginPresenter extends MyPresenter<LoginView> implements LoginUiHan
     }
 
     @Override
-    protected void revealInParent() {
-        RevealRootContentEvent.fire(this, this);
+    public void onShown() {
         getView().focus();
         loading.getStyle().setOpacity(0);
         // Hidden, not just transparent, so screen readers stop reading "Loading..."

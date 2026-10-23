@@ -43,7 +43,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +66,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class FindInContentPresenter
-        extends MyPresenter<FindInContentView>
+        extends MyPresenterWidget<FindInContentView>
         implements FindInContentUiHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -289,11 +289,6 @@ public class FindInContentPresenter
         } else {
             dataProvider.refresh();
         }
-    }
-
-    @Override
-    protected void revealInParent() {
-        show();
     }
 
     private void show() {

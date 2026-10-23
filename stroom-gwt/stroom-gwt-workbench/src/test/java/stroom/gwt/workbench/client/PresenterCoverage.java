@@ -64,7 +64,6 @@ public final class PresenterCoverage {
     /// Types a `ShowPopupEvent.builder(...)` argument may be declared as that aren't dialogs.
     static final Set<String> NON_DIALOG_TYPES = Set.of(
             "MyPresenterWidget",
-            "MyPresenter",
             "PresenterWidget",
             "Presenter",
             "Widget",

@@ -33,7 +33,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserTaskManagerPresenter
-        extends MyPresenter<UserTaskManagerView>
+        extends MyPresenterWidget<UserTaskManagerView>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
@@ -219,10 +219,6 @@ public class UserTaskManagerPresenter
                         .exec();
             }
         });
-    }
-
-    @Override
-    protected void revealInParent() {
     }
 
 

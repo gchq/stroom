@@ -20,8 +20,6 @@ import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.Au
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
-import stroom.widget.presenter.client.MyPresenter;
-import stroom.widget.presenter.client.RevealRootContentEvent;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.dom.client.Element;
@@ -35,7 +33,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class AuthenticationErrorPresenter
-        extends MyPresenter<AuthenticationErrorView> {
+        extends SignInPagePresenter<AuthenticationErrorView> {
 
     private final Element loadingText;
     private final Element loading;
@@ -53,9 +51,8 @@ public class AuthenticationErrorPresenter
     }
 
     @Override
-    protected void revealInParent() {
+    public void onShown() {
         uiConfigCache.get(extendedUiConfig -> {
-            RevealRootContentEvent.fire(this, this);
             final String error = Window.Location.getParameter("error");
             getView().setErrorText(error);
             getView().focus();

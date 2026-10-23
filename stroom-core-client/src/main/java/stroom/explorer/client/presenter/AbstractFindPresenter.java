@@ -24,7 +24,7 @@ import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.presenter.client.HasUiHandlers;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -36,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Supplier;
 
 public abstract class AbstractFindPresenter
-        extends MyPresenter<FindView>
+        extends MyPresenterWidget<FindView>
         implements FindUiHandlers, FindDocResultListHandler<FindResult> {
 
     private final FindDocResultListPresenter findResultListPresenter;
@@ -99,10 +99,6 @@ public abstract class AbstractFindPresenter
 
     private void hide() {
         HidePopupRequestEvent.builder(this).fire();
-    }
-
-    @Override
-    protected void revealInParent() {
     }
 
     public FindDocResultListPresenter getFindResultListPresenter() {

@@ -29,7 +29,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.gwt.core.client.GWT;
@@ -41,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 
 public class ImportConfigPresenter
-        extends MyPresenter<ImportConfigPresenter.ImportConfigView>
+        extends MyPresenterWidget<ImportConfigPresenter.ImportConfigView>
         implements ImportConfigEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
@@ -119,11 +119,6 @@ public class ImportConfigPresenter
 
     @Override
     public void onImport(final ImportConfigEvent event) {
-        forceReveal();
-    }
-
-    @Override
-    protected void revealInParent() {
         show();
     }
 

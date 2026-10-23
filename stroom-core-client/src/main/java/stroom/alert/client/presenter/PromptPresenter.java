@@ -17,14 +17,14 @@
 package stroom.alert.client.presenter;
 
 import stroom.alert.client.event.PromptEvent;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView>
+public class PromptPresenter extends MyPresenterWidget<PromptPresenter.PromptView>
         implements PromptEvent.Handler {
 
     @Inject
@@ -36,11 +36,6 @@ public class PromptPresenter extends MyPresenter<PromptPresenter.PromptView>
     public void onPrompt(final PromptEvent event) {
         final String result = getView().prompt(event.getMessage(), event.getInitialValue());
         event.getCallback().onResult(result);
-    }
-
-    @Override
-    protected void revealInParent() {
-        // Do nothing.
     }
 
     /// Hears the app-wide events the screen handles, and makes the screen when it is first needed.

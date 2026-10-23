@@ -26,7 +26,7 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.presenter.client.MyPresenter;
+import stroom.security.identity.client.presenter.SignInPagePresenter;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -157,7 +157,7 @@ public final class SignInFlowStories {
         return SignInPages.render(context, fixtures, uiConfig, parameters, IdpPage::redirectedMessage, true,
                 (injector, harness) -> {
                     // As App.onModuleLoad does for '/signIn'
-                    final MyPresenter<?> page;
+                    final SignInPagePresenter<?> page;
                     if ("login_required".equals(Window.Location.getParameter("error"))) {
                         page = injector.getLoginPresenter();
                     } else {
