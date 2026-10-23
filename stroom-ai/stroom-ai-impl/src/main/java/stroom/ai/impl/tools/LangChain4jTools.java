@@ -38,6 +38,7 @@ import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /// The one place Stroom's tool contract ([StroomTool], [ToolDefinition], [ToolSchema], [ToolCall]) meets
@@ -158,7 +159,16 @@ public final class LangChain4jTools {
                 if (context == null) {
                     return ToolResult.error("Error: " + name + " can only be used in a chat.");
                 }
-                return guard.run(tool, toolCall(request), context, tool::execute);
+                final ToolResult result = guard.run(tool, toolCall(request), context, tool::execute);
+                // The form it asked waits for the user, however the tool took the stop (seen in Ask Stroom AI:
+                // get_field_conventions' catch-all gave it as a refusal, the agent called again and asked with
+                // ask_user too, and the chat's forms stacked up).
+                final Optional<AiChatRunManager.WaitingForUserException> waiting =
+                        context.userQuestions().waitingForUser();
+                if (waiting.isPresent()) {
+                    throw waiting.get();
+                }
+                return result;
             } catch (final ToolSessionException e) {
                 // The tool needs something the session doesn't have, e.g. a chat's history.
                 return ToolResult.error("Error: " + e.getMessage());
