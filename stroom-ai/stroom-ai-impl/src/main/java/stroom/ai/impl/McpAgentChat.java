@@ -194,6 +194,8 @@ class McpAgentChat {
     private final UserActions userActions;
     private final WorkspaceArguments workspaceArguments;
     private final CurrentToolGrants currentToolGrants;
+    // Null where it isn't injected (in tests), and responses are stored as written.
+    private AnswerLinks answerLinks;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -224,6 +226,12 @@ class McpAgentChat {
         this.usageTracker = usageTracker;
         this.consentGate = consentGate;
         this.auditLog = auditLog;
+    }
+
+    /// @param answerLinks Links the documents and streams the model's responses mention.
+    @Inject
+    void setAnswerLinks(final AnswerLinks answerLinks) {
+        this.answerLinks = answerLinks;
     }
 
     ChatResponse chat(final ChatModel chatModel,
@@ -404,7 +412,10 @@ class McpAgentChat {
             // Shown in its place, before anything the tools then ask the user (e.g. a form), rather than only
             // while it streams.
             if (NullSafe.isNonBlankString(aiMessage.text())) {
-                aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, aiMessage.text().strip());
+                final String interim = aiMessage.text().strip();
+                aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, answerLinks == null
+                        ? interim
+                        : answerLinks.link(chatId, interim));
             }
             final List<ToolExecutionRequest> toolRequests = aiMessage.toolExecutionRequests();
             final List<PendingCall> pending = new ArrayList<>();
