@@ -148,7 +148,11 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
     ///
     /// @param child The component.
     protected final void release(final HasComponentNode child) {
-        node.release(child.getComponentNode());
+        final ComponentNode childNode = child.getComponentNode();
+        // Null only for a mock (e.g. Mockito's, in a test)
+        if (childNode != null) {
+            node.release(childNode);
+        }
     }
 
     /// Owns a registration, removed when this component is disposed, e.g. of a handler on a widget

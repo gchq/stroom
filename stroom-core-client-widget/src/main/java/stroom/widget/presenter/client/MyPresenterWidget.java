@@ -19,9 +19,8 @@ package stroom.widget.presenter.client;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.component.client.Component;
 import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.ContextKey;
-import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.HasComponentNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -29,42 +28,90 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.Event.Type;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
-/// Stroom's presenter: it shows a view, registers handlers while it is bound ([#onBind()]), and has a
-/// place in the ownership tree (see [ComponentNode]): the presenters and components it owns
-/// ([#own(HasComponentNode)]), and the registrations made through it ([#listen(Type, Object)],
-/// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]), as a component's
-/// are. One made by GIN is bound once it is made.
+/// Stroom's presenter: a [Component] that shows a view, and registers handlers while it is bound
+/// ([#onBind()]). As for any component, the presenters and components it owns
+/// ([#own(HasComponentNode)]), and the registrations made through it ([#listen(Event.Type, Object)],
+/// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]). One made by GIN is
+/// bound once it is made; the popup manager binds one while it shows it as a popup.
 ///
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
-        extends HandlerContainerImpl
-        implements HasHandlers, Layer, TaskMonitorFactory, HasComponentNode, IsWidget {
+        extends Component
+        implements HandlerContainer, Layer, TaskMonitorFactory {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
+    // The registrations made while it is bound, removed when it is unbound
+    private final List<HandlerRegistration> registrations = new ArrayList<>();
     // Set explicitly (e.g. a list's own spinner), or null to use the context's (see createTaskMonitor)
     private TaskMonitorFactory taskMonitorFactory;
-    private final ComponentNode node = new ComponentNode(getClass().getSimpleName());
-    private final EventBus eventBus;
     private final V view;
+    private boolean bound;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
-        this.eventBus = eventBus;
+        super(eventBus);
         this.view = view;
         // Run after what it owns is disposed and its registrations are removed
-        node.onDispose(this::release);
+        onDispose(this::release);
+    }
+
+    @Override
+    public final void bind() {
+        if (!bound) {
+            onBind();
+            bound = true;
+        }
+    }
+
+    @Override
+    public final boolean isBound() {
+        return bound;
+    }
+
+    @Override
+    public final void unbind() {
+        if (bound) {
+            bound = false;
+            for (final HandlerRegistration registration : registrations) {
+                registration.removeHandler();
+            }
+            registrations.clear();
+            onUnbind();
+        }
+    }
+
+    /// Registers handlers ([#registerHandler(HandlerRegistration)]) when it is bound.
+    protected void onBind() {
+    }
+
+    /// Lets go of anything else when it is unbound, after its registrations are removed.
+    protected void onUnbind() {
+    }
+
+    /// Keeps a registration, removed when this is unbound.
+    ///
+    /// @param registration The registration.
+    protected void registerHandler(final HandlerRegistration registration) {
+        registrations.add(registration);
+    }
+
+    // GIN calls this once it has made and injected one
+    @Inject
+    final void automaticBind() {
+        bind();
     }
 
     /// @return Its view.
@@ -79,19 +126,6 @@ public class MyPresenterWidget<V extends View>
                 : view.asWidget();
     }
 
-    /// @return The application's event bus.
-    protected final EventBus getEventBus() {
-        return eventBus;
-    }
-
-    /// Fires an event on the event bus, from this presenter.
-    ///
-    /// @param event The event.
-    @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
-    }
-
     /// Adds a handler to the event bus.
     ///
     /// @param type    The event's type.
@@ -100,7 +134,7 @@ public class MyPresenterWidget<V extends View>
     /// @return The registration, which the caller removes.
     protected final <H extends EventHandler> HandlerRegistration addHandler(final GwtEvent.Type<H> type,
                                                                             final H handler) {
-        return eventBus.addHandler(type, handler);
+        return getEventBus().addHandler(type, handler);
     }
 
     /// Adds a handler to the event bus until this presenter is unbound.
@@ -143,32 +177,6 @@ public class MyPresenterWidget<V extends View>
         }
     }
 
-    /// Owns a presenter or component, which is then disposed with this presenter and sees its
-    /// context.
-    ///
-    /// @param child The presenter or component, e.g. one just made by a GIN provider.
-    /// @param <C>   Its type.
-    /// @return The child, so it can be owned as it is made: `own(editorProvider.get())`.
-    protected final <C extends HasComponentNode> C own(final C child) {
-        final ComponentNode childNode = child.getComponentNode();
-        // Null only for a mock (e.g. Mockito's, in a test), which has no node to own
-        if (childNode != null) {
-            node.adopt(childNode);
-        }
-        return child;
-    }
-
-    /// Disposes a presenter or component this presenter owns early, e.g. one being replaced.
-    ///
-    /// @param child The child.
-    protected final void release(final HasComponentNode child) {
-        final ComponentNode childNode = child.getComponentNode();
-        // Null only for a mock (e.g. Mockito's, in a test)
-        if (childNode != null) {
-            node.release(childNode);
-        }
-    }
-
     /// Owns a presenter made for one use, e.g. a dialog made when a button is pressed, until it is
     /// hidden: it is then disposed (once the popup manager has hidden it), rather than kept until
     /// this presenter is. A dialog this presenter shows again must be owned with
@@ -200,41 +208,6 @@ public class MyPresenterWidget<V extends View>
         return dialog;
     }
 
-    /// Owns a registration, removed when this presenter is disposed (not when it is unbound, as
-    /// [#registerHandler(HandlerRegistration)]'s are).
-    ///
-    /// @param registration The registration.
-    protected final void own(final HandlerRegistration registration) {
-        node.add(registration);
-    }
-
-    /// Listens to an app-wide event on the event bus until this presenter is disposed.
-    ///
-    /// @param type    The event's type.
-    /// @param handler The handler.
-    /// @param <H>     The handler's type.
-    protected final <H> void listen(final Type<H> type, final H handler) {
-        node.add(getEventBus().addHandler(type, handler));
-    }
-
-    @Override
-    public final ComponentNode getComponentNode() {
-        return node;
-    }
-
-    /// @return Whether this presenter is disposed.
-    public final boolean isDisposed() {
-        return node.isDisposed();
-    }
-
-    /// Releases this presenter for good, when what it belongs to is closed: disposes what it
-    /// owns, removes the handlers it and others added through it, unbinds it (removing the
-    /// handlers it registered) and lets a subclass release anything else in [#onDispose()]. Runs
-    /// once, however often it is called.
-    public final void dispose() {
-        node.dispose();
-    }
-
     private void release() {
         unbind();
         onDispose();
@@ -263,45 +236,10 @@ public class MyPresenterWidget<V extends View>
         if (taskMonitorFactory != null) {
             return taskMonitorFactory.createTaskMonitor();
         }
-        final TaskMonitorFactory provided = node.lookup(Contexts.TASK_MONITOR);
+        final TaskMonitorFactory provided = getComponentNode().lookup(Contexts.TASK_MONITOR);
         if (provided != Contexts.TASK_MONITOR.getDefaultValue()) {
             return provided.createTaskMonitor();
         }
         return new DefaultTaskMonitorFactory(this).createTaskMonitor();
-    }
-
-    /// Tells the document this belongs to that the user changed something (its [Contexts#DIRTY]
-    /// tracker, looked up from this presenter's owner, so a document part that is a document tells
-    /// the one above it), so it can work out whether it is dirty.
-    protected final void markChanged() {
-        node.lookupAbove(Contexts.DIRTY).onChange();
-    }
-
-    /// Looks up a context value now. To follow changes, use [#watch(ContextKey, Consumer)].
-    ///
-    /// @param key The key, e.g. [Contexts#READ_ONLY].
-    /// @param <T> The type of the value.
-    /// @return The value, or the key's default if nothing provides it.
-    protected final <T> T context(final ContextKey<T> key) {
-        return node.lookup(key);
-    }
-
-    /// Watches a context value: runs `onChange` with it once this presenter is owned (by a tab's
-    /// root, or a presenter that is), and again whenever it changes, until it is disposed.
-    ///
-    /// @param key      The key, e.g. [Contexts#READ_ONLY].
-    /// @param onChange What to run with the value, e.g. `getView()::onReadOnly`.
-    /// @param <T>      The type of the value.
-    protected final <T> void watch(final ContextKey<T> key, final Consumer<T> onChange) {
-        node.watch(key, onChange);
-    }
-
-    /// Provides a context value to this presenter and everything it owns, however deep.
-    ///
-    /// @param key   The key.
-    /// @param value The value, which may change.
-    /// @param <T>   The type of the value.
-    protected final <T> void provide(final ContextKey<T> key, final ContextValue<T> value) {
-        node.provide(key, value);
     }
 }
