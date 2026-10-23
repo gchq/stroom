@@ -1,0 +1,57 @@
+name: App auth events (JSON lines, a few lines damaged)
+template: Event Data (Text)
+capabilities: [malformed_records, mixed_formats]
+# An app's events, 700 JSON lines, four of them damaged as files in the wild are: two cut off part-way, one line of
+# garbage (a stack dump in the wrong file), one with an unescaped quote in a value. Seen on the local Stroom: the
+# JSONParser stops the stream at the first line that isn't JSON (a fatal error), so read that way everything after
+# the 5th line is lost. The traps: profile_sample still calls it JSON lines and lists the damaged lines; the robust
+# route is a Data Splitter, one record a line, the keys read through json_fields (json.<key>), where a damaged line
+# gives no fields (logged as matching no rule, or left out with drop_when once the user has seen them); the 696 good
+# lines are all events.
+request: >
+  Onboard our app's auth events (a JSON lines file on my disk; it's a bit messy). Index the events.
+expected:
+  records: 696
+  event_types: [Authenticate]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+files:
+  - {name: auth-events.jsonl, generate: {kind: damaged_jsonl, records: 700, seed: 14}}
+reference:
+  splitter: {kind: regex, pattern: '^(.*)$', names: [json]}
+  mapping:
+    input: data_splitter
+    json_fields: [json]
+    # The damaged lines, shown to the user by profile_sample (malformed_lines), left out on purpose: a line whose JSON
+    # doesn't parse has no json.time.
+    drop_when:
+      - {when: [{field: json.time, present: false}], reason: damaged lines (not JSON), shown to the user}
+    common:
+      - {path: EventTime/TimeCreated, field: json.time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Auth App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: auth-app}
+      - {path: EventSource/Device/HostName, value: auth01}
+      - {path: EventSource/User/Id, field: json.user}
+      - {path: EventSource/Client/IPAddress, field: json.ip}
+      - {path: EventDetail/TypeId, field: json.action}
+    events:
+      - name: logon
+        when: [{field: json.action, equals: login}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: json.user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: json.result, map: {success: 'true', failure: 'false'}}
+      - name: logoff
+        when: [{field: json.action, equals: logout}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: json.user}
+      - name: password
+        when: [{field: json.action, equals: password_change}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+          - {path: EventDetail/Authenticate/User/Id, field: json.user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: json.result, map: {success: 'true', failure: 'false'}}

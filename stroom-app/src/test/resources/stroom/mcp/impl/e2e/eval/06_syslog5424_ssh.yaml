@@ -1,0 +1,49 @@
+name: SSH bastion (RFC 5424 syslog)
+template: Event Data (Text)
+capabilities: [format_recognition, timestamps, optional_fields]
+request: >
+  Onboard sshd logs from our bastion host (RFC 5424 syslog). Lines record accepted and failed SSH logins, with the
+  method, user and source address; failed logins can be for an invalid (unknown) user. Index the events.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Outcome/Success]
+sample: |
+  <38>1 2026-09-28T13:00:00.000Z bastion sshd 812 - - Accepted publickey for frank from 192.0.2.44 port 50122 ssh2
+  <38>1 2026-09-28T13:02:10.000Z bastion sshd 815 - - Failed password for invalid user admin from 192.0.2.99 port 40022 ssh2
+  <38>1 2026-09-28T13:04:55.000Z bastion sshd 820 - - Accepted password for grace from 192.0.2.45 port 50410 ssh2
+reference:
+  converter: |
+    <?xml version="1.1" encoding="UTF-8"?>
+    <dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+      <split delimiter="\n">
+        <group>
+          <regex pattern="^&lt;(\d+)&gt;1 (\S+) (\S+) (\S+) (\S+) \S+ \S+ (Accepted|Failed) (\S+) for (invalid user )?(\S+) from (\S+) port (\d+).*$">
+            <data name="pri" value="$1" /><data name="time" value="$2" /><data name="host" value="$3" />
+            <data name="app" value="$4" /><data name="pid" value="$5" /><data name="result" value="$6" />
+            <data name="method" value="$7" /><data name="invalid" value="$8" /><data name="user" value="$9" />
+            <data name="ip" value="$10" /><data name="port" value="$11" />
+          </regex>
+        </group>
+      </split>
+    </dataSplitter>
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: Bastion}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: app}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/Client/IPAddress, field: ip}
+      - {path: EventSource/Client/Port, field: port}
+      - {path: EventSource/User/Id, field: user}
+    events:
+      - name: ssh logon
+        fields:
+          - {path: EventDetail/TypeId, value: SSH-Logon}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {Accepted: "true", Failed: "false"}}
+          - {path: EventDetail/Authenticate/Data, data_name: method, field: method}

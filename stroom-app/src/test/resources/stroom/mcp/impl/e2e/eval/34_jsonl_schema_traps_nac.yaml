@@ -1,0 +1,61 @@
+name: Network access control (values the schema rejects as written)
+template: Event Data (JSON)
+capabilities: [type_inference]
+request: >
+  Onboard the network access control system's log (JSON lines). Each line is a device asking to join the network
+  at a switch port: its MAC and IP address, the user when there was one (an empty string when not), whether it
+  was accepted or rejected, and the service it asked for (port/protocol). The switches write MAC addresses in
+  several styles. Index the events.
+# The traps, each a value the event-logging schema rejects as the source writes it: IPv6 in upper case (the schema's
+# patterns are lower case), MAC addresses in lower case or Cisco's dotted style (the schema wants upper-case pairs
+# joined by : or -), a port written "443/tcp" (Port is a number), and an empty user (an element with nothing in it).
+expected:
+  records: 5
+  event_types: [Authenticate]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/Device/MACAddress, EventSource/Device/IPAddress]
+  values:
+    EventSource/Device/IPAddress: ['2001:db8::21', 'fe80::1a2b:3cff:fe4d:60', 10.4.0.21]
+    EventSource/Device/Port: ['443', '22', '8443']
+sample: |
+  {"time": "2026-10-02T12:00:00Z", "switch": "sw-core-01", "port": "Gi1/0/12", "mac": "00:1a:2b:3c:4d:5e", "ip": "10.4.0.21", "user": "alice", "result": "accept", "service": "443/tcp"}
+  {"time": "2026-10-02T12:00:30Z", "switch": "sw-core-01", "port": "Gi1/0/13", "mac": "001a.2b3c.4d5f", "ip": "2001:DB8::21", "user": "", "result": "reject", "service": "22/tcp"}
+  {"time": "2026-10-02T12:01:00Z", "switch": "sw-edge-07", "port": "Fa0/3", "mac": "00-1A-2B-3C-4D-60", "ip": "FE80::1A2B:3CFF:FE4D:60", "user": "bob", "result": "accept", "service": "8443/tcp"}
+  {"time": "2026-10-02T12:02:10Z", "switch": "sw-edge-07", "port": "Fa0/4", "mac": "00:1A:2B:3C:4D:61", "ip": "10.4.7.9", "user": "", "result": "reject", "service": "53/udp"}
+  {"time": "2026-10-02T12:05:00Z", "switch": "sw-core-01", "port": "Gi1/0/12", "mac": "001a.2b3c.4d5e", "ip": "10.4.0.21", "user": "alice", "result": "accept", "service": "443/tcp"}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    extract:
+      - {field: service, regex: '^(\d+)/(\w+)$', names: [service_port, service_protocol]}
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Network Access Control}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: nac}
+      - {path: EventSource/Device/HostName, field: switch}
+      # Lower case, as the schema's IPv6 patterns are; an IPv4 address is unchanged.
+      - {path: EventSource/Device/IPAddress, field: ip, transform: lower}
+      # Every style to upper-case pairs joined by colons: the separators dropped, then rejoined.
+      - {path: EventSource/Device/MACAddress, xpath: "replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"}
+      - {path: EventSource/Device/Port, field: service_port}
+      - {path: EventSource/Device/Data, data_name: switch_port, field: port}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: result}
+    events:
+      - name: user access
+        when: [{field: user, present: true}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Connect}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {accept: 'true', reject: 'false'}}
+          - {path: EventDetail/Authenticate/Data, data_name: protocol, field: service_protocol}
+      # With no user (an empty string), the device is what is authenticated: Authenticate needs one of LogonType,
+      # User, Device or Group before Outcome, and Device and User are alternatives.
+      - name: device access
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Connect}
+          - {path: EventDetail/Authenticate/Device/MACAddress, xpath: "replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {accept: 'true', reject: 'false'}}
+          - {path: EventDetail/Authenticate/Data, data_name: protocol, field: service_protocol}

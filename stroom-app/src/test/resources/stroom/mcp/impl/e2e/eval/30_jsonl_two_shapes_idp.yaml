@@ -1,0 +1,95 @@
+name: Identity provider (JSON lines in two shapes)
+template: Event Data (JSON)
+capabilities: [schema_variation, field_variability]
+request: >
+  Onboard our identity provider's sign-in log (JSON lines). It's mid-migration, so one stream holds two shapes of
+  record: the new one (eventType, published, actor, client, outcome) and the legacy one (type, ts, user, ip, ok).
+  Both describe the same things: sessions starting and ending, failed sign-ins, accounts locked and passwords
+  changed. Every record is one of those, so none should be an unknown event. Index the events.
+expected:
+  records: 8
+  event_types: [Authenticate]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
+  values:
+    EventSource/User/Id: [alice@example.org, bob, carol, dave@example.org]
+    EventDetail/Authenticate/Action: [Logon, Logoff, AccountLock, ChangePassword]
+sample: |
+  {"eventType": "user.session.start", "published": "2026-10-02T08:00:00.000Z", "actor": {"alternateId": "alice@example.org"}, "client": {"ipAddress": "10.0.0.5"}, "outcome": {"result": "SUCCESS"}}
+  {"type": "login", "ts": "2026-10-02T08:01:00Z", "user": "bob", "ip": "10.0.0.6", "ok": true}
+  {"eventType": "user.session.start", "published": "2026-10-02T08:02:30.000Z", "actor": {"alternateId": "dave@example.org"}, "client": {"ipAddress": "203.0.113.9"}, "outcome": {"result": "FAILURE", "reason": "INVALID_CREDENTIALS"}}
+  {"type": "login", "ts": "2026-10-02T08:03:00Z", "user": "carol", "ip": "10.0.0.7", "ok": false}
+  {"eventType": "user.account.lock", "published": "2026-10-02T08:03:05.000Z", "actor": {"alternateId": "dave@example.org"}, "client": {"ipAddress": "203.0.113.9"}, "outcome": {"result": "SUCCESS"}}
+  {"type": "password_change", "ts": "2026-10-02T08:20:00Z", "user": "bob", "ip": "10.0.0.6", "ok": true}
+  {"eventType": "user.session.end", "published": "2026-10-02T09:00:00.000Z", "actor": {"alternateId": "alice@example.org"}, "client": {"ipAddress": "10.0.0.5"}, "outcome": {"result": "SUCCESS"}}
+  {"type": "logout", "ts": "2026-10-02T09:05:00Z", "user": "carol", "ip": "10.0.0.7", "ok": true}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventSource/System/Name, value: Identity Provider}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: idp}
+      - {path: EventSource/Device/HostName, value: idp.example.org}
+    events:
+      # The new shape: eventType names what happened.
+      - name: new session start
+        when: [{field: eventType, equals: user.session.start}]
+        fields:
+          - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/Client/IPAddress, field: client.ipAddress}
+          - {path: EventDetail/TypeId, field: eventType}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: outcome.result, map: {SUCCESS: 'true', FAILURE: 'false'}}
+          - {path: EventDetail/Authenticate/Outcome/Description, field: outcome.reason}
+      - name: new session end
+        when: [{field: eventType, equals: user.session.end}]
+        fields:
+          - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/Client/IPAddress, field: client.ipAddress}
+          - {path: EventDetail/TypeId, field: eventType}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+      - name: new account lock
+        when: [{field: eventType, equals: user.account.lock}]
+        fields:
+          - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/Client/IPAddress, field: client.ipAddress}
+          - {path: EventDetail/TypeId, field: eventType}
+          - {path: EventDetail/Authenticate/Action, value: AccountLock}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+      # The legacy shape: type names what happened, ok whether it worked.
+      - name: legacy login
+        when: [{field: type, equals: login}]
+        fields:
+          - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+          - {path: EventSource/User/Id, field: user}
+          - {path: EventSource/Client/IPAddress, field: ip}
+          - {path: EventDetail/TypeId, field: type}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: ok}
+      - name: legacy logout
+        when: [{field: type, equals: logout}]
+        fields:
+          - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+          - {path: EventSource/User/Id, field: user}
+          - {path: EventSource/Client/IPAddress, field: ip}
+          - {path: EventDetail/TypeId, field: type}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: legacy password change
+        when: [{field: type, equals: password_change}]
+        fields:
+          - {path: EventTime/TimeCreated, field: ts, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+          - {path: EventSource/User/Id, field: user}
+          - {path: EventSource/Client/IPAddress, field: ip}
+          - {path: EventDetail/TypeId, field: type}
+          - {path: EventDetail/Authenticate/Action, value: ChangePassword}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: ok}

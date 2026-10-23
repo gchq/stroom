@@ -1,0 +1,64 @@
+name: Secure web gateway, a whole day's CEF file (syslog then CEF)
+template: Event Data (Text)
+capabilities: [large_samples, mixed_formats]
+# Case 22 at a day's size: 5,000 lines (883 KB) in a file on the user's disk, and a request that says no more than a
+# user would. The traps: the agent sees only the first lines, and the first 3,000 are logons and allowed requests
+# only, so failed logons, logoffs, blocked requests and malware start about 536,000 characters in, past a stream's
+# head (Stroom returns about 80,000 characters a fetch). Masked as text, CEF lines group by how many extension keys
+# they have, not by kind: the survey groups them by the header's signature id and name. Same reference as case 22.
+request: >
+  Onboard our secure web gateway's CEF logs from the file on my disk. Index the events.
+expected:
+  records: 5000
+  event_types: [Authenticate, Network, Alert]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+    EventDetail/Description: [SAML login from the VPN, EICAR test file]
+files:
+  - {name: swg-2026-10-02.cef.log, generate: {kind: cef_gateway, records: 5000, seed: 3}}
+reference:
+  # The server's own Data Splitter, inferred from the sample (build_data_splitter): syslog header, CEF header, extension.
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, xpath: "concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))", time_format: "yyyy MMM d HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Secure Web Gateway}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: cef_product}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/Client/IPAddress, field: src}
+      - {path: EventSource/User/Id, field: suser}
+      - {path: EventDetail/TypeId, field: cef_signature_id}
+      - {path: EventDetail/Description, any_of: [msg, cef_name]}
+    events:
+      - name: logon
+        when: [{field: cef_signature_id, one_of: ['1001', '1002']}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: suser}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: outcome, map: {success: 'true', failure: 'false'}}
+      - name: logoff
+        when: [{field: cef_signature_id, equals: '1003'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: suser}
+      - name: web request
+        when: [{field: cef_signature_id, one_of: ['2001', '2002']}]
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
+          - {path: EventDetail/Network/Open/Destination/Port, field: dpt}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: request}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: cat}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: act, map: {allow: 'true', block: 'false'}}
+      - name: malware
+        when: [{field: cef_signature_id, equals: '3001'}]
+        fields:
+          - {path: EventDetail/Alert/Type, value: Malware}
+          - {path: EventDetail/Alert/Severity, value: Major}
+          - {path: EventDetail/Alert/Data, data_name: file, field: fname}
+          - {path: EventDetail/Alert/Data, data_name: sha_or_md5, field: fileHash}
+          - {path: EventDetail/Alert/Data, data_name: action, field: act}

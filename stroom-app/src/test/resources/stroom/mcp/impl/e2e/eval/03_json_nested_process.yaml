@@ -1,0 +1,37 @@
+name: EDR process executions
+template: Event Data (JSON)
+capabilities: [nesting]
+request: >
+  Onboard these endpoint (EDR) process execution records. They are a JSON array of nested objects: host, user and
+  process details. Each record is a process being started. Index them so we can search by host, user and command.
+expected:
+  records: 3
+  event_types: [Process]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventDetail/Process/Command]
+sample: |
+  [{"@timestamp": "2026-09-28T11:00:01.123Z", "host": {"name": "ws01", "ip": "10.2.0.11"}, "user": {"name": "alice"},
+    "process": {"pid": 4242, "executable": "/usr/bin/curl", "args": "http://example.com"}},
+   {"@timestamp": "2026-09-28T11:00:05.456Z", "host": {"name": "ws02", "ip": "10.2.0.12"}, "user": {"name": "bob"},
+    "process": {"pid": 5150, "executable": "/usr/bin/ssh", "args": "admin@10.2.0.50"}},
+   {"@timestamp": "2026-09-28T11:01:17.789Z", "host": {"name": "ws01", "ip": "10.2.0.11"}, "user": {"name": "alice"},
+    "process": {"pid": 4300, "executable": "/usr/bin/python3", "args": "-c 'import os'"}}]
+reference:
+  mapping:
+    input: json
+    common:
+      - {path: EventTime/TimeCreated, field: "@timestamp", time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: EDR}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: edr-agent}
+      - {path: EventSource/Device/HostName, field: host.name}
+      - {path: EventSource/Device/IPAddress, field: host.ip}
+      - {path: EventSource/User/Id, field: user.name}
+    events:
+      - name: process start
+        fields:
+          - {path: EventDetail/TypeId, value: Process-Start}
+          - {path: EventDetail/Process/Action, value: Execute}
+          - {path: EventDetail/Process/Type, value: Application}
+          - {path: EventDetail/Process/Command, field: process.executable}
+          - {path: EventDetail/Process/Arguments, field: process.args}
+          - {path: EventDetail/Process/ProcessId, field: process.pid}

@@ -1,0 +1,40 @@
+name: Mail gateway delivery log (key=value, a key given once per recipient)
+template: Event Data (Text)
+capabilities: [field_repetition, escaping]
+# A mail gateway's log, 600 messages: key=value pairs, one rcpt= for each recipient (one to three), a quoted subject,
+# and the action taken. The traps: rcpt is repeated, so each recipient is its own element (repeat: true); a field
+# reads the first rcpt only (the dry run once kept the last, unlike the XSLT); the msgid has angle brackets; and a
+# quarantined or rejected message's outcome is a failure.
+request: >
+  Onboard our mail gateway's delivery log (the file on my disk). Index the messages.
+expected:
+  records: 600
+  event_types: [Send]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
+  values:
+    EventSource/User/EmailAddress: [alice@example.com, frank@example.com]
+files:
+  - {name: mx01-delivery.log, generate: {kind: mail_gateway, records: 600, seed: 16}}
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Mail Gateway}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: mailgw}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/EmailAddress, field: from}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: message
+        fields:
+          - {path: EventDetail/Send/Source/User/EmailAddress, field: from}
+          - {path: EventDetail/Send/Destination/User/EmailAddress, field: rcpt, repeat: true}
+          - {path: EventDetail/Send/Payload/Email/Id, field: msgid}
+          - {path: EventDetail/Send/Payload/Email/Name, field: subject}
+          - {path: EventDetail/Send/Data, data_name: size, field: size}
+          - {path: EventDetail/Send/Data, data_name: action, field: action}
+          - {path: EventDetail/Send/Outcome/Success, field: action, map: {deliver: 'true'}, default: 'false'}
