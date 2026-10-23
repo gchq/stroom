@@ -16,17 +16,11 @@
 
 package stroom.dashboard.client.gin;
 
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
-import stroom.dashboard.client.input.gin.InputGinjector;
 import stroom.dashboard.client.input.gin.InputModule;
-import stroom.dashboard.client.query.gin.QueryGinjector;
 import stroom.dashboard.client.query.gin.QueryModule;
-import stroom.dashboard.client.table.gin.TableGinjector;
 import stroom.dashboard.client.table.gin.TableModule;
-import stroom.dashboard.client.text.gin.TextGinjector;
 import stroom.dashboard.client.text.gin.TextModule;
-import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 
 import com.google.gwt.inject.client.GinModules;
@@ -39,11 +33,5 @@ import com.google.gwt.inject.client.GinModules;
         InputModule.class,
         EmbeddedQueryModule.class
 })
-public interface DashboardGinjector extends
-        QueryGinjector,
-        TableGinjector,
-        TextGinjector,
-        VisGinjector,
-        InputGinjector,
-        EmbeddedQueryGinjector {
+public interface DashboardGinjector {
 }

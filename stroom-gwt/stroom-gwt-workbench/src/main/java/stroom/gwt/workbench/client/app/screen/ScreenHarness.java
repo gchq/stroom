@@ -799,7 +799,7 @@ public final class ScreenHarness {
         /// the area injectors in `stroom.gwt.workbench.client.app.gin`, in place of a plain
         /// [ScreenGinjector], so the story can get its presenter from GIN as Stroom does:
         /// ```
-        /// final MonitoringGinjector injector = GWT.create(MonitoringGinjector.class);
+        /// final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
         /// final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES).injector(injector).build();
         /// final JobPresenter presenter = injector.getJobPresenter();
         /// ```

@@ -16,18 +16,14 @@
 
 package stroom.dashboard.client.gin;
 
-import stroom.about.client.gin.AboutGinjector;
 import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.annotation.client.gin.AnnotationGinjector;
 import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
-import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryGinjector;
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
-import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityGinjector;
@@ -68,16 +64,12 @@ import com.google.web.bindery.event.shared.EventBus;
 public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
-        AboutGinjector,
         AlertGinjector,
         SecurityGinjector,
         EntityGinjector,
         DashboardGinjector,
         UserPreferencesGinjector,
-        VisGinjector,
-        EmbeddedQueryGinjector,
-        ChangePasswordGinjector,
-        AnnotationGinjector {
+        ChangePasswordGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();
