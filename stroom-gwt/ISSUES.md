@@ -269,7 +269,8 @@ run of 22 October 2026 (1,538 stories).
 * `App/Editors/QueryEditor` `HyperlinksByKeyboard` (flaky): fails its `toHaveFocus()` step in a
   full run, with 8 workers, and passes when run alone.
 * **Open** (found 22 October 2026, evening): 48 more stories failed with the leak check (13 open: `Embedded`, below, is fixed, and master's
-  `7ad091e2e6` and later fixed the `target-size` stories, `ImpactAbort`, `PauseButtonReportsUp` and `KeyStore`), and fail the
+  `7ad091e2e6` and later fixed the `target-size` stories, `ImpactAbort`, `PauseButtonReportsUp` and `KeyStore`; the 13
+  open ones fail on master `9ddf5f0b07` too, so they don't come from the remove_gwtp branch), and fail the
   same way when run at commit `0ca65724f4`, whose full run passed that afternoon, so something in
   the environment changed rather than the code (the browser and test runner are unchanged; a
   system font or layout change is a guess). They fail every time:
