@@ -382,6 +382,8 @@ class TestBuildTranslationXsltTool {
 
         assertThat(result.get("ok")).isEqualTo(false);
         assertThat(result.get("sample_check")).isEqualTo("not run: fix the problems first");
+        // Without each rule's summary, so the problems come back whole (seen: 20-70 KB results, read in parts).
+        assertThat(result).containsKey("problems").doesNotContainKey("events");
         Mockito.verifyNoInteractions(world.sampleStreamTexts);
     }
 

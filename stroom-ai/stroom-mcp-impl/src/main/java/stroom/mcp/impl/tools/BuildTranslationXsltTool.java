@@ -215,6 +215,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                              + "action) are parsed by the mapping's extract list, not a function: entries {field, "
                              + "regex, names}, whose regex groups become fields named by names, used then like any "
                              + "input field (by field=, never $name in an xpath); no substring-before/after chains. "
+                             + "TypeId names the kind of event: in the format the standing instructions set for "
+                             + "TypeIds, where they set one; else join (fields' values joined, e.g. join: [event, "
+                             + "action] for User-Login) the fields that tell the kinds apart. "
                              + "An input with several values (a JSON array, a tokenize()) writes one element per "
                              + "value with repeat: true; Data entries are written in a named Data with data_parent "
                              + "(data_parent 'links', data_name 'link', repeat: <Data Name=\"links\"><Data "
@@ -346,6 +349,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // Fast: what the schema says is wrong comes back before the sample is read and checked (seen: minutes
             // a call on a large sample, for a mapping that could not have generated anyway).
             b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
+            // Not in the Python server: without what each rule writes, which is for a mapping that generates, so the
+            // problems come back whole rather than in a file read in parts (seen: 20-70 KB results each round, and
+            // their problems fixed a part at a time: 18 rules, then 10, then 1).
+            b.result.remove("events");
             b.result.put("sample_check", "not run: fix the problems first");
             b.result.put("hint", TranslationBuilds.fixHint(request.uuid(), request.build(), request.name())
                                  + " The sample is checked once they are fixed.");

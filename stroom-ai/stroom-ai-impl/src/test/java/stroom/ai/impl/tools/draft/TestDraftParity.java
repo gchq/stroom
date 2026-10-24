@@ -54,6 +54,7 @@ class TestDraftParity extends DraftFixtures {
                 return;
             }
             final Map<String, Object> actual = withoutMessageNotes(drafted(entry, splitter));
+            assertThat(typeIdSaid(actual, "problems")).isEqualTo(typeIdSaid(expected, "warnings"));
             assertThat(PyJson.dumps(inCatalogueOrder(actual), 1))
                     .isEqualTo(PyJson.dumps(inCatalogueOrder(expected), 1));
         }));
@@ -79,8 +80,9 @@ class TestDraftParity extends DraftFixtures {
                         assertThatThrownBy(() -> checked(entry, texts)).isInstanceOf(RuntimeException.class);
                         return;
                     }
-                    assertThat(PyJson.dumps(asPythonSaid(checked(entry, texts)), 1))
-                            .isEqualTo(PyJson.dumps(expected, 1));
+                    final Map<String, Object> actual = asPythonSaid(checked(entry, texts));
+                    assertThat(typeIdSaid(actual, "problems")).isEqualTo(typeIdSaid(expected, "warnings"));
+                    assertThat(PyJson.dumps(actual, 1)).isEqualTo(PyJson.dumps(expected, 1));
                 }));
     }
 
@@ -102,6 +104,30 @@ class TestDraftParity extends DraftFixtures {
                                                     || note.contains("reads as free text written about each "));
         }
         return draft;
+    }
+
+    // A TypeId the sample shows to be the same for different kinds of event: a warning from the Python server, a
+    // problem from the port (see LocalCheck's sharedTypeIds), worded on to say how to fix it. Taken out of the result
+    // (wherever a check is in it) where it is, to be compared on its own: what it says of the sample, up to the
+    // Python server's 'TypeId names the kind of event'.
+    @SuppressWarnings("unchecked")
+    private static List<String> typeIdSaid(final Object result, final String list) {
+        final List<String> said = new ArrayList<>();
+        if (result instanceof final Map<?, ?> map) {
+            if (map.get(list) instanceof final List<?> items) {
+                final List<Object> kept = new ArrayList<>();
+                for (final Object item : items) {
+                    if (item instanceof final String text && text.startsWith("EventDetail/TypeId reads ")) {
+                        said.add(text.substring(0, text.indexOf("TypeId names the kind of event")));
+                    } else {
+                        kept.add(item);
+                    }
+                }
+                ((Map<String, Object>) map).put(list, kept);
+            }
+            map.values().forEach(value -> said.addAll(typeIdSaid(value, list)));
+        }
+        return said;
     }
 
     // The checks as the Python server words them: for values that fit once cased, the port names the transform

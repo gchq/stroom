@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.XmlTree;
@@ -81,6 +82,10 @@ final class MappingSampleCheck {
         final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
         problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
         warnings.addAll(LocalCheck.domainQualifiedUserIds(mapping, found.records()));
+        // Not in the Python server: the required elements the sample's records leave out, counted.
+        warnings.addAll(LocalCheck.requiredLeftEmpty(mapping, found.records(),
+                XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))
+                        .requiredOnInput()));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
         warnings.addAll(checkSeveralValues(mapping, samples, splitter));
         final XPathChecks.Findings extractions = checkExtractions(mapping, samples, splitter, found.records(),

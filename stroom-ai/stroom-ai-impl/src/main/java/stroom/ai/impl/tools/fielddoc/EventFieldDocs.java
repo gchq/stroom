@@ -235,22 +235,9 @@ public final class EventFieldDocs {
             }
             lines.add("");
         }
-        if (!mapping.extract().isEmpty()) {
-            lines.add("### Extracted fields");
-            lines.add("");
-            for (final Extraction ex : mapping.extract()) {
-                final String names = ex.names().stream()
-                        .filter(JsonValues::truthy)
-                        .map(n -> "`" + n + "`")
-                        .collect(Collectors.joining(", "));
-                lines.add("- " + names + ": parsed from `" + (JsonValues.truthy(ex.field())
-                        ? ex.field()
-                        : FieldDocs.readable(ex.xpath())) + "`" + ("record".equals(ex.scope())
-                        ? " (of the record)"
-                        : "") + " with `" + ex.regex() + "`");
-            }
-            lines.add("");
-        }
+        // The extractions (each field a regex parses, from what) are left to the XSLT, not listed: asked for by the
+        // user, as a long list of them is more than documentation needs. Not in the Python server, which lists
+        // them.
         return lines;
     }
 
@@ -689,6 +676,7 @@ public final class EventFieldDocs {
         final List<String> names = new ArrayList<>();
         names.add(entry.field());
         names.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
+        names.addAll(Objects.requireNonNullElse(entry.join(), List.of()));
         if (entry.lookup() != null) {
             names.add(entry.lookup().field());
         }

@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// One output value of a translation mapping: an event-logging path below Event, and where its value comes from.
-/// Give exactly one of field, any_of, value, xpath or lookup (or meta, read as an xpath). Ported from the Stroom
+/// Give exactly one of field, any_of, join, value, xpath or lookup (or meta, read as an xpath). Ported from the Stroom
 /// MCP server's `FieldMapping` model.
 ///
 /// @param path         Event-logging path below Event, e.g. `EventSource/User/Id`,
@@ -55,6 +55,11 @@ import java.util.regex.Pattern;
 ///                     `<Data Name="members"><Data Name="member" Value="..."/>...</Data>`: one container, shared by
 ///                     the entries naming it, and written only when one of them has a value. Not in the Stroom MCP
 ///                     server's model, which wrote every Data at its path's element.
+/// @param join         Input fields whose values are joined, each one's first value that has text, in order, with
+///                     separator between them, e.g. `["event", "action"]` for `User-Login`: what a TypeId telling
+///                     kinds apart by two fields is written from. Not in the Stroom MCP server's model, which had no
+///                     way to join fields (an xpath can't read an extraction's names).
+/// @param separator    With join: what goes between the values (default `-`).
 public record FieldMapping(String path,
                            String field,
                            List<String> anyOf,
@@ -71,7 +76,9 @@ public record FieldMapping(String path,
                            Map<String, String> map,
                            String defaultValue,
                            String dataName,
-                           String dataParent) {
+                           String dataParent,
+                           List<String> join,
+                           String separator) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -93,7 +100,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName, null);
+                null, null, dataName, null, null, null);
     }
 
     /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
@@ -115,7 +122,8 @@ public record FieldMapping(String path,
                 fields.optionalLiteral("scope", Condition.SCOPES), fields.optionalString("time_format"),
                 fields.optionalString("timezone"), fields.optionalStringMap("map"),
                 fields.optionalString("default"), fields.optionalString("data_name"),
-                fields.optionalString("data_parent"));
+                fields.optionalString("data_parent"), fields.optionalStrings("join"),
+                fields.optionalString("separator"));
         if (!fields.ok()) {
             return null;
         }
@@ -157,7 +165,7 @@ public record FieldMapping(String path,
                 ? given()
                 : List.of("xpath");
         if (given.size() != 1) {
-            return "'" + path + "': give exactly one of field, any_of, value, xpath or lookup ("
+            return "'" + path + "': give exactly one of field, any_of, join, value, xpath or lookup ("
                    + (given.isEmpty()
                     ? "none given"
                     : "given " + String.join(" and ", given)) + "), e.g. {\"path\": \"" + path
@@ -172,6 +180,9 @@ public record FieldMapping(String path,
         }
         if (anyOf != null) {
             names.addAll(anyOf);
+        }
+        if (join != null) {
+            names.addAll(join);
         }
         for (final String name : names) {
             final String called = MappingFacts.functionCall(name);
@@ -197,6 +208,16 @@ public record FieldMapping(String path,
                    + "'members', or 'a/b' for one inside another), so it goes with a path ending in Data and its "
                    + "data_name";
         }
+        if (join != null && (join.size() < 2 || join.stream().anyMatch(PyText::isBlank))) {
+            return "'" + path + "': join lists the fields whose values are joined, two or more, e.g. {\"path\": \""
+                   + path + "\", \"join\": [\"event\", \"action\"]} for User-Login";
+        }
+        if (separator != null && join == null) {
+            return "'" + path + "': separator goes with join, between the values it joins";
+        }
+        if (join != null && (repeat || isSet(timeFormat) || isSet(dictionary))) {
+            return "'" + path + "': join gives one text from its fields: no repeat, time_format or dictionary with it";
+        }
         if (repeat && (value != null || hasMap() || isSet(timeFormat) || lookup != null || isSet(dictionary))) {
             return "'" + path + "': repeat takes an input field, any_of or xpath, with transform at most";
         }
@@ -210,6 +231,9 @@ public record FieldMapping(String path,
         }
         if (anyOf != null) {
             out.add("any_of");
+        }
+        if (join != null) {
+            out.add("join");
         }
         if (value != null) {
             out.add("value");
@@ -225,21 +249,22 @@ public record FieldMapping(String path,
 
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + PyText.strip(meta) + "')", null, lookup,
-                dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent);
+                dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
+                join, separator);
     }
 
     /// @param defaultValue The output when the input is empty.
     /// @return This entry with that default.
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
-                timeFormat, timezone, map, defaultValue, dataName, dataParent);
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator);
     }
 
     /// @param dataName The Data element's Name.
     /// @return This entry with that Name.
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
-                timeFormat, timezone, map, defaultValue, dataName, dataParent);
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator);
     }
 
     /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
@@ -254,7 +279,14 @@ public record FieldMapping(String path,
     /// @return This entry written in them.
     public FieldMapping withDataParent(final String dataParent) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
-                timeFormat, timezone, map, defaultValue, dataName, dataParent);
+                timeFormat, timezone, map, defaultValue, dataName, dataParent, join, separator);
+    }
+
+    /// @return What join puts between its values.
+    public String joinSeparator() {
+        return separator == null
+                ? "-"
+                : separator;
     }
 
     /// @return True if the entry has a value map with at least one key (Python's truthiness of `map`).
@@ -294,6 +326,8 @@ public record FieldMapping(String path,
                 .put("default", defaultValue, null)
                 .put("data_name", dataName, null)
                 .putIfSet("data_parent", dataParent)
+                .putIfSet("join", join)
+                .putIfSet("separator", separator)
                 .build();
     }
 }
