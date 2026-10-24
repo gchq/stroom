@@ -116,7 +116,7 @@ public class AnnotationEditPresenter
     private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
-            "<div class=\"setting-block-icon icon-colour__grey svgIcon\">" +
+            "<div class=\"setting-block__icon icon-colour__grey svgIcon\">" +
             SvgImage.ELLIPSES_VERTICAL.getSvg() +
             "</div>");
     private static final SafeHtml HISTORY_LINE = SafeHtmlUtils.fromTrustedString(
@@ -878,7 +878,7 @@ public class AnnotationEditPresenter
         }
         final String name = "Actions for history entry '" + entry.getEntryType().getDisplayValue()
                             + "' by " + getUserName(entry.getEntryUser());
-        final String startTag = "<div class=\"setting-block-icon icon-colour__grey svgIcon "
+        final String startTag = "<div class=\"setting-block__icon icon-colour__grey svgIcon "
                                 + ENTRY_ACTIONS_CLASS + "\" role=\"button\" tabindex=\"0\" "
                                 + "aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"";
         return new SafeHtmlBuilder()

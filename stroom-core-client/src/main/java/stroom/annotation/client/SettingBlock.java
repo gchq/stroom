@@ -115,7 +115,7 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     ///
     /// @param readOnly Whether the setting is read only.
     public void setReadOnly(final boolean readOnly) {
-        formGroupPanel.setStyleName("setting-block--readonly", readOnly);
+        formGroupPanel.setStyleName("setting-block--read-only", readOnly);
     }
 
     @Override

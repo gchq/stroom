@@ -283,8 +283,8 @@
     background-color: var(--border-color);
 }
 
-.annotationHistoryItem:hover .setting-block-icon svg,
-.annotationHistoryCommentHeader:hover .setting-block-icon svg {
+.annotationHistoryItem:hover .setting-block__icon svg,
+.annotationHistoryCommentHeader:hover .setting-block__icon svg {
     opacity: 1;
 }
 
@@ -342,31 +342,6 @@
     width: 100%;
 }
 
-.setting-block {
-    border-radius: 6px;
-    padding: 5px;
-    padding-right: 20px;
-
-	transition: background-color .3s;
-	-webkit-transition: background-color .3s;
-	-moz-transition: background-color .3s;
-	-o-transition: background-color .3s;
-}
-
-.setting-block:hover {
-    background-color: var(--border-color);
-}
-
-.setting-block-icon {
-    opacity: 0;
-    transition: opacity .3s;
-    -webkit-transition: opacity .3s;
-    -moz-transition: opacity .3s;
-    -o-transition: opacity .3s;
-    flex-grow: 1;
-    flex-direction: row-reverse;
-}
-
 .setting-block-expander {
     display: flex;
     flex-grow: 1;
@@ -381,20 +356,11 @@
 
 /* An entry's actions button also shows while it has the focus */
 .annotationHistoryActions:focus,
-.annotationHistoryItem:hover .setting-block-icon,
-.annotationHistoryGroupHeader:hover .setting-block-icon,
-.annotationHistoryCommentHeader:hover .setting-block-icon,
-.setting-block:hover .setting-block-icon {
+.annotationHistoryItem:hover .setting-block__icon,
+.annotationHistoryGroupHeader:hover .setting-block__icon,
+.annotationHistoryCommentHeader:hover .setting-block__icon,
+.setting-block:hover .setting-block__icon {
     opacity: 0.6;
-}
-
-.setting-block .form-group:not(:first-child) {
-    margin-top: 0;
-}
-
-.setting-block,
-.setting-block label{
-    cursor: pointer;
 }
 
 .annotationTable {
@@ -461,30 +427,4 @@
     flex: 1;
     min-height: 0;
     resize: none;
-}
-
-/* A read-only annotation's settings: their values greyed, no ellipsis hint, no pointer */
-.setting-block.setting-block--readonly {
-    cursor: default;
-}
-
-.setting-block.setting-block--readonly .gwt-Label {
-    color: var(--control__text-color--readonly);
-}
-
-.setting-block.setting-block--readonly .setting-block-icon {
-    display: none;
-}
-
-/* A setting's ⋮ is its button (SettingBlock): with the keyboard focus it shows, with a focus ring,
-   and its setting is highlighted as on a hover */
-.setting-block-icon:focus-visible {
-    opacity: 1;
-    outline: none;
-    border-radius: .25rem;
-    box-shadow: var(--focus-shadow);
-}
-
-.setting-block:has(> .setting-block-icon:focus-visible) {
-    background-color: var(--border-color);
 }
