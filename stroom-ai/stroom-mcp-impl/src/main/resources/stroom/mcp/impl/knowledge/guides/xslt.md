@@ -123,8 +123,8 @@ Each value has one source and optional modifiers:
 Times: `time_format` is the profile's pattern, which reads an offset (`XXX`, `Z`) or a zone (`VV` for
 `Australia/Sydney`, `z` for `AEST`) in the value, so Stroom converts the time to UTC, daylight saving included;
 fractions of a second are kept (`.SSS`; epoch seconds with a fraction as `epoch_s`), and finer ones (`.SSSSSS`,
-epoch microseconds `epoch_us`, nanoseconds `epoch_ns`) are rounded half up to the schema's three digits: Stroom's
-`format-date` alone would cut them off. Only a time with no zone of its
+epoch microseconds `epoch_us`, nanoseconds `epoch_ns`) are cut to the schema's three digits, never rounded, so no
+event's time is moved on. Only a time with no zone of its
 own takes `timezone`, the zone the source writes in (UTC unless the user says otherwise). A zone the source names is
 kept with the event as `EventSource/Device/Location/TimeZoneName` (an IANA name: the draft maps it from the value or
 a field of zone names); a time read with an IANA `timezone` that isn't kept is warned about. A bare offset (`+10:00`)

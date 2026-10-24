@@ -16,6 +16,9 @@
 
 package stroom.ai.impl.tools.generation;
 
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XPathCompiler;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -257,7 +260,26 @@ class TestXsltGenerator extends XsltRuns {
         final List<Map<String, Object>> epoch = new ArrayList<>();
         epoch.add(json("{\"path\": \"EventTime/TimeCreated\", \"field\": \"time\", \"time_format\": \"epoch_s\"}"));
         epoch.addAll(BASE.subList(1, BASE.size()));
-        assertThat(generate(mapping(with("common", epoch))).xslt()).contains("xs:integer(round(xs:decimal(");
+        assertThat(generate(mapping(with("common", epoch))).xslt()).contains("xs:integer(floor(xs:decimal(");
+    }
+
+    @Test
+    void timesFinerThanAMillisecondAreCutNotRounded() throws SaxonApiException {
+        // Seen in eval case 31: an epoch_ns time 0.555 ms into its millisecond was written a millisecond late, as
+        // the Stroom MCP server's generator rounded half up (23:59:59.9996 became the next day).
+        assertThat(epochMs("epoch_ns", "1790899198000555000")).isEqualTo("1790899198000");
+        assertThat(epochMs("epoch_us", "1790899198000999")).isEqualTo("1790899198000");
+        assertThat(epochMs("epoch_s", "1790899198.9999")).isEqualTo("1790899198999");
+        // A pattern with digits below the millisecond is read by Stroom's format-date alone, which cuts them.
+        final List<Map<String, Object>> common = new ArrayList<>();
+        common.add(json("""
+                {"path": "EventTime/TimeCreated", "field": "time", "time_format": "yyyy-MM-dd HH:mm:ss.SSSSSS",
+                 "timezone": "UTC"}"""));
+        common.addAll(BASE.subList(1, BASE.size()));
+        final String xslt = generate(mapping(with("common", common))).xslt();
+        assertThat(xslt).contains("stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', "
+                                  + "'UTC')")
+                .doesNotContain("mcp:time-ms");
     }
 
     @Test
@@ -771,5 +793,14 @@ class TestXsltGenerator extends XsltRuns {
                 "dictionaries", "items");
         assertThat(map.get("items")).isEqualTo("items");
         assertThat(generate(mapping()).toMap()).doesNotContainKey("items");
+    }
+
+    // The epoch time's milliseconds as the generated XSLT works them out (Stroom's format-date, absent here, left out).
+    private static String epochMs(final String format, final String value) throws SaxonApiException {
+        final String expression = XPathText.timeExpression(format, null, XPathText.literal(value))
+                .replace("stroom:format-date(", "(");
+        final XPathCompiler compiler = new Processor(false).newXPathCompiler();
+        compiler.declareNamespace("xs", "http://www.w3.org/2001/XMLSchema");
+        return compiler.evaluateSingle(expression, null).getStringValue();
     }
 }
