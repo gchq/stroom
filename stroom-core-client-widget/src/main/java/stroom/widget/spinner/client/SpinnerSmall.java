@@ -37,7 +37,7 @@ public class SpinnerSmall extends Widget implements TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    // How long it takes to fade out (spinner.css), after which it stops spinning
+    // How long it takes to fade out (busy-spinner.css), after which it stops spinning
     private static final int FADE_MILLIS = 500;
     private static final String BLOCK = "busy-spinner";
     private static final String REFRESHING = BLOCK + "--active";

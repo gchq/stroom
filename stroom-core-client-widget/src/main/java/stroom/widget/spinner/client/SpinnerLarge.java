@@ -34,7 +34,7 @@ public class SpinnerLarge extends Composite implements TaskMonitorFactory {
     private static final Binder uiBinder = GWT.create(Binder.class);
     // What a screen reader is told while the spinner shows
     private static final String BUSY_TEXT = "Loading...";
-    // Its BEM modifiers (spinner.css): shown, and fading slowly
+    // Its BEM modifiers (busy-spinner.css): shown, and fading slowly
     private static final String VISIBLE = "busy-spinner--active";
     private static final String SOFT = "busy-spinner--soft";
     /// The modifier that centres the spinner over what is loading, e.g. in UiBinder

@@ -795,6 +795,19 @@ textarea:where(:not(.text-field))[readonly],
     height: 100%;
 }
 
+/* Text for screen readers only, so it must not be display: none (which hides it from them too) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .popupPanel-dragGlass {
     position: absolute;
     left: 0;

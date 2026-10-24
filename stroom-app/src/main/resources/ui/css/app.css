@@ -68,7 +68,7 @@
 @import url("CommandLinkCell.css");
 @import url("TermEditor.css");
 @import url("alert.css");
-@import url("spinner.css");
+@import url("busy-spinner.css");
 @import url("draggable-tree.css");
 @import url("pipeline-tree.css");
 @import url("pipeline-element.css");
