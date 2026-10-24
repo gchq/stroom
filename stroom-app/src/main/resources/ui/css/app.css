@@ -92,8 +92,10 @@
 @import url("settings-group.css");
 @import url("components.css");
 @import url("find-result-cell.css");
+@import url("column-value-cell.css");
 @import url("link-button.css");
 @import url("dashboard.css");
+@import url("query-cell.css");
 @import url("flex-layout.css");
 @import url("xsdbrowser.css");
 @import url("svg-icon.css");

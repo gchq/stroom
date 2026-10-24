@@ -46,13 +46,11 @@ public class QueryCell extends AbstractCell<StoredQuery> {
     public void render(final Context context, final StoredQuery value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value.isFavourite()) {
-                sb.append(template.favouritesLayout("queryCell-outer", "queryCell-expression",
-                        value.getName()));
+                sb.append(template.favouritesLayout(value.getName()));
 
             } else {
                 final String time = dateTimeFormatter.format(value.getCreateTimeMs());
-                sb.append(template.historyLayout("queryCell-outer", "queryCell-time", time,
-                        "queryCell-expression", value.getQuery().getExpression().toString()));
+                sb.append(template.historyLayout(time, value.getQuery().getExpression().toString()));
             }
         }
     }
@@ -61,12 +59,11 @@ public class QueryCell extends AbstractCell<StoredQuery> {
 
         // The space between the time and the expression takes no room (the time's padding spaces
         // them), but is there in the text, so a copied row reads "<time> <expression>"
-        @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span><span class=\"queryCell-gap\"> </span>"
-                  + "<span class=\"{3}\">{4}</span></div>")
-        SafeHtml historyLayout(String outerClassName, String timeClassName, String time, String expressionClassName,
-                               String expression);
+        @Template("<div class=\"query-cell\"><span class=\"query-cell__time\">{0}</span>"
+                  + "<span class=\"query-cell__gap\"> </span><span class=\"query-cell__expression\">{1}</span></div>")
+        SafeHtml historyLayout(String time, String expression);
 
-        @Template("<div class=\"{0}\"><span class=\"{1}\">{2}</span></div>")
-        SafeHtml favouritesLayout(String outerClassName, String nameClassName, String name);
+        @Template("<div class=\"query-cell\"><span class=\"query-cell__expression\">{0}</span></div>")
+        SafeHtml favouritesLayout(String name);
     }
 }

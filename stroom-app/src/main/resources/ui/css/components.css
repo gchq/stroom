@@ -1757,19 +1757,6 @@
     /*height: 300px;*/
 }
 
-.columnValueCell {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: var(--row__gap--horizontal);
-    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
-}
-
-.columnValueCell-text {
-	white-space: nowrap;
-	min-width: 200px;
-}
-
 .durationSetting {
     display: flex;
 }

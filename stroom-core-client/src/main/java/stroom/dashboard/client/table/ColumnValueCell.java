@@ -46,8 +46,8 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
                 // list's option says it (aria-checked), and is what is clicked to change it
                 outer.append(TICK_BOX.getPicture(stateOf(columnValueSelection, item)));
 
-                outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
-            }, Attribute.className("columnValueCell"));
+                outer.div(item.getValue(), Attribute.className("column-value-cell__text"));
+            }, Attribute.className("column-value-cell"));
         }
     }
 
