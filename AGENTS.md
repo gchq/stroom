@@ -180,6 +180,8 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 
 * **Stroom's widgets only.** Never GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), in the app or in workbench stories: use Stroom's `Button` (`new Button("Text")`, `setOnClick`), a `ToolbarButton` in a `Toolbar`, a `LinkButton` or a `FabButton`.
 
+* **Named for what it is.** A class's name says what it is, not how it was made (`TickBox`, not `CustomCheckBox`; `IconBox`, not `SvgIconBox`; `Histogram`, not `HistogramWidget`), and its CSS block is the same name in kebab case (`tick-box`, in `tick-box.css`).
+
 * **Smart parts attach.** A part that needs data (e.g. a document picker) is declared dumb in the template (`<dd:DropDownBox ui:field="feedBox"/>`), and the controller makes the part's controller and attaches it: `feedSelection = make(docSelectionProvider); feedSelection.attach(view.getFeedBox());`.
   A presenter not yet split goes in a slot: the component has a setter for it (`setExpressionEditor(IsWidget)`), and the controller owns the presenter and passes its widget in.
 

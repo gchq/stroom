@@ -21,8 +21,8 @@ import stroom.floormap.client.presenter.FloorMapTimelinePresenter.OutOfRange;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.Histogram;
+import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Element;
