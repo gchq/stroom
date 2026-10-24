@@ -37,13 +37,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.LongPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Makes the documents and streams an answer mentions into links the user can click to open them. The model is
-/// asked to write the links itself, but often writes only the name, e.g. `stream 73145` or **ACME-EVENTS**.
+/// asked to write the links itself, by the document's UUID, and each link it writes is checked by it
+/// ([#checkedDocLinks]); but it often writes only the name, e.g. `stream 73145` or **ACME-EVENTS**, and those are
+/// linked as follows, as a fallback.
 ///
 /// Only what the chat's tools gave is linked, so nothing is made up: a document whose UUID a tool result (or an
 /// attachment) holds, and which the user can view, and a stream whose id a tool result holds. A document is
@@ -60,6 +64,8 @@ public class AnswerLinks {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnswerLinks.class);
 
+    private static final String DOCUMENTATION = "Documentation";
+
     // The most documents looked up for an answer, the latest the chat's tools gave first.
     static final int MAX_DOCUMENTS = 300;
 
@@ -73,11 +79,25 @@ public class AnswerLinks {
             "\\b[Ss]treams?(?:\\s+(?:[Ii][Dd]s?|#))?\\s+"
             + "(\\d{1,18}(?:(?:\\s*,\\s*|,?\\s+(?:and|or)\\s+)\\d{1,18})*)\\b");
     private static final Pattern NUMBER = Pattern.compile("\\d{1,18}");
+    // A link that opens a document: its text, and its query.
+    private static final Pattern DOC_LINK = Pattern.compile(
+            "(?<!!)\\[((?:[^\\]\\\\]|\\\\.)*)]\\((\\?action=open-doc[^)\\s]*)\\)");
+    private static final Pattern DOC_UUID = Pattern.compile(
+            "[?&]docUuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?![\\w-])");
+    private static final Pattern INLINE_CODE = Pattern.compile("(`+).+?\\1");
     private static final Pattern FENCE = Pattern.compile("^\\s*(```|~~~)");
     // A name of ordinary words, e.g. 'Events' or 'Data Splitter', is only linked where it is formatted as a name
     // or its type is named next to it.
     private static final Pattern ORDINARY_WORDS = Pattern.compile(
             "(?:[A-Z]?[a-z]+|[A-Z]+)(?: (?:[A-Z]?[a-z]+|[A-Z]+))*");
+    // A name of one word in capitals, e.g. 'TWITTER' (a feed's): distinctive, unless it is one of the capitalised
+    // words an answer uses as words (seen: "all of TWITTER's existing data" not linked, as an ordinary word).
+    private static final Pattern CAPITALS = Pattern.compile("[A-Z][A-Z0-9_]{2,}");
+    private static final Set<String> CAPITALISED_WORDS = Set.of("XML", "JSON", "CSV", "TSV", "UTC", "GMT", "DNS",
+            "HTTP", "HTTPS", "URL", "URI", "UUID", "XSLT", "XSD", "API", "SQL", "CEF", "ECS", "TCP", "UDP", "AND",
+            "NOT", "ALL", "NONE", "TRUE", "FALSE", "YES", "INFO", "WARN", "WARNING", "ERROR", "FATAL", "DEBUG",
+            "TRACE", "GET", "POST", "PUT", "DELETE", "SSH", "TLS", "SSL", "LDAP", "PDF", "HTML", "YAML", "UTF",
+            "ASCII", "AWS", "VPN", "NOTE", "TODO");
 
     private final AiService aiService;
     private final DocumentAccess documentAccess;
@@ -110,7 +130,10 @@ public class AnswerLinks {
                     .reversed();
             final Map<String, List<DocRef>> documents = documentsByName(given);
             final String allGiven = String.join("\n", given);
-            return link(answer, documents, id -> Pattern.compile("\\b" + id + "\\b").matcher(allGiven).find());
+            // The links written first, each checked by its document's UUID; then, as a fallback, the names left.
+            final String checked = checkedDocLinks(answer, uuid -> documentAccess.find(uuid)
+                    .map(ExplorerNode::getDocRef));
+            return link(checked, documents, id -> Pattern.compile("\\b" + id + "\\b").matcher(allGiven).find());
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to link the answer in chat {}: {}", chatId, e.getMessage()),
                     e);
@@ -136,6 +159,65 @@ public class AnswerLinks {
                             .add(docRef));
         }
         return byName;
+    }
+
+    /// The links to documents an answer holds, each checked by its UUID: one to a document the user can view is
+    /// written with the document's own type (the model may give the UUID alone:
+    /// `[ACME-EVENTS](?action=open-doc&docUuid=...)`), and one to a document that isn't there, or that they may
+    /// not view, becomes its text alone: the document is the UUID's, never a guess (asked for by the user), and a
+    /// wrong type or a made-up UUID never reaches the user. Code blocks and inline code are left as they are.
+    ///
+    /// @param answer  An answer, in Markdown.
+    /// @param resolve Finds a document by UUID, as the user.
+    /// @return The answer with its document links checked.
+    static String checkedDocLinks(final String answer, final Function<String, Optional<DocRef>> resolve) {
+        if (NullSafe.isBlankString(answer) || !answer.contains("action=open-doc")) {
+            return answer;
+        }
+        final StringBuilder out = new StringBuilder();
+        boolean inFence = false;
+        for (final String line : answer.split("\n", -1)) {
+            if (!out.isEmpty()) {
+                out.append('\n');
+            }
+            if (FENCE.matcher(line).find()) {
+                inFence = !inFence;
+                out.append(line);
+            } else if (inFence) {
+                out.append(line);
+            } else {
+                out.append(checkedLine(line, resolve));
+            }
+        }
+        return out.toString();
+    }
+
+    private static String checkedLine(final String line, final Function<String, Optional<DocRef>> resolve) {
+        final StringBuilder out = new StringBuilder();
+        final Matcher code = INLINE_CODE.matcher(line);
+        int at = 0;
+        while (code.find()) {
+            out.append(checkedText(line.substring(at, code.start()), resolve)).append(code.group());
+            at = code.end();
+        }
+        return out.append(checkedText(line.substring(at), resolve)).toString();
+    }
+
+    private static String checkedText(final String text, final Function<String, Optional<DocRef>> resolve) {
+        final Matcher link = DOC_LINK.matcher(text);
+        final StringBuilder out = new StringBuilder();
+        while (link.find()) {
+            final Matcher uuid = DOC_UUID.matcher(link.group(2));
+            final Optional<DocRef> docRef = uuid.find()
+                    ? resolve.apply(uuid.group(1).toLowerCase(Locale.ROOT))
+                    : Optional.empty();
+            link.appendReplacement(out, Matcher.quoteReplacement(docRef
+                    .map(found -> "[" + link.group(1) + "](?action=open-doc&docType=" + found.getType()
+                                  + "&docUuid=" + found.getUuid() + ")")
+                    .orElse(link.group(1))));
+        }
+        link.appendTail(out);
+        return out.toString();
     }
 
     /// @param answer      An answer, in Markdown.
@@ -230,7 +312,7 @@ public class AnswerLinks {
                 if (docRef == null) {
                     continue;
                 }
-                if (!ORDINARY_WORDS.matcher(name).matches()
+                if (!isOrdinaryWords(name)
                     || isFormattedAsName(line, start, end)
                     || typeNamedNextTo(line, start, end, docRef.getType())) {
                     if (linkedOnLine.add(docRef.getUuid())) {
@@ -267,9 +349,24 @@ public class AnswerLinks {
         final List<DocRef> named = candidates.stream()
                 .filter(docRef -> typeNamedNextTo(line, start, end, docRef.getType()))
                 .toList();
-        return named.size() == 1
-                ? named.getFirst()
+        if (named.size() == 1) {
+            return named.getFirst();
+        }
+        // A Documentation doc named as another document is that document's (write_documentation names it after its
+        // pipeline): the name, with no word for a type, means the document (seen: "filter 58 on
+        // Twitter-Events-V1.1" not linked, as the pipeline's documentation shares its name).
+        final List<DocRef> documented = candidates.stream()
+                .filter(docRef -> !DOCUMENTATION.equals(docRef.getType()))
+                .toList();
+        return named.isEmpty() && documented.size() == 1
+                ? documented.getFirst()
                 : null;
+    }
+
+    // Words a sentence could hold as words, so linked only where formatted as a name or next to its type's word.
+    private static boolean isOrdinaryWords(final String name) {
+        return ORDINARY_WORDS.matcher(name).matches()
+               && (!CAPITALS.matcher(name).matches() || CAPITALISED_WORDS.contains(name));
     }
 
     // Not part of a longer name or word, e.g. 'ACME' in 'ACME-EVENTS'.

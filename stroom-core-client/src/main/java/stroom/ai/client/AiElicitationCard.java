@@ -292,7 +292,9 @@ final class AiElicitationCard {
     static String firstLine(final String message, final String fallback) {
         if (message != null) {
             for (final String line : message.split("\n")) {
+                // A link's text alone: the line is shown as plain text (a title).
                 final String text = line.trim()
+                        .replaceAll("\\[([^\\]]*)\\]\\([^)\\s]*\\)", "$1")
                         .replaceAll("^#+\\s*", "")
                         .replaceAll("^[*_]+|[*_]+$", "")
                         .trim();

@@ -36,6 +36,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestUserActionsUi {
 
     @Test
+    void anActionsLabelLinksTheDocumentItActsOn() {
+        // Asked for by the user: the pipeline in "Enable processor filter 58 on pipeline 'Twitter-Events-V1.1'"
+        // opens from the button's card.
+        final DocRef pipeline = new DocRef("Pipeline", "a123a852-baaf-4ead-866f-96f756da1dea", "Twitter-Events-V1.1");
+        assertThat(UserActionsUi.labelMarkdown("Enable processor filter 58 on pipeline 'Twitter-Events-V1.1'",
+                pipeline)).isEqualTo("Enable processor filter 58 on pipeline '[Twitter-Events-V1.1](?action=open-doc"
+                                     + "&docType=Pipeline&docUuid=a123a852-baaf-4ead-866f-96f756da1dea)'");
+        // A name Markdown would read is shown as it is; without the document, or not named, nothing is linked.
+        final DocRef starred = new DocRef("Pipeline", "u", "*ACME_V1*");
+        assertThat(UserActionsUi.labelMarkdown("Disable it on pipeline '*ACME_V1*'", starred))
+                .isEqualTo("Disable it on pipeline '[\\*ACME\\_V1\\*](?action=open-doc&docType=Pipeline&docUuid=u)'");
+        assertThat(UserActionsUi.labelMarkdown("Open <it> & see", null)).isEqualTo("Open \\<it\\> \\& see");
+        assertThat(UserActionsUi.labelMarkdown("Open something else", pipeline)).isEqualTo("Open something else");
+        assertThat(UserActionsUi.labelMarkdown(null, pipeline)).isEmpty();
+    }
+
+    @Test
     void aButtonCanBeUsedUntilItIsUsedOrExpires() {
         assertThat(UserActionsUi.isPending("PENDING", 2_000, 1_000)).isTrue();
         assertThat(UserActionsUi.isPending("PENDING", 1_000, 1_000)).isFalse();
