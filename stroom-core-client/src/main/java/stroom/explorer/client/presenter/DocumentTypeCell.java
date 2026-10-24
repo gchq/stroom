@@ -33,31 +33,8 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
     private final DocumentTypeSelectionModel selectionModel;
 
     public DocumentTypeCell(final DocumentTypeSelectionModel selectionModel) {
-//        super("click");
         this.selectionModel = selectionModel;
     }
-
-//    @Override
-//    public void onBrowserEvent(final Context context,
-//                               final Element parent,
-//                               final DocumentType value,
-//                               final NativeEvent event,
-//                               final ValueUpdater<DocumentType> valueUpdater) {
-//        if (value != null) {
-//            super.onBrowserEvent(context, parent, value, event, valueUpdater);
-//            final String type = event.getType();
-//
-//            final Element target = event.getEventTarget().cast();
-//            if ("div".equalsIgnoreCase(target.getTagName())
-//                    && "click".equals(type)
-//                    && MouseUtil.isPrimary(event)) {
-//
-//                if (TickBoxAppearance.isTickBox(target)) {
-//                    selectionModel.toggle(value);
-//                }
-//            }
-//        }
-//    }
 
     @Override
     public void render(final Context context, final DocumentType item, final SafeHtmlBuilder sb) {

@@ -18,6 +18,9 @@ package stroom.planb.client.view;
 
 import stroom.widget.form.client.FormLabel;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -26,17 +29,21 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Collections;
 import java.util.Iterator;
 
+/// A titled group of settings, e.g. Plan B's or the floor map's Retention: its label, then the
+/// settings. Its markup is `SettingsGroup.ui.xml`.
 public class SettingsGroup extends Composite implements HasWidgets {
 
-    private final FlowPanel settingsGroupPanel = new FlowPanel();
-    private final FormLabel formLabel = new FormLabel();
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    FlowPanel settingsGroupPanel;
+    @UiField
+    FormLabel formLabel;
+
     private Widget childWidget = null;
 
     public SettingsGroup() {
-        settingsGroupPanel.addStyleName("settings-group");
-        formLabel.addStyleName("settings-group-label");
-        initWidget(settingsGroupPanel);
-        updateFormGroupPanel();
+        initWidget(BINDER.createAndBindUi(this));
     }
 
     public void setLabel(final String label) {
@@ -49,22 +56,18 @@ public class SettingsGroup extends Composite implements HasWidgets {
 
     @Override
     public void add(final Widget widget) {
+        clear();
         this.childWidget = widget;
         widget.addStyleName("allow-focus");
-        updateFormGroupPanel();
+        // After the label
+        settingsGroupPanel.add(widget);
     }
 
     @Override
     public void clear() {
-        childWidget = null;
-        updateFormGroupPanel();
-    }
-
-    private void updateFormGroupPanel() {
-        settingsGroupPanel.clear();
-        settingsGroupPanel.add(formLabel);
         if (childWidget != null) {
-            settingsGroupPanel.add(childWidget);
+            settingsGroupPanel.remove(childWidget);
+            childWidget = null;
         }
     }
 
@@ -81,5 +84,13 @@ public class SettingsGroup extends Composite implements HasWidgets {
         } else {
             return false;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<FlowPanel, SettingsGroup> {
+
     }
 }
