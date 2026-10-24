@@ -89,9 +89,8 @@ public final class DialogTitleStories {
 
     private static Widget fromArgs(final StoryContext context) {
         final Args args = context.getArgs();
-        final Dialog dialog = new Dialog(action -> {
-            // No buttons, so no actions to handle
-        });
+        // No buttons, so no actions to handle
+        final Dialog dialog = new Dialog();
         // Not modal, so the workbench stays usable
         dialog.setModal(false);
         dialog.setCaption(args.getString(TITLE, ""));

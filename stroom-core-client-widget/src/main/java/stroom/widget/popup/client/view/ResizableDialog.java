@@ -27,9 +27,9 @@ import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -55,7 +55,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
-    private static final Binder binder = GWT.create(Binder.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
+    // The ways it can be resized, which its handles show (dialog.css)
+    private static final String RESIZE_WIDTH = "dialog--resize-width";
+    private static final String RESIZE_HEIGHT = "dialog--resize-height";
 
     @UiField
     SimplePanel icon;
@@ -84,7 +87,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     @UiField
     FlowPanel titleBar;
     @UiField
-    Label hint;
+    DivElement hint;
     @UiField
     Toolbar windowToolbar;
     @UiField
@@ -109,52 +112,20 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     private Element dialogContent;
     private Element dialogButtons;
 
-    /**
-     * Creates an empty dialog box. It should not be shown until its child
-     * widget has been added using {@link #add(Widget)}.
-     */
-    ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
-                    final PopupSize popupSize) {
-        this(dialogEventHandler, false, popupSize);
-        spinner.setVisible(false);
-    }
-
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     */
-    private ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
-                            final boolean autoHide,
-                            final PopupSize popupSize) {
-        this(dialogEventHandler, autoHide, true, popupSize);
-    }
-
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     * @param modal    <code>true</code> if keyboard and mouse events for widgets not
-     *                 contained by the dialog should be ignored
-     */
-    private ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
-                            final boolean autoHide,
-                            final boolean modal,
-                            final PopupSize popupSize) {
-        super(dialogEventHandler, autoHide, modal);
+    /// Makes a modal dialog that can be resized as its size says. It should not be shown until its
+    /// content has been set with [#setContent(Widget)]; [#setOnAction] tells its owner when it is
+    /// asked to close or for OK. Its markup is `ResizableDialog.ui.xml`.
+    ///
+    /// @param popupSize Its size, and whether and how far each way it can be resized.
+    ResizableDialog(final PopupSize popupSize) {
         this.popupSize = popupSize;
 
+        setModal(true);
         setStyleName("dialog");
         addStyleName("dialog--resizable");
-        setWidget(binder.createAndBindUi(this));
+        setWidget(BINDER.createAndBindUi(this));
         PopupUtil.setDialogRole(getElement(), titleText.getElement());
-        window = new DialogWindow(this, popupSize, windowButton, hint.getElement());
+        window = new DialogWindow(this, popupSize, windowButton, hint);
         // A double click on the title bar maximises the dialog, or restores it
         titleBar.addDomHandler(event -> {
             final EventTarget target = event.getNativeEvent().getEventTarget();
@@ -173,8 +144,6 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
         setResizeEnabled(popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable(),
                 popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable());
-
-        SvgImageUtil.setSvgAsInnerHtml(resizeSE, SvgImage.RESIZE_HANDLE);
     }
 
     @Override
@@ -225,13 +194,9 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
      */
     @Override
     public void hide(final boolean autoClosed) {
-        if (dialogActionHandler != null) {
-            if (autoClosed) {
-                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
-            } else {
-                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
-            }
-        }
+        fireAction(autoClosed
+                ? DialogAction.AUTO_CLOSE
+                : DialogAction.CLOSE);
     }
 
     @Override
@@ -386,7 +351,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     final double constraintDiff = newWidth - constrainedWidth;
                     dx = dx + constraintDiff;
 
-                    elem.getStyle().setPropertyPx("width", (int) constrainedWidth);
+                    DialogWindow.setWidth(elem, (int) constrainedWidth);
                 }
                 if (resizeHeight && heightSize != null && heightSize.isResizable()) {
                     final double newHeight = moveY
@@ -410,7 +375,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     final double constraintDiff = newHeight - constrainedHeight;
                     dy = dy + constraintDiff;
 
-                    elem.getStyle().setPropertyPx("height", (int) constrainedHeight);
+                    DialogWindow.setHeight(elem, (int) constrainedHeight);
                 }
 
                 // Resize popup contents.
@@ -547,17 +512,10 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
     // Only the handles for the ways the dialog can be resized are there, so none offers a resize it
     // can't do (a top edge on a dialog that only widens once moved it up and down instead)
+    // (dialog.css: a corner resizes both ways, so is there only if both can be)
     private void setResizeEnabled(final boolean width, final boolean height) {
-        resizeE.setVisible(width);
-        resizeW.setVisible(width);
-        resizeN.setVisible(height);
-        resizeS.setVisible(height);
-        // A corner resizes both ways, so is there only if both can be
-        final boolean both = width && height;
-        resizeNE.setVisible(both);
-        resizeNW.setVisible(both);
-        resizeSE.setVisible(both);
-        resizeSW.setVisible(both);
+        setStyleName(RESIZE_WIDTH, width);
+        setStyleName(RESIZE_HEIGHT, height);
     }
 
     @Override
@@ -565,9 +523,13 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         return spinner.createTaskMonitor();
     }
 
-    public interface Binder extends UiBinder<Widget, ResizableDialog> {
+    interface Binder extends UiBinder<Widget, ResizableDialog> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
 

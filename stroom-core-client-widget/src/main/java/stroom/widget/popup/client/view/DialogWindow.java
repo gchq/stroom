@@ -26,6 +26,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -89,7 +90,6 @@ final class DialogWindow {
         this.popupSize = popupSize;
         this.button = button;
         this.hint = hint;
-        hint.setAttribute("role", "status");
         button.setOnClick(this::showMenu);
         dialog.addCloseHandler(event -> leaveMode());
     }
@@ -347,10 +347,10 @@ final class DialogWindow {
         }
         final Widget widget = dialog.getWidget();
         if (canResizeWidth()) {
-            widget.getElement().getStyle().setPropertyPx("width", bounds.width);
+            setWidth(widget.getElement(), bounds.width);
         }
         if (canResizeHeight()) {
-            widget.getElement().getStyle().setPropertyPx("height", bounds.height);
+            setHeight(widget.getElement(), bounds.height);
         }
         dialog.setPopupPosition(bounds.left, bounds.top);
         if (widget instanceof final RequiresResize requiresResize) {
@@ -400,5 +400,21 @@ final class DialogWindow {
     // Where a dialog is and how big
     private record Bounds(int left, int top, int width, int height) {
 
+    }
+
+    /// Sets a dialog's width (`--dialog__width` on its container, which `dialog.css` uses).
+    ///
+    /// @param container The dialog's container, the root of its template.
+    /// @param width     The width in pixels.
+    static void setWidth(final Element container, final int width) {
+        CssProperties.set(container, "--dialog__width", width + "px");
+    }
+
+    /// Sets a dialog's height (`--dialog__height` on its container, which `dialog.css` uses).
+    ///
+    /// @param container The dialog's container, the root of its template.
+    /// @param height    The height in pixels.
+    static void setHeight(final Element container, final int height) {
+        CssProperties.set(container, "--dialog__height", height + "px");
     }
 }

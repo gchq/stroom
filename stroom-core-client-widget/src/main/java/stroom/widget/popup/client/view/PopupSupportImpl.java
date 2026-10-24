@@ -33,6 +33,7 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,131 +177,55 @@ public class PopupSupportImpl implements PopupSupport {
     private Popup createPopup(final PopupType popupType,
                               final PopupSize popupSize,
                               final HideRequestUiHandlers uiHandlers) {
-        Popup popup = null;
-
         dialogActionHandler = action -> uiHandlers.hideRequest(
                 new HideRequest(action, null));
 
-        if (popupSize != null) {
-            switch (popupType) {
-                case POPUP: {
-                    popup = new SimplePopup(dialogActionHandler);
-                    popup.setContent(view.asWidget());
-                    break;
-                }
-                case DIALOG: {
-                    final ResizableDialog resizableDialog = new ResizableDialog(dialogActionHandler, popupSize);
-                    setTaskMonitor(resizableDialog);
-                    resizableDialog.setContent(view.asWidget());
-                    popup = resizableDialog;
-
-                    break;
-                }
-                case CLOSE_DIALOG: {
-                    final ResizableCloseContent closeContent = new ResizableCloseContent(uiHandlers);
-                    closeContent.setContent(view.asWidget());
-                    dialogButtons = closeContent;
-                    dialogActionHandler = closeContent;
-
-                    final ResizableDialog resizableDialog = new ResizableDialog(closeContent, popupSize);
-                    setTaskMonitor(resizableDialog);
-                    resizableDialog.setContent(closeContent);
-                    popup = resizableDialog;
-
-                    break;
-                }
-                case OK_CANCEL_DIALOG: {
-                    final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(uiHandlers);
-                    okCancelContent.setContent(view.asWidget());
-                    dialogActionHandler = okCancelContent;
-                    dialogButtons = okCancelContent;
-
-                    final ResizableDialog resizableDialog = new ResizableDialog(okCancelContent, popupSize);
-                    setTaskMonitor(resizableDialog);
-                    resizableDialog.setContent(okCancelContent);
-                    popup = resizableDialog;
-
-                    break;
-                }
-                case CREATE_OK_CANCEL_DIALOG: {
-                    final ResizableCreateOkCancelContent content = new ResizableCreateOkCancelContent(uiHandlers);
-                    content.setContent(view.asWidget());
-                    dialogActionHandler = content;
-                    dialogButtons = content;
-
-                    final ResizableDialog resizableDialog = new ResizableDialog(content, popupSize);
-                    setTaskMonitor(resizableDialog);
-                    resizableDialog.setContent(content);
-                    popup = resizableDialog;
-
-                    break;
-                }
-                case ACCEPT_REJECT_DIALOG: {
-                    final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
-                            uiHandlers);
-                    acceptRejectContent.setContent(view.asWidget());
-                    dialogActionHandler = acceptRejectContent;
-                    dialogButtons = acceptRejectContent;
-
-                    final ResizableDialog resizableDialog = new ResizableDialog(acceptRejectContent, popupSize);
-                    setTaskMonitor(resizableDialog);
-                    resizableDialog.setContent(acceptRejectContent);
-                    popup = resizableDialog;
-
-                    break;
-                }
+        Popup popup = null;
+        switch (popupType) {
+            case POPUP: {
+                final SimplePopup simplePopup = new SimplePopup();
+                simplePopup.setOnAction(dialogActionHandler::onDialogAction);
+                simplePopup.setContent(view.asWidget());
+                popup = simplePopup;
+                break;
             }
-        } else {
-            switch (popupType) {
-                case POPUP: {
-                    popup = new SimplePopup(dialogActionHandler);
-                    popup.setContent(view.asWidget());
-                    break;
+            case DIALOG: {
+                final AbstractPopupPanel dialog = createDialog(popupSize, dialogActionHandler);
+                // (A fixed-size dialog with no buttons has never shown its tasks)
+                if (popupSize != null) {
+                    setTaskMonitor((TaskMonitorFactory) dialog);
                 }
-                case DIALOG: {
-                    popup = new Dialog(dialogActionHandler);
-                    popup.setContent(view.asWidget());
-                    break;
-                }
-                case CLOSE_DIALOG: {
-                    final CloseContent closeContent = new CloseContent(uiHandlers);
-                    closeContent.setContent(view.asWidget());
-                    dialogActionHandler = closeContent;
-                    dialogButtons = closeContent;
-
-                    final Dialog dialog = new Dialog(closeContent);
-                    setTaskMonitor(dialog);
-                    dialog.setContent(closeContent);
-                    popup = dialog;
-
-                    break;
-                }
-                case OK_CANCEL_DIALOG: {
-                    final OkCancelContent okCancelContent = new OkCancelContent(uiHandlers);
-                    okCancelContent.setContent(view.asWidget());
-                    dialogActionHandler = okCancelContent;
-                    dialogButtons = okCancelContent;
-
-                    final Dialog dialog = new Dialog(okCancelContent);
-                    setTaskMonitor(dialog);
-                    dialog.setContent(okCancelContent);
-                    popup = dialog;
-
-                    break;
-                }
-                case ACCEPT_REJECT_DIALOG: {
-                    final AcceptRejectContent acceptRejectContent = new AcceptRejectContent(uiHandlers);
-                    acceptRejectContent.setContent(view.asWidget());
-                    dialogActionHandler = acceptRejectContent;
-                    dialogButtons = acceptRejectContent;
-
-                    final Dialog dialog = new Dialog(acceptRejectContent);
-                    setTaskMonitor(dialog);
-                    dialog.setContent(acceptRejectContent);
-                    popup = dialog;
-
-                    break;
-                }
+                dialog.setContent(view.asWidget());
+                popup = dialog;
+                break;
+            }
+            case CLOSE_DIALOG: {
+                final CloseContent content = new CloseContent();
+                content.setOnHideRequest(uiHandlers::hideRequest);
+                content.setContent(view.asWidget());
+                popup = createDialogWith(content, content, popupSize);
+                break;
+            }
+            case OK_CANCEL_DIALOG: {
+                final OkCancelContent content = new OkCancelContent();
+                content.setOnHideRequest(uiHandlers::hideRequest);
+                content.setContent(view.asWidget());
+                popup = createDialogWith(content, content, popupSize);
+                break;
+            }
+            case CREATE_OK_CANCEL_DIALOG: {
+                final CreateOkCancelContent content = new CreateOkCancelContent();
+                content.setOnHideRequest(uiHandlers::hideRequest);
+                content.setContent(view.asWidget());
+                popup = createDialogWith(content, content, popupSize);
+                break;
+            }
+            case ACCEPT_REJECT_DIALOG: {
+                final AcceptRejectContent content = new AcceptRejectContent();
+                content.setOnHideRequest(uiHandlers::hideRequest);
+                content.setContent(view.asWidget());
+                popup = createDialogWith(content, content, popupSize);
+                break;
             }
         }
 
@@ -312,6 +237,29 @@ public class PopupSupportImpl implements PopupSupport {
         }
 
         return popup;
+    }
+
+    // A dialog holding content with buttons below it, which are told what the user asks of the
+    // dialog (Escape, Ctrl+Enter), as a click on them would be
+    private Popup createDialogWith(final Widget content,
+                                   final DialogButtons buttons,
+                                   final PopupSize popupSize) {
+        dialogButtons = buttons;
+        dialogActionHandler = buttons;
+        final AbstractPopupPanel dialog = createDialog(popupSize, buttons);
+        setTaskMonitor((TaskMonitorFactory) dialog);
+        dialog.setContent(content);
+        return dialog;
+    }
+
+    // A dialog that can be resized as its size says, or one of a fixed size if it has none
+    private static AbstractPopupPanel createDialog(final PopupSize popupSize,
+                                                   final DialogActionUiHandlers onAction) {
+        final AbstractPopupPanel dialog = popupSize != null
+                ? new ResizableDialog(popupSize)
+                : new Dialog();
+        dialog.setOnAction(onAction::onDialogAction);
+        return dialog;
     }
 
     private void setView(final View view) {

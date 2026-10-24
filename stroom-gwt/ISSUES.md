@@ -1487,6 +1487,14 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
   24 October 2026 in wave 2's audit)~~ Fixed: the class goes on the label's cell. A row's other
   cells aren't highlighted with it, as the grid's rows are no longer elements; the XSD browser's
   wave (8) can mark the row's cells if that is wanted.
+* Unused CSS met in wave 3 (24 October 2026): `acceptRejectContent-button`, `-accept` and `-reject`
+  (`components.css`). Only the fixed-size Accept/Reject bar had the classes, and no screen opens
+  one (the splash screen's is resizable, as is the story's); its resizable copy, which went,
+  didn't. The one `AcceptRejectContent` now looks as the resizable one did. Delete the rules once
+  removals are allowed.
+* A dialog's New button (`CreateOkCancelContent`) shows its busy spinner on Cancel, not on itself,
+  while the screen handles it (found 24 October 2026 in wave 3; as it was in
+  `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
 * Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are
   allowed.

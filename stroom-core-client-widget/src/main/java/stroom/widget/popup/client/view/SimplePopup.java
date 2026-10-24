@@ -34,31 +34,10 @@ public class SimplePopup extends AbstractPopupPanel {
     private static final String ARIA_LABEL = "aria-label";
 
     /// Creates a popup that closes itself when the user clicks outside it. It should not be shown
-    /// until its content has been set with [#setContent(Widget)].
-    ///
-    /// @param dialogEventHandler Told when the popup is asked to close.
-    public SimplePopup(final DialogActionUiHandlers dialogEventHandler) {
-        this(dialogEventHandler, true);
-    }
-
-    /// Creates a popup. It should not be shown until its content has been set with
-    /// [#setContent(Widget)].
-    ///
-    /// @param dialogEventHandler Told when the popup is asked to close.
-    /// @param autoHide           Whether the popup closes itself when the user clicks outside it.
-    public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide) {
-        this(dialogEventHandler, autoHide, false);
-    }
-
-    /// Creates a popup. It should not be shown until its content has been set with
-    /// [#setContent(Widget)].
-    ///
-    /// @param dialogEventHandler Told when the popup is asked to close.
-    /// @param autoHide           Whether the popup closes itself when the user clicks outside it.
-    /// @param modal              Whether keyboard and mouse events for widgets not in the popup
-    ///                           should be ignored.
-    public SimplePopup(final DialogActionUiHandlers dialogEventHandler, final boolean autoHide, final boolean modal) {
-        super(dialogEventHandler, autoHide, modal);
+    /// until its content has been set with [#setContent(Widget)]; [#setOnAction] tells its owner
+    /// when it is asked to close.
+    public SimplePopup() {
+        setAutoHideEnabled(true);
         // Floating: hidden until PopupUtil has placed it
         setStyleName("popup popup--floating");
     }
@@ -98,12 +77,8 @@ public class SimplePopup extends AbstractPopupPanel {
     /// then choose whether or not to force the popup to hide.
     @Override
     public void hide(final boolean autoClosed) {
-        if (dialogActionHandler != null) {
-            if (autoClosed) {
-                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
-            } else {
-                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
-            }
-        }
+        fireAction(autoClosed
+                ? DialogAction.AUTO_CLOSE
+                : DialogAction.CLOSE);
     }
 }

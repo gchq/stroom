@@ -161,11 +161,23 @@ public class PopupUtil {
                 newWidth = Math.min(newWidth, Window.getClientWidth() - (2 * WINDOW_MARGIN));
                 newHeight = Math.min(newHeight, Window.getClientHeight() - (2 * WINDOW_MARGIN));
             }
-            if (newWidth != w) {
-                popupPanel.setWidth(newWidth + "px");
-            }
-            if (newHeight != h) {
-                popupPanel.setHeight(newHeight + "px");
+            if (popupType == PopupType.POPUP) {
+                // A popup's content is its own (a menu, a list), so it is sized as GWT sizes it
+                if (newWidth != w) {
+                    popupPanel.setWidth(newWidth + "px");
+                }
+                if (newHeight != h) {
+                    popupPanel.setHeight(newHeight + "px");
+                }
+            } else {
+                // A dialog's container, sized by dialog.css from its custom properties
+                final Element container = popupPanel.getWidget().getElement();
+                if (newWidth != w) {
+                    DialogWindow.setWidth(container, newWidth);
+                }
+                if (newHeight != h) {
+                    DialogWindow.setHeight(container, newHeight);
+                }
             }
 
             if (popupPosition == null) {
@@ -190,7 +202,10 @@ public class PopupUtil {
 
             // Make the popup visible.
             popupPanel.setVisible(true);
-            popupPanel.getElement().getStyle().setOpacity(1);
+            // A floating popup is unseen until it is placed (popup.css)
+            if (popupPanel.getStyleName().contains("popup--floating")) {
+                popupPanel.addStyleName("popup--placed");
+            }
 
             if (onShow != null) {
                 Scheduler.get().scheduleDeferred(onShow::run);

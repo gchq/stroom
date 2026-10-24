@@ -16,26 +16,27 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.function.Consumer;
+
+/// A dialog's content with OK and Cancel below it, in either kind of dialog. Its markup is
+/// `OkCancelContent.ui.xml`.
 public class OkCancelContent extends Composite implements DialogButtons {
 
-    private static final Binder binder = GWT.create(Binder.class);
-    private final HideRequestUiHandlers uiHandlers;
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
     /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
     private boolean okAllowed = true;
+    private Consumer<HideRequest> onHideRequest;
 
     @UiField
     Button ok;
@@ -44,13 +45,19 @@ public class OkCancelContent extends Composite implements DialogButtons {
     @UiField
     SimplePanel content;
 
-    public OkCancelContent(final HideRequestUiHandlers uiHandlers) {
-        initWidget(binder.createAndBindUi(this));
-        this.uiHandlers = uiHandlers;
-        ok.setIcon(SvgImage.OK);
-        cancel.setIcon(SvgImage.CANCEL);
+    public OkCancelContent() {
+        initWidget(BINDER.createAndBindUi(this));
+        ok.setOnClick(() -> onDialogAction(DialogAction.OK));
+        cancel.setOnClick(() -> onDialogAction(DialogAction.CANCEL));
     }
 
+    /// @param onHideRequest Told when the user asks to close the dialog with OK or Cancel; it hides
+    ///                      the dialog, or runs the request's cancel handler to keep it open.
+    public void setOnHideRequest(final Consumer<HideRequest> onHideRequest) {
+        this.onHideRequest = onHideRequest;
+    }
+
+    /// @param widget What the dialog shows above its buttons.
     public void setContent(final Widget widget) {
         content.setWidget(widget);
         okAllowed = true;
@@ -65,33 +72,23 @@ public class OkCancelContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
-        final Button button = action == DialogAction.OK ? ok : cancel;
+        final Button button = action == DialogAction.OK
+                ? ok
+                : cancel;
         if (!DialogButtonAction.canRun(button)) {
             return;
         }
         final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
-        if (action == DialogAction.OK) {
-            ok.setLoading(true);
-        } else {
-            cancel.setLoading(true);
+        button.setLoading(true);
+        if (onHideRequest != null) {
+            onHideRequest.accept(new HideRequest(action, () -> {
+                setEnabled(true);
+                ok.setLoading(false);
+                cancel.setLoading(false);
+                restoreFocus.run();
+            }));
         }
-        uiHandlers.hideRequest(new HideRequest(action, () -> {
-            setEnabled(true);
-            ok.setLoading(false);
-            cancel.setLoading(false);
-            restoreFocus.run();
-        }));
-    }
-
-    @UiHandler("ok")
-    public void onOkClick(final ClickEvent event) {
-        onDialogAction(DialogAction.OK);
-    }
-
-    @UiHandler("cancel")
-    public void onCancelClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CANCEL);
     }
 
     @Override
@@ -110,7 +107,11 @@ public class OkCancelContent extends Composite implements DialogButtons {
         }
     }
 
-    public interface Binder extends UiBinder<Widget, OkCancelContent> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, OkCancelContent> {
 
     }
 }

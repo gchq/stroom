@@ -157,7 +157,9 @@ public class QuickFilter extends Composite
                     .filter(safeHtml -> !safeHtml.asString().isEmpty())
                     .orElse(DEFAULT_POPUP_TEXT);
 
-            final HelpPopup popup = HelpPopup.html(withFilterError(syntaxHelp), HELP_NAME);
+            final HelpPopup popup = new HelpPopup();
+            popup.setContent(withFilterError(syntaxHelp));
+            popup.setAccessibleName(HELP_NAME);
             // A mousedown on the help button mustn't auto-hide the popup, so that its click can
             // toggle it shut
             popup.setOpener(helpButton.getElement());

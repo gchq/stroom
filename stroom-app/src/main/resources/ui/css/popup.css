@@ -21,7 +21,7 @@
    content inside (in GWT's popupContent, for a SimplePopup).
 
    --floating (a modifier with no ARIA attribute): a SimplePopup, a panel of its own, hidden until
-   PopupUtil has placed it (which sets its opacity to 1).
+   PopupUtil has placed it (--placed).
 */
 
 .popup {
@@ -42,5 +42,9 @@
 .popup--floating {
     opacity: 0;
     z-index: 100;
+}
+
+.popup--floating.popup--placed {
+    opacity: 1;
 }
 

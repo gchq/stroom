@@ -3,4 +3,6 @@
 <module>
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
+  <!-- The resize handle's Icon -->
+  <inherits name='stroom.svg.SVG' />
 </module>

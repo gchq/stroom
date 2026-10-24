@@ -27,6 +27,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -49,7 +50,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
-    private static final Binder binder = GWT.create(Binder.class);
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
     SimplePanel icon;
@@ -62,7 +63,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     @UiField
     FlowPanel titleBar;
     @UiField
-    Label hint;
+    DivElement hint;
     @UiField
     Toolbar windowToolbar;
     @UiField
@@ -79,47 +80,15 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     private Element dialogContent;
     private Element dialogButtons;
 
-    /**
-     * Creates an empty dialog box. It should not be shown until its child
-     * widget has been added using {@link #add(Widget)}.
-     */
-    public Dialog(final DialogActionUiHandlers dialogEventHandler) {
-        this(dialogEventHandler, false);
-        spinner.setVisible(false);
-    }
-
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     */
-    public Dialog(final DialogActionUiHandlers dialogEventHandler,
-                  final boolean autoHide) {
-        this(dialogEventHandler, autoHide, true);
-    }
-
-    /**
-     * Creates an empty dialog box specifying its "auto-hide" property. It
-     * should not be shown until its child widget has been added using
-     * {@link #add(Widget)}.
-     *
-     * @param autoHide <code>true</code> if the dialog should be automatically hidden
-     *                 when the user clicks outside of it
-     * @param modal    <code>true</code> if keyboard and mouse events for widgets not
-     *                 contained by the dialog should be ignored
-     */
-    public Dialog(final DialogActionUiHandlers dialogEventHandler,
-                  final boolean autoHide,
-                  final boolean modal) {
-        super(dialogEventHandler, autoHide, modal);
-
+    /// Makes a modal dialog of a fixed size. It should not be shown until its content has been set
+    /// with [#setContent(Widget)]; [#setOnAction] tells its owner when it is asked to close or for
+    /// OK. Its markup is `Dialog.ui.xml`.
+    public Dialog() {
+        setModal(true);
         setStyleName("dialog");
-        setWidget(binder.createAndBindUi(this));
+        setWidget(BINDER.createAndBindUi(this));
         PopupUtil.setDialogRole(getElement(), titleText.getElement());
-        window = new DialogWindow(this, null, windowButton, hint.getElement());
+        window = new DialogWindow(this, null, windowButton, hint);
 
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());
@@ -160,13 +129,9 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
      */
     @Override
     public void hide(final boolean autoClosed) {
-        if (dialogActionHandler != null) {
-            if (autoClosed) {
-                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
-            } else {
-                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
-            }
-        }
+        fireAction(autoClosed
+                ? DialogAction.AUTO_CLOSE
+                : DialogAction.CLOSE);
     }
 
     @Override
@@ -329,9 +294,13 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
         return spinner.createTaskMonitor();
     }
 
-    public interface Binder extends UiBinder<Widget, Dialog> {
+    interface Binder extends UiBinder<Widget, Dialog> {
 
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {
 

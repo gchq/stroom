@@ -16,29 +16,29 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ResizableCreateOkCancelContent extends Composite implements DialogButtons {
+import java.util.function.Consumer;
 
-    private static final Binder binder = GWT.create(Binder.class);
-    private final HideRequestUiHandlers uiHandlers;
+/// A dialog's content with New at the start below it and OK and Cancel at the end, in either kind
+/// of dialog (in practice a resizable one). Its markup is `CreateOkCancelContent.ui.xml`.
+public class CreateOkCancelContent extends Composite implements DialogButtons {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
     /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
     private boolean okAllowed = true;
-
-    /// As [#okAllowed], for the Create button.
+    /// As [#okAllowed], for New.
     private boolean createAllowed = true;
+    private Consumer<HideRequest> onHideRequest;
 
     @UiField
     Button create;
@@ -49,14 +49,20 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
     @UiField
     SimplePanel content;
 
-    public ResizableCreateOkCancelContent(final HideRequestUiHandlers uiHandlers) {
-        initWidget(binder.createAndBindUi(this));
-        this.uiHandlers = uiHandlers;
-        ok.setIcon(SvgImage.OK);
-        cancel.setIcon(SvgImage.CANCEL);
-        create.setIcon(SvgImage.ADD);
+    public CreateOkCancelContent() {
+        initWidget(BINDER.createAndBindUi(this));
+        create.setOnClick(() -> onDialogAction(DialogAction.CREATE));
+        ok.setOnClick(() -> onDialogAction(DialogAction.OK));
+        cancel.setOnClick(() -> onDialogAction(DialogAction.CANCEL));
     }
 
+    /// @param onHideRequest Told when the user asks to close the dialog with New, OK or Cancel; it
+    ///                      hides the dialog, or runs the request's cancel handler to keep it open.
+    public void setOnHideRequest(final Consumer<HideRequest> onHideRequest) {
+        this.onHideRequest = onHideRequest;
+    }
+
+    /// @param widget What the dialog shows above its buttons.
     public void setContent(final Widget widget) {
         content.setWidget(widget);
         okAllowed = true;
@@ -83,12 +89,14 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
         } else {
             cancel.setLoading(true);
         }
-        uiHandlers.hideRequest(new HideRequest(action, () -> {
-            setEnabled(true);
-            ok.setLoading(false);
-            cancel.setLoading(false);
-            restoreFocus.run();
-        }));
+        if (onHideRequest != null) {
+            onHideRequest.accept(new HideRequest(action, () -> {
+                setEnabled(true);
+                ok.setLoading(false);
+                cancel.setLoading(false);
+                restoreFocus.run();
+            }));
+        }
     }
 
     private Button getButton(final DialogAction action) {
@@ -98,21 +106,6 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
             return create;
         }
         return cancel;
-    }
-
-    @UiHandler("ok")
-    public void onOkClick(final ClickEvent event) {
-        onDialogAction(DialogAction.OK);
-    }
-
-    @UiHandler("cancel")
-    public void onCancelClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CANCEL);
-    }
-
-    @UiHandler("create")
-    public void onCreateClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CREATE);
     }
 
     @Override
@@ -136,7 +129,10 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
     }
 
 
-    public interface Binder extends UiBinder<Widget, ResizableCreateOkCancelContent> {
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CreateOkCancelContent> {
 
     }
 }

@@ -31,8 +31,8 @@
        dialog__resize--n … --sw    the resize handles (dialog--resizable)
        dialog__hint                what to do while moving or resizing (centred over the dialog)
 
-   --resizable, --moving, --resizing and the buttons' --start and --end are modifiers with no ARIA
-   attribute.
+   --resizable, --resize-width, --resize-height, --moving, --resizing and the buttons' --start and
+   --end are modifiers with no ARIA attribute.
 */
 
 .dialog {
@@ -194,7 +194,22 @@
     justify-content: flex-end;
 }
 
-/* Resize handles */
+/* Its size, from PopupUtil, its resize handles and its window options (custom properties, so that
+   its element's style holds nothing else) */
+.dialog__container {
+    width: var(--dialog__width, auto);
+    height: var(--dialog__height, auto);
+}
+
+/* Resize handles: only those for the ways the dialog can be resized are there (--resize-width,
+   --resize-height), and a corner, which resizes both ways, only if both can be */
+.dialog:not(.dialog--resize-width) :is(.dialog__resize--e, .dialog__resize--w),
+.dialog:not(.dialog--resize-height) :is(.dialog__resize--n, .dialog__resize--s),
+.dialog:not(.dialog--resize-width.dialog--resize-height) :is(.dialog__resize--ne, .dialog__resize--nw,
+.dialog__resize--se, .dialog__resize--sw) {
+    display: none;
+}
+
 .dialog__resize {
     position: absolute;
     opacity: .4;

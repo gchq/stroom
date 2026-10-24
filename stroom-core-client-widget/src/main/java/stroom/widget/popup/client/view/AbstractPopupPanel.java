@@ -30,9 +30,10 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
 
+import java.util.function.Consumer;
+
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
-    final DialogActionUiHandlers dialogActionHandler;
     private final Glass dragGlass = new Glass(
             "popupPanel-dragGlass",
             "popupPanel-dragGlassVisible");
@@ -40,13 +41,28 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     // into a frame
     private JavaScriptObject frameFocusListener;
 
-    public AbstractPopupPanel(final DialogActionUiHandlers dialogActionHandler,
-                              final boolean autoHide,
-                              final boolean modal) {
-        super(autoHide, modal);
-        this.dialogActionHandler = dialogActionHandler;
+    private Consumer<DialogAction> onAction;
+
+    /// Makes a popup that is neither modal nor closed by a click outside it; a subclass sets either
+    /// with `setModal` or `setAutoHideEnabled`.
+    public AbstractPopupPanel() {
         // Escape from inside the popup closes it here, once the widget with the focus has had it
         addDomHandler(this::onKeyDown, KeyDownEvent.getType());
+    }
+
+    /// @param onAction Told what the user asks of the popup: to close it (Escape, a click outside an
+    ///                 auto-hide popup) or OK (Ctrl+Enter), or null for nothing.
+    public void setOnAction(final Consumer<DialogAction> onAction) {
+        this.onAction = onAction;
+    }
+
+    /// Tells the popup's owner what the user asks of it, as [#setOnAction(Consumer)] says.
+    ///
+    /// @param action What the user asks.
+    protected void fireAction(final DialogAction action) {
+        if (onAction != null) {
+            onAction.accept(action);
+        }
     }
 
     public Glass getDragGlass() {
@@ -206,14 +222,10 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
     }-*/;
 
     private void onCloseAction() {
-        if (dialogActionHandler != null) {
-            dialogActionHandler.onDialogAction(DialogAction.CLOSE);
-        }
+        fireAction(DialogAction.CLOSE);
     }
 
     private void onOkAction() {
-        if (dialogActionHandler != null) {
-            dialogActionHandler.onDialogAction(DialogAction.OK);
-        }
+        fireAction(DialogAction.OK);
     }
 }

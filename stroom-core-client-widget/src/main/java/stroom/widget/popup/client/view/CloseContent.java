@@ -16,34 +16,42 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.function.Consumer;
+
+/// A dialog's content with Close below it, in either kind of dialog. Its markup is
+/// `CloseContent.ui.xml`.
 public class CloseContent extends Composite implements DialogButtons {
 
-    private static final Binder binder = GWT.create(Binder.class);
-    private final HideRequestUiHandlers uiHandlers;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private Consumer<HideRequest> onHideRequest;
 
     @UiField
     Button close;
     @UiField
     SimplePanel content;
 
-    public CloseContent(final HideRequestUiHandlers uiHandlers) {
-        initWidget(binder.createAndBindUi(this));
-        this.uiHandlers = uiHandlers;
-        close.setIcon(SvgImage.CANCEL);
+    public CloseContent() {
+        initWidget(BINDER.createAndBindUi(this));
+        close.setOnClick(() -> onDialogAction(DialogAction.CLOSE));
     }
 
+    /// @param onHideRequest Told when the user asks to close the dialog; it hides the dialog, or
+    ///                      runs the request's cancel handler to keep it open.
+    public void setOnHideRequest(final Consumer<HideRequest> onHideRequest) {
+        this.onHideRequest = onHideRequest;
+    }
+
+    /// @param widget What the dialog shows above its button.
     public void setContent(final Widget widget) {
         content.setWidget(widget);
     }
@@ -55,23 +63,19 @@ public class CloseContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
-        final Button button = close;
-        if (!DialogButtonAction.canRun(button)) {
+        if (!DialogButtonAction.canRun(close)) {
             return;
         }
-        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(close);
         setEnabled(false);
         close.setLoading(true);
-        uiHandlers.hideRequest(new HideRequest(action, () -> {
-            setEnabled(true);
-            close.setLoading(false);
-            restoreFocus.run();
-        }));
-    }
-
-    @UiHandler("close")
-    public void onCloseClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CLOSE);
+        if (onHideRequest != null) {
+            onHideRequest.accept(new HideRequest(action, () -> {
+                setEnabled(true);
+                close.setLoading(false);
+                restoreFocus.run();
+            }));
+        }
     }
 
     @Override
@@ -86,7 +90,11 @@ public class CloseContent extends Composite implements DialogButtons {
         }
     }
 
-    public interface Binder extends UiBinder<Widget, CloseContent> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CloseContent> {
 
     }
 }

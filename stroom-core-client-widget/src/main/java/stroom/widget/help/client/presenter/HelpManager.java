@@ -43,7 +43,10 @@ public class HelpManager {
             return;
         }
 
-        final HelpPopup popup = HelpPopup.markdown(showHelpEvent.getContent(), "Help");
+        final HelpPopup popup = new HelpPopup();
+        popup.setContent(showHelpEvent.getContent());
+        popup.setMarkdown(true);
+        popup.setAccessibleName("Help");
         popup.setOpener(element);
         popup.addCloseHandler(event -> {
             if (currentPopup == popup) {
