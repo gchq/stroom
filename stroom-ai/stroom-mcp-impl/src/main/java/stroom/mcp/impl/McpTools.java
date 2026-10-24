@@ -68,10 +68,10 @@ import java.util.function.Supplier;
 /// only for the chat), or the call changes something and the tool's category is granted only for reading. A call
 /// that changes something needs a client that can show forms (MCP elicitation), and is refused otherwise (see
 /// [FormsRequired]); it asks the user first (see [McpApprovals]), unless the tool asks the user itself before each
-/// change ([StroomTool#confirmsItself()]). A heavy call takes one of the user's run
-/// slots (see [StroomTool#usesRunSlot()]), given back while it waits for the user. A call runs within the longer of
-/// the session's tool and query time limits (see [ToolDeadline]), less any time it waits for the user. Every call
-/// is audited.
+/// change ([StroomTool#confirmsItself()]) or can only change its build ([StroomTool#changesOnlyItsBuild()]). A heavy
+/// call takes one of the user's run slots (see [StroomTool#usesRunSlot()]), given back while it waits for the user.
+/// A call runs within the longer of the session's tool and query time limits (see [ToolDeadline]), less any time it
+/// waits for the user. Every call is audited.
 @Singleton
 class McpTools {
 
@@ -172,8 +172,9 @@ class McpTools {
             audit(session, name, arguments, "Refused: the client can't show forms", false);
             return text(FormsRequired.noForms(name));
         }
-        // A tool that confirms each change itself asks the user in its own form, which is the approval.
-        if (!readOnlyCall && !tool.confirmsItself()) {
+        // A tool that confirms each change itself asks the user in its own form, which is the approval; one that
+        // can only change its build needs none, as nothing outside the build changes until promote_build asks.
+        if (!readOnlyCall && !tool.confirmsItself() && !tool.changesOnlyItsBuild()) {
             final Optional<String> notApproved = approvals.approve(session, exchange, name, arguments);
             if (notApproved.isPresent()) {
                 audit(session, name, arguments, "Not approved", false);

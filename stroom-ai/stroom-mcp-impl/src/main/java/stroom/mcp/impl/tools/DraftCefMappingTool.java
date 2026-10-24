@@ -247,6 +247,12 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder.
+        return true;
+    }
+
+    @Override
     public boolean isReadOnly(final ToolCall call) {
         // A draft or a review that saves nothing only reads.
         return !savesXslt(call);
