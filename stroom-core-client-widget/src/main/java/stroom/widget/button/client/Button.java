@@ -183,6 +183,13 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         parts.text.setInnerHTML(text);
     }
 
+    /// @return The caption, as shown (not with the hidden copy that sizes the button, which the
+    ///         button's own text would include).
+    @Override
+    public String getText() {
+        return parts.text.getInnerText();
+    }
+
     public void setIcon(final SvgImage svgImage) {
         parts.icon.addClassName("button__icon--visible");
         parts.icon.setInnerHTML(svgImage.getSvg());
