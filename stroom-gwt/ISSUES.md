@@ -976,7 +976,7 @@ templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, 
 `.icon-button-group` and their rules (`stroom-button.css` keeps only the floating action button and
 `.navigation-menu-button`); nothing in the app emits those names. Every screenshot is unchanged.
 `SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
-`FabButton` (`stroom-button-fab`, `face`) is left for a BEM pass of its own.
+`FabButton` (`stroom-button-fab`, `face`) was left for a BEM pass of its own, done in wave 1 of the component migration (24 October 2026): `fab-button`, `fab-button__face`, in `fab-button.css`.
 Phase 4: `SvgButton` is deleted, with the unused `SubStreamNavigator` and `DataNavigator` templates.
 Every button it made is now made in the `Toolbar` it sits in (a button is never made on its own):
 the XML schema's validation indicator in the document's toolbar, the data receipt rules' Save and

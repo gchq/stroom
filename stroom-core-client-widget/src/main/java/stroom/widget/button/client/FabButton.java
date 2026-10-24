@@ -105,10 +105,10 @@ public class FabButton extends ButtonBase {
         // The face is the real button: disabled, it stays focusable so its name and tooltip can
         // still be reached, and says it is disabled (onBrowserEvent ignores it while disabled)
         if (enabled) {
-            face.removeClassName("face--disabled");
+            face.removeClassName("fab-button__face--disabled");
             face.removeAttribute("aria-disabled");
         } else {
-            face.addClassName("face--disabled");
+            face.addClassName("fab-button__face--disabled");
             face.setAttribute("aria-disabled", "true");
         }
     }
@@ -206,11 +206,11 @@ public class FabButton extends ButtonBase {
     }
 
     private void onClickStart() {
-        face.addClassName("face--down");
+        face.addClassName("fab-button__face--down");
     }
 
     private void onClickCancel() {
-        face.removeClassName("face--down");
+        face.removeClassName("fab-button__face--down");
     }
 
     private void onClick() {

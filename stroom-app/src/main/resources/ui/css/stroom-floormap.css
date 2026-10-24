@@ -232,7 +232,7 @@
    show one. stroom.css sets `outline: none` on every div app-wide, so the UA
    default focus ring is gone and this has to be drawn explicitly; a class
    selector out-specifies that element-list rule without needing !important.
-   Matches the .icon-button:focus-visible treatment in stroom-button.css so
+   Matches the .toolbar-button:focus-visible treatment in toolbar-button.css so
    keyboard focus looks the same across the whole timeline strip. */
 .stroom-floormap-timeline-outer-bar:focus-visible {
     border-color: var(--focus-border);
@@ -873,7 +873,7 @@
 
 /* The eye / lock icon buttons keep the standard icon-button sizing; nudge
    spacing so they sit tightly at the start of the row */
-/* The eye / lock / add icon buttons. `.icon-button` in stroom-button.css sizes
+/* The eye / lock / add icon buttons. `.toolbar-button` in toolbar-button.css sizes
    every icon button in the app at 22 × 22, which is under the WCAG 2.5.8 minimum
    of 24. Widening it there would move every toolbar in Stroom, so it is raised
    locally for the layer panel's buttons — the row is 28px tall, so there is room
@@ -963,7 +963,7 @@
 }
 
 /* stroom.css kills the outline on every element, so the swatch needs its own
-   focus ring — same treatment as .icon-button in stroom-button.css. */
+   focus ring — same treatment as .toolbar-button in toolbar-button.css. */
 .floormap-layer-swatch:focus-visible {
     box-shadow: var(--focus-shadow);
     outline: thin solid var(--focus-border);

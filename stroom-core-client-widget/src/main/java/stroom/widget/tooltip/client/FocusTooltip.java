@@ -31,7 +31,7 @@ package stroom.widget.tooltip.client;
 /// classes ([#install()]), and refer to no widget, so there is nothing to release.
 public final class FocusTooltip {
 
-    private static final String BUTTON_SELECTOR = ".toolbar-button, .stroom-button-fab > .face";
+    private static final String BUTTON_SELECTOR = ".toolbar-button, .fab-button > .fab-button__face";
 
     private static boolean installed;
 

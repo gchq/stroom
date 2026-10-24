@@ -247,11 +247,11 @@ td {
     margin-left: 2px;
 }
 
-.stepping-button .face {
+.stepping-button .fab-button__face {
 	background: #3385ff;
 }
 
-.stepping-button .face:hover {
+.stepping-button .fab-button__face:hover {
 	background: #51a5ff;
 }
 

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-/* Fab buttons */
-.stroom-button-fab {
+/*
+   A round floating action button (stroom.widget.button.client.FabButton), named BEM style (block,
+   block__element, block--modifier): its face is the real button inside it.
+*/
+.fab-button {
 	display: inline-block;
 	border: none;
 	outline: none;
@@ -26,7 +29,7 @@
 	text-decoration: none;
 }
 
-.stroom-button-fab .face {
+.fab-button__face {
 	border: none;
 	outline: none;
 	cursor: pointer;
@@ -50,12 +53,12 @@
 	-o-transition: background-color .5s;
 }
 
-.stroom-button-fab .face--disabled {
+.fab-button__face--disabled {
 	cursor: default;
 	opacity: var(--disabled-opacity);
 }
 
-.stroom-button-fab .face--down {
+.fab-button__face--down {
 	left: 1px;
 	top: 1px;
 	box-shadow: none;
