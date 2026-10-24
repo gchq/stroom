@@ -32,7 +32,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 /// An icon button in a [Toolbar]: a `<button class="toolbar-button">` holding its icon. It is named
-/// by its title, which is also its tooltip, and styled by toolbar.css.
+/// by its title, which is also its tooltip, and styled by toolbar-button.css.
 ///
 /// A button that a shortcut also presses shows the shortcut in its tooltip, e.g. "Save (Ctrl+S)"
 /// (see [#setShortcut(Action)]).
@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// them the older buttons) work with it unchanged; that interface goes when they no longer need it.
 public class ToolbarButton extends ButtonBase implements ButtonView {
 
-    // Marks focus that a mouse press gave the button, which toolbar.css draws no focus ring for: the
+    // Marks focus that a mouse press gave the button, which toolbar-button.css draws no focus ring for: the
     // button focuses itself from code (see onBrowserEvent), which browsers treat as keyboard focus
     private static final String POINTER_FOCUS_ATTRIBUTE = "data-pointer-focus";
     private static final String ARIA_LABEL = "aria-label";
