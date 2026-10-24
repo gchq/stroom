@@ -91,6 +91,12 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder.
+        return true;
+    }
+
+    @Override
     public boolean isReadOnly(final ToolCall call) {
         return stringArg(call, SAVE_AS_ARG) == null;
     }

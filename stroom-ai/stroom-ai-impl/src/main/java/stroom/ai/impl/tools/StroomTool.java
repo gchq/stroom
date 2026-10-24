@@ -121,6 +121,16 @@ public interface StroomTool {
         return true;
     }
 
+    /// Whether the tool can only change what is in a build's folder (the build layer's `WriteGuard`): nothing
+    /// outside it changes until `promote_build`, which asks the user itself. Such a call isn't approved as a whole
+    /// first, over MCP or (once the chat has read untrusted content) on an approval card in the chat, as nothing it
+    /// was told by what was read can make it change anything else.
+    ///
+    /// @return True if every change the tool makes stays in a build. Defaults to false.
+    default boolean changesOnlyItsBuild() {
+        return false;
+    }
+
     /// @return True if the tool limits how much it returns itself (e.g. a page of a file), so its result is never
     /// saved to the workspace in place of being returned, which would only make another file to read.
     default boolean boundsItsOutput() {

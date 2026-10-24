@@ -344,8 +344,10 @@ class TestCreateIndexingPipelineTool {
     void itIsAnIndexingToolThatDoesNotConfirmItself() {
         assertThat(tool.category()).isEqualTo(AiToolCategory.INDEXING);
         assertThat(tool.isReadOnly()).isFalse();
-        // The pipeline is confirmed in create_pipeline's form; the index fields added after it are not.
+        // The pipeline is confirmed in create_pipeline's form; the index fields added after it are not, but are the
+        // build's own index's.
         assertThat(tool.confirmsItself()).isFalse();
+        assertThat(tool.changesOnlyItsBuild()).isTrue();
         assertThat(tool.definition().description()).startsWith("Onboarding step ")
                 .contains("(indexing_pipeline): Stage 2: create an indexing pipeline as a child of an indexing "
                           + "template");
