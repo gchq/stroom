@@ -236,9 +236,10 @@ class TestRecordSourceNotesTool {
     }
 
     @Test
-    void itIsAWriteApprovedAsAWhole() {
+    void itIsAWriteThatStaysInItsBuild() {
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
+        assertThat(tool.changesOnlyItsBuild()).isTrue();
         assertThat(tool.category().name()).isEqualTo("CONTENT");
     }
 

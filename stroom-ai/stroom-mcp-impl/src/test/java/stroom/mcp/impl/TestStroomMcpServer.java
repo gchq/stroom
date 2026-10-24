@@ -141,6 +141,7 @@ class TestStroomMcpServer {
                 tool("read_thing", AiToolCategory.CORE, true, false, false),
                 tool("write_thing", AiToolCategory.CORE, false, false, false),
                 confirming(tool("confirmed_write", AiToolCategory.CORE, false, false, false)),
+                inItsBuild(tool("build_write", AiToolCategory.CORE, false, false, false)),
                 dryRunning(tool("dry_write", AiToolCategory.CORE, false, false, false)),
                 tool("chat_thing", AiToolCategory.CORE, true, true, false),
                 tool("search_thing", AiToolCategory.SEARCH, true, false, true),
@@ -210,14 +211,14 @@ class TestStroomMcpServer {
             // never offered. A client without forms is offered the tools that write too (their calls that write
             // are refused, saying why), and no tool to approve a call with an id: there are no approval ids.
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "dry_write",
-                            "search_thing", "slow_thing", "asking_search")
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "build_write",
+                            "dry_write", "search_thing", "slow_thing", "asking_search")
                     .doesNotContain("approve_call");
         }
         try (final McpSyncClient client = client(true, request -> new ElicitResult(Action.ACCEPT, Map.of()))) {
             assertThat(client.listTools().tools()).extracting(Tool::name)
-                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "dry_write",
-                            "search_thing", "slow_thing", "asking_search");
+                    .containsExactlyInAnyOrder("read_thing", "write_thing", "confirmed_write", "build_write",
+                            "dry_write", "search_thing", "slow_thing", "asking_search");
             final Tool write = client.listTools().tools().stream()
                     .filter(tool -> tool.name().equals("write_thing"))
                     .findFirst()
@@ -297,6 +298,26 @@ class TestStroomMcpServer {
                     .isEqualTo("ran confirmed_write {}");
             assertThat(asked).isEmpty();
             assertThat(ran).containsExactly("confirmed_write");
+        }
+    }
+
+    @Test
+    void aToolThatCanOnlyChangeItsBuildIsNotApprovedFirst() {
+        final List<String> asked = Collections.synchronizedList(new ArrayList<>());
+        try (final McpSyncClient client = client(true, request -> {
+            asked.add(request.message());
+            return new ElicitResult(Action.ACCEPT, Map.of());
+        })) {
+            // Nothing outside the build changes until promote_build, which asks the user itself.
+            assertThat(text(client.callTool(new CallToolRequest("build_write", Map.of()))))
+                    .isEqualTo("ran build_write {}");
+            assertThat(asked).isEmpty();
+            assertThat(ran).containsExactly("build_write");
+        }
+        // A change still needs a client that can show forms.
+        try (final McpSyncClient client = client(false, null)) {
+            assertThat(text(client.callTool(new CallToolRequest("build_write", Map.of()))))
+                    .isEqualTo(FormsRequired.noForms("build_write"));
         }
     }
 
@@ -831,6 +852,36 @@ class TestStroomMcpServer {
 
             @Override
             public boolean confirmsItself() {
+                return true;
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                return tool.execute(call, context);
+            }
+        };
+    }
+
+    // The tool, as one that can only change what is in its build.
+    private static StroomTool inItsBuild(final StroomTool tool) {
+        return new StroomTool() {
+            @Override
+            public ToolDefinition definition() {
+                return tool.definition();
+            }
+
+            @Override
+            public AiToolCategory category() {
+                return tool.category();
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return tool.isReadOnly();
+            }
+
+            @Override
+            public boolean changesOnlyItsBuild() {
                 return true;
             }
 
