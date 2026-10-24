@@ -76,7 +76,7 @@ public class McpElicitations {
         this.aiConfigProvider = aiConfigProvider;
     }
 
-    /// @param answerLinks Links the documents and streams a form's message names, as an answer's are.
+    /// @param answerLinks Checks the document links a form's message holds.
     @Inject
     void setAnswerLinks(final AnswerLinks answerLinks) {
         this.answerLinks = answerLinks;
@@ -152,13 +152,13 @@ public class McpElicitations {
         throw waitForAnswers(chatId);
     }
 
-    // The message with the documents and streams the chat's tools gave linked (asked for by the user: seen, the
-    // pipeline a form names not opening from it), as an answer's are; as it is if they can't be. Checked for
-    // size before, as the server sent it.
+    // The message with each document link its tool wrote checked by its UUID; no names are linked by guessing
+    // (seen: the index a form was to create linked to the feed of its name). Checked for size before, as the
+    // server sent it.
     private String withLinks(final int chatId, final String message) {
         return answerLinks == null
                 ? message
-                : answerLinks.link(chatId, message);
+                : answerLinks.checkLinks(chatId, message);
     }
 
     private static AiChatRunManager.WaitingForUserException waitForAnswers(final int chatId) {
