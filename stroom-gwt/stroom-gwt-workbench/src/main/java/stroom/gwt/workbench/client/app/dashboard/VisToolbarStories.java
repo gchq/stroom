@@ -82,7 +82,7 @@ public final class VisToolbarStories {
                 .story("ToolbarAboveVisualisation", DashboardSupport.story(DASHBOARD, VisToolbarStories::routes))
                 .withPlay(play -> {
                     final Query frame = visFrame(play);
-                    final Query pause = play.screen().querySelector(".visToolbarRow");
+                    final Query pause = play.screen().querySelector(".vis-toolbar-row");
                     play.expect(pause).toBeVisible();
                     play.expect("the toolbar row's bottom less the frame's top",
                             () -> pause.bottom().get() - frame.top().get()).toBeLessThanOrEqual(0);

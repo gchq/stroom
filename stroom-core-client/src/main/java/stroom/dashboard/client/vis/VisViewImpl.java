@@ -98,7 +98,8 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Override
     public void setVisButtons(final List<VisToolbarButton> buttons, final BiConsumer<String, Boolean> onPress) {
-        toolbarRow.setVisButtons(buttons, onPress);
+        toolbarRow.setOnPress(onPress);
+        toolbarRow.setVisButtons(buttons);
     }
 
     public void setVisFrame(final VisFrame visFrame) {

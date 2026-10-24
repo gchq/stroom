@@ -58,9 +58,6 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
-import stroom.widget.progress.client.view.ProgressViewImpl;
 
 /// The presenter and view bindings of Stroom's `StreamStoreModule`
 /// (`stroom/data/client/gin/StreamStoreModule.java`), without its plugins, app services and the
@@ -108,9 +105,6 @@ public class StreamStoreScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
-        bindPresenterWidget(ProgressPresenter.class,
-                ProgressView.class,
-                ProgressViewImpl.class);
         bind(MetaListPresenter.class);
         bind(SteppingMetaListPresenter.class);
         bind(ProcessorTaskListPresenter.class);

@@ -71,10 +71,7 @@ import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
-import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.datagrid.client.PagerViewImpl;
@@ -85,9 +82,6 @@ import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
-import stroom.widget.progress.client.view.ProgressViewImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
@@ -139,10 +133,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 EditExpressionView.class,
                 EditExpressionViewImpl.class);
         bindPresenterWidget(
-                IFramePresenter.class,
-                IFrameView.class,
-                IFrameViewImpl.class);
-        bindPresenterWidget(
                 IFrameContentPresenter.class,
                 IFrameContentView.class,
                 IFrameContentViewImpl.class);
@@ -158,10 +148,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 TextPresenter.class,
                 TextView.class,
                 TextViewImpl.class);
-        bindPresenterWidget(
-                ProgressPresenter.class,
-                ProgressView.class,
-                ProgressViewImpl.class);
         bindPresenterWidget(
                 SourceTabPresenter.class,
                 SourceTabView.class,

@@ -25,7 +25,7 @@ import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
-import stroom.editor.client.presenter.HtmlPresenter;
+import stroom.editor.client.component.HtmlPane;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
@@ -44,8 +44,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.widget.datagrid.client.WrapperViewImpl;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.progress.client.component.ProgressBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -250,14 +249,14 @@ public final class SourceViewerStories {
                         new ItemSelectionViewImpl(eventBus, GWT.create(ItemSelectionViewImpl.Binder.class))));
         return new DataPresenter(
                 eventBus,
-                new HtmlPresenter(eventBus),
+                new HtmlPane(),
                 itemNavigatorPresenter,
                 new DataViewImpl(GWT.create(DataViewImpl.Binder.class)),
                 new ClassificationWrapperViewImpl(
                         GWT.create(ClassificationWrapperViewImpl.Binder.class),
                         new ClassificationLabel(harness.getUiConfigCache())),
                 EditorWidgets.textPresenter(eventBus),
-                new ProgressPresenter(eventBus, new ProgressViewImpl(GWT.create(ProgressViewImpl.Binder.class))),
+                new ProgressBar(),
                 new MarkerListPresenter(eventBus, new WrapperViewImpl()),
                 // Only used to open the source in a new tab, which the workbench doesn't have
                 null,

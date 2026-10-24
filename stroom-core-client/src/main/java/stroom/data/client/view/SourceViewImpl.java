@@ -27,6 +27,7 @@ import stroom.widget.spinner.client.SpinnerLarge;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -130,9 +131,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setProgressView(final View progressView) {
-        if (progressView != null) {
-            progressBarPanel.setWidget(progressView.asWidget());
+    public void setProgressView(final IsWidget progressBar) {
+        if (progressBar != null) {
+            progressBarPanel.setWidget(progressBar.asWidget());
         } else {
             progressBarPanel.clear();
         }

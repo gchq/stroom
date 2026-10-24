@@ -21,22 +21,28 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
+import stroom.widget.tooltip.client.component.InfoTooltip;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.TooltipView> {
+/// Shows an [InfoTooltip] as a grid row's "Information" popup, beside the icon that opened it. A
+/// thin presenter over the component, kept while its owners (the lists) are presenters, as an owner
+/// keeps one and shows it again (a second click on the icon closes it).
+public class TooltipPresenter extends MyPresenterWidget<View> {
+
+    private final InfoTooltip tooltip;
 
     @Inject
-    public TooltipPresenter(final EventBus eventBus, final TooltipView view) {
-        super(eventBus, view);
+    public TooltipPresenter(final EventBus eventBus, final InfoTooltip tooltip) {
+        super(eventBus, tooltip::asWidget);
+        this.tooltip = tooltip;
     }
 
     public void show(final String text, final PopupPosition popupPosition) {
-        getView().setText(text);
+        tooltip.setText(text);
         show(popupPosition);
     }
 
@@ -52,7 +58,7 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
     ///                      auto-hide the tooltip, so that clicking it again closes the tooltip
     ///                      rather than showing it again.
     public void show(final SafeHtml html, final PopupPosition popupPosition, final Element anchor) {
-        getView().setHTML(html);
+        tooltip.setHtml(html);
         show(popupPosition, anchor);
     }
 
@@ -65,21 +71,11 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
                 .popupType(PopupType.POPUP)
                 .caption("Information")
                 .popupPosition(popupPosition)
-                .onShow(e -> getView().focus());
+                .onShow(e -> tooltip.focus());
         if (anchor != null) {
             builder.addAutoHidePartner(anchor);
         }
         builder.fire();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface TooltipView extends View, Focus {
-
-        void setText(String text);
-
-        void setHTML(SafeHtml html);
-    }
 }

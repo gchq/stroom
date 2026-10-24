@@ -577,7 +577,7 @@ public final class AppShellStories {
                 .story("MainToolbarTabOrder", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
-                    final Query mainToolbar = play.querySelector(".mainToolbar");
+                    final Query mainToolbar = play.querySelector(".main-toolbar");
                     final Query explorer = play.querySelector(NAVIGATION);
                     play.run("expect the main toolbar to come before the explorer in the page", () -> {
                         if (!isBefore(mainToolbar.element().get(), explorer.element().get())) {

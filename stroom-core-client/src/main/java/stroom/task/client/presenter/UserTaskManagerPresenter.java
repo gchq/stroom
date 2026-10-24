@@ -19,6 +19,7 @@ package stroom.task.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
+import stroom.task.client.component.UserTask;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
@@ -38,9 +39,9 @@ import stroom.widget.presenter.client.View;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
@@ -51,14 +52,13 @@ import java.util.Set;
 
 public class UserTaskManagerPresenter
         extends MyPresenterWidget<UserTaskManagerView>
-        implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
+        implements OpenUserTaskManagerHandler {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
-    private final Provider<UserTaskPresenter> taskPresenterProvider;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
-    private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
+    private final Map<TaskProgress, UserTask> taskMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Timer refreshTimer;
     private boolean visible;
@@ -74,11 +74,9 @@ public class UserTaskManagerPresenter
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
                                     final UserTaskManagerView view,
-                                    final Provider<UserTaskPresenter> taskPresenterProvider,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient) {
         super(eventBus, view);
-        this.taskPresenterProvider = taskPresenterProvider;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
@@ -161,7 +159,7 @@ public class UserTaskManagerPresenter
 
     private void setData(final ResultPage<TaskProgress> list) {
         if (visible) {
-            final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
+            final Set<UserTask> tasksToRemove = new HashSet<>(taskMap.values());
 
             idMap.clear();
             if (list != null) {
@@ -172,39 +170,36 @@ public class UserTaskManagerPresenter
                         break;
                     }
 
-                    // Get the associated task presenter.
-                    UserTaskPresenter taskPresenter = taskPresenterMap.get(taskProgress);
+                    // Get the associated task's row.
+                    UserTask task = taskMap.get(taskProgress);
 
                     // If there isn't one then create a new one and add it to
                     // the display.
-                    if (taskPresenter == null) {
-                        taskPresenter = make(taskPresenterProvider);
-                        taskPresenter.setUiHandlers(this);
-                        taskPresenter.setTaskProgress(taskProgress);
-                        taskPresenter.setTerminateVisible(true);
+                    if (task == null) {
+                        task = new UserTask();
+                        task.setTaskProgress(taskProgress);
+                        task.setOnTerminate(() -> onTerminate(taskProgress));
 
-                        taskPresenterMap.put(taskProgress, taskPresenter);
-                        getView().addTask(taskPresenter.getView());
+                        taskMap.put(taskProgress, task);
+                        getView().addTask(task);
                         idMap.put(taskProgress.getId(), taskProgress);
                     }
 
                     // We have updated or added this task so don't remove it
                     // from the display.
-                    tasksToRemove.remove(taskPresenter);
+                    tasksToRemove.remove(task);
                 }
             }
 
-            // Remove old tasks, and release their presenters (they were once kept for good)
-            for (final UserTaskPresenter actionPresenter : tasksToRemove) {
-                getView().removeTask(actionPresenter.getView());
-                taskPresenterMap.values().remove(actionPresenter);
-                release(actionPresenter);
+            // Remove old tasks
+            for (final UserTask task : tasksToRemove) {
+                getView().removeTask(task);
+                taskMap.values().remove(task);
             }
         }
     }
 
-    @Override
-    public void onTerminate(final TaskProgress taskProgress) {
+    private void onTerminate(final TaskProgress taskProgress) {
         final String message = "Are you sure you want to terminate this task?";
         ConfirmEvent.fire(UserTaskManagerPresenter.this, message, ok -> {
             if (ok) {
@@ -226,9 +221,9 @@ public class UserTaskManagerPresenter
 
     public interface UserTaskManagerView extends View, Focus {
 
-        void addTask(View task);
+        void addTask(IsWidget task);
 
-        void removeTask(View task);
+        void removeTask(IsWidget task);
     }
 
 

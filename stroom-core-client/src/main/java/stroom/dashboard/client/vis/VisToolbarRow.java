@@ -20,8 +20,12 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Component;
 
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,29 +34,27 @@ import java.util.function.BiConsumer;
 /// The toolbar row above a visualisation, laid out as a table's (`PagerViewImpl`): the buttons the
 /// visualisation asks for (`stroom.setToolbarButtons` in `vis.js`) at the start, and its pause and
 /// resume button at the end. Being above the visualisation's frame rather than over it, neither
-/// covers what the visualisation draws.
-public class VisToolbarRow extends FlowPanel {
+/// covers what the visualisation draws. Its markup is `VisToolbarRow.ui.xml`.
+public class VisToolbarRow extends Component {
 
-    private final Toolbar visToolbar;
-    private final RefreshButton refreshButton;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    Toolbar visToolbar;
+    @UiField
+    RefreshButton refreshButton;
     // The buttons the visualisation asked for, as visToolbar shows them
     private List<VisToolbarButton> visButtons = Collections.emptyList();
+    private BiConsumer<String, Boolean> onPress;
 
     public VisToolbarRow() {
-        setStyleName("pager dock-container-horizontal dock-min align-center visToolbarRow");
+        initWidget(BINDER.createAndBindUi(this));
+    }
 
-        visToolbar = new Toolbar("Visualisation actions");
-        // No empty toolbar for screen readers to find until the visualisation asks for buttons
-        visToolbar.setVisible(false);
-        final FlowPanel visToolbarContainer = new FlowPanel();
-        visToolbarContainer.setStyleName("pager-toolbar");
-        visToolbarContainer.add(visToolbar);
-        add(visToolbarContainer);
-
-        final Toolbar refreshToolbar = new Toolbar("Visualisation updates");
-        refreshButton = refreshToolbar.refresh(null);
-        refreshButton.setAllowPause(true);
-        add(refreshToolbar);
+    /// @param onPress Given a button's id when it is pressed, and a toggle's new state (null for a
+    ///                button that isn't a toggle), or null for nothing.
+    public void setOnPress(final BiConsumer<String, Boolean> onPress) {
+        this.onPress = onPress;
     }
 
     /// @return The pause and resume button, which the presenter gives what it does.
@@ -63,10 +65,9 @@ public class VisToolbarRow extends FlowPanel {
     /// Shows the buttons the visualisation asks for, replacing any it showed. Stroom's own toolbar
     /// buttons and toggles are made for them, so they look and work as every other toolbar's do.
     ///
-    /// @param buttons The buttons, none for no visualisation buttons.
-    /// @param onPress Given a button's id when it is pressed, and a toggle's new state (null for a
-    ///                button that isn't a toggle).
-    public void setVisButtons(final List<VisToolbarButton> buttons, final BiConsumer<String, Boolean> onPress) {
+    /// @param buttons The buttons, none for no visualisation buttons; pressing one is told to
+    ///                [#setOnPress].
+    public void setVisButtons(final List<VisToolbarButton> buttons) {
         if (isSameButtons(buttons)) {
             // Only a toggle's state, or whether a button is enabled, may have changed, so keep the
             // buttons (and the focus on one)
@@ -82,18 +83,24 @@ public class VisToolbarRow extends FlowPanel {
             for (final VisToolbarButton button : buttons) {
                 if (button.isToggle()) {
                     final ToolbarToggleButton toggle = visToolbar.toggle(button.getIcon(), button.getTitle(),
-                            pressed -> onPress.accept(button.getId(), pressed));
+                            pressed -> press(button.getId(), pressed));
                     toggle.setState(button.isPressed());
                     toggle.setEnabled(button.isEnabled());
                 } else {
                     visToolbar.button(button.getIcon(), button.getTitle(),
-                                    () -> onPress.accept(button.getId(), null))
+                                    () -> press(button.getId(), null))
                             .setEnabled(button.isEnabled());
                 }
             }
         }
         visButtons = buttons;
         visToolbar.setVisible(!buttons.isEmpty());
+    }
+
+    private void press(final String id, final Boolean pressed) {
+        if (onPress != null) {
+            onPress.accept(id, pressed);
+        }
     }
 
     // Whether the buttons are those shown, other than the toggles' states
@@ -112,5 +119,13 @@ public class VisToolbarRow extends FlowPanel {
             }
         }
         return true;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, VisToolbarRow> {
+
     }
 }

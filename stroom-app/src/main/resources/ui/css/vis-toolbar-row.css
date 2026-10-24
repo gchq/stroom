@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+/*
+   A visualisation's toolbar row (stroom.dashboard.client.vis.VisToolbarRow), named BEM style: above
+   the visualisation as a table's pager row is (it borrows PagerView's pager and pager-toolbar), the
+   buttons the visualisation asks for, then its pause and resume button. Padded as a table's pager.
+*/
 
-import stroom.widget.presenter.client.UiHandlers;
-
-public interface QueryUiHandlers extends UiHandlers {
-
-    void start();
+.vis-toolbar-row {
+    padding: 0 5px;
 }

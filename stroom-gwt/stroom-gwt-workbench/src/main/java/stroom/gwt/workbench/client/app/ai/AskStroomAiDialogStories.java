@@ -33,7 +33,6 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.main.client.presenter.MainUiHandlers;
 import stroom.main.client.view.MainToolbar;
 
 import com.google.gwt.dom.client.Element;
@@ -292,17 +291,8 @@ public final class AskStroomAiDialogStories {
             showing[0] = event.isShow();
             toolbar.getShowAi().setState(showing[0]);
         }));
-        toolbar.setMainUiHandlers(new MainUiHandlers() {
-            @Override
-            public void showMenu(final NativeEvent event, final Element target) {
-                // No main menu in a story
-            }
-
-            @Override
-            public void showAi(final NativeEvent event, final Element target) {
-                ShowAskStroomAiEvent.fire(harness.getHasHandlers(), !showing[0]);
-            }
-        });
+        // No main menu in a story
+        toolbar.setOnShowAi(() -> ShowAskStroomAiEvent.fire(harness.getHasHandlers(), !showing[0]));
         harness.add(toolbar);
     }
 }

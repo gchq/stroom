@@ -188,7 +188,7 @@ public class SteppingPresenter
         final Toolbar buttonPanel = new Toolbar("Stepping");
         terminateButton = buttonPanel.button(SvgImage.STOP, "Terminate Stepping", this::terminate);
         terminateButton.setEnabled(false);
-        terminateButton.addStyleName("QueryButtons-button stop");
+        terminateButton.addStyleName("query-buttons__button query-buttons__button--stop");
 
         view.setTreeView(pipelinePathPresenter.getView());
 

@@ -51,13 +51,13 @@ import stroom.gwt.workbench.client.widgets.dialogs.DialogTitleStories;
 import stroom.gwt.workbench.client.widgets.dialogs.EscapeStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ExplorerDropdownPopupStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ModalStories;
+import stroom.gwt.workbench.client.widgets.dialogs.NameDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.PromptDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.StaticDialogStories;
-import stroom.gwt.workbench.client.widgets.dialogs.TextBoxPopupDialogStories;
 import stroom.gwt.workbench.client.widgets.display.ClassificationLabelStories;
 import stroom.gwt.workbench.client.widgets.display.ClassificationWrapperStories;
 import stroom.gwt.workbench.client.widgets.display.CopyTextStories;
-import stroom.gwt.workbench.client.widgets.display.HtmlPresenterStories;
+import stroom.gwt.workbench.client.widgets.display.HtmlPaneStories;
 import stroom.gwt.workbench.client.widgets.display.InfinityLogoStories;
 import stroom.gwt.workbench.client.widgets.display.LogoStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorFeatureStories;
@@ -175,8 +175,8 @@ public final class WidgetsStories {
         PromptDialogStories.addTo(registry);
         // Widgets/Dialogs/StaticDialog
         StaticDialogStories.addTo(registry);
-        // Widgets/Dialogs/TextBoxPopupDialog
-        TextBoxPopupDialogStories.addTo(registry);
+        // Widgets/Dialogs/NameDialog
+        NameDialogStories.addTo(registry);
         // Widgets/Buttons/Button
         ButtonStories.addTo(registry);
         // Widgets/Buttons/ButtonGroup
@@ -209,8 +209,8 @@ public final class WidgetsStories {
         ClassificationWrapperStories.addTo(registry);
         // Widgets/Display/CopyText
         CopyTextStories.addTo(registry);
-        // Widgets/Display/HtmlPresenter
-        HtmlPresenterStories.addTo(registry);
+        // Widgets/Display/HtmlPane
+        HtmlPaneStories.addTo(registry);
         // Widgets/Display/InfinityLogo
         InfinityLogoStories.addTo(registry);
         // Widgets/Display/Logo

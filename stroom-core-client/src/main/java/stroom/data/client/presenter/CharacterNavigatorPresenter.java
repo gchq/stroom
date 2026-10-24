@@ -20,7 +20,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigat
 import stroom.util.shared.HasCharacterData;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.component.ProgressBar;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -31,26 +31,25 @@ import com.google.web.bindery.event.shared.EventBus;
 public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavigatorView> {
 
     private final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider;
-    private final ProgressPresenter progressPresenter;
+    private final ProgressBar progressBar;
     private CharacterRangeSelectionPresenter characterRangeSelectionPresenter = null;
     private HasCharacterData display;
 
     @Inject
     public CharacterNavigatorPresenter(
             final EventBus eventBus,
-            final ProgressPresenter progressPresenter,
+            final ProgressBar progressBar,
             final CharacterNavigatorView view,
             final Provider<CharacterRangeSelectionPresenter> characterRangeSelectionPresenterProvider) {
 
         super(eventBus, view);
-        own(progressPresenter);
-        this.progressPresenter = progressPresenter;
+        this.progressBar = progressBar;
         this.characterRangeSelectionPresenterProvider = characterRangeSelectionPresenterProvider;
 
         getView().setLabelClickHandler(this::handleLabelClick);
-//        getView().setProgressPresenter(progressPresenter);
-//        getView().setProgressView(progressPresenter.getView());
-        progressPresenter.setVisible(false);
+//        getView().setProgressPresenter(progressBar);
+//        getView().setProgressView(progressBar);
+        progressBar.setVisible(false);
     }
 
     public void setDisplay(final HasCharacterData display) {
@@ -68,19 +67,19 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 //        if (display != null
 //                && display.getCharOffsetFrom().isPresent()
 //                && display.getCharOffsetTo().isPresent()) {
-//            progressPresenter.setVisible(true);
+//            progressBar.setVisible(true);
 //            if (display.getTotalChars().isPresent()) {
-//                progressPresenter.setProgress(Progress.boundedRange(
+//                progressBar.setProgress(Progress.boundedRange(
 //                        display.getTotalChars().get(),
 //                        display.getCharOffsetFrom().get(),
 //                        display.getCharOffsetTo().get()));
 //            } else {
-//                progressPresenter.setProgress(Progress.unboundedRange(
+//                progressBar.setProgress(Progress.unboundedRange(
 //                        display.getCharOffsetFrom().get(),
 //                        display.getCharOffsetTo().get()));
 //            }
 //        } else {
-//            progressPresenter.setVisible(false);
+//            progressBar.setVisible(false);
 //        }
 //    }
 
@@ -101,7 +100,7 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
 
     public interface CharacterNavigatorView extends View {
 
-//        void setProgressPresenter(final ProgressPresenter progressPresenter);
+//        void setProgressPresenter(final ProgressBar progressBar);
 
 //        void setProgressView(final ProgressView progressView);
 

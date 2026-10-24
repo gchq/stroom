@@ -75,6 +75,11 @@
 .termEditor-item.field {
 }
 
+/* An expression's operator (OperatorEditor): AND, OR or NOT */
+.termEditor-item.operator {
+	width: 55px;
+}
+
 .termEditor-item.condition {
     /* Need room for 'matches regex (case sensitive)' */
 	width: 160px;

@@ -31,22 +31,6 @@
 	z-index: 4;
 }
 
-.DashboardViewImpl-top .QueryButtons-button svg {
-	width: 20px;
-	height: 20px;
-}
-
-.QueryButtons-button.play svg {
-    color: #4caf50;
-}
-
-.QueryButtons-button.pause svg {
-    color: #2196f3;
-}
-
-.QueryButtons-button.stop svg {
-    color: #d32f2f;
-}
 
 
 

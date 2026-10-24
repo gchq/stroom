@@ -29,8 +29,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.SimpleEventBus;
@@ -111,7 +111,7 @@ public final class InfoPopoverCellStories {
 
     private static Widget render(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new TooltipViewImpl());
+        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new InfoTooltip());
         final InfoColumn<String> infoColumn = new InfoColumn<String>() {
             @Override
             protected void showInfo(final String row,

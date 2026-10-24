@@ -44,12 +44,13 @@ import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.progress.client.presenter.Progress;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
+import stroom.widget.progress.client.Progress;
+import stroom.widget.progress.client.component.ProgressBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,7 +74,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
     private final ClassificationWrapperView classificationWrapperView;
-    private final ProgressPresenter progressPresenter;
+    private final ProgressBar progressBar;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
     private final UiConfigCache uiConfigCache;
@@ -97,18 +98,17 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
                            final ClassificationWrapperView classificationWrapperView,
-                           final ProgressPresenter progressPresenter,
+                           final ProgressBar progressBar,
                            final TextPresenter textPresenter,
                            final CharacterNavigatorPresenter characterNavigatorPresenter,
                            final UiConfigCache uiConfigCache,
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        own(progressPresenter);
         own(textPresenter);
         own(characterNavigatorPresenter);
         this.classificationWrapperView = classificationWrapperView;
-        this.progressPresenter = progressPresenter;
+        this.progressBar = progressBar;
         this.textPresenter = textPresenter;
         this.characterNavigatorPresenter = characterNavigatorPresenter;
         this.uiConfigCache = uiConfigCache;
@@ -121,7 +121,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         view.setTextView(classificationWrapperView);
         view.setNavigatorView(characterNavigatorPresenter.getView());
 
-        setupProgressBar(view, progressPresenter);
+        setupProgressBar(view, progressBar);
 
         textPresenter.setUiHandlers(this);
 
@@ -170,9 +170,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
     private void setupProgressBar(final SourceView view,
-                                  final ProgressPresenter progressPresenter) {
-        view.setProgressView(progressPresenter.getView());
-        progressPresenter.setVisible(false);
+                                  final ProgressBar progressBar) {
+        view.setProgressView(progressBar);
+        progressBar.setVisible(false);
     }
 
     private void setEditorOptions() {
@@ -555,14 +555,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         }
 
         if (progress != null) {
-            progressPresenter.setVisible(true);
-            progressPresenter.setProgress(progress);
+            progressBar.setVisible(true);
+            progressBar.setProgress(progress);
 
             if (progress.isComplete()) {
                 // Don't want users clicking if we are showing everything
-                progressPresenter.setClickHandler(null);
+                progressBar.setOnClick(null);
             } else {
-                progressPresenter.setClickHandler(byteOffsetDbl -> {
+                progressBar.setOnClick(byteOffsetDbl -> {
                     final long byteOffset = (long) Math.floor(byteOffsetDbl);
                     // update the location with the new range
                     doWithConfig(sourceConfig -> {
@@ -572,7 +572,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                 });
             }
         } else {
-            progressPresenter.setVisible(false);
+            progressBar.setVisible(false);
         }
     }
 
@@ -887,7 +887,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     public interface SourceView extends View, TaskMonitorFactory {
 
-        void setProgressView(final View view);
+        void setProgressView(IsWidget progressBar);
 
         void setTextView(final View view);
 

@@ -14,54 +14,67 @@
  * limitations under the License.
  */
 
-package stroom.widget.progress.client.presenter;
+package stroom.widget.progress.client.component;
 
-import stroom.widget.presenter.client.MyPresenterWidget;
-import stroom.widget.presenter.client.View;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.component.client.Component;
+import stroom.widget.progress.client.Progress;
+import stroom.widget.util.client.CssProperties;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
-public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
+/// A bar showing which section of some data is shown (e.g. the part of a stream in the editor) of
+/// how much, as a window on a track; a click on the track asks for the section there. The BEM block
+/// `progress-bar` (`progress-bar.css`), its markup `ProgressBar.ui.xml`.
+///
+/// The window is blue while it can be moved, grey while it can't (`--disabled`), green when it
+/// shows everything (`--complete`) and amber when the size isn't known (`--unbounded`), its size then
+/// a guess a bit bigger than what is known, which shrinks as more is seen.
+public class ProgressBar extends Component {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final String TITLE_PREFIX = "Section of the source data visible in the editor";
     private static final String TITLE_SUFFIX = "\nClick elsewhere in the bar to move the visible section.";
     private static final String TITLE_SUFFIX_DISABLED = "\nUse the Source View to see all of the data.";
     private static final double UNCERTAINTY_FACTOR_MAX = 3;
     private static final double UNCERTAINTY_FACTOR_MIN = 1.1;
     private static final double UNCERTAINTY_FACTOR_DELTA = 0.1;
-    private static final String BAR_COLOUR_KNOWN_BOUNDED = "#1e88e5"; // Stroom blue
-    private static final String BAR_COLOUR_KNOWN_BOUNDED_DISABLED = "#616161"; // Material Grey 700
-    private static final String BAR_COLOUR_COMPLETE = "#15a32c"; // Stroom green
-    private static final String BAR_COLOUR_UNKNOWN_BOUND = "#FFCA28"; // Material Design Amber 300
-
+    private static final String COMPLETE = "progress-bar__window--complete";
+    private static final String DISABLED = "progress-bar__window--disabled";
+    private static final String UNBOUNDED = "progress-bar__window--unbounded";
+    private static final String CLICKABLE = "progress-bar__track--clickable";
     private static final NumberFormat DEFAULT_PERCENT_FORMAT = NumberFormat.getFormat("0.0");
+
+    @UiField
+    FlowPanel track;
+    @UiField
+    FlowPanel window;
 
     private Progress progress;
     private double computedUpperBound = 0;
     private double uncertaintyFactor = UNCERTAINTY_FACTOR_MAX;
-    private String titleSuffix = TITLE_SUFFIX_DISABLED;
-    private String barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED_DISABLED;
+    private Consumer<Double> onClick;
 
-    @Inject
-    public ProgressPresenter(final EventBus eventBus, final ProgressView view) {
-        super(eventBus, view);
+    public ProgressBar() {
+        initWidget(BINDER.createAndBindUi(this));
+        track.addDomHandler(this::onTrackClick, ClickEvent.getType());
     }
 
-    /**
-     * The progress bar maintains state of the highest seen upper bound
-     * so that it can show the latest information about the source. This
-     * resets that state.
-     */
+    /// The bar keeps the highest upper bound it has seen, so that it shows the latest it knows of the
+    /// data; this forgets it.
     public void reset() {
         this.computedUpperBound = 0;
         this.uncertaintyFactor = UNCERTAINTY_FACTOR_MAX;
     }
 
+    /// @param progress Which section of the data is shown, of how much.
     public void setProgress(final Progress progress) {
         this.progress = progress;
         if (progress != null) {
@@ -69,34 +82,27 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         }
     }
 
-    /**
-     * @param valueConsumer A consumer of the value of the point on the progress bar
-     *                      that was clicked in the same units as used in {@link Progress}.
-     *                      valueConsumer will not be called if the current value of {@link Progress}
-     *                      has no upper bound.
-     */
-    public void setClickHandler(final Consumer<Double> valueConsumer) {
-
-        if (valueConsumer == null) {
-            getView().setClickHandler(null);
-            titleSuffix = TITLE_SUFFIX_DISABLED;
-            barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED_DISABLED;
-        } else {
-            getView().setClickHandler(percentage ->
-                    progress.getUpperBound()
-                            .map(upperBound ->
-                                    upperBound * percentage / 100)
-                            .ifPresent(valueConsumer));
-            titleSuffix = TITLE_SUFFIX;
-            barColourKnownBounded = BAR_COLOUR_KNOWN_BOUNDED;
-        }
+    /// @param onClick Told where on the track the user clicked, in the units of [Progress], to show
+    ///                the section there; not told while the data has no upper bound. Null for
+    ///                nothing, and a window that can't be moved.
+    public void setOnClick(final Consumer<Double> onClick) {
+        this.onClick = onClick;
+        track.setStyleName(CLICKABLE, onClick != null);
         if (progress != null) {
             update();
         }
     }
 
-    public void setVisible(final boolean isVisible) {
-        getView().setVisible(isVisible);
+    private void onTrackClick(final ClickEvent event) {
+        if (onClick != null && progress != null) {
+            // Zero based, as a percentage of the track, from 0 to 100
+            final double x = event.getX() - 1;
+            final double width = event.getRelativeElement().getOffsetWidth();
+            final double percentage = Math.max(0, Math.min(100, (x / width * 100)));
+            progress.getUpperBound()
+                    .map(upperBound -> upperBound * percentage / 100)
+                    .ifPresent(onClick);
+        }
     }
 
     private double getWindowSize() {
@@ -148,36 +154,40 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         final double rangeFromPct = getRangeFromPct();
         final double windowSizePct = getWindowAsPercentage();
 
-//        GWT.log("lowerBound: " + progress.getLowerBound()
-//                + " upperBound: " + progress.getUpperBound().orElse((double) -1)
-//                + " rangeFrom: " + progress.getRangeFromInc()
-//                + " rangeTo: " + progress.getRangeToInc()
-//                + " rangePct: " + rangeFromPct
-//                + " winddowPct: " + windowSizePct);
+        CssProperties.set(window.getElement(), "--progress-bar__from", rangeFromPct + "%");
+        CssProperties.set(window.getElement(), "--progress-bar__width", windowSizePct + "%");
 
-        getView().setRangeFromPct(rangeFromPct);
-        getView().setProgressPct(windowSizePct);
-
-        final String barColour;
+        final String state;
         final String title;
-        // TODO set colour via a style name
         if (progress.isComplete()) {
-            barColour = BAR_COLOUR_COMPLETE;
+            state = COMPLETE;
             title = "All data visible in the editor";
         } else if (progress.hasKnownUpperBound()) {
-            barColour = barColourKnownBounded;
+            state = onClick == null
+                    ? DISABLED
+                    : null;
             title = TITLE_PREFIX
                     + " ("
                     + formatPercentage(getWindowAsPercentage())
-                    + "%). " + titleSuffix;
+                    + "%). " + titleSuffix();
         } else {
-            barColour = BAR_COLOUR_UNKNOWN_BOUND;
+            state = UNBOUNDED;
             title = TITLE_PREFIX
                     + " (total size unknown). "
-                    + titleSuffix;
+                    + titleSuffix();
         }
-        getView().setProgressBarColour(barColour);
-        getView().setTitle(title);
+        for (final String modifier : new String[]{COMPLETE, DISABLED, UNBOUNDED}) {
+            window.setStyleName(modifier, modifier.equals(state));
+        }
+        track.setTitle(title);
+        window.setTitle(title);
+    }
+
+    // What the title says the user can do about the section shown
+    private String titleSuffix() {
+        return onClick == null
+                ? TITLE_SUFFIX_DISABLED
+                : TITLE_SUFFIX;
     }
 
     private String formatPercentage(final double percentage) {
@@ -195,22 +205,11 @@ public class ProgressPresenter extends MyPresenterWidget<ProgressView> {
         }
     }
 
-    public interface ProgressView extends View {
 
-        void setRangeFromPct(final double rangeFrom);
+    // --------------------------------------------------------------------------------
 
-        /**
-         * The progress % if working from the lower bound or the size of the sliding
-         * window as a % of the whole.
-         */
-        void setProgressPct(final double progress);
 
-        void setVisible(final boolean isVisible);
+    interface Binder extends UiBinder<Widget, ProgressBar> {
 
-        void setProgressBarColour(final String colour);
-
-        void setTitle(final String title);
-
-        void setClickHandler(final Consumer<Double> percentageConsumer);
     }
 }

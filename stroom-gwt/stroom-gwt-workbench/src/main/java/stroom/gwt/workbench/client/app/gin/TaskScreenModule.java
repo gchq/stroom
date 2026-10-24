@@ -18,10 +18,7 @@ package stroom.gwt.workbench.client.app.gin;
 
 import stroom.task.client.presenter.UserTaskManagerPresenter;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
-import stroom.task.client.presenter.UserTaskPresenter;
-import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.view.UserTaskManagerViewImpl;
-import stroom.task.client.view.UserTaskViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `TaskModule`
@@ -36,9 +33,6 @@ public class TaskScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(UserTaskManagerPresenter.class,
                 UserTaskManagerView.class,
                 UserTaskManagerViewImpl.class);
-        bindPresenterWidget(UserTaskPresenter.class,
-                UserTaskView.class,
-                UserTaskViewImpl.class);
     }
 }
 

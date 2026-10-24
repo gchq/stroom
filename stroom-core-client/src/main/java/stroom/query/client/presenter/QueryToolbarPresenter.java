@@ -42,7 +42,6 @@ public class QueryToolbarPresenter
         extends MyPresenterWidget<QueryToolbarView>
         implements
         QueryToolbarUiHandlers,
-        QueryUiHandlers,
         SearchStateListener,
         SearchErrorListener {
 
@@ -62,7 +61,7 @@ public class QueryToolbarPresenter
         super(eventBus, view);
         getView().setErrorsVisible(false);
         view.setUiHandlers(this);
-        view.getQueryButtons().setUiHandlers(this);
+        view.getQueryButtons().setOnStart(this::start);
     }
 
     @Override
@@ -130,8 +129,7 @@ public class QueryToolbarPresenter
         getView().setTimeRange(currentTimeRange);
     }
 
-    @Override
-    public void start() {
+    private void start() {
         onStart.run();
     }
 

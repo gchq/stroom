@@ -16,67 +16,41 @@
 
 package stroom.query.client;
 
-import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionOperator.Op;
-import stroom.widget.form.client.AccessibleName;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/// Edits an expression's operator (AND, OR, NOT) in place, as a term is edited. Its markup is
+/// `OperatorEditor.ui.xml`.
 public class OperatorEditor extends Composite {
 
-    private final FlowPanel layout;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    FlowPanel layout;
     // The row of its field
-    private final FlowPanel inner;
-    private final SelectionBox<Op> listBox;
+    @UiField
+    FlowPanel inner;
+    @UiField
+    SelectionBox<Op> listBox;
     private Operator operator;
     private boolean reading;
     private boolean editing;
-    private ExpressionUiHandlers uiHandlers;
-    private final EventBinder eventBinder = new EventBinder() {
-        @Override
-        protected void onBind() {
-            super.onBind();
-            registerHandler(listBox.addValueChangeHandler(event -> {
-                onChange();
-            }));
-        }
-    };
+    private Runnable onChange;
 
     public OperatorEditor() {
-        listBox = new SelectionBox<>();
-        AccessibleName.set(listBox, "Operator");
+        initWidget(BINDER.createAndBindUi(this));
         listBox.addItems(Op.values());
-
-        fixStyle(listBox, 55);
-
-        inner = new FlowPanel();
-        inner.setStyleName("termEditor-inner");
-        inner.add(listBox);
-
-        layout = new FlowPanel();
-        layout.add(inner);
-        layout.setVisible(false);
-        layout.setStyleName("termEditor-outer");
-
-        initWidget(layout);
-    }
-
-    @Override
-    protected void onLoad() {
-        super.onLoad();
-        eventBinder.bind();
-    }
-
-    @Override
-    protected void onUnload() {
-        super.onUnload();
-        eventBinder.unbind();
+        // Its own child's handler, which goes with it
+        listBox.addValueChangeHandler(event -> onChange());
     }
 
     public void startEdit(final Operator operator) {
@@ -114,8 +88,8 @@ public class OperatorEditor extends Composite {
     private void onChange() {
         if (!reading && operator != null) {
             operator.setOp(listBox.getValue());
-            if (uiHandlers != null) {
-                uiHandlers.onChange();
+            if (onChange != null) {
+                onChange.run();
             }
         }
     }
@@ -126,12 +100,17 @@ public class OperatorEditor extends Composite {
         return inner.getElement();
     }
 
-    public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+    /// @param onChange Run when the user changes the operator (which is changed in place), or null
+    ///                 for nothing.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
     }
 
-    private void fixStyle(final Widget widget, final int width) {
-        widget.addStyleName("termEditor-item");
-        widget.getElement().getStyle().setWidth(width, Unit.PX);
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, OperatorEditor> {
+
     }
 }

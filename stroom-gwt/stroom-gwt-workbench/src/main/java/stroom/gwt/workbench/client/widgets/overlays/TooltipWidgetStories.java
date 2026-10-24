@@ -26,8 +26,8 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -74,7 +74,7 @@ public final class TooltipWidgetStories {
         if (StoryArgs.getBoolean(args, VISIBLE, true)) {
             final StoryPopups popups = StoryPopups.create(context);
             final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(),
-                    new TooltipViewImpl());
+                    new InfoTooltip());
             final Long x = StoryArgs.getLong(args, X);
             final Long y = StoryArgs.getLong(args, Y);
             tooltipPresenter.show(args.getString(TEXT, ""), new PopupPosition(
@@ -91,7 +91,7 @@ public final class TooltipWidgetStories {
 
     private static Widget followsCursor(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new TooltipViewImpl());
+        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new InfoTooltip());
         final Label target = new Label("Hover me");
         final Style style = target.getElement().getStyle();
         style.setProperty("width", "240px");

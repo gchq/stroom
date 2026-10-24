@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.progress.client.presenter;
+package stroom.widget.progress.client;
 
 import java.util.Optional;
 

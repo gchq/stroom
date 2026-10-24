@@ -42,6 +42,7 @@
 @import url("floormap-icon-picker.css");
 @import url("histogram.css");
 @import url("stroom-dashboard.css");
+@import url("query-buttons.css");
 @import url("editor.css");
 @import url("scrollbar-metrics.css");
 @import url("editor-themes.css");
@@ -94,6 +95,9 @@
 @import url("form-group.css");
 @import url("settings-group.css");
 @import url("layer-container.css");
+@import url("progress-bar.css");
+@import url("user-task.css");
+@import url("main-toolbar.css");
 @import url("components.css");
 @import url("days-of-week.css");
 @import url("paging-bar.css");
@@ -101,6 +105,7 @@
 @import url("column-value-cell.css");
 @import url("link-button.css");
 @import url("dashboard.css");
+@import url("vis-toolbar-row.css");
 @import url("query-cell.css");
 @import url("flex-layout.css");
 @import url("xsdbrowser.css");

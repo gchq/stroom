@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  An expression operator's editor (TermEditor.css, as a term's): its row, holding the operator's
+  box. Hidden until an operator is edited.
+-->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel ui:field="layout" styleName="termEditor-outer" visible="false">
+        <g:FlowPanel ui:field="inner" styleName="termEditor-inner">
+            <i:SelectionBox ui:field="listBox" addStyleNames="termEditor-item operator" ariaLabel="Operator"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

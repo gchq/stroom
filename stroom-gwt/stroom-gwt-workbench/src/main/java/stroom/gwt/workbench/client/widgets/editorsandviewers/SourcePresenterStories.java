@@ -37,8 +37,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.shared.AppPermission;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.progress.client.component.ProgressBar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -179,11 +178,10 @@ public final class SourcePresenterStories {
     /// Creates the presenter and its views, as GIN would.
     static SourcePresenter sourcePresenter(final ScreenHarness harness) {
         final EventBus eventBus = harness.getEventBus();
-        final ProgressPresenter progressPresenter = new ProgressPresenter(
-                eventBus, new ProgressViewImpl(GWT.create(ProgressViewImpl.Binder.class)));
+        final ProgressBar progressBar = new ProgressBar();
         final CharacterNavigatorPresenter characterNavigatorPresenter = new CharacterNavigatorPresenter(
                 eventBus,
-                new ProgressPresenter(eventBus, new ProgressViewImpl(GWT.create(ProgressViewImpl.Binder.class))),
+                new ProgressBar(),
                 new CharacterNavigatorViewImpl(eventBus, GWT.create(CharacterNavigatorViewImpl.Binder.class)),
                 () -> new CharacterRangeSelectionPresenter(
                         eventBus,
@@ -195,7 +193,7 @@ public final class SourcePresenterStories {
                 new ClassificationWrapperViewImpl(
                         GWT.create(ClassificationWrapperViewImpl.Binder.class),
                         new ClassificationLabel(harness.getUiConfigCache())),
-                progressPresenter,
+                progressBar,
                 EditorWidgets.textPresenter(eventBus),
                 characterNavigatorPresenter,
                 harness.getUiConfigCache(),

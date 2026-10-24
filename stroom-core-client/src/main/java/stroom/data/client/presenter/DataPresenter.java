@@ -24,7 +24,7 @@ import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.HtmlPresenter;
+import stroom.editor.client.component.HtmlPane;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.AbstractFetchDataResult;
@@ -47,12 +47,12 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
-import stroom.widget.progress.client.presenter.Progress;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
+import stroom.widget.progress.client.Progress;
+import stroom.widget.progress.client.component.ProgressBar;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -69,6 +69,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -111,10 +112,12 @@ public class DataPresenter
 
     private final DataView dataView;
     private final ClassificationWrapperView classificationWrapperView;
-    private final HtmlPresenter htmlPresenter;
+    private final HtmlPane htmlPane;
+    // The pane as a layer of the data view, kept, as the container tells its layers apart by identity
+    private final ControllerLayer htmlLayer;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
-    private final ProgressPresenter progressPresenter;
+    private final ProgressBar progressBar;
     private final MarkerListPresenter markerListPresenter;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
@@ -157,30 +160,29 @@ public class DataPresenter
 
     @Inject
     public DataPresenter(final EventBus eventBus,
-                         final HtmlPresenter htmlPresenter,
+                         final HtmlPane htmlPane,
                          final ItemNavigatorPresenter itemNavigatorPresenter,
                          final DataView dataView,
                          final ClassificationWrapperView classificationWrapperView,
                          final TextPresenter textPresenter,
-                         final ProgressPresenter progressPresenter,
+                         final ProgressBar progressBar,
                          final MarkerListPresenter markerListPresenter,
                          final SourceTabPlugin sourceTabPlugin,
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, classificationWrapperView);
-        own(htmlPresenter);
         own(itemNavigatorPresenter);
         own(textPresenter);
-        own(progressPresenter);
         own(markerListPresenter);
         classificationWrapperView.setContent(dataView);
         this.dataView = dataView;
         this.classificationWrapperView = classificationWrapperView;
-        this.htmlPresenter = htmlPresenter;
+        this.htmlPane = htmlPane;
+        this.htmlLayer = new ControllerLayer(htmlPane);
         this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
-        this.progressPresenter = progressPresenter;
+        this.progressBar = progressBar;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
         this.uiConfigCache = uiConfigCache;
@@ -214,13 +216,13 @@ public class DataPresenter
                 openSourcePresenter());
         dataView.setSourceLinkVisible(true, true);
         dataView.setNavigatorView(itemNavigatorPresenter.getView());
-        dataView.setProgressView(progressPresenter.getView());
-        progressPresenter.setVisible(false);
+        dataView.setProgressView(progressBar);
+        progressBar.setVisible(false);
 
         own(dataView.getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
         own(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
-        own(htmlPresenter.getWidget().addDomHandler(e ->
+        own(htmlPane.addDomHandler(e ->
                 CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
@@ -296,7 +298,7 @@ public class DataPresenter
                 } else {
 //                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
-                    dataView.setProgressView(progressPresenter.getView());
+                    dataView.setProgressView(progressBar);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -380,7 +382,7 @@ public class DataPresenter
 
             final FetchDataResult fetchDataResult = (FetchDataResult) lastResult;
 
-            progressPresenter.setVisible(true);
+            progressBar.setVisible(true);
 
             // Don't want to confuse the user so the prog bar need to be based on the char/byte content,
             // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
@@ -390,7 +392,7 @@ public class DataPresenter
                 && dataRange.getOptByteOffsetFrom().isPresent()
                 && dataRange.getOptByteOffsetTo().isPresent()) {
                 // progress based on know byte size and byte offsets
-                progressPresenter.setProgress(Progress.boundedRange(
+                progressBar.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalBytes() - 1, // count to zero based bound
                         dataRange.getByteOffsetFrom(),
                         dataRange.getByteOffsetTo()));
@@ -399,22 +401,22 @@ public class DataPresenter
                        && dataRange.getCharOffsetFrom() != null
                        && dataRange.getCharOffsetTo() != null) {
                 // progress based on known char count and char offsets
-                progressPresenter.setProgress(Progress.boundedRange(
+                progressBar.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalCharacterCount().getCount() - 1, // count to zero based bound
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             } else if (dataRange.getCharOffsetFrom() != null
                        && dataRange.getCharOffsetTo() != null) {
                 // progress based on unknown char count and char offsets
-                progressPresenter.setProgress(Progress.unboundedRange(
+                progressBar.setProgress(Progress.unboundedRange(
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             } else {
                 dumpRangeInfo(fetchDataResult);
-                progressPresenter.setVisible(false);
+                progressBar.setVisible(false);
             }
         } else {
-            progressPresenter.setVisible(false);
+            progressBar.setVisible(false);
         }
     }
 
@@ -985,7 +987,7 @@ public class DataPresenter
 
     private void showHtmlPresenter() {
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        dataView.getLayerContainer().show(htmlPresenter);
+        dataView.getLayerContainer().show(htmlLayer);
     }
 
     private void showTextPresenter() {
@@ -1020,7 +1022,7 @@ public class DataPresenter
         } else {
             setNavigationControlsVisible(true);
             dataView.setSourceLinkVisible(true, true);
-            dataView.setProgressView(progressPresenter.getView());
+            dataView.setProgressView(progressBar);
             refreshProgressBar(result != null);
             itemNavigatorPresenter.refreshNavigator();
             refreshHighlights(result);
@@ -1082,7 +1084,7 @@ public class DataPresenter
         if (metaId != null && INFO_TAB_NAME.equals(lastTabName)) {
             fetchMetaInfoData(metaId);
         } else {
-            htmlPresenter.setHtml(null);
+            htmlPane.setHtml(null);
         }
     }
 
@@ -1193,9 +1195,9 @@ public class DataPresenter
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
-        htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
+        htmlPane.setHtml(htmlBuilder.toSafeHtml().asString());
 
-        OpenLinkUtil.addClickHandler(this, htmlPresenter.getWidget());
+        OpenLinkUtil.addClickHandler(this, htmlPane);
     }
 
     private SafeHtml toHtmlLineBreaks(final String key, final String value) {
@@ -1313,7 +1315,7 @@ public class DataPresenter
 
         void setNavigatorView(final ItemNavigatorView itemNavigatorView);
 
-        void setProgressView(final ProgressView progressView);
+        void setProgressView(IsWidget progressBar);
     }
 
 

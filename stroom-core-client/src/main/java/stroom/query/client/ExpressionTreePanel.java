@@ -299,7 +299,9 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
         if (operatorEditor != null) {
-            operatorEditor.setUiHandlers(uiHandlers);
+            operatorEditor.setOnChange(uiHandlers == null
+                    ? null
+                    : uiHandlers::onChange);
         }
         if (termEditor != null) {
             termEditor.setUiHandlers(uiHandlers);

@@ -37,10 +37,10 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.popup.client.component.NameDialogController;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.popup.client.presenter.TextBoxPopup;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -65,7 +65,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
 
     private final RestFactory restFactory;
     private final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter;
-    private final Provider<TextBoxPopup> textBoxPopupProvider;
+    private final Provider<NameDialogController> nameDialogProvider;
     private List<TabSession> userTabSessions;
 
     private final AppRoot appRoot;
@@ -74,13 +74,13 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
     public TabSessionManager(final EventBus eventBus,
                              final RestFactory restFactory,
                              final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter,
-                             final Provider<TextBoxPopup> textBoxPopupProvider,
+                             final Provider<NameDialogController> nameDialogProvider,
                              final AppRoot appRoot) {
         super(eventBus);
         this.appRoot = appRoot;
         this.restFactory = restFactory;
         this.tabSessionChooserPresenter = tabSessionChooserPresenter;
-        this.textBoxPopupProvider = textBoxPopupProvider;
+        this.nameDialogProvider = nameDialogProvider;
 
         getEventBus().addHandler(OpenTabSessionEvent.getType(),
                 event -> {
@@ -94,8 +94,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory {
                         chooseTabSessionThenAccept("Select Tab Session To Delete:", this::delete));
 
         getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
-            final TextBoxPopup textBoxPopup = appRoot.makeDialog(textBoxPopupProvider);
-            textBoxPopup.show("Save New Tab Session", sessionName -> {
+            nameDialogProvider.get().show(appRoot, "Save New Tab Session", null, sessionName -> {
                 if (contains(userTabSessions, sessionName)) {
                     ConfirmEvent.fire(this,
                             "You are going to overwrite an existing tab session. Do you wish to continue?",

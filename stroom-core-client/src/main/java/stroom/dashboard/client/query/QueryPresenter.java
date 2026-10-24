@@ -53,7 +53,6 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
-import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
@@ -168,16 +167,7 @@ public class QueryPresenter
         fieldSelectionBoxModel.setTaskMonitorFactory(this);
 
         view.setExpressionView(expressionPresenter.getView());
-        view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
-            @Override
-            public void start() {
-                if (searchModel.isSearching()) {
-                    QueryPresenter.this.stop();
-                } else {
-                    QueryPresenter.this.promptAndStart();
-                }
-            }
-        });
+        view.getQueryButtons().setOnStart(this::onRunPressed);
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
@@ -578,6 +568,15 @@ public class QueryPresenter
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
         this.queryOnOpen = queryOnOpen;
+    }
+
+    // The run button: stops the query while it runs, else runs it
+    private void onRunPressed() {
+        if (searchModel.isSearching()) {
+            stop();
+        } else {
+            promptAndStart();
+        }
     }
 
     private void promptAndStart() {

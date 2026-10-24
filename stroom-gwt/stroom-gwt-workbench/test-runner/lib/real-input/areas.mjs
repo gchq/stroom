@@ -29,7 +29,7 @@ function area(page) {
     if (!active || active === document.body) {
       return null;
     }
-    if (active.closest('.mainToolbar')) {
+    if (active.closest('.main-toolbar')) {
       return 'toolbar';
     }
     // The explorer at its tree, and the content in its open document (not the tabs above it)

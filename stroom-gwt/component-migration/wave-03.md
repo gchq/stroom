@@ -4,6 +4,8 @@ Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review
 
 Move the tab-bar family to setOnSelect/setOnClose/setOnMenu, give the dialog chrome and its button bars templates and no-arg constructors (deleting the four Resizable*Content copies), and convert the presenter/view pairs that hold no logic into components. PagerView and PagerViewWithHeading become components; their callers move later.
 
+**Status: done 24 October 2026; see the wave's section in `../COMPONENT_MIGRATION_ORDER.md` for what was done and what was left.**
+
 ## Decided before starting (24 October 2026)
 
 - **No merging.** `Dialog` and `ResizableDialog` stay two units, each converted on its own: they differ in about 290 lines (resizing, sizes, their own templates) and already share what they have in common (`DialogWindow`, `DialogFocusTrap`, `AbstractPopupPanel`); anything more found in common goes into a helper, not a flag. The dialogs' button bars stay four small components (`OkCancelContent`, `CloseContent`, `AcceptRejectContent`, `CreateOkCancelContent`), not one bar with an action set; what goes is the four `Resizable*Content` classes, which are copies of the first three (and of the create one's only user), differing only in their names.

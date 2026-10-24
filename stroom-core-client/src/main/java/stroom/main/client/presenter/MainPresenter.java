@@ -49,7 +49,6 @@ import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.Timer;
@@ -60,9 +59,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class MainPresenter
-        extends MyPresenterWidget<MainPresenter.MainView>
-        implements MainUiHandlers {
+public class MainPresenter extends MyPresenterWidget<MainPresenter.MainView> {
 
     private final Timer refreshTimer;
     private boolean click;
@@ -87,7 +84,8 @@ public class MainPresenter
         // The content first: the view lays the explorer out beside it
         view.setContentView(own(contentTabPane).getView());
         view.setExplorerView(own(navigation).getView());
-        view.getMainToolBar().setMainUiHandlers(this);
+        view.getMainToolBar().setOnShowMenu(this::showMenu);
+        view.getMainToolBar().setOnShowAi(() -> ShowAskStroomAiEvent.fire(this, !showingAi));
 
         // Handle key presses
         RootPanel.get().addDomHandler(globalKeyHandler::onKeyDown, KeyDownEvent.getType());
@@ -214,8 +212,8 @@ public class MainPresenter
         }
     }
 
-    @Override
-    public void showMenu(final NativeEvent event, final Element target) {
+    // The main menu, below its button
+    private void showMenu(final Element target) {
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteRight(),
                 target.getAbsoluteBottom());
         showMenuItems(
@@ -240,11 +238,6 @@ public class MainPresenter
                     .opener(autoHidePartner)
                     .fire(this);
         }
-    }
-
-    @Override
-    public void showAi(final NativeEvent event, final Element target) {
-        ShowAskStroomAiEvent.fire(this, !showingAi);
     }
 
     private void startAutoRefresh() {

@@ -28,8 +28,8 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Style;
@@ -97,7 +97,7 @@ public final class TooltipStories {
                                        final String tooltip,
                                        final PopupLocation location) {
         final Button button = button(text);
-        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new TooltipViewImpl());
+        final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new InfoTooltip());
         final boolean[] showing = {false};
         button.addDomHandler(event -> {
             if (!showing[0]) {

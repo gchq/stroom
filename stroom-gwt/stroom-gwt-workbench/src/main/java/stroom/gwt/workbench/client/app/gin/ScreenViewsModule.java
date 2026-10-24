@@ -30,9 +30,6 @@ import stroom.editor.client.view.EditorViewImpl;
 import stroom.editor.client.view.SingleLineEditorViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
-import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
-import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.ExpressionTreeViewImpl;
@@ -62,17 +59,11 @@ import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
-import stroom.widget.popup.client.presenter.TextBoxPopup;
-import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
-import stroom.widget.popup.client.view.TextBoxViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tab.client.view.LinkTabsLayoutViewImpl;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
 /// The views and small presenters that Stroom binds for every screen, copied from Stroom's
 /// `AppModule` and the shared widgets that other Stroom modules (e.g. `StreamStoreModule`) bind,
@@ -93,11 +84,8 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
-        bindPresenterWidget(TextBoxPopup.class, TextBoxView.class, TextBoxViewImpl.class);
         // AppModule: menus and tool tips
         bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
-        bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
-        bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
 
         // SecurityModule
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);

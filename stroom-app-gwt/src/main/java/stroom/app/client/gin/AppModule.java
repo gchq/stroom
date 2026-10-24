@@ -59,10 +59,7 @@ import stroom.explorer.client.view.TabSessionChooserViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
-import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
-import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.main.client.presenter.GlobalKeyHandlerImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainView;
@@ -78,15 +75,9 @@ import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
-import stroom.widget.popup.client.presenter.TextBoxPopup;
-import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
-import stroom.widget.popup.client.view.TextBoxViewImpl;
 import stroom.widget.presenter.client.gin.AbstractPresenterModule;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.inject.Singleton;
@@ -130,10 +121,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(ContentTabPanePresenter.class);
 
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
-
-        bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
-
-        bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
 
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
@@ -172,7 +159,5 @@ public class AppModule extends AbstractPresenterModule {
         bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         bindSharedView(TabSessionChooserView.class, TabSessionChooserViewImpl.class);
-
-        bindPresenterWidget(TextBoxPopup.class, TextBoxView.class, TextBoxViewImpl.class);
     }
 }

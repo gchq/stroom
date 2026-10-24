@@ -18,8 +18,8 @@ package stroom.query.client.presenter;
 
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.component.HtmlPane;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -39,6 +39,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -55,7 +56,6 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //    private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final Provider<EditorPresenter> rawPresenterProvider;
-    private final Provider<HtmlPresenter> htmlPresenterProvider;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private List<FetchDataRequest> fetchDataQueue;
@@ -67,7 +67,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 //    private boolean playButtonVisible;
 
     private EditorPresenter rawPresenter;
-    private HtmlPresenter htmlPresenter;
+    private HtmlPane htmlPane;
 
     private boolean isHtml;
 
@@ -78,12 +78,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
     public TextPresenter(final EventBus eventBus,
                          final TextView view,
                          final Provider<EditorPresenter> rawPresenterProvider,
-                         final Provider<HtmlPresenter> htmlPresenterProvider,
                          final RestFactory restFactory,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.rawPresenterProvider = rawPresenterProvider;
-        this.htmlPresenterProvider = htmlPresenterProvider;
         this.restFactory = restFactory;
         this.securityContext = securityContext;
 
@@ -114,10 +112,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
             getView().setClassification(classification);
             if (isHtml) {
-                initHtmlPresenter();
+                initHtmlPane();
 
-                getView().setContent(htmlPresenter.getView());
-                htmlPresenter.setHtml(data);
+                getView().setContent(htmlPane);
+                htmlPane.setHtml(data);
             } else {
                 initRawPresenter();
 
@@ -172,10 +170,10 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         }
     }
 
-    private void initHtmlPresenter() {
-        if (htmlPresenter == null) {
-            htmlPresenter = make(htmlPresenterProvider);
-            htmlPresenter.getWidget().addDomHandler(event -> {
+    private void initHtmlPane() {
+        if (htmlPane == null) {
+            htmlPane = new HtmlPane();
+            htmlPane.addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");
                 if (link != null) {
@@ -739,7 +737,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {
 
-        void setContent(View view);
+        void setContent(IsWidget content);
 
         void setClassification(String classification);
 

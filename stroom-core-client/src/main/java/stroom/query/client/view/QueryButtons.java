@@ -16,11 +16,9 @@
 
 package stroom.query.client.view;
 
-import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.core.client.GWT;
@@ -31,48 +29,55 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+/// A query's run button: Execute Query (Ctrl+Enter), which becomes Stop Query (Escape) while the
+/// query runs. The BEM block `query-buttons` (`query-buttons.css`), its markup `QueryButtons.ui.xml`.
 public class QueryButtons
         extends Composite
-        implements HasUiHandlers<QueryUiHandlers>, SearchStateListener {
+        implements SearchStateListener {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String PLAY = "query-buttons__button--play";
+    private static final String STOP = "query-buttons__button--stop";
 
     @UiField
     ToolbarButton start;
 
-    private QueryUiHandlers uiHandlers;
+    private Runnable onStart;
 
     public QueryButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        start.setSvg(SvgImage.PLAY);
-        // Ctrl+Enter runs a dashboard's or a query's search, as the button does
-        start.setShortcut(Action.OK);
     }
 
-    @Override
-    public void setUiHandlers(final QueryUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+    /// @param onStart Run when the button is pressed, to run the query or, while it runs, to stop it,
+    ///                or null for nothing.
+    public void setOnStart(final Runnable onStart) {
+        this.onStart = onStart;
     }
 
     @UiHandler("start")
     public void onStartClick(final ClickEvent event) {
-        if (uiHandlers != null) {
-            uiHandlers.start();
+        if (onStart != null) {
+            onStart.run();
         }
     }
 
     @Override
     public void onSearching(final boolean searching) {
+        setSearching(searching);
+    }
+
+    /// Shows whether the query is running: the button stops it while it does.
+    ///
+    /// @param searching Whether the query is running.
+    public void setSearching(final boolean searching) {
+        start.setStyleName(STOP, searching);
+        start.setStyleName(PLAY, !searching);
         if (searching) {
-            start.addStyleName("QueryButtons-button stop");
-            start.removeStyleName("QueryButtons-button play");
             start.setSvg(SvgImage.STOP);
             // Escape stops a dashboard's or a query's search, as Ctrl+Enter starts it
             start.setShortcut(Action.CLOSE);
             start.setTitle("Stop Query");
         } else {
-            start.addStyleName("QueryButtons-button play");
-            start.removeStyleName("QueryButtons-button stop");
             start.setSvg(SvgImage.PLAY);
             start.setShortcut(Action.OK);
             start.setTitle("Execute Query");
@@ -87,7 +92,7 @@ public class QueryButtons
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, QueryButtons> {
+    interface Binder extends UiBinder<Widget, QueryButtons> {
 
     }
 }

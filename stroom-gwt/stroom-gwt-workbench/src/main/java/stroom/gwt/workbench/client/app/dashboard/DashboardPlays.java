@@ -46,7 +46,7 @@ final class DashboardPlays {
     static final String SPLITTER = ".flex-layout__splitter";
 
     /// A Query component's own Execute Query button.
-    static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
+    static final String QUERY_RUN_BUTTON = ".QueryViewImpl .query-buttons__button";
 
     /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
     static final String DESIGN_MODE = "Design Mode";

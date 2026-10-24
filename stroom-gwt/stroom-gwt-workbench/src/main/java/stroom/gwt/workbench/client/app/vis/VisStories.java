@@ -219,7 +219,7 @@ public final class VisStories {
     // The toolbar row (its pause button and any buttons it asked for) is above the visualisation,
     // not over what it draws
     private static void expectToolbarAbove(final Play play, final Query frame) {
-        final Query toolbarRow = play.screen().querySelector(".visToolbarRow");
+        final Query toolbarRow = play.screen().querySelector(".vis-toolbar-row");
         play.expect("the toolbar row's bottom less the visualisation's top",
                 () -> toolbarRow.bottom().get() - frame.top().get()).toBeLessThanOrEqual(0);
     }

@@ -33,8 +33,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.iframe.client.component.IFrame;
 import stroom.iframe.client.presenter.IFramePresenter;
-import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.GWT;
@@ -163,7 +163,7 @@ public final class MarkdownEditorStories {
                 eventBus,
                 new MarkdownPreviewViewImpl(GWT.create(MarkdownPreviewViewImpl.Binder.class)),
                 EditorWidgets.editorPresenter(eventBus),
-                new IFramePresenter(eventBus, new IFrameViewImpl()),
+                new IFramePresenter(eventBus, new IFrame()),
                 harness.getUiConfigCache(),
                 userPreferencesManager,
                 markdownConverter);
@@ -172,7 +172,7 @@ public final class MarkdownEditorStories {
                 new MarkdownEditViewImpl(GWT.create(MarkdownEditViewImpl.Binder.class)),
                 previewPresenter,
                 EditorWidgets.editorPresenter(eventBus),
-                new IFramePresenter(eventBus, new IFrameViewImpl()),
+                new IFramePresenter(eventBus, new IFrame()),
                 harness.getUiConfigCache(),
                 userPreferencesManager,
                 markdownConverter);

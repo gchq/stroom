@@ -21,19 +21,15 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.progress.client.presenter.Progress;
-import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.view.ProgressViewImpl;
+import stroom.widget.progress.client.Progress;
+import stroom.widget.progress.client.component.ProgressBar;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's [ProgressPresenter] (with [ProgressViewImpl]), the sliding window
-/// progress bar of the source editor.
+/// Stories for Stroom's [ProgressBar], the sliding window progress bar of the source editor.
 public final class ProgressBarStories {
 
     private static final String ON_CLICK = "onClick";
@@ -51,40 +47,39 @@ public final class ProgressBarStories {
         registry.component("Widgets/Feedback/ProgressBar", ProgressBarStories.class)
                 .layout(StoryLayout.PADDED)
                 // A simple percentage progress bar at 65% (not clickable, so in the disabled colour)
-                .story("Basic", context -> width400(progressBar(Progress.simplePercentage(65.0)).getWidget()))
+                .story("Basic", context -> width400(progressBar(Progress.simplePercentage(65.0))))
                 // A sliding window: showing 200-350 of a 0-1000 range
                 .story("SlidingWindow", context -> width400(
-                        progressBar(Progress.boundedRange(1000.0, 200.0, 350.0)).getWidget()))
+                        progressBar(Progress.boundedRange(1000.0, 200.0, 350.0))))
                 // Clickable: click to move the visible window; the clicked % is shown
                 .story("Clickable", ProgressBarStories::clickable)
                 // Complete: the full range is visible, shown green
                 .story("Complete", context -> width400(
-                        progressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0)).getWidget()));
+                        progressBar(Progress.boundedRange(0.0, 100.0, 0.0, 100.0))));
     }
 
     private static Widget clickable(final StoryContext context) {
-        final ProgressPresenter presenter = progressBar(Progress.boundedRange(CLICKABLE_UPPER_BOUND, 100.0, 200.0));
+        final ProgressBar bar = progressBar(Progress.boundedRange(CLICKABLE_UPPER_BOUND, 100.0, 200.0));
         final Label display = new Label("Click the bar…");
         display.getElement().getStyle().setProperty("marginTop", "8px");
         display.getElement().getStyle().setProperty("fontSize", "12px");
         final Spy onClick = context.fn(ON_CLICK);
         // Stroom's click handler is given the clicked position in the progress's units (here
         // 0-500), not a percentage, so it is turned back into one
-        presenter.setClickHandler(value -> {
+        bar.setOnClick(value -> {
             final double percentage = value / CLICKABLE_UPPER_BOUND * 100;
             onClick.call(percentage);
             display.setText("Clicked at " + NumberFormat.getFormat("0.0").format(percentage) + "%");
         });
-        final FlowPanel panel = width400(presenter.getWidget());
+        final FlowPanel panel = width400(bar);
         panel.add(display);
         return panel;
     }
 
-    private static ProgressPresenter progressBar(final Progress progress) {
-        final ProgressPresenter presenter = new ProgressPresenter(new SimpleEventBus(),
-                new ProgressViewImpl(GWT.create(ProgressViewImpl.Binder.class)));
-        presenter.setProgress(progress);
-        return presenter;
+    private static ProgressBar progressBar(final Progress progress) {
+        final ProgressBar bar = new ProgressBar();
+        bar.setProgress(progress);
+        return bar;
     }
 
     /// `<div style={{width: 400}}>`.

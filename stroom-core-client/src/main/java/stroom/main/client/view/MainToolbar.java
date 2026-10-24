@@ -16,12 +16,12 @@
 
 package stroom.main.client.view;
 
-import stroom.main.client.presenter.MainUiHandlers;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -29,6 +29,10 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.function.Consumer;
+
+/// The main toolbar: the busy spinner, the Ask Stroom AI toggle and the main menu's button. Its markup
+/// is `MainToolbar.ui.xml`.
 public class MainToolbar extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -40,7 +44,8 @@ public class MainToolbar extends Composite {
     @UiField
     ToolbarToggleButton showAi;
 
-    private MainUiHandlers mainUiHandlers;
+    private Consumer<Element> onShowMenu;
+    private Runnable onShowAi;
 
     public MainToolbar() {
         initWidget(BINDER.createAndBindUi(this));
@@ -54,25 +59,36 @@ public class MainToolbar extends Composite {
         return showAi;
     }
 
-    public void setMainUiHandlers(final MainUiHandlers mainUiHandlers) {
-        this.mainUiHandlers = mainUiHandlers;
+    /// @param onShowMenu Told the main menu's button when it is pressed, to show the menu below it,
+    ///                   or null for nothing.
+    public void setOnShowMenu(final Consumer<Element> onShowMenu) {
+        this.onShowMenu = onShowMenu;
+    }
+
+    /// @param onShowAi Run when the Ask Stroom AI toggle is pressed, or null for nothing.
+    public void setOnShowAi(final Runnable onShowAi) {
+        this.onShowAi = onShowAi;
     }
 
     @UiHandler("menu")
     void onMenu(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event) && mainUiHandlers != null) {
-            mainUiHandlers.showMenu(event.getNativeEvent(), menu.getElement());
+        if (MouseUtil.isPrimary(event) && onShowMenu != null) {
+            onShowMenu.accept(menu.getElement());
         }
     }
 
     @UiHandler("showAi")
     void onShowAi(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event) && mainUiHandlers != null) {
-            mainUiHandlers.showAi(event.getNativeEvent(), menu.getElement());
+        if (MouseUtil.isPrimary(event) && onShowAi != null) {
+            onShowAi.run();
         }
     }
 
-    public interface Binder extends UiBinder<Widget, MainToolbar> {
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, MainToolbar> {
 
     }
 }

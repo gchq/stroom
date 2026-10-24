@@ -21,7 +21,6 @@ import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.presenter.client.LayerContainer;
 import stroom.widget.presenter.client.ViewImpl;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -33,6 +32,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -129,9 +129,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
-    public void setProgressView(final ProgressView progressView) {
-        if (progressView != null) {
-            progressBarPanel.setWidget(progressView.asWidget());
+    public void setProgressView(final IsWidget progressBar) {
+        if (progressBar != null) {
+            progressBarPanel.setWidget(progressBar.asWidget());
         } else {
             progressBarPanel.clear();
         }

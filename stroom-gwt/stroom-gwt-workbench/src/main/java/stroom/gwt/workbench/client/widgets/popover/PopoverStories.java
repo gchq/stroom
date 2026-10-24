@@ -24,8 +24,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.tooltip.client.component.InfoTooltip;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.view.TooltipViewImpl;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -54,7 +54,7 @@ public final class PopoverStories {
                     final Spy onClose = context.fn(ON_CLOSE);
                     final StoryPopups popups = StoryPopups.create(context);
                     final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(),
-                            new TooltipViewImpl());
+                            new InfoTooltip());
                     popups.addCleanUp(popups.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
                         if (event.getPresenterWidget() == tooltipPresenter) {
                             onClose.call();

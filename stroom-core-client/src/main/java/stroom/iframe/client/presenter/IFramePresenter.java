@@ -16,47 +16,71 @@
 
 package stroom.iframe.client.presenter;
 
-import stroom.widget.presenter.client.HasUiHandlers;
+import stroom.iframe.client.component.IFrame;
+import stroom.iframe.client.component.IFrame.SandboxOption;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
-public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
-        implements IFrameLoadUiHandlers {
+import java.util.Objects;
 
+/// Shows a page in an [IFrame], e.g. a link's page as a dialog or a document's Documentation tab,
+/// and follows the page's title, which names the dialog or tab. A thin presenter over the
+/// component, kept while a dialog that renames itself (`RenamePopupEvent`) needs one.
+public class IFramePresenter extends MyPresenterWidget<View> {
+
+    private static final String DEFAULT_TITLE = "Loading...";
+
+    private final IFrame frame;
     private Runnable onTitleChange = () -> {
     };
+    private boolean updateTitle = true;
+    private String lastTitle = DEFAULT_TITLE;
+    private String customTitle;
 
     @Inject
-    public IFramePresenter(final EventBus eventBus, final IFrameView view) {
-        super(eventBus, view);
-        view.setUiHandlers(this);
-        // Stops the view's title poll, which would otherwise run every second, and keep this, for
-        // the life of the page (e.g. a closed document's Documentation tab)
+    public IFramePresenter(final EventBus eventBus, final IFrame frame) {
+        super(eventBus, frame::asWidget);
+        this.frame = frame;
+        // Reads the page's title every second until it is closed (or given a title of its own)
+        Scheduler.get().scheduleFixedDelay(this::readTitle, 1000);
+        // Stops the poll, which would otherwise run, and keep this, for the life of the page (e.g. a
+        // closed document's Documentation tab)
         onDispose(this::close);
     }
 
+    // Tells the owner when the page's title changes; false once the poll is no longer wanted
+    private boolean readTitle() {
+        final String title = frame.getPageTitle();
+        if (title != null && !title.trim().isEmpty() && !Objects.equals(lastTitle, title)) {
+            lastTitle = title;
+            onTitleChange.run();
+        }
+        return updateTitle && customTitle == null;
+    }
+
     public void setId(final String id) {
-        getView().setId(id);
+        frame.setId(id);
     }
 
     public void setUrl(final String url) {
-        getView().setUrl(url);
+        lastTitle = url;
+        frame.setUrl(url);
     }
 
     public void setSrcDoc(final String html) {
-        getView().setSrcDoc(html);
+        frame.setSrcDoc(html);
     }
 
     public void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions) {
-        getView().setSandboxEnabled(isEnabled, sandboxOptions);
+        frame.setSandboxEnabled(isEnabled, sandboxOptions);
     }
 
     public void setCustomTitle(final String customTitle) {
-        getView().setCustomTitle(customTitle);
+        this.customTitle = customTitle;
     }
 
     /// Names the frame for assistive technology, which announces a frame by its `title` (WCAG
@@ -64,113 +88,21 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     ///
     /// @param name The frame's name, e.g. `Preview`.
     public void setAccessibleName(final String name) {
-        getView().setAccessibleName(name);
+        frame.setAccessibleName(name);
     }
 
     public String getLabel() {
-        return getView().getTitle();
+        return customTitle != null
+                ? customTitle
+                : lastTitle;
     }
 
     public void close() {
-        getView().cleanup();
-    }
-
-    @Override
-    public void onTitleChange(final String title) {
-        onTitleChange.run();
+        updateTitle = false;
     }
 
     /// @param onTitleChange What to run when the page shown changes its title.
     public void setOnTitleChange(final Runnable onTitleChange) {
         this.onTitleChange = onTitleChange;
-    }
-
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface IFrameView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
-
-        void setId(String id);
-
-        void setUrl(String url);
-
-        void setSrcDoc(final String html);
-
-        void setSandboxEnabled(final boolean isEnabled, final SandboxOption... sandboxOptions);
-
-        void setCustomTitle(String customTitle);
-
-        /// Names the frame for assistive technology (its `title` attribute).
-        ///
-        /// @param name The frame's name.
-        void setAccessibleName(String name);
-
-        String getTitle();
-
-        void cleanup();
-    }
-
-    // --------------------------------------------------------------------------------
-
-    /**
-     * The possible values for the sandbox iframe attribute. Multiple options may be used.
-     */
-    public enum SandboxOption {
-        /**
-         * Allows form submission
-         */
-        ALLOW_FORMS("allow-forms"),
-        /**
-         * Allows to open modal windows
-         */
-        ALLOW_MODALS("allow-modals"),
-        /**
-         * Allows to lock the screen orientation
-         */
-        ALLOW_ORIENTATION_LOCK("allow-orientation-lock"),
-        /**
-         * Allows to use the Pointer Lock API
-         */
-        ALLOW_POINTER_LOCK("allow-pointer-lock"),
-        /**
-         * Allows popups
-         */
-        ALLOW_POPUPS("allow-popups"),
-        /**
-         * Allows popups to open new windows without inheriting the sandboxing
-         */
-        ALLOW_POPUPS_TO_ESCAPE_SANDBOX("allow-popups-to-escape-sandbox"),
-        /**
-         * Allows to start a presentation session
-         */
-        ALLOW_PRESENTATION("allow-presentation"),
-        /**
-         * Allows the iframe content to be treated as being from the same origin
-         */
-        ALLOW_SAME_ORIGIN("allow-same-origin"),
-        /**
-         * Allows to run scripts
-         */
-        ALLOW_SCRIPTS("allow-scripts"),
-        /**
-         * Allows the iframe content to navigate its top-level browsing context
-         */
-        ALLOW_TOP_NAVIGATION("allow-top-navigation"),
-        /**
-         * Allows the iframe content to navigate its top-level browsing context, but only if initiated by user
-         */
-        ALLOW_TOP_NAVIGATION_BY_USER_ACTIVATION("allow-top-navigation-by-user-activation");
-
-        private final String option;
-
-        SandboxOption(final String option) {
-            this.option = option;
-        }
-
-        public String getOption() {
-            return option;
-        }
     }
 }

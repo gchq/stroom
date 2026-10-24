@@ -75,56 +75,6 @@
     margin-top: 0;
 }
 
-/* The task's details, taking the width, then its terminate button */
-.userTaskView-layout {
-    position: relative;
-    width: 100%;
-    display: flex;
-    border-bottom: 1px solid grey;
-}
-
-.userTaskView-details {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 5px 8px;
-}
-
-.userTaskView-terminateCell {
-    flex: 0 0 auto;
-    align-self: center;
-    padding: 5px 8px;
-}
-
-.userTaskView-layout .gwt-Label {
-	white-space: normal;
-}
-
-.gwt-Button.userTaskView-terminate {
-	width: 12px;
-	height: 12px;
-	background-size: contain;
-	background-position-x: 0;
-	background-position-y: 0;
-	background-color: transparent !important;
-	background-repeat: no-repeat;
-	border-radius: 0;
-	border: none !important;
-	opacity: 0.8;
-}
-
-.gwt-Button.userTaskView-terminate svg {
-	width: 12px;
-	height: 12px;
-	color: red;
-}
-
-.gwt-Button.userTaskView-terminate:hover {
-	opacity: 1;
-}
-
-.userTaskView-taskName {
-	font-weight: bold;
-}
 /*
 .entityTreeView-nameFilter {
     width: 100%;
@@ -802,21 +752,6 @@
     overflow: hidden;
 }
 
-/* At the top right, as high as the tab bar's row (less its border) with its buttons centred in it,
-   leaving room around them for their focus rings, which the page would otherwise cut off */
-.mainToolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 1;
-    height: 33px;
-    padding: 0 4px 0 0;
-    box-sizing: border-box;
-    display: flex;
-    gap: 0;
-    align-items: center;
-}
-
 /* The tasks, scrolling in a rounded frame */
 .userTaskManagerViewImpl-layout {
     width: 400px;
@@ -825,33 +760,6 @@
     border-radius: .25rem;
     background-color: var(--content-box__background-color);
     overflow: hidden;
-}
-
-.progressViewImpl-progressBarContainer {
-    position: relative;
-    height: 10px;
-    padding: 2px;
-}
-
-.progressViewImpl-progressBarOuter {
-    position: relative;
-    background-color: var(--control__background-color);
-    width: 100%;
-    height: 100%;
-    border-style: solid;
-    border-width: 1px;
-    border-color: var(--control__border-color);
-    border-radius: .25rem;
-    overflow: hidden;
-}
-
-.progressViewImpl-progressBarInner {
-    position: absolute;
-    background-color: #1e88e5;
-    height: 100%;
-    min-width: 3px;
-    border: 1px solid var(--page__background-color);
-    border-radius: .25rem;
 }
 
 .solrIndexFieldListViewImpl-synchState {

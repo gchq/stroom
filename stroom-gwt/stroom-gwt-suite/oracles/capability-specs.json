@@ -3159,7 +3159,7 @@
    ],
    "embeds": [
     "EditorPresenter",
-    "HtmlPresenter"
+    "HtmlPane"
    ],
    "viaChildren": [],
    "popupTypes": [],
@@ -3327,7 +3327,7 @@
     "MyPresenterWidget"
    ],
    "embeds": [
-    "HtmlPresenter",
+    "HtmlPane",
     "TextPresenter",
     "ItemNavigatorPresenter",
     "ProgressPresenter",
