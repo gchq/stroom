@@ -163,13 +163,14 @@ Stroom expects Java 25 (Eclipse Temurin)
 A new GWT screen, dialog or tab is a **component** and a **controller**, not a presenter (`MyPresenterWidget`).
 The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md` ("Components, controllers and models"); the receipt rules (`stroom.receive.rules.client.component`) and the analytic notification's stream destination (`stroom.analytics.client.component`) are worked examples.
 
-* **A component is dumb.** `Foo.java`, extending `stroom.widget.component.client.Component`, and its UiBinder template `Foo.ui.xml` (next to the Java in `stroom-core-client`; under `src/main/resources`, same package, in `stroom-core-client-widget`), with a `Binder` interface at the bottom of the class and a public no-arg constructor, so templates can use it and GIN can make it with no binding.
-  It holds the widgets, the layout, Stroom's CSS class names, ARIA roles and labels, and the visible text, in plain English, in the template wherever it can.
+* **A component is dumb.** `Foo.java`, extending `stroom.widget.component.client.Component`, and its UiBinder template `Foo.ui.xml` beside it (in `src/main/java`, in every module), with a `Binder` interface at the bottom of the class and a public no-arg constructor, so templates can use it and GIN can make it with no binding.
+  Its template holds everything that doesn't change at runtime: the layout, Stroom's CSS class names, ARIA roles and labels, and the visible text, in plain English; components it uses are declared there, not made in Java.
+  No inline styles: a fixed style is a Stroom CSS class (an existing one first), and a value known only at runtime is a CSS custom property (`--column-width`) that a class uses.
   Data comes in through setters named for what they do (`setRules(rules)`, `setName(name)`), events go out through one callback each (`setOnChange(Runnable)`), and a set of actions is one enum with one callback (`setOnAction(Consumer<RuleAction>)`) and `setAvailableActions(...)`.
   Repetition and conditions are in its Java (`setRules` adds a row per rule; `setVisible`).
   It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
 
-* **A controller wires it.** `FooController.java`, beside it, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.
+* **A controller wires it.** `FooController.java`, beside it in the area's `client.component` package, extending `stroom.widget.component.client.Controller`, is given its component and everything else in its `@Inject` constructor (no module binding), calls `initWidget(view)`, fills it, sets its callbacks and does the work: REST calls, the bus, context, dialogs, validation.
   Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller.
   Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
 
@@ -209,7 +210,9 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
   A presenter shows a child presenter through a setter on its view (`getView().setListView(listPresenter.getView())`); there are no slots.
   There is no code splitting: everything is in the initial download.
 
-* **Test it.** A `Composite` can't be made on the JVM, so components and controllers are tested with workbench stories: give each screen stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+* **Converting a presenter.** Follow the wave order and "Done means, for every unit" in `stroom-gwt/COMPONENT_MIGRATION_ORDER.md`: `FooPresenter`, `FooView`, `FooViewImpl` and `FooUiHandlers` become `Foo` and `FooController` in `<area>.client.component`, `FooViewImpl.ui.xml` becomes `Foo.ui.xml`, the view interface, `UiHandlers` and GIN binding go, and the callers move in the same commit; a widely used widget keeps its old events beside its new callbacks until its callers have moved.
+
+* **Test it.** A `Composite` can't be made on the JVM, so components and controllers are tested with workbench stories: give each screen stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`); when styles move into classes, compare the screenshots before and after (`-PworkbenchTestScreenshots`).
   Unit test logic that runs without a browser with JUnit (see `TestController`), e.g. as a static method or a plain class beside the controller.
   In a story, the story's root owns whatever the story shows: `harness.show(screen)` fills the canvas with it, `harness.own(screen)` owns one the story shows itself (in a frame, or as a dialog), and `harness.ownPopup(popup)` also asks a popup to close, for one that stops polling only when asked (see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`).
 
