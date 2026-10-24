@@ -871,11 +871,6 @@
     align-items: center;
 }
 
-.task-spinner {
-    width: 22px;
-    height: 22px;
-}
-
 /* The tasks, scrolling in a rounded frame */
 .userTaskManagerViewImpl-layout {
     width: 400px;
