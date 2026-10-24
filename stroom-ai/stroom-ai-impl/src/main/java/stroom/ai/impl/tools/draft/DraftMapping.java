@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -97,6 +98,9 @@ public final class DraftMapping {
     private static final String JSON_ARRAY = SampleProfiler.JSON_ARRAY;
     private static final String PATH = "path";
     private static final String FIELD = "field";
+    private static final String DESCRIPTION = "EventDetail/Description";
+    // Names of free text a person writes about an event, e.g. a ticket's comment.
+    private static final Pattern FREE_TEXT = Pattern.compile("(?i)(comments?|remarks?|notes?)");
     private static final String FIELDS = "fields";
     private static final String VALUE = "value";
     private static final String ANY_OF = "any_of";
@@ -888,6 +892,7 @@ public final class DraftMapping {
                     common.add(readFrom(dict(PATH, home.path(), FIELD, field), covering(field, fits)));
                 }
             }
+            descriptionNote();
             if (common.stream().noneMatch(e -> "EventSource/Generator".equals(e.get(PATH)))) {
                 common.add(dict(PATH, "EventSource/Generator", VALUE, firstText(sourceName, null, "TODO generator")));
             }
@@ -897,6 +902,29 @@ public final class DraftMapping {
                           + "HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's "
                           + "address, only when the record names none.");
             }
+        }
+
+        // What the notes say of the event's message: where the draft put it, or, if it found none, a field of free text
+        // that may be it. Unlike the Stroom MCP server's draft, which said neither (seen in eval cases 22, 23 and 42:
+        // the message, a CEF msg or a ticket's comment, went into a Document's Description or a Data entry).
+        private void descriptionNote() {
+            final Optional<Object> mapped = common.stream()
+                    .filter(e -> DESCRIPTION.equals(e.get(PATH)) && e.get(FIELD) != null)
+                    .map(e -> e.get(FIELD))
+                    .findFirst();
+            if (mapped.isPresent()) {
+                notes.add("'" + mapped.get() + "' reads as each event's message, so it is " + DESCRIPTION
+                          + ", the event's own description: keep it there in every rule, rather than in an "
+                          + "object's Description or a Data entry.");
+                return;
+            }
+            names.stream()
+                    .filter(n -> FREE_TEXT.matcher(n).matches() && !"empty".equals(type(n)))
+                    .findFirst()
+                    .ifPresent(n -> notes.add("'" + n + "' reads as free text written about each event: if it says "
+                                              + "what happened, map it to " + DESCRIPTION + ", the event's own "
+                                              + "description, rather than to an object's Description or a Data "
+                                              + "entry."));
         }
 
         // Kinds of event: the first naming field with a handful of values.

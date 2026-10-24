@@ -138,6 +138,30 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void theNotesSayWhereTheEventsMessageGoes() {
+        // Seen in eval cases 22, 23 and 42: the message (a CEF msg, a ticket's comment) went into a Document's
+        // Description or a Data entry, not the event's own.
+        final Map<String, Object> withMsg = draft(List.of("""
+                {"time": "2026-10-02T09:00:00Z", "user": "jdoe", "action": "login", "msg": "SAML login"}
+                {"time": "2026-10-02T09:45:00Z", "user": "jdoe", "action": "logout", "msg": "Session ended"}
+                """), "Gateway");
+        final Map<String, Object> withComment = draft(List.of("""
+                {"time": "2026-10-02T09:00:00Z", "agent": "jdoe", "action": "create", "comment": "Printer offline"}
+                {"time": "2026-10-02T09:45:00Z", "agent": "jdoe", "action": "close", "comment": "Resolved"}
+                """), "Helpdesk");
+
+        assertThat(common(withMsg).get("EventDetail/Description")).isEqualTo(map("path", "EventDetail/Description",
+                "field", "msg"));
+        assertThat(notes(withMsg)).contains("'msg' reads as each event's message, so it is EventDetail/Description, "
+                                            + "the event's own description: keep it there in every rule, rather "
+                                            + "than in an object's Description or a Data entry.");
+        assertThat(notes(withComment)).contains("'comment' reads as free text written about each event: if it says "
+                                                + "what happened, map it to EventDetail/Description, the event's own "
+                                                + "description, rather than to an object's Description or a Data "
+                                                + "entry.");
+    }
+
+    @Test
     void theDraftIsAValidMappingWithTheObviousHomesAndARulePerKind() {
         final Map<String, Object> draft = draft(Map.of("fw.jsonl", FW_JSON), "FortiOS firewall");
         final Map<String, Object> m = mappingOf(draft);
