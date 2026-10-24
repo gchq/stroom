@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.generation;
 import stroom.ai.impl.tools.PyText;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,11 @@ import java.util.regex.Pattern;
 /// @param map          Input value -> output value, e.g. `{ok: true, fail: false}`.
 /// @param defaultValue `default`: output when the field is empty (or, with map, matches no key).
 /// @param dataName     `data_name`: for a path ending in Data, the Data element's Name.
+/// @param dataParent   `data_parent`: with data_name, the Name of the Data element (or `/`-separated Names of the
+///                     Data elements, outermost first) the Data is written in, e.g. `members` for
+///                     `<Data Name="members"><Data Name="member" Value="..."/>...</Data>`: one container, shared by
+///                     the entries naming it, and written only when one of them has a value. Not in the Stroom MCP
+///                     server's model, which wrote every Data at its path's element.
 public record FieldMapping(String path,
                            String field,
                            List<String> anyOf,
@@ -64,7 +70,8 @@ public record FieldMapping(String path,
                            String timezone,
                            Map<String, String> map,
                            String defaultValue,
-                           String dataName) {
+                           String dataName,
+                           String dataParent) {
 
     /// The transforms an input may be given.
     public static final List<String> TRANSFORMS = List.of("lower", "upper", "trim", "strip_domain", "domain",
@@ -86,7 +93,7 @@ public record FieldMapping(String path,
     /// @return The entry carrying the field as that Data.
     public static FieldMapping data(final String path, final String dataName, final String field) {
         return new FieldMapping(path, field, null, null, null, null, null, null, null, false, null, null, null,
-                null, null, dataName);
+                null, null, dataName, null);
     }
 
     /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
@@ -107,7 +114,8 @@ public record FieldMapping(String path,
                 fields.optionalLiteral("transform", TRANSFORMS), fields.bool("repeat", false),
                 fields.optionalLiteral("scope", Condition.SCOPES), fields.optionalString("time_format"),
                 fields.optionalString("timezone"), fields.optionalStringMap("map"),
-                fields.optionalString("default"), fields.optionalString("data_name"));
+                fields.optionalString("default"), fields.optionalString("data_name"),
+                fields.optionalString("data_parent"));
         if (!fields.ok()) {
             return null;
         }
@@ -183,6 +191,12 @@ public record FieldMapping(String path,
             return "'" + path + "': value '' writes an empty element, which the schema refuses: map the field that "
                    + "holds it (extract it first if it is inside another field's text), or leave the entry out";
         }
+        if (dataParent != null && (dataName == null || !path.endsWith("Data")
+                                   || Arrays.stream(dataParent.split("/", -1)).anyMatch(PyText::isBlank))) {
+            return "'" + path + "': data_parent names the Data element(s) a Data entry is written in (e.g. "
+                   + "'members', or 'a/b' for one inside another), so it goes with a path ending in Data and its "
+                   + "data_name";
+        }
         if (repeat && (value != null || hasMap() || isSet(timeFormat) || lookup != null || isSet(dictionary))) {
             return "'" + path + "': repeat takes an input field, any_of or xpath, with transform at most";
         }
@@ -211,21 +225,36 @@ public record FieldMapping(String path,
 
     private FieldMapping withMetaRead() {
         return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + PyText.strip(meta) + "')", null, lookup,
-                dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName);
+                dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent);
     }
 
     /// @param defaultValue The output when the input is empty.
     /// @return This entry with that default.
     public FieldMapping withDefault(final String defaultValue) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
-                timeFormat, timezone, map, defaultValue, dataName);
+                timeFormat, timezone, map, defaultValue, dataName, dataParent);
     }
 
     /// @param dataName The Data element's Name.
     /// @return This entry with that Name.
     public FieldMapping withDataName(final String dataName) {
         return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
-                timeFormat, timezone, map, defaultValue, dataName);
+                timeFormat, timezone, map, defaultValue, dataName, dataParent);
+    }
+
+    /// @return The Data entry's Name with the Names of the Data elements it is written in, e.g. `members/member`:
+    /// what tells it apart from the other Data entries at its path. Null for an entry that isn't a Data entry.
+    public String dataKey() {
+        return dataName == null || dataParent == null
+                ? dataName
+                : dataParent + "/" + dataName;
+    }
+
+    /// @param dataParent The Names of the Data elements it is written in, or null.
+    /// @return This entry written in them.
+    public FieldMapping withDataParent(final String dataParent) {
+        return new FieldMapping(path, field, anyOf, value, xpath, meta, lookup, dictionary, transform, repeat, scope,
+                timeFormat, timezone, map, defaultValue, dataName, dataParent);
     }
 
     /// @return True if the entry has a value map with at least one key (Python's truthiness of `map`).
@@ -264,6 +293,7 @@ public record FieldMapping(String path,
                         : new LinkedHashMap<>(map), null)
                 .put("default", defaultValue, null)
                 .put("data_name", dataName, null)
+                .putIfSet("data_parent", dataParent)
                 .build();
     }
 }

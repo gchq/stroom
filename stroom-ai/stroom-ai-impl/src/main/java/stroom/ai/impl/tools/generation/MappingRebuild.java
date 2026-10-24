@@ -192,15 +192,18 @@ final class MappingRebuild {
                 out.reusedOne();
                 continue;
             }
-            if (XsltReader.truthy(leaf.repeat())) {
+            if (XsltReader.truthy(leaf.repeat()) && leaf.repeatSelect() == null) {
                 out.problems().add("rule " + name + ": " + leaf.path() + " repeats (xsl:for-each) in a way no entry "
                                    + "it had writes");
                 continue;
             }
-            final ReadIdioms.Entry entry = idioms.entry(leaf);
+            final ReadIdioms.Entry entry = idioms.entry(repeated(leaf));
+            if (leaf.repeatSelect() != null) {
+                entry.json().put("repeat", true);
+            }
             entries.add(new Written(Arrays.asList(leaf.key(), form), entry.json()));
             final String where = "rule " + name + ": " + leaf.path() + (XsltReader.truthy(leaf.dataName())
-                    ? " Data " + leaf.dataName()
+                    ? " Data " + leaf.key().get(1)
                     : "");
             out.added().add(where);
             if (entry.raw()) {
@@ -223,6 +226,39 @@ final class MappingRebuild {
             }
         }
         return keptOrder(entries, reused, old);
+    }
+
+    // A Data entry the generator repeats, read as an entry over what its loop selects (the entry's input); any other
+    // reading as it is.
+    private static LeafReading repeated(final LeafReading leaf) {
+        if (leaf.repeatSelect() == null) {
+            return leaf;
+        }
+        final String parent = leaf.dataParent();
+        final LeafReading over = new LeafReading(parent == null
+                ? leaf.path()
+                : withContainers(leaf.path(), parent), leaf.dataName());
+        over.setExpr(leaf.repeatSelect());
+        return over;
+    }
+
+    // A Data entry's path with a container step before its last for each Data it is in, as XsltReader reads it.
+    private static String withContainers(final String path, final String parents) {
+        final int last = path.lastIndexOf('/');
+        final StringBuilder out = new StringBuilder(path.substring(0, last));
+        for (final String parent : parents.split("/", -1)) {
+            out.append('/').append(LeafReading.CONTAINER).append(parent);
+        }
+        return out.append(path.substring(last)).toString();
+    }
+
+    // An entry's Data name with the Data it is in, as FieldMapping.dataKey() gives it.
+    private static String dataKey(final Map<String, Object> entry) {
+        final String name = (String) entry.get("data_name");
+        final Object parent = entry.get("data_parent");
+        return name == null || parent == null
+                ? name
+                : parent + "/" + name;
     }
 
     // The kept mapping's order (a rule's Data are written in it), each new entry just after the one it follows in
@@ -298,10 +334,10 @@ final class MappingRebuild {
         if (kept != null) {
             final Map<List<String>, Integer> position = new LinkedHashMap<>();
             for (final FieldMapping entry : kept.common()) {
-                position.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), position.size());
+                position.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), position.size());
             }
             common.sort(Comparator.comparingInt(entry -> position.getOrDefault(Arrays.asList(
-                    PyText.strip((String) entry.get("path"), "/"), (String) entry.get("data_name")), position.size())));
+                    PyText.strip((String) entry.get("path"), "/"), dataKey(entry)), position.size())));
         }
         for (int i = 0; i < rulesOut.size(); i++) {
             if (!Boolean.TRUE.equals(rulesOut.get(i).get("drop"))) {
@@ -316,7 +352,7 @@ final class MappingRebuild {
 
     private static Set<List<String>> commonKeysOf(final TranslationMapping mapping) {
         final Set<List<String>> out = new HashSet<>();
-        mapping.common().forEach(entry -> out.add(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName())));
+        mapping.common().forEach(entry -> out.add(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey())));
         return out;
     }
 
@@ -471,10 +507,10 @@ final class MappingRebuild {
         for (final EventRule rule : mapping.events()) {
             final Map<List<String>, FieldMapping> fields = new LinkedHashMap<>();
             for (final FieldMapping entry : mapping.common()) {
-                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), entry);
+                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), entry);
             }
             for (final FieldMapping entry : rule.fields()) {
-                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataName()), entry);
+                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), entry);
             }
             out.add(fields);
         }

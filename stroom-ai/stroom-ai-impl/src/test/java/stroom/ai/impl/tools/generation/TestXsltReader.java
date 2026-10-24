@@ -354,6 +354,50 @@ class TestXsltReader extends XsltRuns {
     }
 
     @Test
+    void dataInTheDataItsDataParentNamesIsReadBackAsTheEntriesThatWroteIt() {
+        // Data entries written in a named Data (data_parent), one inside another and one repeated for each value:
+        // read back, lost or kept, as the entries that wrote them.
+        final Map<String, Object> json = GenerationFixtures.baseJson();
+        final List<Object> fields = new ArrayList<>(GenerationFixtures.LOGON);
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_parent", "client", "data_name", "ip",
+                "field", "ip"));
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_parent", "client", "data_name", "tag",
+                "repeat", true, "xpath", "tokenize(data[@name='tags']/@value, ',')"));
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_parent", "client/geo",
+                "data_name", "city", "field", "city"));
+        json.put("events", List.of(GenerationFixtures.rule("logon",
+                List.of(GenerationFixtures.equalsCondition("action", "login")), fields)));
+        final TranslationMapping m = TranslationMapping.fromJson(json);
+        final String records = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"t1\"/>"
+                               + "<data name=\"action\" value=\"login\"/><data name=\"ip\" value=\"10.0.0.1\"/>"
+                               + "<data name=\"tags\" value=\"vpn,eu\"/><data name=\"city\" value=\"Leeds\"/>"
+                               + "</record><record><data name=\"time\" value=\"t2\"/>"
+                               + "<data name=\"action\" value=\"login\"/></record></records>";
+        final String code = codeOf(m);
+        assertThat(events(code, records).getFirst().replace("{" + EVT + "}", ""))
+                .contains("<Data Name=\"client\"><Data Name=\"ip\" Value=\"10.0.0.1\"></Data>"
+                          + "<Data Name=\"tag\" Value=\"vpn\"></Data><Data Name=\"tag\" Value=\"eu\"></Data>"
+                          + "<Data Name=\"geo\"><Data Name=\"city\" Value=\"Leeds\"></Data></Data></Data>");
+
+        final RebuiltMapping lost = XsltReader.rebuild(code, null, null);
+        assertThat(lost.problems()).as("%s", lost.summary()).isEmpty();
+        // The repeated entry was an xpath: read back as one.
+        assertThat(lost.raw()).as("%s", lost.summary())
+                .containsExactly("rule logon: EventDetail/Authenticate/Data Data client/tag");
+        assertThat(lost.mapping().allEntries().stream()
+                .filter(f -> f.dataParent() != null)
+                .map(f -> f.dataParent() + "/" + f.dataName() + (f.repeat() ? "*" : "")))
+                .containsExactlyInAnyOrder("client/ip", "client/tag*", "client/geo/city");
+        assertThat(events(codeOf(lost.mapping()), records)).isEqualTo(events(code, records));
+
+        final RebuiltMapping kept = XsltReader.rebuild(code, m, code);
+        assertThat(kept.problems()).isEmpty();
+        assertThat(kept.added()).isEmpty();
+        assertThat(kept.removed()).isEmpty();
+        assertThat(normalise(codeOf(kept.mapping()))).isEqualTo(normalise(code));
+    }
+
+    @Test
     void anXsltWithNoStartTemplateHasNothingToRead() {
         final String code = "<xsl:stylesheet xmlns:xsl=\"" + XmlTrees.XSL + "\" version=\"3.0\"/>";
         assertThatThrownBy(() -> XsltReader.read(code))
