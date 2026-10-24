@@ -62,6 +62,23 @@ class TestPromotionLayout {
     }
 
     @Test
+    void aVersionWhoseTypeIsGivenAFolderElsewhereGoesThere() {
+        // Seen: TWITTER's V1.1 pipeline left beside its predecessor under /Feeds/Twitter, while every type was
+        // given System/MCP Testing/Twitter and its XSLT and documentation went there.
+        world.add(PipelineDoc.TYPE, "Twitter-Events", world.folder("System/Feeds/Twitter").uuid, "old");
+        final List<Map<String, Object>> docs = List.of(
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "new", "Twitter-Events-V1.1", "version_of", "old"));
+
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "System/MCP Testing/Twitter")).proposed())
+                .isEmpty();
+        // Given the predecessor's folder (without System, as an agent gives it), or none: beside it, as before.
+        assertThat(layout.versionFolders(docs, Map.of(PipelineDoc.TYPE, "/Feeds/Twitter")).proposed())
+                .isEqualTo(Map.of("new", "System/Feeds/Twitter/V1.1"));
+        assertThat(layout.versionFolders(docs, Map.of()).proposed())
+                .isEqualTo(Map.of("new", "System/Feeds/Twitter/V1.1"));
+    }
+
+    @Test
     void theLayoutIsATreeOfTheDestinationFoldersWithNewOnesMarked() {
         world.add(PipelineDoc.TYPE, "ACME-V1.0-Events", world.folder("System/Feeds/Events/Acme").uuid, "prod");
         final List<PromotionLayout.Step> plan = List.of(
