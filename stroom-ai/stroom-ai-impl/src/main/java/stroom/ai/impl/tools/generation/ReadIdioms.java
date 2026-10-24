@@ -40,7 +40,8 @@ final class ReadIdioms {
     private static final Pattern NOT_WORD = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> PLAIN_SOURCES = Set.of("field", "any_of");
     private static final List<String> TIMES = List.of("time, zone", "time", "time, ms", "epoch_ms", "epoch_s",
-            "epoch_us", "epoch_ns", "epoch_s, truncated");
+            "epoch_us", "epoch_ns", "epoch_s, truncated", "epoch_s, rounded", "epoch_us, rounded",
+            "epoch_ns, rounded");
 
     private final XsltReading reading;
     private final String kind;
