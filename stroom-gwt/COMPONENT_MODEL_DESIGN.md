@@ -1098,6 +1098,8 @@ Prove the split (see [Components, controllers and models](#components-controller
 
 **Exit:** the pilot's screens pass their stories with the leak check, and the rules are written down. Phases 8 to 11 convert each screen into a component and a controller.
 
+> **Proposed 24 October 2026, for agreement:** Phases 8 to 11 below were planned top down (dialogs, documents, dashboards, the rest). A review of every client class (`COMPONENT_MIGRATION_ORDER.md`: 608 units to convert, measured and ordered bottom up by what each embeds) proposes 15 waves instead: widgets first (waves 1 to 6), then composites (7 and 8), small dialogs (9), lists (10), larger dialogs (11), tabs (12), the query and dashboard stack (13), document editors (14), and the screens and shell (15). Once agreed, it replaces the phases below.
+
 ### Phase 8: Dialogs
 
 The 115 presenters that show themselves as a popup (`ShowPopupEvent.builder(this)`) are small, self-contained, and the ones most often made for one use, so they go first and prove `makeDialog`.
