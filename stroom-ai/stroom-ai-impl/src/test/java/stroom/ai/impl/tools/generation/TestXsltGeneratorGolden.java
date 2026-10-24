@@ -77,7 +77,8 @@ class TestXsltGeneratorGolden {
         assertThat(PyJson.dumps(result, 1)).isEqualTo(expected);
         final Path xslt = json.resolveSibling(json.getFileName().toString().replace(".json", ".xslt"));
         if (Files.exists(xslt)) {
-            assertThat(generated.xslt()).isEqualTo(Files.readString(xslt, StandardCharsets.UTF_8));
+            assertThat(generated.xslt()).isEqualTo(GenerationFixtures.asThePortWritesTimes(Files.readString(xslt,
+                    StandardCharsets.UTF_8)));
         } else {
             assertThat(generated.xslt()).isNull();
         }

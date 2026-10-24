@@ -90,6 +90,12 @@ public final class ReadShapes {
         // Before seconds' fraction was rounded: still epoch_s.
         out.put("epoch_s, truncated", shape("stroom:format-date(string(xs:integer(xs:decimal(" + expr(1)
                                             + "[1]) * 1000)))"));
+        // Before finer digits were cut rather than rounded (as the Stroom MCP server's generator rounded them): still
+        // the same formats, read from XSLTs saved then.
+        for (final String epoch : List.of("epoch_s", "epoch_us", "epoch_ns")) {
+            out.put(epoch + ", rounded", shape("stroom:format-date(string(xs:integer(round(xs:decimal(" + expr(1)
+                                               + "[1]) " + XPathText.EPOCH_SCALE.get(epoch) + "))))"));
+        }
         out.put("time, ms", shape(XPathText.timeMsText(text(1), text(2), expr(1) + "[1]")));
         // oneOfText, its values any number of strings: its shape with one value, the value's place taking any
         // expression.

@@ -56,8 +56,10 @@ class TestE2eFormats extends AbstractE2eTest {
             "names", List.of("outcome", "method", "user", "ip", "port"));
     private static final List<String> UTC_MS = List.of("2026-10-01T08:00:00.123Z", "2026-10-01T08:05:00.456Z",
             "2026-10-01T08:07:00.789Z");
-    private static final List<String> UTC_ROUNDED = List.of("2026-10-01T08:00:00.123Z", "2026-10-01T08:05:00.457Z",
-            "2026-10-01T08:07:01.000Z");
+    // Digits below the millisecond cut, not rounded as the Stroom MCP server's generator did (it made 08:07:00.9996
+    // 08:07:01.000): an event's time is never moved on.
+    private static final List<String> UTC_CUT = List.of("2026-10-01T08:00:00.123Z", "2026-10-01T08:05:00.456Z",
+            "2026-10-01T08:07:00.999Z");
     private static final List<String> QUOTED_USERS = List.of("alice", "o'brien, pat", "carol");
     private static final Map<String, Case> CASES = cases();
 
@@ -226,11 +228,11 @@ class TestE2eFormats extends AbstractE2eTest {
         cases.put("json_epoch_fraction", Case.of("json lines", JSON, "user.name", USERS)
                 .withValues(Map.of("TimeCreated", UTC_MS)));
         cases.put("json_micros", Case.of("json lines", JSON, "user.name", USERS)
-                .withValues(Map.of("TimeCreated", UTC_ROUNDED)));
+                .withValues(Map.of("TimeCreated", UTC_CUT)));
         cases.put("json_epoch_micros", Case.of("json lines", JSON, "user.name", USERS)
-                .withValues(Map.of("TimeCreated", UTC_ROUNDED)));
+                .withValues(Map.of("TimeCreated", UTC_CUT)));
         cases.put("json_epoch_s_micros", Case.of("json lines", JSON, "user.name", USERS)
-                .withValues(Map.of("TimeCreated", UTC_ROUNDED)));
+                .withValues(Map.of("TimeCreated", UTC_CUT)));
         cases.put("xml_records", Case.of("xml", XML, "user", USERS));
         cases.put("xml_attributes", Case.of("xml", XML, "@user", USERS));
         cases.put("xml_namespaced", Case.of("xml", XML, "User", USERS));

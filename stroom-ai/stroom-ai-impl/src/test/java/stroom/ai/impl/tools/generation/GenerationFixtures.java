@@ -28,10 +28,21 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// The Stroom MCP server's generator test fixtures (`tests/test_xsltgen.py`): the event-logging schemas, the base
 /// mapping (`mapping(**overrides)`) and its fields, written as the Python tests write them.
 class GenerationFixtures {
+
+    // The Python server's own function rounding a time to the millisecond, as its generator wrote it.
+    private static final Pattern TIME_MS_FUNCTION = Pattern.compile(
+            "[ \\t]*<xsl:function name=\"mcp:time-ms\"[\\s\\S]*?</xsl:function>\\n");
+    // The mcp prefix in use (not its namespace's own name, stroom-mcp:functions).
+    private static final Pattern MCP_PREFIX = Pattern.compile("(?<![\\w-])mcp:[\\w-]");
+    // A call of it: the value, the pattern and the zone ('' for none).
+    private static final Pattern TIME_MS_CALL = Pattern.compile(
+            "mcp:time-ms\\(string\\(([^()]*)\\), ('(?:[^']|'')*'), ('(?:[^']|'')*')\\)");
 
     /// The event-logging 4.1.0 XSD.
     static final String XSD = HeldSchemasWorld.XSD_4_1_0;
@@ -172,6 +183,29 @@ class GenerationFixtures {
                                           final Map<String, Object> next,
                                           final Map<String, Object> last) {
         return plus(plus(plus(entries, more), next), last);
+    }
+
+    /// The Stroom MCP server's XSLT as the port writes it: times finer than a millisecond cut, not rounded (see
+    /// [XPathText#timeExpression]): an epoch time with floor, and a pattern's digits by Stroom's format-date alone,
+    /// with no mcp:time-ms function (nor the mcp prefix, if nothing else uses it).
+    ///
+    /// @param xslt The Python server's XSLT.
+    /// @return It as the port writes it.
+    static String asThePortWritesTimes(final String xslt) {
+        String out = xslt.replace("xs:integer(round(", "xs:integer(floor(");
+        out = TIME_MS_FUNCTION.matcher(out).replaceAll("");
+        out = TIME_MS_CALL.matcher(out).replaceAll(match -> {
+            final String zone = "''".equals(match.group(3))
+                    ? ""
+                    : ", " + match.group(3);
+            return Matcher.quoteReplacement("stroom:format-date(" + match.group(1) + ", " + match.group(2) + zone
+                                            + ")");
+        });
+        if (!MCP_PREFIX.matcher(out).find()) {
+            out = out.replace(" xmlns:mcp=\"stroom-mcp:functions\"", "")
+                    .replaceAll("(exclude-result-prefixes=\"[^\"]*?)\\s*\\bmcp\\b", "$1");
+        }
+        return out;
     }
 
     static String resource(final String name) {

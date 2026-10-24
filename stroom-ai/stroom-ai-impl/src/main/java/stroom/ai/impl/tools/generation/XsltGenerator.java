@@ -96,24 +96,6 @@ public final class XsltGenerator {
                                           + "<xsl:if test=\"starts-with(normalize-space($xml), '&lt;')\"><xsl:try>"
                                           + "<xsl:sequence select=\"parse-xml($xml)\"/><xsl:catch/></xsl:try>"
                                           + "</xsl:if></xsl:function>";
-    // The fraction's fourth digit: its last run of four or more.
-    private static final String FRACTION_DIGIT = "^.*\\d[.,]\\d{3}(\\d)\\d*(\\D.*)?$";
-    /// A time with digits below the millisecond (microseconds, nanoseconds), rounded half up to the event-logging
-    /// schema's three digits (asked for by the user): stroom:format-date truncates them (seen on the local stack:
-    /// .456789 -> .456, 08:07:00.9996 -> 08:07:00.999), so a millisecond is added where the first digit it drops is
-    /// 5 or more, carried into the second, minute and day as xs:dateTime arithmetic carries it.
-    public static final String TIME_MS = "<xsl:function xmlns:xsl=\"" + XmlTrees.XSL + "\" xmlns:mcp=\""
-                                         + MappingFacts.MCP_NS + "\" xmlns:stroom=\"stroom\" xmlns:xs=\""
-                                         + MappingFacts.XS + "\" name=\"mcp:time-ms\" as=\"xs:string?\">"
-                                         + "<xsl:param name=\"value\" as=\"xs:string?\"/><xsl:param name=\"pattern\" "
-                                         + "as=\"xs:string\"/><xsl:param name=\"zone\" as=\"xs:string\"/>"
-                                         + "<xsl:variable name=\"time\" select=\"if ($zone) then stroom:format-date("
-                                         + "$value, $pattern, $zone) else stroom:format-date($value, $pattern)\"/>"
-                                         + "<xsl:sequence select=\"if (matches($value, '" + FRACTION_DIGIT + "') "
-                                         + "and replace($value, '" + FRACTION_DIGIT + "', '$1') ge '5') "
-                                         + "then format-dateTime(xs:dateTime($time) + xs:dayTimeDuration('PT0.001S'), "
-                                         + "'[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z') else $time\"/>"
-                                         + "</xsl:function>";
 
     private static final String XSL = XmlTrees.XSL;
     private static final Map<String, String> DEFAULT_ROOT = Map.of("data_splitter", "records", "json", "/",
@@ -1450,13 +1432,10 @@ public final class XsltGenerator {
                            + "('').");
         }
         final boolean usesDictMap = m.allEntries().stream().anyMatch(entry -> isSet(entry.dictionary()));
-        final boolean subMs = m.allEntries().stream().anyMatch(entry -> isSet(entry.timeFormat())
-                                                                        && XPathText.SUB_MS.matcher(entry.timeFormat())
-                                                                                .find());
         final boolean callsJson = JSON_CALL.matcher(PyJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
-                                 || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || dataFunctionWanted
-                                 || subMs;     // the mcp prefix: its own functions
+                                 || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty()
+                                 || dataFunctionWanted;     // the mcp prefix: its own functions
         final Map<String, String> bound = new LinkedHashMap<>();
         m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
         final XmlElement sheet = XmlElement.create(XSL, "stylesheet", namespaces(usesDictMap, usesJson, bound));
@@ -1486,9 +1465,6 @@ public final class XsltGenerator {
         }
         if (!m.xmlFields().isEmpty()) {
             sheet.append(XmlParser.parse(SAFE_XML));
-        }
-        if (subMs) {
-            sheet.append(XmlParser.parse(TIME_MS));
         }
         final XmlElement rootTemplate = sheet.addElement(XSL, "template", "match", isSet(m.root())
                 ? m.root()
