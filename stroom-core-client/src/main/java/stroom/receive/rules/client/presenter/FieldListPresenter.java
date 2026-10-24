@@ -21,7 +21,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
-import stroom.receive.rules.client.component.FieldEditor;
+import stroom.receive.rules.client.component.FieldEditorController;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
@@ -53,7 +53,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
     private final DataGridWidget<QueryField> dataGrid;
     private final MultiSelectionModelImpl<QueryField> selectionModel;
-    private final Provider<FieldEditor> fieldEditorProvider;
+    private final Provider<FieldEditorController> fieldEditorProvider;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -66,7 +66,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
     @Inject
     public FieldListPresenter(final EventBus eventBus,
                               final PagerView view,
-                              final Provider<FieldEditor> fieldEditorProvider,
+                              final Provider<FieldEditorController> fieldEditorProvider,
                               final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 

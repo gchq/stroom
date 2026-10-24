@@ -16,123 +16,62 @@
 
 package stroom.receive.rules.client.component;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
-import stroom.query.api.datasource.QueryField;
-import stroom.util.shared.NullSafe;
-import stroom.util.shared.string.CIKey;
-import stroom.widget.component.client.Controller;
-import stroom.widget.component.client.ControllerDialog;
-import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.component.client.Component;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.Collection;
 
-/// A dialog to add or edit one of the receipt rules' fields: its type and its name, which must be
-/// given and must not be another field's (ignoring case).
-public class FieldEditor extends Controller {
+/// The content of the dialog that adds or edits one of the receipt rules' fields: its type and its
+/// name. [FieldEditorController] shows it and checks what is entered.
+public class FieldEditor extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-
-    private static final Set<FieldType> VALID_FIELD_TYPES = EnumSet.of(
-            FieldType.TEXT,
-            FieldType.DATE,
-            FieldType.INTEGER,
-            FieldType.LONG,
-            FieldType.FLOAT,
-            FieldType.DOUBLE,
-            FieldType.BOOLEAN,
-            FieldType.IPV4_ADDRESS);
-
-    private Set<CIKey> otherFieldNames = Set.of();
 
     @UiField
     SelectionBox<FieldType> type;
     @UiField
     TextBox name;
 
-    @Inject
-    public FieldEditor(final EventBus eventBus) {
-        super(eventBus);
+    public FieldEditor() {
         initWidget(BINDER.createAndBindUi(this));
-        type.addItems(VALID_FIELD_TYPES);
     }
 
-    /// Shows this editor as a dialog, owned by `opener` until it is closed. OK checks the field,
-    /// and gives it to `onOk` if it is valid; otherwise the dialog stays open.
-    ///
-    /// @param opener          What shows it.
-    /// @param caption         The dialog's caption, e.g. "New Field".
-    /// @param field           The field to edit, or a new one.
-    /// @param otherFieldNames The names of the other fields, which this one may not take.
-    /// @param onOk            What to do with the field when OK is pressed.
-    public void edit(final HasControllerNode opener,
-                     final String caption,
-                     final QueryField field,
-                     final Set<CIKey> otherFieldNames,
-                     final Consumer<QueryField> onOk) {
-        read(field, otherFieldNames);
-        ControllerDialog.showOnce(opener, this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizableX())
-                .caption(caption)
-                .onShow(e -> type.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final QueryField written = write();
-                        if (written != null) {
-                            onOk.accept(written);
-                            e.hide();
-                        } else {
-                            e.reset();
-                        }
-                    } else {
-                        e.hide();
-                    }
-                })
-                .fire();
+    /// @param types The types a field may have, in the order they are offered.
+    public void setTypes(final Collection<FieldType> types) {
+        type.clear();
+        type.addItems(types);
     }
 
-    // Shows a field, to be checked against the others' names
-    void read(final QueryField field, final Set<CIKey> otherFieldNames) {
-        this.otherFieldNames = otherFieldNames;
-        type.setValue(field.getFldType());
-        name.setText(field.getFldName());
+    /// @param fieldType The field's type.
+    public void setType(final FieldType fieldType) {
+        type.setValue(fieldType);
     }
 
-    // The field shown, or null (with a warning) if it has no name or another field's
-    QueryField write() {
-        final String fieldName = NullSafe.trim(name.getText());
-        if (fieldName.isEmpty()) {
-            AlertEvent.fireWarn(this, "A field must have a name", null);
-            return null;
-        }
-        if (otherFieldNames.contains(CIKey.of(fieldName))) {
-            AlertEvent.fireWarn(this,
-                    "A field with this name already exists. Field names are case insensitive.",
-                    null);
-            return null;
-        }
-        return QueryField
-                .builder()
-                .fldName(fieldName)
-                .fldType(type.getValue())
-                .queryable(true)
-                .conditionSet(ConditionSet.RECEIPT_POLICY_CONDITIONS)
-                .build();
+    /// @return The type chosen.
+    public FieldType getType() {
+        return type.getValue();
+    }
+
+    /// @param fieldName The field's name.
+    public void setName(final String fieldName) {
+        name.setText(fieldName);
+    }
+
+    /// @return The name entered, as typed.
+    public String getName() {
+        return name.getText();
+    }
+
+    /// Puts the focus on its first field, the type.
+    public void focus() {
+        type.focus();
     }
 
 

@@ -30,12 +30,12 @@ import java.util.function.Consumer;
 /// with its opener if that is disposed first.
 ///
 /// ```java
-/// final FieldEditor editor = fieldEditorProvider.get();
-/// editor.read(field, otherNames);
-/// ControllerDialog.showOnce(this, editor)
+/// // In FieldEditorController, whose widget is its component, the dialog's content
+/// view.setName(field.getFldName());
+/// ControllerDialog.showOnce(opener, this)
 ///         .popupType(PopupType.OK_CANCEL_DIALOG)
 ///         .caption("Edit Field")
-///         .onShow(e -> editor.focus())
+///         .onShow(e -> view.focus())
 ///         .onHideRequest(e -> ...)
 ///         .fire();
 /// ```
