@@ -94,7 +94,7 @@ final class DashboardPlays {
     static void runQuery(final Play play, final int index) {
         // Waits until it is a run button: while a query is still running it is a stop button, so
         // under load a second run (e.g. after changing a filter) could stop the first instead
-        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index)).toHaveClass("play"));
+        play.waitFor(() -> play.expect(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index)).toHaveClass("query-buttons__button--play"));
         play.click(play.querySelectorAll(QUERY_RUN_BUTTON).nth(index));
     }
 

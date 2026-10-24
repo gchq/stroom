@@ -275,7 +275,7 @@ public final class DashboardSearchStories {
                     // still being refreshed by the first query's results)
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("blue")).toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+                    play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".query-buttons__button--stop"))
                             .toHaveLength(0));
                     play.click(play.getByText("Select None"));
                     play.waitFor(() -> play.expect(valueTick(play, "red")).toHaveAttribute("aria-checked", "false"));
@@ -383,7 +383,7 @@ public final class DashboardSearchStories {
     // No Query is still searching: each Query's own button is back to 'Execute Query' (it is
     // 'Stop Query', with the 'stop' class, while its search polls)
     private static void expectSearchesComplete(final Play play) {
-        play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+        play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".query-buttons__button--stop"))
                 .toHaveLength(0));
         play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + "[aria-label='Execute Query']"))
                 .toHaveLength(2);
