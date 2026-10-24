@@ -208,6 +208,22 @@ public final class AnalyticRuleEditorStories {
                             .toBeInTheDocument());
                     expectNoProblems(play);
                 })
+                // A stream destination's feed picker, declared in its template, has its controller
+                // attached: it shows that no feed is chosen, and opens a dialog to choose one
+                .story("StreamDestinationFeedPicker", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    final Query picker = dialog.querySelector(".drop-down");
+                    play.waitFor(() -> play.expect(picker).toHaveTextContent("None"));
+                    play.expect(picker).toHaveAttribute("role", "button");
+                    play.expect(picker).toHaveAttribute("aria-haspopup", "dialog");
+                    play.expect(dialog.getByRole("button", StroomDom.button("Set Default")))
+                            .toHaveAttribute("title", "Set as the default destination feed for all users");
+                    expectNoProblems(play);
+                })
                 // The notification dialog: its maximum is always shown, and switching the
                 // destination type back keeps what was typed
                 .story("NotificationDialogDetails", context -> render(context, FIXTURES, UI_CONFIG))

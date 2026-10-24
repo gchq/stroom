@@ -16,6 +16,7 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 
@@ -49,4 +50,7 @@ public interface DropDownView extends View, Focus, HasUiHandlers<DropDownUiHandl
     ///
     /// @param readOnly Whether the value is read only.
     void setReadOnly(boolean readOnly);
+
+    /// @return The picker itself, for a controller to attach to (e.g. `DocSelectionController`).
+    DropDownBox getBox();
 }

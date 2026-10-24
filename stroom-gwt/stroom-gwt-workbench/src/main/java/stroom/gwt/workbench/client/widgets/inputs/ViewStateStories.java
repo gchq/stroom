@@ -543,7 +543,7 @@ public final class ViewStateStories {
     // A document picker's view (as DocSelectionBoxPresenter uses it), as a widget
     private static final class PickerField extends Composite {
 
-        private final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
+        private final DropDownViewImpl view = new DropDownViewImpl();
 
         private PickerField() {
             view.setText("My Pipeline");

@@ -87,7 +87,7 @@ public final class SelectorWidgets {
     public static DocSelectionBoxPresenter docSelectionBox(final ScreenHarness harness,
                                                            final ExplorerPopupPresenter popup) {
         return new DocSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class)),
+                new DropDownViewImpl(),
                 popup,
                 harness.getRestFactory());
     }
@@ -105,7 +105,7 @@ public final class SelectorWidgets {
                 harness.getUiConfigCache(),
                 quickFilterContextHandlerFactory(harness));
         return new UserRefSelectionBoxPresenter(harness.getEventBus(),
-                new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class)),
+                new DropDownViewImpl(),
                 popup);
     }
 

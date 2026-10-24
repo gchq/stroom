@@ -18,46 +18,31 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.DecorateRequest;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.Listeners;
-import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, Focus {
+/// A document picker as a presenter, for the screens that still take presenters: a
+/// [DocSelectionController] attached to the view's picker, which it owns. A screen split into a
+/// component and a controller declares the picker (`DropDownBox`) in its template and attaches a
+/// [DocSelectionController] itself.
+public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView> implements Focus {
 
-    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    public static final String NONE_DISPLAY_VALUE = "None";
+    /// Shown when no document is chosen.
+    public static final String NONE_DISPLAY_VALUE = DocSelectionController.NONE_DISPLAY_VALUE;
 
-    private final ExplorerPopupPresenter explorerPopupPresenter;
-    private final RestFactory restFactory;
-    private boolean enabled = true;
-    private boolean readOnly;
-    private DocRef value = null;
-    private String errorMsg = null;
-    private String itemType = null;
-    // The perms required on any selected docRef or nodes in the picker
-    private Set<DocumentPermission> requiredPermissions = null;
-
-    private final Listeners<DocRef> selectionListeners = new Listeners<>();
+    private final DocSelectionController controller;
 
     @Inject
     public DocSelectionBoxPresenter(final EventBus eventBus,
@@ -65,280 +50,124 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                                     final ExplorerPopupPresenter explorerPopupPresenter,
                                     final RestFactory restFactory) {
         super(eventBus, view);
-        own(explorerPopupPresenter);
-        this.restFactory = restFactory;
-        this.explorerPopupPresenter = explorerPopupPresenter;
-        view.setUiHandlers(this);
-//        explorerPopupPresenter.setSelectionChangeConsumer(this::changeSelection);
-        changeSelection(null);
+        controller = own(new DocSelectionController(eventBus, explorerPopupPresenter, restFactory));
+        // This presenter's own task monitor, if it is given one, else its owner's
+        controller.setTaskMonitorFactory(this);
+        controller.attach(view.getBox());
     }
 
     @Override
     public void focus() {
-        getView().focus();
+        controller.focus();
     }
 
-    /**
-     * Call this if the selection box contains more than one {@link DocRef} type,
-     * e.g. all data source types. Value should be singular and in
-     * sentence case, e.g. 'Data Source'.
-     *
-     * @param itemType
-     */
+    /// @see DocSelectionController#setItemType(String)
     public void setItemType(final String itemType) {
-        this.itemType = itemType;
+        controller.setItemType(itemType);
     }
 
-    /**
-     * Sets the caption of the chooser popup this box opens.
-     *
-     * <p>Defaults to {@code "Choose item"}, which says nothing about what is being chosen —
-     * unhelpful on a dialog with more than one box. Convention elsewhere is
-     * {@code "Choose <Thing>"} in title case.</p>
-     *
-     * @param caption the popup caption; a null leaves the default in place
-     */
+    /// @see DocSelectionController#setCaption(String)
     public void setCaption(final String caption) {
-        if (caption != null) {
-            explorerPopupPresenter.setCaption(caption);
-        }
+        controller.setCaption(caption);
     }
 
+    /// @see DocSelectionController#setQuickFilter(String)
     public void setQuickFilter(final String filterInput) {
-        explorerPopupPresenter.setInitialQuickFilter(filterInput);
+        controller.setQuickFilter(filterInput);
     }
 
+    /// @see DocSelectionController#setIncludedTypes(String...)
     public void setIncludedTypes(final String... includedTypes) {
-        explorerPopupPresenter.setIncludedTypes(includedTypes);
+        controller.setIncludedTypes(includedTypes);
     }
 
+    /// @see DocSelectionController#setIncludedTypes(Collection)
     public void setIncludedTypes(final Collection<String> includedTypes) {
-        explorerPopupPresenter.setIncludedTypes(NullSafe.stream(includedTypes)
-                .toArray(String[]::new));
+        controller.setIncludedTypes(includedTypes);
     }
 
+    /// @see DocSelectionController#setTags(String...)
     public void setTags(final String... tags) {
-        explorerPopupPresenter.setTags(tags);
+        controller.setTags(tags);
     }
 
+    /// @see DocSelectionController#setTags(Collection)
     public void setTags(final Collection<String> tags) {
-        explorerPopupPresenter.setTags(NullSafe.stream(tags)
-                .toArray(String[]::new));
+        controller.setTags(tags);
     }
 
+    /// @see DocSelectionController#setTags(StandardExplorerTags...)
     public void setTags(final StandardExplorerTags... tags) {
-        explorerPopupPresenter.setTags(NullSafe.stream(tags)
-                .map(StandardExplorerTags::getTagName)
-                .toArray(String[]::new));
+        controller.setTags(tags);
     }
 
+    /// @see DocSelectionController#setNodeFlags(NodeFlag...)
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerPopupPresenter.setNodeFlags(nodeFlags);
+        controller.setNodeFlags(nodeFlags);
     }
 
+    /// @see DocSelectionController#setNodeFlags(Collection)
     public void setNodeFlags(final Collection<NodeFlag> nodeFlags) {
-        explorerPopupPresenter.setNodeFlags(NullSafe.stream(nodeFlags)
-                .toArray(NodeFlag[]::new));
+        controller.setNodeFlags(nodeFlags);
     }
 
+    /// @see DocSelectionController#setRequiredPermissions(DocumentPermission...)
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
-        this.requiredPermissions = NullSafe.asSet(requiredPermissions);
-        explorerPopupPresenter.setRequiredPermissions(requiredPermissions);
-
-        // In case this is called after setSelectedEntityReference, call that again to
-        // do the perm check now that we know what perms are needed.
-        if (value != null) {
-            setSelectedEntityReference(value, true, null, null);
-        }
+        controller.setRequiredPermissions(requiredPermissions);
     }
 
+    /// @see DocSelectionController#getRequiredPermissions()
     public Set<DocumentPermission> getRequiredPermissions() {
-        return requiredPermissions;
+        return controller.getRequiredPermissions();
     }
 
+    /// @see DocSelectionController#getSelectedEntityReference()
     public DocRef getSelectedEntityReference() {
-        return value;
+        return controller.getSelectedEntityReference();
     }
 
-    /**
-     * @param docRef         The {@link DocRef} to set as the selected value of the dropdown.
-     *                       If docRef does not exist or is not visible to the user, a warning
-     *                       will be displayed but the value will be as passed.
-     * @param decorateDocRef If true, force decorate docRef to ensure it has the correct name.
-     *                       Set to false if you know docRef has an up-to-date name, is a constant,
-     *                       is definitely null, or you don't care.
-     */
+    /// @see DocSelectionController#setSelectedEntityReference(DocRef, boolean)
     public void setSelectedEntityReference(final DocRef docRef, final boolean decorateDocRef) {
-        setSelectedEntityReference(docRef, decorateDocRef, null, null);
+        controller.setSelectedEntityReference(docRef, decorateDocRef);
     }
 
-    /**
-     * @see DocSelectionBoxPresenter#setSelectedEntityReference(DocRef, boolean, Consumer, Runnable)
-     */
+    /// @see DocSelectionController#setSelectedEntityReference(DocRef, boolean, Consumer)
     public void setSelectedEntityReference(final DocRef docRef,
                                            final boolean decorateDocRef,
                                            final Consumer<DocRef> onDocRefDecoration) {
-        setSelectedEntityReference(docRef, decorateDocRef, onDocRefDecoration, null);
+        controller.setSelectedEntityReference(docRef, decorateDocRef, onDocRefDecoration);
     }
 
-    /**
-     * @param docRef             The {@link DocRef} to set as the selected value of the dropdown.
-     *                           If docRef does not exist or is not visible to the user, a warning
-     *                           will be displayed but the value will be as passed.
-     * @param decorateDocRef     If true, force decorate docRef to ensure it has the correct name.
-     *                           Set to false if you know docRef has an up-to-date name, is a constant,
-     *                           is definitely null, or you don't care.
-     * @param onDocRefDecoration Called when docRef is found to be different to a
-     *                           decorated version of it, e.g. it's name has changed.
-     * @param onDocRefNotFound   Called docRef does not exist, e.g. it has been deleted
-     *                           or its permissions have changed.
-     */
+    /// @see DocSelectionController#setSelectedEntityReference(DocRef, boolean, Consumer, Runnable)
     public void setSelectedEntityReference(final DocRef docRef,
                                            final boolean decorateDocRef,
                                            final Consumer<DocRef> onDocRefDecoration,
                                            final Runnable onDocRefNotFound) {
-        if (docRef != null && decorateDocRef) {
-            // Selected as given at once, so that it is the value until decorating it is done, and if
-            // that fails (rather than the value before, or none, which whatever reads the value,
-            // e.g. a query expression's term editor, would save in its place)
-            explorerPopupPresenter.setSelectedEntityReference(docRef);
-            setFieldValue(docRef, null);
-            // The docRef may have come from the data within a Doc so the name may be out of date,
-            // so decorate it to ensure we have the right name
-            restFactory
-                    .create(EXPLORER_RESOURCE)
-                    .method(resource ->
-                            resource.decorate(DecorateRequest.createWithPermCheck(
-                                    docRef, getRequiredPermissions())))
-                    .onSuccess(decoratedDocRef -> {
-                        if (!Objects.equals(value, docRef)) {
-                            // Another has been selected since, e.g. by a term editor moving on to
-                            // another term: this one's reply is too late
-                            return;
-                        }
-                        if (decoratedDocRef != null) {
-                            explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
-                            setFieldValue(decoratedDocRef, null);
-                            if (!Objects.equals(docRef, decoratedDocRef)) {
-                                // The decorated one is different so we need to update
-                                if (onDocRefDecoration != null) {
-                                    onDocRefDecoration.accept(decoratedDocRef);
-                                }
-                            }
-                        } else {
-                            handleDecorateError(docRef, onDocRefNotFound);
-                        }
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        } else {
-            // No decoration
-            explorerPopupPresenter.setSelectedEntityReference(docRef);
-            setFieldValue(docRef, null);
-        }
+        controller.setSelectedEntityReference(docRef, decorateDocRef, onDocRefDecoration, onDocRefNotFound);
     }
 
-    private void handleDecorateError(final DocRef docRef,
-                                     final Runnable onDocRefNotFound) {
-//        GWT.log(error.getException().getClass().getSimpleName() + " - " + error.getMessage());
-        // likely doesn't exist or user can't see it, so leave it as is
-        // but show a warning, so they know there is a problem
-
-        // Even thought it doesn't exist, set the value as requested but display a
-        value = docRef;
-        errorMsg = buildNotFoundMessage(docRef);
-        setFieldValue(docRef, errorMsg);
-
-        NullSafe.run(onDocRefNotFound);
-    }
-
-    // The not-found problem in brief, as shown under the picker; the full message (with the id and
-    // what to do) is its tooltip and what screen readers read
-    private String buildShortNotFoundMessage(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        }
-        final String name = NullSafe.getOrElse(docRef.getName(), n -> "'" + n + "'", "It");
-        return name + " can't be found, or you don't have permission to see it.";
-    }
-
+    /// @see DocSelectionController#buildNotFoundMessage(DocRef)
     public String buildNotFoundMessage(final DocRef docRef) {
-        if (docRef != null) {
-            final String type = Objects.requireNonNullElseGet(this.itemType, () ->
-                    Objects.requireNonNullElse(docRef.getType(), "Document"));
-            final String uuid = docRef.getUuid();
-            final String displayName = NullSafe.getOrElse(
-                    docRef.getName(),
-                    name -> "'" + name + "' (" + uuid + ")",
-                    uuid);
-
-            return type +
-                   " " +
-                   displayName +
-                   " doesn't exist or you do not have permission to view it.\n" +
-                   "Select a different " + type.toLowerCase() + " or speak to your administrator.";
-        } else {
-            return null;
-        }
+        return controller.buildNotFoundMessage(docRef);
     }
 
+    /// @see DocSelectionController#setAllowFolderSelection(boolean)
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
-        explorerPopupPresenter.setAllowFolderSelection(allowFolderSelection);
+        controller.setAllowFolderSelection(allowFolderSelection);
     }
 
-    @Override
-    public void showPopup() {
-        if (enabled && !readOnly) {
-            final DocRef oldDocRef = getSelectedEntityReference();
-            explorerPopupPresenter.show(selectedDocRef -> {
-//                GWT.log("currentSelectionRef: " + selectedDocRef);
-                if (!Objects.equals(oldDocRef, selectedDocRef)) {
-                    setFieldValue(selectedDocRef);
-                    selectionListeners.fire(selectedDocRef);
-                }
-            });
-        }
-    }
-
-    /// Listens for the user choosing a document, until the registration is removed.
-    ///
-    /// @param listener Told what is selected.
-    /// @return The registration, for the listener's owner to own.
+    /// @see DocSelectionController#addSelectionListener(Consumer)
     public HandlerRegistration addSelectionListener(final Consumer<DocRef> listener) {
-        return selectionListeners.add(listener);
+        return controller.addSelectionListener(listener);
     }
 
-    private void changeSelection(final ExplorerNode selection) {
-        setFieldValue(NullSafe.get(selection, ExplorerNode::getDocRef));
-    }
-
-    private void setFieldValue(final DocRef value) {
-        setFieldValue(value, null);
-    }
-
-    private void setFieldValue(final DocRef value, final String errorMsg) {
-        this.value = value;
-        this.errorMsg = errorMsg;
-        getView().setText(NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE));
-        // A document that can't be found is shown as a problem with the field, under it
-        if (NullSafe.isNonBlankString(errorMsg)) {
-            getView().setProblem(buildShortNotFoundMessage(value), errorMsg);
-        } else {
-            getView().setProblem(null, null);
-        }
-    }
-
-    /// Makes the selection read only: it can be read and stays in the tab order, but the
-    /// picker doesn't open. It looks like the normal field with its value greyed.
-    ///
-    /// @param readOnly Whether the selection is read only.
+    /// @see DocSelectionController#setReadOnly(boolean)
     public void setReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        getView().setReadOnly(readOnly);
+        controller.setReadOnly(readOnly);
     }
 
+    /// @see DocSelectionController#setEnabled(boolean)
     public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-        getView().setEnabled(enabled);
+        controller.setEnabled(enabled);
     }
 }

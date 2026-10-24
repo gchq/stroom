@@ -26,7 +26,6 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -100,7 +99,7 @@ public final class DropDownSelectorStories {
                                          final String text,
                                          final boolean hasWarning,
                                          final boolean enabled) {
-        final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
+        final DropDownViewImpl view = new DropDownViewImpl();
         view.setText(text);
         if (hasWarning) {
             view.setProblem(PROBLEM, FULL_PROBLEM);

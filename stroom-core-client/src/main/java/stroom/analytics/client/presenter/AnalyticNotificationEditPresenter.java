@@ -16,6 +16,7 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.component.AnalyticStreamDestinationController;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
@@ -37,6 +38,7 @@ import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -44,7 +46,7 @@ public class AnalyticNotificationEditPresenter
         extends MyPresenterWidget<AnalyticNotificationEditView>
         implements ChangeUiHandlers {
 
-    private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
+    private final AnalyticStreamDestinationController analyticStreamDestination;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
     private final UiConfigCache uiConfigCache;
     private String notificationUUID;
@@ -53,25 +55,25 @@ public class AnalyticNotificationEditPresenter
     @Inject
     public AnalyticNotificationEditPresenter(final EventBus eventBus,
                                              final AnalyticNotificationEditView view,
-                                             final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter,
+                                             final AnalyticStreamDestinationController analyticStreamDestination,
                                              final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
                                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        own(analyticStreamDestinationPresenter);
+        own(analyticStreamDestination);
         own(analyticEmailDestinationPresenter);
         this.uiConfigCache = uiConfigCache;
         view.setUiHandlers(this);
-        this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;
+        this.analyticStreamDestination = analyticStreamDestination;
         this.analyticEmailDestinationPresenter = analyticEmailDestinationPresenter;
 
-        analyticStreamDestinationPresenter.setOnChange(this::onChange);
+        analyticStreamDestination.setOnChange(this::onChange);
         analyticEmailDestinationPresenter.setOnChange(this::onChange);
     }
 
     public void read(final DocRef docRef,
                      final AnalyticProcessType analyticProcessType,
                      final NotificationConfig config) {
-        analyticStreamDestinationPresenter.setAnalyticProcessType(analyticProcessType);
+        analyticStreamDestination.setAnalyticProcessType(analyticProcessType);
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 if (config != null) {
@@ -89,10 +91,10 @@ public class AnalyticNotificationEditPresenter
                 final AbstractAnalyticUiDefaultConfig defaultConfig;
                 if (ReportDoc.TYPE.equals(docRef.getType())) {
                     defaultConfig = extendedUiConfig.getReportUiDefaultConfig();
-                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.REPORT_UI_DEFAULT);
+                    analyticStreamDestination.setConfigTarget(ConfigTarget.REPORT_UI_DEFAULT);
                 } else {
                     defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
-                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.ANALYTIC_UI_DEFAULT);
+                    analyticStreamDestination.setConfigTarget(ConfigTarget.ANALYTIC_UI_DEFAULT);
                 }
 
                 final NotificationDestination destination = NullSafe.get(
@@ -105,7 +107,7 @@ public class AnalyticNotificationEditPresenter
 
                 final NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
                         destination, defaultConfig);
-                NullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
+                NullSafe.consume(streamDestination, analyticStreamDestination::read);
             }
         }, this);
     }
@@ -150,7 +152,7 @@ public class AnalyticNotificationEditPresenter
                     break;
                 }
                 case STREAM: {
-                    destination = analyticStreamDestinationPresenter.write();
+                    destination = analyticStreamDestination.write();
                     break;
                 }
             }
@@ -180,7 +182,7 @@ public class AnalyticNotificationEditPresenter
                     break;
                 }
                 case STREAM: {
-                    getView().setDestinationView(analyticStreamDestinationPresenter.getView());
+                    getView().setDestinationView(analyticStreamDestination);
                     break;
                 }
             }
@@ -215,6 +217,6 @@ public class AnalyticNotificationEditPresenter
 
         void setDestinationType(NotificationDestinationType destinationType);
 
-        void setDestinationView(View view);
+        void setDestinationView(IsWidget view);
     }
 }
