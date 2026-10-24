@@ -240,8 +240,18 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         result.put("rebuilt", rebuilt.summary());
         if (rebuilt.mapping() == null || !rebuilt.problems().isEmpty()) {
             result.put("saved", null);
-            result.put("hint", "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
-                               + "instead (draft_translation_mapping drafts one from the samples).");
+            // Not in the Python server; seen: an XSLT rewritten by hand outside the generator's layout read back
+            // as nothing, and the agent took it for an empty mapping and the edit for one no mapping can express.
+            final boolean unlaid = rebuilt.notes().stream().anyMatch(note -> note.startsWith("no record template"));
+            result.put("hint", unlaid && base != null
+                    ? "The XSLT isn't laid out as the generator writes one (a template per rule), so nothing in it "
+                      + "could be read back: the kept mapping is still there. Carry the hand edit into it with "
+                      + "build_translation_xslt uuid=<this XSLT> changes= only the entries that change (repeat: "
+                      + "true writes one element per value; data_parent writes Data in a named Data; an xpath "
+                      + "computes a value, e.g. one with the mentions taken out), then step_sample: the generated "
+                      + "XSLT replaces the hand-written one."
+                    : "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
+                      + "instead (draft_translation_mapping drafts one from the samples).");
             return result;
         }
         final XsltGenerator.Generated regenerated = XsltGenerator.generate(rebuilt.mapping(), schema, version);
