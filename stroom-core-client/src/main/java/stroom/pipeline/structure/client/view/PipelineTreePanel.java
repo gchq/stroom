@@ -155,7 +155,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("pipeline-tree__canvas");
+            canvas.addStyleName("pipeline-tree__canvas");
             panel.add(canvas);
         }
 

@@ -11,7 +11,7 @@
     <g:FlowPanel ui:field="formGroupPanel" styleName="form-group">
         <g:FlowPanel ui:field="labelPanel" styleName="form-group__label-row">
             <f:FormLabel ui:field="formLabel" addStyleNames="form-group__label"/>
-            <f:FormGroupHelpButton ui:field="helpButton"/>
+            <f:FormGroupHelpButton ui:field="helpButton" title="Click for help"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="descriptionPanel" styleName="form-group__description-row"/>
         <g:Label ui:field="feedbackLabel" styleName="form-group__feedback"/>

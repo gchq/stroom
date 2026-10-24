@@ -39,6 +39,7 @@ public class AssignYourselfLink extends Widget {
 
     private Runnable onAssign;
 
+    /// Makes the link, enabled until [#setState(boolean, boolean)] says otherwise.
     public AssignYourselfLink() {
         setElement(BINDER.createAndBindUi(this));
         addDomHandler(event -> {

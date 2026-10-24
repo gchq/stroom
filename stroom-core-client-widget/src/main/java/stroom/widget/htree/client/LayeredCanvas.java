@@ -19,14 +19,16 @@ package stroom.widget.htree.client;
 import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.canvas.client.Canvas;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /// A canvas of stacked layers, made on demand by name, e.g. a tree's lines on one and its selection
-/// on another. Styled by `layered-canvas.css`; its size is set as custom properties on its root,
-/// which every layer shares.
+/// on another. Styled by `layered-canvas.css`; its size is set as custom properties on the root and
+/// on every layer, as a layer may be moved elsewhere to be drawn (e.g. the pipeline tree's faded
+/// layer, drawn in its faded group).
 public class LayeredCanvas extends FlowPanel {
 
     private static final String BLOCK = "layered-canvas";
@@ -37,6 +39,7 @@ public class LayeredCanvas extends FlowPanel {
 
     private LayeredCanvas() {
         setStyleName(BLOCK);
+        setSizeProperties(getElement());
     }
 
     public static LayeredCanvas createIfSupported() {
@@ -52,6 +55,7 @@ public class LayeredCanvas extends FlowPanel {
             layerMap.put(name, canvas);
 
             canvas.setStyleName(BLOCK + "__layer");
+            setSizeProperties(canvas.getElement());
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
 
@@ -75,11 +79,10 @@ public class LayeredCanvas extends FlowPanel {
         this.width = width;
         this.height = height;
 
-        // The layers share the root's size
-        CssProperties.set(getElement(), "--" + BLOCK + "__width", width + "px");
-        CssProperties.set(getElement(), "--" + BLOCK + "__height", height + "px");
+        setSizeProperties(getElement());
 
         for (final Canvas canvas : layerMap.values()) {
+            setSizeProperties(canvas.getElement());
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
         }
@@ -100,6 +103,12 @@ public class LayeredCanvas extends FlowPanel {
         for (final Canvas canvas : layerMap.values()) {
             hide(canvas);
         }
+    }
+
+    // The size, which layered-canvas.css's rules use
+    private void setSizeProperties(final Element element) {
+        CssProperties.set(element, "--" + BLOCK + "__width", width + "px");
+        CssProperties.set(element, "--" + BLOCK + "__height", height + "px");
     }
 
     private static void hide(final Canvas canvas) {

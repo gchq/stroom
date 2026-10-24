@@ -26,17 +26,33 @@ public abstract class AbstractSettingsWidget extends Component {
     private Runnable onChange = () -> {
     };
 
-    /// @param onChange Run when the user changes a setting.
+    /// @param onChange Run when the user changes a setting, or null for nothing.
     public void setOnChange(final Runnable onChange) {
-        this.onChange = onChange;
+        this.onChange = onChange != null
+                ? onChange
+                : () -> {
+                };
     }
 
     /// The old way to hear changes, kept while the widgets' view interfaces (and the floor map's
     /// views) still ask for it; they move to [#setOnChange(Runnable)] with Plan B's wave.
     ///
-    /// @param uiHandlers Told when the user changes a setting.
+    /// @param uiHandlers Told when the user changes a setting, or null for nothing.
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
-        setOnChange(uiHandlers::onChange);
+        setOnChange(uiHandlers != null
+                ? uiHandlers::onChange
+                : null);
+    }
+
+    /// Makes the settings read only, or editable. Each widget applies it to its own fields; the
+    /// inherited [#setReadOnly(boolean)] calls this too.
+    ///
+    /// @param readOnly Whether the settings can't be changed.
+    public abstract void onReadOnly(boolean readOnly);
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        onReadOnly(readOnly);
     }
 
     /// Says that the user changed a setting.

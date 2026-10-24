@@ -16,7 +16,7 @@
 
 /*
  * A canvas of stacked layers (LayeredCanvas), e.g. the lines of a pipeline or expression tree. Its
- * size is set as custom properties on its root, which every layer shares.
+ * size is set as custom properties on its root and on each layer (a layer may be drawn elsewhere).
  */
 .layered-canvas {
     width: var(--layered-canvas__width, 100px);

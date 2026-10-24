@@ -40,11 +40,17 @@ public class TaskSpinner extends Composite {
     SpinnerLarge spinner;
 
     private boolean spinning;
+    private Runnable onClick;
 
     private final Timer timer;
 
     public TaskSpinner() {
         initWidget(BINDER.createAndBindUi(this));
+        addDomHandler(event -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        }, ClickEvent.getType());
 
         timer = new Timer() {
             @Override
@@ -76,6 +82,12 @@ public class TaskSpinner extends Composite {
             spinning = false;
             spinner.setVisible(false);
         }
+    }
+
+    /// @param onClick Run when the spinner is clicked (e.g. to open the task manager), or null for
+    ///                nothing.
+    public void setOnClick(final Runnable onClick) {
+        this.onClick = onClick;
     }
 
     public HandlerRegistration addClickHandler(final ClickHandler handler) {

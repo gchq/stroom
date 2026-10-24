@@ -43,6 +43,7 @@ public class FabButton extends ButtonBase {
 
     private final Parts parts;
     private final Element face;
+    private Runnable onClick;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -62,6 +63,11 @@ public class FabButton extends ButtonBase {
         this.parts = parts;
         face = parts.face;
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS);
+        addClickHandler(event -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        });
         // Shows the button's name when it has the keyboard focus
         FocusTooltip.install();
     }
@@ -72,6 +78,16 @@ public class FabButton extends ButtonBase {
     protected void onAttach() {
         super.onAttach();
         getElement().removeAttribute("tabindex");
+    }
+
+    /// @param onClick Run when the button is pressed, or null for nothing.
+    public void setOnClick(final Runnable onClick) {
+        this.onClick = onClick;
+    }
+
+    /// Puts the focus on the button (its face).
+    public void focus() {
+        face.focus();
     }
 
     @Override

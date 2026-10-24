@@ -100,7 +100,7 @@ public class ExpressionTreePanel extends TreePanel<Item> implements HasControlle
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("expression-tree__canvas");
+            canvas.addStyleName("expression-tree__canvas");
             panel.add(canvas);
         }
 
