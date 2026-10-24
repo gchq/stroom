@@ -20,7 +20,7 @@ import stroom.item.client.EventBinder;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimes;
-import stroom.svg.client.SvgIconBox;
+import stroom.svg.client.IconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
@@ -51,7 +51,7 @@ public class ScheduleBox
 
     private Provider<SchedulePopup> schedulePresenterProvider;
     private final TextBox textBox;
-    private final SvgIconBox svgIconBox;
+    private final IconBox iconBox;
     private Schedule value = Schedule
             .builder()
             .type(ScheduleType.CRON)
@@ -67,7 +67,7 @@ public class ScheduleBox
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
+            registerHandler(iconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 // As a date-time box: Enter or Alt+Down opens the dialog
                 final int keyCode = event.getNativeKeyCode();
@@ -118,11 +118,11 @@ public class ScheduleBox
         textBox.addStyleName("schedule-box__input stroom-control allow-focus");
         textBox.getElement().setAttribute("aria-haspopup", "dialog");
 
-        svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName("schedule-box");
-        svgIconBox.setWidget(textBox, SvgImage.HISTORY);
+        iconBox = new IconBox();
+        iconBox.addStyleName("schedule-box");
+        iconBox.setWidget(textBox, SvgImage.HISTORY);
 
-        initWidget(svgIconBox);
+        initWidget(iconBox);
     }
 
     @Override
@@ -187,7 +187,7 @@ public class ScheduleBox
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         textBox.setEnabled(enabled);
-        svgIconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || readOnly);
         updateReadOnly();
         validate();
     }
@@ -199,7 +199,7 @@ public class ScheduleBox
     /// @param readOnly Whether the schedule is read only.
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        svgIconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || readOnly);
         updateReadOnly();
     }
 

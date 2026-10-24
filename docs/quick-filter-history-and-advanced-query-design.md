@@ -67,7 +67,7 @@ cannot fetch history itself; it needs hooks set by the presenter.
 ### 2.2 Existing drop-down and popup building blocks
 
 - `BaseSelectionBox` (`stroom-core-client-widget/.../item/client/BaseSelectionBox.java:85`) is
-  the app's combo box: a `SvgIconBox` with `SvgImage.DROP_DOWN`, click → `SelectionPopup`
+  the app's combo box: a `IconBox` with `SvgImage.DROP_DOWN`, click → `SelectionPopup`
   (`:146`) with a filter box, list and keyboard navigation, auto-hide partnered with the text box.
 - `ShowMenuEvent` + `IconMenuItem` / `Separator` / `InfoMenuItem` (`stroom.widget.menu.client`)
   is the lightest popup and is already used from inside the widget module (`MyDataGrid.java:437`).

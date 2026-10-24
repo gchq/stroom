@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The days of a [CustomDatePicker]'s month: a WAI-ARIA grid (a `table`, `role="grid"`, named for
+/// The days of a [Calendar]'s month: a WAI-ARIA grid (a `table`, `role="grid"`, named for
 /// the month it shows) of six weeks, each day a `gridcell` named by its full date.
 ///
 /// The grid is one tab stop: the focus is on a day (a roving `tabindex`), and the keys move it
@@ -62,7 +62,7 @@ public final class CalendarGrid extends Widget {
     private final List<UTCDate> dates = new ArrayList<>(CELL_COUNT);
     // The day with the roving tab stop (and the focus, while the grid has it), at midnight UTC
     private UTCDate focusDate;
-    private CustomDatePicker datePicker;
+    private Calendar datePicker;
 
     /// Makes the grid, for a template; its calendar gives it itself ([#setDatePicker]).
     public CalendarGrid() {
@@ -97,7 +97,7 @@ public final class CalendarGrid extends Widget {
 
     /// @param datePicker The calendar the grid belongs to, which holds the month shown and the
     ///                   chosen day.
-    void setDatePicker(final CustomDatePicker datePicker) {
+    void setDatePicker(final Calendar datePicker) {
         if (this.datePicker != null) {
             throw new IllegalStateException("The grid already has its calendar");
         }

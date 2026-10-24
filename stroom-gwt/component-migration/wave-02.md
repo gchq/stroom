@@ -8,7 +8,7 @@ Give the shared value widgets and layout widgets setOnChange callbacks and one r
 
 - Cross-cutting, decide before wave 2: UiBinder can't write role, aria-*, tabindex, type or placeholder on a g: widget element (the only ways in templates today are plain HTML in a g:HTMLPanel, see SpinnerLarge.ui.xml, or a typed setter, as TickBox.setAriaLabel and PasswordBox.setPlaceholder). This wave uses three ways: (1) a template whose root is an element (UiBinder<DivElement/InputElement, X> with setElement) for widgets that extend Widget (ColourBox, RadioGroup, FloorMapIconPicker); (2) plain elements in a g:HTMLPanel for parts that need no widget (ValueSpinner arrows/feedback/status, PasswordBox status, QuickFilter description/error); (3) small shared widgets with setters for the rest. Proposed names, all free in all_simple_names.json: stroom.widget.component.client.AriaPanel (a FlowPanel with setRole, setTabIndex, setAriaLabel, setAriaHasPopup, setAriaHidden, setAriaLive) for DropDownBox's root and SelectionBox's renderBox; stroom.widget.form.client.TextInput (a TextBox with setType, setPlaceholder, setRole, setAriaHasPopup, setAriaExpanded) for the inputs in QuickFilter, ValueSpinner and BaseSelectionBox.
 - Add setAriaLabel(String) (template attribute ariaLabel) to ValueSpinner and BaseSelectionBox, as TickBox has, so that AccessibleName.set(...) calls in DurationPicker.java:76-77 and DefaultMonthSelector.java:116,139 become template attributes.
-- SvgIconBox (wave 1) needs a template form of setDropDownWidget (e.g. @UiChild or a dropDown="true" attribute) before BaseSelectionBox can declare it.
+- IconBox (wave 1) needs a template form of setDropDownWidget (e.g. @UiChild or a dropDown="true" attribute) before BaseSelectionBox can declare it.
 - Hiding: there is no Stroom utility hidden class in ui/css. UIObject.setVisible (GWT's own inline display:none) isn't counted as an inline style; SplitPane's own getStyle().setDisplay calls become BEM modifiers (split-pane__pane--hidden, split-pane__splitter--hidden) in split-pane.css.
 - Reused classes in this wave: sr-only (spinner.css:126), allow-focus, stroom-control (stroom.css:576), max (stroom.css:793), form (form.css:42), days (components.css:1655), pager-* (components.css:294-336). New classes go in the block's own CSS file: selection-box.css, split-pane.css, xsdbrowser.css, editor.css (scrollbar-metrics), stroom-histogram.css, pathways.css, tick-box.css only if word wrap is kept.
 - Custom property naming follows the existing --block__thing form (e.g. --split-pane__splitter-size): --split-pane__tracks, --xsd-node-grid__columns, --stroom-histogram__tooltip-left, --trace-histogram__bar-width/-index/-height.
@@ -350,7 +350,7 @@ widget, tidy; complexity 3, effort M; used by 108.
 | BaseSelectionBox.java:92 | aria | aria-hidden="true" on renderBox (AriaPanel/plain element) |
 | BaseSelectionBox.java:94-96 | aria | role="combobox" aria-haspopup="listbox" aria-expanded="false" on the text box (TextInput setters) |
 | BaseSelectionBox.java:98-101 | structure | <g:FlowPanel styleName="selection-box__control"> holding renderBox then textBox |
-| BaseSelectionBox.java:103-107 | component-declaration | <svg:SvgIconBox ui:field="svgIconBox" styleName="selection-box" dropDown="true"> with the control as its child: SvgIconBox needs a template form of setDropDownWidget (e.g. @UiChild or a dropDown attribute); it is a wave 1 widget |
+| BaseSelectionBox.java:103-107 | component-declaration | <svg:IconBox ui:field="svgIconBox" styleName="selection-box" dropDown="true"> with the control as its child: IconBox needs a template form of setDropDownWidget (e.g. @UiChild or a dropDown attribute); it is a wave 1 widget |
 
 **Stays in Java:** BaseSelectionBox.java:122 selection-box--select-only, :116 disabled, :136 readonly modifiers: state; aria-expanded/aria-controls when the popup opens and closes, aria-readonly: state; The value's rendered picture and text: data.
 
@@ -374,19 +374,19 @@ widget, tidy; complexity 2, effort S; used by 7.
 
 **Stays in Java:** DurationPicker.java:59-65 and smallTimeMode() addItem(TimeUnit...): enum items; SelectionBox has no template item syntax; Values set in setValue: data.
 
-## `CustomDatePicker`
+## `Calendar`
 
 widget, tidy; complexity 2, effort S; used by 3.
 
-- **Component:** `stroom.widget.datepicker.client.CustomDatePicker`
+- **Component:** `stroom.widget.datepicker.client.Calendar`
 - **Controller:** `none`
-- **Template:** `none` → `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/CustomDatePicker.ui.xml (new; holds the header from DefaultMonthSelector and declares CalendarGrid)`
-- **Goes:** DefaultMonthSelector.java merged into CustomDatePicker (its header goes into the template, its handlers into CustomDatePicker), removing the child-takes-parent coupling; `CalendarGrid(CustomDatePicker) constructor argument: give it a no-arg constructor and a setter or callbacks so the template can declare it`; `Keep HasValue<UTCDate>/ValueChangeEvent beside setOnChange until its 3 callers move`
-- **Names:** CustomDatePicker, CalendarGrid, DefaultMonthSelector are unique. DefaultMonthSelector is merged rather than renamed.
+- **Template:** `none` → `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/Calendar.ui.xml (new; holds the header from DefaultMonthSelector and declares CalendarGrid)`
+- **Goes:** DefaultMonthSelector.java merged into Calendar (its header goes into the template, its handlers into Calendar), removing the child-takes-parent coupling; `CalendarGrid(Calendar) constructor argument: give it a no-arg constructor and a setter or callbacks so the template can declare it`; `Keep HasValue<UTCDate>/ValueChangeEvent beside setOnChange until its 3 callers move`
+- **Names:** Calendar, CalendarGrid, DefaultMonthSelector are unique. DefaultMonthSelector is merged rather than renamed.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| CustomDatePicker.java:61-65 | structure | root <g:FlowPanel styleName="calendar"> holding header then <dp:CalendarGrid ui:field="grid"/> |
+| Calendar.java:61-65 | structure | root <g:FlowPanel styleName="calendar"> holding header then <dp:CalendarGrid ui:field="grid"/> |
 | DefaultMonthSelector.java:91-95 | structure | <g:FlowPanel styleName="calendar__header"> with two calendar__row rows |
 | DefaultMonthSelector.java:81-84 | component-declaration | year row: <i:SelectionBox ui:field="yearSelect" ariaLabel="Year"/> then <b:Toolbar name="Year"><b:ToolbarButton ui:field="previousYear" svg="ARROW_LEFT" title="Previous Year"/><b:ToolbarButton ui:field="nextYear" svg="ARROW_RIGHT" title="Next Year"/></b:Toolbar> |
 | DefaultMonthSelector.java:74-76, 86-89 | component-declaration | month row: <i:SelectionBox ui:field="monthSelect" ariaLabel="Month"/> then <b:Toolbar name="Month"> with previousMonth/nextMonth ToolbarButtons (ARROW_LEFT 'Previous Month', ARROW_RIGHT 'Next Month') |

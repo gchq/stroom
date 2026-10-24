@@ -16,7 +16,7 @@
             </g:FlowPanel>
             <form:FormGroup identity="date" label="Select date" addStyleNames="dock-min"
                             helpText="Calendar for choosing the date. In the days, the arrow keys move a day or a week, Home and End to the start and end of the week, Page Up and Page Down a month, Shift with Page Up and Page Down a year, and Enter or Space chooses the day. Use Today, Yesterday or Week Start for quick choices.">
-                <date:CustomDatePicker ui:field="datePicker"/>
+                <date:Calendar ui:field="datePicker"/>
             </form:FormGroup>
         </g:FlowPanel>
         <g:FlowPanel styleName="date-time-view__column date-time-view__column--time dock-max">

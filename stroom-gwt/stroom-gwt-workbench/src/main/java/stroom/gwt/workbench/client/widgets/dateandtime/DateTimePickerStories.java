@@ -23,7 +23,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.client.SvgIconBox;
+import stroom.svg.client.IconBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
@@ -44,8 +44,8 @@ public final class DateTimePickerStories {
 
     private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
     // The calendar icon, and the element its read-only class is on
-    private static final String ICON_OUTER = ".svg-icon-box__icon";
-    private static final String ICON_INNER = ".svg-icon-box";
+    private static final String ICON_OUTER = ".icon-box__icon";
+    private static final String ICON_INNER = ".icon-box";
     /// 2024-01-15T09:50:00.000Z.
     private static final long VALUE_MS = 1705312200000L;
 
@@ -97,7 +97,7 @@ public final class DateTimePickerStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.expect(play.querySelector("input")).toBeDisabled();
-                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
+                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(IconBox.ICON_BOX_READONLY_CLASS_NAME);
                     // The icon once still opened the dialog (DateTimeBox.setEnabled only disabled
                     // its text box)
                     play.click(play.querySelector(ICON_OUTER));

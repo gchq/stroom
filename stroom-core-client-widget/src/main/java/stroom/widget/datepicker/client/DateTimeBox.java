@@ -18,7 +18,7 @@ package stroom.widget.datepicker.client;
 
 import stroom.event.client.StaticEventBus;
 import stroom.item.client.EventBinder;
-import stroom.svg.client.SvgIconBox;
+import stroom.svg.client.IconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.form.client.FieldValidity;
 
@@ -62,7 +62,7 @@ public class DateTimeBox
     private Provider<DateTimePopup> popupProvider;
     private final TextBox textBox;
     private boolean readOnly;
-    private final SvgIconBox svgIconBox;
+    private final IconBox iconBox;
     private String stringValue;
     private Long longValue;
     private DateTimePopup popup;
@@ -74,7 +74,7 @@ public class DateTimeBox
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
+            registerHandler(iconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(DateTimeBox.this::onKeyDown));
             registerHandler(textBox.addValueChangeHandler(event -> {
                 stringValue = textBox.getValue();
@@ -92,11 +92,11 @@ public class DateTimeBox
         textBox.getElement().setAttribute("aria-haspopup", "dialog");
         stringValue = textBox.getText();
 
-        svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName(BLOCK);
-        svgIconBox.setWidget(textBox, SvgImage.CALENDAR);
+        iconBox = new IconBox();
+        iconBox.addStyleName(BLOCK);
+        iconBox.setWidget(textBox, SvgImage.CALENDAR);
 
-        initWidget(svgIconBox);
+        initWidget(iconBox);
     }
 
     @Override
@@ -169,7 +169,7 @@ public class DateTimeBox
     /// @param enabled Whether the box is enabled.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        svgIconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || readOnly);
         updateInvalidState();
     }
 
@@ -181,7 +181,7 @@ public class DateTimeBox
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         textBox.setReadOnly(readOnly);
-        svgIconBox.setReadOnly(!textBox.isEnabled() || readOnly);
+        iconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
 
     /// @return Whether the box is enabled.

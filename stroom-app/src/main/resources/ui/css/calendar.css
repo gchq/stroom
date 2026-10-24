@@ -1,5 +1,5 @@
 /*
- * Stroom's calendar (CustomDatePicker): its year and month rows above a grid of the month's days
+ * Stroom's calendar (Calendar): its year and month rows above a grid of the month's days
  * (CalendarGrid, role="grid"). A day's states come from its ARIA attributes: the chosen day is
  * [aria-selected="true"], today is [aria-current="date"]. A day of the month before or after,
  * shown to fill the weeks, is calendar__day--outside, a modifier as it has no ARIA meaning.

@@ -463,7 +463,7 @@
     justify-content: center;
 }
 
-/* Its arrow: that of every field that opens a list (a selection box's, svg-icon-box.css) */
+/* Its arrow: that of every field that opens a list (a selection box's, icon-box.css) */
 .pipeline-path__caret-arrow svg {
     width: 10px;
     height: 10px;

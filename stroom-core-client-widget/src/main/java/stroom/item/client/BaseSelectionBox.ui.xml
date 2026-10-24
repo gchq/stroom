@@ -10,7 +10,7 @@
              xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:f="urn:import:stroom.widget.form.client"
              xmlns:svg="urn:import:stroom.svg.client">
-    <svg:SvgIconBox ui:field="svgIconBox" addStyleNames="selection-box selection-box--select-only">
+    <svg:IconBox ui:field="iconBox" addStyleNames="selection-box selection-box--select-only">
         <svg:dropDown>
             <g:FlowPanel styleName="selection-box__control">
                 <c:AriaPanel ui:field="renderBox" styleName="selection-box__value stroom-control allow-focus"
@@ -19,5 +19,5 @@
                              readOnly="true" role="combobox" ariaHasPopup="listbox" ariaExpanded="false"/>
             </g:FlowPanel>
         </svg:dropDown>
-    </svg:SvgIconBox>
+    </svg:IconBox>
 </ui:UiBinder>

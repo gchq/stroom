@@ -298,7 +298,7 @@ public final class DashboardSearchStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
                     // A selection box that allows free text opens with its drop down button
-                    play.click(play.querySelector(".ListInputView .svg-icon-box__icon"));
+                    play.click(play.querySelector(".ListInputView .icon-box__icon"));
                     screen.findByText("red", ".selection-popup *");
                     play.expect(screen.getByText("blue", ".selection-popup *")).toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);

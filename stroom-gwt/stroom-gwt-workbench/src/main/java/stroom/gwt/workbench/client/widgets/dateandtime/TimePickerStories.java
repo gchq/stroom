@@ -61,7 +61,7 @@ public final class TimePickerStories {
                 .story("HourMinute", context -> timePicker(context, new Time(9, 0, 0), false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.click(play.querySelector(".svg-icon-box__icon"));
+                    play.click(play.querySelector(".icon-box__icon"));
                     final Play dialog = screen.within(screen.findByText("Set Time").closest(StroomDom.DIALOG));
                     play.expect(dialog.getByText("Minute")).toBeVisible();
                     // The seconds spinner was once still shown (TimeViewImpl.setSecondVisible did

@@ -54,13 +54,13 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /// Stroom's calendar, for choosing a day: the BEM block `calendar` (`calendar.css`, markup
-/// `CustomDatePicker.ui.xml`), holding its year and month rows above the month's days
+/// `Calendar.ui.xml`), holding its year and month rows above the month's days
 /// ([CalendarGrid], a WAI-ARIA grid). In each row, a selection box ("Year", "Month") and a toolbar of
 /// its Previous and Next buttons (also "Year" and "Month", one tab stop each). Left and Right in a
 /// box step it back and on.
 ///
 /// Its value is a day at midnight UTC, or null for none.
-public class CustomDatePicker extends Composite implements HasValue<UTCDate> {
+public class Calendar extends Composite implements HasValue<UTCDate> {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // The number of years the year box lists, centred on the year shown
@@ -85,7 +85,7 @@ public class CustomDatePicker extends Composite implements HasValue<UTCDate> {
     private Consumer<UTCDate> onChange;
 
     /// Makes a calendar showing today's month, with no day chosen.
-    public CustomDatePicker() {
+    public Calendar() {
         initWidget(BINDER.createAndBindUi(this));
         grid.setDatePicker(this);
 
@@ -271,7 +271,7 @@ public class CustomDatePicker extends Composite implements HasValue<UTCDate> {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, CustomDatePicker> {
+    interface Binder extends UiBinder<Widget, Calendar> {
 
     }
 }

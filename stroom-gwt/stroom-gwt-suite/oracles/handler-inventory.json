@@ -17355,7 +17355,7 @@
    ]
   },
   {
-   "class": "SvgIconBox",
+   "class": "IconBox",
    "classKind": "widget",
    "kind": "click",
    "receiver": "ClickEvent",

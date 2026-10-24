@@ -629,8 +629,8 @@ public final class ExpressionBuilderStories {
                         context -> editor(context, populatedExpression(), false))
                 .withPlay(play -> {
                     selectTermFieldPicker(play, "UserId");
-                    // The arrow is the SelectionBox's SvgIconBox icon
-                    final Query arrowSvgPath = play.querySelector(FIELD_PICKER + " .svg-icon-box__icon svg path");
+                    // The arrow is the SelectionBox's IconBox icon
+                    final Query arrowSvgPath = play.querySelector(FIELD_PICKER + " .icon-box__icon svg path");
                     play.expect(arrowSvgPath).not().toBeNull();
                     play.click(arrowSvgPath);
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());

@@ -16,7 +16,7 @@
 
 package stroom.item.client;
 
-import stroom.svg.client.SvgIconBox;
+import stroom.svg.client.IconBox;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.form.client.TextInput;
 import stroom.widget.util.client.SelectionType;
@@ -48,7 +48,7 @@ import java.util.function.Supplier;
 /// can't be typed in, on Space or a typed character, which the list goes to, or Home or End, which
 /// open it at its first or last option. The list takes the focus,
 /// and Enter or Alt+Up there chooses an option, and Escape closes it. Its drop-down arrow is an
-/// [SvgIconBox]'s.
+/// [IconBox]'s.
 ///
 /// Its markup is `BaseSelectionBox.ui.xml`, styled by selection-box.css: `selection-box`,
 /// `selection-box__control`, `selection-box__value` and `selection-box__input`, and the modifiers
@@ -69,7 +69,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     @UiField
     TextInput textBox;
     @UiField
-    SvgIconBox svgIconBox;
+    IconBox iconBox;
     private SelectionListModel<T, I> model;
     private T value;
     private SelectionPopup<T, I> popup;
@@ -82,7 +82,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     public BaseSelectionBox() {
         initWidget(BINDER.createAndBindUi(this));
         // Its own children's handlers, which go with them
-        svgIconBox.addClickHandler(event -> togglePopup());
+        iconBox.addClickHandler(event -> togglePopup());
         textBox.addClickHandler(event -> onTextBoxClick());
         textBox.addKeyDownHandler(event -> onKeyDown(event.getNativeEvent()));
         textBox.addValueChangeHandler(event -> fireChange());
@@ -96,7 +96,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         textBox.setReadOnly(readOnly || !allowTextEntry);
-        svgIconBox.setStyleName(SELECT_ONLY, !allowTextEntry);
+        iconBox.setStyleName(SELECT_ONLY, !allowTextEntry);
     }
 
     /// @param onChange Told the value chosen when the user chooses one (or `setValue(value, true)`
@@ -195,7 +195,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         popup = new SelectionPopup<>();
         popup.init(model);
         popup.addAutoHidePartner(textBox.getElement());
-        popup.addAutoHidePartner(svgIconBox.getElement());
+        popup.addAutoHidePartner(iconBox.getElement());
         popup.registerPopupTextProvider(popupTextSupplier);
         // The list is named after the box, and the box says that it is open and controls it
         popup.setAccessibleName(getAccessibleName(textBox.getElement()));
@@ -279,9 +279,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             hidePopup();
         }
         textBox.setEnabled(enabled);
-        svgIconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || readOnly);
         // The disabled look (selection-box.css), rather than fading the value
-        svgIconBox.setStyleName(DISABLED, !enabled);
+        iconBox.setStyleName(DISABLED, !enabled);
     }
 
     /// Makes the value read only: it can be read and stays in the tab order, but the list
@@ -300,8 +300,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         } else {
             textBox.getElement().removeAttribute("aria-readonly");
         }
-        svgIconBox.setReadOnly(!isEnabled() || readOnly);
-        svgIconBox.setStyleName(READ_ONLY, readOnly);
+        iconBox.setReadOnly(!isEnabled() || readOnly);
+        iconBox.setStyleName(READ_ONLY, readOnly);
     }
 
     /// @return Whether the value is read only.

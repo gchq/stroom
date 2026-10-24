@@ -2,13 +2,13 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
-Set the leaf contract (no-arg constructor, setOnX, setReadOnly, focus(), Binder made with GWT.create) on the smallest leaf widgets and cells that are not in flight, so every later wave has a model to copy. Buttons gain setOnClick, SvgIconBox's setReadonly is renamed setReadOnly, and RefreshButton/Spinner* get setRefreshing in place of their own task counting.
+Set the leaf contract (no-arg constructor, setOnX, setReadOnly, focus(), Binder made with GWT.create) on the smallest leaf widgets and cells that are not in flight, so every later wave has a model to copy. Buttons gain setOnClick, IconBox's setReadonly is renamed setReadOnly, and RefreshButton/Spinner* get setRefreshing in place of their own task counting.
 
 ## CSS and template notes for the wave
 
 - Runtime values as custom properties: no shared setter exists yet. Two private JSNI copies do element.style.setProperty(name, value): DataGridDom.setCssVariable (stroom-core-client-widget/src/main/java/stroom/widget/datagrid/client/DataGridDom.java:108, package-private) and ClassificationLabel.setStyleProperty (stroom-core-client/src/main/java/stroom/data/client/view/ClassificationLabel.java:84). GWT's Style.setProperty can't set a '--' name. Add one public ElementUtil.setCssVariable(Element, String, String) in stroom.widget.util.client.ElementUtil and use it for Button's ripple and LayeredCanvas. Cells use SafeStylesUtils.fromTrustedNameAndValue("--name", value) in their SafeHtml style attribute.
 - Custom property naming follows the existing --block__property form (--data-grid__columns, --classification-label__background-color): --ripple__left/--ripple__top (Button.css .ripple), --layered-canvas__width/--layered-canvas__height (new layered-canvas.css), --percent-bar-cell__width (PercentBarCell.css), --colour-swatch-cell__background-color (ColourSwatchCell.css), --expander-cell__indent (ExpanderCell.css).
-- New file layered-canvas.css (stroom-app/src/main/resources/ui/css/, @import from app.css as svg-icon-box.css is at app.css:61): .layered-canvas sizes from the two variables; .layered-canvas__layer { position: absolute; left: 0; top: 0; outline: none; width/height from the inherited variables }. No existing class covers absolute 0,0 placement; .max (stroom.css:793) is only width/height 100%.
+- New file layered-canvas.css (stroom-app/src/main/resources/ui/css/, @import from app.css as icon-box.css is at app.css:61): .layered-canvas sizes from the two variables; .layered-canvas__layer { position: absolute; left: 0; top: 0; outline: none; width/height from the inherited variables }. No existing class covers absolute 0,0 placement; .max (stroom.css:793) is only width/height 100%.
 - Convention to agree for this wave: a widget that is its own single element (extends ButtonBase, FlowPanel or Widget: ToolbarButton, LinkButton, RefreshButton, Toolbar, ToolbarRow, FormLabel, FormGroupHelpButton) keeps its root block class in its constructor, as there is nothing else to template; a widget with fixed inner markup gets a template.
 - Template for an element-root widget: CurveTabSelector (stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTabSelector.java:30-57) is the existing pattern (UiBinder<DivElement, X>, createAndBindUi(this), setElement). ButtonBase subclasses (Button, FabButton) only take their element through super(element), so they bind a static Binder to a small Parts holder inside the super(...) call, or move to FocusWidget, which has a no-arg constructor.
 - Cells (TextFieldCell, ActionCell, the info cells, TickBoxCell, ExpanderCell, ValueSpinnerCell and the explorer, dashboard, AI and annotation cells) have no UiBinder template: SafeHtmlTemplates stay for grid cells and rows (COMPONENT_MODEL_DESIGN.md, Components, controllers and models). Their only Done-means work is rule 3 (custom properties instead of inline styles).
@@ -139,24 +139,24 @@ cell, dumb; complexity 1, effort S; used by 7.
 
 **Stays in Java:** ActionCell.java:48,58 - default name 'Actions...' is a CellIcon constructor argument; ActionCell.java:118-125 - per-row name from nameFunction (data); classes svgCell-button/svgCell-icon in SafeHtml.
 
-## `SvgIconBox`
+## `IconBox`
 
 widget, tidy; complexity 1, effort S; used by 4.
 
-- **Component:** `stroom.svg.client.SvgIconBox`
+- **Component:** `stroom.svg.client.IconBox`
 - **Controller:** `none`
-- **Template:** `none` → `stroom-core-client-widget/src/main/java/stroom/svg/client/SvgIconBox.ui.xml (new; SvgIconBox becomes a Composite, best the thin stroom.widget.component.client.Component so setReadonly becomes the inherited final setReadOnly + onReadOnlyChange)`
-- **Goes:** Nothing deleted; setReadonly(boolean) (SvgIconBox.java:91) is replaced by setReadOnly, and its 4 callers (DateTimeBox.java:172,184, TimeBox.java:128,139, BaseSelectionBox.java:293,314, ScheduleBox) move in the same commit
-- **Names:** No clash: SvgIconBox is the only class of that name. Keeps its name and package (widget).
+- **Template:** `none` → `stroom-core-client-widget/src/main/java/stroom/svg/client/IconBox.ui.xml (new; IconBox becomes a Composite, best the thin stroom.widget.component.client.Component so setReadonly becomes the inherited final setReadOnly + onReadOnlyChange)`
+- **Goes:** Nothing deleted; setReadonly(boolean) (IconBox.java:91) is replaced by setReadOnly, and its 4 callers (DateTimeBox.java:172,184, TimeBox.java:128,139, BaseSelectionBox.java:293,314, ScheduleBox) move in the same commit
+- **Names:** No clash: IconBox is the only class of that name. Keeps its name and package (widget).
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| SvgIconBox.java:48 | css-class | Root block class: <g:HTMLPanel styleName="svg-icon-box"> |
-| SvgIconBox.java:62-63 | structure | The icon holder is fixed markup, not a new SimplePanel(): <div ui:field="icon" class="svg-icon-box__icon" aria-hidden="true"></div> after a <span ui:field="fieldSlot"/> that setWidget replaces with the field (HTMLPanel.addAndReplaceElement), so the DOM order (field, then icon) is unchanged |
-| SvgIconBox.java:67 | aria | aria-hidden="true" on the icon div |
-| SvgIconBox.java:77 | css-class | svg-icon-box--drop-down can be a template-settable modifier (a dropDown="true" setter), though callers today set it through setDropDownWidget |
+| IconBox.java:48 | css-class | Root block class: <g:HTMLPanel styleName="icon-box"> |
+| IconBox.java:62-63 | structure | The icon holder is fixed markup, not a new SimplePanel(): <div ui:field="icon" class="icon-box__icon" aria-hidden="true"></div> after a <span ui:field="fieldSlot"/> that setWidget replaces with the field (HTMLPanel.addAndReplaceElement), so the DOM order (field, then icon) is unchanged |
+| IconBox.java:67 | aria | aria-hidden="true" on the icon div |
+| IconBox.java:77 | css-class | icon-box--drop-down can be a template-settable modifier (a dropDown="true" setter), though callers today set it through setDropDownWidget |
 
-**Stays in Java:** SvgIconBox.java:59 - svg-icon-box__field is added to the caller's input, found at runtime (findField); SvgIconBox.java:64-66 - the SVG is the SvgImage passed in (data); svg-icon-box__image must go on the SVG element itself, so it is set after inserting it; SvgIconBox.java:93-97 - svg-icon-box--readonly is state; SvgIconBox.java:82-88 - the click goes out through a new setOnIconClick(Runnable) beside addClickHandler (rule 5: ClickHandler stays until its 4 callers move).
+**Stays in Java:** IconBox.java:59 - icon-box__field is added to the caller's input, found at runtime (findField); IconBox.java:64-66 - the SVG is the SvgImage passed in (data); icon-box__image must go on the SVG element itself, so it is set after inserting it; IconBox.java:93-97 - icon-box--readonly is state; IconBox.java:82-88 - the click goes out through a new setOnIconClick(Runnable) beside addClickHandler (rule 5: ClickHandler stays until its 4 callers move).
 
 ## `FabButton`
 

@@ -40,13 +40,13 @@ import com.google.gwt.user.client.ui.Widget;
 /// stop, though clicking it opens it too. While the box is read only ([#setReadOnly(boolean)]) the
 /// icon is dimmed and does nothing.
 ///
-/// Styled by svg-icon-box.css: `svg-icon-box`, `svg-icon-box__field`, `svg-icon-box__icon`,
-/// `svg-icon-box__image`, and the modifiers `svg-icon-box--drop-down` and `svg-icon-box--read-only`.
-public class SvgIconBox extends Component {
+/// Styled by icon-box.css: `icon-box`, `icon-box__field`, `icon-box__icon`,
+/// `icon-box__image`, and the modifiers `icon-box--drop-down` and `icon-box--read-only`.
+public class IconBox extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private static final String BLOCK = "svg-icon-box";
+    private static final String BLOCK = "icon-box";
     /// The modifier of a box whose icon is dimmed and does nothing, as its field can't be changed.
     public static final String ICON_BOX_READONLY_CLASS_NAME = BLOCK + "--read-only";
     private static final String DROP_DOWN_CLASS_NAME = BLOCK + "--drop-down";
@@ -59,7 +59,7 @@ public class SvgIconBox extends Component {
 
     private Runnable onIconClick;
 
-    public SvgIconBox() {
+    public IconBox() {
         panel = BINDER.createAndBindUi(this);
         initWidget(panel);
         addIconClickHandler(event -> {
@@ -94,7 +94,7 @@ public class SvgIconBox extends Component {
     }
 
     /// Puts a field in the box with a drop-down arrow, from a template:
-    /// `<svg:SvgIconBox><svg:dropDown><g:TextBox/></svg:dropDown></svg:SvgIconBox>`.
+    /// `<svg:IconBox><svg:dropDown><g:TextBox/></svg:dropDown></svg:IconBox>`.
     ///
     /// @param widget The field, or a widget holding it (its first input is the field).
     @UiChild(tagname = "dropDown", limit = 1)
@@ -143,7 +143,7 @@ public class SvgIconBox extends Component {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<HTMLPanel, SvgIconBox> {
+    interface Binder extends UiBinder<HTMLPanel, IconBox> {
 
     }
 }

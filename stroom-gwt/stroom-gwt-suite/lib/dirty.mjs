@@ -124,7 +124,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // trying to opened nothing, so the Escape meant for its list closed the dialog instead.
       if (select && select.offsetWidth > 0 && /\bdisabled\b/.test(select.className)) continue;
       if (select && select.offsetWidth > 0) {
-        const icon = select.querySelector('.svg-icon-box__icon') ?? select;
+        const icon = select.querySelector('.icon-box__icon') ?? select;
         out.push({ label, kind: 'select', value: norm(select.querySelector('.selection-box__value')?.textContent
           ?? select.querySelector('input')?.value), ...at(icon) });
         continue;

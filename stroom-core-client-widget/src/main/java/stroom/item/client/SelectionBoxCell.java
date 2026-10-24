@@ -43,7 +43,7 @@ import java.util.Objects;
 import java.util.function.IntFunction;
 
 /// A selection box in a grid's cell: the same WAI-ARIA combobox as [BaseSelectionBox] (one that
-/// can't be typed in), drawn by the same classes (selection-box.css, svg-icon-box.css) and filling
+/// can't be typed in), drawn by the same classes (selection-box.css, icon-box.css) and filling
 /// its column (`selection-box--cell`), opening the same list ([SelectionPopup]) below it.
 ///
 /// Its keys are the box's: Enter, Space, Down, Up and Alt+Down open the list, Home and End open it at
@@ -110,7 +110,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
         final String name = name(context.getIndex());
         final String rowId = cellId + "-" + context.getIndex();
         final SafeHtml arrow = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg()
-                .replaceFirst("<svg", "<svg class=\"svg-icon-box__image\""));
+                .replaceFirst("<svg", "<svg class=\"icon-box__image\""));
         sb.append(readOnly
                 ? TEMPLATE.readOnlyBox(rendered, text, name, rowId, arrow)
                 : TEMPLATE.box(rendered, text, name, rowId, arrow));
@@ -303,30 +303,30 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
     // --------------------------------------------------------------------------------
 
 
-    // The markup of BaseSelectionBox (an SvgIconBox holding the value's picture and the combobox,
+    // The markup of BaseSelectionBox (an IconBox holding the value's picture and the combobox,
     // then the drop-down arrow), with the cell modifier. The combobox holds the value as text for
     // screen readers, unseen over its picture, as the widget's does in a box that can't be typed in
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"svg-icon-box svg-icon-box--drop-down selection-box selection-box--select-only "
+        @Template("<div class=\"icon-box icon-box--drop-down selection-box selection-box--select-only "
                   + "selection-box--cell\"><div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"
                   + "<input type=\"text\" class=\"text-field selection-box__input stroom-control "
-                  + "svg-icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
+                  + "icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
                   + "aria-expanded=\"false\" value=\"{1}\" aria-label=\"{2}\" readonly "
                   + "data-selection-box-cell=\"{3}\"></input></div>"
-                  + "<div class=\"svg-icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
+                  + "<div class=\"icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
         SafeHtml box(SafeHtml rendered, String text, String name, String rowId, SafeHtml arrow);
 
-        @Template("<div class=\"svg-icon-box svg-icon-box--drop-down svg-icon-box--read-only selection-box "
+        @Template("<div class=\"icon-box icon-box--drop-down icon-box--read-only selection-box "
                   + "selection-box--select-only selection-box--read-only selection-box--cell\">"
                   + "<div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"
                   + "<input type=\"text\" class=\"text-field selection-box__input stroom-control "
-                  + "svg-icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
+                  + "icon-box__field\" role=\"combobox\" aria-haspopup=\"listbox\" "
                   + "aria-expanded=\"false\" aria-readonly=\"true\" value=\"{1}\" aria-label=\"{2}\" readonly "
                   + "data-selection-box-cell=\"{3}\"></input></div>"
-                  + "<div class=\"svg-icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
+                  + "<div class=\"icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
         SafeHtml readOnlyBox(SafeHtml rendered, String text, String name, String rowId, SafeHtml arrow);
     }
 }

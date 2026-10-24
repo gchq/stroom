@@ -40,7 +40,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     Label date;
     @SuppressWarnings("unused")
     @UiField
-    CustomDatePicker datePicker;
+    Calendar datePicker;
     @SuppressWarnings("unused")
     @UiField
     Label time;

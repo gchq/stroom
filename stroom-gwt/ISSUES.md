@@ -685,7 +685,7 @@ of them must go:
    doesn't call; `QueryResultVisPresenter.onRemove()` (line 182) calls `onUnbind()` rather than
    `unbind()`, so each query run that draws a vis keeps the last one.
 
-**Size (fixed for date pickers):** every `MyDateBox` built its calendar (a `CustomDatePicker`, a
+**Size (fixed for date pickers):** every `MyDateBox` built its calendar (a `Calendar`, a
 few hundred elements) when it was made, and `TermEditor` makes one for every expression term, so
 a dashboard built about 20 calendars that were never shown. `MyDateBox` now uses one calendar for
 every date box, made when one is first opened (only one can be open at a time; the box that opens
@@ -2194,14 +2194,14 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   Length spinner, which had no label at all, is now named by `AccessibleName` (the tick box above it
   says what it is, so it has no visible label of its own) (`BasicTableSettingsViewImpl`). Workbench:
   `Widgets/Inputs/ValueSpinner`, `Widgets/Cell Renderers/ValueSpinnerCell`; real input: `value-spinner.mjs`.
-* **Drop-down arrows that didn't match, and field icons screen readers met unnamed** (`SvgIconBox`):
+* **Drop-down arrows that didn't match, and field icons screen readers met unnamed** (`IconBox`):
   a selection box's arrow (`SvgImage.DROP_DOWN`) was a smaller, thinner arrow than the value
   spinner's beside it, and the icon at the end of a selection, date, time or schedule box was a
   `div` with no name that a screen reader could find. The selection box's arrow, and QuickFilter's
   Recent Filters arrow, are now the value spinner's (`ARROW_DOWN`, 10px, in the drop-down arrow's
   colour), and `DROP_DOWN` is deleted; the icons are pictures hidden from screen readers
   (`aria-hidden`), as the field opens the same thing from the keyboard, with their own BEM stylesheet
-  (`svg-icon-box.css`). The date picker's year and month boxes touched, so a focused box's ring
+  (`icon-box.css`). The date picker's year and month boxes touched, so a focused box's ring
   covered the other; they are now 4px apart.
 * **The selection box only opened on Enter or a click** (`BaseSelectionBox`): the WAI-ARIA
   combobox's keys did nothing. Down, Up and Alt+Down now open the list, and in a box that can't be
@@ -2326,7 +2326,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
   `App/Editors/PlanBEditor` `Metric`.
 * **Two calendars, one of them out of the keyboard's reach** (`MyDateBox`, GWT's `DatePicker`,
-  `CustomDatePicker`, `DateTimeBox`): 17 date boxes (the expression term editor, the query time range,
+  `Calendar`, `DateTimeBox`): 17 date boxes (the expression term editor, the query time range,
   processor and reprocess filters, the table builder, import, data upload, API key expiry and a
   visualisation's date settings) showed GWT's own calendar, which opened whenever the field got the
   focus and could only be used with the mouse; the other date fields showed Stroom's calendar in the
@@ -2351,7 +2351,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `ToolbarsChangeTheMonth`), `Widgets/Date & Time/DateTimePicker` (`AltDownOpensTheDialog`,
   `ChooseADayWithTheKeys`, `ShortcutsAreButtons`, `InvalidTextIsMarked`, `ExpressionsAllowed`),
   `Widgets/Query/ExpressionBuilder` `DateTermBoxes`; real input: `date-time.mjs`.
-* **Text ran under what is drawn over a field's end** (`PasswordBox`, `QuickFilter`, `SvgIconBox`,
+* **Text ran under what is drawn over a field's end** (`PasswordBox`, `QuickFilter`, `IconBox`,
   `BaseSelectionBox`): a password box's text ran 7px under its show/hide button, and a quick filter's
   ran under Clear (which appears once there is text; 22px of padding for 57px of buttons) and under
   the recent filters' button; an icon box's and a selection box's text stopped 1px short of the

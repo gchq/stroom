@@ -66,7 +66,7 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/ClientDateUtil.java` | stroom-core-client-widget | Util |
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/CustomCalendarModel.java` | stroom-core-client-widget | Model |
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/CustomDateBox.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/CustomDatePicker.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/Calendar.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/CustomDateTimeFormat.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/DateBoxView.java` | stroom-core-client-widget | View |
 | `stroom-core-client-widget/src/main/java/stroom/widget/customdatebox/client/DurationPicker.java` | stroom-core-client-widget | — |
@@ -75,7 +75,7 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/CalendarUtil.java` | stroom-core-client-widget | Util |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/CalendarView.java` | stroom-core-client-widget | View |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/ClientTimeZone.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/CustomDatePicker.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/Calendar.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DateChangeEvent.java` | stroom-core-client-widget | Event |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DateGrid.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/datepicker/client/DatePickerComponent.java` | stroom-core-client-widget | — |
@@ -642,7 +642,7 @@ _516 files._
 | --- | --- | --- |
 | `stroom-core-client-widget/src/main/java/stroom/svg/client/IconColour.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/svg/client/Preset.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/svg/client/SvgIconBox.java` | stroom-core-client-widget | — |
+| `stroom-core-client-widget/src/main/java/stroom/svg/client/IconBox.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/svg/client/SvgPresets.java` | stroom-core-client-widget | — |
 | `stroom-core-shared/src/main/java/stroom/svg/shared/SvgImage.java` | stroom-core-shared | — |
 

@@ -17,7 +17,7 @@
 package stroom.widget.datepicker.client;
 
 import stroom.item.client.EventBinder;
-import stroom.svg.client.SvgIconBox;
+import stroom.svg.client.IconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.Time;
 import stroom.widget.form.client.FieldValidity;
@@ -40,14 +40,14 @@ public class TimeBox
     private Provider<TimePopup> popupProvider;
     private final TextBox textBox;
     private boolean readOnly;
-    private final SvgIconBox svgIconBox;
+    private final IconBox iconBox;
     private Time value;
     private TimePopup popup;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
-            registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
+            registerHandler(iconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 // As a date-time box: Enter or Alt+Down opens the dialog
                 final int keyCode = event.getNativeKeyCode();
@@ -80,11 +80,11 @@ public class TimeBox
         textBox.addStyleName("date-time-box__input stroom-control allow-focus");
         textBox.getElement().setAttribute("aria-haspopup", "dialog");
 
-        svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName("date-time-box date-time-box--time");
-        svgIconBox.setWidget(textBox, SvgImage.HISTORY);
+        iconBox = new IconBox();
+        iconBox.addStyleName("date-time-box date-time-box--time");
+        iconBox.setWidget(textBox, SvgImage.HISTORY);
 
-        initWidget(svgIconBox);
+        initWidget(iconBox);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class TimeBox
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
         // So the clock icon can't open the dialog either
-        svgIconBox.setReadOnly(!enabled || readOnly);
+        iconBox.setReadOnly(!enabled || readOnly);
     }
 
     /// Makes the value read only: it can be read, selected and copied, and stays in the tab
@@ -136,7 +136,7 @@ public class TimeBox
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         textBox.setReadOnly(readOnly);
-        svgIconBox.setReadOnly(!textBox.isEnabled() || readOnly);
+        iconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
 
     public Time getValue() {

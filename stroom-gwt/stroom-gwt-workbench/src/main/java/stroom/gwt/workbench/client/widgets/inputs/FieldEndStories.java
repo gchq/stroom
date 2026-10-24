@@ -150,7 +150,7 @@ public final class FieldEndStories {
     /// is drawn over its end.
     private static native double endGap(Element root) /*-{
         var text = root.querySelector('.selection-box__value') || root.querySelector('input');
-        var end = root.querySelector('.svg-icon-box__icon, .password-box__end, .quick-filter__toolbar,'
+        var end = root.querySelector('.icon-box__icon, .password-box__end, .quick-filter__toolbar,'
                                      + ' .value-spinner__steps');
         var t = text.getBoundingClientRect();
         var cs = $wnd.getComputedStyle(text);

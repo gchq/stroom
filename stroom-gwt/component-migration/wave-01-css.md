@@ -26,7 +26,7 @@ Renames:
 5. `refresh-button.css`'s animations: `spinner-border` (also Bootstrap's name) → `refresh-button-spin`, `pulse-animation` → `refresh-button-pulse`.
 6. FabButton: `stroom-button.css` → `fab-button.css`; `stroom-button-fab` → `fab-button`, `face` → `fab-button__face` (with `--disabled`, `--down`); `FocusTooltip`, `stroom.css`'s `.stepping-button .face`, `ButtonRuns`.
 7. LinkButton: `linkButton` → `link-button`, its rules from `components.css` to `link-button.css` (imported after `components.css`, keeping its `:where`).
-8. `svg-icon-box--readonly` → `svg-icon-box--read-only` (with `SelectionBoxCell`'s literal and the stories).
+8. `icon-box--readonly` → `icon-box--read-only` (with `SelectionBoxCell`'s literal and the stories).
 9. SettingsGroup: `settings-group-label` → `settings-group__label` (with `PlanBEditorStories`).
 10. SettingBlock: `setting-block-icon` → `setting-block__icon` (with `AnnotationEditPresenter`'s SafeHtml), its rules from `stroom-annotation.css` to `setting-block.css`.
 11. AssignYourselfLink: `annotationAssignYourself` → `assign-yourself-link`, in `assign-yourself-link.css` (with the test suite's `lib/cycle.mjs`).

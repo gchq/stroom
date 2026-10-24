@@ -17,7 +17,7 @@
 /*
    The selection box (stroom.item.client.BaseSelectionBox), named BEM style (block, block__element,
    block--modifier): a WAI-ARIA combobox, its text box over a picture of its value, with the icon
-   box's drop-down arrow at its end (svg-icon-box.css). Its list is styled by selection-popup.css.
+   box's drop-down arrow at its end (icon-box.css). Its list is styled by selection-popup.css.
 
    Its states (disabled, read only) are modifiers, as the box itself has no ARIA attribute for them:
    they follow its text box's disabled and aria-readonly.
@@ -91,12 +91,12 @@
 }
 
 /* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (a box's field is
-   otherwise at least 200px, svg-icon-box.css) */
+   otherwise at least 200px, icon-box.css) */
 .selection-box.selection-box--cell {
     width: 100%;
 }
 
-.selection-box--cell.svg-icon-box .svg-icon-box__field {
+.selection-box--cell.icon-box .icon-box__field {
     min-width: 0;
 }
 

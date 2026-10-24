@@ -15,20 +15,20 @@
  */
 
 /*
-   The icon box (stroom.svg.client.SvgIconBox), named BEM style (block, block__element,
+   The icon box (stroom.svg.client.IconBox), named BEM style (block, block__element,
    block--modifier): a field with an icon inside the end of its border, e.g. a selection box's
    drop-down arrow, or a date or time box's calendar or clock. The icon is a picture (the field opens
    the same thing from the keyboard), so it has no focus or hover states.
 */
 
-.svg-icon-box {
+.icon-box {
     position: relative;
 }
 
 /* The field, leaving room at its end for the icon (26px) and 4px between its text and the icon, as
    every field with something over its end does (see FieldEnd). Under the block, to outrank the text
    field's padding (text-field.css) */
-.svg-icon-box .svg-icon-box__field {
+.icon-box .icon-box__field {
     height: 100%;
     width: 100%;
     padding-right: 30px;
@@ -36,7 +36,7 @@
 }
 
 /* The icon, over the end of the field, centred on its height */
-.svg-icon-box__icon {
+.icon-box__icon {
     position: absolute;
     top: 0;
     right: 0;
@@ -48,27 +48,27 @@
     cursor: pointer;
 }
 
-.svg-icon-box__image {
+.icon-box__image {
     width: var(--icon-width);
     height: var(--icon-height);
     color: var(--icon-colour__grey);
 }
 
-/* A drop-down arrow (SvgIconBox.setDropDownWidget), a variant with no ARIA meaning: the value
+/* A drop-down arrow (IconBox.setDropDownWidget), a variant with no ARIA meaning: the value
    spinner's arrow, small (as the date picker's month and year arrows are) and in the drop-down
    arrow's colour */
-.svg-icon-box--drop-down .svg-icon-box__image {
+.icon-box--drop-down .icon-box__image {
     width: 10px;
     height: 10px;
     color: var(--icon-colour__black);
 }
 
 /* A box whose field can't be changed (disabled or read only): its icon is dimmed and does nothing.
-   A state with no ARIA attribute on the box, so a modifier, set by SvgIconBox.setReadOnly */
-.svg-icon-box--read-only .svg-icon-box__icon {
+   A state with no ARIA attribute on the box, so a modifier, set by IconBox.setReadOnly */
+.icon-box--read-only .icon-box__icon {
     cursor: default;
 }
 
-.svg-icon-box--read-only .svg-icon-box__image {
+.icon-box--read-only .icon-box__image {
     opacity: var(--disabled-opacity);
 }

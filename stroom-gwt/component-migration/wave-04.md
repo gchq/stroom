@@ -7,7 +7,7 @@ Split the widgets that open their own presenter dialogs, or reach services or th
 ## CSS and template notes for the wave
 
 - Custom-property helper: ClassificationLabel (JSNI setStyleProperty), FieldEnd, DataGridDom and SplitPane each set CSS custom properties with their own element.style.setProperty JSNI; one shared helper in stroom.widget.util.client (e.g. CssProperties.set(element, name, value) / remove) would serve every dynamic style in later waves too.
-- SvgIconBox (wave 1) needs template support before TimeBox, DateTimeBox and ScheduleBox can declare it: an icon attribute (SvgImage enum, which UiBinder parses), its field as a child (it extends FlowPanel, so add() must apply svg-icon-box__field) and an opensDialog attribute that puts aria-haspopup="dialog" on its field. Their classes are already in date-time-box.css, schedule-box.css and svg-icon-box.css.
+- IconBox (wave 1) needs template support before TimeBox, DateTimeBox and ScheduleBox can declare it: an icon attribute (SvgImage enum, which UiBinder parses), its field as a child (it extends FlowPanel, so add() must apply icon-box__field) and an opensDialog attribute that puts aria-haspopup="dialog" on its field. Their classes are already in date-time-box.css, schedule-box.css and icon-box.css.
 - ValueSpinner min/max can't be set in templates: UiBinder has no long parser and setMin/setMax take long. Int-taking setters with distinct names (overloads of the same name are ambiguous to UiBinder) would let TimePicker, DateTimePicker, ItemSelection, CharacterRangeSelection and StepLocationPicker move their fixed limits into templates; minStep/maxStep (int) already can.
 - Accessible names in templates: SelectionBox, ValueSpinner and LineColInput need setAccessibleName(String) (wrapping AccessibleName.set) for CharacterRangeSelection's AccessibleName.set calls to become attributes; Button needs setOpensDialog like LinkButton for CustomFileUpload.
 - date-time-view.css (block date-time-view) is shared by TimePicker and DateTimePicker; quick-settings.css by TimeRangePicker and SchedulePicker, which both declare QuickSettings.
@@ -186,8 +186,8 @@ widget, smart widget; complexity 2, effort S; used by 2.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | TimeBox.java:78-80 | css-class | <g:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/> |
-| TimeBox.java:81 | aria | aria-haspopup="dialog": UiBinder can't set it on g:TextBox; give SvgIconBox an opensDialog attribute that marks its field (wave 1 SvgIconBox change), or keep in Java |
-| TimeBox.java:83-85 | component-declaration | <svg:SvgIconBox styleName="svg-icon-box date-time-box date-time-box--time" icon="HISTORY"><g:TextBox .../></svg:SvgIconBox>: needs SvgIconBox (wave 1) to take an icon attribute (SvgImage enum) and its field as a child instead of setWidget(widget, image) |
+| TimeBox.java:81 | aria | aria-haspopup="dialog": UiBinder can't set it on g:TextBox; give IconBox an opensDialog attribute that marks its field (wave 1 IconBox change), or keep in Java |
+| TimeBox.java:83-85 | component-declaration | <svg:IconBox styleName="icon-box date-time-box date-time-box--time" icon="HISTORY"><g:TextBox .../></svg:IconBox>: needs IconBox (wave 1) to take an icon attribute (SvgImage enum) and its field as a child instead of setWidget(widget, image) |
 
 **Stays in Java:** TimeBox.java:47-67 key, click, blur and focus handlers (behaviour); TimeBox.java:125-140 setEnabled/setReadOnly and svgIconBox.setReadonly (state); TimeBox.java:150-177 value, FieldValidity invalid state; ValueChangeEvent stays beside a new setOnChange until its callers move (rule 5); new setOnOpenPicker(Runnable) for the controller.
 
@@ -244,7 +244,7 @@ dialog, presenter; complexity 2, effort S; used by 10.
 | --- | --- | --- |
 | DateTimeViewImpl.java:90-91,94-95,98-99,102-103 | structure | minStep="1" maxStep="1" on hour, minute, second; minStep="1" maxStep="10" on millisecond |
 | DateTimeViewImpl.java:88-89,92-93,96-97,100-101 | structure | min/max (0-23, 0-59, 0-999) once ValueSpinner has int-taking, distinctly named setters (no long parser in UiBinder); until then they stay |
-| DateTimeViewImpl.ui.xml:13-64 | component-declaration | CustomDatePicker, FormGroup, FormLabel, LinkButton and ValueSpinner already declared; switch @UiHandler to setOnClick/setOnChange as waves 1-2 add them |
+| DateTimeViewImpl.ui.xml:13-64 | component-declaration | Calendar, FormGroup, FormLabel, LinkButton and ValueSpinner already declared; switch @UiHandler to setOnClick/setOnChange as waves 1-2 add them |
 
 **Stays in Java:** DateTimeViewImpl.java:106-383 date/time resolution, DST fixes and labels (values built from data); DateTimeViewImpl.java:345 and :382 date and time label text (formatted from the value); DateTimePopup.java:44-61 caption and OK/Cancel move to DateTimePickerController.
 
@@ -281,8 +281,8 @@ widget, smart widget; complexity 3, effort M; used by 4.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | ScheduleBox.java:117-118 | css-class | <g:TextBox ui:field="textBox" styleName="schedule-box__input stroom-control allow-focus"/> |
-| ScheduleBox.java:119 | aria | aria-haspopup="dialog" through SvgIconBox's opensDialog attribute (as TimeBox, DateTimeBox), else stays |
-| ScheduleBox.java:121-123 | component-declaration | <svg:SvgIconBox styleName="svg-icon-box schedule-box" icon="HISTORY"><g:TextBox .../></svg:SvgIconBox> (wave 1 SvgIconBox with icon attribute and child slot) |
+| ScheduleBox.java:119 | aria | aria-haspopup="dialog" through IconBox's opensDialog attribute (as TimeBox, DateTimeBox), else stays |
+| ScheduleBox.java:121-123 | component-declaration | <svg:IconBox styleName="icon-box schedule-box" icon="HISTORY"><g:TextBox .../></svg:IconBox> (wave 1 IconBox with icon attribute and child slot) |
 
 **Stays in Java:** ScheduleBox.java:67-84 key, click, blur and focus handlers; ScheduleBox.java:187-218 enabled, read-only and instant read-only state; ScheduleBox.java:228-249 value and restriction; ScheduleBox.java:251-255 ValueChangeEvent beside a new setOnChange until callers move (rule 5); add setOnOpenPicker(Runnable) and setInvalid(boolean).
 
@@ -299,8 +299,8 @@ widget, smart widget; complexity 3, effort M; used by 19.
 | Into the template | What | Detail |
 | --- | --- | --- |
 | DateTimeBox.java:90-91 | css-class | <g:TextBox ui:field="textBox" styleName="date-time-box__input stroom-control allow-focus"/> |
-| DateTimeBox.java:92 | aria | aria-haspopup="dialog": through an SvgIconBox opensDialog attribute (shared with TimeBox and ScheduleBox), else stays in Java |
-| DateTimeBox.java:95-97 | component-declaration | <svg:SvgIconBox styleName="svg-icon-box date-time-box" icon="CALENDAR"><g:TextBox .../></svg:SvgIconBox> (needs SvgIconBox's icon attribute and child slot from wave 1) |
+| DateTimeBox.java:92 | aria | aria-haspopup="dialog": through an IconBox opensDialog attribute (shared with TimeBox and ScheduleBox), else stays in Java |
+| DateTimeBox.java:95-97 | component-declaration | <svg:IconBox styleName="icon-box date-time-box" icon="CALENDAR"><g:TextBox .../></svg:IconBox> (needs IconBox's icon attribute and child slot from wave 1) |
 
 **Stays in Java:** DateTimeBox.java:74-86,112-121 key, click, blur and focus handlers; DateTimeBox.java:170-185 setEnabled/setReadOnly and icon read-only state; DateTimeBox.java:212-302 value, text, optional, expressionsAllowed and FieldValidity state; DateTimeBox.java:304-316 ValueChangeEvent and addKeyDownHandler stay beside a new setOnChange until callers move (rule 5); add setOnOpenPicker(Runnable).
 
