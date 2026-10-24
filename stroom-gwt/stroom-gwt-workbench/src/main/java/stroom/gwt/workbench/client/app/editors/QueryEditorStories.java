@@ -48,12 +48,11 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.security.shared.DocumentPermission;
+import stroom.widget.button.client.Button;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
@@ -1220,7 +1219,8 @@ public final class QueryEditorStories {
             type.setText(event.getDocType());
             title.setText(event.getDialogCaption());
             name.setText(event.getInitialDocName());
-            final Button seed = new Button("run-seed", (ClickHandler) click -> event.getNewDocConsumer().accept(
+            final Button seed = new Button("run-seed");
+            seed.setOnClick(() -> event.getNewDocConsumer().accept(
                     ExplorerNode.builder()
                             .docRef(new DocRef(event.getDocType(), "new-1", "New"))
                             .build()));

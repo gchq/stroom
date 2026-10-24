@@ -92,6 +92,8 @@ screen, presenter; complexity 2, effort S; used by 4.
 
 shell, presenter; complexity 5, effort XL; used by 3.
 
+**GWT button.** It still uses GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), which nothing may use (agreed 24 October 2026): the explorer's logo (`NavigationViewImpl.ui.xml`, `<g:Button ui:field="logo">`) and the activity button (`NavigationPresenter.java`). Replace it in this wave, together with the stories that copy them (`LogoStories`, `ActivityChooserStories`), and check the look against the screenshots.
+
 - **Component:** `stroom.explorer.client.component.Navigation`
 - **Controller:** `stroom.explorer.client.component.NavigationController`
 - **Template:** `stroom-core-client/src/main/resources/stroom/explorer/client/view/NavigationViewImpl.ui.xml` → `stroom-core-client/src/main/java/stroom/explorer/client/component/Navigation.ui.xml`

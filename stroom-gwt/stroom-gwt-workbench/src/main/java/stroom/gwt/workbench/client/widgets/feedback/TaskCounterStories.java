@@ -27,9 +27,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.widget.button.client.Button;
 import stroom.widget.spinner.client.SpinnerSmall;
 
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;

@@ -26,11 +26,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.Button;
 import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -257,7 +256,9 @@ public final class SplitPaneContentStories {
                     final Spy onResized = context.fn(ON_RESIZED);
                     pane.setOnResized(() -> onResized.call(pane.getPaneSize(explorer)));
                     final FlowPanel page = new FlowPanel();
-                    page.add(new Button("Set in code", (ClickHandler) event -> pane.setPaneSize(explorer, "200px")));
+                    final Button setInCode = new Button("Set in code");
+                    setInCode.setOnClick(() -> pane.setPaneSize(explorer, "200px"));
+                    page.add(setInCode);
                     page.add(frame(pane, "200px"));
                     return page;
                 })

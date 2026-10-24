@@ -170,6 +170,8 @@ widget, dumb; complexity 2, effort S; used by 10.
 
 composite, tidy; complexity 1, effort S; used by 3.
 
+**GWT button.** It still uses GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), which nothing may use (agreed 24 October 2026): `UserTaskViewImpl.ui.xml`'s Terminate (`<g:Button ui:field="terminate">`). Replace it in this wave, with a Stroom icon button in a toolbar as its plan says (the red 12px look moves to a class on it), and check the look against the screenshots.
+
 - **Component:** `stroom.task.client.component.UserTask`
 - **Controller:** `none`
 - **Template:** `stroom-core-client/src/main/resources/stroom/task/client/view/UserTaskViewImpl.ui.xml` → `stroom-core-client/src/main/java/stroom/task/client/component/UserTask.ui.xml`

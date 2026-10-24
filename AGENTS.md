@@ -177,6 +177,8 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
   Every screen, dialog and smart part is a pair, even when small; a reusable dumb widget needs no controller.
   Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
 
+* **Stroom's widgets only.** Never GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), in the app or in workbench stories: use Stroom's `Button` (`new Button("Text")`, `setOnClick`), a `ToolbarButton` in a `Toolbar`, a `LinkButton` or a `FabButton`.
+
 * **Smart parts attach.** A part that needs data (e.g. a document picker) is declared dumb in the template (`<dd:DropDownBox ui:field="feedBox"/>`), and the controller makes the part's controller and attaches it: `feedSelection = make(docSelectionProvider); feedSelection.attach(view.getFeedBox());`.
   A presenter not yet split goes in a slot: the component has a setter for it (`setExpressionEditor(IsWidget)`), and the controller owns the presenter and passes its widget in.
 

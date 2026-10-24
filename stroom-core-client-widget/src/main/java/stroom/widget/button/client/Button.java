@@ -54,6 +54,14 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         this(new Parts());
     }
 
+    /// Makes a button with its caption.
+    ///
+    /// @param text The caption, which is also its name.
+    public Button(final String text) {
+        this(new Parts());
+        setText(text);
+    }
+
     private Button(final Parts parts) {
         super(BINDER.createAndBindUi(parts));
         this.parts = parts;

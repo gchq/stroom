@@ -33,9 +33,8 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.Button;
 
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -311,9 +310,9 @@ public final class DeleteConfirmationStories {
 
         final FlowPanel panel = new FlowPanel();
         for (final Case deleteCase : cases) {
-            final Button button = new Button("Delete: " + deleteCase.id, (ClickHandler)
-                    event -> DeleteDocumentEvent.fire(harness.getHasHandlers(), deleteCase.docRefs(), true,
-                            ok -> harness.spy(ON_RESULT, String.valueOf(ok)), null));
+            final Button button = new Button("Delete: " + deleteCase.id);
+            button.setOnClick(() -> DeleteDocumentEvent.fire(harness.getHasHandlers(), deleteCase.docRefs(), true,
+                    ok -> harness.spy(ON_RESULT, String.valueOf(ok)), null));
             button.getElement().setAttribute("data-testid", "delete-" + deleteCase.id);
             panel.add(StoryPanels.row(8, button));
         }

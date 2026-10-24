@@ -238,6 +238,8 @@ composite, presenter; complexity 1, effort S; used by 4.
 
 list, presenter; complexity 3, effort M; used by 4.
 
+**GWT button.** It still uses GWT's own `Button` (`com.google.gwt.user.client.ui.Button`), which nothing may use (agreed 24 October 2026): the drag grip and the colour swatches (`FloorMapLayersPresenter.java`, which strip GWT's `gwt-Button` class). Replace it in this wave with Stroom widgets (an unstyled `LinkButton`, or a component of their own) keeping their classes, and check the look against the screenshots.
+
 - **Component:** `stroom.floormap.client.component.FloorMapLayers`
 - **Controller:** `none`
 - **Template:** `none` → `stroom-core-client/src/main/java/stroom/floormap/client/component/FloorMapLayers.ui.xml`
