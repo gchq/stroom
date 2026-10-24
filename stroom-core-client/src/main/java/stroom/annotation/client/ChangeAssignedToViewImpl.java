@@ -37,14 +37,14 @@ public class ChangeAssignedToViewImpl
     @UiField
     Label assignedTo;
     @UiField
-    Label assignYourself;
+    AssignYourselfLink assignYourself;
     @UiField
     SettingBlock assignedToBlock;
 
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        AssignYourselfLink.init(assignYourself, this::assignYourself);
+        assignYourself.setOnAssign(this::assignYourself);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class ChangeAssignedToViewImpl
 
     @Override
     public void setAssignYourselfEnabled(final boolean enabled) {
-        AssignYourselfLink.update(assignYourself, !enabled, false);
+        assignYourself.setState(!enabled, false);
     }
 
     @Override
@@ -78,12 +78,6 @@ public class ChangeAssignedToViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
         }
-    }
-
-    @UiHandler("assignYourself")
-    public void onAssignYourself(final ClickEvent e) {
-        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
-        e.stopPropagation();
     }
 
     private void assignYourself() {

@@ -52,8 +52,7 @@
                                         helpText="The user the annotation is assigned to. Select it to choose a user, or select Assign Yourself.">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                                 <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
-                                <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
-                                </g:Label>
+                                <annotation:AssignYourselfLink ui:field="assignYourself"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>

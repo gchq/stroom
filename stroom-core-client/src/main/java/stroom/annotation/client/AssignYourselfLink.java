@@ -18,67 +18,75 @@ package stroom.annotation.client;
 
 import stroom.widget.util.client.DisabledState;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.ui.Widget;
 
-/// Makes the 'Assign Yourself' link of an annotation's Assigned To setting a button that the
-/// keyboard can reach and press, and that is disabled, saying why, when there is nothing to do,
-/// rather than hidden.
-final class AssignYourselfLink {
+/// The 'Assign Yourself' link of an annotation's Assigned To setting: a button that the keyboard
+/// can reach and press (Enter or Space), and that is disabled, saying why, when there is nothing to
+/// do, rather than hidden. Its markup is `AssignYourselfLink.ui.xml`.
+public class AssignYourselfLink extends Widget {
+
+    private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final String TITLE = "Assign this annotation to yourself";
     private static final String ALREADY_ASSIGNED = "Already assigned to you";
     private static final String READ_ONLY = "You don't have permission to change this";
 
-    private AssignYourselfLink() {
-        // Static utility
-    }
+    private Runnable onAssign;
 
-    /// Makes the label a button, pressed by Enter or Space as well as a click.
-    ///
-    /// @param link   The 'Assign Yourself' label.
-    /// @param action Assigns the annotation; only run while the link is enabled.
-    static void init(final Label link, final Runnable action) {
-        final Element element = link.getElement();
-        element.setAttribute("role", "button");
-        element.setTabIndex(0);
-        element.setTitle(TITLE);
-        link.addDomHandler(event -> {
+    public AssignYourselfLink() {
+        setElement(BINDER.createAndBindUi(this));
+        addDomHandler(event -> {
+            // The setting around it opens its chooser on a click: this click is the link's own
+            event.stopPropagation();
+            assign();
+        }, ClickEvent.getType());
+        addDomHandler(event -> {
             final int keyCode = event.getNativeKeyCode();
             if (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE) {
                 event.preventDefault();
                 event.stopPropagation();
-                runIfEnabled(link, action);
+                assign();
             }
         }, KeyDownEvent.getType());
     }
 
-    /// Runs the action unless the link is disabled.
-    ///
-    /// @param link   The 'Assign Yourself' label.
-    /// @param action Assigns the annotation.
-    static void runIfEnabled(final Label link, final Runnable action) {
-        if (!DisabledState.isDisabled(link.getElement())) {
-            action.run();
-        }
+    /// @param onAssign Assigns the annotation; only run while the link is enabled.
+    public void setOnAssign(final Runnable onAssign) {
+        this.onAssign = onAssign;
     }
 
     /// Enables the link, or disables it with the reason as its tooltip.
     ///
-    /// @param link            The 'Assign Yourself' label.
     /// @param alreadyAssigned Whether the annotation is already assigned to the current user.
     /// @param readOnly        Whether the annotation is read only.
-    static void update(final Label link, final boolean alreadyAssigned, final boolean readOnly) {
-        final boolean disabled = alreadyAssigned || readOnly;
-        DisabledState.set(link.getElement(), disabled);
+    public void setState(final boolean alreadyAssigned, final boolean readOnly) {
+        DisabledState.set(getElement(), alreadyAssigned || readOnly);
         if (readOnly) {
-            link.setTitle(READ_ONLY);
+            setTitle(READ_ONLY);
         } else if (alreadyAssigned) {
-            link.setTitle(ALREADY_ASSIGNED);
+            setTitle(ALREADY_ASSIGNED);
         } else {
-            link.setTitle(TITLE);
+            setTitle(TITLE);
         }
+    }
+
+    private void assign() {
+        if (onAssign != null && !DisabledState.isDisabled(getElement())) {
+            onAssign.run();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<DivElement, AssignYourselfLink> {
+
     }
 }

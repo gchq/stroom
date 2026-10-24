@@ -65,7 +65,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignedTo;
     @UiField
-    Label assignYourself;
+    AssignYourselfLink assignYourself;
     @UiField
     HTML labels;
     @UiField
@@ -97,7 +97,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        AssignYourselfLink.init(assignYourself, this::assignYourself);
+        assignYourself.setOnAssign(this::assignYourself);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
         // Named, as a placeholder is only a hint, and the title each is given (its value, for when
@@ -240,7 +240,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @Override
     public void setAssignYourselfEnabled(final boolean enabled) {
         this.assignYourselfEnabled = enabled;
-        AssignYourselfLink.update(assignYourself, !enabled, readOnly);
+        assignYourself.setState(!enabled, readOnly);
     }
 
     @Override
@@ -257,7 +257,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         annotationLabelBlock.setReadOnly(readOnly);
         annotationCollectionBlock.setReadOnly(readOnly);
         annotationRetentionPeriodBlock.setReadOnly(readOnly);
-        AssignYourselfLink.update(assignYourself, !assignYourselfEnabled, readOnly);
+        assignYourself.setState(!assignYourselfEnabled, readOnly);
     }
 
     @Override
@@ -346,12 +346,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 //            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
 //        }
 //    }
-
-    @UiHandler("assignYourself")
-    public void onAssignYourself(final ClickEvent e) {
-        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
-        e.stopPropagation();
-    }
 
     private void assignYourself() {
         if (getUiHandlers() != null) {

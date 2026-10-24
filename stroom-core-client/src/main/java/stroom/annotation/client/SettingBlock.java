@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -29,6 +30,8 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -45,17 +48,18 @@ import java.util.Iterator;
 /// takes the focus itself) keeps the ⋮ as a hint only.
 public class SettingBlock extends Composite implements HasWidgets, HasClickHandlers {
 
-    private final FlowPanel formGroupPanel = new FlowPanel();
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final SimplePanel icon;
+    @UiField
+    FlowPanel formGroupPanel;
+    @UiField
+    SimplePanel icon;
+
     private Widget childWidget = null;
 
     public SettingBlock() {
-        formGroupPanel.addStyleName("setting-block icon-colour__grey");
-
-        icon = new SimplePanel();
+        initWidget(BINDER.createAndBindUi(this));
         icon.getElement().setInnerHTML(SvgImage.ELLIPSES_VERTICAL.getSvg());
-        icon.getElement().setClassName("setting-block-icon icon-colour__grey svgIcon");
         // A hint only, until the setting has a title (see setTitle)
         icon.getElement().setAttribute("aria-hidden", "true");
         icon.addDomHandler(event -> {
@@ -67,9 +71,6 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
                         1, 0, 0, 0, 0, false, false, false, false));
             }
         }, KeyDownEvent.getType());
-
-        formGroupPanel.add(icon);
-        initWidget(formGroupPanel);
 
         formGroupPanel.addDomHandler(
                 event ->
@@ -121,24 +122,19 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     public void add(final Widget widget) {
         // Not a HelpHTML so must be the childWidget
         if (childWidget != null) {
-            throw new IllegalStateException("FormGroup can only contain one child widget.");
+            throw new IllegalStateException("SettingBlock can only contain one child widget.");
         }
         this.childWidget = widget;
         widget.addStyleName("allow-focus");
-        updateFormGroupPanel();
+        // After the hint
+        formGroupPanel.add(widget);
     }
 
     @Override
     public void clear() {
-        childWidget = null;
-        updateFormGroupPanel();
-    }
-
-    private void updateFormGroupPanel() {
-        formGroupPanel.clear();
-        formGroupPanel.add(icon);
         if (childWidget != null) {
-            formGroupPanel.add(childWidget);
+            formGroupPanel.remove(childWidget);
+            childWidget = null;
         }
     }
 
@@ -160,5 +156,13 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     @Override
     public HandlerRegistration addClickHandler(final ClickHandler clickHandler) {
         return formGroupPanel.addDomHandler(clickHandler, ClickEvent.getType());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<FlowPanel, SettingBlock> {
+
     }
 }
