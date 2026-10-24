@@ -4,6 +4,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:f="urn:import:stroom.widget.form.client">
     <g:FlowPanel ui:field="settingsGroupPanel" styleName="settings-group">
-        <f:FormLabel ui:field="formLabel" addStyleNames="settings-group-label"/>
+        <f:FormLabel ui:field="formLabel" addStyleNames="settings-group__label"/>
     </g:FlowPanel>
 </ui:UiBinder>

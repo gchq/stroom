@@ -2062,19 +2062,6 @@
     border: 1px solid rgba(255,255,255,.3);
 }
 
-.settings-group {
-    display: flex;
-    margin-top: 1rem;
-    flex-direction: column;
-}
-
-.settings-group-label {
-    color: var(--heading-color);
-    font-weight: bold;
-    font-size: 125%;
-    padding-bottom: 0.3em;
-}
-
 
 
 

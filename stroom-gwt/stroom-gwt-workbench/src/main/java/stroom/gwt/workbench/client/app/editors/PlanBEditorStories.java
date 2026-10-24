@@ -49,7 +49,7 @@ public final class PlanBEditorStories {
 
     // The caption of a settings group (SettingsGroup's FormLabel).
     // The groups' captions are labels, not headings
-    private static final String GROUP_LABEL = "label.settings-group-label";
+    private static final String GROUP_LABEL = "label.settings-group__label";
     private static final String GROUP = ".settings-group";
     private static final String FORM_GROUP = ".form-group";
 
