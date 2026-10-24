@@ -26,7 +26,7 @@ import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.main.client.view.MainToolbar;
-import stroom.main.client.view.Spinner;
+import stroom.main.client.view.TaskSpinner;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -202,7 +202,7 @@ public class MainPresenter
         // already.
         final MainToolbar mainToolbar = getView().getMainToolBar();
         if (mainToolbar != null) {
-            final Spinner spinner = mainToolbar.getSpinner();
+            final TaskSpinner spinner = mainToolbar.getSpinner();
             if (spinner != null) {
                 if (taskCount > 0) {
                     spinner.start();

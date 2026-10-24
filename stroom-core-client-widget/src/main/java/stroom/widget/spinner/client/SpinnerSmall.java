@@ -22,8 +22,9 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -34,27 +35,23 @@ import com.google.gwt.user.client.ui.Widget;
 /// every tab have one, which would otherwise spin unseen all the time (#5299).
 public class SpinnerSmall extends Widget implements TaskMonitorFactory {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     // How long it takes to fade out (spinner.css), after which it stops spinning
     private static final int FADE_MILLIS = 500;
     private static final String BLOCK = "busy-spinner";
     private static final String REFRESHING = BLOCK + "--active";
     private static final String SPINNING = BLOCK + "--spinning";
 
+    @UiField
+    DivElement inner;
+
     private int taskCount;
     private Timer stopSpinning;
 
     public SpinnerSmall() {
-        final Element spinningInner = DOM.createDiv();
-        spinningInner.setClassName(BLOCK + "__inner");
-        spinningInner.setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
-        spinningInner.setTitle("Loading...");
-        final Element spinningOuter = DOM.createDiv();
-        spinningOuter.appendChild(spinningInner);
-        spinningOuter.setClassName(BLOCK + "__outer");
-        final Element spinnerSmall = DOM.createDiv();
-        spinnerSmall.appendChild(spinningOuter);
-        spinnerSmall.setClassName(BLOCK + " " + BLOCK + "--small");
-        setElement(spinnerSmall);
+        setElement(BINDER.createAndBindUi(this));
+        inner.setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
     }
 
     /// Shows the spinner, fading it in, or fades it out and then stops it spinning.
@@ -101,5 +98,13 @@ public class SpinnerSmall extends Widget implements TaskMonitorFactory {
                 setRefreshing(taskCount > 0);
             }
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<DivElement, SpinnerSmall> {
+
     }
 }

@@ -34,7 +34,7 @@ public class MainToolbar extends Composite {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    Spinner spinner;
+    TaskSpinner spinner;
     @UiField
     ToolbarButton menu;
     @UiField
@@ -46,7 +46,7 @@ public class MainToolbar extends Composite {
         initWidget(BINDER.createAndBindUi(this));
     }
 
-    public Spinner getSpinner() {
+    public TaskSpinner getSpinner() {
         return spinner;
     }
 

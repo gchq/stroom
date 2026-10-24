@@ -25,24 +25,26 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class Spinner extends Composite {
+/// The main toolbar's spinner, shown while the app's tasks run (after a short delay, so that quick
+/// polls don't make it flicker); clicking it opens the task manager.
+public class TaskSpinner extends Composite {
 
-    private static final Binder binder = GWT.create(Binder.class);
-    private final SpinnerLarge spinner;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    SpinnerLarge spinner;
+
     private boolean spinning;
 
     private final Timer timer;
 
-    public Spinner() {
-        initWidget(binder.createAndBindUi(this));
-        spinner = new SpinnerLarge();
-        spinner.setSoft(true);
-        spinner.setVisible(false);
-        getElement().appendChild(spinner.getElement());
+    public TaskSpinner() {
+        initWidget(BINDER.createAndBindUi(this));
 
         timer = new Timer() {
             @Override
@@ -84,7 +86,7 @@ public class Spinner extends Composite {
         return addDomHandler(handler, DoubleClickEvent.getType());
     }
 
-    interface Binder extends UiBinder<Widget, Spinner> {
+    interface Binder extends UiBinder<Widget, TaskSpinner> {
 
     }
 }
