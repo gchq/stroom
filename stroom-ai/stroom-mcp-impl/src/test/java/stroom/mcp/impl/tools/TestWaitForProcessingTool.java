@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.FeedAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolResult;
@@ -82,6 +83,7 @@ class TestWaitForProcessingTool {
     private final FeedAccess feedAccess = Mockito.mock(FeedAccess.class);
     private final StreamReader streamReader = Mockito.mock(StreamReader.class);
     private final ProcessorTaskService taskService = Mockito.mock(ProcessorTaskService.class);
+    private final StreamSummaries streamSummaries = Mockito.mock(StreamSummaries.class);
     private final AtomicLong clock = new AtomicLong(1_000_000L);
     private final AtomicInteger pauses = new AtomicInteger();
     private final List<String> said = new ArrayList<>();
@@ -205,6 +207,89 @@ class TestWaitForProcessingTool {
         assertThat(result.get("batch_size")).isEqualTo("restored to the template's default, now that indexing "
                                                        + "completed without errors");
         assertThat(PipelineDocs.addedProperties((PipelineDoc) world.docs.get(P1.getUuid()))).isEmpty();
+    }
+
+    @Test
+    void anOutputStillBeingWrittenIsWaitedFor() {
+        // Seen in Stroom: "finished" with a 100,000-event stream still being written, so it couldn't be read, and
+        // its Error stream not yet made.
+        inBuildSteppedClean();
+        filters = List.of(filter(9, true));
+        selectable(5);
+        streamTasks = read -> List.of(task(read > 1
+                ? TaskStatus.COMPLETE
+                : TaskStatus.PROCESSING, 5L));
+        children.put(5L, List.of(locked(output(20, "Events", 9))));
+        pause = duration -> {
+            pauses.incrementAndGet();
+            clock.addAndGet(duration.toMillis());
+            children.put(5L, List.of(output(20, "Events", 9)));
+        };
+
+        final Map<String, Object> result = call("{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5], "
+                                                + "\"timeout_seconds\": 60, \"filter_id\": 9}");
+
+        assertThat(pauses.get()).isEqualTo(1);
+        assertThat(result.get("finished")).isEqualTo(true);
+        assertThat(result.get("gate")).isEqualTo("pass");
+        assertThat(result.get("streams")).isEqualTo(List.of(Map.of("input", 5, "events", List.of(20),
+                "errors", List.of())));
+    }
+
+    @Test
+    void anOutputWrittenWhileItsTaskIsStillToEndIsWaitedFor() {
+        // The Error stream is made as the task ends, after the output is written.
+        inBuildSteppedClean();
+        filters = List.of(filter(9, true));
+        selectable(5);
+        streamTasks = read -> List.of(task(read > 1
+                ? TaskStatus.COMPLETE
+                : TaskStatus.PROCESSING, 5L));
+        children.put(5L, List.of(output(20, "Events", 9)));
+
+        final Map<String, Object> result = call("{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5], "
+                                                + "\"timeout_seconds\": 60, \"filter_id\": 9}");
+
+        assertThat(pauses.get()).isEqualTo(1);
+        assertThat(result.get("gate")).isEqualTo("pass");
+    }
+
+    @Test
+    void warningsBesideTheOutputAreGivenToLookInto() {
+        // Seen in Stroom: a warning that characters not valid in XML were removed went unread, the gate passing.
+        inBuildSteppedClean();
+        endedTask();
+        children.put(5L, List.of(output(20, "Events", 9), output(21, "Error", 9)));
+        final String removed = "Some characters that are not valid in XML v1.1 were removed from the input stream";
+        Mockito.when(streamSummaries.summariseErrors(21L)).thenReturn(Map.of("groups", List.of(
+                errorGroup("WARN", "invalidCharFilterReader", "review", removed, false),
+                errorGroup("WARN", "xsltFilter", "benign", "An accepted one", true))));
+
+        final Map<String, Object> result = call("{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5], "
+                                                + "\"timeout_seconds\": 60}");
+
+        assertThat(result.get("gate")).isEqualTo("pass");
+        assertThat(result.get("look_into")).isEqualTo(List.of(Map.of("input", 5, "error_stream", 21,
+                "severity", "WARN", "element", "invalidCharFilterReader", "count", 1, "class", "review",
+                "message", removed)));
+        assertThat(result.get("look_into_hint")).isEqualTo(WaitForProcessingTool.LOOK_INTO_HINT);
+    }
+
+    @Test
+    void errorsThatMustBeFixedBesideTheOutputFailTheGate() {
+        inBuildSteppedClean();
+        endedTask();
+        children.put(5L, List.of(output(20, "Events", 9), output(21, "Error", 9)));
+        Mockito.when(streamSummaries.summariseErrors(21L)).thenReturn(Map.of("groups", List.of(
+                errorGroup("ERROR", "xsltFilter", "blocking", "Undefined variable", false))));
+
+        final Map<String, Object> result = call("{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5], "
+                                                + "\"timeout_seconds\": 60}");
+
+        assertThat(result.get("gate")).isEqualTo("fail");
+        assertThat(result.get("problems")).isEqualTo(List.of("Stream 5's processing wrote ERRORs that must be fixed "
+                                                             + "(Error stream 21, xsltFilter): Undefined variable. "
+                                                             + "summarise_streams (kind=errors) 5"));
     }
 
     @Test
@@ -485,7 +570,7 @@ class TestWaitForProcessingTool {
                 world.guard(), streamProcessing, () -> Mockito.mock(IndexResource.class), streamId -> "");
         return new WaitForProcessingTool(world.documentAccess, processorFilterAccess, status, streamProcessing,
                 new PipelineOutputs(world.pipelineShapes), world.guard(), world.records(), plan, indexingRuns,
-                clock::get, duration -> pause.pause(duration));
+                streamSummaries, clock::get, duration -> pause.pause(duration));
     }
 
     private ToolCallContext context() {
@@ -560,6 +645,28 @@ class TestWaitForProcessingTool {
     private static Meta output(final long id, final String type, final int filterId) {
         return Meta.builder().id(id).pipelineUuid("p1").typeName(type).processorFilterId(filterId)
                 .status(Status.UNLOCKED).build();
+    }
+
+    private static Meta locked(final Meta meta) {
+        return meta.copy().status(Status.LOCKED).build();
+    }
+
+    // A group of error markers, as the error triage gives it.
+    private static Map<String, Object> errorGroup(final String severity,
+                                                  final String element,
+                                                  final String classification,
+                                                  final String message,
+                                                  final boolean accepted) {
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("class", classification);
+        group.put("severity", severity);
+        group.put("element", element);
+        group.put("count", 1);
+        group.put("examples", List.of(Map.of("message", message, "location", "1:1")));
+        if (accepted) {
+            group.put("accepted", true);
+        }
+        return group;
     }
 
     private static ProcessorTask task(final TaskStatus status, final Long metaId) {

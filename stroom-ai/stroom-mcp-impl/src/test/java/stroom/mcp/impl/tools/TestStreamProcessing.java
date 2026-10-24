@@ -145,7 +145,9 @@ class TestStreamProcessing {
                             task(TaskStatus.COMPLETE, 8L, "SECRET")));
         });
 
-        assertThat(processing.tasksEnded(List.of(9), List.of(5L, 6L, 7L, 8L))).containsExactly(5L, 6L);
+        final StreamProcessing.Tasks tasks = processing.tasks(List.of(9), List.of(5L, 6L, 7L, 8L));
+        assertThat(tasks.ended()).containsExactly(5L, 6L);
+        assertThat(tasks.open()).containsExactly(7L);
     }
 
     private static ExpressionOperator and(final ExpressionTerm... terms) {
