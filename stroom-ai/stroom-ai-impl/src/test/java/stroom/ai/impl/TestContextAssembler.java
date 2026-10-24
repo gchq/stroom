@@ -633,4 +633,22 @@ class TestContextAssembler {
                 .contains("with ask_user, or in your answer at the end of the turn, and then wait for them")
                 .contains("Never ask a question and carry on calling tools in the same turn");
     }
+
+    @Test
+    void theModelIsToldThatABuildGoesOnThroughItsNextStepsWithoutAsking() {
+        // Seen in Ask Stroom AI: an onboarding stopped after each stage to ask "Shall I write the documentation
+        // now?", taking each next step as a change the user hadn't asked for.
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("A request to onboard a source or to build or change a pipeline asks for every step its "
+                          + "build's `next` gives: go on to each without asking first")
+                .contains("end your turn only for what is the user's");
+    }
+
+    @Test
+    void theModelIsToldToLookIntoEveryWarning() {
+        // Seen in Ask Stroom AI: processing's warning that characters not valid in XML were removed went unread.
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("Look into every warning or error a result reports")
+                .contains("fix its cause, or tell the user what it is and why it stays. Never pass over one.");
+    }
 }
