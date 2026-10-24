@@ -41,6 +41,10 @@ import java.util.Optional;
 class GeneratedDrift {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GeneratedDrift.class);
+    // How the drift of an XSLT edited since its mapping was kept starts: saved as written by hand, or changed in
+    // Stroom since.
+    private static final String HAND_SAVED = "its XSLT was saved as written by hand";
+    private static final String EDITED = "its XSLT was edited by hand";
 
     private final KeptCode keptCode;
     private final XsltHistory history;
@@ -93,11 +97,14 @@ class GeneratedDrift {
         // What differs, so the edit can be carried into the mapping (- what the mapping generates, + the XSLT).
         final String differs = " What differs (- what the mapping generates, + the XSLT): " + String.join(" | ",
                 CodeDiff.diff(regenerated.xslt(), code));
-        if (same.orElse(false) && saved.map(XsltVersionHistory.Saved::hand).orElse(false)) {
+        // Saved by this generator and unchanged since, yet not what it generates: written by hand, though saved
+        // before hand saves were marked (seen: TWITTER's, taken for an earlier generator's code).
+        final boolean thisGenerator = !NullSafe.isBlankString(by) && by.contains(history.madeBy());
+        if (same.orElse(false) && (saved.map(XsltVersionHistory.Saved::hand).orElse(false) || thisGenerator)) {
             // Not in the Python server, which took this for an earlier generator's code and offered to regenerate
             // it, undoing the edit (seen: TWITTER's mentions and links, saved with save_xslt, and the
             // documentation generated from the mapping without them).
-            return Optional.of("its XSLT was saved as written by hand (save_xslt) since its mapping was kept, and "
+            return Optional.of(HAND_SAVED + " (save_xslt) since its mapping was kept, and "
                                + "differs from what that mapping generates: the mapping no longer says what it "
                                + "writes. Carry the edit into the mapping: build_translation_xslt uuid='"
                                + xslt.getUuid() + "' changes= (repeat: true writes one element per value; "
@@ -118,7 +125,7 @@ class GeneratedDrift {
             final String later = NullSafe.isBlankString(by) || by.contains(history.madeBy())
                     ? ""
                     : " (saved by " + by.split(",")[0] + ": the generator's own changes since may show too)";
-            return Optional.of("its XSLT was edited by hand since the server saved it, and differs from what its "
+            return Optional.of(EDITED + " since the server saved it, and differs from what its "
                                + "mapping generates: carry the edit into the mapping (rebuild_mapping uuid='"
                                + xslt.getUuid() + "' stream_ids=<the sample streams> does it, proven on the sample; "
                                + "or build_translation_xslt changes=), or accept that the documentation says so."
@@ -137,13 +144,7 @@ class GeneratedDrift {
     /// @return Why the XSLT is no longer what its mapping generates, when it was edited; else empty (it is, or
     /// only the generator changed since).
     public Optional<String> editDrift(final KeptMappings.KeptXslt kept) {
-        final Optional<String> drift = drift(kept);
-        final XsltDoc xslt = kept.xslt();
-        return drift.isPresent()
-               && Optional.of(false).equals(XsltVersionHistory.asGenerated(xslt.getDescription(),
-                NullSafe.string(xslt.getData())))
-                ? drift
-                : Optional.empty();
+        return drift(kept).filter(why -> why.startsWith(HAND_SAVED) || why.startsWith(EDITED));
     }
 
     /// @param kept An index or CEF plan kept with its XSLT.
