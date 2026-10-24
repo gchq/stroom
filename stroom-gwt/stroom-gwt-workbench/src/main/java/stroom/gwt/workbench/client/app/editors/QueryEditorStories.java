@@ -637,7 +637,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("North");
                     // The ExpanderCell icon has no title
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     expectSearchWith(play, "{\"groupSelection\": {\"openGroups\": [\"g-north\"]}}");
                     DocumentEditors.expectNoProblems(play);
                 })

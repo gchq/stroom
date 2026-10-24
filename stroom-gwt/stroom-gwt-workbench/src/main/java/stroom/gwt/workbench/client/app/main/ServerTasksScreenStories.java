@@ -136,7 +136,7 @@ public final class ServerTasksScreenStories {
                     play.findByText("Pipeline Processor");
                     play.expect(play.queryByText("Stream Processor A")).toBeNull();
                     // Expand the parent: the children appear
-                    play.click(play.querySelector(".expanderIcon.active"));
+                    play.click(play.querySelector(".expander-cell__icon.expander-cell__icon--active"));
                     play.findByText("Stream Processor A");
                     play.findByText("Stream Processor B");
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
@@ -209,7 +209,7 @@ public final class ServerTasksScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Pipeline Processor");
-                    play.click(play.querySelector(".expanderIcon.active"));
+                    play.click(play.querySelector(".expander-cell__icon.expander-cell__icon--active"));
                     play.findByText("Stream Processor A");
                     // No row has a '...' button: the items are in the Info cell's context menu, which
                     // has none of the task info items for a row whose info has no keys

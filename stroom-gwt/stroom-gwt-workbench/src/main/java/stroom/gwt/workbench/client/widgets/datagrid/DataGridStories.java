@@ -547,12 +547,12 @@ public final class DataGridStories {
                     final Query rows = play.querySelectorAll(ROW);
                     play.waitFor(() -> play.expect(rows).toHaveLength(2));
                     final Query engineering = InteractiveCellGrids.rowOf(play, "Engineering");
-                    play.click(play.within(engineering).querySelector(".expanderIcon"));
+                    play.click(play.within(engineering).querySelector(".expander-cell__icon"));
                     play.waitFor(() -> play.expect(rows).toHaveLength(4));
                     play.expect(play.getByText("Alice Johnson")).toBeInTheDocument();
                     play.expect(engineering).toHaveAttribute("aria-selected", "false");
 
-                    play.click(play.within(engineering).querySelector(".expanderIcon"));
+                    play.click(play.within(engineering).querySelector(".expander-cell__icon"));
                     play.waitFor(() -> play.expect(rows).toHaveLength(2));
                 })
                 // A grid with an expander column is a treegrid: its rows say their level and whether
@@ -568,7 +568,7 @@ public final class DataGridStories {
                     play.expect(engineering).toHaveAttribute("aria-expanded", "false");
                     // The expander says what a press does, to the mouse; the row tells assistive
                     // technology (aria-expanded), so the expander is hidden from it
-                    final Query expander = play.within(engineering).querySelector(".expanderCell");
+                    final Query expander = play.within(engineering).querySelector(".expander-cell");
                     play.expect(expander).toHaveAttribute("title", "Expand");
                     play.expect(expander).toHaveAttribute("aria-hidden", "true");
 
@@ -577,7 +577,7 @@ public final class DataGridStories {
                     play.waitFor(() -> play.expect(rows).toHaveLength(4));
                     play.expect(engineering).toHaveAttribute("aria-expanded", "true");
                     play.expect(engineering).toHaveFocus();
-                    play.expect(play.within(engineering).querySelector(".expanderCell"))
+                    play.expect(play.within(engineering).querySelector(".expander-cell"))
                             .toHaveAttribute("title", "Collapse");
 
                     play.keyboard("{ArrowDown}");

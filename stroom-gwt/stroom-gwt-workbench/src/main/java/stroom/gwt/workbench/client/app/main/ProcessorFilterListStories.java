@@ -144,18 +144,18 @@ public final class ProcessorFilterListStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW).count()).toBe(2));
                     // GWT's SVG expander, not a text triangle
-                    play.expect(play.querySelectorAll(".expanderCell")).toHaveLength(2);
+                    play.expect(play.querySelectorAll(".expander-cell")).toHaveLength(2);
                     play.expect(play.body()).not().toHaveTextContent(TextMatch.containing("▾"));
                     play.expect(play.body()).not().toHaveTextContent(TextMatch.containing("▸"));
                     // The parent is an expanded arrow; the child is a leaf dot
-                    play.expect(play.within(play.querySelectorAll(".expanderCell").nth(0))
-                            .querySelector(".svg-image__arrow-down.expanderIcon.active")).not().toBeNull();
-                    play.expect(play.within(play.querySelectorAll(".expanderCell").nth(1))
+                    play.expect(play.within(play.querySelectorAll(".expander-cell").nth(0))
+                            .querySelector(".svg-image__arrow-down.expander-cell__icon.expander-cell__icon--active")).not().toBeNull();
+                    play.expect(play.within(play.querySelectorAll(".expander-cell").nth(1))
                             .querySelector(".svg-image__dot")).not().toBeNull();
                     // Depth 1 is indented by GWT's 20px per level
                     // GWT writes the style without spaces, so the padding is checked as a style rather
                     // than as the attribute's text
-                    play.expect(play.querySelectorAll(".expanderCell").nth(1)).toHaveStyle("paddingLeft", "20px");
+                    play.expect(play.querySelectorAll(".expander-cell").nth(1)).toHaveStyle("paddingLeft", "20px");
                     expectNoProblems(play);
                 });
     }

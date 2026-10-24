@@ -276,8 +276,8 @@
     --dashboard-panel__grid-background-color: #fbfbfb;
 
     /* ExpanderCell */
-    --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
-    --expander-cell-icon__background-color--active: rgba(0, 0, 0, 0.6);
+    --expander-cell__icon-background-color--hover: rgba(0, 0, 0, 0.2);
+    --expander-cell__icon-background-color--active: rgba(0, 0, 0, 0.6);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);

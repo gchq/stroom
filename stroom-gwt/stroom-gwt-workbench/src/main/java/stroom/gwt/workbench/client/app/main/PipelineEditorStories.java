@@ -834,9 +834,9 @@ public final class PipelineEditorStories {
                     play.click(play.getAllByTitle("Info").nth(1));
                     screen.findByText("Total Tasks Created");
                     // The processor row is expanded: collapsing it hides the filter
-                    play.click(play.querySelectorAll(".expanderCell .expanderIcon").nth(0));
+                    play.click(play.querySelectorAll(".expander-cell .expander-cell__icon").nth(0));
                     play.waitFor(() -> play.expect(play.queryByText("Complete")).toBeNull());
-                    play.click(play.querySelectorAll(".expanderCell .expanderIcon").nth(0));
+                    play.click(play.querySelectorAll(".expander-cell .expander-cell__icon").nth(0));
                     play.findByText("Complete");
                     // Show Tasks for Selected Processor is enabled once a single filter row is selected
                     play.expect(play.getByText("Active Tasks", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();

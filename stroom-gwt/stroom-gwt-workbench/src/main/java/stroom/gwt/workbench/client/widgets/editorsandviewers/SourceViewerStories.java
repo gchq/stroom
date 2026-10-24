@@ -165,11 +165,11 @@ public final class SourceViewerStories {
                     // (resetExpandedSeverities), so the error shows to begin with
                     // and the first click collapses the group
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     play.waitFor(() -> play.expect(play.queryByText("Split records {SplitFilter}")).toBeNull());
                     // Clicking the expander again fetches with ERROR expanded, and the server returns
                     // the group's rows (they aren't filtered by the client)
-                    play.click(play.querySelector(".expanderCell .expanderIcon"));
+                    play.click(play.querySelector(".expander-cell .expander-cell__icon"));
                     play.waitFor(() -> play.expect(play.getByText("Split records {SplitFilter}"))
                             .toBeInTheDocument());
                     play.expect("the last fetch", lastFetch)
