@@ -34,8 +34,6 @@ import java.util.Objects;
 public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
         implements SessionKeySchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<KeyType> keyType;
     @UiField
@@ -45,17 +43,12 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     @Inject
     public SessionKeySchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         setKeySchema(new SessionKeySchema.Builder().build());
         onStateKeyTypeChange();
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -92,17 +85,17 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onStateKeyTypeChange();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("temporalPrecision")
     public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, SessionKeySchemaSettingsWidget> {

@@ -42,8 +42,6 @@ public class SharedFileStoreSettingsWidget
         extends AbstractSettingsWidget
         implements SharedFileStoreSettingsView {
 
-    private final Widget widget;
-
     @UiField
     TextBox sharedPath;
     @UiField
@@ -53,16 +51,11 @@ public class SharedFileStoreSettingsWidget
 
     @Inject
     public SharedFileStoreSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
 
         shardCount.setMin(1);
         shardCount.setMax(999);
         shardCount.setValue(1);
-    }
-
-    @Override
-    Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -104,12 +97,12 @@ public class SharedFileStoreSettingsWidget
 
     @UiHandler("sharedPath")
     public void onSharedPath(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("shardCount")
     public void onShardCount(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, SharedFileStoreSettingsWidget> {

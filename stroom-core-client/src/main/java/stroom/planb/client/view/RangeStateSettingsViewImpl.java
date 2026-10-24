@@ -74,11 +74,11 @@ public class RangeStateSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        rangeKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
-        stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        rangeKeySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
+        stateValueSchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

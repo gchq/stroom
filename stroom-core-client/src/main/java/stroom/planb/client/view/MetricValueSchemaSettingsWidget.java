@@ -32,8 +32,6 @@ public class MetricValueSchemaSettingsWidget
         extends AbstractSettingsWidget
         implements MetricValueSchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<MaxValueSize> maxValue;
     @UiField
@@ -49,14 +47,9 @@ public class MetricValueSchemaSettingsWidget
 
     @Inject
     public MetricValueSchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new MetricValueSchema.Builder().build());
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -93,32 +86,32 @@ public class MetricValueSchemaSettingsWidget
 
     @UiHandler("maxValue")
     public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("storeLatestValue")
     public void onStoreLatestValue(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("storeMin")
     public void onStoreMin(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("storeMax")
     public void onStoreMax(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("storeCount")
     public void onStoreCount(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("storeSum")
     public void onStoreSum(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, MetricValueSchemaSettingsWidget> {

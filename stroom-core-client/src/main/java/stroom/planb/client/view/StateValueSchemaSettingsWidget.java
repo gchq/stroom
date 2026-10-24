@@ -32,8 +32,6 @@ import java.util.Objects;
 
 public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget implements StateValueSchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<StateValueType> stateValueType;
     @UiField
@@ -41,16 +39,11 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
 
     @Inject
     public StateValueSchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         stateValueType.addItems(StateValueType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         setValueSchema(new StateValueSchema.Builder().build());
         onStateValueTypeChange();
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -84,12 +77,12 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
     @UiHandler("stateValueType")
     public void onStateValueType(final ValueChangeEvent<StateValueType> event) {
         onStateValueTypeChange();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, StateValueSchemaSettingsWidget> {

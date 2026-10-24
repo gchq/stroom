@@ -33,8 +33,6 @@ import com.google.inject.Inject;
 
 public class RetentionSettingsWidget extends AbstractSettingsWidget implements RetentionSettingsView {
 
-    private final Widget widget;
-
     @UiField
     CustomCheckBox retentionEnabled;
     @UiField
@@ -59,7 +57,7 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
 
     @Inject
     public RetentionSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
 
         retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
 
@@ -81,11 +79,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionCheckIntervalTimeUnit.addItem(TimeUnit.HOURS);
         retentionCheckIntervalTimeUnit.addItem(TimeUnit.DAYS);
         retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -175,32 +168,32 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiHandler("retentionEnabled")
     public void onRetentionEnabled(final ValueChangeEvent<Boolean> event) {
         updateStates();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("retentionAge")
     public void onRetainAge(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("retentionTimeUnit")
     public void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("retentionCheckInterval")
     public void onRetentionCheckInterval(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("retentionCheckIntervalTimeUnit")
     public void onRetentionCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("useStateTime")
     public void onUseStateTime(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, RetentionSettingsWidget> {

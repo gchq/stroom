@@ -17,20 +17,30 @@
 package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
+import stroom.widget.component.client.Component;
 
-import com.google.gwt.user.client.ui.Widget;
+/// The base of Plan B's settings widgets (general, retention, snapshot, key and value schemas and
+/// the rest): a dumb component that says when the user changes a setting.
+public abstract class AbstractSettingsWidget extends Component {
 
-public abstract class AbstractSettingsWidget {
+    private Runnable onChange = () -> {
+    };
 
-    private ChangeUiHandlers uiHandlers;
+    /// @param onChange Run when the user changes a setting.
+    public void setOnChange(final Runnable onChange) {
+        this.onChange = onChange;
+    }
 
+    /// The old way to hear changes, kept while the widgets' view interfaces (and the floor map's
+    /// views) still ask for it; they move to [#setOnChange(Runnable)] with Plan B's wave.
+    ///
+    /// @param uiHandlers Told when the user changes a setting.
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
-        this.uiHandlers = uiHandlers;
+        setOnChange(uiHandlers::onChange);
     }
 
-    public ChangeUiHandlers getUiHandlers() {
-        return uiHandlers;
+    /// Says that the user changed a setting.
+    protected final void changed() {
+        onChange.run();
     }
-
-    abstract Widget asWidget();
 }

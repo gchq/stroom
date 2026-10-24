@@ -42,8 +42,6 @@ public class PublishingSettingsWidget
         extends AbstractSettingsWidget
         implements PublishingSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<BucketGranularity> granularity;
     @UiField
@@ -53,7 +51,7 @@ public class PublishingSettingsWidget
 
     @Inject
     public PublishingSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
 
         granularity.addItem(BucketGranularity.HOUR);
         granularity.addItem(BucketGranularity.DAY);
@@ -70,11 +68,6 @@ public class PublishingSettingsWidget
         maxWaitForDataTimeUnit.addItem(TimeUnit.MONTHS);
 
         setMaxWaitForData(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
-    }
-
-    @Override
-    Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -115,17 +108,17 @@ public class PublishingSettingsWidget
 
     @UiHandler("granularity")
     public void onGranularity(final ValueChangeEvent<BucketGranularity> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("maxWaitForData")
     public void onMaxWaitForData(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("maxWaitForDataTimeUnit")
     public void onMaxWaitForDataTimeUnit(final ValueChangeEvent<TimeUnit> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, PublishingSettingsWidget> {

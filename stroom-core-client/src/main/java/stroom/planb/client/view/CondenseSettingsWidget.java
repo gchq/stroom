@@ -33,8 +33,6 @@ import com.google.inject.Inject;
 
 public class CondenseSettingsWidget extends AbstractSettingsWidget implements CondenseSettingsView {
 
-    private final Widget widget;
-
     @UiField
     CustomCheckBox condenseEnabled;
     @UiField
@@ -46,7 +44,7 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
 
     @Inject
     public CondenseSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
 
         condenseAge.setMin(1);
         condenseAge.setMax(9999);
@@ -59,11 +57,6 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
         condenseTimeUnit.setValue(TimeUnit.YEARS);
 
         setCondenseEnabled(this.condenseEnabled.getValue());
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -109,17 +102,17 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
     @UiHandler("condenseEnabled")
     public void onCondenseEnabled(final ValueChangeEvent<Boolean> event) {
         setCondenseEnabled(condenseEnabled.getValue());
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("condenseAge")
     public void onCondenseAge(final ValueChangeEvent<Long> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("condenseTimeUnit")
     public void onCondenseTimeUnit(final ValueChangeEvent<TimeUnit> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, CondenseSettingsWidget> {

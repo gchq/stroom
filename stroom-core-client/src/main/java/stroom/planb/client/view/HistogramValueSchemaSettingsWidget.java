@@ -31,21 +31,14 @@ public class HistogramValueSchemaSettingsWidget
         extends AbstractSettingsWidget
         implements HistogramValueSchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<MaxValueSize> maxValue;
 
     @Inject
     public HistogramValueSchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         maxValue.addItems(MaxValueSize.ORDERED_LIST);
         setValueSchema(new HistogramValueSchema.Builder().build());
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -67,7 +60,7 @@ public class HistogramValueSchemaSettingsWidget
 
     @UiHandler("maxValue")
     public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, HistogramValueSchemaSettingsWidget> {

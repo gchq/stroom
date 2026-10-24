@@ -74,11 +74,11 @@ public class SessionSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        condenseSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        sessionKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        condenseSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        sessionKeySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

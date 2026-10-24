@@ -29,21 +29,14 @@ import com.google.inject.Inject;
 
 public class RangeKeySchemaSettingsWidget extends AbstractSettingsWidget implements RangeKeySchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<RangeType> rangeType;
 
     @Inject
     public RangeKeySchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         rangeType.addItems(RangeType.ORDERED_LIST);
         setKeySchema(new RangeKeySchema.Builder().build());
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -63,10 +56,9 @@ public class RangeKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
         rangeType.setReadOnly(readOnly);
     }
 
-
     @UiHandler("rangeType")
     public void onRangeType(final ValueChangeEvent<RangeType> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, RangeKeySchemaSettingsWidget> {

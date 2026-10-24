@@ -32,8 +32,6 @@ import java.util.Objects;
 
 public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget implements StateKeySchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<KeyType> keyType;
     @UiField
@@ -41,16 +39,11 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
 
     @Inject
     public StateKeySchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         setKeySchema(new StateKeySchema.Builder().build());
         onStateKeyTypeChange();
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -84,12 +77,12 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onStateKeyTypeChange();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, StateKeySchemaSettingsWidget> {

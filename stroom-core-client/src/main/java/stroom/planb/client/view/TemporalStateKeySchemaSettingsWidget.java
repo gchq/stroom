@@ -34,8 +34,6 @@ import java.util.Objects;
 public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
         implements TemporalStateKeySchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<KeyType> keyType;
     @UiField
@@ -45,17 +43,12 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     @Inject
     public TemporalStateKeySchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         setKeySchema(new TemporalStateKeySchema.Builder().build());
         onKeyTypeChange();
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -92,17 +85,17 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onKeyTypeChange();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("temporalPrecision")
     public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, TemporalStateKeySchemaSettingsWidget> {

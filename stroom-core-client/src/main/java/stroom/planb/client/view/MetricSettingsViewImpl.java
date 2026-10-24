@@ -75,11 +75,11 @@ public class MetricSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        keySchemaSettingsWidget.setUiHandlers(uiHandlers);
-        valueSchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        keySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
+        valueSchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

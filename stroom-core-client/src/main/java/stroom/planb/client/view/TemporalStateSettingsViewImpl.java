@@ -82,12 +82,12 @@ public class TemporalStateSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        condenseSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        temporalStateKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
-        stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        condenseSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        temporalStateKeySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
+        stateValueSchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

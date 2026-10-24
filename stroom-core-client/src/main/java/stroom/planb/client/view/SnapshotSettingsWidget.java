@@ -33,8 +33,6 @@ import com.google.inject.Inject;
  */
 public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
-    private final Widget widget;
-
     @UiField
     CustomCheckBox useSnapshotsForLookup;
     @UiField
@@ -44,12 +42,7 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
     @Inject
     public SnapshotSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    Widget asWidget() {
-        return widget;
+        initWidget(binder.createAndBindUi(this));
     }
 
     public SnapshotSettings getSnapshotSettings() {
@@ -75,17 +68,17 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
     @UiHandler("useSnapshotsForLookup")
     public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("useSnapshotsForGet")
     public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("useSnapshotsForQuery")
     public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {

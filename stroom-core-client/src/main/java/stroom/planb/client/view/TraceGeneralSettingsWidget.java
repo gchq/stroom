@@ -33,19 +33,12 @@ import com.google.inject.Inject;
  */
 public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
 
-    private final Widget widget;
-
     @UiField
     TextBox maxSpansPerTrace;
 
     @Inject
     public TraceGeneralSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    Widget asWidget() {
-        return widget;
+        initWidget(binder.createAndBindUi(this));
     }
 
     public Long getMaxSpansPerTrace() {
@@ -77,7 +70,7 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget {
 
     @UiHandler("maxSpansPerTrace")
     public void onMaxSpansPerTrace(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, TraceGeneralSettingsWidget> {

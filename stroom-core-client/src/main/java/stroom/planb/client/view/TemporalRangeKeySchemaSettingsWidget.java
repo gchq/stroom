@@ -32,8 +32,6 @@ public class TemporalRangeKeySchemaSettingsWidget
         extends AbstractSettingsWidget
         implements TemporalRangeKeySchemaSettingsView {
 
-    private final Widget widget;
-
     @UiField
     SelectionBox<RangeType> rangeType;
     @UiField
@@ -41,15 +39,10 @@ public class TemporalRangeKeySchemaSettingsWidget
 
     @Inject
     public TemporalRangeKeySchemaSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         rangeType.addItems(RangeType.ORDERED_LIST);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         setKeySchema(new TemporalRangeKeySchema.Builder().build());
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -74,12 +67,12 @@ public class TemporalRangeKeySchemaSettingsWidget
 
     @UiHandler("rangeType")
     public void onRangeType(final ValueChangeEvent<RangeType> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("temporalPrecision")
     public void onTemporalPrecision(final ValueChangeEvent<TemporalPrecision> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, TemporalRangeKeySchemaSettingsWidget> {

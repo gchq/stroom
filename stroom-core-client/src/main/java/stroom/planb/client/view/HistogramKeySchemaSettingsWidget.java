@@ -16,7 +16,6 @@
 
 package stroom.planb.client.view;
 
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
@@ -39,8 +38,6 @@ public class HistogramKeySchemaSettingsWidget
         extends AbstractSettingsWidget
         implements HistogramKeySchemaSettingsView {
 
-    private final Widget widget;
-
     private final TimeZoneWidget timeZoneWidget;
 
     @UiField
@@ -56,7 +53,7 @@ public class HistogramKeySchemaSettingsWidget
     public HistogramKeySchemaSettingsWidget(final Binder binder,
                                             final TimeZoneWidget timeZoneWidget) {
         this.timeZoneWidget = timeZoneWidget;
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
@@ -66,14 +63,9 @@ public class HistogramKeySchemaSettingsWidget
     }
 
     @Override
-    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
-        super.setUiHandlers(uiHandlers);
-        timeZoneWidget.setUiHandlers(uiHandlers);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
+    public void setOnChange(final Runnable onChange) {
+        super.setOnChange(onChange);
+        timeZoneWidget.setUiHandlers(onChange::run);
     }
 
     @Override
@@ -114,17 +106,17 @@ public class HistogramKeySchemaSettingsWidget
     @UiHandler("keyType")
     public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onKeyTypeChange();
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("hashLength")
     public void onHashLength(final ValueChangeEvent<HashLength> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("temporalResolution")
     public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, HistogramKeySchemaSettingsWidget> {

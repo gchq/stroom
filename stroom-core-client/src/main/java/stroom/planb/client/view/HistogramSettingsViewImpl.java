@@ -75,11 +75,11 @@ public class HistogramSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        histogramKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
-        stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        histogramKeySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
+        stateValueSchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

@@ -96,11 +96,11 @@ public class TraceSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        traceGeneralSettingsWidget.setUiHandlers(uiHandlers);
-        publishingSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        sharedFileStoreSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        traceGeneralSettingsWidget.setOnChange(uiHandlers::onChange);
+        publishingSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        sharedFileStoreSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override

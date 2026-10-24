@@ -16,7 +16,6 @@
 
 package stroom.planb.client.view;
 
-import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.form.client.FormGroup;
@@ -31,8 +30,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class GeneralSettingsWidget extends AbstractSettingsWidget implements GeneralSettingsView {
-
-    private final Widget widget;
 
     @UiField
     FormGroup maxStoreSizePanel;
@@ -51,18 +48,8 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     @Inject
     public GeneralSettingsWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        initWidget(binder.createAndBindUi(this));
         setOverwrite(true);
-    }
-
-    @Override
-    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
-        super.setUiHandlers(uiHandlers);
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
     }
 
     @Override
@@ -144,17 +131,17 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     @UiHandler("maxStoreSize")
     public void onMaxStoreSize(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("synchroniseMerge")
     public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     @UiHandler("overwrite")
     public void onOverwrite(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        changed();
     }
 
     public interface Binder extends UiBinder<Widget, GeneralSettingsWidget> {

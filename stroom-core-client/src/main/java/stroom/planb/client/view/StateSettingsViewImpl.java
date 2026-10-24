@@ -74,11 +74,11 @@ public class StateSettingsViewImpl
     @Override
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
-        generalSettingsWidget.setUiHandlers(uiHandlers);
-        snapshotSettingsWidget.setUiHandlers(uiHandlers);
-        retentionSettingsWidget.setUiHandlers(uiHandlers);
-        stateKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
-        stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setOnChange(uiHandlers::onChange);
+        snapshotSettingsWidget.setOnChange(uiHandlers::onChange);
+        retentionSettingsWidget.setOnChange(uiHandlers::onChange);
+        stateKeySchemaSettingsWidget.setOnChange(uiHandlers::onChange);
+        stateValueSchemaSettingsWidget.setOnChange(uiHandlers::onChange);
     }
 
     @Override
