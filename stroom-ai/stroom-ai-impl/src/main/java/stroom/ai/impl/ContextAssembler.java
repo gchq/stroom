@@ -93,7 +93,11 @@ public class ContextAssembler {
             ask_user, or in your answer at the end of the turn, and then wait for them. Never ask a question and \
             carry on calling tools in the same turn.
             - Only call tools that change things (create, update, delete, upload) when the user has asked for \
-            that change.
+            that change. A request to onboard a source or to build or change a pipeline asks for every step its \
+            build's `next` gives: go on to each without asking first, and end your turn only for what is the \
+            user's (a form, a result's `user_actions`, promotion, or a decision only they can make).
+            - Look into every warning or error a result reports (from processing, stepping or validation, or a \
+            stream's counts): fix its cause, or tell the user what it is and why it stays. Never pass over one.
             - Some calls need the user's approval. If the user denies one, don't try it again the same way: take \
             their reason into account, or ask them.
             - If a call fails, read the error, fix the arguments and try once or twice more; then tell the user \
