@@ -38,17 +38,29 @@ public class LinkButton extends ButtonBase {
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_HASPOPUP = "aria-haspopup";
 
+    private Runnable onClick;
+
     /// A button with no text yet, e.g. for a template, which gives it its text.
     public LinkButton() {
         // A push button (type="button"), so it never submits a form
         super(Document.get().createPushButtonElement());
         setStyleName(STYLE_NAME);
+        addClickHandler(event -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        });
     }
 
     /// @param text The button's text, which is also its name.
     public LinkButton(final String text) {
         this();
         setText(text);
+    }
+
+    /// @param onClick Run when the button is pressed, or null for nothing.
+    public void setOnClick(final Runnable onClick) {
+        this.onClick = onClick;
     }
 
     /// Names the button for screen readers in place of its text, e.g. "Schema Home" for a button

@@ -81,7 +81,7 @@ public final class QuickSettings extends Composite {
         public Group add(final String name, final Runnable onPress) {
             final LinkButton button = new LinkButton(name);
             button.addStyleName(BLOCK + "__setting");
-            button.addClickHandler(event -> onPress.run());
+            button.setOnClick(onPress);
             panel.add(button);
             return this;
         }

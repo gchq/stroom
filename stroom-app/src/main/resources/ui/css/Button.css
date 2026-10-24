@@ -638,6 +638,9 @@ Ripple effect
 
 .ripple {
   position: absolute;
+  /* Where the button was pressed (Button.java) */
+  left: var(--ripple__left, 50%);
+  top: var(--ripple__top, 50%);
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.1);
 

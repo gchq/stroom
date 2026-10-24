@@ -20,96 +20,59 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.CssProperties;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ButtonElement;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
+/// A button (`Button.css`) with an optional icon and a busy spinner. Its markup is `Button.ui.xml`.
 public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     // While the busy spinner spins (Button.css), until it has shrunk away (as long as that takes)
     private static final String SPINNING = "Button--spinning";
     private static final int SPINNER_FADE_MILLIS = 500;
 
-    private final Element rippleContainer;
-    private final Element buttonContent;
-    private final Element buttonSpinner;
-    private final Element spinnerBorder;
-    private final Element icon;
-    private final Element backgroundText;
-    private final Element text;
+    private final Parts parts;
 
     private int taskCount;
     private Timer stopSpinning;
+    private Runnable onClick;
 
-    /**
-     * Creates a button with no caption.
-     */
+    /// Makes a button captioned "Close", which callers usually change with `text="..."`.
     public Button() {
+        this(new Parts());
+    }
 
-        //  <button class="Button Button--base Button Button--contained Button--contained-primary has-text ">
-        //     <div class="ripple-container"></div>
-        //     <div class="Button__content">
-        //        <span class="Button__spinner">
-        //           <span aria-hidden="true" class="Button__spinner-ring"></span>
-        //        </span>
-        //        <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="check" class="svg-inline--fa fa-check fa-w-16 fa-lg " role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"></path>
-        //        </svg>
-        //        <span class="Button__margin"></span>
-        //        <span class="Button__text">Close</span>
-        //     </div>
-        //  </button>
-
-        super(Document.get().createPushButtonElement());
+    private Button(final Parts parts) {
+        super(BINDER.createAndBindUi(parts));
+        this.parts = parts;
         DOM.sinkEvents(getElement(),
                 Event.ONMOUSEDOWN |
                         Event.ONMOUSEUP |
                         Event.ONMOUSEOUT |
                         Event.ONCLICK |
                         Event.ONKEYUP);
+        addClickHandler(event -> {
+            if (onClick != null) {
+                onClick.run();
+            }
+        });
+    }
 
-        setStyleName("Button Button--base Button Button--contained has-text");
-
-        backgroundText = DOM.createSpan();
-        backgroundText.setClassName("Button__backgroundText");
-        // An invisible copy of the text that sizes the button, so it isn't part of its name
-        backgroundText.setAttribute("aria-hidden", "true");
-        getElement().appendChild(backgroundText);
-
-        rippleContainer = DOM.createDiv();
-        rippleContainer.setClassName("ripple-container");
-        getElement().appendChild(rippleContainer);
-
-        buttonContent = DOM.createDiv();
-        buttonContent.setClassName("Button__content");
-        getElement().appendChild(buttonContent);
-
-        buttonSpinner = DOM.createSpan();
-        buttonSpinner.setClassName("Button__spinner");
-        buttonContent.appendChild(buttonSpinner);
-
-        spinnerBorder = DOM.createSpan();
-        spinnerBorder.setClassName("Button__spinner-ring");
-        // Only a picture: the button itself says it is busy (aria-busy)
-        spinnerBorder.setAttribute("aria-hidden", "true");
-        buttonSpinner.appendChild(spinnerBorder);
-
-        icon = DOM.createSpan();
-        icon.setClassName("Button__icon svgIcon");
-        icon.setAttribute("aria-hidden", "true");
-        icon.setAttribute("focusable", "false");
-        buttonContent.appendChild(icon);
-
-        text = DOM.createSpan();
-        text.setClassName("Button__text");
-        buttonContent.appendChild(text);
-
-        setText("Close");
+    /// @param onClick Run when the button is clicked, or null for nothing.
+    public void setOnClick(final Runnable onClick) {
+        this.onClick = onClick;
     }
 
     private int getRelativeX(final Event e, final Element target) {
@@ -134,14 +97,14 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
             if (event.getClientX() == 0 || event.getClientY() == 0) {
                 // If this is a click via a keypress then simulate mousedown in the center.
                 getElement().addClassName("Button--down");
-                final int x = rippleContainer.getClientWidth() / 2;
-                final int y = rippleContainer.getClientHeight() / 2;
+                final int x = parts.rippleContainer.getClientWidth() / 2;
+                final int y = parts.rippleContainer.getClientHeight() / 2;
                 ripple(x, y);
             }
         } else if (event.getTypeInt() == Event.ONMOUSEDOWN) {
             getElement().addClassName("Button--down");
-            final int x = getRelativeX(event, rippleContainer);
-            final int y = getRelativeY(event, rippleContainer);
+            final int x = getRelativeX(event, parts.rippleContainer);
+            final int y = getRelativeY(event, parts.rippleContainer);
             ripple(x, y);
         } else if (event.getTypeInt() == Event.ONMOUSEUP ||
                 event.getTypeInt() == Event.ONMOUSEOUT ||
@@ -155,13 +118,14 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     private void ripple(final int x, final int y) {
         final Element ripple = DOM.createDiv();
         ripple.setClassName("ripple");
-        ripple.getStyle().setLeft(x, Unit.PX);
-        ripple.getStyle().setTop(y, Unit.PX);
-        rippleContainer.appendChild(ripple);
+        // Where the press was, which Button.css's .ripple uses
+        CssProperties.set(ripple, "--ripple__left", x + "px");
+        CssProperties.set(ripple, "--ripple__top", y + "px");
+        parts.rippleContainer.appendChild(ripple);
         new Timer() {
             @Override
             public void run() {
-                rippleContainer.removeChild(ripple);
+                parts.rippleContainer.removeChild(ripple);
             }
         }.schedule(1000);
     }
@@ -207,13 +171,13 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
     @Override
     public void setText(final String text) {
-        this.backgroundText.setInnerHTML(text);
-        this.text.setInnerHTML(text);
+        parts.backgroundText.setInnerHTML(text);
+        parts.text.setInnerHTML(text);
     }
 
     public void setIcon(final SvgImage svgImage) {
-        icon.addClassName("Button__icon--visible");
-        icon.setInnerHTML(svgImage.getSvg());
+        parts.icon.addClassName("Button__icon--visible");
+        parts.icon.setInnerHTML(svgImage.getSvg());
     }
 
     @Override
@@ -241,5 +205,31 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
                 setLoading(taskCount > 0);
             }
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template the button changes; the button element itself is the template's root
+    static final class Parts {
+
+        @UiField
+        SpanElement backgroundText;
+        @UiField
+        DivElement rippleContainer;
+        @UiField
+        SpanElement icon;
+        @UiField
+        SpanElement text;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("Button.ui.xml")
+    interface Binder extends UiBinder<ButtonElement, Parts> {
+
     }
 }

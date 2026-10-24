@@ -22,9 +22,15 @@ import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.ButtonElement;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
@@ -33,6 +39,9 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// button that takes the focus and is announced is the face inside its element.
 public class FabButton extends ButtonBase {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    private final Parts parts;
     private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
@@ -45,15 +54,14 @@ public class FabButton extends ButtonBase {
     private boolean allowClick;
 
     public FabButton() {
-        super(Document.get().createDivElement());
+        this(new Parts());
+    }
+
+    private FabButton(final Parts parts) {
+        super(BINDER.createAndBindUi(parts));
+        this.parts = parts;
+        face = parts.face;
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS);
-
-        getElement().setClassName("stroom-button-fab");
-
-        face = Document.get().createPushButtonElement();
-        face.setClassName("face");
-
-        getElement().appendChild(face);
         // Shows the button's name when it has the keyboard focus
         FocusTooltip.install();
     }
@@ -104,8 +112,8 @@ public class FabButton extends ButtonBase {
 
     public void setIcon(final SvgImage svgImage) {
         // The icon is decoration: the button is named by its aria-label
-        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\" aria-hidden=\"true\">"
-                          + svgImage.getSvg() + "</div>");
+        parts.icon.setClassName("svgIcon " + svgImage.getClassName());
+        parts.icon.setInnerHTML(svgImage.getSvg());
     }
 
     @Override
@@ -200,5 +208,27 @@ public class FabButton extends ButtonBase {
         final NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false, false, false, false);
         getElement().dispatchEvent(evt);
         allowClick = false;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template the button changes; its outer element is the template's root
+    static final class Parts {
+
+        @UiField
+        ButtonElement face;
+        @UiField
+        DivElement icon;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("FabButton.ui.xml")
+    interface Binder extends UiBinder<DivElement, Parts> {
+
     }
 }

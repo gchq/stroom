@@ -16,8 +16,9 @@
 
 package stroom.widget.button.client;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A line between a [Toolbar]'s buttons. The buttons either side are still one group, so the arrow
@@ -25,11 +26,17 @@ import com.google.gwt.user.client.ui.Widget;
 /// `<b:ToolbarSeparator/>`.
 public class ToolbarSeparator extends Widget {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     public ToolbarSeparator() {
-        final Element element = Document.get().createDivElement();
-        element.setClassName("toolbar__separator");
-        element.setAttribute("role", "separator");
-        element.setAttribute("aria-orientation", "vertical");
-        setElement(element);
+        setElement(BINDER.createAndBindUi(this));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<DivElement, ToolbarSeparator> {
+
     }
 }
