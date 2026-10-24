@@ -650,7 +650,7 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 - **Names.** The block is `svg-icon-box`; the field (the wrapped widget's first input) is `svg-icon-box__field`, padded clear of the icon (its 26px and 4px more, see Field ends); the icon is `svg-icon-box__icon` (a 26px strip over the end of the field) holding `svg-icon-box__image`.
 - **Drop-down arrow.** `setDropDownWidget` gives the box the value spinner's arrow (`ARROW_DOWN`), 10px, in `--icon-colour__black`, as the date picker's month and year arrows' size (`svg-icon-box--drop-down`, a variant with no ARIA meaning). Every "opens a list" arrow in a field looks the same: the selection box's, QuickFilter's Recent Filters (a toolbar button, so a tab stop, with the same icon) and, as a pair, the value spinner's. `SvgImage.DROP_DOWN`, which drew a smaller, thinner arrow, is deleted.
 - **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
-- **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
+- **Read only.** `setReadOnly` dims the icon and stops it opening anything (`svg-icon-box--read-only`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
 
 ## Schedule box
 

@@ -318,7 +318,7 @@ public class SelectionBoxCell<T, I extends SelectionItem> extends AbstractCell<T
                   + "<div class=\"svg-icon-box__icon\" aria-hidden=\"true\">{4}</div></div>")
         SafeHtml box(SafeHtml rendered, String text, String name, String rowId, SafeHtml arrow);
 
-        @Template("<div class=\"svg-icon-box svg-icon-box--drop-down svg-icon-box--readonly selection-box "
+        @Template("<div class=\"svg-icon-box svg-icon-box--drop-down svg-icon-box--read-only selection-box "
                   + "selection-box--select-only selection-box--readonly selection-box--cell\">"
                   + "<div class=\"selection-box__control\">"
                   + "<div class=\"selection-box__value stroom-control\" aria-hidden=\"true\">{0}</div>"

@@ -64,11 +64,11 @@
 }
 
 /* A box whose field can't be changed (disabled or read only): its icon is dimmed and does nothing.
-   A state with no ARIA attribute on the box, so a modifier, set by SvgIconBox.setReadonly */
-.svg-icon-box--readonly .svg-icon-box__icon {
+   A state with no ARIA attribute on the box, so a modifier, set by SvgIconBox.setReadOnly */
+.svg-icon-box--read-only .svg-icon-box__icon {
     cursor: default;
 }
 
-.svg-icon-box--readonly .svg-icon-box__image {
+.svg-icon-box--read-only .svg-icon-box__image {
     opacity: var(--disabled-opacity);
 }

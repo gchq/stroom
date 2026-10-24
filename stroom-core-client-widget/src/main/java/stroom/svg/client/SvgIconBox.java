@@ -40,14 +40,14 @@ import com.google.gwt.user.client.ui.Widget;
 /// icon is dimmed and does nothing.
 ///
 /// Styled by svg-icon-box.css: `svg-icon-box`, `svg-icon-box__field`, `svg-icon-box__icon`,
-/// `svg-icon-box__image`, and the modifiers `svg-icon-box--drop-down` and `svg-icon-box--readonly`.
+/// `svg-icon-box__image`, and the modifiers `svg-icon-box--drop-down` and `svg-icon-box--read-only`.
 public class SvgIconBox extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     private static final String BLOCK = "svg-icon-box";
     /// The modifier of a box whose icon is dimmed and does nothing, as its field can't be changed.
-    public static final String ICON_BOX_READONLY_CLASS_NAME = BLOCK + "--readonly";
+    public static final String ICON_BOX_READONLY_CLASS_NAME = BLOCK + "--read-only";
     private static final String DROP_DOWN_CLASS_NAME = BLOCK + "--drop-down";
 
     private final HTMLPanel panel;
