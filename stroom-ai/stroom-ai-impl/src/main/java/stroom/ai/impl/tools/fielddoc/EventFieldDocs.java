@@ -701,13 +701,10 @@ public final class EventFieldDocs {
 
     // An entry's xpath below a prefix, with its Data name.
     private static String xpath(final FieldMapping entry, final String below) {
-        final String path = entry.strippedPath();
-        final String rest = path.startsWith(below)
+        final String path = FieldKey.of(entry).xpath();
+        return path.startsWith(below)
                 ? path.substring(below.length())
                 : path;
-        return rest + (JsonValues.truthy(entry.dataName())
-                ? "[@Name='" + entry.dataName() + "']/@Value"
-                : "");
     }
 
     private static String orNotSampled(final String shown) {
@@ -770,6 +767,15 @@ public final class EventFieldDocs {
         final String name = node.localName();
         final String here = path + "/" + name;
         final List<XmlElement> children = node.childElements();
+        if ("Data".equals(name) && node.get("Name") != null && node.get("Value") == null
+            && children.stream().anyMatch(child -> "Data".equals(child.localName()))) {
+            // A Data holding Data (data_parent; not in the Python server, whose Data held none): its own are keyed
+            // under it, e.g. Data[@Name='mentions']/Data and mention, as the mapping keys them.
+            for (final XmlElement child : children) {
+                walk(child, here + "[@Name='" + node.get("Name") + "']", found);
+            }
+            return;
+        }
         if ("Data".equals(name) && node.get("Name") != null) {
             found.computeIfAbsent(new FieldKey(here, node.get("Name")), k -> new ArrayList<>())
                     .add(Objects.requireNonNullElse(node.get("Value"), ""));
@@ -796,7 +802,19 @@ public final class EventFieldDocs {
         /// @param entry A field mapping.
         /// @return Its key.
         public static FieldKey of(final FieldMapping entry) {
-            return new FieldKey(entry.strippedPath(), entry.dataName());
+            return new FieldKey(entry.strippedPath() + inParents(entry.dataParent()), entry.dataName());
+        }
+
+        // The Data an entry is written in, as the steps after its path's Data: [@Name='mentions']/Data.
+        private static String inParents(final String dataParent) {
+            if (!JsonValues.truthy(dataParent)) {
+                return "";
+            }
+            final StringBuilder steps = new StringBuilder();
+            for (final String parent : dataParent.split("/", -1)) {
+                steps.append("[@Name='").append(parent).append("']/Data");
+            }
+            return steps.toString();
         }
 
         /// @return The xpath it is documented by, e.g. `EventDetail/Authenticate/Data[@Name='sid']/@Value`.

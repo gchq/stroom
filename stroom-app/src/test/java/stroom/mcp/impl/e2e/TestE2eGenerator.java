@@ -50,8 +50,9 @@ class TestE2eGenerator extends AbstractE2eTest {
     private static final String FIREWALL_SAMPLE = textResource("firewall.csv");
     private static final String NESTED_DATA_SAMPLE = "[{\"ts\": \"2026-09-28T11:00:00Z\", \"user\": \"dave\", "
             + "\"host\": \"ws04\", \"src\": \"10.0.1.4\", \"id\": \"p1\", \"mentions\": [\"tim\", \"bob\"], "
-            + "\"city\": \"Leeds\"}, {\"ts\": \"2026-09-28T11:02:00Z\", \"user\": \"erin\", \"host\": \"ws05\", "
-            + "\"src\": \"10.0.1.5\", \"id\": \"p2\", \"mentions\": []}]";
+            + "\"city\": \"Leeds\", \"text\": \"Facts https://t.co/a https://t.co/b\"}, "
+            + "{\"ts\": \"2026-09-28T11:02:00Z\", \"user\": \"erin\", \"host\": \"ws05\", \"src\": \"10.0.1.5\", "
+            + "\"id\": \"p2\", \"mentions\": [], \"text\": \"No links here\"}]";
     private static final Map<String, Object> ALLOW_DENY = Map.of("field", "action",
             "map", Map.of("ALLOW", "true", "DENY", "false"));
     private static final Map<String, Object> LOGIN = Map.of("field", "action",
@@ -106,47 +107,91 @@ class TestE2eGenerator extends AbstractE2eTest {
     }
 
     @Test
-    void dataGroupedInTheDataItsDataParentNamesStepsCleanAndValidates() {
-        // Asked for by the user: Data in Data (data_parent), a JSON array's values each a Data of the one named
-        // for them, and a Data two deep. A record with neither writes no container.
+    void dataGroupedInTheDataItsDataParentNamesIsWrittenProcessedAndDocumentedUnderIt() {
+        // Asked for by the user: Data arrays (data_parent), through to the artifacts made: a JSON array's values
+        // each a Data of the one named for them, an xpath's (the text's links), and a Data two deep; a record with
+        // none writes no container. The Events stream holds them so, and the documentation's rows name each by its
+        // XPath under the Data it is in, with the sample's values (seen: TWITTER's mention and link rows under
+        // Document, with no values).
         final List<Map<String, Object>> fields = new ArrayList<>(List.of(
                 Map.of("path", "EventDetail/TypeId", "value", "Post"),
                 Map.of("path", "EventDetail/Create/Document/Id", "field", "id"),
                 Map.of("path", "EventDetail/Create/Document/Data", "data_parent", "mentions",
                         "data_name", "mention", "field", "mentions", "repeat", true),
+                Map.of("path", "EventDetail/Create/Document/Data", "data_parent", "links", "data_name", "link",
+                        "repeat", true, "xpath", "tokenize(*[@key='text'], ' ')[starts-with(., 'https://')]"),
                 Map.of("path", "EventDetail/Create/Document/Data", "data_parent", "client/geo",
                         "data_name", "city", "field", "city")));
         final Map<String, Object> mapping = Map.of("input", "json",
                 "common", common("ts", "yyyy-MM-dd'T'HH:mm:ssX", "host", "src", "user"),
                 "events", List.of(Map.of("name", "post", "fields", fields)));
-        final Map<String, Object> generated = json("build_translation_xslt", args("mapping", mapping,
-                "schema_version", VERSION));
-        assertThat(generated).as("generated from the mapping: %s", generated.get("problems"))
-                .containsEntry("ok", true);
         final String build = "gen-nested-data";
         final String feed = "GEN-NESTED-DATA";
+        final String name = feed + "-Events";
         createFeed(build, feed);
         final long raw = upload(feed, NESTED_DATA_SAMPLE);
-        final Map<String, Object> xslt = json("save_xslt", args("build", build, "name", feed + "-Events",
-                "code", generated.get("xslt")));
-        final Map<String, Object> pipeline = json("create_pipeline", args("build", build, "name", feed + "-Events",
+        // Saved with its mapping, so the documentation is generated from it.
+        final Map<String, Object> xslt = agreed("build_translation_xslt", args("build", build, "name", name,
+                "mapping", mapping, "schema_version", VERSION));
+        assertThat(xslt).as("saved from the mapping: %s", xslt.get("problems")).containsKey("saved");
+        final String xsltUuid = String.valueOf(map(xslt, "saved").get("uuid"));
+        final Map<String, Object> pipeline = agreed("create_pipeline", args("build", build, "name", name,
                 "template_uuid", templateUuid("translation", template("json")), "set_properties", List.of(
-                        docProperty("translationFilter", "xslt", (String) xslt.get("uuid"), "XSLT"),
+                        docProperty("translationFilter", "xslt", xsltUuid, "XSLT"),
                         valueProperty("jsonParser", "addRootObject", false))));
-        final String pipelineUuid = (String) pipeline.get("uuid");
-        final Map<String, Object> sample = json("step_sample", args("pipeline_uuid", pipelineUuid,
-                "stream_ids", List.of(raw)));
+        final String pipelineUuid = uuidOf(pipeline);
+        final Map<String, Object> sample = stepSample(pipelineUuid, List.of(raw));
         assertThat(sample).as("stepped clean: %s", sample.get("groups")).containsEntry("verdict", "clean");
-
-        final List<String> events = validEvents(pipelineUuid, raw, sample).stream()
+        final List<String> stepped = validEvents(pipelineUuid, raw, sample).stream()
                 .map(output -> output.replaceAll(">\\s+<", "><"))
                 .toList();
+        assertThat(stepped).hasSize(2);
+
+        // The Events stream processing writes.
+        final Map<String, Object> gate = process(pipelineUuid, List.of(raw));
+        assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+        final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+        final Map<String, Object> checked = json("check_events", args("stream_ids", List.of(eventsId)));
+        assertThat(map(checked, "schema")).as("Events valid: %s", checked).containsEntry("valid", true);
+        assertThat(checked).as("quality: %s", checked.get("quality")).containsEntry("ok", true);
+        final List<String> events = ((List<?>) json("fetch_events", args("streamId", eventsId, "firstRecord", 0,
+                "recordCount", 10)).get("records")).stream()
+                .map(record -> record instanceof final Map<?, ?> fieldsOf
+                        ? String.valueOf(fieldsOf.get("data"))
+                        : String.valueOf(record))
+                .map(record -> record.replaceAll(">\\s+<", "><"))
+                .toList();
         assertThat(events).hasSize(2);
-        assertThat(events.getFirst()).contains("<Data Name=\"mentions\"><Data Name=\"mention\" Value=\"tim\"/>"
-                                               + "<Data Name=\"mention\" Value=\"bob\"/></Data>");
-        assertThat(events.getFirst()).contains("<Data Name=\"client\"><Data Name=\"geo\"><Data Name=\"city\" "
-                                               + "Value=\"Leeds\"/></Data></Data>");
-        assertThat(events.get(1)).doesNotContain("Name=\"mentions\"", "Name=\"client\"");
+        assertThat(events.getFirst()).contains(
+                "<Data Name=\"mentions\"><Data Name=\"mention\" Value=\"tim\"/><Data Name=\"mention\" "
+                + "Value=\"bob\"/></Data>",
+                "<Data Name=\"links\"><Data Name=\"link\" Value=\"https://t.co/a\"/><Data Name=\"link\" "
+                + "Value=\"https://t.co/b\"/></Data>",
+                "<Data Name=\"client\"><Data Name=\"geo\"><Data Name=\"city\" Value=\"Leeds\"/></Data></Data>");
+        assertThat(events.get(1)).doesNotContain("Name=\"mentions\"", "Name=\"links\"", "Name=\"client\"");
+
+        // The documentation: each row under the Data it is in, with the sample's values.
+        final Map<String, Object> doc = agreed("write_documentation", args("build", build,
+                "pipeline_uuid", pipelineUuid, "stream_ids", List.of(raw), "change", "Created",
+                "markdown", "# " + name + "\n\n## Purpose and data\n\nPosts, for the generator's e2e test.\n"));
+        final String text = documentation(uuidOf(doc));
+        final String section = text.split("## Field mapping", 2)[1].split("\n## ", 2)[0];
+        final Map<String, List<String>> rows = fieldRows(section);
+        final String document = "EventDetail/Create/Document/";
+        assertThat(rows).containsKeys(document + "Data[@Name='mentions']/Data[@Name='mention']/@Value",
+                document + "Data[@Name='links']/Data[@Name='link']/@Value",
+                document + "Data[@Name='client']/Data[@Name='geo']/Data[@Name='city']/@Value");
+        assertThat(rows.keySet()).as("no row for a Data by its own name alone, nor for a container")
+                .noneMatch(field -> field.equals(document + "Data[@Name='mention']/@Value")
+                                    || field.equals(document + "Data[@Name='link']/@Value")
+                                    || field.equals(document + "Data[@Name='mentions']/@Value"));
+        assertThat(rows.get(document + "Data[@Name='mentions']/Data[@Name='mention']/@Value").getLast())
+                .contains("\"tim\"", "\"bob\"");
+        assertThat(rows.get(document + "Data[@Name='links']/Data[@Name='link']/@Value").getLast())
+                .contains("\"https://t.co/a\"");
+        assertThat(rows.get(document + "Data[@Name='client']/Data[@Name='geo']/Data[@Name='city']/@Value")
+                .getLast()).contains("\"Leeds\"");
+        assertThat(section).doesNotContain("not written by a rule", "(not in the sample)");
     }
 
     // Each record's Events, each checked valid against the schema and passing the quality checks.
