@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -34,6 +35,7 @@ import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.shared.AppPermission;
@@ -66,6 +68,12 @@ import java.util.stream.Collectors;
 /// interrupted (the client gave up on the call) or the chat's run is stopped. Once indexing passes, the build's
 /// Elasticsearch indexing pipeline's development batch size is taken off again ([IndexingRuns#developmentBatch]).
 ///
+/// Unlike the Stroom MCP server's, an input stream is only done once none of its outputs is still locked (being
+/// written) and no task for it is still to end (seen: "finished" with a 100,000-event stream still being written, so
+/// it couldn't be read, and its Error stream not yet made). The warnings and errors processing wrote beside the
+/// output are given (`look_into`), triaged, for the agent to look into and fix or tell the user of (asked for by the
+/// user: a warning that invalid XML characters were removed went unread); errors that must be fixed fail the gate.
+///
 /// Read as the user: the filters and their tasks need the Manage Processors permission and View on the pipeline,
 /// and only streams of feeds the user may view are seen.
 class WaitForProcessingTool extends AbstractBuiltInTool {
@@ -81,6 +89,11 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
     static final int DEFAULT_TIMEOUT_SECONDS = 180;
     static final int MIN_TIMEOUT_SECONDS = 5;
     static final int MAX_TIMEOUT_SECONDS = 900;
+    /// What to do with the warnings and errors processing wrote beside the output.
+    static final String LOOK_INTO_HINT = "Processing wrote these warnings or errors beside the output: look into "
+                                         + "each (summarise_streams kind=errors gives them in full), then fix its "
+                                         + "cause, or tell the user what it is and why it stays. Never pass over "
+                                         + "one.";
     /// The time between looks at processing.
     static final Duration POLL_INTERVAL = Duration.ofSeconds(3);
     /// What is kept of the session's time limit for the call's last reads, after the wait.
@@ -95,6 +108,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
     private final BuildRecords buildRecords;
     private final BuildPlan plan;
     private final IndexingRuns indexingRuns;
+    private final StreamSummaries streamSummaries;
     private final LongSupplier clockMs;
     private final Pause pause;
 
@@ -107,9 +121,10 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                           final WriteGuard guard,
                           final BuildRecords buildRecords,
                           final BuildPlan plan,
-                          final IndexingRuns indexingRuns) {
+                          final IndexingRuns indexingRuns,
+                          final StreamSummaries streamSummaries) {
         this(documentAccess, processorFilterAccess, processingStatus, streamProcessing, pipelineOutputs, guard,
-                buildRecords, plan, indexingRuns, System::currentTimeMillis,
+                buildRecords, plan, indexingRuns, streamSummaries, System::currentTimeMillis,
                 duration -> Thread.sleep(duration.toMillis()));
     }
 
@@ -123,6 +138,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                           final BuildRecords buildRecords,
                           final BuildPlan plan,
                           final IndexingRuns indexingRuns,
+                          final StreamSummaries streamSummaries,
                           final LongSupplier clockMs,
                           final Pause pause) {
         this.documentAccess = documentAccess;
@@ -134,6 +150,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         this.buildRecords = buildRecords;
         this.plan = plan;
         this.indexingRuns = indexingRuns;
+        this.streamSummaries = streamSummaries;
         this.clockMs = clockMs;
         this.pause = pause;
     }
@@ -257,7 +274,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                 return plan.nextFor(context, ref, noFilter(request));
             }
             // Tasks first, outputs after: a task ends once its output is written, so an ended task's output is read.
-            final Set<Long> ended = streamProcessing.tasksEnded(request.filterId() != null
+            final StreamProcessing.Tasks tasks = streamProcessing.tasks(request.filterId() != null
                     ? List.of(request.filterId())
                     : filters.stream().map(ProcessorFilter::getId).toList(), request.streamIds());
             outputs = new LinkedHashMap<>();
@@ -281,10 +298,11 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
             }
             // A stream is done once its own task has ended (seen in e2e: a promoted indexing pipeline's earlier
             // tasks were all complete before its filter made one for the new stream, and the gate passed with
-            // nothing indexed), or once it has its output, Stroom deleting old tasks.
+            // nothing indexed), or once it has its output, Stroom deleting old tasks; but never while one of its
+            // outputs is still being written, or a task for it is still to end.
             final Map<Long, List<Meta>> found = outputs;
             pending = request.streamIds().stream()
-                    .filter(raw -> !ended.contains(raw) && !(expected && !found.get(raw).isEmpty()))
+                    .filter(raw -> !done(found.get(raw), tasks, raw, expected))
                     .toList();
             if (pending.isEmpty() || clockMs.getAsLong() > deadline.atMs()) {
                 break;
@@ -310,6 +328,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         final boolean finished = pending.isEmpty();
         final List<Map<String, Object>> perStream = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
+        final List<Map<String, Object>> lookInto = new ArrayList<>();
         outputs.forEach((raw, metas) -> {
             final List<Long> events = expected
                     ? metas.stream().filter(meta -> Objects.equals(meta.getTypeName(), outputType))
@@ -325,7 +344,11 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                 entry.put("output_type", outputType);
             }
             perStream.add(entry);
-            problems.addAll(problems(raw, events, errors, !expected || pending.contains(raw), outputType));
+            final boolean errorsOnly = !expected || pending.contains(raw);
+            problems.addAll(problems(raw, events, errors, errorsOnly, outputType));
+            if (!errorsOnly && !events.isEmpty() && !errors.isEmpty()) {
+                lookInto(raw, errors, lookInto, problems);
+            }
         });
         // Only while the pipeline is in a build, where its code changes: a promoted one keeps no record of its steps.
         if (guard.tags(ref).contains(WriteGuard.MANAGED) && !steppedClean(ref)) {
@@ -350,6 +373,10 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
                 ? "pass"
                 : "fail");
         result.put("problems", problems);
+        if (!lookInto.isEmpty()) {
+            result.put("look_into", lookInto);
+            result.put("look_into_hint", LOOK_INTO_HINT);
+        }
         result.put("hint", hint(finished, idle, pending, deadline));
         if ("pass".equals(result.get("gate")) && restoredBatch(request.pipelineUuid())) {
             // Indexing completed without errors: the small development batch was only to see Elasticsearch's
@@ -368,6 +395,66 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
             // Housekeeping: never a reason for the wait to fail.
             return false;
         }
+    }
+
+    // Whether an input stream is done: its task ended, or its output is there (Stroom deleting old tasks), and none
+    // of its outputs is still being written and no task for it is still to end.
+    private static boolean done(final List<Meta> outputs,
+                                final StreamProcessing.Tasks tasks,
+                                final long raw,
+                                final boolean expected) {
+        if (tasks.open().contains(raw) || outputs.stream().anyMatch(meta -> meta.getStatus() == Status.LOCKED)) {
+            return false;
+        }
+        return tasks.ended().contains(raw) || (expected && !outputs.isEmpty());
+    }
+
+    // What processing wrote to the Error streams beside an input's output (warnings, errors), triaged: each group
+    // the build hasn't accepted, to look into. Errors that must be fixed are a problem too.
+    @SuppressWarnings("unchecked")
+    private void lookInto(final long raw,
+                          final List<Long> errors,
+                          final List<Map<String, Object>> lookInto,
+                          final List<String> problems) {
+        for (final long errorStream : errors) {
+            final Map<String, Object> summary;
+            try {
+                summary = streamSummaries.summariseErrors(errorStream);
+            } catch (final RuntimeException e) {
+                final Map<String, Object> unread = new LinkedHashMap<>();
+                unread.put("input", raw);
+                unread.put("error_stream", errorStream);
+                unread.put("unread", StreamSummaries.reason(e));
+                lookInto.add(unread);
+                continue;
+            }
+            for (final Map<?, ?> group : NullSafe.list((List<Map<?, ?>>) summary.get("groups"))) {
+                if (Boolean.TRUE.equals(group.get("accepted"))) {
+                    continue;
+                }
+                final Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("input", raw);
+                entry.put("error_stream", errorStream);
+                entry.put("severity", group.get("severity"));
+                entry.put("element", group.get("element"));
+                entry.put("count", group.get("count"));
+                entry.put("class", group.get("class"));
+                entry.put("message", firstMessage(group));
+                lookInto.add(entry);
+                if ("blocking".equals(group.get("class"))) {
+                    problems.add("Stream " + raw + "'s processing wrote " + group.get("severity") + "s that must be "
+                                 + "fixed (Error stream " + errorStream + ", " + group.get("element") + "): "
+                                 + firstMessage(group) + ". summarise_streams (kind=errors) " + raw);
+                }
+            }
+        }
+    }
+
+    private static String firstMessage(final Map<?, ?> group) {
+        return group.get("examples") instanceof final List<?> examples && !examples.isEmpty()
+               && examples.getFirst() instanceof final Map<?, ?> example
+                ? String.valueOf(example.get("message"))
+                : "";
     }
 
     // The problems with one input stream's outputs.

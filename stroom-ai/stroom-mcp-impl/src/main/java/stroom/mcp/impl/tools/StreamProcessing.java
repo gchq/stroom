@@ -54,8 +54,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// What processing a pipeline's filters has done, or will do, with given input streams: the outputs each has, the
-/// tasks that have ended, and why nothing will process one (no filter selects it, or the filters that would are
-/// disabled). Ported from the helpers of the Stroom MCP server's `tools/processing_writes.py` that
+/// tasks that have ended or are still to, and why nothing will process one (no filter selects it, or the filters
+/// that would are disabled). Ported from the helpers of the Stroom MCP server's `tools/processing_writes.py` that
 /// `wait_for_processing` is made of (`_outputs`, `_tasks_ended`, `_selects`, `_will_process`, `_waiting_on`,
 /// `_unselected` and `_iso`), for its write tools (`reprocess_streams`, `create_processor_filter`) to share.
 ///
@@ -101,9 +101,11 @@ class StreamProcessing {
 
     /// @param filterIds Processor filters.
     /// @param streamIds Input streams.
-    /// @return The streams one of these filters has a task for that ended (complete or failed).
-    Set<Long> tasksEnded(final List<Integer> filterIds, final List<Long> streamIds) {
+    /// @return The streams these filters have tasks for that ended (complete or failed), and those with a task that
+    /// hasn't ended yet (created, queued, being processed).
+    Tasks tasks(final List<Integer> filterIds, final List<Long> streamIds) {
         final Set<Long> ended = new TreeSet<>();
+        final Set<Long> open = new TreeSet<>();
         final Map<String, Boolean> feedViews = new HashMap<>();
         for (final Integer filterId : filterIds) {
             final ExpressionOperator.Builder streams = ExpressionOperator.builder().op(Op.OR);
@@ -117,10 +119,12 @@ class StreamProcessing {
                     task -> feedViews.computeIfAbsent(NullSafe.string(task.getFeedName()), feedAccess::canView))
                     .visible();
             tasks.stream()
-                    .filter(task -> ENDED.contains(task.getStatus()) && task.getMetaId() != null)
-                    .forEach(task -> ended.add(task.getMetaId()));
+                    .filter(task -> task.getMetaId() != null)
+                    .forEach(task -> (ENDED.contains(task.getStatus())
+                            ? ended
+                            : open).add(task.getMetaId()));
         }
-        return ended;
+        return new Tasks(ended, open);
     }
 
     /// @param streamIds Streams.
@@ -323,5 +327,13 @@ class StreamProcessing {
             }
             return String.join(" and ", parts);
         }
+    }
+
+    /// The tasks of some filters for some input streams.
+    ///
+    /// @param ended The streams with a task that ended (complete or failed).
+    /// @param open  The streams with a task that hasn't ended yet.
+    record Tasks(Set<Long> ended, Set<Long> open) {
+
     }
 }
