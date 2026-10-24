@@ -79,7 +79,7 @@ public class PercentBarCell extends AbstractCell<Number> {
                 final String thresholdClassName = getThresholdClassName(pctAsLong);
                 final String title = pctAsLong + "%";
 
-                // The bar's length, which PercentBarCell.css's width uses
+                // The bar's length, which percent-bar-cell.css's width uses
                 final SafeStyles widthStyle = SafeStylesUtils.fromTrustedString(
                         "--percent-bar-cell__width:" + pctAsLong + "%;");
 
@@ -91,11 +91,11 @@ public class PercentBarCell extends AbstractCell<Number> {
 
     private String getThresholdClassName(final long percentage) {
         if (dangerThreshold != null && percentage >= dangerThreshold) {
-            return "percentBarCell-bar__danger";
+            return "percent-bar-cell__bar--danger";
         } else if (warningThreshold != null && percentage >= warningThreshold) {
-            return "percentBarCell-bar__warning";
+            return "percent-bar-cell__bar--warning";
         } else {
-            return "percentBarCell-bar__healthy";
+            return "percent-bar-cell__bar--healthy";
         }
     }
 
@@ -105,8 +105,8 @@ public class PercentBarCell extends AbstractCell<Number> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"percentBarCell percentBarCell-container\" title=\"{2}\">"
-                + "<div class=\"percentBarCell-bar {0}\" style=\"{1}\"></div>"
+        @Template("<div class=\"percent-bar-cell\" title=\"{2}\">"
+                + "<div class=\"percent-bar-cell__bar {0}\" style=\"{1}\"></div>"
                 + "</div>")
         SafeHtml percentBar(final String thresholdClassName,
                             final SafeStyles widthStyle,

@@ -144,15 +144,15 @@ public final class IndexVolumesScreenStories {
                     // Use%: the percentage is the bar's title, with the danger class at 90%
                     final Query vol1Row = dialog.getByText("/vol1").closest(StroomDom.GRID_ROW);
                     final Play vol1 = dialog.within(vol1Row);
-                    final Query bar = vol1.querySelector(".percentBarCell-container");
+                    final Query bar = vol1.querySelector(".percent-bar-cell");
                     play.expect(bar).toBeInTheDocument();
                     play.expect(bar.attribute("title")).toBe("90%");
-                    play.expect(dialog.within(bar).querySelector(".percentBarCell-bar__danger")).toBeInTheDocument();
+                    play.expect(dialog.within(bar).querySelector(".percent-bar-cell__bar--danger")).toBeInTheDocument();
                     play.expect(bar.textContent()).toBe("");
                     // Full: 90% used isn't full by GWT's rule (10 GiB / 1% headroom)
                     final Query full = vol1.getByText("No");
-                    play.expect(full).toHaveClass("redGreenCell");
-                    play.expect(full).toHaveClass("redGreenCell__green");
+                    play.expect(full).toHaveClass("red-green-text-cell");
+                    play.expect(full).toHaveClass("red-green-text-cell--green");
                     // Limit: 3 significant figures, trailing zeros stripped
                     play.expect(dialog.getByText("1.23G")).toBeInTheDocument();
                     play.expect(dialog.queryByText("1.2G")).toBeNull();

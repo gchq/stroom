@@ -1,15 +1,15 @@
-.colourSwatchCell {
+.colour-swatch-cell {
 
 }
 
-.colourSwatchCell-container {
+.colour-swatch-cell {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.2em;
 }
 
-.colourSwatchCell-swatch {
+.colour-swatch-cell__swatch {
     /* The colour shown (ColourSwatchCell.java) */
     background-color: var(--colour-swatch-cell__colour, transparent);
     min-width: 14px;
@@ -24,9 +24,9 @@
     border-color: var(--text-color);
 }
 
-.colourSwatchCell-text {
+.colour-swatch-cell__text {
 }
 
-.dataGridDisabledCell .colourSwatchCell-swatch {
+.dataGridDisabledCell .colour-swatch-cell__swatch {
     opacity: var(--disabled-opacity);
 }

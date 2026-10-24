@@ -49,8 +49,8 @@ public class RedGreenTextCell extends AbstractCell<Boolean> {
                     ? greenText
                     : redText;
             final String className = isGreen
-                    ? "redGreenCell__green"
-                    : "redGreenCell__red";
+                    ? "red-green-text-cell--green"
+                    : "red-green-text-cell--red";
             sb.append(template.span(text, className));
         }
     }
@@ -61,7 +61,7 @@ public class RedGreenTextCell extends AbstractCell<Boolean> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<span class=\"redGreenCell {1}\">{0}</span>")
+        @Template("<span class=\"red-green-text-cell {1}\">{0}</span>")
         SafeHtml span(final String title,
                       final String className);
     }

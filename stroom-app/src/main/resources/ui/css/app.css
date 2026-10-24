@@ -100,10 +100,10 @@
 @import url("prismjs/prismjs-light.css");
 @import url("markdown.css");
 @import url("icon-colours.css");
-@import url("ColourSwatchCell.css");
+@import url("colour-swatch-cell.css");
 @import url("colour-box.css");
-@import url("PercentBarCell.css");
-@import url("RedGreenTextCell.css");
+@import url("percent-bar-cell.css");
+@import url("red-green-text-cell.css");
 @import url("conditional-formatting.css");
 @import url("pathways.css");
 @import url("ask-stroom-ai.css");

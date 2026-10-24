@@ -35,15 +35,15 @@ public class ColourSwatchCell extends AbstractCell<String> {
         if (NullSafe.isBlankString(cssColour)) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            sb.appendHtmlConstant("<div class=\"colourSwatchCell colourSwatchCell-container\">");
+            sb.appendHtmlConstant("<div class=\"colour-swatch-cell\">");
 
-            // The colour, which ColourSwatchCell.css's background uses
-            sb.appendHtmlConstant("<div class=\"colourSwatchCell-swatch\" style=\"--colour-swatch-cell__colour:");
+            // The colour, which colour-swatch-cell.css's background uses
+            sb.appendHtmlConstant("<div class=\"colour-swatch-cell__swatch\" style=\"--colour-swatch-cell__colour:");
             sb.appendEscaped(cssColour);
             sb.appendHtmlConstant("\">");
             sb.appendHtmlConstant("</div>");
 
-            sb.appendHtmlConstant("<div class=\"colourSwatchCell-text\">");
+            sb.appendHtmlConstant("<div class=\"colour-swatch-cell__text\">");
             sb.appendEscaped(cssColour);
             sb.appendHtmlConstant("</div>");
 
