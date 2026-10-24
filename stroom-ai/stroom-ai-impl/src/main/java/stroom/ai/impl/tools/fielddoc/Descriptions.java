@@ -41,6 +41,10 @@ import java.util.stream.Collectors;
 /// ([FieldDocs#dataKey(String)]): seen, 224 fields asked of the agent for one feed, most of them its 18 Data names
 /// once per action element. A description given by full path still wins for that row. Ported from the Stroom MCP
 /// server's `Descriptions` in `utils/fielddoc.py`.
+///
+/// Each description is kept with where its field came from when it was given ([#sources()]), and asked for again
+/// when that changes: not in the Python server, where a description outlived its field's source (seen: TWITTER's
+/// Description, "the tweet's text, including mentions and links", kept once both were taken out of it).
 public final class Descriptions {
 
     /// What a field description's fallback is said to come from first: the vendor's documentation.
@@ -55,6 +59,10 @@ public final class Descriptions {
     private static final Pattern BARE = Pattern.compile("\\[[^\\]]*\\]|/@Value$");
 
     private final Map<String, String> given;
+    // Where each given description's field came from when it was given, for those it was recorded of.
+    private final Map<String, String> givenFrom;
+    // Where each description used here was of, by its key.
+    private final Map<String, String> used = new LinkedHashMap<>();
     private final boolean ask;
     private final List<Map<String, Object>> notes;
     private final Map<String, Map<String, Object>> asked = new LinkedHashMap<>();
@@ -66,6 +74,20 @@ public final class Descriptions {
     /// @param notes The vendor documentation's field dictionary (`record_source_notes`): maps with `field`,
     ///              `meaning`, `event_logging_path` and `values`.
     public Descriptions(final Map<String, ?> given, final boolean ask, final List<Map<String, Object>> notes) {
+        this(given, Map.of(), ask, notes);
+    }
+
+    /// @param given     The descriptions given (field to description); blank ones are left out.
+    /// @param givenFrom Where each given description's field came from when it was given (field to source), for
+    ///                  those recorded; one whose field comes from elsewhere now is asked for again.
+    /// @param ask       True to collect the fields not yet described.
+    /// @param notes     The vendor documentation's field dictionary (`record_source_notes`): maps with `field`,
+    ///                  `meaning`, `event_logging_path` and `values`.
+    public Descriptions(final Map<String, ?> given,
+                        final Map<String, String> givenFrom,
+                        final boolean ask,
+                        final List<Map<String, Object>> notes) {
+        this.givenFrom = Map.copyOf(Objects.requireNonNullElse(givenFrom, Map.of()));
         final Map<String, String> kept = new LinkedHashMap<>();
         if (given != null) {
             given.forEach((key, value) -> {
@@ -101,6 +123,18 @@ public final class Descriptions {
     /// @return The descriptions given.
     public Map<String, String> given() {
         return given;
+    }
+
+    /// @return Where the field of each description given came from: as it was used here, else as it was given.
+    public Map<String, String> sources() {
+        final Map<String, String> out = new LinkedHashMap<>();
+        given.keySet().forEach(key -> {
+            final String from = used.getOrDefault(key, givenFrom.get(key));
+            if (from != null) {
+                out.put(key, from);
+            }
+        });
+        return out;
     }
 
     /// @return True if the fields not yet described are collected.
@@ -221,8 +255,15 @@ public final class Descriptions {
         if (isData) {
             keys.add(FieldDocs.dataKey(dataPath.group(2)));
         }
+        String was = null;
         for (final String key : keys) {
             if (given.containsKey(key)) {
+                if (givenFrom.containsKey(key) && !givenFrom.get(key).equals(source)) {
+                    // Given of a field that came from elsewhere: asked again, with what it said.
+                    was = given.get(key);
+                    continue;
+                }
+                used.put(key, source);
                 return given.get(key);
             }
         }
@@ -230,6 +271,9 @@ public final class Descriptions {
             final Map<String, Object> asking = new LinkedHashMap<>();
             asking.put("field", field);
             asking.put("from", source);
+            if (was != null) {
+                asking.put("was", was);
+            }
             asking.put("values", values.subList(0, Math.min(3, values.size())).stream()
                     .map(v -> PyText.head(v, 60))
                     .toList());

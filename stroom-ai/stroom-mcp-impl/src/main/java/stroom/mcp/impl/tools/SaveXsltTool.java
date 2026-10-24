@@ -132,7 +132,11 @@ class SaveXsltTool extends AbstractBuiltInTool {
                              + "step_sample and draft_code first). It is checked with check_xslt and not saved if "
                              + "that fails. A translation generated from a mapping is saved by "
                              + "build_translation_xslt (build and name, or uuid), which keeps the mapping with it "
-                             + "for the documentation. An edit the user made by hand since is kept: code that "
+                             + "for the documentation; code saved here over one keeps the mapping, which then no "
+                             + "longer says what it writes, and write_documentation won't generate the Field "
+                             + "mapping from it: make the change with build_translation_xslt changes= instead "
+                             + "(repeat: true for one element per value, data_parent for Data in a named Data). "
+                             + "An edit the user made by hand since is kept: code that "
                              + "undoes it is refused, saying what it changed, to carry into the plan; where the "
                              + "plan changes a field the edit changed too, the user is asked whether to keep their "
                              + "edit or use the proposed field.")

@@ -254,6 +254,15 @@ class BuildDocumentation {
                 : FieldDocs.readDescriptions(writes.text(previous));
     }
 
+    /// @param previous The doc the documentation was written in before, or null.
+    /// @return Where each kept description's field came from when it was described; none for a doc written before
+    /// they were kept.
+    Map<String, String> keptDescriptionSources(final DocRef previous) {
+        return previous == null
+                ? Map.of()
+                : FieldDocs.readDescriptionSources(writes.text(previous));
+    }
+
     /// `_errors_markdown`: the error groups processing the streams gave, from the Error streams this pipeline wrote
     /// for them.
     ///
@@ -345,6 +354,10 @@ class BuildDocumentation {
                           + "never only repeat their generic words, nor where it comes from, which the table shows. "
                           + "Where the values don't make the meaning clear, say what they look like and that its "
                           + "meaning is unconfirmed, rather than guess."
+                          + (fields.stream().anyMatch(field -> field.containsKey("was"))
+                ? " A field with was has been described before, when it came from elsewhere: was is what that said; "
+                  + "describe it as it is now."
+                : "")
                           + (shared
                 ? " A field named Data[@Name='x'] is a Data value read from the same source under every element in "
                   + "under: one description covers it under all of them (only where it means something else "

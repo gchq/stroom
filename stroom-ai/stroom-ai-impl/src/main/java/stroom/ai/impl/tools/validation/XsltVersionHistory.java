@@ -161,7 +161,8 @@ public final class XsltVersionHistory {
                 .toList();
         if (!entries.isEmpty()) {
             final Map<String, Object> last = entries.getLast();
-            return Optional.of(new Saved(stringOf(last.get("digest")), stringOf(last.get("by"))));
+            return Optional.of(new Saved(stringOf(last.get("digest")), stringOf(last.get("by")),
+                    Boolean.TRUE.equals(last.get("hand"))));
         }
         List<Row> rows = history(description);
         if (rows.isEmpty()) {
@@ -169,7 +170,7 @@ public final class XsltVersionHistory {
         }
         return rows.isEmpty()
                 ? Optional.empty()
-                : Optional.of(new Saved(rows.getLast().digest(), rows.getLast().by()));
+                : Optional.of(new Saved(rows.getLast().digest(), rows.getLast().by(), false));
     }
 
     /// @param description An XSLT's description, or null.
@@ -178,6 +179,18 @@ public final class XsltVersionHistory {
     /// (empty).
     public static Optional<Boolean> untouched(final String description, final String code) {
         return lastSaved(description, code).map(saved -> saved.digest().equals(digest(code)));
+    }
+
+    /// Whether the code is what the tools last generated: neither changed since they saved it, nor last saved as
+    /// written by hand (save_xslt's code, not a mapping's or plan's; not in the Python server, where an agent's
+    /// hand edit saved so was taken for what an earlier generator wrote, and regenerating it from the mapping,
+    /// undoing the edit, was offered).
+    ///
+    /// @param description An XSLT's description, or null.
+    /// @param code        Its code, or null.
+    /// @return True if it is, false if it was changed or written by hand since, empty if unknown.
+    public static Optional<Boolean> asGenerated(final String description, final String code) {
+        return lastSaved(description, code).map(saved -> !saved.hand() && saved.digest().equals(digest(code)));
     }
 
     /// @param description An XSLT's description, or null.
@@ -205,6 +218,29 @@ public final class XsltVersionHistory {
                                      final String by,
                                      final Instant now,
                                      final String code) {
+        return withPending(description, previous, author, change, by, now, code, false);
+    }
+
+    /// The description with this change added to the build's pending changes, as [#withPending(String, Previous,
+    /// String, String, String, Instant, String)], marking a save of code written by hand (save_xslt's) as such.
+    ///
+    /// @param description An XSLT's description, or null.
+    /// @param previous    The XSLT as it was before this save, or null for a new one.
+    /// @param author      Who made the change.
+    /// @param change      What changed.
+    /// @param by          What made it, e.g. the tools' version, the client and the model.
+    /// @param now         When.
+    /// @param code        The code saved, or null if it isn't known.
+    /// @param hand        True if the code was written by hand, not generated from a mapping or plan.
+    /// @return The description with the change pending.
+    public static String withPending(final String description,
+                                     final Previous previous,
+                                     final String author,
+                                     final String change,
+                                     final String by,
+                                     final Instant now,
+                                     final String code,
+                                     final boolean hand) {
         final Map<String, Object> pending = new LinkedHashMap<>(pendingOf(description).orElse(Map.of()));
         final List<Map<String, Object>> entries = new ArrayList<>(entries(pending));
         if (!pending.containsKey("base")) {
@@ -232,6 +268,10 @@ public final class XsltVersionHistory {
         entry.put("by", by);
         if (code != null) {
             entry.put("digest", digest(code));
+        }
+        if (hand) {
+            // Only when so, so a generated save's entry is the Python server's.
+            entry.put("hand", true);
         }
         entries.add(entry);
         pending.put("entries", entries);
@@ -422,7 +462,8 @@ public final class XsltVersionHistory {
     ///
     /// @param digest The digest of the code saved.
     /// @param by     What saved it.
-    public record Saved(String digest, String by) {
+    /// @param hand   True if the code saved was written by hand (save_xslt's), not generated.
+    public record Saved(String digest, String by, boolean hand) {
 
     }
 
