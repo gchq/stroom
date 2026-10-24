@@ -352,6 +352,13 @@ public class AiChatRunManager {
             LOGGER.error(() -> "Run " + run.getId() + " for chat " + run.getChatId() + " failed", e);
             runDao.compareAndSetStatus(run.getId(), ACTIVE, AiChatRunStatus.FAILED, null,
                     NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+        } catch (final Error e) {
+            // E.g. a class Stroom can't load (seen: its jar rewritten under the running node). The run fails, saying
+            // why, rather than being left for its heartbeats to stop and taken for one whose node has. The error
+            // goes on up, as one the JVM may not recover from.
+            LOGGER.error(() -> "Run " + run.getId() + " for chat " + run.getChatId() + " failed", e);
+            runDao.compareAndSetStatus(run.getId(), ACTIVE, AiChatRunStatus.FAILED, null, e.toString());
+            throw e;
         } finally {
             // Anything the user sent that the run didn't pick up stays in the conversation, as sent, for the model to
             // see on the chat's next run, rather than being shown as waiting forever.
