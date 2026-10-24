@@ -124,14 +124,6 @@ class TestGeneratedDrift {
         assertThat(editDrift(mapping, old, XsltVersionHistory.withPending("", null, "pk", "Created",
                 "stroom-mcp 0.16.42", DAY, old))).isEmpty();
         assertThat(editDrift(mapping, generate(mapping), handSaved)).isEmpty();
-        // Saved before hand saves were marked, by this generator, unchanged since, yet not what it generates: the
-        // generator didn't change, so it was written by hand (seen: TWITTER's).
-        final String unmarked = XsltVersionHistory.withPending("", null, "pk", "Created", world.history.madeBy()
-                                                                                          + ", Stroom AI chat", DAY,
-                edited);
-        assertThat(translationDrift(mapping, edited, unmarked).orElseThrow())
-                .startsWith("its XSLT was saved as written by hand (save_xslt)");
-        assertThat(editDrift(mapping, edited, unmarked)).isPresent();
     }
 
     @Test

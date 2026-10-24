@@ -39,6 +39,11 @@ rules:
   # replaces it and reads on; the cause is the source's bytes, not the pipeline (inherited parser element).
   - {message: 'un-decodable byte', class: review,
      reason: "The source sends bytes that aren't in the feed's character set (its encoding; UTF-8 unless set): Stroom replaces each with the replacement character and reads on, so those characters are lost, but not by anything in the pipeline. fetch_events (streamId) on the raw stream says which bytes they are and how they read. If the whole stream is in one other character set (Windows-1252, say: é, curly quotes), set the feed's encoding to it; if it mixes character sets, no one setting reads it all, and the source is to be fixed. Ask the user which"}
+  # A required element left out, reported at the element after it (not in the Python server; seen: "starting with
+  # element '{Data}'. One of '{Command}' is expected" read as Data put in the wrong place, two rounds of stepping
+  # before Command was given a default).
+  - {element: '*schema*', severity: [ERROR], message: 'Invalid content was found starting with element .*One of .* is expected', class: blocking,
+     reason: "Output fails schema validation: an element the schema requires here (one of those it names as expected) was left out, so the schema reports the element written after it, which is in its place. In a mapping its entry's input was empty in these records: give the entry a default (or any_of with a field that is filled), rather than moving the element named"}
   - {element: '*schema*', severity: [ERROR], class: blocking, reason: 'Output fails schema validation'}
   - {own: true, severity: [ERROR], class: blocking, reason: "Error in this pipeline's own element"}
   - {own: false, severity: [ERROR], class: review, reason: 'Error in an inherited element; check whether our output causes it'}

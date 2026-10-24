@@ -140,6 +140,9 @@ public final class FieldDocs {
                     : "");
         } else if (JsonValues.truthy(entry.anyOf())) {
             text = "first of " + entry.anyOf().stream().map(f -> "`" + f + "`").collect(Collectors.joining(", "));
+        } else if (JsonValues.truthy(entry.join())) {
+            text = entry.join().stream().map(f -> "`" + f + "`").collect(Collectors.joining(", ")) + " joined with '"
+                   + entry.joinSeparator() + "'";
         } else if (entry.field() != null) {
             text = "`" + entry.field() + "`";
         } else {

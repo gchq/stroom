@@ -54,6 +54,8 @@ final class EventTrees {
     private final List<String> problems;
     private final List<String> warnings;
     private List<String> conditional = new ArrayList<>();
+    // Each rule's required elements written only when their inputs have a value.
+    private final Map<String, List<String>> conditionalByRule = new LinkedHashMap<>();
     private EventNode root;
 
     /// @param generator The generator writing the XSLT, whose reading of inputs the checks use.
@@ -230,6 +232,9 @@ final class EventTrees {
         }
         if (entry.anyOf() != null) {
             read.addAll(entry.anyOf());
+        }
+        if (entry.join() != null) {
+            read.addAll(entry.join());
         }
         final Set<String> held = new HashSet<>();
         for (final Condition condition : rule.when()) {
@@ -445,11 +450,18 @@ final class EventTrees {
                            + "searches by user read it. Map it as well, from the same input when it is the same "
                            + "account.");
         }
+        conditionalByRule.put(rule.name(), List.copyOf(conditional));
         if (!conditional.isEmpty()) {
             note(warnings, "[" + rule.name() + "] required " + PyText.list(conditional) + " are left out when "
                            + "their input fields are empty, which makes the event invalid. Fine if those fields are "
                            + "always filled; otherwise give the mapping a default.");
         }
+    }
+
+    /// @return Each rule's required elements written only when their inputs have a value (paths below Event), by
+    /// the rule's name.
+    Map<String, List<String>> conditionalByRule() {
+        return Map.copyOf(conditionalByRule);
     }
 
     // For a missing required choice: the members the event already maps outside node (EventSource/User/Id when
@@ -485,6 +497,8 @@ final class EventTrees {
                 source = "field '" + entry.field() + "'";
             } else if (hasAnyOf(entry)) {
                 source = "any_of " + PyText.list(entry.anyOf());
+            } else if (entry.join() != null) {
+                source = "join " + PyText.list(entry.join());
             } else if (isSet(entry.xpath())) {
                 source = "xpath `" + entry.xpath() + "`";
             } else if (entry.value() != null) {

@@ -100,6 +100,78 @@ class TestMappingSampleCheck {
     }
 
     @Test
+    void aRequiredElementWhoseInputIsEmptyInSampleRecordsIsCounted() {
+        // Seen: "Invalid content was found starting with element '{Data}'. One of '{Command}' is expected" in 87
+        // records, read as Data put in the wrong place: Command was left out where its field was empty.
+        final String sample = "<records><record><t>2022-01-15T14:52:23.000Z</t><cmd>run.exe</cmd><note>a</note>"
+                              + "</record><record><t>2022-01-15T14:52:24.000Z</t><note>b</note></record></records>";
+        final Map<String, Object> command = new LinkedHashMap<>(Map.of("path", "EventDetail/Process/Command",
+                "field", "cmd"));
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "xml", "root", "records",
+                "record", "record", "common", List.of(
+                        Map.of("path", "EventTime/TimeCreated", "field", "t"),
+                        Map.of("path", "EventSource/System/Name", "value", "S"),
+                        Map.of("path", "EventSource/System/Environment", "value", "Dev"),
+                        Map.of("path", "EventSource/Generator", "value", "g"),
+                        Map.of("path", "EventSource/Device/HostName", "value", "h"))));
+        json.put("events", List.of(Map.of("name", "launch", "fields", List.of(
+                Map.of("path", "EventDetail/TypeId", "value", "Launch"),
+                Map.of("path", "EventDetail/Process/Action", "value", "Execute"), command,
+                Map.of("path", "EventDetail/Process/Data", "data_name", "note", "field", "note")))));
+
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .contains("[launch] EventDetail/Process/Command is required by the schema, but its input ('cmd') is "
+                          + "empty in 1 of the 2 sample records this rule takes: those events fail the schema, "
+                          + "which reports the element written after it (often Data) as unexpected. Give the entry "
+                          + "a default, or any_of with a field that is filled.");
+
+        // Given a default: nothing to say.
+        command.put("default", "unknown");
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .noneSatisfy(warning -> assertThat(warning).contains("is required by the schema, but its input"));
+    }
+
+    @Test
+    void aTypeIdTheSameForDifferentKindsIsAProblemAndAJoinOfTheirFieldsIsNot() {
+        // Seen: two runs that left TypeId the SecretServer category alone ('User' for logons and logoffs), the
+        // warning one among many.
+        final String sample = "<records><record><t>2022-01-15T14:52:23.000Z</t><event>User</event>"
+                              + "<action>Login</action><who>pat</who></record><record><t>2022-01-15T14:52:24.000Z</t>"
+                              + "<event>User</event><action>Logout</action><who>sam</who></record></records>";
+        final Map<String, Object> typeId = new LinkedHashMap<>(Map.of("path", "EventDetail/TypeId", "field", "event"));
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "xml", "root", "records",
+                "record", "record", "common", List.of(
+                        Map.of("path", "EventTime/TimeCreated", "field", "t"),
+                        Map.of("path", "EventSource/System/Name", "value", "S"),
+                        Map.of("path", "EventSource/System/Environment", "value", "Dev"),
+                        Map.of("path", "EventSource/Generator", "value", "g"),
+                        Map.of("path", "EventSource/Device/HostName", "value", "h"),
+                        Map.of("path", "EventSource/User/Id", "field", "who"), typeId)));
+        json.put("events", List.of(
+                Map.of("name", "logon", "when", List.of(Map.of("field", "action", "equals", "Login")),
+                        "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "who"))),
+                Map.of("name", "logoff", "when", List.of(Map.of("field", "action", "equals", "Logout")),
+                        "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action", "value", "Logoff"),
+                                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "who")))));
+
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("problems")))
+                .singleElement().asString()
+                .startsWith("EventDetail/TypeId reads 'event', which in the sample is the same for events of "
+                            + "different kinds ('User' for rules logoff, logon)")
+                .contains("the format the standing instructions (AGENTS docs) set for TypeIds")
+                .contains("\"join\": [\"event\", ");
+
+        typeId.remove("field");
+        typeId.put("join", List.of("event", "action"));
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("problems"))).isEmpty();
+    }
+
+    @Test
     void theCheckSaysWhichExtractionsMatchNoneAndWhichSome() {
         // The user key is missing from every seventh record: 342 of the 400 match.
         final TranslationMapping m = kvMapping(List.of(extraction("(?:^|[\\s,;])absent=(\\S*)", "absent"),
