@@ -17,7 +17,7 @@
 package stroom.dispatch.client;
 
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.HasControllerNode;
 
 import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Method;
@@ -83,7 +83,7 @@ public class FakeRestFactory implements RestFactory {
         private final Function<T, R> function;
         private Consumer<R> resultConsumer;
         private RestErrorHandler errorHandler;
-        private HasComponentNode owner;
+        private HasControllerNode owner;
 
         private FakeRequest(final Function<T, R> function) {
             this.function = function;
@@ -113,7 +113,7 @@ public class FakeRestFactory implements RestFactory {
         }
 
         @Override
-        public MethodExecutor<T, R> owner(final HasComponentNode owner) {
+        public MethodExecutor<T, R> owner(final HasControllerNode owner) {
             this.owner = owner;
             return this;
         }
@@ -155,7 +155,7 @@ public class FakeRestFactory implements RestFactory {
         }
 
         private boolean isOwnerDisposed() {
-            return owner != null && owner.getComponentNode().isDisposed();
+            return owner != null && owner.getControllerNode().isDisposed();
         }
 
         /// @return True if the request has its own failure handler, rather than Stroom's default.

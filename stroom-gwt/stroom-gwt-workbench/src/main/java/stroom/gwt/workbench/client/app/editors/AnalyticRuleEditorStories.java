@@ -431,7 +431,7 @@ public final class AnalyticRuleEditorStories {
                     resource, res -> res.fetch(DOC_REF.getUuid()));
             // Another query's table, not shown, as another open rule's Shards tab has
             final QueryResultTablePresenter table = injector.getQueryResultTablePresenter();
-            harness.getComponentRoot().adopt(table.getComponentNode());
+            harness.getComponentRoot().adopt(table.getControllerNode());
             otherTable = table;
         });
         return harness.asWidget();

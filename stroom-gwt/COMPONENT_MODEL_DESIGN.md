@@ -1073,7 +1073,7 @@ Make each lifecycle step one call, everywhere, before any screen is rewritten (s
 
 Prove the split (see [Components, controllers and models](#components-controllers-and-models)) before any screen is converted, so that Phases 8 to 11 convert straight into it.
 
-1. Rename `Component` to `Controller` (and `ComponentNode`'s users, the leak check's counts, the guide), one mechanical commit; `MyPresenterWidget extends Controller`.
+1. Done (24 October 2026): `Component` renamed `Controller`, one mechanical commit; `MyPresenterWidget extends Controller`. With it `ComponentNode`, `HasComponentNode` (`getComponentNode`), `ComponentDialog`, `ComponentLayer`, `ComponentView`, `ComponentChecks` (the `stroom.componentChecks` property) and `TabbedComponent` became `Controller...`, and the framework's comments say controller. Kept: the package and GWT module (`stroom.widget.component`, which the dumb `Component` joins), the dashboard's unrelated `Component`, the pilot classes, story titles and the harness's method names. All 1,570 stories pass with the leak check.
 2. Add the thin `Component` base (a `Composite`), with tests.
 3. Pilot: split the receive rules screen and its `FieldEditor` dialog into components and controllers, and `DocSelectionBox` into a dumb box and a `DocSelectionController` attached to it, with their stories run with the leak check.
 4. Compare files, wiring and stories with before; revise the rules if needed; update this design and the authoring guide in `AGENTS.md`.

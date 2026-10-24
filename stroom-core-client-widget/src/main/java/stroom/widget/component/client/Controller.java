@@ -30,54 +30,54 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// A part of the UI that owns the components it shows. Inputs come in through its constructor and
+/// A part of the UI that owns the controllers it shows. Inputs come in through its constructor and
 /// setters, outputs go back through callbacks its owner gives it, and values many layers need
 /// (read-only, the task monitor) come from context (see [Contexts]).
 ///
-/// Whoever shows a component owns it ([#make(Provider)], or [#own(HasComponentNode)] for one
-/// injected), and disposing a component
+/// Whoever shows a controller owns it ([#make(Provider)], or [#own(HasControllerNode)] for one
+/// injected), and disposing a controller
 /// disposes everything it owns, along with every registration made through it. Screen authors
 /// never call [#dispose()]: only roots are disposed (an open document's tab, a dialog, a workbench
 /// story).
 ///
-/// A component builds its widget once, in its constructor, and gives it to [#initWidget(Widget)].
+/// A controller builds its widget once, in its constructor, and gives it to [#initWidget(Widget)].
 /// [#onAttach()] and [#onDetach()] are called as the widget enters and leaves the page, e.g. as its
 /// tab is shown and hidden; being hidden doesn't dispose it.
 ///
-/// A component made with the event bus can be the source of app-wide requests, as a presenter
+/// A controller made with the event bus can be the source of app-wide requests, as a presenter
 /// can: `AlertEvent.fireWarn(this, ...)`, `ConfirmEvent.fire(this, ...)`.
-public abstract class Component implements IsWidget, HasComponentNode, HasHandlers {
+public abstract class Controller implements IsWidget, HasControllerNode, HasHandlers {
 
-    private final ComponentNode node;
+    private final ControllerNode node;
     private final EventBus eventBus;
     private Widget widget;
 
-    /// Makes a component that doesn't listen to the event bus.
-    protected Component() {
+    /// Makes a controller that doesn't listen to the event bus.
+    protected Controller() {
         this(null);
     }
 
-    /// Makes a component that listens to app-wide events (see [#listen(Event.Type, Object)]).
+    /// Makes a controller that listens to app-wide events (see [#listen(Event.Type, Object)]).
     ///
     /// @param eventBus The application's event bus.
-    protected Component(final EventBus eventBus) {
+    protected Controller(final EventBus eventBus) {
         this(null, eventBus);
     }
 
-    /// Makes a component with a name of its own, for diagnostics (e.g. the unowned components
-    /// [ComponentChecks] lists), rather than its class's.
+    /// Makes a controller with a name of its own, for diagnostics (e.g. the unowned controllers
+    /// [ControllerChecks] lists), rather than its class's.
     ///
     /// @param name     The name, or null for the class's simple name.
     /// @param eventBus The application's event bus, or null if it doesn't listen to it.
-    protected Component(final String name, final EventBus eventBus) {
-        this.node = new ComponentNode(name != null
+    protected Controller(final String name, final EventBus eventBus) {
+        this.node = new ControllerNode(name != null
                 ? name
                 : getClass().getSimpleName());
         this.eventBus = eventBus;
     }
 
     @Override
-    public final ComponentNode getComponentNode() {
+    public final ControllerNode getControllerNode() {
         return node;
     }
 
@@ -90,10 +90,10 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
     }
 
     /// Fires an app-wide event, e.g. a request to show an alert, on the event bus, from this
-    /// component.
+    /// controller.
     ///
     /// @param event The event.
-    /// @throws IllegalStateException If this component was made without an event bus.
+    /// @throws IllegalStateException If this controller was made without an event bus.
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         if (eventBus == null) {
@@ -102,18 +102,18 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         eventBus.fireEventFromSource(event, this);
     }
 
-    /// Disposes this component and everything it owns. Only the owners of roots call this; a
-    /// component owned by another is disposed with it.
+    /// Disposes this controller and everything it owns. Only the owners of roots call this; a
+    /// controller owned by another is disposed with it.
     public final void dispose() {
         node.dispose();
     }
 
-    /// @return Whether this component is disposed.
+    /// @return Whether this controller is disposed.
     public final boolean isDisposed() {
         return node.isDisposed();
     }
 
-    /// Sets the widget this component shows. Called once, from the constructor.
+    /// Sets the widget this controller shows. Called once, from the constructor.
     ///
     /// @param widget The widget.
     protected final void initWidget(final Widget widget) {
@@ -134,13 +134,13 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         });
     }
 
-    /// Makes a component (or presenter) and owns it until this one is disposed, e.g. a tab, a list
+    /// Makes a controller (or presenter) and owns it until this one is disposed, e.g. a tab, a list
     /// or a settings panel: `final FieldList list = make(fieldListProvider);`.
     ///
     /// @param provider What makes it, e.g. a GIN provider.
     /// @param <C>      Its type.
-    /// @return The component, made and owned.
-    protected final <C extends HasComponentNode> C make(final Provider<C> provider) {
+    /// @return The controller, made and owned.
+    protected final <C extends HasControllerNode> C make(final Provider<C> provider) {
         Objects.requireNonNull(provider, "provider");
         return own(provider.get());
     }
@@ -158,17 +158,17 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
     /// @return The dialog, made and owned, ready to show.
     protected final <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
         Objects.requireNonNull(provider, "provider");
-        return ComponentDialog.disposeWhenHidden(make(provider));
+        return ControllerDialog.disposeWhenHidden(make(provider));
     }
 
-    /// Owns a component, which is then disposed with this one and sees this one's context.
+    /// Owns a controller, which is then disposed with this one and sees this one's context.
     ///
-    /// @param child The component, e.g. one injected into the constructor (one made here is made
+    /// @param child The controller, e.g. one injected into the constructor (one made here is made
     ///              with [#make(Provider)]).
     /// @param <C>   Its type.
-    /// @return The component.
-    protected final <C extends HasComponentNode> C own(final C child) {
-        final ComponentNode childNode = child.getComponentNode();
+    /// @return The controller.
+    protected final <C extends HasControllerNode> C own(final C child) {
+        final ControllerNode childNode = child.getControllerNode();
         // Null only for a mock (e.g. Mockito's, in a test), which has no node to own
         if (childNode != null) {
             node.adopt(childNode);
@@ -176,27 +176,27 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         return child;
     }
 
-    /// Disposes a component this one owns early, e.g. one that is being replaced.
+    /// Disposes a controller this one owns early, e.g. one that is being replaced.
     ///
-    /// @param child The component.
-    protected final void release(final HasComponentNode child) {
-        final ComponentNode childNode = child.getComponentNode();
+    /// @param child The controller.
+    protected final void release(final HasControllerNode child) {
+        final ControllerNode childNode = child.getControllerNode();
         // Null only for a mock (e.g. Mockito's, in a test)
         if (childNode != null) {
             node.release(childNode);
         }
     }
 
-    /// Owns a registration, removed when this component is disposed, e.g. of a handler on a widget
-    /// this component doesn't own.
+    /// Owns a registration, removed when this controller is disposed, e.g. of a handler on a widget
+    /// this controller doesn't own.
     ///
     /// @param registration The registration.
     protected final void own(final HandlerRegistration registration) {
         node.add(registration);
     }
 
-    /// Listens to an app-wide event on the event bus until this component is disposed. Events
-    /// between a component and its owner are callbacks, not bus events.
+    /// Listens to an app-wide event on the event bus until this controller is disposed. Events
+    /// between a controller and its owner are callbacks, not bus events.
     ///
     /// @param type    The event's type.
     /// @param handler The handler.
@@ -208,14 +208,14 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         node.add(eventBus.addHandler(type, handler));
     }
 
-    /// Adds a clean-up, run when this component is disposed, e.g. to stop a timer.
+    /// Adds a clean-up, run when this controller is disposed, e.g. to stop a timer.
     ///
     /// @param cleanUp What to run.
     protected final void onDispose(final Runnable cleanUp) {
         node.onDispose(cleanUp);
     }
 
-    /// Wraps a callback, e.g. a REST result's, so that it does nothing once this component is
+    /// Wraps a callback, e.g. a REST result's, so that it does nothing once this controller is
     /// disposed.
     ///
     /// @param callback The callback.
@@ -240,8 +240,8 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         return node.lookup(key);
     }
 
-    /// Watches a context value: runs `onChange` with it once this component is owned, and again
-    /// whenever it changes, until this component is disposed.
+    /// Watches a context value: runs `onChange` with it once this controller is owned, and again
+    /// whenever it changes, until this controller is disposed.
     ///
     /// @param key      The key, e.g. [Contexts#READ_ONLY].
     /// @param onChange What to run with the value, e.g. `nameBox::setReadOnly`.
@@ -250,7 +250,7 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         node.watch(key, onChange);
     }
 
-    /// Provides a context value to this component and every component it owns, however deep.
+    /// Provides a context value to this controller and every controller it owns, however deep.
     ///
     /// @param key   The key.
     /// @param value The value, which may change.
@@ -259,18 +259,18 @@ public abstract class Component implements IsWidget, HasComponentNode, HasHandle
         node.provide(key, value);
     }
 
-    /// @return The application's event bus, or null if this component was made without one.
+    /// @return The application's event bus, or null if this controller was made without one.
     protected final EventBus getEventBus() {
         return eventBus;
     }
 
-    /// Called when this component's widget enters the page, e.g. its tab is shown or its dialog
+    /// Called when this controller's widget enters the page, e.g. its tab is shown or its dialog
     /// opened: the time to focus, measure or start polling.
     protected void onAttach() {
         // Nothing by default
     }
 
-    /// Called when this component's widget leaves the page, e.g. its tab is hidden or its dialog
+    /// Called when this controller's widget leaves the page, e.g. its tab is hidden or its dialog
     /// closed: the time to stop polling. It keeps its state.
     protected void onDetach() {
         // Nothing by default

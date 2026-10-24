@@ -44,8 +44,8 @@
     <inherits name="stroom.pipeline.Pipeline"/>
     <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
 
-    <!-- Ownership misuse fails and unowned components are counted (see ComponentChecks) -->
-    <set-property name="stroom.componentChecks" value="ENABLED"/>
+    <!-- Ownership misuse fails and unowned components are counted (see ControllerChecks) -->
+    <set-property name="stroom.controllerChecks" value="ENABLED"/>
 
     <!--
       Screens (App/* stories): real presenters and views that call the server, shown with fake

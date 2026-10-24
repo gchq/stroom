@@ -35,8 +35,8 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
-import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
@@ -61,7 +61,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class TermEditor extends Composite implements HasComponentNode {
+public class TermEditor extends Composite implements HasControllerNode {
 
     private static final String ITEM_CLASS_NAME = "termEditor-item";
     private static final String DROPDOWN_CLASS_NAME = "dropdown";
@@ -84,7 +84,7 @@ public class TermEditor extends Composite implements HasComponentNode {
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
     // Owns the selection boxes' presenters, so whatever owns this editor's view disposes them
-    private final ComponentNode node = new ComponentNode("TermEditor");
+    private final ControllerNode node = new ControllerNode("TermEditor");
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
@@ -111,9 +111,9 @@ public class TermEditor extends Composite implements HasComponentNode {
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
-        node.adopt(docRefPresenter.getComponentNode());
+        node.adopt(docRefPresenter.getControllerNode());
         if (userRefSelectionBoxPresenter != null) {
-            node.adopt(userRefSelectionBoxPresenter.getComponentNode());
+            node.adopt(userRefSelectionBoxPresenter.getControllerNode());
         }
         docRefWidget = docSelectionBoxPresenter.getWidget();
         docRefWidget.addStyleName(ITEM_CLASS_NAME);
@@ -177,7 +177,7 @@ public class TermEditor extends Composite implements HasComponentNode {
     }
 
     @Override
-    public ComponentNode getComponentNode() {
+    public ControllerNode getControllerNode() {
         return node;
     }
 

@@ -29,20 +29,20 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TestComponentNode {
+class TestControllerNode {
 
     private final List<String> events = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        ComponentChecks.setEnabled(true);
-        ComponentChecks.reset();
+        ControllerChecks.setEnabled(true);
+        ControllerChecks.reset();
     }
 
     @AfterEach
     void tearDown() {
-        ComponentChecks.setEnabled(true);
-        ComponentChecks.reset();
+        ControllerChecks.setEnabled(true);
+        ControllerChecks.reset();
     }
 
     @Nested
@@ -50,14 +50,14 @@ class TestComponentNode {
 
         @Test
         void childrenNewestFirstThenRegistrationsThenCleanUps() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.onDispose(() -> events.add("cleanUp1"));
             root.add(registration("registration1"));
-            final ComponentNode first = owned(root, "first");
+            final ControllerNode first = owned(root, "first");
             first.onDispose(() -> events.add("first"));
             root.onDispose(() -> events.add("cleanUp2"));
             root.add(registration("registration2"));
-            final ComponentNode second = owned(root, "second");
+            final ControllerNode second = owned(root, "second");
             second.onDispose(() -> events.add("second"));
 
             root.dispose();
@@ -73,9 +73,9 @@ class TestComponentNode {
 
         @Test
         void cascadesDepthFirst() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
-            final ComponentNode grandChild = owned(child, "grandChild");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
+            final ControllerNode grandChild = owned(child, "grandChild");
             grandChild.onDispose(() -> events.add("grandChild"));
             child.onDispose(() -> events.add("child"));
 
@@ -88,8 +88,8 @@ class TestComponentNode {
 
         @Test
         void eachRunsOnce() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
             child.onDispose(() -> events.add("child"));
             root.add(registration("registration"));
 
@@ -102,8 +102,8 @@ class TestComponentNode {
 
         @Test
         void aDisposedChildLeavesItsOwner() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
 
             child.dispose();
 
@@ -112,7 +112,7 @@ class TestComponentNode {
 
         @Test
         void oneFailureDoesNotStopTheRestAndTheFirstIsRethrown() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.onDispose(() -> events.add("cleanUp1"));
             root.onDispose(() -> {
                 throw new IllegalStateException("second");
@@ -120,7 +120,7 @@ class TestComponentNode {
             root.onDispose(() -> {
                 throw new IllegalStateException("first");
             });
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
             child.onDispose(() -> events.add("child"));
 
             assertThatThrownBy(root::dispose)
@@ -132,10 +132,10 @@ class TestComponentNode {
 
         @Test
         void aFailingChildDoesNotStopItsSiblings() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode first = owned(root, "first");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode first = owned(root, "first");
             first.onDispose(() -> events.add("first"));
-            final ComponentNode second = owned(root, "second");
+            final ControllerNode second = owned(root, "second");
             second.onDispose(() -> {
                 throw new IllegalStateException("second");
             });
@@ -147,7 +147,7 @@ class TestComponentNode {
 
         @Test
         void registrationsAndCleanUpsGivenOnceDisposedRunAtOnce() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.dispose();
 
             root.add(registration("registration"));
@@ -159,9 +159,9 @@ class TestComponentNode {
 
         @Test
         void releaseDisposesOneChildEarly() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode replaced = owned(root, "replaced");
-            final ComponentNode kept = owned(root, "kept");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode replaced = owned(root, "replaced");
+            final ControllerNode kept = owned(root, "kept");
 
             root.release(replaced);
 
@@ -172,10 +172,10 @@ class TestComponentNode {
 
         @Test
         void aChildOwnedWhileItsOwnerIsDisposedIsDisposedWhenChecksAreDisabled() {
-            ComponentChecks.setEnabled(false);
-            final ComponentNode root = ComponentNode.root("root");
+            ControllerChecks.setEnabled(false);
+            final ControllerNode root = ControllerNode.root("root");
             root.dispose();
-            final ComponentNode late = new ComponentNode("late");
+            final ControllerNode late = new ControllerNode("late");
 
             root.adopt(late);
 
@@ -188,7 +188,7 @@ class TestComponentNode {
 
         @Test
         void dropsCallbacksOnceDisposed() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final Consumer<String> consumer = root.guard(events::add);
             final Runnable runnable = root.guard(() -> events.add("runnable"));
 
@@ -203,8 +203,8 @@ class TestComponentNode {
 
         @Test
         void dropsCallbacksOfAChildDisposedWithItsOwner() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
             final Consumer<String> consumer = child.guard(events::add);
 
             root.dispose();
@@ -219,8 +219,8 @@ class TestComponentNode {
 
         @Test
         void owningADisposedChildFails() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = new ComponentNode("child");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = new ControllerNode("child");
             child.dispose();
 
             assertThatThrownBy(() -> root.adopt(child))
@@ -230,8 +230,8 @@ class TestComponentNode {
 
         @Test
         void owningTwiceFails() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
 
             assertThatThrownBy(() -> root.adopt(child))
                     .hasMessageContaining("already owned by root");
@@ -239,9 +239,9 @@ class TestComponentNode {
 
         @Test
         void owningAChildOwnedByAnotherFails() {
-            final ComponentNode first = ComponentNode.root("first");
-            final ComponentNode second = ComponentNode.root("second");
-            final ComponentNode child = owned(first, "child");
+            final ControllerNode first = ControllerNode.root("first");
+            final ControllerNode second = ControllerNode.root("second");
+            final ControllerNode child = owned(first, "child");
 
             assertThatThrownBy(() -> second.adopt(child))
                     .hasMessageContaining("already owned by first");
@@ -249,8 +249,8 @@ class TestComponentNode {
 
         @Test
         void owningASharedNodeFails() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode singleton = new ComponentNode("singleton");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode singleton = new ControllerNode("singleton");
             singleton.markShared();
 
             assertThatThrownBy(() -> root.adopt(singleton))
@@ -259,17 +259,17 @@ class TestComponentNode {
 
         @Test
         void owningARootFails() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
 
-            assertThatThrownBy(() -> root.adopt(ComponentNode.root("other")))
+            assertThatThrownBy(() -> root.adopt(ControllerNode.root("other")))
                     .hasMessageContaining("is a root");
         }
 
         @Test
         void owningAnOwnerFails() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode child = owned(root, "child");
-            final ComponentNode grandChild = owned(child, "grandChild");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode child = owned(root, "child");
+            final ControllerNode grandChild = owned(child, "grandChild");
 
             assertThatThrownBy(() -> grandChild.adopt(child))
                     .hasMessageContaining("it owns grandChild");
@@ -279,17 +279,17 @@ class TestComponentNode {
 
         @Test
         void owningOnceDisposedFails() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.dispose();
 
-            assertThatThrownBy(() -> root.adopt(new ComponentNode("late")))
+            assertThatThrownBy(() -> root.adopt(new ControllerNode("late")))
                     .hasMessageContaining("root is disposed");
         }
 
         @Test
         void releasingANodeThatIsNotAChildFails() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode stranger = new ComponentNode("stranger");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode stranger = new ControllerNode("stranger");
 
             assertThatThrownBy(() -> root.release(stranger))
                     .hasMessageContaining("isn't owned by root");
@@ -298,18 +298,18 @@ class TestComponentNode {
 
         @Test
         void withChecksDisabledMisuseIsIgnored() {
-            ComponentChecks.setEnabled(false);
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode disposed = new ComponentNode("disposed");
+            ControllerChecks.setEnabled(false);
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode disposed = new ControllerNode("disposed");
             disposed.dispose();
-            final ComponentNode singleton = new ComponentNode("singleton");
+            final ControllerNode singleton = new ControllerNode("singleton");
             singleton.markShared();
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
 
             root.adopt(disposed);
             root.adopt(singleton);
             root.adopt(child);
-            root.release(new ComponentNode("stranger"));
+            root.release(new ControllerNode("stranger"));
 
             assertThat(root.childCount()).isEqualTo(1);
             assertThat(singleton.parent()).isNull();
@@ -317,10 +317,10 @@ class TestComponentNode {
 
         @Test
         void withChecksDisabledAChildOwnedByAnotherMoves() {
-            ComponentChecks.setEnabled(false);
-            final ComponentNode first = ComponentNode.root("first");
-            final ComponentNode second = ComponentNode.root("second");
-            final ComponentNode child = owned(first, "child");
+            ControllerChecks.setEnabled(false);
+            final ControllerNode first = ControllerNode.root("first");
+            final ControllerNode second = ControllerNode.root("second");
+            final ControllerNode child = owned(first, "child");
 
             second.adopt(child);
 
@@ -336,55 +336,55 @@ class TestComponentNode {
 
         @Test
         void countsLiveNodesNothingOwns() {
-            final ComponentNode root = ComponentNode.root("root");
-            final ComponentNode owned = new ComponentNode("owned");
-            new ComponentNode("leaked");
-            final ComponentNode disposed = new ComponentNode("disposed");
+            final ControllerNode root = ControllerNode.root("root");
+            final ControllerNode owned = new ControllerNode("owned");
+            new ControllerNode("leaked");
+            final ControllerNode disposed = new ControllerNode("disposed");
             disposed.dispose();
-            final ComponentNode singleton = new ComponentNode("singleton");
+            final ControllerNode singleton = new ControllerNode("singleton");
             singleton.markShared();
 
             root.adopt(owned);
 
-            assertThat(ComponentChecks.unownedCount()).isEqualTo(1);
-            assertThat(ComponentChecks.unownedNames()).containsExactly("leaked");
+            assertThat(ControllerChecks.unownedCount()).isEqualTo(1);
+            assertThat(ControllerChecks.unownedNames()).containsExactly("leaked");
         }
 
         @Test
         void countsEachNameAsOftenAsItIsUnowned() {
-            new ComponentNode("leaked");
-            new ComponentNode("leaked");
-            final ComponentNode owned = new ComponentNode("owned");
-            ComponentNode.root("root").adopt(owned);
+            new ControllerNode("leaked");
+            new ControllerNode("leaked");
+            final ControllerNode owned = new ControllerNode("owned");
+            ControllerNode.root("root").adopt(owned);
 
-            assertThat(ComponentChecks.unownedNames()).containsExactly("leaked", "leaked");
+            assertThat(ControllerChecks.unownedNames()).containsExactly("leaked", "leaked");
         }
 
         @Test
         void nodesCountedBeforeAResetAreNotTakenOffTheNewCount() {
-            final ComponentNode before = new ComponentNode("before");
-            ComponentChecks.reset();
-            new ComponentNode("after");
+            final ControllerNode before = new ControllerNode("before");
+            ControllerChecks.reset();
+            new ControllerNode("after");
 
-            ComponentNode.root("root").adopt(before);
+            ControllerNode.root("root").adopt(before);
 
-            assertThat(ComponentChecks.unownedCount()).isEqualTo(1);
-            assertThat(ComponentChecks.unownedNames()).containsExactly("after");
+            assertThat(ControllerChecks.unownedCount()).isEqualTo(1);
+            assertThat(ControllerChecks.unownedNames()).containsExactly("after");
         }
 
         @Test
         void rootsAreNotCounted() {
-            ComponentNode.root("root");
+            ControllerNode.root("root");
 
-            assertThat(ComponentChecks.unownedCount()).isZero();
+            assertThat(ControllerChecks.unownedCount()).isZero();
         }
 
         @Test
         void nothingIsCountedWhenChecksAreDisabled() {
-            ComponentChecks.setEnabled(false);
-            new ComponentNode("leaked");
+            ControllerChecks.setEnabled(false);
+            new ControllerNode("leaked");
 
-            assertThat(ComponentChecks.unownedCount()).isZero();
+            assertThat(ControllerChecks.unownedCount()).isZero();
         }
     }
 
@@ -395,9 +395,9 @@ class TestComponentNode {
 
         @Test
         void lookupAboveSkipsWhatTheNodeProvidesItself() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.provide(colour, ContextValue.of("red"));
-            final ComponentNode document = new ComponentNode("document");
+            final ControllerNode document = new ControllerNode("document");
             root.adopt(document);
             document.provide(colour, ContextValue.of("blue"));
 
@@ -408,11 +408,11 @@ class TestComponentNode {
 
         @Test
         void theNearestProviderWins() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.provide(colour, ContextValue.of("red"));
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
             child.provide(colour, ContextValue.of("blue"));
-            final ComponentNode grandChild = owned(child, "grandChild");
+            final ControllerNode grandChild = owned(child, "grandChild");
 
             assertThat(root.lookup(colour)).isEqualTo("red");
             assertThat(child.lookup(colour)).isEqualTo("blue");
@@ -421,7 +421,7 @@ class TestComponentNode {
 
         @Test
         void theDefaultAppliesWhenNothingProvides() {
-            final ComponentNode unowned = new ComponentNode("unowned");
+            final ControllerNode unowned = new ControllerNode("unowned");
 
             assertThat(unowned.lookup(colour)).isEqualTo("none");
             assertThat(unowned.lookup(Contexts.READ_ONLY)).isTrue();
@@ -431,7 +431,7 @@ class TestComponentNode {
 
         @Test
         void providingAKeyTwiceFails() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.provide(colour, ContextValue.of("red"));
 
             assertThatThrownBy(() -> root.provide(colour, ContextValue.of("blue")))
@@ -440,10 +440,10 @@ class TestComponentNode {
 
         @Test
         void aWatchReportsNowAndOnEveryChange() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final ContextValue<String> value = ContextValue.of("red");
             root.provide(colour, value);
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
 
             child.watch(colour, events::add);
             value.set("blue");
@@ -455,10 +455,10 @@ class TestComponentNode {
 
         @Test
         void watchesMadeBeforeOwnershipAreAppliedWhenConnected() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.provide(colour, ContextValue.of("red"));
-            final ComponentNode parent = new ComponentNode("parent");
-            final ComponentNode child = owned(parent, "child");
+            final ControllerNode parent = new ControllerNode("parent");
+            final ControllerNode child = owned(parent, "child");
 
             child.watch(colour, events::add);
             assertThat(events).isEmpty();
@@ -472,10 +472,10 @@ class TestComponentNode {
 
         @Test
         void aProviderAddedLaterIsPickedUp() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             root.provide(colour, ContextValue.of("red"));
-            final ComponentNode child = owned(root, "child");
-            final ComponentNode grandChild = owned(child, "grandChild");
+            final ControllerNode child = owned(root, "child");
+            final ControllerNode grandChild = owned(child, "grandChild");
             grandChild.watch(colour, events::add);
             final ContextValue<String> nearer = ContextValue.of("blue");
 
@@ -487,10 +487,10 @@ class TestComponentNode {
 
         @Test
         void aWatchStopsWhenItsNodeIsDisposed() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final ContextValue<String> value = ContextValue.of("red");
             root.provide(colour, value);
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
             child.watch(colour, events::add);
 
             child.dispose();
@@ -502,7 +502,7 @@ class TestComponentNode {
 
         @Test
         void aWatchCanBeStoppedEarly() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final ContextValue<String> value = ContextValue.of("red");
             root.provide(colour, value);
             final HandlerRegistration registration = root.watch(colour, events::add);
@@ -516,10 +516,10 @@ class TestComponentNode {
 
         @Test
         void aWatchOnlyReportsChangesOfItsEffectiveValue() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final ContextValue<String> outer = ContextValue.of("red");
             root.provide(colour, outer);
-            final ComponentNode child = owned(root, "child");
+            final ControllerNode child = owned(root, "child");
             child.provide(colour, ContextValue.of("blue"));
             child.watch(colour, events::add);
 
@@ -531,13 +531,13 @@ class TestComponentNode {
 
         @Test
         void readOnlyOnlyNarrows() {
-            final ComponentNode root = ComponentNode.root("root");
+            final ControllerNode root = ControllerNode.root("root");
             final ContextValue<Boolean> documentReadOnly = ContextValue.of(true);
             root.provide(Contexts.READ_ONLY, documentReadOnly);
-            final ComponentNode editor = owned(root, "editor");
+            final ControllerNode editor = owned(root, "editor");
             final ContextValue<Boolean> editorReadOnly = ContextValue.of(false);
             editor.provide(Contexts.READ_ONLY, editorReadOnly);
-            final ComponentNode field = owned(editor, "field");
+            final ControllerNode field = owned(editor, "field");
             final List<Boolean> readOnly = new ArrayList<>();
             field.watch(Contexts.READ_ONLY, readOnly::add);
 
@@ -558,16 +558,16 @@ class TestComponentNode {
 
         @Test
         void aRootThatProvidesEditableMakesItsTreeEditable() {
-            final ComponentNode root = ComponentNode.root("story");
+            final ControllerNode root = ControllerNode.root("story");
             root.provide(Contexts.READ_ONLY, ContextValue.of(false));
-            final ComponentNode field = owned(root, "field");
+            final ControllerNode field = owned(root, "field");
 
             assertThat(field.lookup(Contexts.READ_ONLY)).isFalse();
         }
     }
 
-    private ComponentNode owned(final ComponentNode owner, final String name) {
-        final ComponentNode node = new ComponentNode(name);
+    private ControllerNode owned(final ControllerNode owner, final String name) {
+        final ControllerNode node = new ControllerNode(name);
         owner.adopt(node);
         return node;
     }

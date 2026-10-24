@@ -16,9 +16,9 @@
 
 package stroom.widget.component.client;
 
-/// Something with a place in the ownership tree, e.g. a [Component], so that another can own it.
-public interface HasComponentNode {
+/// Something with a place in the ownership tree, e.g. a [Controller], so that another can own it.
+public interface HasControllerNode {
 
     /// @return Its node in the ownership tree.
-    ComponentNode getComponentNode();
+    ControllerNode getControllerNode();
 }

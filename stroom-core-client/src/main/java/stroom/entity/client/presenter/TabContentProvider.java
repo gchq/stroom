@@ -17,8 +17,8 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -45,12 +45,12 @@ public class TabContentProvider<E>
     private int readCount;
     // What owns the tab presenters this makes (the document), so they are disposed with it, see
     // its context and tell it of changes (Contexts.DIRTY). The tab providers are released when it is
-    private final ComponentNode owner;
+    private final ControllerNode owner;
 
     /// @param eventBus The application's event bus.
     /// @param owner    What owns the tab presenters this makes, e.g. the document's presenter.
-    public TabContentProvider(final EventBus eventBus, final HasComponentNode owner) {
-        this.owner = owner.getComponentNode();
+    public TabContentProvider(final EventBus eventBus, final HasControllerNode owner) {
+        this.owner = owner.getControllerNode();
         // Null only for a mock owner (e.g. Mockito's, in a test)
         if (this.owner != null) {
             this.owner.onDispose(this::release);
@@ -116,8 +116,8 @@ public class TabContentProvider<E>
     // The owner owns each tab presenter once it is made (a provider makes it when first asked)
     private MyPresenterWidget<?> ownPresenter(final TabProvider<E> tabProvider) {
         final MyPresenterWidget<?> presenter = tabProvider.getPresenter();
-        if (presenter instanceof final HasComponentNode hasComponentNode) {
-            final ComponentNode node = hasComponentNode.getComponentNode();
+        if (presenter instanceof final HasControllerNode hasComponentNode) {
+            final ControllerNode node = hasComponentNode.getControllerNode();
             if (node != null && node.parent() != owner && !node.isDisposed()) {
                 owner.adopt(node);
             }

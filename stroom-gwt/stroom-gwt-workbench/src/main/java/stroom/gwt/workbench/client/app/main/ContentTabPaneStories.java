@@ -38,7 +38,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -141,8 +141,8 @@ public final class ContentTabPaneStories {
         // The pane lasts for the story, as Stroom's main view keeps it, and is the screen each
         // opening shows (as the leak check opens it again), with the document's tab, which is
         // closed when the screen is
-        final ComponentNode paneOwner = ComponentNode.root("ContentTabPaneStories");
-        paneOwner.adopt(pane.getComponentNode());
+        final ControllerNode paneOwner = ControllerNode.root("ContentTabPaneStories");
+        paneOwner.adopt(pane.getControllerNode());
         harness.addCleanUp(paneOwner::dispose);
         harness.afterStartUp(() -> {
             harness.show(pane);

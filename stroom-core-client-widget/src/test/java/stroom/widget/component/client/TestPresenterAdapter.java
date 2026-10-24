@@ -41,20 +41,20 @@ class TestPresenterAdapter {
 
     @BeforeEach
     void setUp() {
-        ComponentChecks.setEnabled(true);
-        ComponentChecks.reset();
+        ControllerChecks.setEnabled(true);
+        ControllerChecks.reset();
     }
 
     @AfterEach
     void tearDown() {
-        ComponentChecks.reset();
+        ControllerChecks.reset();
     }
 
     @Test
     void disposingTheOwnerDisposesThePresenter() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
-        root.adopt(adapter.getComponentNode());
+        root.adopt(adapter.getControllerNode());
 
         root.dispose();
 
@@ -65,9 +65,9 @@ class TestPresenterAdapter {
     @Test
     void presentersThePresenterOwnsAreDisposedToo() {
         // Owned by the presenter, not the adapter
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final PresenterAdapter<ParentPresenter> adapter = PresenterAdapter.of(ParentPresenter::new);
-        root.adopt(adapter.getComponentNode());
+        root.adopt(adapter.getControllerNode());
 
         root.dispose();
 
@@ -76,9 +76,9 @@ class TestPresenterAdapter {
 
     @Test
     void handlersThePresenterListensWithAreRemoved() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
-        root.adopt(adapter.getComponentNode());
+        root.adopt(adapter.getControllerNode());
         final TestPresenter presenter = adapter.getPresenter();
         presenter.addTestHandler(() -> events.add("heard"));
 
@@ -91,14 +91,14 @@ class TestPresenterAdapter {
 
     @Test
     void readOnlyIsGivenOnceOwnedAndOnEveryChange() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final ContextValue<Boolean> readOnly = ContextValue.of(false);
         root.provide(Contexts.READ_ONLY, readOnly);
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"))
                 .onReadOnly(TestPresenter::setReadOnly);
         assertThat(adapter.getPresenter().readOnly).isEmpty();
 
-        root.adopt(adapter.getComponentNode());
+        root.adopt(adapter.getControllerNode());
         readOnly.set(true);
 
         assertThat(adapter.getPresenter().readOnly).containsExactly(false, true);
@@ -109,20 +109,20 @@ class TestPresenterAdapter {
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"))
                 .onReadOnly(TestPresenter::setReadOnly);
 
-        ComponentNode.root("story").adopt(adapter.getComponentNode());
+        ControllerNode.root("story").adopt(adapter.getControllerNode());
 
         assertThat(adapter.getPresenter().readOnly).containsExactly(true);
     }
 
     @Test
     void aProvidedTaskMonitorIsGivenToThePresenter() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final TaskMonitor taskMonitor = Mockito.mock(TaskMonitor.class);
         final TaskMonitorFactory taskMonitorFactory = () -> taskMonitor;
         root.provide(Contexts.TASK_MONITOR, ContextValue.of(taskMonitorFactory));
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
 
-        root.adopt(adapter.getComponentNode());
+        root.adopt(adapter.getControllerNode());
 
         assertThat(adapter.getPresenter().createTaskMonitor()).isSameAs(taskMonitor);
     }
@@ -132,7 +132,7 @@ class TestPresenterAdapter {
         final PresenterAdapter<TestPresenter> adapter = PresenterAdapter.of(() -> new TestPresenter("editor"));
         final TaskMonitor before = adapter.getPresenter().createTaskMonitor();
 
-        ComponentNode.root("story").adopt(adapter.getComponentNode());
+        ControllerNode.root("story").adopt(adapter.getControllerNode());
 
         assertThat(adapter.getPresenter().createTaskMonitor().getClass()).isSameAs(before.getClass());
         assertThat(adapter.getPresenter().createTaskMonitor())
@@ -143,7 +143,7 @@ class TestPresenterAdapter {
     void anAdapterNothingOwnsIsCounted() {
         PresenterAdapter.of(() -> new TestPresenter("editor"));
 
-        assertThat(ComponentChecks.unownedNames()).containsExactly("PresenterAdapter(TestPresenter)");
+        assertThat(ControllerChecks.unownedNames()).containsExactly("PresenterAdapter(TestPresenter)");
     }
 
     // --------------------------------------------------------------------------------

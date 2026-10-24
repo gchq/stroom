@@ -43,8 +43,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.ComponentChecks;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerChecks;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -379,13 +379,13 @@ public final class DictionaryEditorStories {
                 .story("CloseWhileLoading", context -> renderComponent(context, false, LATE_FAILURE_FIXTURES))
                 .withPlay(play -> {
                     // Presenters the story's harness makes for itself are counted too
-                    final Value<Integer> unownedBefore = play.capture("unowned", ComponentChecks::unownedCount);
+                    final Value<Integer> unownedBefore = play.capture("unowned", ControllerChecks::unownedCount);
                     openTab(play, "Effective Words");
                     play.run("close the editor, as closing its tab does", ScreenHarness::closeShownComponents);
                     play.expect("editor disposed", () -> editor().isDisposed()).toBe(true);
                     play.sleep(LATE_REPLY_MILLIS * 2);
                     play.expect("unowned components added",
-                            () -> ComponentChecks.unownedCount() - unownedBefore.get()).toBeLessThanOrEqual(0);
+                            () -> ControllerChecks.unownedCount() - unownedBefore.get()).toBeLessThanOrEqual(0);
                     expectNoProblems(play);
                 });
     }

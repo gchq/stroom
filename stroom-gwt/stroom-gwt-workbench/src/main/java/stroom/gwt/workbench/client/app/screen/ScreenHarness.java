@@ -46,11 +46,11 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
 import stroom.widget.component.client.AppRoot;
-import stroom.widget.component.client.Component;
-import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
@@ -122,7 +122,7 @@ import java.util.function.Consumer;
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
 /// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers and handlers
 /// registered with [#addTimer(Timer)] and [#addRegistration(HandlerRegistration)] are stopped, the
-/// story's root, which owns what the story shows ([#show(Component)], [#own(HasComponentNode)]), is
+/// story's root, which owns what the story shows ([#show(Controller)], [#own(HasControllerNode)]), is
 /// disposed, and the event bus is switched off.
 public final class ScreenHarness {
 
@@ -170,8 +170,8 @@ public final class ScreenHarness {
     // The owner of the dialogs of what the story makes itself (see getAppRoot)
     private final AppRoot appRoot = new AppRoot();
     // Owns what the story shows (see own), made when first needed
-    private ComponentNode componentRoot;
-    private Component shownComponent;
+    private ControllerNode componentRoot;
+    private Controller shownComponent;
     private MyPresenterWidget<?> shownContent;
     // The number of clean ups registered before the screen was opened, so that the probe's close
     // runs those its opening registered (e.g. a story's save handler)
@@ -404,7 +404,7 @@ public final class ScreenHarness {
     /// @param screen The screen, a component or a presenter.
     /// @param <C>    The screen's type.
     /// @return The screen.
-    public <C extends Component> C show(final C screen) {
+    public <C extends Controller> C show(final C screen) {
         return fill(screen, true);
     }
 
@@ -415,7 +415,7 @@ public final class ScreenHarness {
     /// @param page The page, a component or a presenter.
     /// @param <C>  The page's type.
     /// @return The page.
-    public <C extends Component> C showPage(final C page) {
+    public <C extends Controller> C showPage(final C page) {
         return fill(page, false);
     }
 
@@ -426,7 +426,7 @@ public final class ScreenHarness {
     /// @return The component.
     /// @throws IllegalStateException If the story shows none.
     @SuppressWarnings("unchecked")
-    public static <C extends Component> C shownComponent() {
+    public static <C extends Controller> C shownComponent() {
         if (shown == null || shown.shownComponent == null) {
             throw new IllegalStateException("The story shows no component");
         }
@@ -473,9 +473,9 @@ public final class ScreenHarness {
     /// fires task events on the harness's bus. It is disposed with the story's clean ups.
     ///
     /// @return The root.
-    public ComponentNode getComponentRoot() {
+    public ControllerNode getComponentRoot() {
         if (componentRoot == null || componentRoot.isDisposed()) {
-            final ComponentNode root = ComponentNode.root("story");
+            final ControllerNode root = ControllerNode.root("story");
             root.provide(Contexts.TASK_MONITOR, ContextValue.of(new DefaultTaskMonitorFactory(getHasHandlers())));
             componentRoot = root;
             addCleanUp(root::dispose);
@@ -484,7 +484,7 @@ public final class ScreenHarness {
     }
 
     // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
-    private <C extends Component> C fill(final C screen, final boolean tab) {
+    private <C extends Controller> C fill(final C screen, final boolean tab) {
         own(screen);
         fillWidget(screen.asWidget(), screen, tab);
         shownComponent = screen;
@@ -618,8 +618,8 @@ public final class ScreenHarness {
     /// @param screen The component or presenter.
     /// @param <C>    Its type.
     /// @return It.
-    public <C extends HasComponentNode> C own(final C screen) {
-        final ComponentNode node = screen.getComponentNode();
+    public <C extends HasControllerNode> C own(final C screen) {
+        final ControllerNode node = screen.getControllerNode();
         if (node.parent() == null) {
             getComponentRoot().adopt(node);
         }

@@ -28,9 +28,9 @@ import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.Component;
-import stroom.widget.component.client.ComponentDialog;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.HtmlBuilder;
@@ -53,7 +53,7 @@ import java.util.function.Consumer;
 /// A dialog to add or edit a receipt rule: the expression that selects the data it applies to, an
 /// optional name, and what to do with that data. OK warns if the expression uses a field Stroom-Proxy
 /// obfuscates with a condition that can't be obfuscated, and keeps the rule only if the user goes on.
-public class RuleEditor extends Component {
+public class RuleEditor extends Controller {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -89,12 +89,12 @@ public class RuleEditor extends Component {
     /// @param fields The fields the expression may use.
     /// @param onOk   What to do with the rule (a copy of `rule`, as edited) when OK is pressed and,
     ///               if the expression can't be obfuscated, the user goes on.
-    public void edit(final HasComponentNode opener,
+    public void edit(final HasControllerNode opener,
                      final ReceiveDataRule rule,
                      final FieldSelectionListModel fields,
                      final Consumer<ReceiveDataRule> onOk) {
         read(rule, fields);
-        ComponentDialog.showOnce(opener, this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(1_000, 600))
                 .caption("Edit Rule")

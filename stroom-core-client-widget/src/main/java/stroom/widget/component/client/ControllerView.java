@@ -22,20 +22,20 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-/// The view of a presenter that shows a component, for the places that still take only
-/// presenters: a dialog ([ComponentDialog]) and a document's tab (`DocumentEditorHost`).
-/// The presenter owns the component.
-public final class ComponentView extends ViewImpl {
+/// The view of a presenter that shows a controller, for the places that still take only
+/// presenters: a dialog ([ControllerDialog]) and a document's tab (`DocumentEditorHost`).
+/// The presenter owns the controller.
+public final class ControllerView extends ViewImpl {
 
-    private final Component content;
+    private final Controller content;
 
-    /// @param content The component to show.
-    public ComponentView(final Component content) {
+    /// @param content The controller to show.
+    public ControllerView(final Controller content) {
         this.content = Objects.requireNonNull(content, "content");
     }
 
-    /// @return The component shown.
-    public Component getContent() {
+    /// @return The controller shown.
+    public Controller getContent() {
         return content;
     }
 

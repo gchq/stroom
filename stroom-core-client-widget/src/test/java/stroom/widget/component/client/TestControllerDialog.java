@@ -16,7 +16,7 @@
 
 package stroom.widget.component.client;
 
-import stroom.widget.component.client.ComponentDialog.DialogHost;
+import stroom.widget.component.client.ControllerDialog.DialogHost;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -33,30 +33,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // Showing and hiding need a browser (the popup manager), so these tests cover what is shown and
-// who owns it; disposal once hidden is tested with Component.makeDialog (TestComponent)
-class TestComponentDialog {
+// who owns it; disposal once hidden is tested with Controller.makeDialog (TestController)
+class TestControllerDialog {
 
     private final EventBus eventBus = new SimpleEventBus();
     private final List<ShowPopupEvent> shown = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        ComponentChecks.setEnabled(true);
-        ComponentChecks.reset();
+        ControllerChecks.setEnabled(true);
+        ControllerChecks.reset();
         eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
     }
 
     @AfterEach
     void tearDown() {
-        ComponentChecks.reset();
+        ControllerChecks.reset();
     }
 
     @Test
     void theDialogIsShownThroughAPresenterThatOwnsIt() {
-        final ComponentNode opener = ComponentNode.root("opener");
+        final ControllerNode opener = ControllerNode.root("opener");
         final Editor editor = new Editor(eventBus);
 
-        ComponentDialog.showOnce(() -> opener, editor)
+        ControllerDialog.showOnce(() -> opener, editor)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Edit")
                 .fire();
@@ -66,28 +66,28 @@ class TestComponentDialog {
         assertThat(event.getCaption()).isEqualTo("Edit");
         assertThat(event.getPresenterWidget()).isInstanceOfSatisfying(DialogHost.class, host -> {
             assertThat(host.getContent()).isSameAs(editor);
-            assertThat(host.getComponentNode().parent()).isSameAs(opener);
-            assertThat(editor.getComponentNode().parent()).isSameAs(host.getComponentNode());
+            assertThat(host.getControllerNode().parent()).isSameAs(opener);
+            assertThat(editor.getControllerNode().parent()).isSameAs(host.getControllerNode());
         });
-        assertThat(ComponentChecks.unownedNames()).isEmpty();
+        assertThat(ControllerChecks.unownedNames()).isEmpty();
     }
 
     @Test
     void theDialogSeesItsOpenersContext() {
-        final ComponentNode opener = ComponentNode.root("opener");
+        final ControllerNode opener = ControllerNode.root("opener");
         opener.provide(Contexts.READ_ONLY, ContextValue.of(false));
         final Editor editor = new Editor(eventBus);
 
-        ComponentDialog.showOnce(() -> opener, editor).fire();
+        ControllerDialog.showOnce(() -> opener, editor).fire();
 
         assertThat(editor.readOnly).containsExactly(false);
     }
 
     @Test
     void theDialogIsDisposedWithItsOpener() {
-        final ComponentNode opener = ComponentNode.root("opener");
+        final ControllerNode opener = ControllerNode.root("opener");
         final Editor editor = new Editor(eventBus);
-        ComponentDialog.showOnce(() -> opener, editor).fire();
+        ControllerDialog.showOnce(() -> opener, editor).fire();
 
         opener.dispose();
 
@@ -96,10 +96,10 @@ class TestComponentDialog {
 
     @Test
     void aComponentWithoutAnEventBusCantBeADialog() {
-        final ComponentNode opener = ComponentNode.root("opener");
+        final ControllerNode opener = ControllerNode.root("opener");
         final Editor editor = new Editor(null);
 
-        assertThatThrownBy(() -> ComponentDialog.showOnce(() -> opener, editor))
+        assertThatThrownBy(() -> ControllerDialog.showOnce(() -> opener, editor))
                 .hasMessageContaining("Editor can't be shown as a dialog");
         assertThat(opener.isDisposed()).isFalse();
     }
@@ -108,7 +108,7 @@ class TestComponentDialog {
     // --------------------------------------------------------------------------------
 
 
-    private static final class Editor extends Component {
+    private static final class Editor extends Controller {
 
         private final List<Boolean> readOnly = new ArrayList<>();
 

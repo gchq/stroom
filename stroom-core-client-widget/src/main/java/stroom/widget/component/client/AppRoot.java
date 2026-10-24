@@ -26,7 +26,7 @@ import java.util.Objects;
 
 /// The owner of what lasts as long as the page and isn't part of a screen: the dialogs of the
 /// plugins, the managers (e.g. `TabSessionManager`) and the app-wide helpers (e.g. `CurrentUser`),
-/// which are singletons rather than components. Inject it, and make a dialog with
+/// which are singletons rather than controllers. Inject it, and make a dialog with
 /// [#makeDialog(Provider)]:
 ///
 /// ```java
@@ -34,11 +34,11 @@ import java.util.Objects;
 /// ```
 ///
 /// A dialog left open is then still owned, so it shows in the ownership tree's leak counts, rather
-/// than being an unowned component.
+/// than being an unowned controller.
 @Singleton
-public final class AppRoot implements HasComponentNode {
+public final class AppRoot implements HasControllerNode {
 
-    private final ComponentNode node = ComponentNode.root("App");
+    private final ControllerNode node = ControllerNode.root("App");
 
     /// Makes the app root; GIN makes one per injector.
     @Inject
@@ -47,7 +47,7 @@ public final class AppRoot implements HasComponentNode {
     }
 
     @Override
-    public ComponentNode getComponentNode() {
+    public ControllerNode getControllerNode() {
         return node;
     }
 
@@ -60,7 +60,7 @@ public final class AppRoot implements HasComponentNode {
     public <P extends MyPresenterWidget<?>> P makeDialog(final Provider<P> provider) {
         Objects.requireNonNull(provider, "provider");
         final P dialog = provider.get();
-        node.adopt(dialog.getComponentNode());
-        return ComponentDialog.disposeWhenHidden(dialog);
+        node.adopt(dialog.getControllerNode());
+        return ControllerDialog.disposeWhenHidden(dialog);
     }
 }

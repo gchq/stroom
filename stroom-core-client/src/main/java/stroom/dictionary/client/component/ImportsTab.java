@@ -26,8 +26,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -45,7 +45,7 @@ import javax.inject.Provider;
 
 /// A dictionary's Imports tab: the dictionaries it imports, which can be added and removed unless
 /// the dictionary is read only, and the effective words of the one selected.
-public class ImportsTab extends Component {
+public class ImportsTab extends Controller {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 

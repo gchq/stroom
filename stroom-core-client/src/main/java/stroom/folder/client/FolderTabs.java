@@ -20,7 +20,7 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.component.TabbedComponent;
+import stroom.entity.client.component.TabbedController;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.processor.client.presenter.ProcessorPresenter;
@@ -40,7 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 ///
 /// Which tabs it has depends on what it shows (the System root always has Permissions; a folder
 /// only for a user who may manage processors), so they are added when it is first read.
-public class FolderTabs extends TabbedComponent<DocRef> {
+public class FolderTabs extends TabbedController<DocRef> {
 
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");

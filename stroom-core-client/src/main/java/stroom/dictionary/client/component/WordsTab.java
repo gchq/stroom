@@ -17,7 +17,7 @@
 package stroom.dictionary.client.component;
 
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.widget.component.client.Component;
+import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.PresenterAdapter;
 
 import com.google.inject.Inject;
@@ -27,7 +27,7 @@ import javax.inject.Provider;
 
 /// A dictionary's Words tab: its words, one a line, in a plain text editor. It is read only when
 /// its document is.
-public class WordsTab extends Component {
+public class WordsTab extends Controller {
 
     private final PresenterAdapter<EditorPresenter> editor;
     private Runnable onChange = () -> {

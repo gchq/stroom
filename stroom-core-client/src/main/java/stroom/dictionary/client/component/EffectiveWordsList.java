@@ -29,7 +29,7 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.Component;
+import stroom.widget.component.client.Controller;
 import stroom.widget.datagrid.client.DataGridWidget;
 
 import com.google.gwt.core.client.GWT;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 
 /// The words a dictionary has once its imports are added (the dictionary's own and those of the
 /// dictionaries it imports, however deep), with where each comes from. Read only.
-public class EffectiveWordsList extends Component {
+public class EffectiveWordsList extends Controller {
 
     private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
 

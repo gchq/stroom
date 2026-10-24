@@ -19,9 +19,9 @@ package stroom.widget.presenter.client;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskStartEvent;
-import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerNode;
 
 import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
@@ -53,8 +53,8 @@ class TestMyPresenterWidget {
     @Test
     void disposingByItsOwnerAndDirectlyReleasesItOnce() {
         final TestPresenter presenter = new TestPresenter("presenter");
-        final ComponentNode root = ComponentNode.root("tab");
-        root.adopt(presenter.getComponentNode());
+        final ControllerNode root = ControllerNode.root("tab");
+        root.adopt(presenter.getControllerNode());
 
         root.dispose();
         presenter.dispose();
@@ -87,9 +87,9 @@ class TestMyPresenterWidget {
     void aTaskMonitorSetOnThePresenterIsUsed() {
         final TestPresenter presenter = new TestPresenter("presenter");
         final TaskMonitor own = Mockito.mock(TaskMonitor.class);
-        final ComponentNode root = ComponentNode.root("tab");
+        final ControllerNode root = ControllerNode.root("tab");
         root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> Mockito.mock(TaskMonitor.class)));
-        root.adopt(presenter.getComponentNode());
+        root.adopt(presenter.getControllerNode());
 
         presenter.setTaskMonitorFactory(() -> own);
 
@@ -101,9 +101,9 @@ class TestMyPresenterWidget {
         // e.g. its tab's, which its tab provides
         final TestPresenter presenter = new TestPresenter("presenter");
         final TaskMonitor tabs = Mockito.mock(TaskMonitor.class);
-        final ComponentNode root = ComponentNode.root("tab");
+        final ControllerNode root = ControllerNode.root("tab");
         root.provide(Contexts.TASK_MONITOR, ContextValue.of(() -> tabs));
-        root.adopt(presenter.getComponentNode());
+        root.adopt(presenter.getControllerNode());
 
         assertThat(presenter.createTaskMonitor()).isSameAs(tabs);
     }
@@ -130,7 +130,7 @@ class TestMyPresenterWidget {
         parent.ownChild(mock);
         parent.dispose();
 
-        assertThat(parent.getComponentNode().childCount()).isZero();
+        assertThat(parent.getControllerNode().childCount()).isZero();
         assertThat(events).containsExactly("parent disposed");
     }
 
@@ -148,9 +148,9 @@ class TestMyPresenterWidget {
 
     @Test
     void aPresenterCanBeOwnedByAComponentNode() {
-        final ComponentNode root = ComponentNode.root("tab");
+        final ControllerNode root = ControllerNode.root("tab");
         final TestPresenter presenter = new TestPresenter("presenter");
-        root.adopt(presenter.getComponentNode());
+        root.adopt(presenter.getControllerNode());
 
         root.dispose();
 
@@ -171,7 +171,7 @@ class TestMyPresenterWidget {
 
         assertThat(finished.isDisposed()).isTrue();
         assertThat(running.isDisposed()).isFalse();
-        assertThat(presenter.getComponentNode().childCount()).isEqualTo(1);
+        assertThat(presenter.getControllerNode().childCount()).isEqualTo(1);
     }
 
     // --------------------------------------------------------------------------------

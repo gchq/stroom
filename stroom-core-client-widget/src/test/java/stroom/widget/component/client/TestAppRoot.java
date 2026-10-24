@@ -43,13 +43,13 @@ class TestAppRoot {
     @BeforeEach
     void setUp() {
         // JVM tests have no GWT scheduler: run what is deferred when the test says
-        scheduler = ComponentDialog.deferred;
-        ComponentDialog.deferred = deferred::add;
+        scheduler = ControllerDialog.deferred;
+        ControllerDialog.deferred = deferred::add;
     }
 
     @AfterEach
     void tearDown() {
-        ComponentDialog.deferred = scheduler;
+        ControllerDialog.deferred = scheduler;
     }
 
     @Test
@@ -58,14 +58,14 @@ class TestAppRoot {
 
         final MyPresenterWidget<View> dialog = appRoot.makeDialog(this::newDialog);
 
-        assertThat(dialog.getComponentNode().parent()).isSameAs(appRoot.getComponentNode());
+        assertThat(dialog.getControllerNode().parent()).isSameAs(appRoot.getControllerNode());
         HidePopupEvent.builder(dialog).fire();
         // Not until the popup manager has hidden it
         assertThat(dialog.isDisposed()).isFalse();
         deferred.forEach(Runnable::run);
         assertThat(dialog.isDisposed()).isTrue();
-        assertThat(appRoot.getComponentNode().childCount()).isZero();
-        assertThat(appRoot.getComponentNode().isDisposed()).isFalse();
+        assertThat(appRoot.getControllerNode().childCount()).isZero();
+        assertThat(appRoot.getControllerNode().isDisposed()).isFalse();
     }
 
     @Test
@@ -75,7 +75,7 @@ class TestAppRoot {
         appRoot.makeDialog(this::newDialog);
         appRoot.makeDialog(this::newDialog);
 
-        assertThat(appRoot.getComponentNode().childCount()).isEqualTo(2);
+        assertThat(appRoot.getControllerNode().childCount()).isEqualTo(2);
     }
 
     @Test

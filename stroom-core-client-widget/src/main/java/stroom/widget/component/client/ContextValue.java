@@ -20,9 +20,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
 
-/// A value a component provides to the components it owns (see
-/// [ComponentNode#provide(ContextKey, ContextValue)]), e.g. whether its document is read-only.
-/// Setting it tells every component that watches it.
+/// A value a controller provides to the controllers it owns (see
+/// [ControllerNode#provide(ContextKey, ContextValue)]), e.g. whether its document is read-only.
+/// Setting it tells every controller that watches it.
 ///
 /// @param <T> The type of the value.
 public final class ContextValue<T> {

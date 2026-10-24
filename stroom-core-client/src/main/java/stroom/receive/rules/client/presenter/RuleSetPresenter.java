@@ -44,9 +44,9 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.component.client.ComponentLayer;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.DirtyTracker;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.tab.client.presenter.TabData;
@@ -80,7 +80,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
     private final RuleSetSettings ruleSetSettings;
     // Shows the Rules tab's component in the tab panel
-    private final ComponentLayer ruleSetSettingsLayer;
+    private final ControllerLayer ruleSetSettingsLayer;
     private final FieldListPresenter fieldListPresenter;
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
@@ -110,7 +110,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         // Its tabs tell it of changes, however deep (markChanged)
         provide(Contexts.DIRTY, ContextValue.<DirtyTracker>of(this::onChange));
         this.ruleSetSettings = own(ruleSetSettings);
-        ruleSetSettingsLayer = new ComponentLayer(ruleSetSettings);
+        ruleSetSettingsLayer = new ControllerLayer(ruleSetSettings);
         ruleSetSettings.setOnChange(this::onChange);
         fieldListPresenter = make(fieldListPresenterProvider);
         ruleSetSettings.setFields(fieldListPresenter::getFields);

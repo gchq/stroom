@@ -25,49 +25,49 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// A place in the ownership tree: what a component owns and what it provides to the components
-/// below it. Disposing a node releases everything it owns, so nothing a component registers or
+/// A place in the ownership tree: what a controller owns and what it provides to the controllers
+/// below it. Disposing a node releases everything it owns, so nothing a controller registers or
 /// creates outlives it.
 ///
 /// A node owns:
 ///
-/// - child nodes ([#adopt(ComponentNode)]), the components it shows;
+/// - child nodes ([#adopt(ControllerNode)]), the controllers it shows;
 /// - registrations ([#add(HandlerRegistration)]), e.g. event bus handlers;
 /// - clean-ups ([#onDispose(Runnable)]), e.g. stopping a timer.
 ///
 /// Context values provided on a node ([#provide(ContextKey, ContextValue)]) are seen by every node
 /// below it, through [#lookup(ContextKey)] and [#watch(ContextKey, Consumer)]. A node is
 /// *connected* when it is a root ([#root(String)]) or its owner is connected; watches report a
-/// value only once their node is connected, so a component can watch in its constructor, before
+/// value only once their node is connected, so a controller can watch in its constructor, before
 /// it is owned.
 ///
 /// The UI runs on one thread, so nodes are not thread safe.
-public final class ComponentNode {
+public final class ControllerNode {
 
     private final String name;
     private final boolean root;
-    private final List<ComponentNode> children = new ArrayList<>();
+    private final List<ControllerNode> children = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
     private final List<Runnable> cleanUps = new ArrayList<>();
     private final List<Watch<?>> watches = new ArrayList<>();
     private final Map<ContextKey<?>, ContextValue<?>> provided = new HashMap<>();
-    private ComponentNode parent;
+    private ControllerNode parent;
     private boolean shared;
     private boolean disposing;
     private boolean disposed;
-    // The ComponentChecks generation it is counted as unowned in, if it is
-    int countedUnowned = ComponentChecks.NOT_COUNTED;
+    // The ControllerChecks generation it is counted as unowned in, if it is
+    int countedUnowned = ControllerChecks.NOT_COUNTED;
 
-    /// Makes a node that something must own (see [#adopt(ComponentNode)]). Until it is owned, it
-    /// is counted as unowned by [ComponentChecks].
+    /// Makes a node that something must own (see [#adopt(ControllerNode)]). Until it is owned, it
+    /// is counted as unowned by [ControllerChecks].
     ///
-    /// @param name The component's name, for diagnostics.
-    public ComponentNode(final String name) {
+    /// @param name The controller's name, for diagnostics.
+    public ControllerNode(final String name) {
         this(name, false);
-        ComponentChecks.unowned(this);
+        ControllerChecks.unowned(this);
     }
 
-    private ComponentNode(final String name, final boolean root) {
+    private ControllerNode(final String name, final boolean root) {
         this.name = Objects.requireNonNull(name, "name");
         this.root = root;
     }
@@ -78,17 +78,17 @@ public final class ComponentNode {
     ///
     /// @param name The root's name, for diagnostics.
     /// @return The root.
-    public static ComponentNode root(final String name) {
-        return new ComponentNode(name, true);
+    public static ControllerNode root(final String name) {
+        return new ControllerNode(name, true);
     }
 
-    /// @return The component's name.
+    /// @return The controller's name.
     public String getName() {
         return name;
     }
 
     /// @return The node that owns this one, or null if none does.
-    public ComponentNode parent() {
+    public ControllerNode parent() {
         return parent;
     }
 
@@ -99,7 +99,7 @@ public final class ComponentNode {
 
     /// @return Whether this node is a root or its owner is connected, so that context resolves.
     public boolean isConnected() {
-        ComponentNode node = this;
+        ControllerNode node = this;
         while (node.parent != null) {
             node = node.parent;
         }
@@ -110,7 +110,7 @@ public final class ComponentNode {
     /// owner would break it for every other). A shared node isn't counted as unowned.
     public void markShared() {
         shared = true;
-        ComponentChecks.owned(this);
+        ControllerChecks.owned(this);
     }
 
     /// @return Whether this node is shared.
@@ -120,50 +120,50 @@ public final class ComponentNode {
 
     /// Owns a child, which is then disposed with this node, and connects it to this node's context.
     ///
-    /// Misuse fails (see [ComponentChecks]): owning a root, a shared node, a disposed node, a node
+    /// Misuse fails (see [ControllerChecks]): owning a root, a shared node, a disposed node, a node
     /// that is already owned, this node or one of its owners, or owning anything once this node is
     /// disposed. With the checks disabled, the misuse is ignored, except that a node owned by
     /// another is moved here, and a node given to a disposed owner is disposed, as nothing else
     /// would release it.
     ///
     /// @param child The child.
-    public void adopt(final ComponentNode child) {
+    public void adopt(final ControllerNode child) {
         Objects.requireNonNull(child, "child");
         if (disposed || disposing) {
-            if (!ComponentChecks.fail("Can't own " + child.name + ": " + name + " is disposed")) {
+            if (!ControllerChecks.fail("Can't own " + child.name + ": " + name + " is disposed")) {
                 child.dispose();
             }
             return;
         }
         if (child.root) {
-            ComponentChecks.fail("Can't own " + child.name + ": it is a root");
+            ControllerChecks.fail("Can't own " + child.name + ": it is a root");
             return;
         }
         if (child.shared) {
-            ComponentChecks.fail("Can't own " + child.name + ": it is shared");
+            ControllerChecks.fail("Can't own " + child.name + ": it is shared");
             return;
         }
         if (child.disposed) {
-            ComponentChecks.fail("Can't own " + child.name + ": it is disposed");
+            ControllerChecks.fail("Can't own " + child.name + ": it is disposed");
             return;
         }
         if (child.parent == this) {
-            ComponentChecks.fail(child.name + " is already owned by " + name);
+            ControllerChecks.fail(child.name + " is already owned by " + name);
             return;
         }
         if (isOrIsOwnedBy(child)) {
-            ComponentChecks.fail("Can't own " + child.name + ": it owns " + name);
+            ControllerChecks.fail("Can't own " + child.name + ": it owns " + name);
             return;
         }
         if (child.parent != null) {
-            if (ComponentChecks.fail(child.name + " is already owned by " + child.parent.name)) {
+            if (ControllerChecks.fail(child.name + " is already owned by " + child.parent.name)) {
                 return;
             }
             child.parent.children.remove(child);
         }
         child.parent = this;
         children.add(child);
-        ComponentChecks.owned(child);
+        ControllerChecks.owned(child);
         if (isConnected()) {
             child.refreshWatches();
         }
@@ -172,10 +172,10 @@ public final class ComponentNode {
     /// Disposes one child early, e.g. a replaced tab's, rather than waiting for this node.
     ///
     /// @param child The child.
-    public void release(final ComponentNode child) {
+    public void release(final ControllerNode child) {
         Objects.requireNonNull(child, "child");
         if (child.parent != this) {
-            ComponentChecks.fail("Can't release " + child.name + ": it isn't owned by " + name);
+            ControllerChecks.fail("Can't release " + child.name + ": it isn't owned by " + name);
             return;
         }
         child.dispose();
@@ -339,7 +339,7 @@ public final class ComponentNode {
         disposing = true;
         RuntimeException failure = null;
 
-        final List<ComponentNode> ownedChildren = new ArrayList<>(children);
+        final List<ControllerNode> ownedChildren = new ArrayList<>(children);
         children.clear();
         for (int i = ownedChildren.size() - 1; i >= 0; i--) {
             failure = run(ownedChildren.get(i)::dispose, failure);
@@ -363,7 +363,7 @@ public final class ComponentNode {
         if (parent != null) {
             parent.children.remove(this);
         }
-        ComponentChecks.owned(this);
+        ControllerChecks.owned(this);
         disposed = true;
         disposing = false;
         if (failure != null) {
@@ -391,8 +391,8 @@ public final class ComponentNode {
         return name;
     }
 
-    private boolean isOrIsOwnedBy(final ComponentNode node) {
-        for (ComponentNode current = this; current != null; current = current.parent) {
+    private boolean isOrIsOwnedBy(final ControllerNode node) {
+        for (ControllerNode current = this; current != null; current = current.parent) {
             if (current == node) {
                 return true;
             }
@@ -405,7 +405,7 @@ public final class ComponentNode {
         for (final Watch<?> watch : new ArrayList<>(watches)) {
             watch.refresh();
         }
-        for (final ComponentNode child : new ArrayList<>(children)) {
+        for (final ControllerNode child : new ArrayList<>(children)) {
             child.refreshWatches();
         }
     }
@@ -414,7 +414,7 @@ public final class ComponentNode {
     @SuppressWarnings("unchecked")
     private <T> List<ContextValue<T>> providers(final ContextKey<T> key) {
         final List<ContextValue<T>> providers = new ArrayList<>();
-        for (ComponentNode node = this; node != null; node = node.parent) {
+        for (ControllerNode node = this; node != null; node = node.parent) {
             final ContextValue<T> value = (ContextValue<T>) node.provided.get(key);
             if (value != null) {
                 providers.add(value);

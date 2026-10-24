@@ -38,27 +38,27 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// Widgets need a browser, so these tests cover what a component does without one
-class TestComponent {
+// Widgets need a browser, so these tests cover what a controller does without one
+class TestController {
 
     private final List<String> events = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        ComponentChecks.setEnabled(true);
-        ComponentChecks.reset();
+        ControllerChecks.setEnabled(true);
+        ControllerChecks.reset();
     }
 
     @AfterEach
     void tearDown() {
-        ComponentChecks.reset();
+        ControllerChecks.reset();
     }
 
     @Test
     void anOwnedComponentIsDisposedWithItsOwner() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final Parent parent = new Parent(null);
-        root.adopt(parent.getComponentNode());
+        root.adopt(parent.getControllerNode());
 
         root.dispose();
 
@@ -71,22 +71,22 @@ class TestComponent {
     void aComponentIsUnownedUntilOwned() {
         final Child child = new Child();
 
-        assertThat(ComponentChecks.unownedNames()).containsExactly("Child");
+        assertThat(ControllerChecks.unownedNames()).containsExactly("Child");
 
-        ComponentNode.root("story").adopt(child.getComponentNode());
+        ControllerNode.root("story").adopt(child.getControllerNode());
 
-        assertThat(ComponentChecks.unownedCount()).isZero();
+        assertThat(ControllerChecks.unownedCount()).isZero();
     }
 
     @Test
     void aWatchInTheConstructorReportsOnceOwned() {
-        final ComponentNode root = ComponentNode.root("story");
+        final ControllerNode root = ControllerNode.root("story");
         final ContextValue<Boolean> readOnly = ContextValue.of(false);
         root.provide(Contexts.READ_ONLY, readOnly);
         final Parent parent = new Parent(null);
         assertThat(parent.child.readOnly).isEmpty();
 
-        root.adopt(parent.getComponentNode());
+        root.adopt(parent.getControllerNode());
         readOnly.set(true);
 
         assertThat(parent.child.readOnly).containsExactly(false, true);
@@ -95,7 +95,7 @@ class TestComponent {
     @Test
     void releaseDisposesAChildEarly() {
         final Parent parent = new Parent(null);
-        ComponentNode.root("story").adopt(parent.getComponentNode());
+        ControllerNode.root("story").adopt(parent.getControllerNode());
 
         parent.replaceChild();
 
@@ -107,7 +107,7 @@ class TestComponent {
     void listenStopsListeningWhenDisposed() {
         final EventBus eventBus = new SimpleEventBus();
         final Parent parent = new Parent(eventBus);
-        ComponentNode.root("story").adopt(parent.getComponentNode());
+        ControllerNode.root("story").adopt(parent.getControllerNode());
 
         eventBus.fireEvent(new TestEvent("first"));
         parent.dispose();
@@ -147,7 +147,7 @@ class TestComponent {
     @Test
     void guardDropsLateResults() {
         final Parent parent = new Parent(null);
-        ComponentNode.root("story").adopt(parent.getComponentNode());
+        ControllerNode.root("story").adopt(parent.getControllerNode());
         final Consumer<String> result = parent.guard(events::add);
 
         parent.dispose();
@@ -168,7 +168,7 @@ class TestComponent {
 
         final Child made = parent.makeChild(Child::new);
 
-        assertThat(parent.getComponentNode().childCount()).isEqualTo(2);
+        assertThat(parent.getControllerNode().childCount()).isEqualTo(2);
         parent.dispose();
         assertThat(made.isDisposed()).isTrue();
     }
@@ -184,15 +184,15 @@ class TestComponent {
 
     @Test
     void aDialogIsOwnedUntilHiddenThenDisposed() {
-        final Consumer<Runnable> scheduler = ComponentDialog.deferred;
+        final Consumer<Runnable> scheduler = ControllerDialog.deferred;
         final List<Runnable> deferred = new ArrayList<>();
-        ComponentDialog.deferred = deferred::add;
+        ControllerDialog.deferred = deferred::add;
         try {
             final EventBus eventBus = new SimpleEventBus();
             final Parent opener = new Parent(null);
             final MyPresenterWidget<View> dialog = opener.makeDialogChild(() ->
                     new MyPresenterWidget<>(eventBus, Mockito.mock(View.class)));
-            assertThat(dialog.getComponentNode().parent()).isSameAs(opener.getComponentNode());
+            assertThat(dialog.getControllerNode().parent()).isSameAs(opener.getControllerNode());
 
             HidePopupEvent.builder(dialog).fire();
             // Not until the popup manager has hidden it
@@ -202,9 +202,9 @@ class TestComponent {
             assertThat(dialog.isDisposed()).isTrue();
             assertThat(opener.isDisposed()).isFalse();
             // Only the child it made itself is left
-            assertThat(opener.getComponentNode().childCount()).isEqualTo(1);
+            assertThat(opener.getControllerNode().childCount()).isEqualTo(1);
         } finally {
-            ComponentDialog.deferred = scheduler;
+            ControllerDialog.deferred = scheduler;
         }
     }
 
@@ -219,7 +219,7 @@ class TestComponent {
         Mockito.verify(registration).removeHandler();
     }
 
-    private class Parent extends Component {
+    private class Parent extends Controller {
 
         private Child child;
 
@@ -246,7 +246,7 @@ class TestComponent {
         }
     }
 
-    private class Child extends Component {
+    private class Child extends Controller {
 
         private final List<Boolean> readOnly = new ArrayList<>();
 

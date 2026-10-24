@@ -27,8 +27,8 @@ import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -63,10 +63,10 @@ import java.util.function.Predicate;
 /// menu (see [#detach]).
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
-        implements ExpressionTreeView, HasComponentNode {
+        implements ExpressionTreeView, HasControllerNode {
 
     // Owns the presenters its tree panels' term editors make; its presenter owns it
-    private final ComponentNode node = new ComponentNode("ExpressionTreeView");
+    private final ControllerNode node = new ControllerNode("ExpressionTreeView");
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
@@ -86,8 +86,8 @@ public class ExpressionTreeViewImpl
                 docRefProvider,
                 userRefProvider,
                 uiConfigCache);
-        node.adopt(treePanel.getComponentNode());
-        node.adopt(subTreePanel.getComponentNode());
+        node.adopt(treePanel.getControllerNode());
+        node.adopt(subTreePanel.getControllerNode());
         // The copy of what is dragged, which is only to be seen
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");
@@ -205,7 +205,7 @@ public class ExpressionTreeViewImpl
     }
 
     @Override
-    public ComponentNode getComponentNode() {
+    public ControllerNode getControllerNode() {
         return node;
     }
 

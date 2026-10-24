@@ -25,15 +25,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
-/// Shows a component's widget in a [LayerContainer], e.g. as the body of one of a document's
-/// tabs, as a presenter is shown. Make one per component and keep it, as the container tells its
+/// Shows a controller's widget in a [LayerContainer], e.g. as the body of one of a document's
+/// tabs, as a presenter is shown. Make one per controller and keep it, as the container tells its
 /// layers apart by identity.
-public final class ComponentLayer implements Layer {
+public final class ControllerLayer implements Layer {
 
     private final IsWidget content;
 
-    /// @param content What to show, e.g. a component.
-    public ComponentLayer(final IsWidget content) {
+    /// @param content What to show, e.g. a controller.
+    public ControllerLayer(final IsWidget content) {
         this.content = Objects.requireNonNull(content, "content");
     }
 

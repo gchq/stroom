@@ -21,9 +21,9 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.component.client.Component;
-import stroom.widget.component.client.ComponentLayer;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerLayer;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.component.client.PresenterAdapter;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -41,16 +41,16 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /// Something shown in tabs, e.g. a document ([DocumentEditor]) or a folder: a tab bar, a row for
-/// toolbars, and the tab showing. Each tab's content, a component or a presenter, is made and owned
+/// toolbars, and the tab showing. Each tab's content, a controller or a presenter, is made and owned
 /// when the tab is first shown, is read into whenever this is ([#read(DocRef, Object)]), and may
 /// write what it shows back ([#write()]).
 ///
-/// The toolbar row shows this component's toolbar ([#getToolbar()]) if it has any buttons, with
+/// The toolbar row shows this controller's toolbar ([#getToolbar()]) if it has any buttons, with
 /// those of the tab showing if its content is a [HasToolbar], and the content's other toolbars.
 ///
 /// @param <D> The type of what is shown, e.g. a document's, which must compare by value (`equals`)
 ///            if it is written.
-public abstract class TabbedComponent<D> extends Component {
+public abstract class TabbedController<D> extends Controller {
 
     private final LinkTabPanelView view;
     private final Toolbar toolbar = new Toolbar("Document actions");
@@ -65,7 +65,7 @@ public abstract class TabbedComponent<D> extends Component {
 
     /// @param eventBus The application's event bus.
     /// @param view     The tab bar, toolbar row and tab content.
-    protected TabbedComponent(final EventBus eventBus, final LinkTabPanelView view) {
+    protected TabbedController(final EventBus eventBus, final LinkTabPanelView view) {
         super(eventBus);
         this.view = view;
         view.getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem()));
@@ -131,10 +131,10 @@ public abstract class TabbedComponent<D> extends Component {
     /// Adds a tab that only shows what is read, e.g. a document's permissions.
     ///
     /// @param tab    The tab.
-    /// @param make   Makes its content, a component or a presenter, when it is first shown.
+    /// @param make   Makes its content, a controller or a presenter, when it is first shown.
     /// @param reader Reads what is shown into it.
     /// @param <C>    Its content's type.
-    protected final <C extends HasComponentNode & IsWidget> void addTab(final TabData tab,
+    protected final <C extends HasControllerNode & IsWidget> void addTab(final TabData tab,
                                                                       final Supplier<C> make,
                                                                       final TabReader<C, D> reader) {
         addTab(tab, make, reader, (content, document) -> document);
@@ -143,11 +143,11 @@ public abstract class TabbedComponent<D> extends Component {
     /// Adds a tab that shows and changes part of what is read.
     ///
     /// @param tab    The tab.
-    /// @param make   Makes its content, a component or a presenter, when it is first shown.
+    /// @param make   Makes its content, a controller or a presenter, when it is first shown.
     /// @param reader Reads what is shown into it.
     /// @param writer Writes what it shows into a copy of what is shown.
     /// @param <C>    Its content's type.
-    protected final <C extends HasComponentNode & IsWidget> void addTab(final TabData tab,
+    protected final <C extends HasControllerNode & IsWidget> void addTab(final TabData tab,
                                                                       final Supplier<C> make,
                                                                       final TabReader<C, D> reader,
                                                                       final BiFunction<C, D, D> writer) {
@@ -243,13 +243,13 @@ public abstract class TabbedComponent<D> extends Component {
     }
 
     // A tab: how to make its content, read into it and write from it, and the content once made
-    private final class Tab<C extends HasComponentNode & IsWidget> {
+    private final class Tab<C extends HasControllerNode & IsWidget> {
 
         private final Supplier<C> make;
         private final TabReader<C, D> reader;
         private final BiFunction<C, D, D> writer;
         private C content;
-        private ComponentLayer layer;
+        private ControllerLayer layer;
 
         private Tab(final Supplier<C> make, final TabReader<C, D> reader, final BiFunction<C, D, D> writer) {
             this.make = make;
@@ -257,10 +257,10 @@ public abstract class TabbedComponent<D> extends Component {
             this.writer = writer;
         }
 
-        private ComponentLayer getLayer() {
+        private ControllerLayer getLayer() {
             if (content == null) {
                 content = own(make.get());
-                layer = new ComponentLayer(content);
+                layer = new ControllerLayer(content);
                 if (document != null) {
                     reader.read(content, docRef, document);
                 }

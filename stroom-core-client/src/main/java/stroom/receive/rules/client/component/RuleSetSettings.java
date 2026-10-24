@@ -30,8 +30,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 /// The receipt rules' Rules tab: the rules, in the order they are tried, which can be added,
 /// edited, copied, enabled or disabled, deleted and moved unless the rules are read only
 /// ([Contexts#READ_ONLY]), and the selected rule's expression.
-public class RuleSetSettings extends Component {
+public class RuleSetSettings extends Controller {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 

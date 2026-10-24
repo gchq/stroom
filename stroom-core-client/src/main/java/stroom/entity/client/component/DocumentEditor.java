@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// A document's editor: its tabs (see [TabbedComponent]), its toolbar with Save and Save As,
+/// A document's editor: its tabs (see [TabbedController]), its toolbar with Save and Save As,
 /// whether it is read only, and whether it has changes that aren't saved. A document type's editor
 /// adds its tabs (`addTab`) and any buttons of its own ([#getToolbar()]).
 ///
@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 /// the tabs write.
 ///
 /// @param <D> The document's type, which must compare by value (`equals`).
-public abstract class DocumentEditor<D> extends TabbedComponent<D> {
+public abstract class DocumentEditor<D> extends TabbedController<D> {
 
     // Why a document is read only: it is only ever opened read only for a user who can't edit it
     private static final String READ_ONLY_REASON = "You don't have permission to change this";

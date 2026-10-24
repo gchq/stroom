@@ -160,11 +160,12 @@ Stroom expects Java 25 (Eclipse Temurin)
 
 ### GWT UI components
 
-New GWT screens, dialogs and tabs are components (`stroom.widget.component.client.Component`), not presenters (`MyPresenterWidget`).
+New GWT screens, dialogs and tabs are controllers (`stroom.widget.component.client.Controller`), not presenters (`MyPresenterWidget`).
+The UI is being split into dumb components (a UiBinder template and its Java) and the controllers that wire them, Phase 7a in the design ("Components, controllers and models"); until the pilot is done, the rules below describe controllers, which still build their own widgets.
 The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL_DESIGN.md`; the receive rules (`stroom.receive.rules.client.component`), the Dictionary editor and `FolderTabs` are worked examples.
-Every presenter is a component too (`MyPresenterWidget extends Component`), so the rules below for making, owning, registering and releasing apply to presenters as well.
+Every presenter is a controller too (`MyPresenterWidget extends Controller`), so the rules below for making, owning, registering and releasing apply to presenters as well.
 
-* **Make one.** Extend `Component`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
+* **Make one.** Extend `Controller`, take what it needs in an `@Inject` constructor (GIN makes it; it needs no module binding), build its widget once and pass it to `initWidget`.
   A component owns its UiBinder template (`Foo.ui.xml` next to `Foo.java`, with a `Binder` interface at the bottom of the class); it has no view interface unless a second view is needed.
 
 * **Own what you show.** Whoever shows a component or presenter owns it: `make(provider)` makes one and owns it, `makeDialog(provider)` makes a presenter dialog owned until it is hidden, `own(child)` owns one injected into the constructor, and `release(child)` disposes one replaced early.
@@ -188,10 +189,10 @@ Every presenter is a component too (`MyPresenterWidget extends Component`), so t
 
 * **REST calls.** `restFactory.create(resource).method(...).onSuccess(...).owner(this).exec()`: nothing runs if the component is disposed before the reply.
 
-* **A dialog.** Make it for one use and show it with `ComponentDialog.showOnce(opener, dialog)`, which returns the popup's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
+* **A dialog.** Make it for one use and show it with `ControllerDialog.showOnce(opener, dialog)`, which returns the popup's `ShowPopupEvent.Builder`; the opener owns it until it is hidden, then it is disposed.
   Give the dialog a method that shows it and takes a callback for its result (see `FieldEditor.edit`).
 
-* **A tab body.** Show a component in a `LayerContainer` with `new ComponentLayer(component)`, or add it to a `TabbedComponent` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
+* **A tab body.** Show a component in a `LayerContainer` with `new ControllerLayer(component)`, or add it to a `TabbedController` with `addTab(tab, make, reader[, writer])`; presenters can be tabs too.
 
 * **A document.** Extend `DocumentEditor<D>` (Save, Save As, read-only status and dirty state), add its tabs, and have its plugin's `createEditor()` return `new DocumentEditorHost<>(eventBus, editorProvider.get(), TYPE)`.
 
@@ -201,7 +202,7 @@ Every presenter is a component too (`MyPresenterWidget extends Component`), so t
   A presenter shows a child presenter through a setter on its view (`getView().setListView(listPresenter.getView())`); there are no slots.
   There is no code splitting: everything is in the initial download.
 
-* **Test it.** Unit test what runs without a browser with JUnit (see `TestComponent`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
+* **Test it.** Unit test what runs without a browser with JUnit (see `TestController`); give each screen workbench stories for its default, read-only and dialog OK and Cancel paths, and run them with the leak check (`-PworkbenchLeakCheck`).
   In a story, the story's root owns whatever the story shows: `harness.show(screen)` fills the canvas with it, `harness.own(screen)` owns one the story shows itself (in a frame, or as a dialog), and `harness.ownPopup(popup)` also asks a popup to close, for one that stops polling only when asked (see `stroom-gwt/stroom-gwt-workbench/WRITING-STORIES.md`).
 
 

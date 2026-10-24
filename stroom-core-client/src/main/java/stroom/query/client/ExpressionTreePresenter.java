@@ -22,7 +22,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -56,7 +56,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view) {
         super(eventBus, view);
         // The view owns the presenters its term editors make
-        if (view instanceof final HasComponentNode hasComponentNode) {
+        if (view instanceof final HasControllerNode hasComponentNode) {
             own(hasComponentNode);
         }
         selectionModel = new MySingleSelectionModel<>();

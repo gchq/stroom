@@ -25,14 +25,14 @@ import com.google.gwt.core.client.Scheduler;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/// Shows a component as a dialog, for one use: the dialog is owned by its opener while it is shown,
+/// Shows a controller as a dialog, for one use: the dialog is owned by its opener while it is shown,
 /// so it sees the opener's context (e.g. [Contexts#READ_ONLY]), and disposed once it is hidden, or
 /// with its opener if that is disposed first.
 ///
 /// ```java
 /// final FieldEditor editor = fieldEditorProvider.get();
 /// editor.read(field, otherNames);
-/// ComponentDialog.showOnce(this, editor)
+/// ControllerDialog.showOnce(this, editor)
 ///         .popupType(PopupType.OK_CANCEL_DIALOG)
 ///         .caption("Edit Field")
 ///         .onShow(e -> editor.focus())
@@ -40,42 +40,42 @@ import java.util.function.Consumer;
 ///         .fire();
 /// ```
 ///
-/// The popup manager shows presenters, so the component is shown through a small presenter that
+/// The popup manager shows presenters, so the controller is shown through a small presenter that
 /// owns it; the hide request handler's event (`e.hide()`, `e.reset()`) works as for any dialog.
-public final class ComponentDialog {
+public final class ControllerDialog {
 
     // Runs something once the event being handled is done (replaced in JVM tests, which have no
     // GWT scheduler)
     static Consumer<Runnable> deferred = runnable -> Scheduler.get().scheduleDeferred(runnable::run);
 
-    private ComponentDialog() {
+    private ControllerDialog() {
         // Static utility
     }
 
-    /// Starts showing a component as a dialog for one use.
+    /// Starts showing a controller as a dialog for one use.
     ///
     /// @param opener What shows it, which owns it until it is hidden.
-    /// @param dialog The component, just made and not owned by anything else. It must have been made
+    /// @param dialog The controller, just made and not owned by anything else. It must have been made
     ///               with the event bus, which the popup manager listens to.
     /// @return The popup's builder: set its type, caption and handlers, then `fire()` it.
-    /// @throws IllegalStateException If the component was made without an event bus.
-    public static ShowPopupEvent.Builder showOnce(final HasComponentNode opener, final Component dialog) {
+    /// @throws IllegalStateException If the controller was made without an event bus.
+    public static ShowPopupEvent.Builder showOnce(final HasControllerNode opener, final Controller dialog) {
         Objects.requireNonNull(opener, "opener");
         Objects.requireNonNull(dialog, "dialog");
         if (dialog.getEventBus() == null) {
-            throw new IllegalStateException(dialog.getComponentNode().getName()
+            throw new IllegalStateException(dialog.getControllerNode().getName()
                                             + " can't be shown as a dialog: it was made without an event bus");
         }
         final DialogHost host = new DialogHost(dialog);
-        opener.getComponentNode().adopt(host.getComponentNode());
+        opener.getControllerNode().adopt(host.getControllerNode());
         disposeWhenHidden(host);
         return ShowPopupEvent.builder(host);
     }
 
     // Disposes a presenter shown as a popup for one use once it is hidden, after the popup manager
-    // has hidden it (see Component.makeDialog and AppRoot.makeDialog)
+    // has hidden it (see Controller.makeDialog and AppRoot.makeDialog)
     static <P extends MyPresenterWidget<?>> P disposeWhenHidden(final P dialog) {
-        final ComponentNode dialogNode = dialog.getComponentNode();
+        final ControllerNode dialogNode = dialog.getControllerNode();
         // Null only for a mock (e.g. Mockito's, in a test)
         if (dialogNode != null) {
             // A registration of the dialog's, so it goes when the dialog is disposed
@@ -89,16 +89,16 @@ public final class ComponentDialog {
     // --------------------------------------------------------------------------------
 
 
-    // The presenter the popup manager shows, which owns the component, so disposing it (once
-    // hidden) disposes the component
-    static final class DialogHost extends MyPresenterWidget<ComponentView> {
+    // The presenter the popup manager shows, which owns the controller, so disposing it (once
+    // hidden) disposes the controller
+    static final class DialogHost extends MyPresenterWidget<ControllerView> {
 
-        private DialogHost(final Component content) {
-            super(content.getEventBus(), new ComponentView(content));
+        private DialogHost(final Controller content) {
+            super(content.getEventBus(), new ControllerView(content));
             own(content);
         }
 
-        Component getContent() {
+        Controller getContent() {
             return getView().getContent();
         }
     }

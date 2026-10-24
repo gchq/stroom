@@ -19,8 +19,8 @@ package stroom.widget.component.client;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
 
-/// The name of a value that a component provides to the components it owns, however deep (see
-/// [ComponentNode#provide(ContextKey, ContextValue)]). Keys are compared by identity, so each is
+/// The name of a value that a controller provides to the controllers it owns, however deep (see
+/// [ControllerNode#provide(ContextKey, ContextValue)]). Keys are compared by identity, so each is
 /// made once, as a constant (see [Contexts]).
 ///
 /// @param <T> The type of the value.

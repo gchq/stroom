@@ -24,8 +24,8 @@ import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
-import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
@@ -51,7 +51,7 @@ public class ContentManager implements HasHandlers {
     private final Map<TabData, CloseContentEvent.Handler> handlerMap = new HashMap<>();
     // A root in the ownership tree for each open tab, owning its content (unless something else
     // owns it), disposed when the tab is closed
-    private final Map<TabData, ComponentNode> roots = new HashMap<>();
+    private final Map<TabData, ControllerNode> roots = new HashMap<>();
     private final EventBus eventBus;
 
     @Inject
@@ -158,7 +158,7 @@ public class ContentManager implements HasHandlers {
         CloseContentTabEvent.fire(ContentManager.this, tabData, resizeTabBar);
         handlerMap.remove(tabData);
         // Closed for good, so release its content and everything that owns
-        final ComponentNode root = roots.remove(tabData);
+        final ControllerNode root = roots.remove(tabData);
         if (root != null) {
             root.dispose();
         }
@@ -177,16 +177,16 @@ public class ContentManager implements HasHandlers {
                      final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
         handlerMap.put(tabData, closeHandler);
         // Opening a tab that is open again keeps its root
-        final ComponentNode root = roots.computeIfAbsent(tabData, k -> ComponentNode.root("ContentTab"));
+        final ControllerNode root = roots.computeIfAbsent(tabData, k -> ControllerNode.root("ContentTab"));
         ownIfUnowned(root, presenter);
         ownIfUnowned(root, layer);
         ownIfUnowned(root, tabData);
         OpenContentTabEvent.fire(this, tabData, layer, presenter, callbackOnOpen);
     }
 
-    private static void ownIfUnowned(final ComponentNode root, final Object content) {
-        if (content instanceof final HasComponentNode hasComponentNode) {
-            final ComponentNode node = hasComponentNode.getComponentNode();
+    private static void ownIfUnowned(final ControllerNode root, final Object content) {
+        if (content instanceof final HasControllerNode hasComponentNode) {
+            final ControllerNode node = hasComponentNode.getControllerNode();
             if (node != null && node.parent() == null && !node.isShared() && !node.isDisposed()) {
                 root.adopt(node);
             }

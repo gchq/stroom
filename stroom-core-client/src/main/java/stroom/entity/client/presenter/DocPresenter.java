@@ -119,7 +119,7 @@ public abstract class DocPresenter<V extends View, D>
     ///
     /// @param readOnly Whether it may not be changed.
     public final void setReadOnly(final boolean readOnly) {
-        getComponentNode().setProvided(Contexts.READ_ONLY, readOnly);
+        getControllerNode().setProvided(Contexts.READ_ONLY, readOnly);
     }
 
     /**

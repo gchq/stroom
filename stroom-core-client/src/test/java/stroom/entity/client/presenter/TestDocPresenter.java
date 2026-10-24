@@ -17,9 +17,9 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.ContextValue;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.presenter.client.View;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -40,11 +40,11 @@ class TestDocPresenter {
     @Test
     void whatItOwnsFollowsWhetherTheDocumentIsReadOnly() {
         final Doc document = new Doc();
-        final ComponentNode root = ComponentNode.root("tab");
-        root.adopt(document.getComponentNode());
+        final ControllerNode root = ControllerNode.root("tab");
+        root.adopt(document.getControllerNode());
         // e.g. a settings presenter in one of its tabs
-        final ComponentNode field = new ComponentNode("field");
-        document.getComponentNode().adopt(field);
+        final ControllerNode field = new ControllerNode("field");
+        document.getControllerNode().adopt(field);
         final List<Boolean> readOnly = new ArrayList<>();
         field.watch(Contexts.READ_ONLY, readOnly::add);
 
@@ -60,33 +60,33 @@ class TestDocPresenter {
     @Test
     void aDocumentEmbeddedInAnotherScreenIsToldWhetherItIsReadOnly() {
         final Doc document = new Doc();
-        final ComponentNode root = ComponentNode.root("tab");
-        root.adopt(document.getComponentNode());
+        final ControllerNode root = ControllerNode.root("tab");
+        root.adopt(document.getControllerNode());
 
         document.setReadOnly(false);
-        assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isFalse();
+        assertThat(document.getControllerNode().lookup(Contexts.READ_ONLY)).isFalse();
         assertThat(document.isReadOnly()).isFalse();
 
         document.setReadOnly(true);
-        assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isTrue();
+        assertThat(document.getControllerNode().lookup(Contexts.READ_ONLY)).isTrue();
     }
 
     @Test
     void aReadOnlyOwnerKeepsItReadOnly() {
         final Doc document = new Doc();
-        final ComponentNode root = ComponentNode.root("tab");
+        final ControllerNode root = ControllerNode.root("tab");
         root.provide(Contexts.READ_ONLY, ContextValue.of(true));
-        root.adopt(document.getComponentNode());
+        root.adopt(document.getControllerNode());
 
         document.open(DOC_REF, "contents", false);
 
-        assertThat(document.getComponentNode().lookup(Contexts.READ_ONLY)).isTrue();
+        assertThat(document.getControllerNode().lookup(Contexts.READ_ONLY)).isTrue();
     }
 
     @Test
     void aDocumentNobodySaysMayBeChangedIsReadOnly() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
 
         document.read(DOC_REF, "contents");
 
@@ -96,10 +96,10 @@ class TestDocPresenter {
     @Test
     void aDocumentThatIsPartOfAnotherIsReadOnlyAsThatIs() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
         // e.g. a settings tab, which is itself a document, read without being told
         final Doc part = new Doc();
-        document.getComponentNode().adopt(part.getComponentNode());
+        document.getControllerNode().adopt(part.getControllerNode());
 
         document.open(DOC_REF, "contents", false);
         part.read(DOC_REF, "contents");
@@ -114,7 +114,7 @@ class TestDocPresenter {
     @Test
     void aTabIsOwnedBeforeItIsReadSoItReadsAsItsDocumentIs() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
         document.setReadOnly(false);
         final Doc tab = new Doc();
         final TabContentProvider<String> tabs = new TabContentProvider<>(new SimpleEventBus(), document);
@@ -136,15 +136,15 @@ class TestDocPresenter {
         tabs.getPresenter(tabData);
 
         assertThat(tab.readOnlyWhenRead).isFalse();
-        assertThat(tab.getComponentNode().parent()).isSameAs(document.getComponentNode());
+        assertThat(tab.getControllerNode().parent()).isSameAs(document.getControllerNode());
     }
 
     @Test
     void aPartThatBecomesDirtyTellsItsDocument() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
         final Doc part = new Doc();
-        document.getComponentNode().adopt(part.getComponentNode());
+        document.getControllerNode().adopt(part.getControllerNode());
         document.open(DOC_REF, "part", false);
         part.open(DOC_REF, "part", false);
         // Each writes what the part shows
@@ -170,13 +170,13 @@ class TestDocPresenter {
     @Test
     void anythingBelowADocumentCanTellItOfAChange() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
         document.open(DOC_REF, "contents", false);
         document.writer = doc -> "changed";
         // e.g. a field's node, two levels down
-        final ComponentNode panel = new ComponentNode("panel");
-        document.getComponentNode().adopt(panel);
-        final ComponentNode field = new ComponentNode("field");
+        final ControllerNode panel = new ControllerNode("panel");
+        document.getControllerNode().adopt(panel);
+        final ControllerNode field = new ControllerNode("field");
         panel.adopt(field);
 
         field.lookupAbove(Contexts.DIRTY).onChange();
@@ -187,7 +187,7 @@ class TestDocPresenter {
     @Test
     void aReadOnlyDocumentIsNeverDirty() {
         final Doc document = new Doc();
-        ComponentNode.root("tab").adopt(document.getComponentNode());
+        ControllerNode.root("tab").adopt(document.getControllerNode());
         document.open(DOC_REF, "contents", true);
         document.writer = doc -> "changed";
 

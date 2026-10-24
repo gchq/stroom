@@ -13,12 +13,12 @@
     <inherits name="stroom.widget.util.Util"/>
 
     <!--
-      Development checks (ComponentChecks): misuse of ownership fails loudly and components left
+      Development checks (ControllerChecks): misuse of ownership fails loudly and components left
       with no owner are counted. Off in the application; development modules (e.g. the workbench)
       set it to ENABLED.
     -->
-    <define-property name="stroom.componentChecks" values="ENABLED,DISABLED"/>
-    <set-property name="stroom.componentChecks" value="DISABLED"/>
+    <define-property name="stroom.controllerChecks" values="ENABLED,DISABLED"/>
+    <set-property name="stroom.controllerChecks" value="DISABLED"/>
 
     <source path="client"/>
 </module>

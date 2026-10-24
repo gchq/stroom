@@ -23,9 +23,9 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.ComponentNode;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -124,7 +124,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
 
         private Consumer<R> resultConsumer;
         private RestErrorHandler errorConsumer;
-        private ComponentNode owner;
+        private ControllerNode owner;
 
         public MethodExecutorImpl(final HasHandlers hasHandlers,
                                   final Dispatcher dispatcher,
@@ -183,8 +183,8 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public MethodExecutor<T, R> owner(final HasComponentNode owner) {
-            this.owner = Objects.requireNonNull(owner, "owner").getComponentNode();
+        public MethodExecutor<T, R> owner(final HasControllerNode owner) {
+            this.owner = Objects.requireNonNull(owner, "owner").getControllerNode();
             return this;
         }
 
@@ -206,7 +206,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
         private final TaskMonitorFactory taskMonitorFactory;
         private final Task task;
         // The component the reply is for, or null
-        private final ComponentNode owner;
+        private final ControllerNode owner;
 
         public TaskExecutorImpl(final HasHandlers hasHandlers,
                                 final Dispatcher dispatcher,
@@ -216,7 +216,7 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                                 final RestErrorHandler errorHandler,
                                 final TaskMonitorFactory taskMonitorFactory,
                                 final String taskMessage,
-                                final ComponentNode owner) {
+                                final ControllerNode owner) {
             this.hasHandlers = hasHandlers;
             this.dispatcher = dispatcher;
             this.service = service;

@@ -17,7 +17,7 @@
 package stroom.dispatch.client;
 
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.HasControllerNode;
 
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -56,7 +56,7 @@ public interface RestFactory {
         ///
         /// @param owner The component the reply is for.
         /// @return This executor.
-        MethodExecutor<T, R> owner(HasComponentNode owner);
+        MethodExecutor<T, R> owner(HasControllerNode owner);
 
         void exec();
     }

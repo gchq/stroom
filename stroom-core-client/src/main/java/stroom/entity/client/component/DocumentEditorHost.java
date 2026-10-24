@@ -27,16 +27,16 @@ import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasCommonTabs;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.component.client.ComponentView;
+import stroom.widget.component.client.ControllerView;
 
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
 import java.util.Optional;
 
-/// Opens a [DocumentEditor], or another [TabbedComponent] such as a folder's tabs, as a tab of
+/// Opens a [DocumentEditor], or another [TabbedController] such as a folder's tabs, as a tab of
 /// Stroom's, for `DocumentPlugin`, which opens, saves and closes documents through presenters.
-/// It owns the component, and:
+/// It owns the controller, and:
 ///
 /// * reads the document into it as the plugin reads it (when it is opened, saved, or its lock
 ///   changes), telling a document editor whether the user may change it;
@@ -52,10 +52,10 @@ import java.util.Optional;
 ///
 /// @param <D> The document's type.
 public final class DocumentEditorHost<D>
-        extends DocPresenter<ComponentView, D>
+        extends DocPresenter<ControllerView, D>
         implements DocumentTabData, HasSave, HasCommonTabs {
 
-    private final TabbedComponent<D> editor;
+    private final TabbedController<D> editor;
     private final String type;
     private DocRef docRef;
     private String lastLabel;
@@ -63,8 +63,8 @@ public final class DocumentEditorHost<D>
     /// @param eventBus The application's event bus.
     /// @param editor   The document's editor (or a folder's tabs), just made.
     /// @param type     The document's type, e.g. `DictionaryDoc.TYPE`, for the tab's icon.
-    public DocumentEditorHost(final EventBus eventBus, final TabbedComponent<D> editor, final String type) {
-        super(eventBus, new ComponentView(editor));
+    public DocumentEditorHost(final EventBus eventBus, final TabbedController<D> editor, final String type) {
+        super(eventBus, new ControllerView(editor));
         this.editor = own(editor);
         this.type = Objects.requireNonNull(type, "type");
         if (editor instanceof final DocumentEditor<D> documentEditor) {
@@ -74,8 +74,8 @@ public final class DocumentEditorHost<D>
         }
     }
 
-    /// @return The component this shows.
-    public TabbedComponent<D> getEditor() {
+    /// @return The controller this shows.
+    public TabbedController<D> getEditor() {
         return editor;
     }
 

@@ -102,7 +102,7 @@ class TestListeners {
     @Test
     void aRegistrationOwnedByAComponentIsRemovedWithIt() {
         final Listeners<String> listeners = new Listeners<>();
-        final ComponentNode root = ComponentNode.root("root");
+        final ControllerNode root = ControllerNode.root("root");
         root.add(listeners.add(events::add));
 
         root.dispose();

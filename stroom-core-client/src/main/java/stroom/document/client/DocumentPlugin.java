@@ -43,7 +43,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.widget.component.client.ComponentNode;
+import stroom.widget.component.client.ControllerNode;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -313,7 +313,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                 final MyPresenterWidget<?> documentEditPresenter) {
         // No tab is closed for a document shown full screen, so it is forgotten once its editor is
         // disposed, else opening it again would select a tab that doesn't exist
-        final ComponentNode node = documentEditPresenter.getComponentNode();
+        final ControllerNode node = documentEditPresenter.getControllerNode();
         if (node != null) {
             node.add(() -> documentTabManager.remove(docRef, tabData));
         }

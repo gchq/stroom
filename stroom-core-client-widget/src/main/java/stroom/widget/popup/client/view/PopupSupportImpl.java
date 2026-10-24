@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -321,9 +321,9 @@ public class PopupSupportImpl implements PopupSupport {
     // The dialog's presenter, and everything it owns (through its context), show their tasks on the
     // dialog
     private void setTaskMonitor(final TaskMonitorFactory taskMonitorFactory) {
-        if (dialogPresenter instanceof final HasComponentNode hasComponentNode
-            && hasComponentNode.getComponentNode() != null) {
-            hasComponentNode.getComponentNode().setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
+        if (dialogPresenter instanceof final HasControllerNode hasComponentNode
+            && hasComponentNode.getControllerNode() != null) {
+            hasComponentNode.getControllerNode().setProvided(Contexts.TASK_MONITOR, taskMonitorFactory);
         }
     }
 

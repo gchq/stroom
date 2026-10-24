@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// The listeners of something a component tells more than one listener about. Most components
+/// The listeners of something a controller tells more than one listener about. Most controllers
 /// have one listener, their owner, and take a single callback instead (e.g. `setOnChange`).
 ///
-/// Each [#add(Consumer)] returns a registration for the listener's own component to own (see
-/// [ComponentNode#add(HandlerRegistration)]), so that neither side keeps the other once either
+/// Each [#add(Consumer)] returns a registration for the listener's own controller to own (see
+/// [ControllerNode#add(HandlerRegistration)]), so that neither side keeps the other once either
 /// is disposed.
 ///
 /// @param <T> What the listeners are told.

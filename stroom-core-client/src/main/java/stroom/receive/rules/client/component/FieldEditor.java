@@ -23,9 +23,9 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
-import stroom.widget.component.client.Component;
-import stroom.widget.component.client.ComponentDialog;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.ControllerDialog;
+import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 
 /// A dialog to add or edit one of the receipt rules' fields: its type and its name, which must be
 /// given and must not be another field's (ignoring case).
-public class FieldEditor extends Component {
+public class FieldEditor extends Controller {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -79,13 +79,13 @@ public class FieldEditor extends Component {
     /// @param field           The field to edit, or a new one.
     /// @param otherFieldNames The names of the other fields, which this one may not take.
     /// @param onOk            What to do with the field when OK is pressed.
-    public void edit(final HasComponentNode opener,
+    public void edit(final HasControllerNode opener,
                      final String caption,
                      final QueryField field,
                      final Set<CIKey> otherFieldNames,
                      final Consumer<QueryField> onOk) {
         read(field, otherFieldNames);
-        ComponentDialog.showOnce(opener, this)
+        ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizableX())
                 .caption(caption)

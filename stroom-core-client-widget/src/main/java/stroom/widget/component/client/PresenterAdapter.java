@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/// Puts an existing presenter into the ownership tree, so that a component can show one it
+/// Puts an existing presenter into the ownership tree, so that a controller can show one it
 /// isn't rewritten as (e.g. the code editor or the permissions tab) and have it released with
 /// itself:
 ///
@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 /// read-only through the setter given to [#onReadOnly(BiConsumer)].
 ///
 /// @param <P> The presenter's type.
-public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Component {
+public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Controller {
 
     private final P presenter;
 
@@ -57,7 +57,7 @@ public final class PresenterAdapter<P extends MyPresenterWidget<?>> extends Comp
     ///
     /// @param maker What makes the presenter, e.g. `editorPresenterProvider::get`.
     /// @param <P>   The presenter's type.
-    /// @return The adapter, for a component to own.
+    /// @return The adapter, for a controller to own.
     public static <P extends MyPresenterWidget<?>> PresenterAdapter<P> of(final Supplier<P> maker) {
         Objects.requireNonNull(maker, "maker");
         return new PresenterAdapter<>(Objects.requireNonNull(maker.get(), "presenter"));

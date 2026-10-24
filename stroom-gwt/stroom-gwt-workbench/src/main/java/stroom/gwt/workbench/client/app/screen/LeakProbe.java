@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.screen;
 
-import stroom.widget.component.client.ComponentChecks;
+import stroom.widget.component.client.ControllerChecks;
 
 import com.google.gwt.user.client.Window;
 
@@ -32,7 +32,7 @@ import com.google.gwt.user.client.Window;
 /// * `open()` opens the screen again, as the story did (usually with new presenters).
 /// * `shown()` is the number of widgets the opening has shown, and of popups shown.
 /// * `pending()` is the number of REST requests not yet answered.
-/// * `unowned()` is the number of live components that nothing owns (see [ComponentChecks]),
+/// * `unowned()` is the number of live components that nothing owns (see [ControllerChecks]),
 ///   which should be none once the screen is closed and disposed; `unownedNames()` their names,
 ///   comma separated, each as often as it is unowned.
 final class LeakProbe {
@@ -75,11 +75,11 @@ final class LeakProbe {
     }
 
     private int unowned() {
-        return ComponentChecks.unownedCount();
+        return ControllerChecks.unownedCount();
     }
 
     private String unownedNames() {
-        return String.join(",", ComponentChecks.unownedNames());
+        return String.join(",", ControllerChecks.unownedNames());
     }
 
     // Close and open run as GWT entry points ($entry), as a browser event's handlers do, so that the

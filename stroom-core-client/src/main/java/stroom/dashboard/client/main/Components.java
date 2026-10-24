@@ -19,8 +19,8 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
 import stroom.docref.HasDisplayValue;
-import stroom.widget.component.client.ComponentNode;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.ControllerNode;
+import stroom.widget.component.client.HasControllerNode;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONObject;
@@ -46,7 +46,7 @@ public class Components implements Iterable<Component> {
 
     private final JavaScriptObject context;
     // What owns the components made (the dashboard), so that closing it releases them
-    private ComponentNode owner;
+    private ControllerNode owner;
 
     @Inject
     public Components(final ComponentRegistry componentRegistry,
@@ -57,15 +57,15 @@ public class Components implements Iterable<Component> {
     }
 
     /// @param owner What owns the components made, e.g. the dashboard's presenter.
-    public void setOwner(final HasComponentNode owner) {
-        this.owner = owner.getComponentNode();
+    public void setOwner(final HasControllerNode owner) {
+        this.owner = owner.getControllerNode();
     }
 
     public Component add(final String type,
                          final String id) {
         final Component component = addComponent(type, id);
-        if (owner != null && component instanceof final HasComponentNode hasComponentNode) {
-            owner.adopt(hasComponentNode.getComponentNode());
+        if (owner != null && component instanceof final HasControllerNode hasComponentNode) {
+            owner.adopt(hasComponentNode.getControllerNode());
         }
         return component;
     }
@@ -105,9 +105,9 @@ public class Components implements Iterable<Component> {
 
             component.onRemove();
             // Removed for good
-            if (owner != null && component instanceof final HasComponentNode hasComponentNode
-                && hasComponentNode.getComponentNode().parent() == owner) {
-                owner.release(hasComponentNode.getComponentNode());
+            if (owner != null && component instanceof final HasControllerNode hasComponentNode
+                && hasComponentNode.getControllerNode().parent() == owner) {
+                owner.release(hasComponentNode.getControllerNode());
             }
         }
         return component;

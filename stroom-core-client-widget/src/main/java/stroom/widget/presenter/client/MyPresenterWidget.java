@@ -19,9 +19,9 @@ package stroom.widget.presenter.client;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.component.client.HasComponentNode;
+import stroom.widget.component.client.Controller;
+import stroom.widget.component.client.HasControllerNode;
 
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,14 +29,14 @@ import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-/// Stroom's presenter: a [Component] that shows a view. It registers its handlers when it is made,
-/// and, as for any component, the presenters and components it owns ([#own(HasComponentNode)]),
+/// Stroom's presenter: a [Controller] that shows a view. It registers its handlers when it is made,
+/// and, as for any component, the presenters and components it owns ([#own(HasControllerNode)]),
 /// and the registrations made through it ([#listen(Event.Type, Object)],
 /// [#own(HandlerRegistration)]), are released when it is disposed ([#dispose()]).
 ///
 /// @param <V> The view's type.
 public class MyPresenterWidget<V extends View>
-        extends Component
+        extends Controller
         implements Layer, TaskMonitorFactory {
 
     // Set explicitly (e.g. a list's own spinner), or null to use the context's (see createTaskMonitor)
@@ -61,7 +61,7 @@ public class MyPresenterWidget<V extends View>
     }
 
     /// @return Its view's widget, so a presenter can go where a component can, e.g. a tab of a
-    /// `TabbedComponent`.
+    /// `TabbedController`.
     @Override
     public Widget asWidget() {
         return getWidget();
@@ -108,7 +108,7 @@ public class MyPresenterWidget<V extends View>
         if (taskMonitorFactory != null) {
             return taskMonitorFactory.createTaskMonitor();
         }
-        final TaskMonitorFactory provided = getComponentNode().lookup(Contexts.TASK_MONITOR);
+        final TaskMonitorFactory provided = getControllerNode().lookup(Contexts.TASK_MONITOR);
         if (provided != Contexts.TASK_MONITOR.getDefaultValue()) {
             return provided.createTaskMonitor();
         }
