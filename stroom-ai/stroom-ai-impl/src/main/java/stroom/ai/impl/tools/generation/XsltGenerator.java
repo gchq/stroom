@@ -238,7 +238,7 @@ public final class XsltGenerator {
                 : null, List.copyOf(new TreeSet<>(generator.referenceMaps)), List.copyOf(dictionaries),
                 generator.itemMode
                         ? mapping.forEach()
-                        : null);
+                        : null, generator.eventTrees.conditionalByRule());
     }
 
     /// @param mapping The mapping.
@@ -405,6 +405,9 @@ public final class XsltGenerator {
             }
             if (entry.anyOf() != null) {
                 inputs.addAll(entry.anyOf());
+            }
+            if (entry.join() != null) {
+                inputs.addAll(entry.join());
             }
             inputs.stream().filter(name -> !read.contains(name)).forEach(read::add);
         }
@@ -585,6 +588,11 @@ public final class XsltGenerator {
         if (hasAnyOf(entry)) {
             return new Source(null, keySource, null);
         }
+        if (entry.join() != null) {
+            return new Source(null, XPathText.joinText(entry.join().stream()
+                    .map(field -> source(field, null, entryScope))
+                    .toList(), entry.joinSeparator()), null);
+        }
         return new Source(entry.field(), entry.xpath(), entryScope);
     }
 
@@ -695,6 +703,9 @@ public final class XsltGenerator {
         }
         if (hasAnyOf(entry)) {
             return entry.anyOf().getFirst();
+        }
+        if (entry.join() != null) {
+            return String.join("-", entry.join());
         }
         final List<String> steps = PyText.split(entry.strippedPath(), "/");
         return String.join("-", steps.subList(Math.max(0, steps.size() - 2), steps.size()));
@@ -1890,6 +1901,9 @@ public final class XsltGenerator {
     /// @param referenceMaps `reference_maps`: the reference maps lookups read, sorted.
     /// @param dictionaries  The Dictionary docs read, sorted.
     /// @param items         `items`: the mapping's for_each, or null.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value (paths
+    ///                      below Event), by rule: not in the Python server's dict, for the sample check to count
+    ///                      the records that leave them out.
     public record Generated(boolean ok,
                             List<String> problems,
                             List<String> warnings,
@@ -1897,7 +1911,8 @@ public final class XsltGenerator {
                             String xslt,
                             List<String> referenceMaps,
                             List<String> dictionaries,
-                            String items) {
+                            String items,
+                            Map<String, List<String>> requiredOnInput) {
 
         /// @return It as the Python generator's dict: `ok`, `problems`, `warnings`, `events`, `xslt`,
         /// `reference_maps`, `dictionaries` and, with for_each, `items`.

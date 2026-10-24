@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,7 +163,33 @@ class TestE2eFormats extends AbstractE2eTest {
         if (formatCase.rules() != null) {
             mapping.put("events", formatCase.rules());
         }
+        typeIdOfEachKind(mapping, common);
         return mapping;
+    }
+
+    // A TypeId the draft reads from one field that its rules tell apart by another (kv_quoted's type, 'traffic' for
+    // permits and denies alike): joined with the fields the rules test, as the agent is told to, once the port
+    // refuses a TypeId the same for different kinds (not in the Python server, which warned).
+    @SuppressWarnings("unchecked")
+    private static void typeIdOfEachKind(final Map<String, Object> mapping, final List<Map<String, Object>> common) {
+        for (int i = 0; i < common.size(); i++) {
+            final Map<String, Object> entry = common.get(i);
+            if (!"EventDetail/TypeId".equals(entry.get("path")) || !(entry.get("field") instanceof final String by)) {
+                continue;
+            }
+            final Set<String> tested = new LinkedHashSet<>(List.of(by));
+            for (final Object rule : (List<Object>) mapping.getOrDefault("events", List.of())) {
+                for (final Object condition : (List<Object>) ((Map<String, Object>) rule).getOrDefault("when",
+                        List.of())) {
+                    if (((Map<String, Object>) condition).get("field") instanceof final String field) {
+                        tested.add(field);
+                    }
+                }
+            }
+            if (tested.size() > 1) {
+                common.set(i, Map.of("path", "EventDetail/TypeId", "join", List.copyOf(tested)));
+            }
+        }
     }
 
     private static List<Map<String, Object>> logonRules(final String kindField,

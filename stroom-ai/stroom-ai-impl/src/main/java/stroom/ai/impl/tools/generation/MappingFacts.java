@@ -165,6 +165,9 @@ public final class MappingFacts {
             if (entry.anyOf() != null) {
                 names.addAll(entry.anyOf());
             }
+            if (entry.join() != null) {
+                names.addAll(entry.join());
+            }
             if (entry.lookup() != null) {
                 names.add(entry.lookup().field());
             }

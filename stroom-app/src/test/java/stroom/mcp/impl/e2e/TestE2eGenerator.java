@@ -53,6 +53,12 @@ class TestE2eGenerator extends AbstractE2eTest {
             + "\"city\": \"Leeds\", \"text\": \"Facts https://t.co/a https://t.co/b\"}, "
             + "{\"ts\": \"2026-09-28T11:02:00Z\", \"user\": \"erin\", \"host\": \"ws05\", \"src\": \"10.0.1.5\", "
             + "\"id\": \"p2\", \"mentions\": [], \"text\": \"No links here\"}]";
+    private static final String TYPE_ID_SAMPLE = "[{\"ts\": \"2026-09-28T11:00:00Z\", \"user\": \"dave\", "
+            + "\"host\": \"ws04\", \"src\": \"10.0.1.4\", \"category\": \"User\", \"action\": \"Login\"}, "
+            + "{\"ts\": \"2026-09-28T11:05:00Z\", \"user\": \"dave\", \"host\": \"ws04\", \"src\": \"10.0.1.4\", "
+            + "\"category\": \"User\", \"action\": \"Logout\"}, {\"ts\": \"2026-09-28T11:09:00Z\", "
+            + "\"user\": \"erin\", \"host\": \"ws05\", \"src\": \"10.0.1.5\", \"category\": \"User\", "
+            + "\"action\": \"Login\"}]";
     private static final Map<String, Object> ALLOW_DENY = Map.of("field", "action",
             "map", Map.of("ALLOW", "true", "DENY", "false"));
     private static final Map<String, Object> LOGIN = Map.of("field", "action",
@@ -192,6 +198,78 @@ class TestE2eGenerator extends AbstractE2eTest {
         assertThat(rows.get(document + "Data[@Name='client']/Data[@Name='geo']/Data[@Name='city']/@Value")
                 .getLast()).contains("\"Leeds\"");
         assertThat(section).doesNotContain("not written by a rule", "(not in the sample)");
+    }
+
+    @Test
+    void aTypeIdTheSameForDifferentKindsIsRefusedAndJoinedFieldsTellThemApart() {
+        // Asked for by the user: a TypeId from the category alone ('User' for logons and logoffs alike, seen in two
+        // SecretServer runs) is refused, saying the standing instructions' TypeId format comes first; the category
+        // and action joined tell the kinds apart, through to the Events stream and the documentation.
+        final String build = "gen-type-ids";
+        final String feed = "GEN-TYPE-IDS";
+        final String name = feed + "-Events";
+        createFeed(build, feed);
+        documentationDoc("System/MCP Workspace/" + build, "AGENTS",
+                "## Fields\n- EventDetail/TypeId is <Category>-<Action>, e.g. User-Login.\n");
+        final long raw = upload(feed, TYPE_ID_SAMPLE);
+        final Map<String, Object> typeId = new LinkedHashMap<>(Map.of("path", "EventDetail/TypeId",
+                "field", "category"));
+        final List<Map<String, Object>> common = new ArrayList<>(common("ts", "yyyy-MM-dd'T'HH:mm:ssX", "host",
+                "src", "user"));
+        common.add(typeId);
+        final Map<String, Object> mapping = new LinkedHashMap<>(Map.of("input", "json", "common", common,
+                "events", List.of(
+                        Map.of("name", "logon", "when", List.of(Map.of("field", "action", "equals", "Login")),
+                                "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action",
+                                        "value", "Logon"), Map.of("path", "EventDetail/Authenticate/User/Id",
+                                        "field", "user"))),
+                        Map.of("name", "logoff", "when", List.of(Map.of("field", "action", "equals", "Logout")),
+                                "fields", List.of(Map.of("path", "EventDetail/Authenticate/Action",
+                                        "value", "Logoff"), Map.of("path", "EventDetail/Authenticate/User/Id",
+                                        "field", "user"))))));
+
+        final Map<String, Object> refused = json("build_translation_xslt", args("build", build, "name", name,
+                "mapping", mapping, "schema_version", VERSION, "stream_ids", List.of(raw), "feeds", List.of(feed)));
+        assertThat(refused).containsEntry("ok", false).doesNotContainKey("saved");
+        assertThat(strings(refused, "problems")).anySatisfy(problem -> assertThat(problem)
+                .contains("EventDetail/TypeId reads 'category', which in the sample is the same for events of "
+                          + "different kinds ('User' for rules logoff, logon)")
+                .contains("the format the standing instructions (AGENTS docs) set for TypeIds"));
+        assertThat(jsonOf(refused.get("standing_instructions"))).as("the format the build's AGENTS doc sets")
+                .contains("EventDetail/TypeId is <Category>-<Action>");
+
+        typeId.remove("field");
+        typeId.put("join", List.of("category", "action"));
+        final Map<String, Object> xslt = agreed("build_translation_xslt", args("build", build, "name", name,
+                "mapping", mapping, "schema_version", VERSION, "stream_ids", List.of(raw), "feeds", List.of(feed)));
+        assertThat(xslt).as("saved: %s", xslt.get("problems")).containsKey("saved");
+        final Map<String, Object> pipeline = agreed("create_pipeline", args("build", build, "name", name,
+                "template_uuid", templateUuid("translation", template("json")), "set_properties", List.of(
+                        docProperty("translationFilter", "xslt", String.valueOf(map(xslt, "saved").get("uuid")),
+                                "XSLT"), valueProperty("jsonParser", "addRootObject", false))));
+        final String pipelineUuid = uuidOf(pipeline);
+        final Map<String, Object> sample = stepSample(pipelineUuid, List.of(raw));
+        assertThat(sample).as("stepped clean: %s", sample.get("groups")).containsEntry("verdict", "clean");
+        final Map<String, Object> gate = process(pipelineUuid, List.of(raw));
+        assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+        final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+        final List<String> typeIds = ((List<?>) json("fetch_events", args("streamId", eventsId, "firstRecord", 0,
+                "recordCount", 10)).get("records")).stream()
+                .map(record -> record instanceof final Map<?, ?> fieldsOf
+                        ? String.valueOf(fieldsOf.get("data"))
+                        : String.valueOf(record))
+                .map(record -> record.replaceAll("(?s).*<TypeId>([^<]*)</TypeId>.*", "$1"))
+                .toList();
+        assertThat(typeIds).containsExactly("User-Login", "User-Logout", "User-Login");
+
+        final Map<String, Object> doc = agreed("write_documentation", args("build", build,
+                "pipeline_uuid", pipelineUuid, "stream_ids", List.of(raw), "change", "Created",
+                "markdown", "# " + name + "\n\n## Purpose and data\n\nLogons, for the generator's e2e test.\n"));
+        final Map<String, List<String>> rows = fieldRows(documentation(uuidOf(doc))
+                .split("## Field mapping", 2)[1].split("\n## ", 2)[0]);
+        assertThat(rows).hasEntrySatisfying("EventDetail/TypeId", cells -> assertThat(String.join(" | ", cells))
+                .contains("`category`, `action` joined with '-'")
+                .contains("\"User-Login\"", "\"User-Logout\""));
     }
 
     // Each record's Events, each checked valid against the schema and passing the quality checks.

@@ -158,6 +158,21 @@ class TestErrorTriage {
     }
 
     @Test
+    void aRequiredElementLeftOutIsSaidSoNotTheElementTheSchemaNames() {
+        // Seen: "starting with element '{Data}'. One of '{Command}' is expected" read as Data put in the wrong
+        // place, two rounds of stepping before Command was given a default.
+        final ErrorTriage.Classified classified = RULES.classify("ERROR", "schemaFilter", false,
+                "Invalid content was found starting with element '{Data}'. One of '{Command}' is expected.");
+
+        assertThat(classified.classification()).isEqualTo("blocking");
+        assertThat(classified.reason()).startsWith("Output fails schema validation: an element the schema requires")
+                .contains("was left out", "give the entry a default", "rather than moving the element named");
+        // Any other schema error as before.
+        assertThat(RULES.classify("ERROR", "schemaFilter", false, "cvc-type.3.1.3: The value 'x' is not valid")
+                .reason()).isEqualTo("Output fails schema validation");
+    }
+
+    @Test
     void cleanWhenThereAreNoMarkers() {
         assertThat(RULES.triage(List.of(), Set.of()).get("verdict")).isEqualTo("clean");
     }

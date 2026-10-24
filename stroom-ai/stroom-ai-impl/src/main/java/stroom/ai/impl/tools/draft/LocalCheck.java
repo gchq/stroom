@@ -43,12 +43,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /// A translation mapping checked against the sample it is for, before anything is created or stepped (the Stroom
 /// MCP server's `utils/localcheck.py`).
@@ -795,19 +798,19 @@ public final class LocalCheck {
     /// rules: events of different kinds share it. Seen: TypeId the SecretServer category ('User') for logons,
     /// logoffs and role changes alike. Told from the sample, not the mapping's shape: a TypeId field whose values
     /// already differ per kind (a firewall's action, FortiGate's logid) is fine though the rules test other fields
-    /// as well.
+    /// as well. A TypeId joining fields (join) is told the same way, from its joined values.
     ///
     /// @param mapping   The mapping.
     /// @param records   The sample's records.
     /// @param extracted Each record's extracted values, worked out once, or null to work them out.
-    /// @return The warning, or an empty list.
+    /// @return The problem, or an empty list.
     public static List<String> sharedTypeIds(final TranslationMapping mapping, final List<Object> records,
                                              final List<Map<String, String>> extracted) {
         final FieldMapping typeId = mapping.common().stream()
                 .filter(e -> "EventDetail/TypeId".equals(e.strippedPath()))
                 .findFirst()
                 .orElse(null);
-        if (typeId == null || !hasText(typeId.field()) || hasText(mapping.forEach())) {
+        if (typeId == null || (!hasText(typeId.field()) && typeId.join() == null) || hasText(mapping.forEach())) {
             return List.of();
         }
         final Set<String> own = new HashSet<>();
@@ -824,11 +827,18 @@ public final class LocalCheck {
             if (name == null || name.isEmpty() || name.startsWith("drop: ") || own.contains(name)) {
                 continue;
             }
-            final String value = derived.contains(typeId.field())
+            final Object record = records.get(n);
+            final Function<String, String> read = field -> derived.contains(field)
                     ? (values == null
                             ? null
-                            : values.get(typeId.field()))
-                    : valueOf(records.get(n), typeId.field());
+                            : values.get(field))
+                    : valueOf(record, field);
+            final String value = typeId.join() == null
+                    ? read.apply(typeId.field())
+                    : typeId.join().stream()
+                            .map(read)
+                            .filter(LocalCheck::hasText)
+                            .collect(Collectors.joining(typeId.joinSeparator()));
             if (value != null && !value.isEmpty()) {
                 byValue.computeIfAbsent(value, k -> new LinkedHashMap<>()).merge(name, 1, Integer::sum);
             }
@@ -844,9 +854,95 @@ public final class LocalCheck {
         if (examples.isEmpty()) {
             return List.of();
         }
-        return List.of("EventDetail/TypeId reads '" + typeId.field() + "', which in the sample is the same for "
-                       + "events of different kinds (" + String.join("; ", examples) + "). TypeId names the kind "
-                       + "of event: give each rule its own (a value per rule, or an xpath joining the fields).");
+        // A problem, not the Python server's warning (seen: two runs that left TypeId the category alone, 'User' for
+        // logons, logoffs and lockouts, the warning one among many).
+        return List.of("EventDetail/TypeId reads " + (typeId.join() == null
+                ? "'" + typeId.field() + "'"
+                : "join " + PyText.list(typeId.join())) + ", which in the sample is the same for events of different "
+                       + "kinds (" + String.join("; ", examples) + "). TypeId names the kind of event, so each "
+                       + "kind needs its own: write it in the format the standing instructions (AGENTS docs) set "
+                       + "for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. "
+                       + "{\"path\": \"EventDetail/TypeId\", \"join\": [\"" + (typeId.join() == null
+                ? typeId.field()
+                : typeId.join().getFirst()) + "\", \"<the field telling them apart, e.g. action>\"]} (separator, "
+                       + "default '-'), or give each rule its own value.");
+    }
+
+    /// Required elements a rule writes only when their inputs have a value, whose inputs are empty in sample records
+    /// the rule takes: those events fail the schema, which reports the element written after the one left out
+    /// (seen: "Invalid content was found starting with element '{Data}'. One of '{Command}' is expected", read as
+    /// Data put in the wrong place, two rounds of stepping before the Command entry was given a default). Not in the
+    /// Python server, which warned of such elements without saying whether the sample has any. Only entries read
+    /// from fields are counted (an xpath's value isn't known here).
+    ///
+    /// @param mapping         The mapping.
+    /// @param records         The sample's records.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The warnings.
+    public static List<String> requiredLeftEmpty(final TranslationMapping mapping,
+                                                 final List<Object> records,
+                                                 final Map<String, List<String>> requiredOnInput) {
+        if (hasText(mapping.forEach()) || requiredOnInput.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = new ArrayList<>();
+        final List<Map<String, String>> extracted = new ArrayList<>();
+        for (int n = 0; n < records.size(); n++) {
+            final Map<String, String> values = extracted(mapping, records, null, n);
+            extracted.add(values);
+            rules.add(ruleOf(mapping, records.get(n), values));
+        }
+        final List<String> out = new ArrayList<>();
+        for (final EventRule rule : mapping.events()) {
+            for (final String path : requiredOnInput.getOrDefault(rule.name(), List.of())) {
+                final List<FieldMapping> entries = new ArrayList<>(mapping.common());
+                entries.addAll(rule.fields());
+                entries.removeIf(e -> !e.strippedPath().equals(path) && !e.strippedPath().startsWith(path + "/"));
+                final List<String> fields = new ArrayList<>();
+                boolean readable = !entries.isEmpty();
+                for (final FieldMapping entry : entries) {
+                    final List<String> inputs = new ArrayList<>();
+                    if (hasText(entry.field())) {
+                        inputs.add(entry.field());
+                    }
+                    inputs.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
+                    readable = readable && !inputs.isEmpty() && entry.value() == null && !hasText(entry.xpath())
+                               && entry.defaultValue() == null && entry.lookup() == null
+                               && !hasText(entry.dictionary());
+                    fields.addAll(inputs);
+                }
+                if (!readable) {
+                    continue;
+                }
+                int taken = 0;
+                int empty = 0;
+                for (int n = 0; n < records.size(); n++) {
+                    if (!rule.name().equals(rules.get(n))) {
+                        continue;
+                    }
+                    taken++;
+                    final Object record = records.get(n);
+                    final Map<String, String> values = extracted.get(n);
+                    if (fields.stream().allMatch(field -> !hasText(derived.contains(field)
+                            ? (values == null
+                                    ? null
+                                    : values.get(field))
+                            : valueOf(record, field)))) {
+                        empty++;
+                    }
+                }
+                if (empty > 0) {
+                    out.add("[" + rule.name() + "] " + path + " is required by the schema, but its input ("
+                            + fields.stream().map(f -> "'" + f + "'").collect(Collectors.joining(", "))
+                            + ") is empty in " + empty + " of the " + taken + " sample records this rule takes: "
+                            + "those events fail the schema, which reports the element written after it (often "
+                            + "Data) as unexpected. Give the entry a default, or any_of with a field that is "
+                            + "filled.");
+                }
+            }
+        }
+        return out;
     }
 
     /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,
@@ -1081,7 +1177,7 @@ public final class LocalCheck {
                     extracted.add(extractedValues(mapping, record));
                 }
             }
-            warnings.addAll(sharedTypeIds(mapping, records, extracted));
+            problems.addAll(sharedTypeIds(mapping, records, extracted));
             final Coverage coverage = unknownCoverage(mapping, records, extracted);
             problems.addAll(coverage.problems());
             if (!hasText(mapping.forEach())) {
@@ -1130,6 +1226,9 @@ public final class LocalCheck {
                 }
                 if (entry.anyOf() != null) {
                     names.addAll(entry.anyOf());
+                }
+                if (entry.join() != null) {
+                    names.addAll(entry.join());
                 }
                 if (entry.lookup() != null && hasText(entry.lookup().field())) {
                     names.add(entry.lookup().field());

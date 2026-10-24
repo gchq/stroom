@@ -75,7 +75,10 @@ class TestPythonParity {
                         map.put("input", error.input());
                         return (Object) map;
                     }).toList();
-                    assertThat(PyJson.dumps(errors, 1)).isEqualTo(PyJson.dumps(c.get("errors"), 1));
+                    // The port's entries may join fields too (FieldMapping's join), which the message names.
+                    assertThat(PyJson.dumps(errors, 1)).isEqualTo(PyJson.dumps(c.get("errors"), 1).replace(
+                            "give exactly one of field, any_of, value, xpath or lookup",
+                            "give exactly one of field, any_of, join, value, xpath or lookup"));
                     return;
                 }
                 assertThat(c).doesNotContainKey("errors");

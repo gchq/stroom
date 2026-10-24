@@ -97,10 +97,7 @@ class GeneratedDrift {
         // What differs, so the edit can be carried into the mapping (- what the mapping generates, + the XSLT).
         final String differs = " What differs (- what the mapping generates, + the XSLT): " + String.join(" | ",
                 CodeDiff.diff(regenerated.xslt(), code));
-        // Saved by this generator and unchanged since, yet not what it generates: written by hand, though saved
-        // before hand saves were marked (seen: TWITTER's, taken for an earlier generator's code).
-        final boolean thisGenerator = !NullSafe.isBlankString(by) && by.contains(history.madeBy());
-        if (same.orElse(false) && (saved.map(XsltVersionHistory.Saved::hand).orElse(false) || thisGenerator)) {
+        if (same.orElse(false) && saved.map(XsltVersionHistory.Saved::hand).orElse(false)) {
             // Not in the Python server, which took this for an earlier generator's code and offered to regenerate
             // it, undoing the edit (seen: TWITTER's mentions and links, saved with save_xslt, and the
             // documentation generated from the mapping without them).
