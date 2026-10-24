@@ -263,24 +263,6 @@
     border-color: var(--control__text-color);
 }
 
-.aiChatHistoryCell {
-}
-
-.aiChatHistoryCell-row {
-    display: flex;
-    flex-direction: row;
-    padding: 5px;
-    gap: 5px;
-}
-
-.aiChatHistoryCell-title {
-    flex-grow: 1;
-}
-
-.aiChatHistoryCell-age {
-    opacity: 0.6;
-}
-
 /* ---- Delete button (visible on hover) ---- */
 
 .ai-message-delete {
