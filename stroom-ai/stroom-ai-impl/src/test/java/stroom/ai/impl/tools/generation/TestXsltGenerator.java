@@ -339,11 +339,62 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aTypeIdJoinsTheFieldsThatTellTheKindsApart() {
+        // Seen: TypeId the SecretServer category alone ('User' for logons, logoffs and lockouts); the kind is the
+        // category and the action together, both extracted from one message, which no xpath could join.
+        final Map<String, Object> json = baseJson();
+        json.put("extract", List.of(Map.of("field", "msg",
+                "regex", "Event: \\[([^\\]]+)\\](?: Action: \\[([^\\]]+)\\])?",
+                "names", List.of("event", "action"))));
+        json.put("events", List.of(rule("any", List.of(), List.of(
+                Map.of("path", "EventDetail/TypeId", "join", List.of("event", "action")),
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "user")))));
+        final String records = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"t\"/>"
+                               + "<data name=\"user\" value=\"pat\"/><data name=\"msg\" value=\"x Event: [User] "
+                               + "Action: [Login Failed] y\"/></record><record><data name=\"time\" value=\"t\"/>"
+                               + "<data name=\"user\" value=\"sam\"/><data name=\"msg\" value=\"Event: [Secret]\"/>"
+                               + "</record></records>";
+
+        final XsltGenerator.Generated generated = generate(TranslationMapping.fromJson(json));
+        final List<XmlElement> events = children(transform(generated.xslt(), records), "Event");
+
+        assertThat(events).extracting(event -> find(event, "EventDetail/TypeId").text())
+                // Only the values there are: no separator left dangling.
+                .containsExactly("User-Login Failed", "Secret");
+        json.put("events", List.of(rule("any", List.of(), List.of(
+                Map.of("path", "EventDetail/TypeId", "join", List.of("event", "action"), "separator", "."),
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/User/Id", "field", "user")))));
+        assertThat(children(transform(generate(TranslationMapping.fromJson(json)).xslt(), records), "Event"))
+                .extracting(event -> find(event, "EventDetail/TypeId").text())
+                .containsExactly("User.Login Failed", "Secret");
+    }
+
+    @Test
+    void aJoinIsOfTwoOrMoreFieldsAndOnlyTheirText() {
+        for (final String[] bad : new String[][]{
+                {"{\"path\": \"EventDetail/TypeId\", \"join\": [\"event\"]}", "two or more"},
+                {"{\"path\": \"EventDetail/TypeId\", \"field\": \"event\", \"separator\": \".\"}",
+                 "separator goes with join"},
+                {"{\"path\": \"EventDetail/TypeId\", \"join\": [\"a\", \"b\"], \"field\": \"a\"}",
+                 "give exactly one of field, any_of, join"},
+                {"{\"path\": \"EventTime/TimeCreated\", \"join\": [\"d\", \"t\"], \"time_format\": \"x\"}",
+                 "no repeat, time_format or dictionary"}}) {
+            assertThatThrownBy(() -> FieldMapping.fromJson(json(bad[0])))
+                    .as(bad[0]).hasMessageContaining(bad[1]);
+        }
+        assertThat(FieldMapping.fromJson(json("{\"path\": \"EventDetail/TypeId\", \"join\": [\"a\", \"b\"], "
+                                              + "\"separator\": \".\"}")).toJson(DumpMode.COMPACT))
+                .containsEntry("join", List.of("a", "b")).containsEntry("separator", ".");
+    }
+
+    @Test
     void eachFieldNeedsExactlyOneSource() {
         assertThatThrownBy(() -> mapping(with("common", json("""
                 [{"path": "EventSource/User/Id", "field": "user", "value": "x"}]"""))))
                 .isInstanceOf(MappingValidationException.class)
-                .hasMessageContaining("exactly one of field, any_of, value, xpath or lookup");
+                .hasMessageContaining("exactly one of field, any_of, join, value, xpath or lookup");
     }
 
     @Test

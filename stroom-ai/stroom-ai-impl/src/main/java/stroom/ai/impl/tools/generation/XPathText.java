@@ -121,6 +121,16 @@ public final class XPathText {
         return "(" + String.join(", ", sources) + ")[normalize-space(.)][1]";
     }
 
+    /// @param sources   The fields' selectors, in order.
+    /// @param separator What goes between their values.
+    /// @return Each one's first value that has text, joined with the separator: empty when none has one, as an
+    /// empty input is (not in the Python server, which had no join).
+    public static String joinText(final List<String> sources, final String separator) {
+        return "string-join((" + sources.stream()
+                .map(source -> "(" + source + ")[normalize-space(.)][1]")
+                .collect(Collectors.joining(", ")) + "), " + literal(separator) + ")";
+    }
+
     /// @param mapReference The xsl:map variable, e.g. `$action_to_success`.
     /// @param key          The key's expression.
     /// @param defaultValue The default, or null.

@@ -109,6 +109,7 @@ Each value has one source and optional modifiers:
 | --- | --- |
 | `field` | An input field, or a name from `extract` |
 | `any_of: [a, b]` | The first of these fields with a value, for sources whose variants name a thing differently |
+| `join: [a, b]` | These fields' values joined with `separator` (default `-`), those with no value left out: `User-Login` from a category and an action, extracted fields included |
 | `value` | A constant |
 | `lookup: {map, field, path?}` | What reference data holds for the key (see the reference-data guide) |
 | `xpath` | A computed value (embedded JSON: `json-to-xml(...)/*/*[@key='x']`) |
@@ -200,6 +201,12 @@ what they agreed to, and saving it again asks only about a rule not agreed yet, 
 `EventDetail/TypeId` is required. Read from a field, it would be left out of events whose records lack that field (the
 rule for the rest, often): there the generator falls back to the rule's name and warns. Give TypeId a `default` to
 choose another value.
+
+TypeId names the kind of event, so each kind gets its own: a TypeId the sample shows to be the same for events of
+different rules (a category alone, `User` for logons and logoffs alike) is refused. Write it in the format the standing
+instructions (AGENTS docs) set for TypeIds, where they set one (`<Category>-<Action>`, say, or the vendor's event
+code); otherwise join the fields that tell the kinds apart, `{"path": "EventDetail/TypeId", "join": ["event",
+"action"]}` (`User-Login`, `User-Logout`), or give each rule a value of its own.
 
 A field no element of the schema means (a rule id, a byte count, a vendor's key) is carried as `Data` (a path ending
 `/Data`, with `data_name`) on the element it describes: `destination_key` under
