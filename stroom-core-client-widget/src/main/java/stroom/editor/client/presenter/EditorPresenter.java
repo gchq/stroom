@@ -51,7 +51,8 @@ public class EditorPresenter
         own(view.addContextMenuHandler(event ->
                 contextMenu.show(
                         EditorPresenter.this,
-                        event.getPopupPosition())));
+                        event.getPopupPosition(),
+                        event.getEditTarget())));
     }
 
     /**

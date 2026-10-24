@@ -24,7 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -32,8 +31,9 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -56,7 +56,7 @@ public class ScheduledProcessHistoryListPresenter
             GWT.create(ExecutionScheduleResource.class);
 
     private final RestFactory restFactory;
-    private final DataGridWidget<ExecutionHistory> dataGrid;
+    private final DataGrid<ExecutionHistory> dataGrid;
     private final MultiSelectionModelImpl<ExecutionHistory> selectionModel;
     private RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
     private final DateTimeFormatter dateTimeFormatter;
@@ -75,12 +75,12 @@ public class ScheduledProcessHistoryListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         request = ExecutionHistoryRequest.builder().build();
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Scheduled Process History");
         dataGrid.setMultiLine(true);
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridWidgetSelectionEventManager<ExecutionHistory> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(
+        final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager =
+                new DataGridSelectionEventManager<>(
                         dataGrid,
                         selectionModel,
                         false);

@@ -18,14 +18,14 @@ package stroom.processor.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final DataGridWidget<ProcessorProfile> dataGrid;
+    private final DataGrid<ProcessorProfile> dataGrid;
     private final MultiSelectionModelImpl<ProcessorProfile> selectionModel;
     private final RestDataProvider<ProcessorProfile, ResultPage<ProcessorProfile>> dataProvider;
 
@@ -50,7 +50,7 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
                                          final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ProcessorProfile::getId);
         dataGrid.setTableName("Processor Profiles");

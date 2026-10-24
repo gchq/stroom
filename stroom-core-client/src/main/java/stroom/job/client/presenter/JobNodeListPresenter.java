@@ -21,7 +21,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -45,7 +44,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerViewWithHeading;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -75,7 +75,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
 
-    private final DataGridWidget<JobNodeAndInfo> dataGrid;
+    private final DataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final ToolbarToggleButton showEnabledToggleBtn;
 
@@ -97,7 +97,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Job Nodes");
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);

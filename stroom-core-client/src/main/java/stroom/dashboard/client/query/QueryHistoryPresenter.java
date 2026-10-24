@@ -25,9 +25,9 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -55,7 +55,7 @@ public class QueryHistoryPresenter
     private static final String NAME = "Query history";
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
-    private final DataGridWidget<StoredQuery> list;
+    private final DataGrid<StoredQuery> list;
     private QueryPresenter queryPresenter;
     private String currentDashboardUuid;
 
@@ -78,7 +78,7 @@ public class QueryHistoryPresenter
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
-        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(NAME);
         list.addColumn(DataGridUtil.columnBuilder((StoredQuery query) -> query,
@@ -86,7 +86,7 @@ public class QueryHistoryPresenter
                 .build(), "", 200);
         selectionModel = new MultiSelectionModelImpl<>();
         list.setSelectionModel(selectionModel,
-                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false));
+                new DataGridSelectionEventManager<>(list, selectionModel, false));
         view.setList(list);
 
         own(selectionModel.addSelectionChangeHandler(event -> {

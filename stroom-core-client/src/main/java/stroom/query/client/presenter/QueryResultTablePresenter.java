@@ -38,8 +38,6 @@ import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.grid.client.MessagePanel;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -71,7 +69,9 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Listeners;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.MessagePanel;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -115,7 +115,7 @@ public class QueryResultTablePresenter
     private final RestFactory restFactory;
     private final LocationManager locationManager;
     private final PagerView pagerView;
-    private final DataGridWidget<TableRow> dataGrid;
+    private final DataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
 
     private QueryModel currentSearchModel;
@@ -190,7 +190,7 @@ public class QueryResultTablePresenter
         annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Query Results");
         // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
         dataGrid.setVirtual(true);

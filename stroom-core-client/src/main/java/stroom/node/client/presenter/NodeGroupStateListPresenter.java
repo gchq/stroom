@@ -21,7 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.client.NodeGroupClient;
@@ -31,7 +30,8 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 
 public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final DataGridWidget<NodeStatusResult> dataGrid;
+    private final DataGrid<NodeStatusResult> dataGrid;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
 
@@ -60,7 +60,7 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
                                        final NodeClient nodeClient,
                                        final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Node Group State");
         view.setDataWidget(dataGrid);
 

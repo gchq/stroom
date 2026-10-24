@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -39,7 +38,8 @@ import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -80,7 +80,7 @@ public class PropertyListPresenter
     private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
     private static final String EDIT_TITLE = "Edit Selected Property";
 
-    private final DataGridWidget<PipelineProperty> dataGrid;
+    private final DataGrid<PipelineProperty> dataGrid;
     private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
@@ -101,7 +101,7 @@ public class PropertyListPresenter
                                  final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by element and property name: an edit replaces the row
         dataGrid.setKeyProvider(property -> property.getElement() + ":" + property.getName());
         dataGrid.setTableName("Pipeline Properties");

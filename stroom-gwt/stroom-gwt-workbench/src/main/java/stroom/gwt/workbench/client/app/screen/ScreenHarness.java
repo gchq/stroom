@@ -51,7 +51,8 @@ import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
@@ -231,8 +232,10 @@ public final class ScreenHarness {
         // Widgets with no event bus of their own show their dialogs on Stroom's static one (e.g. a
         // DateTimeBox not given a dialog provider), as in Stroom
         new StaticEventBus(eventBus);
-        // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
-        new Menu(eventBus, this::createMenuPresenter, appRoot);
+        // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's MenuManager does
+        new MenuManager(eventBus, this::createMenuPresenter, appRoot);
+        // and the edit menu on text fields, in place of the browser's
+        addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
         // MainPresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);

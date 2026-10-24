@@ -62,7 +62,7 @@ const UTIL_AREAS = new Set(['util', 'dispatch']);
 
 // Gradle modules that ARE the reusable widget library — anything in them that
 // isn't framework plumbing is a widget, regardless of its `area` (e.g. the
-// DataGrid subsystem lives under stroom.data.grid, not stroom.widget).
+// cell tables live under stroom.data.table, not stroom.widget).
 const WIDGET_MODULES = new Set(['stroom-core-client-widget']);
 
 // Display names for functional areas (subcategory labels). Unknowns are title-cased.

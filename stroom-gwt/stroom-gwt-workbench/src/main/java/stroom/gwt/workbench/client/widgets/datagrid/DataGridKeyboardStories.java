@@ -34,7 +34,7 @@ import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Button;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
@@ -47,7 +47,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The keyboard of a [DataGridWidget] (its `DataGridKeyboard`): the row focus, Right
+/// The keyboard of a [DataGrid] (its `DataGridKeyboard`): the row focus, Right
 /// into the cells, the controls in them (a tick box and a value spinner, as `ProcessorListPresenter`
 /// has, a text field and a selection box, as `FloorMapSettingsPresenter`'s value schema has),
 /// editing with Enter or F2, and Tab from one control to the next while editing.
@@ -357,7 +357,7 @@ public final class DataGridKeyboardStories {
             rows.add(new Row(name));
         }
 
-        final DataGridWidget<Row> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<Row> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.setAccessibleName("Processors");

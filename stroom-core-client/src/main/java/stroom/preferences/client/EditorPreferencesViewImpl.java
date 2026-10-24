@@ -21,6 +21,7 @@ import stroom.item.client.DecoratedItem;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.ui.config.shared.UserPreferences.TextContextMenu;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.util.shared.NullSafe;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
@@ -50,6 +51,8 @@ public final class EditorPreferencesViewImpl
     SelectionBox<String> editorKeyBindings;
     @UiField
     SelectionBox<String> editorLiveAutoCompletion;
+    @UiField
+    SelectionBox<String> textContextMenu;
 
     @Inject
     public EditorPreferencesViewImpl(final Binder binder) {
@@ -57,6 +60,9 @@ public final class EditorPreferencesViewImpl
 
         setEditorKeyBindingsValues();
         setEditorLiveAutoCompletionValues();
+        for (final TextContextMenu value : TextContextMenu.values()) {
+            textContextMenu.addItem(value.getDisplayValue());
+        }
     }
 
     @Override
@@ -144,6 +150,17 @@ public final class EditorPreferencesViewImpl
         this.editorLiveAutoCompletion.addItem(Toggle.OFF.getDisplayValue());
     }
 
+    @Override
+    public TextContextMenu getTextContextMenu() {
+        return TextContextMenu.fromDisplayValue(textContextMenu.getValue());
+    }
+
+    @Override
+    public void setTextContextMenu(final TextContextMenu textContextMenu) {
+        Objects.requireNonNull(textContextMenu);
+        this.textContextMenu.setValue(textContextMenu.getDisplayValue());
+    }
+
     @UiHandler("editorTheme")
     public void onEditorThemeValueChange(final ValueChangeEvent<EditorThemeName> e) {
         if (getUiHandlers() != null) {
@@ -160,6 +177,13 @@ public final class EditorPreferencesViewImpl
 
     @UiHandler("editorLiveAutoCompletion")
     public void onEditorLiveAutoCompletionValueChange(final ValueChangeEvent<String> e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
+    }
+
+    @UiHandler("textContextMenu")
+    public void onTextContextMenuValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onChange();
         }

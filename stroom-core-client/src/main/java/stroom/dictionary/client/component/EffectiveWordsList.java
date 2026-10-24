@@ -18,8 +18,6 @@ package stroom.dictionary.client.component;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.dictionary.shared.Word;
 import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordListResource;
@@ -30,7 +28,9 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
@@ -56,7 +56,7 @@ public class EffectiveWordsList extends Controller {
 
     private final RestFactory restFactory;
     private final PagerView pagerView;
-    private final DataGridWidget<Word> dataGrid;
+    private final DataGrid<Word> dataGrid;
     private WordList wordList = WordList.EMPTY;
     private DocRef docRef;
     private CriteriaFieldSort fieldSort;
@@ -69,7 +69,7 @@ public class EffectiveWordsList extends Controller {
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by word, so a row whose values change is still the same row
         dataGrid.setKeyProvider(Word::getWord);
         dataGrid.setTableName("Words");

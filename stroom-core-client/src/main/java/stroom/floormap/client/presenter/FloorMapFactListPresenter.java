@@ -26,7 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.JSONUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -72,7 +72,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
 
     private static final String END_TITLE = "Delete From This Time (keeps history)";
 
-    private final DataGridWidget<FactObject> dataGrid;
+    private final DataGrid<FactObject> dataGrid;
     private final ListDataProvider<FactObject> dataProvider = new ListDataProvider<>();
     private final MultiSelectionModelImpl<FactObject> selectionModel;
     /// Called with the full multi-selection on every change. Used by the Editor tab.
@@ -117,7 +117,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                                      final FloorMapFactListView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Facts");
         // Multi-select: ctrl/shift-click extends the selection natively via the
         // grid's selection event manager.
@@ -251,7 +251,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     /// Replaces the entire grid data with the supplied list.
     ///
     /// Both the backing [ListDataProvider] and the visible
-    /// [DataGridWidget] row data are updated. The current selection is
+    /// [DataGrid] row data are updated. The current selection is
     /// *not* automatically adjusted — callers should follow up with
     /// [#setSelected(String)] as appropriate.
     ///

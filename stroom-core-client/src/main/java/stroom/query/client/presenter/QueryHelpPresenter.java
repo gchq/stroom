@@ -28,12 +28,12 @@ import stroom.query.shared.QueryHelpType;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -141,7 +141,7 @@ public class QueryHelpPresenter
                     detail.getInsertType() != null &&
                     detail.getInsertType().isInsertable() &&
                     detail.getInsertText() != null) {
-                    ClipboardUtil.copy(detail.getInsertText());
+                    Clipboard.writeText(detail.getInsertText());
                 }
             });
         }

@@ -22,7 +22,6 @@ import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -39,7 +38,8 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -82,7 +82,7 @@ public class DataRetentionImpactPresenter
         FILTERABLE_FIELDS.add(MetaFields.TYPE);
     }
 
-    private final DataGridWidget<DataRetentionImpactRow> dataGrid;
+    private final DataGrid<DataRetentionImpactRow> dataGrid;
     private final MultiSelectionModelImpl<DataRetentionImpactRow> selectionModel;
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
@@ -111,7 +111,7 @@ public class DataRetentionImpactPresenter
                                         final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Data Retention Impact");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);

@@ -23,6 +23,7 @@ import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
+import stroom.ui.config.shared.UserPreferences.TextContextMenu;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -90,13 +91,15 @@ public final class EditorPreferencesPresenter
         getView().setEditorTheme(editorThemeName);
         getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
         getView().setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
+        getView().setTextContextMenu(userPreferences.getTextContextMenu());
     }
 
     public void write(final UserPreferences.Builder builder) {
         builder
                 .editorTheme(getView().getEditorTheme())
                 .editorKeyBindings(getView().getEditorKeyBindings())
-                .editorLiveAutoCompletion(getView().getEditorLiveAutoCompletion());
+                .editorLiveAutoCompletion(getView().getEditorLiveAutoCompletion())
+                .textContextMenu(getView().getTextContextMenu());
     }
 
     /// @param onChange What to run when the user changes an editor preference.
@@ -123,5 +126,13 @@ public final class EditorPreferencesPresenter
         Toggle getEditorLiveAutoCompletion();
 
         void setEditorLiveAutoCompletion(Toggle editorLiveAutoCompletion);
+
+        /// @return Whether a right-click in a text field or code editor shows Stroom's edit menu or
+        /// the browser's.
+        TextContextMenu getTextContextMenu();
+
+        /// @param textContextMenu Whether a right-click in a text field or code editor shows
+        ///                        Stroom's edit menu or the browser's.
+        void setTextContextMenu(TextContextMenu textContextMenu);
     }
 }

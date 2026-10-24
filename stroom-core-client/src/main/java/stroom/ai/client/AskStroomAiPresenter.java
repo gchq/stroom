@@ -45,7 +45,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -54,6 +53,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -176,7 +176,7 @@ public class AskStroomAiPresenter
                     // Capture copy click events.
                     final String data = button.getAttribute("data");
                     if (NullSafe.isNonBlankString(data)) {
-                        if (ClipboardUtil.copy(data)) {
+                        Clipboard.writeText(data, () -> {
                             // Code to change label
                             final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
                             final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
@@ -191,7 +191,8 @@ public class AskStroomAiPresenter
                                     }
                                 }.schedule(2000);
                             }
-                        }
+                        }, () -> {
+                        });
                     }
                 }
             }

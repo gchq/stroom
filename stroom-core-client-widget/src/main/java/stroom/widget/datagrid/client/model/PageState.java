@@ -22,7 +22,7 @@ import java.util.List;
 
 /// The rows on the current page, the visible range and the row count (design requirement R-D1).
 ///
-/// This replicates the data handling in the forked GWT `HasDataPresenter` without any rendering, so
+/// This replicates the data handling in GWT's `HasDataPresenter` without any rendering, so
 /// `AsyncDataProvider`, `RestDataProvider`, `ListDataProvider` and `Pager` behave exactly as they do
 /// with `MyDataGrid`. It also records which rows have changed since the last render.
 ///

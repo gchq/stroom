@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CellIcon;
-import stroom.data.grid.client.WrapperView;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -29,7 +28,8 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.HtmlBuilder;
 
@@ -58,7 +58,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private final RegExp messageCauseDelimiterPattern;
 
-    private final DataGridWidget<Marker> dataGrid;
+    private final DataGrid<Marker> dataGrid;
     private Set<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
@@ -66,7 +66,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
     public MarkerListPresenter(final EventBus eventBus,
                                final WrapperView view) {
         super(eventBus, view);
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Markers");
         dataGrid.setMultiLine(true);
         // A severity's summary row is keyed by its severity (there is one of each), so it is still the

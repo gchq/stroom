@@ -23,9 +23,9 @@ import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.Listeners;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -65,7 +65,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             SELECT_ALL_OR_NONE_TEXT,
             SvgImage.DOCUMENT_SELECT_ALL_OR_NONE);
 
-    private final DataGridWidget<DocumentType> list;
+    private final DataGrid<DocumentType> list;
     private Consumer<Boolean> filterStateConsumer = null;
 
     private final Listeners<TypeFilterPresenter> selectionListeners = new Listeners<>();
@@ -78,7 +78,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         // arrows move, and Space, Enter or a press ticks or unticks the type with the focus, Ctrl+A
         // all of them. As wide as its longest type and as high as its types, up to the popup's
         // size, then scrolling. Escape goes on to the popup, which closes
-        list = new DataGridWidget<>(this, DataGridWidget.DEFAULT_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.DEFAULT_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Document types");
         list.setFitContent(true);
@@ -92,8 +92,8 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
                 ? "type-filter__all"
                 : null);
         list.addColumn(getTickBoxColumn(), "", 100);
-        final DataGridWidgetSelectionEventManager<DocumentType> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        final DataGridSelectionEventManager<DocumentType> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
         selectionEventManager.setChooser(this::execute);
         selectionEventManager.addSelectAllHandler(e -> {
             toggleSelectAll();

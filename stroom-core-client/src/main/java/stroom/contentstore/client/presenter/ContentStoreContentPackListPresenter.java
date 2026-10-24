@@ -21,13 +21,13 @@ import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -56,7 +56,7 @@ public class ContentStoreContentPackListPresenter
     final RestFactory restFactory;
 
     /** Table of content packs */
-    final DataGridWidget<ContentStoreContentPackWithDynamicState> dataGrid;
+    final DataGrid<ContentStoreContentPackWithDynamicState> dataGrid;
 
     /** Shows what is selected in the App Store list */
     private final MultiSelectionModel<ContentStoreContentPackWithDynamicState> gridSelectionModel;
@@ -78,7 +78,7 @@ public class ContentStoreContentPackListPresenter
                                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         // Rows keyed by their pack: each fetch brings new rows
         this.dataGrid.setKeyProvider(ContentStoreContentPackWithDynamicState::getContentPack);
         this.dataGrid.setTableName("Content Packs");
@@ -208,7 +208,7 @@ public class ContentStoreContentPackListPresenter
      * Creates the columns for displaying the Content Packs.
      * @param dataGrid The widget to display stuff in.
      */
-    private void initColumns(final DataGridWidget<ContentStoreContentPackWithDynamicState> dataGrid) {
+    private void initColumns(final DataGrid<ContentStoreContentPackWithDynamicState> dataGrid) {
 
         // Icon for content pack, pulled via passthrough servlet
         dataGrid.addResizableColumn(

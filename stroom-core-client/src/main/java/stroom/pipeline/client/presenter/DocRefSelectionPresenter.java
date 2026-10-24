@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Selection;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.presenter.client.View;
 
@@ -41,7 +41,7 @@ import java.util.function.Function;
 
 public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionView> {
 
-    private final DataGridWidget<DocRef> dataGrid;
+    private final DataGrid<DocRef> dataGrid;
     private final Selection<DocRef> selection = new Selection<>(true, new HashSet<>());
     private final ListDataProvider<DocRef> dataProvider = new ListDataProvider<>();
 
@@ -51,7 +51,7 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
     public DocRefSelectionPresenter(final EventBus eventBus, final DocRefSelectionView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Document References");
         addSelectedColumn();
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Document Name", Function.identity(), false);

@@ -18,7 +18,7 @@
 // Records, or compares with a recording, the geometry of every data grid in the workbench's
 // stories: header height, column widths and row heights, at the default and compact densities
 // (see lib/grid-geometry.mjs). The baseline for switching screens from MyDataGrid to
-// DataGridWidget (stroom-core-client-widget/DATA_GRID_DESIGN.md, Phases 0 and 3).
+// DataGrid (stroom-core-client-widget/DATA_GRID_DESIGN.md, Phases 0 and 3).
 //
 // Each story is measured once its play has finished. Exits 1 if a comparison finds differences.
 

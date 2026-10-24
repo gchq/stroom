@@ -18,12 +18,12 @@ package stroom.dashboard.client.table.cf;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.PagerView;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -42,7 +42,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> {
     private Runnable onChange = () -> {
     };
 
-    private final DataGridWidget<ConditionalFormattingRule> dataGrid;
+    private final DataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
     private List<ConditionalFormattingRule> currentData;
 
@@ -51,7 +51,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> {
                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(ConditionalFormattingRule::getId);
         dataGrid.setTableName("Conditional Formatting Rules");

@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -32,7 +31,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.presenter.client.MyPresenterWidget;
@@ -60,7 +60,7 @@ public class UserAccessListPresenter
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
-    private final DataGridWidget<UserAccessRow> dataGrid;
+    private final DataGrid<UserAccessRow> dataGrid;
     private final MultiSelectionModelImpl<UserAccessRow> selectionModel;
 
     private RestDataProvider<UserAccessRow, ResultPage<UserAccessRow>> dataProvider = null;
@@ -77,7 +77,7 @@ public class UserAccessListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         this.dataGrid.setKeyProvider(UserAccessRow::getSubjectId);
         this.dataGrid.setTableName("User Access");

@@ -46,14 +46,14 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/// Stories for Stroom's menus (`ShowMenuEvent`, handled by Stroom's `Menu` with a
+/// Stories for Stroom's menus (`ShowMenuEvent`, handled by Stroom's `MenuManager` with a
 /// `MenuPresenter` per menu and submenu).
 public final class MenuPanelStories {
 
-    // Stroom's menu is a cell table with this class and `role="menu"`.
+    // Stroom's menu (`Menu`) has this class and `role="menu"`.
     static final String MENU = ".menu";
-    // The highlighted row is the cell table's keyboard-selected row.
-    private static final String ACTIVE_ROW = ".menu tr[class*='KeyboardSelectedRow']";
+    // The highlighted row is the menu's active row.
+    private static final String ACTIVE_ROW = ".menu .menu__row--active";
     private static final String NO_ACTION = "(no action yet)";
     // Longer than the pause in typing that starts type-ahead again (TypeAhead, half a second)
     private static final int TYPE_AHEAD_PAUSE_MILLIS = 600;
@@ -82,7 +82,7 @@ public final class MenuPanelStories {
                                 MenuWidgets.icon("Copy", SvgImage.COPY, () -> result.accept("Copy")).build(),
                                 MenuWidgets.icon("Cut", SvgImage.CLEAR, () -> result.accept("Cut")).build(),
                                 MenuWidgets.iconDisabled("Paste", SvgImage.CLIPBOARD)
-                                        .tooltip("Nothing in clipboard")
+                                        .tooltip("Nothing's in the clipboard")
                                         .build(),
                                 MenuWidgets.separator(),
                                 MenuWidgets.simple("Select all", () -> result.accept("Select All")),
@@ -92,6 +92,10 @@ public final class MenuPanelStories {
                 .withPlay(play -> {
                     // Open the menu, click an item — its action fires and the menu closes
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
+                    // A tooltip shows as written, its apostrophe not escaped twice (as "&#39;")
+                    play.expect(play.within(play.screen().findByRole("menuitem", TextMatch.containing("Paste")))
+                                    .querySelector(".menu__item"))
+                            .toHaveAttribute("title", "Nothing's in the clipboard");
                     play.click(play.screen().findByText("Copy"));
                     play.waitFor(() -> play.expect(play.getByText("Copy", "strong")).toBeInTheDocument());
                 })
@@ -201,7 +205,7 @@ public final class MenuPanelStories {
                                 MenuWidgets.simple("Close", () -> result.accept("Close")))))
                 .withPlay(play -> {
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
-                    // Stroom's Menu focuses the first enabled item when it is shown, so no focus()
+                    // Stroom's `MenuManager` focuses the first enabled item when it is shown, so no focus()
                     // is needed
                     final Query menu = play.screen().findByRole("menu");
                     play.waitFor(() -> play.expect(menu).toBeVisible());
@@ -345,7 +349,7 @@ public final class MenuPanelStories {
                     play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                     play.expect(actions).toHaveAttribute("aria-expanded", "false");
 
-                    // The button is the menu's auto-hide partner and Stroom's Menu closes a menu
+                    // The button is the menu's auto-hide partner and Stroom's `MenuManager` closes a menu
                     // shown again with the same items, so a second press toggles it closed
                     play.click(actions);
                     play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
@@ -402,7 +406,7 @@ public final class MenuPanelStories {
         final FlowPanel panel = new FlowPanel();
         panel.getElement().getStyle().setProperty("padding", "20px 16px");
 
-        // The same list each time, so that Stroom's Menu toggles the menu on a second press
+        // The same list each time, so that Stroom's `MenuManager` toggles the menu on a second press
         final List<Item> actionItems = Arrays.asList(
                 MenuWidgets.icon("Copy", SvgImage.COPY, () -> onChosen.call("Copy")).build(),
                 MenuWidgets.icon("Delete", SvgImage.DELETE, () -> onChosen.call("Delete")).build());

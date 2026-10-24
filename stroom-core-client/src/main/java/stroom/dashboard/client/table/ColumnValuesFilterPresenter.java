@@ -21,16 +21,16 @@ import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFil
 import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -66,7 +66,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         QuickFilterUiHandlers {
 
     private final PagerView pagerView;
-    private final DataGridWidget<ColumnValue> list;
+    private final DataGrid<ColumnValue> list;
     private final ColumnValueRowStyles rowStyles;
 
     private Provider<Element> filterButtonProvider;
@@ -91,7 +91,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         // A list of the column's values, each ticked or not: the arrows move, and Space, Enter or a
         // press ticks or unticks the value with the focus, Ctrl+A all of them. Escape goes on to
         // the popup, which closes
-        list = new DataGridWidget<>(this, DataGridWidget.DEFAULT_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.DEFAULT_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Values");
         list.setRowStyles(rowStyles);
@@ -100,8 +100,8 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
         list.addColumn(getTickBoxColumn(), "", 100);
 
-        final DataGridWidgetSelectionEventManager<ColumnValue> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
+        final DataGridSelectionEventManager<ColumnValue> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, new MultiSelectionModelImpl<>(), true);
         selectionEventManager.setChooser(this::toggle);
         selectionEventManager.addSelectAllHandler(e -> onSelectAll());
         // The ticks are the rows' own state, not a selection

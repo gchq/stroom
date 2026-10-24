@@ -17,7 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.data.grid.client.PagerView;
+import stroom.widget.datagrid.client.PagerView;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

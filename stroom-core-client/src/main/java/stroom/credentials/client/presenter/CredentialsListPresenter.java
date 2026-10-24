@@ -24,7 +24,6 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -37,7 +36,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -74,7 +74,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * List of credentials
      */
-    private final DataGridWidget<CredentialWithPerms> dataGrid;
+    private final DataGrid<CredentialWithPerms> dataGrid;
 
     /**
      * What is selected in the list?
@@ -145,7 +145,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
 
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
@@ -205,7 +205,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Initialise the columns in the data grid.
      */
-    private void initColumns(final DataGridWidget<CredentialWithPerms> grid) {
+    private void initColumns(final DataGrid<CredentialWithPerms> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName)
                         .build(),
                 DataGridUtil.headingBuilder("Name")

@@ -16,7 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.data.grid.client.MouseHelper;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -28,6 +27,7 @@ import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.component.client.ControllerNode;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;

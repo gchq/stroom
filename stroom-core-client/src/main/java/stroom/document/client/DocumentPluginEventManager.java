@@ -98,7 +98,6 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -117,6 +116,7 @@ import stroom.widget.tab.client.event.RequestCloseTabsEvent;
 import stroom.widget.tab.client.event.RequestMoveTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.HtmlBuilder;
@@ -1726,7 +1726,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.SHARE)
                 .text("Link")
-                .command(() -> ClipboardUtil.copy(docUrl))
+                .command(() -> Clipboard.writeText(docUrl))
                 .build();
     }
 
@@ -1838,7 +1838,7 @@ public class DocumentPluginEventManager extends Plugin {
                     .collect(Collectors.joining(delimter));
         }
         if (!NullSafe.isBlankString(value)) {
-            ClipboardUtil.copy(value);
+            Clipboard.writeText(value);
         }
     }
 

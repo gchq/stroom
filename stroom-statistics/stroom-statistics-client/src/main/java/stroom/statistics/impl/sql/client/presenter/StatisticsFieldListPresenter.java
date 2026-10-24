@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
@@ -25,7 +24,8 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class StatisticsFieldListPresenter extends DocPresenter<PagerView, StatisticStoreDoc> {
 
-    private final DataGridWidget<Field> dataGrid;
+    private final DataGrid<Field> dataGrid;
     private final MultiSelectionModelImpl<Field> selectionModel;
 
     private final StatisticsFieldEditPresenter statisticsFieldEditPresenter;
@@ -57,7 +57,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         super(eventBus, view);
         own(statisticsFieldEditPresenter);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Statistics Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

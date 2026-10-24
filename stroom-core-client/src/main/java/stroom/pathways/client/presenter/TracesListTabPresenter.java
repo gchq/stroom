@@ -16,7 +16,6 @@
 
 package stroom.pathways.client.presenter;
 
-import stroom.data.grid.client.DefaultResources;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -65,13 +64,12 @@ public class TracesListTabPresenter extends DocPresenter<TracesView, TracesDoc> 
     public TracesListTabPresenter(final EventBus eventBus,
                                   final TracesView view,
                                   final TracesListPresenter listPresenter,
-                                  final DefaultResources resources,
                                   final RestFactory restFactory) {
         super(eventBus, view);
         own(listPresenter);
         this.listPresenter = listPresenter;
         this.restFactory = restFactory;
-        traceOverviewWidget = new TraceOverviewWidget(this, resources);
+        traceOverviewWidget = new TraceOverviewWidget(this);
 
         toolbar.addStyleName("traces-toolbar");
         toolbar.add(timeRangeSelector);

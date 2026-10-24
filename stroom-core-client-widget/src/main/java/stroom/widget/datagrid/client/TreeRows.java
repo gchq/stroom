@@ -39,7 +39,7 @@ import java.util.function.Function;
 /// @param <R> The type of the grid's rows.
 final class TreeRows<R> {
 
-    private final DataGridWidget<R> grid;
+    private final DataGrid<R> grid;
     // The column of expanders, or -1 if the grid isn't a tree
     private int column = -1;
     // A tree's rows' expanders and what expands or collapses one, from the screen, or null
@@ -48,7 +48,7 @@ final class TreeRows<R> {
     // Each row's place among its siblings and how many there are, for the rows last drawn
     private TreePositions positions = TreePositions.of(new int[0]);
 
-    TreeRows(final DataGridWidget<R> grid) {
+    TreeRows(final DataGrid<R> grid) {
         this.grid = grid;
     }
 

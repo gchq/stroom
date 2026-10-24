@@ -32,7 +32,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -57,7 +56,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -91,7 +91,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final ProcessorInfoBuilder processorInfoBuilder;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
-    private final DataGridWidget<ProcessorListRow> dataGrid;
+    private final DataGrid<ProcessorListRow> dataGrid;
     private final MultiSelectionModelImpl<ProcessorListRow> selectionModel;
 
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
@@ -115,7 +115,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         own(tooltipPresenter);
         this.securityContext = securityContext;
 
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Processors");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

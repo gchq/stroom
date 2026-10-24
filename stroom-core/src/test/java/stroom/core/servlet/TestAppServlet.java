@@ -41,7 +41,18 @@ class TestAppServlet {
         assertThat(html)
                 .contains("<html lang=\"en\" class=\"stroom")
                 .contains("s.src = 'ui/stroom/stroom.nocache.js';")
-                .doesNotContain("@ROOT_CLASS@", "@TITLE@", "@ON_CONTEXT_MENU@", "@BOOTSTRAP@");
+                .doesNotContain("@ROOT_CLASS@", "@TITLE@", "@BOOTSTRAP@");
+    }
+
+    @Test
+    void pageLeavesRightClicksToTheUi() throws Exception {
+        // The body no longer stops the browser's context menu itself (gchq/stroom#5897): the UI's
+        // ContextMenuManager shows Stroom's edit menu on text fields, and the browser's on Shift.
+        final String html = render(new StroomServlet(UiConfig::new, () -> mock(UserPreferencesService.class)));
+
+        assertThat(html)
+                .contains("<body class=\"stroom-body\">")
+                .doesNotContain("oncontextmenu");
     }
 
     @Test
@@ -52,7 +63,7 @@ class TestAppServlet {
         assertThat(html)
                 .contains("<html lang=\"en\" class=\"stroom")
                 .contains("<script type=\"text/javascript\" src='ui/stroom/stroom.nocache.js'></script>")
-                .doesNotContain("@ROOT_CLASS@", "@TITLE@", "@ON_CONTEXT_MENU@", "@BOOTSTRAP@");
+                .doesNotContain("@ROOT_CLASS@", "@TITLE@", "@BOOTSTRAP@");
     }
 
     private String render(final AppServlet servlet) throws Exception {

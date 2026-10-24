@@ -31,9 +31,9 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -57,7 +57,7 @@ public class QueryFavouritesPresenter
     private static final String NAME = "Favourite queries";
 
     private final MultiSelectionModelImpl<StoredQuery> selectionModel;
-    private final DataGridWidget<StoredQuery> list;
+    private final DataGrid<StoredQuery> list;
     private final NamePresenter namePresenter;
     private final ButtonView createButton;
     private final ButtonView editButton;
@@ -88,7 +88,7 @@ public class QueryFavouritesPresenter
 
         // A list of the queries, the one with the focus chosen (and shown below it); Enter, or a
         // double click, on one opens it (the dialog's OK)
-        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName(NAME);
         list.addColumn(DataGridUtil.columnBuilder((StoredQuery query) -> query,
@@ -96,7 +96,7 @@ public class QueryFavouritesPresenter
                 .build(), "", 200);
         selectionModel = new MultiSelectionModelImpl<>();
         list.setSelectionModel(selectionModel,
-                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false));
+                new DataGridSelectionEventManager<>(list, selectionModel, false));
         view.setList(list);
 
         createButton = view.getToolbar().button(SvgImage.ADD, "Create Favourite From Current Query", this::onCreate);

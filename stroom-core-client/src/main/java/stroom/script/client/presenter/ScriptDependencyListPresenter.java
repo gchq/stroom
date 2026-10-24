@@ -17,7 +17,6 @@
 package stroom.script.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.WrapperView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
@@ -27,6 +26,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.component.client.Contexts;
+import stroom.widget.datagrid.client.WrapperView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 
 import com.google.inject.Inject;

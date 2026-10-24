@@ -19,8 +19,12 @@ package stroom.editor.client.view;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.menu.client.presenter.CheckMenuItem;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -38,19 +42,59 @@ public class EditorMenuPresenter {
 
     private EditorPresenter xmlEditorPresenter;
 
+    /// Shows the menu.
+    ///
+    /// @param xmlEditorPresenter The editor the menu is for.
+    /// @param popupPosition      Where to show it.
+    /// @param editTarget         The editor's text, whose edit items (Cut, Copy, Paste and so on)
+    ///                           start the menu, or null if the menu was opened elsewhere (e.g. on
+    ///                           an error shown in place of the editor).
     public void show(final EditorPresenter xmlEditorPresenter,
-                     final PopupPosition popupPosition) {
+                     final PopupPosition popupPosition,
+                     final TextEditTarget editTarget) {
         this.xmlEditorPresenter = xmlEditorPresenter;
-        ShowMenuEvent
+        final ShowMenuEvent.Builder builder = ShowMenuEvent
                 .builder()
-                .name("Editor Options")
-                .items(getMenuItems())
-                .popupPosition(popupPosition)
-                .fire(xmlEditorPresenter);
+                .name(editTarget != null
+                        ? "Editor"
+                        : "Editor Options")
+                .items(editTarget != null
+                        ? ContextMenuManager.withEditItems(editTarget, getEditorItems())
+                        : getOptionAndFormatItems())
+                .popupPosition(popupPosition);
+        if (editTarget != null) {
+            builder.onHide(e -> editTarget.restore());
+        }
+        builder.fire(xmlEditorPresenter);
     }
 
-    // The context menu's items, ticked to show the editor's current settings
-    private List<Item> getMenuItems() {
+    // Format, then the editor's options in a sub menu of their own, below the edit items
+    private List<Item> getEditorItems() {
+        final List<Item> menuItems = new ArrayList<>();
+        // With icons, as the edit items above them have
+        final Action formatAction = xmlEditorPresenter.getFormatAction();
+        if (formatAction.isAvailable()) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(0)
+                    .icon(SvgImage.FORMAT)
+                    .text(formatAction.getText())
+                    .command(formatAction::execute)
+                    .build());
+        }
+        final List<Item> options = getOptionItems();
+        if (!options.isEmpty()) {
+            menuItems.add(new IconParentMenuItem.Builder()
+                    .priority(1)
+                    .icon(SvgImage.SETTINGS)
+                    .text("Editor Options")
+                    .children(options)
+                    .build());
+        }
+        return menuItems;
+    }
+
+    // The editor's options, ticked to show its current settings
+    private List<Item> getOptionItems() {
         // TODO @AT Consider using MenuBuilder.builder() instead
         int position = 0;
         final List<Item> menuItems = new ArrayList<>();
@@ -65,8 +109,14 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
+        addMenuItem(position, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
+        return menuItems;
+    }
+
+    // The options with Format below them, for a menu opened away from the editor's text
+    private List<Item> getOptionAndFormatItems() {
+        final List<Item> menuItems = getOptionItems();
+        addMenuItem(menuItems.size(), menuItems, xmlEditorPresenter.getFormatAction());
         return menuItems;
     }
 

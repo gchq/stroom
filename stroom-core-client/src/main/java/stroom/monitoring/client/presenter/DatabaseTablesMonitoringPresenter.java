@@ -19,8 +19,6 @@ package stroom.monitoring.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
@@ -30,7 +28,9 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -48,7 +48,7 @@ public class DatabaseTablesMonitoringPresenter
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
     private final RestFactory restFactory;
-    private final DataGridWidget<DBTableStatus> dataGrid;
+    private final DataGrid<DBTableStatus> dataGrid;
     private final FindDBTableCriteria criteria;
     private RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
@@ -59,7 +59,7 @@ public class DatabaseTablesMonitoringPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new DataGridWidget<>(this, 1000);
+        dataGrid = new DataGrid<>(this, 1000);
         // Rows keyed by database and table
         dataGrid.setKeyProvider(row -> row.getDb() + "." + row.getTable());
         dataGrid.setTableName("Database Tables");

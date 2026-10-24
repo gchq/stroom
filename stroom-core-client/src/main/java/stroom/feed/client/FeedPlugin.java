@@ -30,7 +30,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.ClipboardUtil;
+import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -78,7 +78,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                                 .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, docRef.getType())
                                 .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, docRef.getUuid())
                                 .buildString();
-                        ClipboardUtil.copy(docUrl);
+                        Clipboard.writeText(docUrl);
                     }
                 }, new ExplorerTaskMonitorFactory(this)));
     }

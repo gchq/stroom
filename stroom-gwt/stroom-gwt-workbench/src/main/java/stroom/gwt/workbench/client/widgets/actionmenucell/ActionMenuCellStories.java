@@ -26,7 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 
@@ -133,7 +133,7 @@ public final class ActionMenuCellStories {
     // A one-row grid of a name column and the cell's, as Stroom's lists show it
     private static Widget actionMenuGrid(final StoryContext context, final List<Item> items) {
         final StoryPopups popups = StoryPopups.create(context).withMenus();
-        final DataGridWidget<String> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String row) -> row).build(), "Name", 150);
         grid.addColumn(DataGridUtil.columnBuilder(
                                 (String row) -> row,

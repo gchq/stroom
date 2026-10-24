@@ -19,12 +19,12 @@ package stroom.config.global.client.view;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.PasswordBox;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -231,7 +231,7 @@ public final class GlobalPropertyEditViewImpl
 
     @UiHandler("copyNameButton")
     public void onCopyNameButton(final ClickEvent event) {
-        ClipboardUtil.copy(name.getText());
+        Clipboard.writeText(name.getText());
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

@@ -18,12 +18,12 @@ package stroom.ai.client;
 
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -41,12 +41,12 @@ import java.util.function.Consumer;
 /**
  * Displays attachment table data in a pageable data grid inside a popup dialog.
  * Columns are dynamically created from the markdown table header row returned by
- * the server. Uses {@link DataGridWidget} for fixed headers and column resizing.
+ * the server. Uses {@link DataGrid} for fixed headers and column resizing.
  */
 public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
 
     private final AskStroomAiClient askStroomAiClient;
-    private final DataGridWidget<List<String>> dataGrid;
+    private final DataGrid<List<String>> dataGrid;
     private RestDataProvider<List<String>, ResultPage<List<String>>> dataProvider;
 
     private int chatId;
@@ -60,7 +60,7 @@ public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.askStroomAiClient = askStroomAiClient;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Attachment Data");
         view.setDataWidget(dataGrid);
     }

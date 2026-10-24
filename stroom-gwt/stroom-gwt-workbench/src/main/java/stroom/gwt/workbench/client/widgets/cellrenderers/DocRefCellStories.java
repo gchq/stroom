@@ -25,7 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -177,7 +177,7 @@ public final class DocRefCellStories {
                 .build();
 
         // The grid takes a GWT event bus, not the cell's web bindery one
-        final DataGridWidget<DocRef> grid = new DataGridWidget<>(new com.google.gwt.event.shared.SimpleEventBus());
+        final DataGrid<DocRef> grid = new DataGrid<>(new com.google.gwt.event.shared.SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addDefaultSelectionModel(false);

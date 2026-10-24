@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -45,7 +44,8 @@ import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -82,7 +82,7 @@ public class DocumentUserPermissionsListPresenter
     private final RestFactory restFactory;
     private final FetchDocumentUserPermissionsRequest.Builder criteriaBuilder =
             new FetchDocumentUserPermissionsRequest.Builder();
-    private final DataGridWidget<DocumentUserPermissions> dataGrid;
+    private final DataGrid<DocumentUserPermissions> dataGrid;
     private final MultiSelectionModelImpl<DocumentUserPermissions> selectionModel;
     private final PagerView pagerView;
     private RestDataProvider<DocumentUserPermissions, ResultPage<DocumentUserPermissions>> dataProvider;
@@ -105,7 +105,7 @@ public class DocumentUserPermissionsListPresenter
         this.securityContext = securityContext;
         documentTypeCache.fetch(this::setupColumns, this);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Document User Permissions");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);

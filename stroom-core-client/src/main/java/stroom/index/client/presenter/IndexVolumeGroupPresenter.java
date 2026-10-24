@@ -18,13 +18,13 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.grid.client.WrapperView;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.WrapperView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

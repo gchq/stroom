@@ -238,9 +238,9 @@ public final class AceEditorFeatureStories {
                     play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_error"))
                             .toHaveTextContent("5"));
                 })
-                // The editor's context menu (a secondary mouse down): its options are check items,
-                // ticked while on (with no '(ON)' or '(OFF)' in their text), and turning the line
-                // numbers off hides the gutter and unticks them
+                // The editor's context menu (a secondary mouse down): the edit items, Format, and the
+                // editor's options in a sub menu, as check items, ticked while on (with no '(ON)' or
+                // '(OFF)' in their text); turning the line numbers off hides the gutter and unticks them
                 .story("ContextMenu", context -> {
                     final StoryPopups popups = StoryPopups.create(context).withMenus();
                     final EditorPresenter editor = editor(popups.getEventBus(), AceEditorStories.SAMPLE_XML,
@@ -256,11 +256,14 @@ public final class AceEditorFeatureStories {
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT)
                             .textContents();
                     play.waitFor(() -> play.expect("the menu's items", () -> String.join(", ", items.get()))
-                            .toBe("Syntax Highlighting, Line Numbers, Wrap Lines, "
-                                  + "Show Indent Guides, Show Hidden Characters, "
-                                  + "Highlight Active Line, Vim Key Bindings, "
-                                  + "Basic Auto Completion, Snippets, "
-                                  + "Live Auto Completion, Format"));
+                            .toBe("Undo, Redo, Cut, Copy, Paste, Delete, Select All, Format, Editor Options"));
+                    play.click(screen.getByRole("menuitem", TextMatch.containing("Editor Options")));
+                    play.waitFor(() -> play.expect("the menus' items", () -> String.join(", ", items.get()))
+                            .toMatch("Editor Options, Syntax Highlighting, Line Numbers, Wrap Lines, "
+                                     + "Show Indent Guides, Show Hidden Characters, "
+                                     + "Highlight Active Line, Vim Key Bindings, "
+                                     + "Basic Auto Completion, Snippets, "
+                                     + "Live Auto Completion"));
                     // An option that is on is a ticked check item, one that is off an unticked one
                     final Query lineNumbers = screen.getByRole("menuitemcheckbox", "Line Numbers");
                     play.expect(lineNumbers).toHaveAttribute("aria-checked", "true");
@@ -274,6 +277,7 @@ public final class AceEditorFeatureStories {
                     play.click(lineNumbers);
                     play.waitFor(() -> play.expect(gutter).not().toBeVisible());
                     play.rightClick(play.querySelector(".ace_content"));
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Editor Options")));
                     play.waitFor(() -> play.expect(screen.getByRole("menuitemcheckbox", "Line Numbers"))
                             .toHaveAttribute("aria-checked", "false"));
                 })

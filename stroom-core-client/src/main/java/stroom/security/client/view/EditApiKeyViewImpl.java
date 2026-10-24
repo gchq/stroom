@@ -22,7 +22,6 @@ import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.HashAlgorithm;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
@@ -30,6 +29,7 @@ import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewWithUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -99,7 +99,7 @@ public class EditApiKeyViewImpl
         prefixTextBox.setEnabled(false);
         // When the copy btn is clicked show a label to give feedback to user, but then remove it after a time
         apiKeyButtonPanel.button(SvgImage.COPY, "Copy API Key to Clipboard", () -> {
-            ClipboardUtil.copy(apiKeyTextArea.getText());
+            Clipboard.writeText(apiKeyTextArea.getText());
             copyToClipboardLabel.setText("API Key copied to clipboard");
             final Timer timer = new Timer() {
                 @Override

@@ -22,7 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
-/// Small browser helpers used by [DataGridWidget] that GWT's DOM classes do not provide.
+/// Small browser helpers used by [DataGrid] that GWT's DOM classes do not provide.
 final class DataGridDom {
 
     private DataGridDom() {
@@ -236,13 +236,6 @@ final class DataGridDom {
             blocks[i].appendChild($doc.createTextNode(" "));
         }
         return div.textContent || "";
-    }-*/;
-
-    /// Put text on the clipboard.
-    ///
-    /// @param text The text.
-    static native void copyToClipboard(String text) /*-{
-        $wnd.navigator.clipboard.writeText(text);
     }-*/;
 
     /// Offer some text to the user as a file download.

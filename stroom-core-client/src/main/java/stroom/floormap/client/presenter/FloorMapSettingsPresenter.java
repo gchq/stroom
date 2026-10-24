@@ -39,8 +39,8 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Contexts;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.presenter.client.HasUiHandlers;
 import stroom.widget.presenter.client.View;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -97,7 +97,7 @@ public class FloorMapSettingsPresenter
     private final SelectionBox<ValueFormat> valueFormatListBox;
 
     // Value Schema grid
-    private final DataGridWidget<FloorMapFieldMapping> schemaGrid;
+    private final DataGrid<FloorMapFieldMapping> schemaGrid;
     private final ListDataProvider<FloorMapFieldMapping> schemaDataProvider;
     private final MultiSelectionModelImpl<FloorMapFieldMapping> schemaSelectionModel;
     // Each mapping's row key, by identity: an edit's replacement takes the key of the mapping it
@@ -155,7 +155,7 @@ public class FloorMapSettingsPresenter
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
-        schemaGrid = new DataGridWidget<>(this);
+        schemaGrid = new DataGrid<>(this);
         schemaGrid.setTableName("Value Schema");
         // An edit replaces a mapping with a new one, so rows are keyed by the mapping they
         // started as (see rowKey), not by their values, and keep their row (and focus)
@@ -163,7 +163,7 @@ public class FloorMapSettingsPresenter
         // One row at a time: the selection (which enables Remove) follows the keyboard's row
         schemaSelectionModel = new MultiSelectionModelImpl<>();
         schemaGrid.setSelectionModel(schemaSelectionModel,
-                new DataGridWidgetSelectionEventManager<>(schemaGrid, schemaSelectionModel, false));
+                new DataGridSelectionEventManager<>(schemaGrid, schemaSelectionModel, false));
         schemaDataProvider = new ListDataProvider<>();
         schemaDataProvider.addDataDisplay(schemaGrid);
         initSchemaColumns();
@@ -469,7 +469,7 @@ public class FloorMapSettingsPresenter
     }
 
     /// Synchronises the schema [ListDataProvider]'s list with the
-    /// [DataGridWidget] widget, updating both the displayed rows and the total
+    /// [DataGrid] widget, updating both the displayed rows and the total
     /// row count so the grid reflects the current state of the data provider.
     private void refreshGrid() {
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
@@ -666,7 +666,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the data grid widget that displays the Value Schema mappings.
         ///
-        /// @param grid the [DataGridWidget] widget
+        /// @param grid the [DataGrid] widget
         void setSchemaGrid(Widget grid);
     }
 }

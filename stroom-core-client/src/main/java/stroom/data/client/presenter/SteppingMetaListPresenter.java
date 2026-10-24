@@ -17,7 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.DataRetentionFields;
@@ -26,6 +25,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;

@@ -18,7 +18,7 @@ package stroom.widget.datagrid.client;
 
 import java.util.Objects;
 
-/// Identifies a rendered row of a [DataGridWidget]: the row's key, plus which occurrence of that key
+/// Identifies a rendered row of a [DataGrid]: the row's key, plus which occurrence of that key
 /// on the page it is, so a page that shows the same row twice still has two distinct rows.
 final class RowKey {
 

@@ -32,8 +32,6 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.ExpressionPresenter;
 import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.OrderByColumn;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
@@ -52,8 +50,10 @@ import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.OrderByColumn;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -86,7 +86,7 @@ public class ExecutionScheduleManager
 
     public static final String TAB_TYPE = "ExecutionScheduleManager";
 
-    private final DataGridWidget<ExecutionSchedule> dataGrid;
+    private final DataGrid<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
@@ -130,11 +130,11 @@ public class ExecutionScheduleManager
         this.expressionValidator = expressionValidator;
 
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Execution Schedules");
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridWidgetSelectionEventManager<ExecutionSchedule> selectionEventManager
-            = new DataGridWidgetSelectionEventManager<>(
+        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
+            = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
                 true);

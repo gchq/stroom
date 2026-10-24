@@ -26,7 +26,6 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.DocPresenter;
@@ -34,8 +33,9 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -53,7 +53,7 @@ import java.util.List;
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<PagerView, D> {
 
-    private final DataGridWidget<NotificationConfig> dataGrid;
+    private final DataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -74,13 +74,13 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Notifications");
         // An edit replaces the row (their equals compares every field), so keep the row by its uuid
         dataGrid.setKeyProvider(NotificationConfig::getUuid);
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridWidgetSelectionEventManager<NotificationConfig> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(
+        final DataGridSelectionEventManager<NotificationConfig> selectionEventManager =
+                new DataGridSelectionEventManager<>(
                         dataGrid,
                         selectionModel,
                         false);

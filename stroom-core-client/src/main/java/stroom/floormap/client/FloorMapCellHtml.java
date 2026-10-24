@@ -22,7 +22,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 /// Shared cell markup for the floor map's data grids.
 ///
 /// Grid cells are single `nowrap` lines that ellipsise when the column is
-/// too narrow (see `ui/css/celltable/DataGrid.css`), so detail that will not
+/// too narrow (see `ui/css/data-grid.css`), so detail that will not
 /// fit goes in a `title` tooltip instead of wrapping. Both the tracking
 /// panel's Area column and the Groups panel's columns need that, so the markup
 /// lives here rather than being written twice.

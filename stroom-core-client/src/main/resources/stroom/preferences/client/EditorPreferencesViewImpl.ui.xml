@@ -23,5 +23,11 @@
                         screenReaderText="Shows suggestions as you type. Default is Off.">
             <item:SelectionBox ui:field="editorLiveAutoCompletion" addStyleNames="w-100"/>
         </form:FormGroup>
+        <!-- What a right-click in a text field or code editor shows -->
+        <form:FormGroup identity="userPreferencesTextContextMenu" label="Text Context Menu"
+                        helpText="What a right-click in a text field or code editor shows. Stroom shows Stroom's own menu (Cut, Copy, Paste, Select All and so on), styled as Stroom's other menus. Browser shows your browser's menu, with its spelling suggestions and password manager. A Shift+right-click always shows the browser's menu. Default is Stroom unless an administrator has changed the defaults."
+                        screenReaderText="Stroom or Browser. Shift+right-click always shows the browser's menu.">
+            <item:SelectionBox ui:field="textContextMenu" addStyleNames="w-100"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

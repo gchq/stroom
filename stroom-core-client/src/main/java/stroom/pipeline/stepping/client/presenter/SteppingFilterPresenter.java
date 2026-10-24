@@ -30,9 +30,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -64,7 +64,7 @@ public class SteppingFilterPresenter extends
     private List<XPathFilter> xPathFilters;
 
     private final MultiSelectionModelImpl<PipelineElement> elementSelectionModel = new MultiSelectionModelImpl<>();
-    private final DataGridWidget<PipelineElement> elementChooser;
+    private final DataGrid<PipelineElement> elementChooser;
     private final ButtonView addXPath;
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
@@ -98,7 +98,7 @@ public class SteppingFilterPresenter extends
         removeXPath.setEnabled(false);
 
         // A list of the pipeline's elements, the one with the focus chosen (its filters shown)
-        elementChooser = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        elementChooser = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         elementChooser.setProfile(DataGridProfile.LISTBOX);
         elementChooser.setAccessibleName("Elements");
         elementChooser.getElement().addClassName(BASE_CLASS);
@@ -147,7 +147,7 @@ public class SteppingFilterPresenter extends
             elementChooser.addColumn(filterIconColumn, "", ICON_COL_WIDTH);
 
             elementChooser.setSelectionModel(elementSelectionModel,
-                    new DataGridWidgetSelectionEventManager<>(elementChooser, elementSelectionModel, false));
+                    new DataGridSelectionEventManager<>(elementChooser, elementSelectionModel, false));
         });
 
         getView().setElementChooser(elementChooser);

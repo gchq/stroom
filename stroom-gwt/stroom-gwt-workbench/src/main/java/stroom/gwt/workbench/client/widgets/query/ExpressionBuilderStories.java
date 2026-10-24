@@ -360,6 +360,34 @@ public final class ExpressionBuilderStories {
                 // pointer has a green border if it would take it, or a red one (and the "not allowed"
                 // icon) if not, and nothing else is marked; dropping on a green one moves it there,
                 // last, which reorders it when that is its own operator
+                // A right-click on a term's value shows the field's edit items (Cut, Copy, Paste and
+                // so on) above the expression's own items (gchq/stroom#5897); on its condition, a box
+                // to choose from, only the expression's
+                .story("TermFieldContextMenu", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query value = play.querySelector(".termEditor-item[aria-label='Value']");
+                    play.click(play.getByText(USER_ID, ".expression-item__label"));
+                    play.waitFor(() -> play.expect(value).toBeVisible());
+                    play.rightClick(value);
+                    final Query menu = screen.findByRole("menu");
+                    play.expect(play.within(menu).getAllByRole("menuitem").first())
+                            .toHaveTextContent(TextMatch.containing("Undo"));
+                    play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("Select All")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("Add Term")))
+                            .toBeInTheDocument();
+                    // Select All acts on the value, which keeps the focus
+                    play.click(play.within(menu).getByRole("menuitem", TextMatch.containing("Select All")));
+                    play.waitFor(() -> play.expect(value).toHaveFocus());
+
+                    play.rightClick(play.querySelector(".termEditor-item.condition .selection-box__input"));
+                    final Query conditionMenu = screen.findByRole("menu");
+                    play.expect(play.within(conditionMenu).getByRole("menuitem", TextMatch.containing("Add Term")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(conditionMenu).queryByRole("menuitem", TextMatch.containing("Undo")))
+                            .toBeNull();
+                })
                 .story("DragToMove", context -> editor(context, complexExpression(), false))
                 .withPlay(play -> {
                     final Play tree = play.within(play.getByRole("tree", "Expression"));

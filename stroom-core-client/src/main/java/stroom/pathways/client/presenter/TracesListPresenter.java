@@ -18,7 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,7 +39,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -85,7 +85,7 @@ public class TracesListPresenter
     private final RestFactory restFactory;
     private final PagerView pagerView;
     private final TraceHistogramWidget histogramWidget;
-    private final DataGridWidget<TraceRoot> dataGrid;
+    private final DataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
 
@@ -110,7 +110,7 @@ public class TracesListPresenter
         this.pagerView = pagerView;
         this.histogramWidget = new TraceHistogramWidget(dateTimeFormatter);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(TraceRoot::getTraceId);
         dataGrid.setTableName("Traces");

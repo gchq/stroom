@@ -16,9 +16,9 @@
 
 package stroom.script.client.presenter;
 
-import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -32,7 +32,7 @@ import java.util.List;
 
 public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final DataGridWidget<DocRef> dataGrid;
+    private final DataGrid<DocRef> dataGrid;
     private final MultiSelectionModelImpl<DocRef> selectionModel;
 
     @Inject
@@ -40,7 +40,7 @@ public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
                                final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Script Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

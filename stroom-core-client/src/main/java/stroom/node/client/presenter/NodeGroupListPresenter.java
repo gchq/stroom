@@ -20,7 +20,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
@@ -31,7 +30,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.presenter.client.MyPresenterWidget;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     private final NodeGroupClient nodeGroupClient;
-    private final DataGridWidget<NodeGroup> dataGrid;
+    private final DataGrid<NodeGroup> dataGrid;
     private final MultiSelectionModelImpl<NodeGroup> selectionModel;
     private final RestDataProvider<NodeGroup, ResultPage<NodeGroup>> dataProvider;
 
@@ -58,7 +58,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
         this.nodeGroupClient = nodeGroupClient;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id: a tick fetches the groups again as new rows
         dataGrid.setKeyProvider(NodeGroup::getId);
         dataGrid.setTableName("Node Groups");

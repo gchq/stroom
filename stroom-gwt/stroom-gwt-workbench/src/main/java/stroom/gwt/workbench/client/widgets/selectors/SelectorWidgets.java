@@ -17,13 +17,13 @@
 
 package stroom.gwt.workbench.client.widgets.selectors;
 
-import stroom.data.grid.client.PagerViewImpl;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.widget.datagrid.client.PagerViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogViewImpl;
 
