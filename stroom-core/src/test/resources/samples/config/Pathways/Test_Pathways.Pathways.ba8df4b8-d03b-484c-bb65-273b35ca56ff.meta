@@ -7,6 +7,10 @@
     "time" : 0,
     "timeUnit" : "NANOSECONDS"
   },
+  "narrowingWindow" : {
+    "time" : 7,
+    "timeUnit" : "DAYS"
+  },
   "allowPathwayCreation" : true,
   "allowPathwayMutation" : true,
   "allowConstraintCreation" : true,
