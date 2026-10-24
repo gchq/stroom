@@ -183,11 +183,16 @@ class IndexDocumentation {
                 .flatMap(List::stream)
                 .toList()));
         final String layout = docs.layout(context.session(), ref, request.layout()).layout();
-        final Map<String, String> descriptions = new LinkedHashMap<>(docs.keptDescriptions(existing != null
+        final DocRef previous = existing != null
                 ? existing
-                : beside));
+                : beside;
+        final Map<String, String> descriptions = new LinkedHashMap<>(docs.keptDescriptions(previous));
         descriptions.putAll(request.fieldDescriptions());
-        final Descriptions described = new Descriptions(descriptions, true, docs.vendorNotes(request.build()));
+        // As for an events pipeline's: one whose field comes from elsewhere now is asked for again.
+        final Map<String, String> givenFrom = new LinkedHashMap<>(docs.keptDescriptionSources(previous));
+        givenFrom.keySet().removeAll(request.fieldDescriptions().keySet());
+        final Descriptions described = new Descriptions(descriptions, givenFrom, true,
+                docs.vendorNotes(request.build()));
         // Not in the index: as the user chose.
         String section = IndexFieldDocs.existingIndexMarkdown(survey, planned, schema, layout, described);
         if (!described.wanted().isEmpty()) {
@@ -197,6 +202,9 @@ class IndexDocumentation {
         }
         if (!described.given().isEmpty()) {
             section = section.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
+            if (!described.sources().isEmpty()) {
+                section += "\n\n" + FieldDocs.descriptionSourcesBlock(described.sources());
+            }
         }
         final String summary = IndexFieldDocs.existingIndexSummary(survey);
         final String text = DocumentationText.belowSection(KeptMapping.replaceSection(request.body(), "Field mapping",

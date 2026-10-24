@@ -73,6 +73,8 @@ public final class FieldDocs {
             "^(EventDetail/)(?!(?:TypeId|Description|Classification|Purpose|Data)\\b)([^/\\[]+)(?=/)");
     private static final Pattern DESCRIPTIONS = Pattern.compile("<!-- stroom-mcp field descriptions\\n(.*?)\\n-->",
             Pattern.DOTALL);
+    private static final Pattern DESCRIPTION_SOURCES = Pattern.compile(
+            "<!-- stroom-mcp field description sources\\n(.*?)\\n-->", Pattern.DOTALL);
     private static final Pattern IP = PyText.re("^(\\d{1,3}\\.){3}\\d{1,3}$|^[0-9a-fA-F:]+:[0-9a-fA-F:]*$");
     private static final Pattern EMAIL = PyText.re("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final Pattern TIME = PyText.re("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}");
@@ -268,7 +270,33 @@ public final class FieldDocs {
     /// @param markdown The doc's text, or null.
     /// @return Field to description; none if there is no block or it doesn't read.
     public static Map<String, String> readDescriptions(final String markdown) {
-        final Matcher matcher = DESCRIPTIONS.matcher(markdown == null
+        return readBlock(DESCRIPTIONS, markdown);
+    }
+
+    /// Where each kept field description's field came from when it was described (not in the Python server: a
+    /// description is asked for again once its field comes from elsewhere).
+    ///
+    /// @param markdown The doc's text, or null.
+    /// @return Field to source; none if there is no block (one written before they were kept) or it doesn't read.
+    public static Map<String, String> readDescriptionSources(final String markdown) {
+        return readBlock(DESCRIPTION_SOURCES, markdown);
+    }
+
+    /// The sources of the field descriptions as the hidden block they are kept in, after the descriptions' own.
+    ///
+    /// @param sources Field to where it came from when described.
+    /// @return The block, or "" for none.
+    public static String descriptionSourcesBlock(final Map<String, String> sources) {
+        if (sources.isEmpty()) {
+            return "";
+        }
+        final String body = PyJson.dumps(sources, 1, false).replace("--", "-\\u002d");
+        return "<!-- stroom-mcp field description sources\n" + body + "\n-->";
+    }
+
+    // A hidden block of strings by key.
+    private static Map<String, String> readBlock(final Pattern block, final String markdown) {
+        final Matcher matcher = block.matcher(markdown == null
                 ? ""
                 : markdown);
         final Object found;
