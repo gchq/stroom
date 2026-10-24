@@ -121,11 +121,12 @@ class TestMcpElicitations {
     }
 
     @Test
-    void theDocumentsAFormNamesAreLinkedAsAnAnswersAre() throws Exception {
-        // Asked for by the user: the pipeline a form names opens from it.
+    void aFormsDocumentLinksAreCheckedAndNoNamesGuessed() throws Exception {
+        // Asked for by the user: the pipeline a form names opens from it, linked by its tool; no name is linked by
+        // guessing (seen: the index a form was to create linked to the feed of its name).
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
         final AnswerLinks links = Mockito.mock(AnswerLinks.class);
-        Mockito.when(links.link(CHAT_ID, "Reprocess with 'Twitter-Events-V1.1'?"))
+        Mockito.when(links.checkLinks(CHAT_ID, "Reprocess with 'Twitter-Events-V1.1'?"))
                 .thenReturn("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType=Pipeline&docUuid=p)'?");
         elicitations.setAnswerLinks(links);
 
@@ -136,6 +137,7 @@ class TestMcpElicitations {
 
         assertThat(JsonUtil.readValue(card.getMessage(), ElicitationRecord.class).message())
                 .isEqualTo("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType=Pipeline&docUuid=p)'?");
+        Mockito.verify(links, Mockito.never()).link(Mockito.anyInt(), Mockito.anyString());
         elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null);
         assertThat(result.get(10, TimeUnit.SECONDS).action()).isEqualTo(Action.DECLINE);
     }
