@@ -39,7 +39,9 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * {@code table} - filters, groups, aggregates and sorts a table in the workspace (an attached table, or a CSV or
@@ -56,6 +58,9 @@ class TableTool extends AbstractWorkspaceTool {
                                    + "'yyyy-MM-dd HH:00')\"}; aggregates {\"as\": \"error %\", \"expression\": "
                                    + "\"round(sum(if(${status} = 'ERROR', 1, 0)) / count() * 100, 1)\"}";
     private static final LazyValue<String> CATALOGUE = LazyValue.initialisedBy(ExpressionFunctions::catalogue);
+    // Kinds of file that are never tables.
+    private static final Set<String> NOT_TABLES = Set.of("json", "jsonl", "ndjson", "xml", "xsl", "xslt", "txt",
+            "log", "yaml", "yml");
     static final int PREVIEW_ROWS = 10;
 
     /**
@@ -178,6 +183,7 @@ class TableTool extends AbstractWorkspaceTool {
             return ToolResult.text(ExpressionFunctions.help(help));
         }
         final WorkspacePath path = pathArg(request, PATH_ARG);
+        refuseUnlessATable(path);
         try {
             return ToolResult.text(query(request, context, path));
         } catch (final ExpressionException e) {
@@ -185,6 +191,27 @@ class TableTool extends AbstractWorkspaceTool {
             throw e;
         } catch (final WorkspaceException e) {
             return ToolResult.text(fallBack(request, context, path, e));
+        }
+    }
+
+    /// A file of another kind isn't read as CSV, which it isn't (seen: a survey's JSON, its first line refused for
+    /// a stray quote).
+    ///
+    /// @param path The file the table is read from.
+    /// @throws WorkspaceException if it is a kind of file that is never a table.
+    static void refuseUnlessATable(final WorkspacePath path) {
+        final String name = path.path().toLowerCase(Locale.ROOT);
+        final int dot = name.lastIndexOf('.');
+        final String extension = dot < 0 || dot < name.lastIndexOf('/')
+                ? ""
+                : name.substring(dot + 1);
+        if (NOT_TABLES.contains(extension)) {
+            throw new WorkspaceException(path + " is " + extension.toUpperCase(Locale.ROOT) + ", not a table: "
+                                         + ("json".equals(extension) || "jsonl".equals(extension)
+                                            || "ndjson".equals(extension)
+                    ? "query it with jq."
+                    : "read it with read_file or grep.")
+                                         + " table reads .csv, .tsv and .md tables.");
         }
     }
 

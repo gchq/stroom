@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.workspace;
 
+import org.apache.commons.csv.CSVException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -62,6 +63,22 @@ public final class TableEngine {
     /// @return The result.
     /// @throws WorkspaceException if the query does not fit the table, or goes over a limit.
     public static Result run(final Path file, final Format format, final Query query) {
+        try {
+            return runOn(file, format, query);
+        } catch (final UncheckedIOException e) {
+            // A file that isn't the table it is named as (seen: a CSV line with a stray quote, from JSON read as
+            // CSV): said to the model, which can read the line, rather than a tool failure.
+            if (e.getCause() instanceof final CSVException csv) {
+                throw new WorkspaceException("The file isn't " + format + " the table tool can read: "
+                                             + csv.getMessage() + ". A field holding the delimiter, a quote or a "
+                                             + "line break must be in double quotes, its own quotes doubled; "
+                                             + "read_file shows the line.");
+            }
+            throw e;
+        }
+    }
+
+    private static Result runOn(final Path file, final Format format, final Query query) {
         try (final RowSource source = withEvals(open(file, format), query.eval())) {
             final List<String> header = source.header();
             final List<CompiledCondition> conditions = new ArrayList<>();
