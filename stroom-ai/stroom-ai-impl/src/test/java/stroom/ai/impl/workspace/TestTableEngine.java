@@ -67,6 +67,19 @@ class TestTableEngine {
     }
 
     @Test
+    void testAFileThatIsNotTheTableItIsNamedAsIsSaidSo() throws IOException {
+        // Seen: a survey's JSON read as CSV, and the parser's exception a tool failure.
+        final Path json = tempDir.resolve("shapes.csv");
+        Files.writeString(json, "[{\"signature\": \"a\"x, \"count\": 3}]\n");
+
+        assertThatThrownBy(() -> TableEngine.run(json, Format.CSV, query().build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageStartingWith("The file isn't CSV the table tool can read: ")
+                .hasMessageContaining("line: 1")
+                .hasMessageContaining("read_file shows the line");
+    }
+
+    @Test
     void testFilterSelectAndSort() {
         final Result result = TableEngine.run(csv, Format.CSV, query()
                 .where(List.of(new Condition("bytes", ">", "20")))
