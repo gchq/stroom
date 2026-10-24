@@ -74,6 +74,32 @@ class TestMappingSampleCheck {
     }
 
     @Test
+    void anEntryWithoutRepeatGivingSeveralValuesIsWarnedOf() {
+        // Seen: TWITTER's mentions without repeat came out joined in one Data, and the agent wrote the XSLT by hand.
+        final String sample = "<tweets><tweet><data name=\"@timestamp\" value=\"2022-01-15T14:52:23.000Z\"/>"
+                              + "<data name=\"text\" value=\"@pataz1 @Lancegooden Facts much\"/></tweet></tweets>";
+        final Map<String, Object> mentions = new LinkedHashMap<>(Map.of("path", "EventDetail/Create/Document/Data",
+                "data_name", "mentions", "xpath", "for $m in tokenize(data[@name='text']/@value, '\\s+')"
+                                                  + "[starts-with(., '@')] return substring($m, 2)"));
+        final Map<String, Object> json = new LinkedHashMap<>(Map.of("input", "xml", "root", "tweets",
+                "record", "tweet", "common", List.of(Map.of("path", "EventTime/TimeCreated",
+                        "xpath", "data[@name='@timestamp']/@value"))));
+        json.put("events", List.of(Map.of("name", "tweet", "fields", List.of(
+                Map.of("path", "EventDetail/TypeId", "value", "Tweet"), mentions))));
+
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .anySatisfy(warning -> assertThat(warning)
+                        .contains("(used for [tweet] EventDetail/Create/Document/Data mentions) gives 2 values")
+                        .contains("repeat: true writes one element per value"));
+
+        mentions.put("repeat", true);
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .noneSatisfy(warning -> assertThat(warning).contains("values in sample record"));
+    }
+
+    @Test
     void theCheckSaysWhichExtractionsMatchNoneAndWhichSome() {
         // The user key is missing from every seventh record: 342 of the 400 match.
         final TranslationMapping m = kvMapping(List.of(extraction("(?:^|[\\s,;])absent=(\\S*)", "absent"),
