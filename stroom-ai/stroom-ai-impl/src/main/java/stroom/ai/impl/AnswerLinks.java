@@ -141,6 +141,26 @@ public class AnswerLinks {
         }
     }
 
+    /// Run as the user, who must be able to view a document for it to stay linked.
+    ///
+    /// @param chatId The chat the text is in.
+    /// @param text   Text a tool wrote (a form's message), in Markdown, its documents linked by their UUIDs.
+    /// @return The text with each document link checked by its UUID ([#checkedDocLinks]); no names are linked, as
+    /// the tool that wrote it linked what it means (a name matched there was linked to the wrong document: seen,
+    /// the index a form was to create linked to the feed of its name).
+    public String checkLinks(final int chatId, final String text) {
+        if (NullSafe.isBlankString(text)) {
+            return text;
+        }
+        try {
+            return checkedDocLinks(text, uuid -> documentAccess.find(uuid).map(ExplorerNode::getDocRef));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to check the links in chat {}: {}", chatId, e.getMessage()),
+                    e);
+            return text;
+        }
+    }
+
     // The documents whose UUIDs the texts hold, that the user can view, by name.
     private Map<String, List<DocRef>> documentsByName(final List<String> texts) {
         final Set<String> uuids = new LinkedHashSet<>();
