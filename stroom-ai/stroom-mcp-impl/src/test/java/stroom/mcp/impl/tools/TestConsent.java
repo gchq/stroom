@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.docref.DocRef;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.Test;
@@ -209,6 +210,27 @@ class TestConsent {
                 .endsWith("(the rest is in the chat)")
                 .contains("…");
         assertThat(Consent.formMessage("Create feed X", Map.of("name", "X"))).isEqualTo("Create feed X\n\n- name: X");
+    }
+
+    @Test
+    void theDocumentsAFormNamesAreLinkedByTheirUuids() {
+        // Asked for by the user: the pipeline an approval names opens from its form, as the document it is.
+        final DocRef pipeline = new DocRef("Pipeline", "a123a852-baaf-4ead-866f-96f756da1dea", "Twitter_Events");
+        final String link = "[Twitter\\_Events](?action=open-doc&docType=Pipeline&docUuid="
+                            + "a123a852-baaf-4ead-866f-96f756da1dea)";
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("pipeline", "Twitter_Events");
+        details.put("streams", List.of(1));
+
+        assertThat(Consent.formMessage("Reprocess\nReprocess 1 stream(s) with 'Twitter_Events'.", details,
+                List.of(pipeline)))
+                .isEqualTo("Reprocess\nReprocess 1 stream(s) with '" + link + "'.\n\n- pipeline: " + link
+                           + "\n- streams: 1");
+        // Not part of what is agreed to: the request is the same one without them.
+        assertThat(Consent.Request.approval("t", "s", details).withDocuments(pipeline, null).documents())
+                .containsExactly(pipeline);
+        assertThat(Consent.formMessage("Create feed X", Map.of("name", "X"), List.of(pipeline)))
+                .isEqualTo("Create feed X\n\n- name: X");
     }
 
     @Test

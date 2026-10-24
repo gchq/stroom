@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.LongPredicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +46,12 @@ class TestAnswerLinks {
     private static final DocRef SHARED_FEED = new DocRef("Feed", "e82b2aa3-4fe8-48ba-a57a-e2b41464888f", "SHARED");
     private static final DocRef SHARED_PIPELINE = new DocRef("Pipeline", "5d8ce80a-34ba-4afa-8ee2-e65a7ad43401",
             "SHARED");
+    private static final DocRef TWITTER = new DocRef("Feed", "183ff469-b853-4fa5-8462-4c1b3733bc19", "TWITTER");
+    private static final DocRef JSON_FEED = new DocRef("Feed", "2e9b8b9e-3f63-4a7b-9a51-35f8a1d8e6a2", "JSON");
+    private static final DocRef EVENTS_PIPELINE = new DocRef("Pipeline", "a123a852-baaf-4ead-866f-96f756da1dea",
+            "Twitter-Events-V1.1");
+    private static final DocRef EVENTS_DOCUMENTATION = new DocRef("Documentation",
+            "ba2a4250-6a8f-4404-a4ae-6c00837ffbb3", "Twitter-Events-V1.1");
     private static final Map<String, List<DocRef>> DOCUMENTS = Map.of(
             FEED.getName(), List.of(FEED),
             CONVERTER.getName(), List.of(CONVERTER),
@@ -114,6 +121,57 @@ class TestAnswerLinks {
         assertThat(link("The pipeline SHARED reads the feed 'SHARED'."))
                 .isEqualTo("The pipeline " + docLink("SHARED", SHARED_PIPELINE) + " reads the feed '"
                            + docLink("SHARED", SHARED_FEED) + "'.");
+    }
+
+    @Test
+    void testALinkTheModelWritesIsCheckedByItsUuid() {
+        // Asked for by the user: the document is the UUID's, never a guess. Given by UUID alone, or with the wrong
+        // type, it is written with its own; one that isn't there (or the user may not view) is its text alone.
+        final Map<String, DocRef> known = Map.of(EVENTS_PIPELINE.getUuid(), EVENTS_PIPELINE);
+        final Function<String, Optional<DocRef>> resolve = uuid -> Optional.ofNullable(known.get(uuid));
+        final String pipelineLink = docLink("Twitter-Events-V1.1", EVENTS_PIPELINE);
+
+        assertThat(AnswerLinks.checkedDocLinks("Enable [Twitter-Events-V1.1](?action=open-doc&docUuid="
+                                               + EVENTS_PIPELINE.getUuid() + ") now.", resolve))
+                .isEqualTo("Enable " + pipelineLink + " now.");
+        assertThat(AnswerLinks.checkedDocLinks("See [it](?action=open-doc&docType=Feed&docUuid="
+                                               + EVENTS_PIPELINE.getUuid().toUpperCase() + ").", resolve))
+                .isEqualTo("See " + docLink("it", EVENTS_PIPELINE) + ".");
+        assertThat(AnswerLinks.checkedDocLinks("See [GHOST](?action=open-doc&docType=Feed&docUuid="
+                                               + "00000000-0000-0000-0000-000000000000) and [x](?action=open-doc).",
+                resolve)).isEqualTo("See GHOST and x.");
+        // Code is left as it is, as are other links.
+        final String code = "`[a](?action=open-doc&docUuid=00000000-0000-0000-0000-000000000000)` and "
+                            + "[stream 1](?action=open-stream&id=1)\n```\n[b](?action=open-doc&docUuid=x)\n```";
+        assertThat(AnswerLinks.checkedDocLinks(code, resolve)).isEqualTo(code);
+    }
+
+    @Test
+    void testANameInCapitalsIsLinkedUnlessItIsAWordAnAnswerUses() {
+        // Seen: "all of TWITTER's existing data" not linked, TWITTER taken for an ordinary word.
+        final Map<String, List<DocRef>> documents = Map.of("TWITTER", List.of(TWITTER), "JSON", List.of(JSON_FEED));
+        assertThat(AnswerLinks.link("It processes all of TWITTER's existing data.", documents, KNOWN_STREAMS))
+                .isEqualTo("It processes all of " + docLink("TWITTER", TWITTER) + "'s existing data.");
+        assertThat(AnswerLinks.link("Its records are JSON.", documents, KNOWN_STREAMS))
+                .isEqualTo("Its records are JSON.");
+        assertThat(AnswerLinks.link("The feed JSON holds them.", documents, KNOWN_STREAMS))
+                .isEqualTo("The feed " + docLink("JSON", JSON_FEED) + " holds them.");
+    }
+
+    @Test
+    void testAPipelinesNameIsThePipelinesNotItsDocumentations() {
+        // Seen: "Enable filter 58 on Twitter-Events-V1.1" not linked, the pipeline's documentation sharing its
+        // name.
+        final Map<String, List<DocRef>> documents = Map.of("Twitter-Events-V1.1",
+                List.of(EVENTS_DOCUMENTATION, EVENTS_PIPELINE));
+        assertThat(AnswerLinks.link("Enable filter 58 on Twitter-Events-V1.1, on its Processors tab.", documents,
+                KNOWN_STREAMS))
+                .isEqualTo("Enable filter 58 on " + docLink("Twitter-Events-V1.1", EVENTS_PIPELINE)
+                           + ", on its Processors tab.");
+        // Its documentation, where that is said.
+        assertThat(AnswerLinks.link("The documentation Twitter-Events-V1.1 is updated.", documents, KNOWN_STREAMS))
+                .isEqualTo("The documentation " + docLink("Twitter-Events-V1.1", EVENTS_DOCUMENTATION)
+                           + " is updated.");
     }
 
     @Test
