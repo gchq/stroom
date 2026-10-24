@@ -273,7 +273,7 @@ public final class XsltGenerator {
         for (final FieldMapping entry : m.allEntries()) {
             for (final Conversion conversion : conversions(entry)) {
                 places.computeIfAbsent(conversion, ignored -> new HashSet<>())
-                        .add(entry.strippedPath() + "[" + or(entry.dataName(), "") + "]");
+                        .add(entry.strippedPath() + "[" + or(entry.dataKey(), "") + "]");
             }
         }
         final Map<Conversion, String> out = new LinkedHashMap<>();
@@ -1688,7 +1688,7 @@ public final class XsltGenerator {
                 final List<FieldMapping> entries = new ArrayList<>(m.common());
                 entries.addAll(rule.fields());
                 entries.forEach(e -> fields.add(e.strippedPath() + (isSet(e.dataName())
-                        ? "[" + e.dataName() + "]"
+                        ? "[" + e.dataKey() + "]"
                         : "")));
                 final Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("event", rule.name());
