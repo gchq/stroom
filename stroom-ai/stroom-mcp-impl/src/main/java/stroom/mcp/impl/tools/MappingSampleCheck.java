@@ -80,6 +80,7 @@ final class MappingSampleCheck {
         final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
         final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
         problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
+        warnings.addAll(LocalCheck.domainQualifiedUserIds(mapping, found.records()));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
         final XPathChecks.Findings extractions = checkExtractions(mapping, samples, splitter, found.records(),
                 deadline, clock);

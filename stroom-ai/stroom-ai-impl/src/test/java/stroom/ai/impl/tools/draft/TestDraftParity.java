@@ -53,7 +53,7 @@ class TestDraftParity extends DraftFixtures {
                 assertThatThrownBy(() -> drafted(entry, splitter)).isInstanceOf(RuntimeException.class);
                 return;
             }
-            final Map<String, Object> actual = drafted(entry, splitter);
+            final Map<String, Object> actual = withoutMessageNotes(drafted(entry, splitter));
             assertThat(PyJson.dumps(inCatalogueOrder(actual), 1))
                     .isEqualTo(PyJson.dumps(inCatalogueOrder(expected), 1));
         }));
@@ -79,7 +79,8 @@ class TestDraftParity extends DraftFixtures {
                         assertThatThrownBy(() -> checked(entry, texts)).isInstanceOf(RuntimeException.class);
                         return;
                     }
-                    assertThat(PyJson.dumps(checked(entry, texts), 1)).isEqualTo(PyJson.dumps(expected, 1));
+                    assertThat(PyJson.dumps(asPythonSaid(checked(entry, texts)), 1))
+                            .isEqualTo(PyJson.dumps(expected, 1));
                 }));
     }
 
@@ -90,6 +91,30 @@ class TestDraftParity extends DraftFixtures {
                     final SplitterSpec spec = spec(entry.get("spec"));
                     assertThat(SplitterXml.generateSplitter(spec)).isEqualTo(entry.get("xml"));
                 }));
+    }
+
+    // The draft's notes but those on where the event's message goes, which the port adds and the Python server's draft
+    // didn't (see DraftMapping's descriptionNote).
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withoutMessageNotes(final Map<String, Object> draft) {
+        if (draft.get("notes") instanceof final List<?> notes) {
+            ((List<String>) notes).removeIf(note -> note.contains("reads as each event's message, so it is ")
+                                                    || note.contains("reads as free text written about each "));
+        }
+        return draft;
+    }
+
+    // The checks as the Python server words them: for values that fit once cased, the port names the transform
+    // (see LocalCheck's checkSchemaValues), where the Python server said to map only the values that fit.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asPythonSaid(final Map<String, Object> checked) {
+        if (checked.get("schema_values") instanceof final List<?> said) {
+            ((List<String>) said).replaceAll(problem -> problem.replaceFirst(
+                    "They fit once (lower|upper)-cased: give the entry transform: (lower|upper)$",
+                    "Map only the values that fit (an extract whose regex matches only them gives an empty field "
+                    + "otherwise), or map the field elsewhere (a name to a HostName, say)"));
+        }
+        return checked;
     }
 
     // The values the catalogue doesn't list, sorted: the Python server listed them in the order of a set of the

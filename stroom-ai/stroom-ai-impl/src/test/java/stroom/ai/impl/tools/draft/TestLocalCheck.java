@@ -300,6 +300,51 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void valuesThatFitOnceCasedAreGivenTheTransformThatFitsThem() {
+        // Seen in eval case 34: upper-case IPv6 addresses (the schema's pattern is lower case) were left out, as the
+        // problem said to map only the values that fit, when transform: lower makes them fit.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/Device/IPAddress", "field": "ip"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"}]}]}"""));
+        final List<Object> records = List.of(map("ip", "2001:DB8::21"), map("ip", "10.4.0.21"));
+
+        assertThat(LocalCheck.checkSchemaValues(mapping, records, SCHEMA)).singleElement().asString()
+                .contains("['2001:DB8::21'] in 1 of the 2 sample records")
+                .endsWith("They fit once lower-cased: give the entry transform: lower")
+                .doesNotContain("Map only the values that fit");
+    }
+
+    @Test
+    void domainQualifiedUserIdsAreWarnedOf() {
+        // Seen in eval cases 35, 36 and 43: every Id kept its domain (domain.com\priya.patel, ACME\alice), the
+        // account name alone wanted.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/User/Id", "field": "by_user"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"},
+                                                     {"path": "EventDetail/Authenticate/User/Id",
+                                                      "field": "upn"}]}]}"""));
+        final List<Object> records = List.of(map("by_user", "domain.com\\priya.patel", "upn", "joe@acme.example"),
+                map("by_user", "alice", "upn", "bob"));
+
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, records)).containsExactly(
+                "EventSource/User/Id takes field 'by_user', whose values are domain-qualified "
+                + "(['domain.com\\\\priya.patel']): an Id is usually the account name alone. If so, give the entry "
+                + "transform: strip_domain",
+                "EventDetail/Authenticate/User/Id takes field 'upn', whose values are domain-qualified "
+                + "(['joe@acme.example']): an Id is usually the account name alone. If so, give the entry transform: "
+                + "strip_domain");
+        // With the transform given, or values with no domain, nothing is said.
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, List.of(map("by_user", "alice", "upn", "bob"))))
+                .isEmpty();
+    }
+
+    @Test
     void everySampleTextIsReadNotTheFirst200() {
         // test_extraction_check.py: seen in production, a VPN rule's keys first appeared at the 557th of 3,933
         // records; reading only the first 200, the check said they matched nothing.
