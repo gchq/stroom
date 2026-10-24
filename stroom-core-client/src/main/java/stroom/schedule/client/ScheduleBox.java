@@ -187,7 +187,7 @@ public class ScheduleBox
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled || readOnly);
+        svgIconBox.setReadOnly(!enabled || readOnly);
         updateReadOnly();
         validate();
     }
@@ -199,7 +199,7 @@ public class ScheduleBox
     /// @param readOnly Whether the schedule is read only.
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        svgIconBox.setReadonly(!enabled || readOnly);
+        svgIconBox.setReadOnly(!enabled || readOnly);
         updateReadOnly();
     }
 

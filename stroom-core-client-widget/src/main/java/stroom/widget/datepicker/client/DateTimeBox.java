@@ -169,7 +169,7 @@ public class DateTimeBox
     /// @param enabled Whether the box is enabled.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled || readOnly);
+        svgIconBox.setReadOnly(!enabled || readOnly);
         updateInvalidState();
     }
 
@@ -181,7 +181,7 @@ public class DateTimeBox
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         textBox.setReadOnly(readOnly);
-        svgIconBox.setReadonly(!textBox.isEnabled() || readOnly);
+        svgIconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
 
     /// @return Whether the box is enabled.

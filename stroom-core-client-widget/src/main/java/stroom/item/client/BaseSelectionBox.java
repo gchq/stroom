@@ -290,7 +290,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             hidePopup();
         }
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled || readOnly);
+        svgIconBox.setReadOnly(!enabled || readOnly);
         // The disabled look (selection-box.css), rather than fading the value
         svgIconBox.setStyleName(DISABLED, !enabled);
     }
@@ -311,7 +311,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         } else {
             textBox.getElement().removeAttribute("aria-readonly");
         }
-        svgIconBox.setReadonly(!isEnabled() || readOnly);
+        svgIconBox.setReadOnly(!isEnabled() || readOnly);
         svgIconBox.setStyleName(READ_ONLY, readOnly);
     }
 

@@ -125,7 +125,7 @@ public class TimeBox
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
         // So the clock icon can't open the dialog either
-        svgIconBox.setReadonly(!enabled || readOnly);
+        svgIconBox.setReadOnly(!enabled || readOnly);
     }
 
     /// Makes the value read only: it can be read, selected and copied, and stays in the tab
@@ -136,7 +136,7 @@ public class TimeBox
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         textBox.setReadOnly(readOnly);
-        svgIconBox.setReadonly(!textBox.isEnabled() || readOnly);
+        svgIconBox.setReadOnly(!textBox.isEnabled() || readOnly);
     }
 
     public Time getValue() {
