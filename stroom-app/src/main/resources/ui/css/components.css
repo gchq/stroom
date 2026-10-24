@@ -1751,29 +1751,6 @@
     border-radius: .25rem;
 }
 
-/* A text button drawn as the text around it (LinkButton), without the browser's button look;
-   the caller's style names give it its look. :where() leaves them in charge */
-:where(.linkButton) {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    text-align: inherit;
-    cursor: pointer;
-}
-
-.linkButton:hover {
-    text-decoration: underline;
-}
-
-.linkButton:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-shadow);
-    border-radius: .25rem;
-}
-
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate {
     /*width: 1000px;*/

@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// "Part 1 of 3". It is a real `<button>`, so the keyboard reaches it, Enter and Space press it and
 /// screen readers announce it as a button, named by its text (or by [#setAriaLabel(String)]).
 ///
-/// The `linkButton` style takes away the browser's button look (border, background, padding and
+/// The `link-button` style takes away the browser's button look (border, background, padding and
 /// font); the look of the text comes from the style names the caller adds, as a label's would:
 ///
 /// ```
@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// A standalone action with an icon belongs in a [Toolbar] as a [ToolbarButton] instead.
 public class LinkButton extends ButtonBase {
 
-    private static final String STYLE_NAME = "linkButton";
+    private static final String STYLE_NAME = "link-button";
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_HASPOPUP = "aria-haspopup";
 
