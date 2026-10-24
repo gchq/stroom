@@ -22,12 +22,15 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -115,15 +118,26 @@ public class FormGroup extends Composite implements HasWidgets {
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
             "hidden", "button", "submit", "reset", "image");
 
-    private final FlowPanel formGroupPanel = new FlowPanel();
-    private final FormLabel formLabel = new FormLabel();
-    private final FormGroupHelpButton helpButton = new FormGroupHelpButton();
-    private final FlowPanel labelPanel = new FlowPanel();
-    private final FlowPanel descriptionPanel = new FlowPanel();
-    private final Label feedbackLabel = new Label();
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    // The parts, declared in FormGroup.ui.xml
+    @UiField
+    FlowPanel formGroupPanel;
+    @UiField
+    FormLabel formLabel;
+    // Made here, as it is private to the package
+    @UiField(provided = true)
+    final FormGroupHelpButton helpButton = new FormGroupHelpButton();
+    @UiField
+    FlowPanel labelPanel;
+    @UiField
+    FlowPanel descriptionPanel;
+    @UiField
+    Label feedbackLabel;
     // The short screen reader description (or else the plain help text), hidden, as the description
     // of the control the label is for, so that a screen reader reads it when the control is focused
-    private final Label helpDescription = new Label();
+    @UiField
+    Label helpDescription;
     // The short description a screen reader reads, or null to use the plain help text
     private String screenReaderText;
     // Whether the control must have a value, so assistive technology says it is required
@@ -165,20 +179,13 @@ public class FormGroup extends Composite implements HasWidgets {
     private boolean disabled = false;
 
     public FormGroup() {
-        feedbackLabel.setStyleName("form-group__feedback");
+        initWidget(BINDER.createAndBindUi(this));
+        // Only the parts in use are shown, arranged once there is something to show (add)
+        formGroupPanel.clear();
         helpDescription.getElement().setId(DOM.createUniqueId());
         // So that a group of several controls can be labelled by it
         formLabel.getElement().setId(DOM.createUniqueId());
-        // Read by screen readers as the control's description, but not seen
-        helpDescription.setStyleName("form-group__help-text");
-        helpDescription.setVisible(false);
-        formGroupPanel.addStyleName("form-group");
-        labelPanel.addStyleName("form-group__label-row");
-        formLabel.addStyleName("form-group__label");
-        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_ROW);
         updateLabelPanel();
-
-        initWidget(formGroupPanel);
 
         formGroupPanel.addDomHandler(
                 event ->
@@ -823,5 +830,13 @@ public class FormGroup extends Composite implements HasWidgets {
         } else {
             return false;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<FlowPanel, FormGroup> {
+
     }
 }
