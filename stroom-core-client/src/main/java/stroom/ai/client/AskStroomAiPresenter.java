@@ -2361,7 +2361,9 @@ public class AskStroomAiPresenter
         final String action = NullSafe.string(AiToolMessages.getString(json, "action"));
         final String status = NullSafe.string(AiToolMessages.getString(json, "status"));
         card.div(row -> {
-            row.div(text -> text.append(NullSafe.string(AiToolMessages.getString(json, "label"))),
+            // The document it acts on a link that opens it (asked for by the user).
+            row.div(text -> text.append(markdownConverter.convertUntrustedMarkdownToHtml(UserActionsUi.labelMarkdown(
+                            AiToolMessages.getString(json, "label"), docRef(AiToolMessages.getString(json, "doc"))))),
                     Attribute.className("ai-user-action-label"));
             final String details = AiToolMessages.getString(json, "details");
             if (NullSafe.isNonBlankString(details)) {

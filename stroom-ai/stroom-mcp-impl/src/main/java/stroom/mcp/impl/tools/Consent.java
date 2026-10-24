@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.PyJson;
+import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -64,6 +65,8 @@ public class Consent {
 
     /// The most characters a form's message holds.
     public static final int FORM_MESSAGE_LIMIT = 600;
+    // The most a form's message runs to with its documents' links, well inside what a form may hold (2,000).
+    private static final int LINKED_MESSAGE_LIMIT = 1_500;
     // Characters of one detail's value in a form.
     private static final int DETAIL_LIMIT = 160;
     private static final int HEADING_LIMIT = 150;
@@ -176,12 +179,38 @@ public class Consent {
     /// @param details Its details.
     /// @return The form's message.
     public static String formMessage(final String summary, final Map<String, Object> details) {
+        return formMessage(summary, details, List.of());
+    }
+
+    /// [#formMessage(String, Map)], each document the request names a link that opens it, by its UUID: where
+    /// the summary names it in quotes, and a detail that is its name.
+    ///
+    /// @param summary   What the user is asked to agree to.
+    /// @param details   Its details.
+    /// @param documents The documents it names.
+    /// @return The form's message.
+    public static String formMessage(final String summary,
+                                     final Map<String, Object> details,
+                                     final List<DocRef> documents) {
         final String text = NullSafe.string(summary).strip();
-        String message = text.length() <= 300
+        final String head = text.length() <= 300
                 ? text
                 : heading(text, 300);
+        // What is cut is measured as the user reads it, without the links (seen: a late detail, the index
+        // template, cut once its pipeline was a link).
+        String message = head;
+        String withLinks = linked(head, documents);
         final List<String> lines = new ArrayList<>();
-        NullSafe.map(details).forEach((key, value) -> lines.add("- " + key + ": " + shortDetail(value)));
+        final List<String> linkedLines = new ArrayList<>();
+        NullSafe.map(details).forEach((key, value) -> {
+            final String shown = shortDetail(value);
+            lines.add("- " + key + ": " + shown);
+            linkedLines.add("- " + key + ": " + documents.stream()
+                    .filter(docRef -> shown.equals(docRef.getName()))
+                    .findFirst()
+                    .map(Consent::docLink)
+                    .orElse(shown));
+        });
         for (int i = 0; i < lines.size(); i++) {
             final String line = lines.get(i);
             if (message.length() + line.length() + 30 > FORM_MESSAGE_LIMIT) {
@@ -191,13 +220,22 @@ public class Consent {
                         heading(text, 80),
                         shown,
                         lines.size()));
-                return message + "\n- … (the rest is in the chat)";
+                return within(withLinks, message, "\n- … (the rest is in the chat)");
             }
-            message += (i == 0
+            final String gap = i == 0
                     ? "\n\n"
-                    : "\n") + line;
+                    : "\n";
+            message += gap + line;
+            withLinks += gap + linkedLines.get(i);
         }
-        return message;
+        return within(withLinks, message, "");
+    }
+
+    // The message with its links, unless they make it longer than a form can show; then without them.
+    private static String within(final String withLinks, final String plain, final String tail) {
+        return withLinks.length() + tail.length() <= LINKED_MESSAGE_LIMIT
+                ? withLinks + tail
+                : plain + tail;
     }
 
     /// @param text A question.
@@ -257,7 +295,7 @@ public class Consent {
         final String kind = request.kind().word();
         final String key = kind + "-" + digest.substring(0, 16);
         final ElicitResult answer = context.userQuestions().ask(call.name(), UserQuestions.formCallId(call.id(), key),
-                formMessage(request.summary(), request.details()), schema(request));
+                formMessage(request.summary(), request.details(), request.documents()), schema(request));
         final Map<String, Object> content = NullSafe.map(answer.content());
         final boolean accepted = answer.action() == ElicitResult.Action.ACCEPT;
         // With a value to edit, accepting the form is the confirmation; otherwise its yes or no is.
@@ -367,6 +405,31 @@ public class Consent {
         return Boolean.TRUE.equals(value) || "true".equalsIgnoreCase(String.valueOf(value));
     }
 
+    // The summary with each document it names in quotes a link.
+    private static String linked(final String summary, final List<DocRef> documents) {
+        String out = summary;
+        for (final DocRef docRef : documents) {
+            final String quoted = "'" + docRef.getName() + "'";
+            final int at = out.indexOf(quoted);
+            if (NullSafe.isNonBlankString(docRef.getName()) && at >= 0) {
+                out = out.substring(0, at) + "'" + docLink(docRef) + "'" + out.substring(at + quoted.length());
+            }
+        }
+        return out;
+    }
+
+    // A link that opens the document, as the chat's answers write one.
+    private static String docLink(final DocRef docRef) {
+        final StringBuilder name = new StringBuilder();
+        for (final char c : docRef.getName().toCharArray()) {
+            if ("\\`*_[]()<>#!|~".indexOf(c) >= 0) {
+                name.append('\\');
+            }
+            name.append(c);
+        }
+        return "[" + name + "](?action=open-doc&docType=" + docRef.getType() + "&docUuid=" + docRef.getUuid() + ")";
+    }
+
     private static String shortDetail(final Object value) {
         final String raw;
         if (value instanceof final Collection<?> collection) {
@@ -438,24 +501,29 @@ public class Consent {
     /// @param action   The tool, e.g. `create_feed`.
     /// @param summary  What the user agrees to, in a line, e.g. `Create feed 'ACME-VPN-V1.0'`.
     /// @param details  Its details, e.g. `{"feed name": "ACME-VPN-V1.0"}`.
-    /// @param editable The values the user may correct in the form, by key.
+    /// @param editable  The values the user may correct in the form, by key.
+    /// @param documents The documents it names (in quotes in the summary, or as a detail's value), which its form
+    ///                  links to open them; not part of what is agreed to.
     public record Request(Kind kind,
                           String action,
                           String summary,
                           Map<String, Object> details,
-                          Map<String, Editable> editable) {
+                          Map<String, Editable> editable,
+                          List<DocRef> documents) {
 
-        /// @param kind     A confirmation or an approval.
-        /// @param action   The tool.
-        /// @param summary  What the user agrees to.
-        /// @param details  Its details.
-        /// @param editable The values the user may correct in the form.
+        /// @param kind      A confirmation or an approval.
+        /// @param action    The tool.
+        /// @param summary   What the user agrees to.
+        /// @param details   Its details.
+        /// @param editable  The values the user may correct in the form.
+        /// @param documents The documents it names, which its form links.
         public Request {
             Objects.requireNonNull(kind, "kind");
             Objects.requireNonNull(action, "action");
             summary = NullSafe.string(summary);
             details = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(details)));
             editable = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(editable)));
+            documents = List.copyOf(NullSafe.list(documents));
         }
 
         /// @param action  The tool.
@@ -465,7 +533,7 @@ public class Consent {
         public static Request confirmation(final String action,
                                            final String summary,
                                            final Map<String, Object> details) {
-            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of());
+            return new Request(Kind.CONFIRMATION, action, summary, details, Map.of(), List.of());
         }
 
         /// @param action  The tool.
@@ -475,7 +543,7 @@ public class Consent {
         public static Request approval(final String action,
                                        final String summary,
                                        final Map<String, Object> details) {
-            return new Request(Kind.APPROVAL, action, summary, details, Map.of());
+            return new Request(Kind.APPROVAL, action, summary, details, Map.of(), List.of());
         }
 
         /// @param key      The value's key, e.g. `name`.
@@ -485,7 +553,20 @@ public class Consent {
         public Request withEditable(final String key, final String title, final String proposed) {
             final Map<String, Editable> more = new LinkedHashMap<>(editable);
             more.put(key, new Editable(title, proposed));
-            return new Request(kind, action, summary, details, more);
+            return new Request(kind, action, summary, details, more, documents);
+        }
+
+        /// @param named The documents the request names, by their names in it.
+        /// @return This request, its form linking them by their UUIDs (asked for by the user: seen, the pipeline an
+        /// approval names not opening from it).
+        public Request withDocuments(final DocRef... named) {
+            final List<DocRef> more = new ArrayList<>(documents);
+            for (final DocRef docRef : named) {
+                if (docRef != null) {
+                    more.add(docRef);
+                }
+            }
+            return new Request(kind, action, summary, details, editable, more);
         }
     }
 
