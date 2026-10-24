@@ -40,6 +40,8 @@ widget, smart widget; complexity 1, effort S; used by 3.
 
 widget, smart widget; complexity 3, effort M; used by 9.
 
+**Name (rule 12, agreed after wave 2).** "Custom" only says it was made from GWT's, and GWT's own `FileUpload` is the obvious name, so choose another for what it is (e.g. `FileChooser`), with its block.
+
 - **Component:** `stroom.widget.form.client.CustomFileUpload`
 - **Controller:** `stroom.widget.form.client.CustomFileUploadController`
 - **Template:** `stroom-core-client-widget/src/main/resources/stroom/widget/form/client/CustomFileUpload.ui.xml` → `stroom-core-client-widget/src/main/java/stroom/widget/form/client/CustomFileUpload.ui.xml`

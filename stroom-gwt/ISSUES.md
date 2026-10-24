@@ -511,6 +511,10 @@ each story re-run against both builds with the same runner options):
   the focused node's tooltip ("nginx.conf", its path and value) was drawn, and in the baseline it
   wasn't, with a line of the root node's focus ring. Like TopBar `Keyboard`, a tooltip shown on
   focus depends on timing; nothing in wave 2 touched the visualisations.
+* `App/Visualisations/Force3D` `ViewKeys` failed both attempts in one full run with screenshots
+  (24 October 2026, after the renames that followed wave 2): a view key's turn ended 4 to 5.4
+  away from where it should (`toBeLessThan(0.5)`). Run on its own it passed. The simulation keeps
+  moving under a full run's load; nothing in that change touched the visualisations.
 * `Widgets/Menu/MenuPanel` `TypeAhead` failed in every run with screenshots, on both builds
   (`expect(<div>).toHaveFocus() failed` after typing "re"). **Fixed** (data_grid2): those runs fix
   the page's `Date` (`--fixed-time`), and `TypeAhead` timed the pause between keys with it, so the

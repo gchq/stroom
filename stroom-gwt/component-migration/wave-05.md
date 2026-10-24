@@ -33,6 +33,8 @@ cell, smart widget; complexity 3, effort M; used by 7.
 
 cell, dumb; complexity 1, effort S; used by 6.
 
+**Name (rule 12, agreed after wave 2).** It draws an icon, so it becomes `IconCell`, with its block (`svg-cell` and `SvgCell.css` become `icon-cell` and `icon-cell.css`, with `ActionCell`'s and `SvgStringCell`'s uses). `SvgIconCell` is unused, and `SvgStringCell` probably is: delete them once removals are allowed, rather than renaming them.
+
 **Since the merge.** InfoColumn: a comment now says DataGrid instead of DataGridWidget. Nothing material.
 
 - **Component:** `stroom.cell.info.client.SvgCell`
