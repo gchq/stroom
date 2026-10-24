@@ -165,7 +165,9 @@ The design, and how far the migration has got, is in `stroom-gwt/COMPONENT_MODEL
 
 * **A component is dumb.** `Foo.java`, extending `stroom.widget.component.client.Component`, and its UiBinder template `Foo.ui.xml` beside it (in `src/main/java`, in every module), with a `Binder` interface at the bottom of the class and a public no-arg constructor, so templates can use it and GIN can make it with no binding.
   Its template holds everything that doesn't change at runtime: the layout, Stroom's CSS class names, ARIA roles and labels, and the visible text, in plain English; components it uses are declared there, not made in Java.
-  No inline styles: a fixed style is a Stroom CSS class (an existing one first), and a value known only at runtime is a CSS custom property (`--column-width`) that a class uses.
+  ARIA and similar attributes are set in the template through typed setters on Stroom's widgets (`ariaLabel="Filter"`, `placeholder="…"`, `opensDialog="true"`); add one to a widget when a template needs it.
+  The only markup left in Java: a single-element widget's root (a `ButtonBase`, or a `FlowPanel` or `Widget` subclass such as `ToolbarButton`) sets its root block class and role in its constructor, a `PopupPanel`'s root keeps its class and role, and grid cells use `SafeHtmlTemplates`.
+  No inline styles: a fixed style is a Stroom CSS class (an existing one first), and a value known only at runtime is a CSS custom property (`--block__property`), set with `CssProperties.set(element, name, value)`, that a class uses. `setVisible` is fine (it is state, not styling).
   Data comes in through setters named for what they do (`setRules(rules)`, `setName(name)`), events go out through one callback each (`setOnChange(Runnable)`), and a set of actions is one enum with one callback (`setOnAction(Consumer<RuleAction>)`) and `setAvailableActions(...)`.
   Repetition and conditions are in its Java (`setRules` adds a row per rule; `setVisible`).
   It makes no REST calls, uses no bus or context and owns nothing; it applies read-only in `onReadOnlyChange`, when its controller calls `setReadOnly`.
