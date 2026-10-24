@@ -4378,7 +4378,11 @@ public class AskStroomAiPresenter
                                    final boolean deletable,
                                    final int retryTurnId,
                                    final boolean editable) {
-        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(markdownText);
+        // What the user typed is shown as typed (markup in it too); what is copied stays as they typed it.
+        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(
+                cssClass.contains("ai-message--user")
+                        ? AiUserMarkdown.escapeHtml(markdownText)
+                        : markdownText);
         final boolean assistant = cssClass.contains("ai-message--assistant");
         final boolean error = cssClass.contains("ai-message--error");
 
@@ -4457,7 +4461,8 @@ public class AskStroomAiPresenter
                                    final AiChatMessage msg,
                                    final long timeMs,
                                    final long nowMs) {
-        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(msg.getMessage());
+        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(
+                AiUserMarkdown.escapeHtml(msg.getMessage()));
         final boolean sendingNow = msg.getMessageType() == AiMessageType.SEND_NOW_STEER_MESSAGE;
         hb.div(wrapper -> {
             wrapper.div(content -> content.append(markdownHtml), Attribute.className("ai-message-content"));
