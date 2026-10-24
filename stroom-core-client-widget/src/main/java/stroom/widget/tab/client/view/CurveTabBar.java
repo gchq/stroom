@@ -21,13 +21,25 @@ import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 
+/// The document tabs' bar, whose tabs can be dragged to reorder them. Its markup is
+/// `CurveTabBar.ui.xml`.
 public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandlers {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     public CurveTabBar() {
-        getElement().setClassName("tab-bar tab-bar--curved");
-        setAccessibleName("Open documents");
+        this(new Parts());
+    }
+
+    private CurveTabBar(final Parts parts) {
+        super(BINDER.createAndBindUi(parts), parts.tabList);
     }
 
     @Override
@@ -51,11 +63,6 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
                 tabData.isCloseable());
     }
 
-    @Override
-    protected AbstractTabSelector createTabSelector() {
-        return new CurveTabSelector();
-    }
-
     /// The room between document tabs, for a focused tab's focus ring, which is drawn outside it.
     ///
     /// @return The gap in pixels.
@@ -67,5 +74,25 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
     @Override
     public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
         return addHandler(handler, ShowTabMenuEvent.getType());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template the bar needs; the bar's element itself is the template's root
+    static final class Parts {
+
+        @UiField
+        DivElement tabList;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("CurveTabBar.ui.xml")
+    interface Binder extends UiBinder<DivElement, Parts> {
+
     }
 }

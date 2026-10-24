@@ -20,7 +20,6 @@ import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.dom.client.DataTransfer.DropEffect;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DropEvent;
@@ -32,7 +31,10 @@ public abstract class DraggableTabBar extends AbstractTabBar {
 
     private DraggedTab draggedTab;
 
-    public DraggableTabBar() {
+    /// @param root    The bar's element, from its template.
+    /// @param tabList The tab list in it.
+    protected DraggableTabBar(final Element root, final Element tabList) {
+        super(root, tabList);
         addDomHandler(this::onDragOver, DragOverEvent.getType());
         addDomHandler(this::onDrop, DropEvent.getType());
     }
@@ -110,13 +112,6 @@ public abstract class DraggableTabBar extends AbstractTabBar {
 
         for (final TabData tabData : tabList) {
             final AbstractTab tab = getTab(tabData);
-            if (x > 0) {
-                final Element separator = addSeparator();
-                if (separator != null) {
-                    separator.getStyle().setLeft(x, Unit.PX);
-                    x += separator.getOffsetWidth();
-                }
-            }
             x += tab.getOffsetWidth() + tabGap;
         }
 

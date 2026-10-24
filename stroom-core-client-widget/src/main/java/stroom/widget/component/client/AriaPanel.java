@@ -53,6 +53,16 @@ public class AriaPanel extends FlowPanel {
         setAttribute("aria-haspopup", ariaHasPopup);
     }
 
+    /// @param ariaExpanded Whether what the panel opens is open.
+    public void setAriaExpanded(final boolean ariaExpanded) {
+        getElement().setAttribute("aria-expanded", String.valueOf(ariaExpanded));
+    }
+
+    /// @param ariaSelected Whether the panel (e.g. a tab) is the one chosen.
+    public void setAriaSelected(final boolean ariaSelected) {
+        getElement().setAttribute("aria-selected", String.valueOf(ariaSelected));
+    }
+
     /// @param ariaHidden Whether screen readers skip the panel and all it holds.
     public void setAriaHidden(final boolean ariaHidden) {
         if (ariaHidden) {

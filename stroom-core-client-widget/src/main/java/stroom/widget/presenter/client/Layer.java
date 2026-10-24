@@ -21,9 +21,9 @@ import com.google.gwt.user.client.ui.RequiresResize;
 
 public interface Layer extends RequiresResize {
 
-    String BASE = "layerContainer-layer--base";
-    String VISIBLE = "layerContainer-layer--visible";
-    String FADE = "layerContainer-layer--fade";
+    String BASE = "layer-container__layer--base";
+    String VISIBLE = "layer-container__layer--visible";
+    String FADE = "layer-container__layer--fade";
 
 //    double getOpacity();
 //

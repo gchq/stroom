@@ -17,60 +17,59 @@
 package stroom.widget.tab.client.view;
 
 import stroom.util.shared.NullSafe;
+import stroom.widget.component.client.AriaPanel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 
+/// A link tab: its label, over an invisible bold copy that keeps its width the same when it is
+/// selected, and a hotspot that a dashboard pane being dragged highlights. Its markup is
+/// `LinkTab.ui.xml`.
 public class LinkTab extends AbstractTab {
 
-    private final Element element;
-    private final Element background;
-    private final Element label;
-    private final Element hotspot;
+    private static final Binder BINDER = GWT.create(Binder.class);
+
+    @UiField
+    AriaPanel sizer;
+    @UiField
+    Label label;
+    @UiField
+    SimplePanel hotspot;
 
     public LinkTab(final String text, final String tooltip) {
-        element = DOM.createDiv();
-        element.setClassName("tab-bar__tab");
-        NullSafe.consumeNonBlankString(tooltip, element::setTitle);
-
-        background = DOM.createDiv();
-        background.setClassName("tab-bar__sizer");
-        background.setInnerText(text);
-        // An invisible copy of the label that sizes the tab, so screen readers don't read it
-        background.setAttribute("aria-hidden", "true");
-        element.appendChild(background);
-
-        label = DOM.createDiv();
-        label.setClassName("tab-bar__label");
-        label.setInnerText(text);
-        element.appendChild(label);
-
-        hotspot = DOM.createDiv();
-        hotspot.setClassName("tab-bar__hotspot");
-        element.appendChild(hotspot);
-
-        setElement(element);
+        initWidget(BINDER.createAndBindUi(this));
+        NullSafe.consumeNonBlankString(tooltip, this::setTitle);
+        setText(text);
     }
 
     public Element getHotspot() {
-        return hotspot;
+        return hotspot.getElement();
     }
 
     public void setHighlight(final boolean highlight) {
-        if (highlight) {
-            hotspot.addClassName("tab-bar__hotspot--visible");
-        } else {
-            hotspot.removeClassName("tab-bar__hotspot--visible");
-        }
+        hotspot.setStyleName("tab-bar__hotspot--visible", highlight);
     }
 
     public String getText() {
-        return label.getInnerText();
+        return label.getText();
     }
 
     @Override
     public void setText(final String text) {
-        background.setInnerText(text);
-        label.setInnerText(text);
+        sizer.getElement().setInnerText(text);
+        label.setText(text);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, LinkTab> {
+
     }
 }

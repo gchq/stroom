@@ -26,14 +26,13 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -41,7 +40,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -55,6 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -65,7 +65,17 @@ import java.util.stream.Collectors;
 /// closable tab; the context menu key or Shift+F10 opens the focused tab's menu (as a right click
 /// does). When focus leaves the bar, the tab stop goes back to the selected tab, so tabbing back in
 /// lands on it.
-public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
+///
+/// Its root and tab list come from each bar's template (`CurveTabBar.ui.xml`, `LinkTabBar.ui.xml`).
+/// It places the tabs, separators and overflow selector ([TabSelector]) itself, as their positions
+/// depend on their widths: `--tab-bar__left` on a tab or separator, `--tab-selector__left` on the
+/// selector, and `tab-bar__tab--hidden` and `tab-selector--hidden` for those that don't fit.
+public abstract class AbstractTabBar extends ComplexPanel implements TabBar, RequiresResize {
+
+    private static final String TAB_HIDDEN = "tab-bar__tab--hidden";
+    private static final String TAB_LEFT = "--tab-bar__left";
+    private static final String SELECTOR_HIDDEN = "tab-selector--hidden";
+    private static final String SELECTOR_LEFT = "--tab-selector__left";
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final ArrayList<TabData> tabs = new ArrayList<>();
@@ -76,18 +86,20 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     private Element currentTabIndexElement;
     private int overflowTabCount;
     private Object currentTargetObject;
-    private AbstractTabSelector tabSelector;
+    private TabSelector tabSelector;
     private List<Element> separators;
     // The tabs and their separators, as a `tablist`; it covers the bar, so the tabs are placed in it
     // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
     private final Element tabList;
     private Element tabPanel;
+    private Consumer<TabData> onSelect;
+    private Consumer<TabData> onClose;
 
-    public AbstractTabBar() {
-        tabList = DOM.createDiv();
-        tabList.setClassName("tab-bar__tabs");
-        tabList.setAttribute("role", "tablist");
-        getElement().appendChild(tabList);
+    /// @param root    The bar's element, from its template.
+    /// @param tabList The tab list in it (`role="tablist"`), which the tabs and separators go in.
+    protected AbstractTabBar(final Element root, final Element tabList) {
+        setElement(root);
+        this.tabList = tabList;
         sinkEvents(Event.ONMOUSEDOWN |
                    Event.ONMOUSEUP |
                    Event.ONKEYDOWN);
@@ -99,8 +111,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     protected Element createSeparator() {
         return null;
     }
-
-    protected abstract AbstractTabSelector createTabSelector();
 
     @Override
     public void addTab(final TabData tabData) {
@@ -121,7 +131,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
         final AbstractTab tab = createTab(tabData);
         initTabElement(tab.getElement());
-        makeInvisible(tab.getElement());
+        setTabHidden(tab.getElement(), true);
         insert(tab, tabList, insertIndex, true);
         tabWidgetMap.put(tabData, tab);
         tabs.add(insertIndex, tabData);
@@ -143,7 +153,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             // A tab closed from the keyboard has the focus, which mustn't be lost with it
             final boolean hadFocus = hasFocus(tab.getElement());
 
-            makeInvisible(tab.getElement());
+            setTabHidden(tab.getElement(), true);
             remove(tab);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
@@ -350,13 +360,14 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 if (x > 0) {
                     final Element separator = addSeparator();
                     if (separator != null) {
-                        separator.getStyle().setLeft(x, Unit.PX);
+                        CssProperties.set(separator, TAB_LEFT, x + "px");
                         x += separator.getOffsetWidth();
                     }
                 }
 
                 visible = true;
-                makeVisible(tab.getElement(), x);
+                CssProperties.set(tab.getElement(), TAB_LEFT, x + "px");
+                setTabHidden(tab.getElement(), false);
                 visibleTabs.add(tabData);
                 x += tab.getOffsetWidth() + tabGap;
 
@@ -366,7 +377,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             }
 
             if (!visible) {
-                makeInvisible(tab.getElement());
+                setTabHidden(tab.getElement(), true);
             }
 
             if (visible && tabData.equals(keyboardSelectedTab)) {
@@ -636,22 +647,21 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     private void setOverflowTabCount(final int x, final int count) {
         if (count > 0) {
-            getTabSelector().setText(String.valueOf(count));
-            getTabSelector().getElement().setAttribute("aria-label", "Show all tabs (" + count + " hidden)");
-            makeVisible(getTabSelector().getElement(), x);
+            getTabSelector().setHiddenCount(count);
+            CssProperties.set(getTabSelector().getElement(), SELECTOR_LEFT, x + "px");
+            getTabSelector().removeStyleName(SELECTOR_HIDDEN);
         } else {
-            makeInvisible(getTabSelector().getElement());
+            getTabSelector().addStyleName(SELECTOR_HIDDEN);
         }
     }
 
-    private void makeInvisible(final Element element) {
-        element.getStyle().setVisibility(Visibility.HIDDEN);
-        element.getStyle().setLeft(-1000, Unit.PX);
-    }
-
-    private void makeVisible(final Element element, final int x) {
-        element.getStyle().setLeft(x, Unit.PX);
-        element.getStyle().setVisibility(Visibility.VISIBLE);
+    // A tab that doesn't fit is out of sight (tab-bar.css)
+    private static void setTabHidden(final Element tab, final boolean hidden) {
+        if (hidden) {
+            tab.addClassName(TAB_HIDDEN);
+        } else {
+            tab.removeClassName(TAB_HIDDEN);
+        }
     }
 
     /// Names the tab list for screen readers, e.g. "Open documents".
@@ -680,12 +690,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         updateTabPanelLabel();
     }
 
-    // A tab's role, id (which names the panel) and the panel it controls
+    // A tab's id (which names the panel) and the panel it controls; its role, tab index and
+    // selected state start in its template
     private void initTabElement(final Element element) {
-        element.setAttribute("role", "tab");
         element.setId(DOM.createUniqueId());
-        element.setTabIndex(-1);
-        element.setAttribute("aria-selected", "false");
         setControls(element);
     }
 
@@ -940,13 +948,31 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     protected void fireTabSelection(final TabData tabData) {
         if (tabData != null && tabData != selectedTab) {
             SelectionEvent.fire(this, tabData);
+            if (onSelect != null) {
+                onSelect.accept(tabData);
+            }
         }
     }
 
     private void fireTabCloseRequest(final TabData tabData) {
         if (tabData != null) {
             RequestCloseTabEvent.fire(this, tabData);
+            if (onClose != null) {
+                onClose.accept(tabData);
+            }
         }
+    }
+
+    /// @param onSelect Told the tab the user selects (a click, Enter or Space, or the All Tabs menu),
+    ///                 beside the selection event, or null for nothing.
+    public void setOnSelect(final Consumer<TabData> onSelect) {
+        this.onSelect = onSelect;
+    }
+
+    /// @param onClose Told the tab the user asks to close (its cross, or Delete), beside the close
+    ///                request event, or null for nothing.
+    public void setOnClose(final Consumer<TabData> onClose) {
+        this.onClose = onClose;
     }
 
     @Override
@@ -1005,10 +1031,11 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         return visibleTabs;
     }
 
-    private AbstractTabSelector getTabSelector() {
+    // Made when first needed, after the template's own elements, hidden until some tabs don't fit
+    private TabSelector getTabSelector() {
         if (tabSelector == null) {
-            tabSelector = createTabSelector();
-            makeInvisible(tabSelector.getElement());
+            tabSelector = new TabSelector();
+            tabSelector.addStyleName(SELECTOR_HIDDEN);
             getElement().appendChild(tabSelector.getElement());
         }
         return tabSelector;

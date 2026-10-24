@@ -33,6 +33,7 @@
 @import url("info-tooltip.css");
 @import url("split-pane.css");
 @import url("tab-bar.css");
+@import url("tab-selector.css");
 @import url("stroom-annotation.css");
 @import url("assign-yourself-link.css");
 @import url("find-annotation-cell.css");
@@ -92,6 +93,7 @@
 @import url("form.css");
 @import url("form-group.css");
 @import url("settings-group.css");
+@import url("layer-container.css");
 @import url("components.css");
 @import url("days-of-week.css");
 @import url("paging-bar.css");

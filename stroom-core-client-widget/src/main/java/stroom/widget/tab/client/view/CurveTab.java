@@ -16,104 +16,94 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.Icon;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
+import stroom.widget.component.client.AriaPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
 
+/// A document tab: its icon, its label (cut to 50 characters, the whole as its tooltip), its busy
+/// spinner and, if it can be closed, its close cross; one that can't is the `tab-bar__tab--fixed`
+/// modifier. Its markup is `CurveTab.ui.xml`.
 public class CurveTab extends AbstractTab {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private final Element element;
-    private final Element label;
-    private final Element close;
-    private final SpinnerSmall spinnerSmall;
-    private final boolean allowClose;
+    @UiField
+    AriaPanel iconPanel;
+    @UiField
+    Icon icon;
+    @UiField
+    Label label;
+    @UiField
+    SpinnerSmall spinner;
+    @UiField
+    AriaPanel close;
 
     public CurveTab(final SvgImage icon,
                     final IconColour iconColour,
                     final String text,
                     final String tooltip,
                     final boolean allowClose) {
-        this.allowClose = allowClose;
-
-        element = DOM.createDiv();
-        element.setClassName("tab-bar__tab");
-
+        initWidget(BINDER.createAndBindUi(this));
         final String title = Objects.requireNonNullElse(tooltip, text);
 
         if (icon != null) {
-            final Element iconElement = DOM.createDiv();
-            iconElement.addClassName("tab-bar__icon " + iconColour.getClassName());
-            iconElement.setTitle(title);
-            SvgImageUtil.setSvgAsInnerHtml(iconElement, icon);
-            // The tab is named by its label
-            iconElement.setAttribute("aria-hidden", "true");
-            element.appendChild(iconElement);
-        }
-
-        label = DOM.createDiv();
-        label.setClassName("tab-bar__label");
-
-        if (text.length() > MAX_TEXT_LENGTH) {
-            label.setInnerText(text.substring(0, MAX_TEXT_LENGTH) + "...");
+            iconPanel.addStyleName(iconColour.getClassName());
+            iconPanel.setTitle(title);
+            this.icon.setImage(icon);
         } else {
-            label.setInnerText(text);
+            // A tab with no icon has room before its label instead (its label is its first child)
+            iconPanel.removeFromParent();
         }
 
+        setText(text);
         label.setTitle(title);
-        element.appendChild(label);
-
-        close = DOM.createDiv();
-        close.setClassName("tab-bar__close");
-        SvgImageUtil.setSvgAsInnerHtml(close, SvgImage.TAB_CLOSE);
-        // A tab is closed from the keyboard with Delete, so its cross isn't read
-        close.setAttribute("aria-hidden", "true");
-        element.appendChild(close);
-
-        setElement(element);
 
         if (!allowClose) {
-            close.getStyle().setDisplay(Display.NONE);
-            label.getStyle().setPaddingRight(20, Unit.PX);
+            addStyleName("tab-bar__tab--fixed");
         }
-
-        spinnerSmall = new SpinnerSmall();
-        spinnerSmall.addStyleName("tab-bar__spinner");
-
-        final Element closeWrapper = DOM.createDiv();
-        closeWrapper.setClassName("tab-bar__end");
-        closeWrapper.appendChild(spinnerSmall.getElement());
-        closeWrapper.appendChild(close);
-
-        element.appendChild(closeWrapper);
     }
 
     public String getText() {
-        return label.getInnerText();
+        return label.getText();
     }
 
     @Override
     public void setText(final String text) {
-        label.setInnerText(text);
+        if (text.length() > MAX_TEXT_LENGTH) {
+            label.setText(text.substring(0, MAX_TEXT_LENGTH) + "...");
+        } else {
+            label.setText(text);
+        }
     }
 
     @Override
     protected Element getCloseElement() {
-        return close;
+        return close.getElement();
     }
 
     @Override
     public TaskMonitor createTaskMonitor() {
-        return spinnerSmall.createTaskMonitor();
+        return spinner.createTaskMonitor();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<Widget, CurveTab> {
+
     }
 }

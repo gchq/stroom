@@ -21,9 +21,10 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.Composite;
 
-public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
+/// A tab of a tab bar, a component with a template whose root is the tab (`role="tab"`).
+public abstract class AbstractTab extends Composite implements TaskMonitorFactory {
 
     private boolean hidden;
 

@@ -18,20 +18,25 @@ package stroom.widget.tab.client.view;
 
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.DOM;
 
+/// The link tabs' bar, its tabs separated by "|". Its markup is `LinkTabBar.ui.xml`.
 public class LinkTabBar extends AbstractTabBar {
 
-    public LinkTabBar() {
-        getElement().setClassName("tab-bar tab-bar--link");
+    private static final Binder BINDER = GWT.create(Binder.class);
 
-        final Element text = DOM.createDiv();
-        text.setClassName("tab-bar__strut");
-        text.setInnerText("A");
-        // Invisible text that gives the bar its height, so screen readers don't read it
-        text.setAttribute("aria-hidden", "true");
-        getElement().appendChild(text);
+    public LinkTabBar() {
+        this(new Parts());
+    }
+
+    private LinkTabBar(final Parts parts) {
+        super(BINDER.createAndBindUi(parts), parts.tabList);
     }
 
     @Override
@@ -54,15 +59,30 @@ public class LinkTabBar extends AbstractTabBar {
     }
 
     @Override
-    protected AbstractTabSelector createTabSelector() {
-        return new BasicTabSelector();
-    }
-
-    @Override
     protected Element createSeparator() {
         final Element separator = DOM.createDiv();
         separator.setClassName("tab-bar__separator");
         separator.setInnerText("|");
         return separator;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The parts of the template the bar needs; the bar's element itself is the template's root
+    static final class Parts {
+
+        @UiField
+        DivElement tabList;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @UiTemplate("LinkTabBar.ui.xml")
+    interface Binder extends UiBinder<DivElement, Parts> {
+
     }
 }

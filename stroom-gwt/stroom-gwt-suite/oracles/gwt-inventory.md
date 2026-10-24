@@ -157,11 +157,7 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/Popup.java` | stroom-core-client-widget | Popup |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/PopupSupportImpl.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/PopupUtil.java` | stroom-core-client-widget | Util |
-| `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/ResizableAcceptRejectContent.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/ResizableCloseContent.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/ResizableCreateOkCancelContent.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/ResizableDialog.java` | stroom-core-client-widget | Dialog |
-| `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/ResizableOkCancelContent.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/SimplePopup.java` | stroom-core-client-widget | Popup |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/SimplePopupLayout.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/view/TextBoxViewImpl.java` | stroom-core-client-widget | ViewImpl |
@@ -172,11 +168,7 @@ _516 files._
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/CloseContent.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/Dialog.ui.xml` | stroom-core-client-widget | Dialog |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/OkCancelContent.ui.xml` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/ResizableAcceptRejectContent.ui.xml` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/ResizableCloseContent.ui.xml` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/ResizableCreateOkCancelContent.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/ResizableDialog.ui.xml` | stroom-core-client-widget | Dialog |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/ResizableOkCancelContent.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/SimplePopup.ui.xml` | stroom-core-client-widget | Popup |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/SimplePopupLayout.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/popup/client/view/TextBoxViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
@@ -370,13 +362,10 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/presenter/TabDataImpl.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/AbstractTab.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/AbstractTabBar.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/AbstractTabSelector.java` | stroom-core-client-widget | — |
-| `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/BasicTabSelector.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTab.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTabBar.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTabLayoutUiHandlers.java` | stroom-core-client-widget | UiHandlers |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTabLayoutViewImpl.java` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/CurveTabSelector.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/DraggableTabBar.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/DraggedTab.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/GlobalResizeObserver.java` | stroom-core-client-widget | — |
@@ -386,7 +375,6 @@ _516 files._
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/LinkTabsLayoutViewImpl.java` | stroom-core-client-widget | ViewImpl |
 | `stroom-core-client-widget/src/main/java/stroom/widget/tab/client/view/ResizeListener.java` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/tab/client/view/CurveTabLayoutViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
-| `stroom-core-client-widget/src/main/resources/stroom/widget/tab/client/view/CurveTabSelector.ui.xml` | stroom-core-client-widget | — |
 | `stroom-core-client-widget/src/main/resources/stroom/widget/tab/client/view/LinkTabsLayoutViewImpl.ui.xml` | stroom-core-client-widget | ViewImpl |
 
 ### Widget — Data / Table

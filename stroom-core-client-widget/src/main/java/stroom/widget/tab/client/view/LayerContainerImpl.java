@@ -19,6 +19,8 @@ package stroom.widget.tab.client.view;
 import stroom.widget.presenter.client.Layer;
 import stroom.widget.presenter.client.LayerContainer;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -32,6 +34,8 @@ import java.util.Set;
 
 public class LayerContainerImpl extends Composite implements LayerContainer, RequiresResize, ProvidesResize {
 
+    private static final Binder BINDER = GWT.create(Binder.class);
+
     private final FlowPanel panel;
     private final Set<Layer> layers = new HashSet<>();
     private boolean fade;
@@ -39,8 +43,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     private Layer selectedLayer;
 
     public LayerContainerImpl() {
-        panel = new FlowPanel();
-        panel.addStyleName("layerContainer-container");
+        panel = BINDER.createAndBindUi(this);
         initWidget(panel);
     }
 
@@ -114,7 +117,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     public void add(final IsWidget isWidget) {
         final Widget widget = isWidget.asWidget();
 
-        widget.addStyleName("layerContainer-layer");
+        widget.addStyleName("layer-container__layer");
         panel.add(widget);
     }
 
@@ -176,4 +179,12 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
 //            this.selectedLayer = selectedLayer;
 //        }
 //    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface Binder extends UiBinder<FlowPanel, LayerContainerImpl> {
+
+    }
 }
