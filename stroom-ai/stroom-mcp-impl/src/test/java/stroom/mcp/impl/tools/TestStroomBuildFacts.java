@@ -92,6 +92,35 @@ class TestStroomBuildFacts {
     }
 
     @Test
+    void thePipelinesTranslatingAFeedAreThoseOfItsReadersThatTranslate() {
+        // Seen: TWITTER's raw data was read by an archiving pipeline and by Twitter-Events; the archiver came first,
+        // so the plan offered it as the pipeline a new version follows.
+        final BuildWorld world = new BuildWorld();
+        PipelineLayers.given(world.pipelineService, "archive", PipelineLayers.of(PipelineLayers.layer("archive")
+                .chain("Source", "Source", "xmlParser", "XMLParser", "writer", "XMLWriter",
+                        "rollingFileAppender", "RollingFileAppender")));
+        PipelineLayers.given(world.pipelineService, "events", PipelineLayers.of(PipelineLayers.layer("events")
+                .chain("Source", "Source", "xmlParser", "XMLParser", "translationFilter", "XSLTFilter",
+                        "streamAppender", "StreamAppender")
+                .property("streamAppender", "streamType", "Events")));
+        final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
+        Mockito.when(processorFilters.pipelinesReading("TWITTER")).thenReturn(List.of(
+                reader("archive", "Twitter-RollingFileAppender"), reader("events", "Twitter-Events")));
+        final StroomBuildFacts facts = new StroomBuildFacts(null, null, null, null, world.pipelineShapes, null,
+                null, null, null, processorFilters, null, null, null);
+
+        assertThat(facts.translating(List.of("TWITTER")))
+                .containsExactly(Map.of("name", "Twitter-Events", "uuid", "events"));
+
+        // None of them seen to translate (one Stroom can't load, here): every reader, as the Python server gives.
+        Mockito.when(processorFilters.pipelinesReading("OTHER")).thenReturn(List.of(
+                reader("archive", "Twitter-RollingFileAppender"), reader("missing", "Unloadable")));
+        assertThat(facts.translating(List.of("OTHER")))
+                .extracting(pipeline -> pipeline.get("uuid"))
+                .containsExactly("archive", "missing");
+    }
+
+    @Test
     void aSurveysStateIsReadFromItsFence() {
         assertThat(StroomBuildFacts.readState("# ACME - Survey\n\n```json survey-state\n{\"saturated\": true}\n```\n"))
                 .contains(Map.of("saturated", true));
@@ -113,6 +142,14 @@ class TestStroomBuildFacts {
         entry.put("copy_of", "prod-é");
         assertThat(PyJson.dumpsSortedKeys(entry, 1))
                 .isEqualTo("{\n \"copy_of\": \"prod-\\u00e9\",\n \"verified\": []\n}");
+    }
+
+    private static Map<String, Object> reader(final String uuid, final String name) {
+        final Map<String, Object> reader = new LinkedHashMap<>();
+        reader.put("uuid", uuid);
+        reader.put("name", name);
+        reader.put("reads_events", false);
+        return reader;
     }
 
     private static Map<String, Object> state(final boolean saturated,
