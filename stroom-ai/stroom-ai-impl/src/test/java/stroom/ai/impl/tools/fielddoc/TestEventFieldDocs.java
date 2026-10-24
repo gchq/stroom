@@ -42,6 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// `utils/fielddoc.py` writes for the same mappings and events (golden files).
 class TestEventFieldDocs {
 
+    private static final String NOT_IN_THE_MAPPING = "not in the mapping";
+
     private static final EventSchema SCHEMA = FieldDocFixtures.SCHEMA;
 
     @ParameterizedTest
@@ -174,6 +176,47 @@ class TestEventFieldDocs {
                                    + "in a Data element of Unknown. | `action` |");
         // Without a sample: no sample column.
         assertThat(EventFieldDocs.fieldMappingMarkdown(m, SCHEMA)).doesNotContain("Sample values");
+    }
+
+    @Test
+    void dataInADataParentIsDocumentedUnderItWithItsValues() {
+        // Seen: TWITTER's mention and link rows written as Data[@Name='mention'] under Document, not under the
+        // mentions and links Data they're in, with no sample values, and the events holding them not counted as
+        // their rule's.
+        final TranslationMapping m = FieldDocFixtures.mapping(Map.of("events", FieldDocFixtures.json("""
+                [{"name": "logon", "fields": [
+                   {"path": "EventDetail/TypeId", "value": "Logon"},
+                   {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                   {"path": "EventDetail/Authenticate/User/Id", "value": "u"},
+                   {"path": "EventDetail/Authenticate/Data", "data_parent": "client", "data_name": "session",
+                    "field": "sid"},
+                   {"path": "EventDetail/Authenticate/Data", "data_parent": "client", "data_name": "tag",
+                    "repeat": true, "xpath": "tokenize(data[@name='tags']/@value, ',')"},
+                   {"path": "EventDetail/Authenticate/Data", "data_parent": "client/geo", "data_name": "result",
+                    "field": "result"}]}]""")));
+        final String records = FieldDocFixtures.RECORDS.replace("<data name=\"sid\" value=\"s1\"/>",
+                "<data name=\"sid\" value=\"s1\"/><data name=\"tags\" value=\"vpn,eu\"/>");
+        final XsltGenerator.Generated marked = XsltGenerator.generate(m, SCHEMA, "4.1.0", true);
+        assertThat(marked.problems()).isEmpty();
+        final List<XmlElement> events = EventFieldDocs.sampledEvents(List.of(FieldDocFixtures.transform(
+                marked.xslt(), records)));
+        assertThat(events).hasSize(2);
+
+        final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, events, FieldDocs.BY_EVENT_TYPE, null);
+
+        assertThat(text).contains(
+                "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='session']/@Value` | ",
+                "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='tag']/@Value` | ",
+                "| `EventDetail/Authenticate/Data[@Name='client']/Data[@Name='geo']/Data[@Name='result']/@Value` | ",
+                "| \"s1\" |", "| \"vpn\"<br>\"eu\"<br>(several per event) |", "| \"fail\" |")
+                .contains("Every record: 2 of the sample's 2 events.")
+                .doesNotContain("not written by a rule", "(not in the sample)", "[@Name='client']/@Value`",
+                        NOT_IN_THE_MAPPING);
+        // Each Data a row's own key, as the events hold it.
+        assertThat(EventFieldDocs.eventValues(events.getFirst(), List.of("EventDetail")))
+                .containsEntry(new EventFieldDocs.FieldKey("EventDetail/Authenticate/Data[@Name='client']/Data",
+                        "tag"), List.of("vpn", "eu"))
+                .doesNotContainKey(new EventFieldDocs.FieldKey("EventDetail/Authenticate/Data", "client"));
     }
 
     @Test
