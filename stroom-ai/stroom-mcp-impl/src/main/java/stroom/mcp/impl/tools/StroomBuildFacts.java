@@ -80,6 +80,8 @@ class StroomBuildFacts implements BuildFacts {
     private static final List<String> COLUMN_PATHS = List.of("EventTime/TimeCreated", "EventSource/User/Id",
             "EventSource/Device/HostName", "IPAddress", "TypeId", "Action", "Outcome/Success");
 
+    private static final String TRANSLATION = "translation";
+
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final DocumentAccess documentAccess;
@@ -460,7 +462,26 @@ class StroomBuildFacts implements BuildFacts {
                 LOGGER.debug("Unable to find the pipelines reading {}", feed, e);
             }
         }
-        return found;
+        // A deliberate departure from the Python server, which gives every pipeline reading the raw data: those of
+        // them that translate it, when any can be told to (seen: TWITTER's raw data was read by an archiving
+        // pipeline, Twitter-RollingFileAppender, and by Twitter-Events; the archiver came first, so the plan
+        // offered it as the one a new version follows, and the drafts read its XSLTs, of which it has none).
+        final List<Map<String, Object>> translations = found.stream()
+                .filter(pipeline -> TRANSLATION.equals(stage(String.valueOf(pipeline.get("uuid")))))
+                .toList();
+        return translations.isEmpty()
+                ? found
+                : translations;
+    }
+
+    // A pipeline's stage, or null when Stroom can't load it.
+    private String stage(final String uuid) {
+        try {
+            return pipelineShapes.shape(uuid).stage();
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the stage of pipeline {}", uuid, e);
+            return null;
+        }
     }
 
     // The feed's own streams of a type, not deleted: Stroom keeps a deleted feed's streams under its name (the UI
