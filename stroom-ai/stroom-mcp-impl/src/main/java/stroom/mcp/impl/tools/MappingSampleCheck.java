@@ -82,6 +82,7 @@ final class MappingSampleCheck {
         problems.addAll(LocalCheck.checkSchemaValues(mapping, found.records(), schema));
         warnings.addAll(LocalCheck.domainQualifiedUserIds(mapping, found.records()));
         warnings.addAll(checkXPaths(mapping, samples, splitter));
+        warnings.addAll(checkSeveralValues(mapping, samples, splitter));
         final XPathChecks.Findings extractions = checkExtractions(mapping, samples, splitter, found.records(),
                 deadline, clock);
         problems.addAll(extractions.problems());
@@ -122,6 +123,42 @@ final class MappingSampleCheck {
             return List.of();
         }
         return XPathChecks.checkXPaths(inputs, MappingFacts.mappingNamespaces(mapping),
+                recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
+    }
+
+    /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record (written
+    /// joined in one element): not in the Python server.
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec, or null.
+    /// @return The warnings.
+    static List<String> checkSeveralValues(final TranslationMapping mapping,
+                                           final List<String> samples,
+                                           final SplitterSpec splitter) {
+        if (NullSafe.isNonEmptyString(mapping.forEach())) {
+            return List.of();
+        }
+        final Map<String, List<String>> used = new LinkedHashMap<>();
+        mapping.common().stream()
+                .filter(entry -> !entry.repeat())
+                .forEach(entry -> add(used, entry.xpath(), entry.path()));
+        for (final EventRule rule : mapping.events()) {
+            rule.fields().stream()
+                    .filter(entry -> !entry.repeat())
+                    .forEach(entry -> add(used, entry.xpath(), "[" + rule.name() + "] " + entry.path()
+                                                               + (NullSafe.isNonEmptyString(entry.dataName())
+                            ? " " + entry.dataKey()
+                            : "")));
+        }
+        final List<String> imported = mapping.functions().stream().map(SharedFunctions::prefix).toList();
+        // One reading only the variables it binds itself is run too (a for ... return, as TWITTER's mentions).
+        used.keySet().removeIf(xpath -> xpath.contains("stroom:") || XPathChecks.readsUnboundVariable(xpath)
+                                        || imported.stream().anyMatch(prefix -> xpath.contains(prefix + ":")));
+        if (used.isEmpty()) {
+            return List.of();
+        }
+        return XPathChecks.severalValues(used, MappingFacts.mappingNamespaces(mapping),
                 recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
     }
 

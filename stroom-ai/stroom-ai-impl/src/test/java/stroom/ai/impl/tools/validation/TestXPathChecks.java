@@ -91,6 +91,33 @@ class TestXPathChecks {
     }
 
     @Test
+    void testSeveralValuesWithoutRepeatAreWarnedOf() {
+        // Seen: mentions without repeat came out joined in one Data ("pataz1 Lancegooden"), and the agent took
+        // that for something the generator can't do.
+        final Map<String, String> record = new LinkedHashMap<>();
+        record.put("text", "@pataz1 @Lancegooden Facts much");
+        record.put("id", "1");
+        final List<String> documents = List.of(XPathChecks.splitterRecordDocument(Map.of("id", "0"), "records:2"),
+                XPathChecks.splitterRecordDocument(record, "records:2"));
+        final Map<String, List<String>> inputs = new LinkedHashMap<>();
+        inputs.put("for $m in tokenize(data[@name='text']/@value, '\\s+')[starts-with(., '@')] return "
+                   + "substring($m, 2)", List.of("[tweet] EventDetail/Create/Document/Data mentions"));
+        inputs.put("data[@name='id']/@value", List.of("[tweet] EventDetail/Create/Document/Id"));
+
+        assertThat(XPathChecks.severalValues(inputs, Map.of(), documents, "records:2")).singleElement().asString()
+                .contains("(used for [tweet] EventDetail/Create/Document/Data mentions) gives 2 values in sample "
+                          + "record 2 (['pataz1', 'Lancegooden'])")
+                .contains("without repeat they are written joined in one element")
+                .contains("repeat: true writes one element per value");
+        assertThat(XPathChecks.severalValues(Map.of(), Map.of(), documents, "records:2")).isEmpty();
+        // The loop's own variable is the expression's; one the XSLT binds is not.
+        assertThat(XPathChecks.readsUnboundVariable("for $m in tokenize(x, ' ') return $m")).isFalse();
+        assertThat(XPathChecks.readsUnboundVariable("let $a := x, $b := y return concat($a, $b)")).isFalse();
+        assertThat(XPathChecks.readsUnboundVariable("for $m in $words return $m")).isTrue();
+        assertThat(XPathChecks.readsUnboundVariable("replace(x, '(a)', '$1')")).isFalse();
+    }
+
+    @Test
     void testDataSplitterRecordsAndWhatIsNotEvaluated() {
         final Map<String, String> record = new LinkedHashMap<>();
         record.put("time", "2026-10-01T10:00:00Z");
