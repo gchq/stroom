@@ -19,8 +19,8 @@ package stroom.widget.menu.client.presenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.NewTabLink;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -164,12 +164,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                         TEMPLATE.inner("menu__text", value.getText()));
                 appendNewTabHint(value, inner);
 
-                if (value.getAction() != null) {
-                    final String shortcut = KeyBinding.getShortcut(value.getAction());
-                    if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menu__shortcut",
-                                SafeHtmlUtils.fromString(shortcut)));
-                    }
+                final String shortcut = value.getShortcut();
+                if (shortcut != null) {
+                    inner.append(TEMPLATE.inner("menu__shortcut",
+                            SafeHtmlUtils.fromString(shortcut)));
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
@@ -183,7 +181,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                         ? " menu__item--highlight"
                         : "";
                 final SafeHtml tooltip = NullSafe.getOrElse(value, MenuItem::getTooltip, value.getText());
-                sb.append(TEMPLATE.outer(className, tooltip.asString(), inner.toSafeHtml()));
+                // As text: the template escapes the title itself
+                sb.append(TEMPLATE.outer(className, SafeHtmlUtil.toPlainText(tooltip), inner.toSafeHtml()));
             }
         }
 
@@ -226,12 +225,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                                 value.getText()));
                 appendNewTabHint(value, inner);
 
-                if (value.getAction() != null) {
-                    final String shortcut = KeyBinding.getShortcut(value.getAction());
-                    if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menu__shortcut",
-                                SafeHtmlUtils.fromString(shortcut)));
-                    }
+                final String shortcut = value.getShortcut();
+                if (shortcut != null) {
+                    inner.append(TEMPLATE.inner("menu__shortcut",
+                            SafeHtmlUtils.fromString(shortcut)));
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side

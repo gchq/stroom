@@ -22,6 +22,8 @@ import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.contextmenu.client.ContextMenuManager;
+import stroom.widget.contextmenu.client.TextEditTarget;
 import stroom.widget.datagrid.client.model.TableText;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -29,6 +31,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.Clipboard;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
@@ -63,14 +66,23 @@ final class DataGridContextMenu<R> {
 
     /// Show the menu.
     ///
-    /// @param x        The pointer's client x position.
-    /// @param y        The pointer's client y position.
-    /// @param rowIndex The page-relative index of the row clicked, or `-1`.
-    /// @param colIndex The index of the column clicked, or `-1`.
-    /// @param target   The element clicked.
-    void show(final int x, final int y, final int rowIndex, final int colIndex, final Element target) {
+    /// @param position  Where to show it.
+    /// @param rowIndex  The page-relative index of the row clicked, or `-1`.
+    /// @param colIndex  The index of the column clicked, or `-1`.
+    /// @param target    The element clicked.
+    /// @param textField The text field clicked (a cell's, or the header's filter), whose edit items
+    ///                  start the menu, or null.
+    void show(final PopupPosition position,
+              final int rowIndex,
+              final int colIndex,
+              final Element target,
+              final TextEditTarget textField) {
         final boolean onCell = rowIndex >= 0 && colIndex >= 0;
         final List<Item> menuItems = new ArrayList<>();
+        if (textField != null) {
+            menuItems.addAll(ContextMenuManager.createEditItems(textField));
+            addSeparator(menuItems);
+        }
 
         if (onCell) {
             final List<Item> cellItems = getCellMenuItems(rowIndex, colIndex);
@@ -78,14 +90,10 @@ final class DataGridContextMenu<R> {
 
             final Hyperlink hyperlink = findHyperlink(target);
             if (hyperlink != null) {
-                if (!menuItems.isEmpty()) {
-                    menuItems.add(new Separator(1));
-                }
+                addSeparator(menuItems);
                 addLinkItems(menuItems, hyperlink);
             }
-            if (!menuItems.isEmpty()) {
-                menuItems.add(new Separator(1));
-            }
+            addSeparator(menuItems);
         }
 
         menuItems.add(new IconParentMenuItem.Builder()
@@ -104,10 +112,20 @@ final class DataGridContextMenu<R> {
                 .children(getAiItems(rowIndex, colIndex))
                 .build());
 
-        ShowMenuEvent.builder()
+        final ShowMenuEvent.Builder builder = ShowMenuEvent.builder()
                 .items(menuItems)
-                .popupPosition(new PopupPosition(x, y))
-                .fire(getEventBus());
+                .popupPosition(position);
+        if (textField != null) {
+            builder.onHide(e -> textField.restore());
+        }
+        builder.fire(getEventBus());
+    }
+
+    // A separator between groups of items: none at the top, and never two together
+    private static void addSeparator(final List<Item> menuItems) {
+        if (!menuItems.isEmpty() && !(menuItems.get(menuItems.size() - 1) instanceof Separator)) {
+            menuItems.add(new Separator(1));
+        }
     }
 
     // --------------------------------------------------------------------------------
@@ -166,7 +184,7 @@ final class DataGridContextMenu<R> {
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
                 .text("Copy Link URL")
-                .command(() -> DataGridDom.copyToClipboard(hyperlink.getHref()))
+                .command(() -> Clipboard.writeText(hyperlink.getHref()))
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.OPEN)
@@ -222,7 +240,7 @@ final class DataGridContextMenu<R> {
         return new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
                 .text(text)
-                .command(() -> DataGridDom.copyToClipboard(textSupplier.get()))
+                .command(() -> Clipboard.writeText(textSupplier.get()))
                 .build();
     }
 

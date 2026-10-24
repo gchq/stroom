@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
@@ -55,6 +56,8 @@ public final class AceEditorStories {
 
     private static final String WIDTH = "720px";
     private static final String HEIGHT = "380px";
+    private static final String ACE_CONTENT = ".ace_content";
+    private static final String MENU_ITEM = "menuitem";
 
     static final String SAMPLE_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -118,6 +121,52 @@ public final class AceEditorStories {
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
                     play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
                             .toMatch("hello world"));
+                })
+                // A right-click shows the edit items (gchq/stroom#5897), then Format and the editor's
+                // options in a sub menu
+                .story("ContextMenu", context -> menuEditor(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_CONTENT)).toBeInTheDocument());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    final Query menu = play.screen().findByRole("menu", "Editor");
+                    for (final String item : List.of("Undo", "Redo", "Cut", "Copy", "Paste", "Delete",
+                            "Select All", "Format", "Editor Options")) {
+                        play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing(item)))
+                                .toBeInTheDocument();
+                    }
+                    // Nothing is selected yet
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Copy")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Editor Options")))
+                            .toHaveAttribute("aria-haspopup", "menu");
+
+                    // Select All, then Delete, empties the editor; Undo puts the text back
+                    play.click(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Select All")));
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    play.click(play.screen().findByRole(MENU_ITEM, TextMatch.containing("Delete")));
+                    final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
+                    play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
+                            .toBe(""));
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    play.click(play.screen().findByRole(MENU_ITEM, TextMatch.containing("Undo")));
+                    play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
+                            .toMatch("<root>"));
+                })
+                // A read-only editor can only be copied from
+                .story("ReadOnlyContextMenu", context -> menuEditor(context, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_CONTENT)).toBeInTheDocument());
+                    play.rightClick(play.querySelector(ACE_CONTENT));
+                    final Query menu = play.screen().findByRole("menu", "Editor");
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Copy")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(menu).getByRole(MENU_ITEM, TextMatch.containing("Select All")))
+                            .toBeInTheDocument();
+                    play.expect(play.within(menu).queryByRole(MENU_ITEM, TextMatch.containing("Paste")))
+                            .toBeNull();
+                    play.expect(play.within(menu).queryByRole(MENU_ITEM, TextMatch.containing("Cut")))
+                            .toBeNull();
                 })
                 // Plain text, read-only, not wrapped (no syntax highlighting)
                 .story("PlainText", context -> {
@@ -226,6 +275,17 @@ public final class AceEditorStories {
         final TextBox textBox = new TextBox();
         textBox.getElement().setAttribute("aria-label", name);
         return textBox;
+    }
+
+    // An editor that shows Stroom's menus, as in Stroom
+    private static Widget menuEditor(final StoryContext context, final boolean readOnly) {
+        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        final EditorPresenter editor = EditorWidgets.editorPresenter(popups.getEventBus());
+        editor.setMode(AceEditorMode.XML);
+        editor.setReadOnly(readOnly);
+        editor.getFormatAction().setAvailable(!readOnly);
+        editor.setText("<root><a>1</a></root>");
+        return framed(editor);
     }
 
     private static Widget editableTyping(final StoryContext context) {

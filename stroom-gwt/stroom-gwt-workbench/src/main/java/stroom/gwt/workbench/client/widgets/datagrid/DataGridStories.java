@@ -22,6 +22,7 @@ import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -512,6 +513,35 @@ public final class DataGridStories {
                     play.expect(play.spy(InteractiveCellGrids.ON_CHANGE)).toHaveBeenCalledTimes(1);
                 })
                 // ExpanderCell: the expander opens and closes the tree without selecting the row
+                // A right-click on a cell's text field shows the field's edit items (Cut, Copy, Paste
+                // and so on) above the grid's own items (gchq/stroom#5897)
+                .story("TextFieldContextMenu", InteractiveCellGrids::textFieldGrid)
+                .withPlay(play -> {
+                    final Query input = play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .querySelector("input");
+                    play.waitFor(() -> play.expect(input).toBeInTheDocument());
+                    play.rightClick(input);
+                    final Query menu = play.screen().findByRole("menu");
+                    for (final String item : List.of("Undo", "Cut", "Paste", "Select All", "Export Table")) {
+                        play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing(item)))
+                                .toBeInTheDocument();
+                    }
+                    // The edit items come first
+                    play.expect(play.within(menu).getAllByRole("menuitem").first())
+                            .toHaveTextContent(TextMatch.containing("Undo"));
+                    // Two separators in the edit items, one before the grid's: never two together
+                    play.expect(play.within(menu).getAllByRole("separator")).toHaveLength(3);
+                    // Select All acts on the field, which keeps the focus
+                    play.click(play.within(menu).getByRole("menuitem", TextMatch.containing("Select All")));
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+
+                    // Elsewhere in the row, only the grid's items
+                    play.rightClick(play.within(InteractiveCellGrids.rowOf(play, "Alice Johnson"))
+                            .querySelector(".data-grid__cell[data-col=\"0\"]"));
+                    final Query rowMenu = play.screen().findByRole("menu");
+                    play.expect(play.within(rowMenu).queryByRole("menuitem", TextMatch.containing("Undo")))
+                            .toBeNull();
+                })
                 .story("ExpanderColumn", InteractiveCellGrids::expanderGrid)
                 .withPlay(play -> {
                     final Query rows = play.querySelectorAll(ROW);

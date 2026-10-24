@@ -21,7 +21,6 @@ import stroom.feed.client.CopyFeedUrlEvent;
 import stroom.feed.client.OpenFeedEvent;
 import stroom.feed.shared.FeedDoc;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.datagrid.client.EventCell;
 import stroom.widget.datagrid.client.HasContextMenus;
@@ -29,6 +28,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.RowActions;
@@ -167,7 +167,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                 CopyTextUtil.keepSelection(event);
                 final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
-                    ClipboardUtil.copy(text);
+                    Clipboard.writeText(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);
@@ -178,7 +178,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
             if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
                 CopyTextUtil.keepSelection(event);
                 if (text != null) {
-                    ClipboardUtil.copy(text);
+                    Clipboard.writeText(text);
                 }
             }
         }
@@ -272,7 +272,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .icon(SvgImage.COPY)
                     .text("Name")
                     .enabled(true)
-                    .command(() -> ClipboardUtil.copy(name))
+                    .command(() -> Clipboard.writeText(name))
                     .build());
         }
         childMenuItems.add(createCopyLinkMenuItem(name, priority++));

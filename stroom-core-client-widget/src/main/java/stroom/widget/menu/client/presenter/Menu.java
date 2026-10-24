@@ -70,6 +70,7 @@ public class Menu extends Widget {
     private static final String ARIA_DISABLED = "aria-disabled";
     private static final String ARIA_EXPANDED = "aria-expanded";
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
+    private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final int PAGE_SIZE = 10;
@@ -488,6 +489,12 @@ public class Menu extends Widget {
                 row.removeAttribute(ARIA_DISABLED);
             } else {
                 row.setAttribute(ARIA_DISABLED, "true");
+            }
+            final String keyShortcuts = menuItem.getAriaKeyShortcuts();
+            if (keyShortcuts != null) {
+                row.setAttribute(ARIA_KEY_SHORTCUTS, keyShortcuts);
+            } else {
+                row.removeAttribute(ARIA_KEY_SHORTCUTS);
             }
             if (item instanceof HasChildren) {
                 row.setAttribute(ARIA_HAS_POPUP, "menu");

@@ -16,8 +16,8 @@
 
 package stroom.data.client.presenter;
 
-import stroom.util.client.ClipboardUtil;
 import stroom.widget.datagrid.client.EventCell;
+import stroom.widget.util.client.Clipboard;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
@@ -81,7 +81,7 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
         if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
             CopyTextUtil.keepSelection(event);
             if (value != null) {
-                ClipboardUtil.copy(value);
+                Clipboard.writeText(value);
             }
         }
     }

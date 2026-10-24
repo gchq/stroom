@@ -93,6 +93,7 @@ import stroom.gwt.workbench.client.widgets.layout.SplitPaneStateStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuItemWidgetStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuPanelStories;
+import stroom.gwt.workbench.client.widgets.menu.TextContextMenuStories;
 import stroom.gwt.workbench.client.widgets.overlays.TooltipStories;
 import stroom.gwt.workbench.client.widgets.overlays.TooltipWidgetStories;
 import stroom.gwt.workbench.client.widgets.popover.InfoPopoverCellStories;
@@ -302,6 +303,8 @@ public final class WidgetsStories {
         MenuPanelStories.addTo(registry);
         // Widgets/Menu/MenuItemWidget
         MenuItemWidgetStories.addTo(registry);
+        // Widgets/Menu/TextContextMenu
+        TextContextMenuStories.addTo(registry);
         // Widgets/Popover/InfoPopoverCell
         InfoPopoverCellStories.addTo(registry);
         // Widgets/Popover/Popover

@@ -82,7 +82,7 @@ public final class MenuPanelStories {
                                 MenuWidgets.icon("Copy", SvgImage.COPY, () -> result.accept("Copy")).build(),
                                 MenuWidgets.icon("Cut", SvgImage.CLEAR, () -> result.accept("Cut")).build(),
                                 MenuWidgets.iconDisabled("Paste", SvgImage.CLIPBOARD)
-                                        .tooltip("Nothing in clipboard")
+                                        .tooltip("Nothing's in the clipboard")
                                         .build(),
                                 MenuWidgets.separator(),
                                 MenuWidgets.simple("Select all", () -> result.accept("Select All")),
@@ -92,6 +92,10 @@ public final class MenuPanelStories {
                 .withPlay(play -> {
                     // Open the menu, click an item — its action fires and the menu closes
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
+                    // A tooltip shows as written, its apostrophe not escaped twice (as "&#39;")
+                    play.expect(play.within(play.screen().findByRole("menuitem", TextMatch.containing("Paste")))
+                                    .querySelector(".menu__item"))
+                            .toHaveAttribute("title", "Nothing's in the clipboard");
                     play.click(play.screen().findByText("Copy"));
                     play.waitFor(() -> play.expect(play.getByText("Copy", "strong")).toBeInTheDocument());
                 })

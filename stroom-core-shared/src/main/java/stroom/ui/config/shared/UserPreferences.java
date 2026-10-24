@@ -105,6 +105,12 @@ public class UserPreferences {
                              "`Colour-blind safe`")
     private final String visualisationPalette;
 
+    @JsonProperty
+    @JsonPropertyDescription("Whether a right-click in a text field or code editor shows Stroom's own edit " +
+                             "menu (`STROOM`) or the browser's (`BROWSER`). A Shift+right-click always shows " +
+                             "the browser's.")
+    private final TextContextMenu textContextMenu;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -120,7 +126,8 @@ public class UserPreferences {
                            @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig,
                            @JsonProperty("keyBindings") final Map<String, List<String>> keyBindings,
                            @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts,
-                           @JsonProperty("visualisationPalette") final String visualisationPalette) {
+                           @JsonProperty("visualisationPalette") final String visualisationPalette,
+                           @JsonProperty("textContextMenu") final TextContextMenu textContextMenu) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -138,6 +145,7 @@ public class UserPreferences {
         this.keyBindings = keyBindings;
         this.enableCharacterKeyShortcuts = Objects.requireNonNullElse(enableCharacterKeyShortcuts, true);
         this.visualisationPalette = visualisationPalette;
+        this.textContextMenu = Objects.requireNonNullElse(textContextMenu, TextContextMenu.DEFAULT);
     }
 
     public String getTheme() {
@@ -205,6 +213,12 @@ public class UserPreferences {
         return visualisationPalette;
     }
 
+    /// @return Whether a right-click in a text field or code editor shows Stroom's edit menu or the
+    /// browser's.
+    public TextContextMenu getTextContextMenu() {
+        return textContextMenu;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -228,7 +242,8 @@ public class UserPreferences {
                Objects.equals(askStroomAiConfig, that.askStroomAiConfig) &&
                Objects.equals(keyBindings, that.keyBindings) &&
                Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts) &&
-               Objects.equals(visualisationPalette, that.visualisationPalette);
+               Objects.equals(visualisationPalette, that.visualisationPalette) &&
+               textContextMenu == that.textContextMenu;
     }
 
     @Override
@@ -246,7 +261,8 @@ public class UserPreferences {
                 hideConditionalStyles,
                 keyBindings,
                 enableCharacterKeyShortcuts,
-                visualisationPalette);
+                visualisationPalette,
+                textContextMenu);
     }
 
     @Override
@@ -267,6 +283,7 @@ public class UserPreferences {
                ", keyBindings=" + keyBindings +
                ", enableCharacterKeyShortcuts=" + enableCharacterKeyShortcuts +
                ", visualisationPalette='" + visualisationPalette + '\'' +
+               ", textContextMenu=" + textContextMenu +
                '}';
     }
 
@@ -322,6 +339,42 @@ public class UserPreferences {
     //--------------------------------------------------------------------------------
 
 
+    /// What a right-click in a text field or code editor shows.
+    public enum TextContextMenu {
+        /// Stroom's own edit menu, styled as Stroom's other menus.
+        STROOM("Stroom"),
+        /// The browser's own menu (e.g. for its spelling suggestions or password manager).
+        BROWSER("Browser");
+
+        public static final TextContextMenu DEFAULT = STROOM;
+
+        private final String displayValue;
+
+        TextContextMenu(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        /// @return The value's name, as the preferences dialog shows it.
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        /// @param displayValue A value's name, as the preferences dialog shows it.
+        /// @return The value, or the default if the name is no value's.
+        public static TextContextMenu fromDisplayValue(final String displayValue) {
+            for (final TextContextMenu value : values()) {
+                if (value.displayValue.equalsIgnoreCase(displayValue)) {
+                    return value;
+                }
+            }
+            return DEFAULT;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String theme;
@@ -339,6 +392,7 @@ public class UserPreferences {
         private Map<String, List<String>> keyBindings;
         private Boolean enableCharacterKeyShortcuts;
         private String visualisationPalette;
+        private TextContextMenu textContextMenu;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -371,6 +425,7 @@ public class UserPreferences {
             this.keyBindings = userPreferences.keyBindings;
             this.enableCharacterKeyShortcuts = userPreferences.enableCharacterKeyShortcuts;
             this.visualisationPalette = userPreferences.visualisationPalette;
+            this.textContextMenu = userPreferences.textContextMenu;
         }
 
         public Builder theme(final String theme) {
@@ -457,6 +512,14 @@ public class UserPreferences {
             return this;
         }
 
+        /// @param textContextMenu Whether a right-click in a text field or code editor shows
+        ///                        Stroom's edit menu or the browser's, or null for the default.
+        /// @return This builder.
+        public Builder textContextMenu(final TextContextMenu textContextMenu) {
+            this.textContextMenu = textContextMenu;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -473,7 +536,8 @@ public class UserPreferences {
                     askStroomAiConfig,
                     keyBindings,
                     enableCharacterKeyShortcuts,
-                    visualisationPalette);
+                    visualisationPalette,
+                    textContextMenu);
         }
     }
 

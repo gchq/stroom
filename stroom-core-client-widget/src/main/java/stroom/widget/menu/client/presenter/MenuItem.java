@@ -16,6 +16,7 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -30,6 +31,7 @@ public abstract class MenuItem extends Item {
     private final Command command;
     private final boolean enabled;
     private final boolean opensNewTab;
+    private final String shortcut;
 
     protected MenuItem(final int priority,
                        final SafeHtml text,
@@ -55,6 +57,21 @@ public abstract class MenuItem extends Item {
                        final boolean enabled,
                        final Command command,
                        final boolean opensNewTab) {
+        this(priority, text, tooltip, action, enabled, command, opensNewTab, null);
+    }
+
+    /// @param shortcut The shortcut shown beside the item as fixed text, e.g. "Ctrl+C" for a key
+    ///                 the browser handles rather than a Stroom key binding, or null to show the
+    ///                 action's binding (see [#getShortcut]). The other parameters are as for the
+    ///                 other constructors.
+    protected MenuItem(final int priority,
+                       final SafeHtml text,
+                       final SafeHtml tooltip,
+                       final Action action,
+                       final boolean enabled,
+                       final Command command,
+                       final boolean opensNewTab,
+                       final String shortcut) {
         super(priority);
         this.text = text;
         this.tooltip = tooltip;
@@ -62,6 +79,7 @@ public abstract class MenuItem extends Item {
         this.enabled = enabled;
         this.command = command;
         this.opensNewTab = opensNewTab;
+        this.shortcut = shortcut;
     }
 
     public SafeHtml getText() {
@@ -74,6 +92,49 @@ public abstract class MenuItem extends Item {
 
     public Action getAction() {
         return action;
+    }
+
+    /// @return The shortcut shown beside the item, e.g. "Ctrl+C": the fixed text it was given,
+    /// else the key its action is bound to, or null for none.
+    public String getShortcut() {
+        if (shortcut != null) {
+            return shortcut;
+        }
+        return action != null
+                ? KeyBinding.getShortcut(action)
+                : null;
+    }
+
+    /// @return The shortcut in the form the `aria-keyshortcuts` attribute takes, e.g. "Control+C"
+    /// for "Ctrl+C", or null for none or for a key sequence, which the attribute can't express.
+    public String getAriaKeyShortcuts() {
+        return toAriaKeyShortcuts(getShortcut());
+    }
+
+    // A shortcut as shown (e.g. "Ctrl+C") in the form aria-keyshortcuts takes ("Control+C"); null for
+    // none, or for a key sequence (e.g. "G H"), which the attribute can't express (a space separates
+    // alternatives)
+    static String toAriaKeyShortcuts(final String shortcut) {
+        if (shortcut == null || shortcut.isEmpty() || shortcut.contains(" ")) {
+            return null;
+        }
+        final String[] keys = shortcut.split("\\+", -1);
+        final StringBuilder sb = new StringBuilder();
+        for (final String key : keys) {
+            if (sb.length() > 0) {
+                sb.append('+');
+            }
+            if ("Ctrl".equals(key)) {
+                sb.append("Control");
+            } else if ("Cmd".equals(key)) {
+                sb.append("Meta");
+            } else if ("Del".equals(key)) {
+                sb.append("Delete");
+            } else {
+                sb.append(key);
+            }
+        }
+        return sb.toString();
     }
 
     public boolean isEnabled() {

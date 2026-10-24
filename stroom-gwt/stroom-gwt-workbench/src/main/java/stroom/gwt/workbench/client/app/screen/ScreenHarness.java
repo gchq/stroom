@@ -42,6 +42,7 @@ import stroom.security.shared.AppPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
+import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
@@ -215,6 +216,8 @@ public final class ScreenHarness {
         new StaticEventBus(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's MenuManager does
         new MenuManager(eventBus, this::createMenuPresenter);
+        // and the edit menu on text fields, in place of the browser's
+        addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
         // MainPresenter relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
