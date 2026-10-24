@@ -24,15 +24,19 @@ import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.docref.DocRef;
 import stroom.index.shared.AddField;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +126,50 @@ class TestCreateIndexDocTool {
         final ArgumentCaptor<AddField> added = ArgumentCaptor.forClass(AddField.class);
         Mockito.verify(world.indexResource, Mockito.times(2)).addField(added.capture());
         assertThat(added.getAllValues().getLast().getIndexField().getAnalyzerType().name()).isEqualTo("KEYWORD");
+    }
+
+    @Test
+    void theBuildsLuceneIndexDocGetsAPlansNewFieldsWhenNamedAgain() {
+        // Seen in eval cases 02 and 13: a field wanted after indexing couldn't be added to the build's index, and the
+        // agent asked the user to add it in Stroom, or made a second index (the Stroom MCP server had
+        // set_index_fields for this).
+        final Map<String, Object> first = lucene(FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"))));
+        final String uuid = (String) call(first, world.forms(question -> Map.of("name", "ACME-INDEX"))).get("uuid");
+        // The field the first call added, as Stroom's index service now lists it.
+        Mockito.when(world.indexResource.findFields(any())).thenReturn(ResultPage.createUnboundedList(List.of(
+                IndexFieldImpl.builder().fldName("StreamId").fldType(FieldType.ID).build())));
+        final List<String> asked = new ArrayList<>();
+
+        final Map<String, Object> again = call(lucene(FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("Severity", "long",
+                        "EventDetail/Alert/Severity")))), world.forms(question -> {
+                            asked.add(question);
+                            return Map.of("value", true);
+                        }));
+
+        assertThat(again.get("uuid")).isEqualTo(uuid);
+        assertThat(((Map<?, ?>) again.get("fields")).get("added")).isEqualTo(List.of("Severity"));
+        assertThat(((Map<?, ?>) again.get("fields")).get("already_present")).isEqualTo(List.of("StreamId"));
+        assertThat(String.valueOf(again.get("hint"))).startsWith("Events indexed before have only the fields");
+        assertThat(asked).singleElement().asString().startsWith("Add the plan's fields to Lucene index doc "
+                                                                 + "'ACME-INDEX'");
+        // Named again with no plan: nothing to add, said so.
+        final Map<String, Object> noPlan = lucene(null);
+        assertThat(refused(noPlan)).contains("The build already has Lucene index doc 'ACME-INDEX'")
+                .contains("give plan=");
+    }
+
+    private static Map<String, Object> lucene(final FieldPlan plan) {
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("build", IndexingWorld.BUILD);
+        arguments.put("backend", "lucene");
+        arguments.put("name", "ACME-INDEX");
+        arguments.put("time_field", "EventTime");
+        if (plan != null) {
+            arguments.put("plan", plan.toJson());
+        }
+        return arguments;
     }
 
     private void pipelineWriting(final String indexName) {

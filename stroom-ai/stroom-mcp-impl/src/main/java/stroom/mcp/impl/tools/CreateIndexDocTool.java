@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.IndexingHelpers.Destination;
+import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
@@ -138,7 +139,8 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                              + "Create the build's index doc: a Lucene Index in a volume group with the plan's fields, "
                              + "or an Elastic Index doc on an existing Elastic Cluster doc pointing at the index or "
                              + "data stream, tested against the cluster. The user confirms the backend, name and "
-                             + "target.")
+                             + "target. Given the name of the build's Lucene index doc again, with plan=, it adds "
+                             + "the plan's fields the index lacks (then reprocess_streams the Events).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addEnumProperty(BACKEND_ARG, FieldPlans.BACKENDS, "The index's backend.")
@@ -190,6 +192,14 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                     : null;
         }
         final boolean elastic = FieldPlan.ELASTICSEARCH.equals(backend);
+        if (!elastic) {
+            final Optional<WriteGuard.BuildDoc> existing = guard.folderContents(build, true).stream()
+                    .filter(doc -> LuceneIndexDoc.TYPE.equals(doc.type()) && doc.name().equals(proposedName))
+                    .findFirst();
+            if (existing.isPresent()) {
+                return addFields(call, context, build, existing.get().docRef(), fieldPlan);
+            }
+        }
         final Map<String, Object> target = new LinkedHashMap<>();
         ElasticClusterDoc cluster = null;
         if (elastic) {
@@ -292,6 +302,38 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                                      + "indexing XSLT (save_xslt index_plan=...).");
             }
         }
+        return plan.withNext(context, build, result);
+    }
+
+    // The build's Lucene index has the name already: the plan's fields it lacks are added, once the user confirms
+    // (the Stroom MCP server's set_index_fields, which the port folded into create_index_doc's first call only; seen
+    // in eval cases 02 and 13: a field wanted after indexing couldn't be added, and the agent asked the user to add
+    // it in Stroom, or made a second index).
+    private Map<String, Object> addFields(final ToolCall call,
+                                          final ToolCallContext context,
+                                          final String build,
+                                          final DocRef index,
+                                          final FieldPlan fieldPlan) {
+        if (fieldPlan == null) {
+            throw new ToolRefusal("The build already has Lucene index doc '" + index.getName() + "' (uuid "
+                                  + index.getUuid() + "): give plan= (draft_index_mapping's plan, with the fields "
+                                  + "to add) to add the fields it lacks, or give a new index another name.");
+        }
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("build", build);
+        details.put("index doc", index.getName());
+        details.put("fields in the plan", PyText.list(fieldPlan.fields().stream().map(PlannedField::name)
+                .toList()));
+        consent.require(call, context, Consent.Request.confirmation(NAME, "Add the plan's fields to Lucene index "
+                                                                          + "doc '" + index.getName() + "'", details));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", LuceneIndexDoc.TYPE);
+        result.put("uuid", index.getUuid());
+        result.put("name", index.getName());
+        result.put("fields", indexFields.addLuceneFields(context.session(), index, fieldPlan));
+        result.put("hint", "Events indexed before have only the fields the index had then: reprocess_streams the "
+                           + "Events through the indexing pipeline (with the XSLT saved from this plan) so they have "
+                           + "the new ones, then verify_index.");
         return plan.withNext(context, build, result);
     }
 
