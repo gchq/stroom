@@ -389,6 +389,14 @@ run of 22 October 2026 (1,538 stories).
   the probe page, with an uncaught `TypeError` (`Cannot read properties of null`) before the delete
   confirmation appeared. It passed alone and with the other 54 AppShell stories, with the leak
   check. Not yet traced; a pretty compile would name the null.
+* Screenshots that differ from run to run, whatever changed (found 24 October 2026, comparing two
+  diffs against one baseline): the force layout visualisations (`App/Visualisations/Force`,
+  `Force2d`, `Force3d`; 39 to 70 of them, by different amounts each time, as their layouts are
+  animated), `App/Visualisations/LineChart` `PageKeys`, the `Polled` time in
+  `Widgets/Data Grid/DataGrid` `ValueSpinnerColumn`, and `App/Main/AppShell` `OpensDocument`, whose
+  keyboard focus lands on the Data tab in one run and on the info button in another (a race over
+  where the focus goes as the document opens). A screenshot diff should ignore the first three, and
+  the last needs the story to wait for the focus to settle, or the race fixing.
 
 * `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/CredentialsScreenStories.java`
 
