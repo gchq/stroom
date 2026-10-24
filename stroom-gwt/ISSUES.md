@@ -1454,6 +1454,18 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported.**
 
+* A disabled link button still underlines on hover: a disabled step location link and a disabled
+  `TimeRangeSelector` (found 24 October 2026, in wave 1's stylesheet review). `.link-button:hover`
+  (`link-button.css`, once `.linkButton:hover` in `components.css`) wins over their disabled rules.
+  Fix: `.link-button:hover:not(:disabled):not([aria-disabled="true"])`, with a story for each.
+* Unused CSS and classes met in wave 1's stylesheet renames (24 October 2026), renamed rather than
+  deleted (removals wait): in `button.css`, the default, outline and icon button variants, the
+  `button--selected`, `.small` and `.large` rules, `button__container`, the empty `.button svg`
+  and `.button:focus-visible` rules, and the unused `.stroom-theme-dark2` colours; in
+  `SvgCell.css`, `svgCell-face`; and the unused classes `SvgIconCell`,
+  `FindResultWithPermissionsCell` and `ToolTipCell` (which never closes its `<div>`). Delete them
+  once removals are allowed.
+
 * ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
   string to a template's `String` attribute, which escapes it again, so an apostrophe shows as
   `&#39;` (found 2026-10-23 by `TestTextEditMenu`)~~ Fixed (worktree `copy_and_paste`): the menu's
