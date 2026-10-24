@@ -234,7 +234,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         if (details.containsKey(IndexingRuns.ALREADY_INDEXED)) {
             summary += " Approve only once the index is dropped, as said below.";
         }
-        consent.require(call, context, Consent.Request.approval(NAME, summary, details));
+        consent.require(call, context, Consent.Request.approval(NAME, summary, details).withDocuments(ref,
+                source.pipeline()));
         if (clear) {
             indexingRuns.deleteIndexShards(lucene.getUuid());
         }

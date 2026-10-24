@@ -67,6 +67,43 @@ final class UserActionsUi {
         // Static methods only.
     }
 
+    /// An action's label as Markdown, the document it acts on (named in it in quotes, as the server writes it:
+    /// `Enable processor filter 58 on pipeline 'Twitter-Events-V1.1'`) a link that opens it (asked for by the
+    /// user), the rest as plain text.
+    ///
+    /// @param label The action's label.
+    /// @param doc   The document it acts on, or null.
+    /// @return The label as Markdown.
+    static String labelMarkdown(final String label, final DocRef doc) {
+        final String text = escapeMarkdown(label == null
+                ? ""
+                : label);
+        if (doc == null || doc.getName() == null || doc.getName().isEmpty() || doc.getType() == null
+            || doc.getUuid() == null) {
+            return text;
+        }
+        final String quoted = "'" + escapeMarkdown(doc.getName()) + "'";
+        final int at = text.indexOf(quoted);
+        if (at < 0) {
+            return text;
+        }
+        return text.substring(0, at) + "'[" + escapeMarkdown(doc.getName()) + "](?action=open-doc&docType="
+               + doc.getType() + "&docUuid=" + doc.getUuid() + ")'" + text.substring(at + quoted.length());
+    }
+
+    // Text as Markdown that shows it as it is.
+    private static String escapeMarkdown(final String text) {
+        final StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if ("\\`*_[]()<>#!|~&".indexOf(c) >= 0) {
+                out.append('\\');
+            }
+            out.append(c);
+        }
+        return out.toString();
+    }
+
     /// @param status    The action's status, as stored.
     /// @param expiresMs When its button stops working.
     /// @param nowMs     The time now.

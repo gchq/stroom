@@ -63,6 +63,7 @@ public class McpElicitations {
     private final AiChatRunManager runManager;
     private final Provider<AiConfig> aiConfigProvider;
     private final AtomicInteger waiting = new AtomicInteger();
+    private AnswerLinks answerLinks;
 
     @Inject
     McpElicitations(final AiDao aiDao,
@@ -73,6 +74,12 @@ public class McpElicitations {
         this.runDao = runDao;
         this.runManager = runManager;
         this.aiConfigProvider = aiConfigProvider;
+    }
+
+    /// @param answerLinks Links the documents and streams a form's message names, as an answer's are.
+    @Inject
+    void setAnswerLinks(final AnswerLinks answerLinks) {
+        this.answerLinks = answerLinks;
     }
 
     /// Shows a form from an MCP server to the user, and waits for their answer.
@@ -140,9 +147,18 @@ public class McpElicitations {
         }
         // It waits for as long as the user takes, as nothing is held while it does.
         aiDao.storeMessage(chatId, AiMessageType.ELICITATION, JsonUtil.writeValueAsString(
-                new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, STROOM_AI, tool, message, schema,
-                        Long.MAX_VALUE, null, callId), false));
+                new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, STROOM_AI, tool,
+                        withLinks(chatId, message), schema, Long.MAX_VALUE, null, callId), false));
         throw waitForAnswers(chatId);
+    }
+
+    // The message with the documents and streams the chat's tools gave linked (asked for by the user: seen, the
+    // pipeline a form names not opening from it), as an answer's are; as it is if they can't be. Checked for
+    // size before, as the server sent it.
+    private String withLinks(final int chatId, final String message) {
+        return answerLinks == null
+                ? message
+                : answerLinks.link(chatId, message);
     }
 
     private static AiChatRunManager.WaitingForUserException waitForAnswers(final int chatId) {
@@ -176,7 +192,7 @@ public class McpElicitations {
             final AtomicBoolean stop = runManager.stopFlag(chatId);
             final long expiresMs = System.currentTimeMillis() + config.getElicitationTimeout().toMillis();
             final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, server,
-                    tool, request.message(), request.requestedSchema(), expiresMs, null, null);
+                    tool, withLinks(chatId, request.message()), request.requestedSchema(), expiresMs, null, null);
             final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
                     JsonUtil.writeValueAsString(record, false));
             // The chat needs the user, but the run keeps its thread, so it is not carried on by anything else.

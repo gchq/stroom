@@ -350,7 +350,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         if (details.containsKey(ProcessingApprovals.INDEX_TEMPLATE)) {
             summary += " Approve only once the agreed index template is committed to the cluster.";
         }
-        consent.require(call, context, Consent.Request.approval(NAME, summary, details));
+        consent.require(call, context, Consent.Request.approval(NAME, summary, details).withDocuments(run.ref()));
         if (run.clear()) {
             indexingRuns.deleteIndexShards(run.lucene().getUuid());
         }

@@ -34,6 +34,10 @@ class TestAiElicitationCard {
         assertThat(AiElicitationCard.firstLine("\n## Create the feed?\nIt will receive data.", "A form"))
                 .isEqualTo("Create the feed?");
         assertThat(AiElicitationCard.firstLine("Which pipeline name?", "A form")).isEqualTo("Which pipeline name?");
+        // A link's text alone, as the title is plain text.
+        assertThat(AiElicitationCard.firstLine("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType="
+                                               + "Pipeline&docUuid=p)'\n- streams: 1", "A form"))
+                .isEqualTo("Reprocess with 'Twitter-Events-V1.1'");
     }
 
     @Test

@@ -1855,6 +1855,11 @@
     margin-bottom: 2px;
 }
 
+/* The label, as Markdown: its paragraph without the space round one. */
+.ai-user-action-label p {
+    margin: 0;
+}
+
 .ai-user-action-details,
 .ai-user-action-after {
     font-size: var(--ai-font-size--small);

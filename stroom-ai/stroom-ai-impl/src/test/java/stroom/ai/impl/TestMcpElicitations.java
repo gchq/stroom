@@ -121,6 +121,26 @@ class TestMcpElicitations {
     }
 
     @Test
+    void theDocumentsAFormNamesAreLinkedAsAnAnswersAre() throws Exception {
+        // Asked for by the user: the pipeline a form names opens from it.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final AnswerLinks links = Mockito.mock(AnswerLinks.class);
+        Mockito.when(links.link(CHAT_ID, "Reprocess with 'Twitter-Events-V1.1'?"))
+                .thenReturn("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType=Pipeline&docUuid=p)'?");
+        elicitations.setAnswerLinks(links);
+
+        final CompletableFuture<ElicitResult> result = CompletableFuture.supplyAsync(() ->
+                elicitations.handle(CHAT_ID, "Stroom AI", new ElicitFormRequest(
+                        "Reprocess with 'Twitter-Events-V1.1'?", FORM, null)));
+        final AiChatMessage card = waitForCard();
+
+        assertThat(JsonUtil.readValue(card.getMessage(), ElicitationRecord.class).message())
+                .isEqualTo("Reprocess with '[Twitter-Events-V1.1](?action=open-doc&docType=Pipeline&docUuid=p)'?");
+        elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null);
+        assertThat(result.get(10, TimeUnit.SECONDS).action()).isEqualTo(Action.DECLINE);
+    }
+
+    @Test
     void anAnswerThatDoesNotFitTheFormIsRefusedAndTheFormStillWaits() throws Exception {
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
         final CompletableFuture<ElicitResult> result = CompletableFuture.supplyAsync(() ->
