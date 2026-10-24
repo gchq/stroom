@@ -799,7 +799,9 @@ public class BuildPlan {
             case "documented:edited" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
                             args.editedXslt(), "<the translation XSLT>"), "pipeline_uuid", tr),
                     "its XSLT was changed by hand (save_xslt, or in Stroom): this reads the mapping back from it, "
-                    + "proven on the sample, so the documentation can be generated; then write_documentation");
+                    + "proven on the sample, so the documentation can be generated; then write_documentation. One "
+                    + "it can't read back (not laid out as the generator writes one): carry the edit with "
+                    + "build_translation_xslt uuid=<it> changes= instead");
             case "cef_mapping" -> call("draft_cef_mapping", args("stream_ids", events, "feeds",
                             args.sources().isEmpty()
                                     ? "<the Events feed>"
