@@ -26,7 +26,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -174,7 +174,7 @@ public final class ValueSpinnerCellStories {
         values.put("Bravo", 5);
         values.put(READ_ONLY_ROW, 50);
 
-        final DataGridWidget<String> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
         grid.setWidth("100%");
         grid.setHeight("100%");
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String name) -> name).build(), "Name", 150);

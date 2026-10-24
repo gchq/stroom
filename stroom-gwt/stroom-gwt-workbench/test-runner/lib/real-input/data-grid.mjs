@@ -199,6 +199,42 @@ export const CHECKS = {
   // A density change made by the page alone, with no key or click after it (as a preference change
   // arriving): the virtual rows' fixed height follows their cells' content, at both densities. The
   // play can't show this, as its own steps run the grid's pending work.
+  // The grid polls every 10ms, changing every row. A field typed in keeps its element, its text and
+  // its caret through the polls (the row is written cell by cell, leaving the cell with the focus),
+  // so real typing in the middle of the text goes where the caret is
+  'widgets-data-grid-datagrid--value-spinner-column': async (page) => {
+    const input = page.locator('[role="row"][data-row]', { hasText: 'Alice Johnson' }).locator('input');
+    // Clicked where it is, as a mouse does: until it has the focus the field is drawn again on every
+    // poll, so it is never still for as long as Playwright waits before a click (nor for long enough to
+    // measure in two steps). Near its start, clear of the arrows over its end
+    const point = await page.evaluate(() => {
+      const row = [...document.querySelectorAll('[role="row"][data-row]')]
+          .find((element) => element.textContent.includes('Alice Johnson'));
+      const rect = row.querySelector('input').getBoundingClientRect();
+      return { x: rect.x + 8, y: rect.y + rect.height / 2 };
+    });
+    await page.mouse.click(point.x, point.y);
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('12');
+    await page.keyboard.press('ArrowLeft');
+    await input.evaluate((element) => {
+      element.__caretCheck = true;
+    });
+    // About 30 polls
+    await page.waitForTimeout(300);
+    const state = () => input.evaluate((element) => ({
+      same: element.__caretCheck === true,
+      focused: document.activeElement === element,
+      value: element.value,
+      caret: element.selectionStart,
+    }));
+    assert.deepEqual(await state(), { same: true, focused: true, value: '12', caret: 1 },
+      'the field, its text and its caret are kept through the polls');
+    await page.keyboard.type('3');
+    await page.waitForTimeout(100);
+    assert.equal((await state()).value, '132', 'typing goes in at the caret');
+  },
+
   'widgets-data-grid-behaviour--rows-follow-density-virtual': async (page) => {
     const rowFitsCells = () => page.evaluate(() => {
       // The padded cell is the row's tallest: its content and the padding round it up to the cell.

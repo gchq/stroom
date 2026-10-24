@@ -16,11 +16,11 @@
 
 package stroom.gwt.workbench.client.widgets.layout;
 
-import stroom.data.grid.client.PagerViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
@@ -73,8 +73,8 @@ final class SplitPaneContent {
     /// @param testId The test id of the grid.
     /// @return The pager and grid.
     static Widget table(final String testId) {
-        final DataGridWidget<String[]> grid =
-                new DataGridWidget<>(new SimpleEventBus(), DataGridWidget.DEFAULT_LIST_PAGE_SIZE);
+        final DataGrid<String[]> grid =
+                new DataGrid<>(new SimpleEventBus(), DataGrid.DEFAULT_LIST_PAGE_SIZE);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[0]).build(), "Name", 200);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[1]).build(), "Role", 120);
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String[] row) -> row[2]).build(), "Notes", 400);

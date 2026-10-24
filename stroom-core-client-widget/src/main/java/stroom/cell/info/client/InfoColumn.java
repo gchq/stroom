@@ -51,7 +51,7 @@ public abstract class InfoColumn<T> extends Column<T, CellIcon> {
         super.onBrowserEvent(context, elem, row, event);
         Element target = event.getEventTarget().cast();
 
-        // Find the cell (MyDataGrid's td, DataGridWidget's [data-col]), or the element in it
+        // Find the cell (MyDataGrid's td, DataGrid's [data-col]), or the element in it
         while (target.getParentElement() != null
                && !isCell(target)
                && !isCell(target.getParentElement())) {

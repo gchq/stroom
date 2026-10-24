@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
 
@@ -99,8 +99,8 @@ public final class CopyTextStories {
 
     private static ScreenHarness harness(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
-        // Shows ShowMenuEvent's menu, as Stroom's Menu singleton does
-        new Menu(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()));
+        // Shows ShowMenuEvent's menu, as Stroom's MenuManager singleton does
+        new MenuManager(harness.getEventBus(), () -> menuPresenter(harness.getEventBus()));
         return harness;
     }
 

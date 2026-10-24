@@ -155,7 +155,7 @@ public final class SourcePresenterStories {
         }
         final ScreenHarness harness = builder.build();
         final EventBus eventBus = harness.getEventBus();
-        // Stroom's Menu (for the source's context menus) is the harness's
+        // Stroom's MenuManager (for the source's context menus) is the harness's
 
         final SourcePresenter presenter = sourcePresenter(harness);
         harness.unbindOnCleanUp(presenter);

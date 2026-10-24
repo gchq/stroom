@@ -111,9 +111,9 @@ export async function readVisibleMenuItems(page) {
       // A separator sits in the PRECEDING SIBLING of this item's row container.
       // NB closest() starts at the element itself, so a selector list including '.menu__item'
       // returns el and the sibling walk never reaches GWT's row. GWT renders each entry as its own
-      // cellTable row (separator = a div.menu__separator in its own row). Resolve the row
-      // explicitly: prefer the tr, else the item itself.
-      const row = el.closest('tr') || el;
+      // row (a menu__row, a cellTable tr in older builds; separator = a div.menu__separator in its
+      // own row). Resolve the row explicitly: prefer the row, else the item itself.
+      const row = el.closest('.menu__row, tr') || el;
       const prevRow = row.previousElementSibling;
       // The descendant search must not reach into the previous ITEM's own subtree: if a group's
       // element contains its children, a separator among them would be read as a separator before

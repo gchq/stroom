@@ -16,8 +16,6 @@
 
 package stroom.widget.datagrid.client;
 
-import stroom.data.grid.client.Heading;
-import stroom.data.grid.client.HeadingListener;
 import stroom.widget.datagrid.client.model.AutoFit;
 import stroom.widget.datagrid.client.model.ColumnModel;
 import stroom.widget.util.client.MouseUtil;
@@ -34,7 +32,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The header's pointer interactions for [DataGridWidget] (design sections 5.3 to 5.5): resizing
+/// The header's pointer interactions for [DataGrid] (design sections 5.3 to 5.5): resizing
 /// a column by dragging its edge, sizing it to fit by double-clicking the edge, moving a column by
 /// dragging its header, and the header click menu.
 ///
@@ -59,7 +57,7 @@ final class ColumnInteractions {
     private static final String RESIZING_CLASS_NAME = "data-grid--resizing";
     private static final String MEASURE_CLASS_NAME = "data-grid__measure";
 
-    private final DataGridWidget<?> grid;
+    private final DataGrid<?> grid;
     private final Element root;
     private final Element scroller;
     private final Element head;
@@ -94,7 +92,7 @@ final class ColumnInteractions {
     /// @param root     The grid's root element.
     /// @param scroller The grid's scroller.
     /// @param head     The grid's sticky header.
-    ColumnInteractions(final DataGridWidget<?> grid,
+    ColumnInteractions(final DataGrid<?> grid,
                        final Element root,
                        final Element scroller,
                        final Element head) {

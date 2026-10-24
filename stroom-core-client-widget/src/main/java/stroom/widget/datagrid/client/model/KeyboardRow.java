@@ -18,8 +18,8 @@ package stroom.widget.datagrid.client.model;
 
 import java.util.List;
 
-/// Where the keyboard row goes when the rows on the page change (design R-S12), replicating the
-/// forked GWT `HasDataPresenter.resolvePendingState`, as measured in the workbench in Phase 0.
+/// Where the keyboard row goes when the rows on the page change (design R-S12), replicating
+/// `HasDataPresenter.resolvePendingState` of GWT's cell tables, as measured in the workbench in Phase 0.
 ///
 /// The keyboard row is remembered by its row's key as well as its index. When new rows arrive it
 /// moves to the row with the same key nearest to its old index ([#bestMatch]); if no row has that

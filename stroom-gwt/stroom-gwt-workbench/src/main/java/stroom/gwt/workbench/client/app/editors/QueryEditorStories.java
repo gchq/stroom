@@ -1075,7 +1075,7 @@ public final class QueryEditorStories {
     /// move, and drops it when the mouse leaves), so the play moves the mouse over the header,
     /// waits, then presses and releases the button there without moving again (user-event's
     /// click would move the mouse in from the page's body). Pointer events go before the mouse
-    /// events, as a browser sends them: the new grid (DataGridWidget) reads the pointer events.
+    /// events, as a browser sends them: the new grid (DataGrid) reads the pointer events.
     ///
     /// @param play   The play.
     /// @param target The part of the header to click, e.g. its label or value filter icon.

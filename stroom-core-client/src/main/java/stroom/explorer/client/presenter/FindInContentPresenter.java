@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -37,8 +36,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -72,7 +72,7 @@ public class FindInContentPresenter
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final int TIMER_DELAY_MS = 750;
 
-    private final DataGridWidget<FindInContentResult> resultList;
+    private final DataGrid<FindInContentResult> resultList;
     private final RestDataProvider<FindInContentResult, ResultPage<FindInContentResult>> dataProvider;
     private final MultiSelectionModelImpl<FindInContentResult> selectionModel;
     private final EditorPresenter editorPresenter;

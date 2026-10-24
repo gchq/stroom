@@ -16,8 +16,8 @@
 
 package stroom.data.client.presenter;
 
-import stroom.data.grid.client.EventCell;
 import stroom.util.client.ClipboardUtil;
+import stroom.widget.datagrid.client.EventCell;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;

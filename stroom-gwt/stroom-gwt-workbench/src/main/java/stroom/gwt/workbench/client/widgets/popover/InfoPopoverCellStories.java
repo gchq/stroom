@@ -18,7 +18,7 @@
 package stroom.gwt.workbench.client.widgets.popover;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.table.client.MyCellTable;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
@@ -26,11 +26,13 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -42,7 +44,7 @@ import java.util.Collections;
 ///
 /// An `InfoColumn` is a grid column of info icons; clicking one shows the row's details in a
 /// [TooltipPresenter] to the right of the cell, as Stroom's monitoring screens (e.g.
-/// `ProcessorListPresenter`) do. The story shows a one-row table with just that column.
+/// `ProcessorListPresenter`) do. The story shows a one-row grid with just that column.
 public final class InfoPopoverCellStories {
 
     private static final String BODY = "Popover body content";
@@ -118,10 +120,12 @@ public final class InfoPopoverCellStories {
                 tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition, anchor);
             }
         };
-        final MyCellTable<String> table = new MyCellTable<>(1);
-        table.addColumn(infoColumn);
-        table.setRowData(0, Collections.singletonList("row"));
-        table.setRowCount(1);
+        final DataGrid<String> grid = new DataGrid<>(new SimpleEventBus());
+        grid.setFitContent(true);
+        grid.setFitWidth(true);
+        grid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        grid.setRowData(0, Collections.singletonList("row"));
+        grid.setRowCount(1);
 
         // The neighbour button is added as the story renders, so that the spy that counts its
         // clicks is registered then
@@ -131,7 +135,7 @@ public final class InfoPopoverCellStories {
         neighbour.addClickHandler(event -> neighbourClicks.call());
 
         final FlowPanel panel = new FlowPanel();
-        panel.add(table);
+        panel.add(grid);
         panel.add(neighbour);
         return panel;
     }

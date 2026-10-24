@@ -18,7 +18,6 @@ package stroom.node.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerViewWithHeading;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -40,7 +39,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerViewWithHeading;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -66,7 +66,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
-    private final DataGridWidget<JobNodeAndInfo> dataGrid;
+    private final DataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final ToolbarToggleButton showEnabledToggleBtn;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
@@ -84,7 +84,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final NodeClient nodeClient) {
         super(eventBus, view);
         this.nodeClient = nodeClient;
-        this.dataGrid = new DataGridWidget<>(this);
+        this.dataGrid = new DataGrid<>(this);
         this.dataGrid.setTableName("Node Jobs");
         this.dataGrid.setAccessibleName("Node jobs");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);

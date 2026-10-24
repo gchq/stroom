@@ -16,7 +16,7 @@
 
 package stroom.widget.datagrid.client.model;
 
-import stroom.data.grid.client.ColSettings;
+import stroom.widget.datagrid.client.ColSettings;
 
 import java.util.Objects;
 

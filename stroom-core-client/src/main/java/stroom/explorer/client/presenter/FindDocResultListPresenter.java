@@ -17,7 +17,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentFindRequest;
@@ -29,8 +28,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -46,7 +46,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final DataGridWidget<FindResult> resultList;
+    private final DataGrid<FindResult> resultList;
     private final RestDataProvider<FindResult, ResultPage<FindResult>> dataProvider;
     private final MultiSelectionModelImpl<FindResult> selectionModel;
     private final ExplorerTreeFilter.Builder explorerTreeFilterBuilder = ExplorerTreeFilter.builder();

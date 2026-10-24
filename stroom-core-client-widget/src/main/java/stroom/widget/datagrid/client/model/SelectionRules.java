@@ -24,9 +24,9 @@ import java.util.function.Predicate;
 
 /// The row selection and keyboard movement rules (design requirements R-S3 and R-S8).
 ///
-/// These replicate `DataGridSelectionEventManager.doSelect` and
-/// `AbstractSelectionEventManager.move` without any dependency on a grid widget, so they can be
-/// unit tested. Whether multi-select is allowed comes from the selection type, which the selection
+/// These replicate `DataGridSelectionEventManager.doSelect` and the keyboard movement of the cell
+/// tables' selection event managers (since deleted) without any dependency on a grid widget, so they
+/// can be unit tested. Whether multi-select is allowed comes from the selection type, which the selection
 /// model's owner sets, as it does today.
 public final class SelectionRules {
 

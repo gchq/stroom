@@ -24,7 +24,7 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
 /// The sort direction icon with the column's sort position, as shown in a sorted column's header
-/// (design requirement R-H3). The markup matches the forked GWT `SortIcon` so existing CSS applies.
+/// (design requirement R-H3). The markup matches [SortIcon]'s so the same CSS applies.
 final class DataGridSortIcon {
 
     static final String SORT_ASCENDING = "Sort Ascending";

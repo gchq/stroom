@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
@@ -28,7 +27,8 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -46,7 +46,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final DataGridWidget<FsVolumeGroupRow> dataGrid;
+    private final DataGrid<FsVolumeGroupRow> dataGrid;
     private final MultiSelectionModelImpl<FsVolumeGroupRow> selectionModel;
     private final RestDataProvider<FsVolumeGroupRow, ResultPage<FsVolumeGroupRow>> dataProvider;
 
@@ -56,7 +56,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                       final RestFactory restFactory) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(row -> row.getGroup().getId());
         dataGrid.setTableName("FS Volume Groups");

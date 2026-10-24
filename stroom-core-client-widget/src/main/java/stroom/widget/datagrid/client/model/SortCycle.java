@@ -21,7 +21,7 @@ import java.util.List;
 
 /// Works out the new sort list when a sortable column header is clicked (design requirement R-H1).
 ///
-/// This replicates the forked GWT `AbstractCellTable.onBrowserEvent2` sort logic:
+/// This replicates GWT's `AbstractCellTable.onBrowserEvent2` sort logic:
 ///
 /// * Each column cycles unsorted → default direction → reversed → unsorted.
 /// * A plain click replaces the whole sort list.

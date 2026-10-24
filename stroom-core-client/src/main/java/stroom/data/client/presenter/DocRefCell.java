@@ -17,8 +17,6 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.UrlParameters;
-import stroom.data.grid.client.EventCell;
-import stroom.data.grid.client.HasContextMenus;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocumentType;
@@ -27,6 +25,8 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.EventCell;
+import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;

@@ -46,8 +46,6 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.client.event.AskStroomAiEvent;
-import stroom.data.grid.client.MessagePanel;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -107,7 +105,9 @@ import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.MessagePanel;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -173,7 +173,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final UserPreferencesManager userPreferencesManager;
     private final DynamicColumnSelectionListModel columnSelectionListModel;
     private final ColumnsManager columnsManager;
-    private final DataGridWidget<TableRow> dataGrid;
+    private final DataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
@@ -229,7 +229,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         columnSelectionListModel.setTaskMonitorFactory(this);
         annotationManager.setTaskMonitorFactory(this);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // Pages of up to 10,000 rows: draw only the rows in view, unless a column wraps
         dataGrid.setVirtual(true);
         dataGrid.addStyleName("TablePresenter");

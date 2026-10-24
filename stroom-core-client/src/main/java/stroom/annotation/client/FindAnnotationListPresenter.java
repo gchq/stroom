@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.security.shared.DocumentPermission;
@@ -27,8 +26,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.FindResultLists;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 
 public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final DataGridWidget<Annotation> resultList;
+    private final DataGrid<Annotation> resultList;
     private final RestDataProvider<Annotation, ResultPage<Annotation>> dataProvider;
     private final MultiSelectionModelImpl<Annotation> selectionModel;
 

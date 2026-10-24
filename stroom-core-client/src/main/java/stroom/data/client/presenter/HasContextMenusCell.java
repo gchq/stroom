@@ -16,7 +16,7 @@
 
 package stroom.data.client.presenter;
 
-import stroom.data.grid.client.HasContextMenus;
+import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.Item;
 
 import com.google.gwt.cell.client.AbstractCell;

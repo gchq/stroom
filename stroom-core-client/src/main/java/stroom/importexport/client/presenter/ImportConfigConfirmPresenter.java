@@ -41,7 +41,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -84,7 +84,7 @@ public class ImportConfigConfirmPresenter extends
 
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
-    private final DataGridWidget<ImportState> dataGrid;
+    private final DataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
@@ -112,7 +112,7 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        dataGrid = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         dataGrid.setTableName("Import Items");
         // An import can hold many thousands of items, all on one page: draw only those in view
         dataGrid.setVirtual(true);

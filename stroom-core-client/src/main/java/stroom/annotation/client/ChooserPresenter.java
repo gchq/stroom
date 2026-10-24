@@ -19,9 +19,9 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -50,7 +50,7 @@ public class ChooserPresenter<T>
         implements ChooserUiHandlers {
 
     private final MultiSelectionModelImpl<T> selectionModel = new MultiSelectionModelImpl<>();
-    private final DataGridWidget<T> list;
+    private final DataGrid<T> list;
     private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
     private Function<T, String> tooltipFunction = null;
@@ -66,12 +66,12 @@ public class ChooserPresenter<T>
         // A list of values to choose from: moving through it chooses nothing; a click, Enter or Space
         // chooses a value, which the caller acts on (and closes the chooser), even the one chosen
         // already. Escape goes on to the popup, which closes
-        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         // As high as its values, up to the chooser's height (its max-height), then scrolling
         list.setFitContent(true);
-        final DataGridWidgetSelectionEventManager<T> selectionEventManager =
-                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false);
+        final DataGridSelectionEventManager<T> selectionEventManager =
+                new DataGridSelectionEventManager<>(list, selectionModel, false);
         selectionEventManager.setChooser(item -> {
             final boolean alreadySelected = Objects.equals(selectionModel.getSelected(), item);
             selectionModel.setSelected(item);

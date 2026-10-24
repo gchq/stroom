@@ -29,9 +29,9 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.TokenError;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
@@ -79,7 +79,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
-    private final DataGridWidget<ExplorerNode> tree;
+    private final DataGrid<ExplorerNode> tree;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private final String expanderClassName;
@@ -105,7 +105,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
         explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
 
-        tree = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        tree = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         tree.setProfile(DataGridProfile.TREE);
         // The explorer's cells draw their own padding; a long name scrolls the tree sideways
         tree.setCellPadding(false);
@@ -480,11 +480,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
 
     /// The explorer's choosing, for the tree's keyboard and the mouse.
-    private class ExplorerTreeSelectionEventManager extends DataGridWidgetSelectionEventManager<ExplorerNode> {
+    private class ExplorerTreeSelectionEventManager extends DataGridSelectionEventManager<ExplorerNode> {
 
         private boolean selectionFollowsFocus;
 
-        ExplorerTreeSelectionEventManager(final DataGridWidget<ExplorerNode> tree,
+        ExplorerTreeSelectionEventManager(final DataGrid<ExplorerNode> tree,
                                           final MultiSelectionModel<ExplorerNode> model) {
             super(tree, model, allowMultiSelect);
         }
