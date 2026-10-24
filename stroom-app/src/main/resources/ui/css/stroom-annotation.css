@@ -180,21 +180,6 @@
     justify-content: flex-end;
 }
 
-.annotationAssignYourself {
-    display: inline-block;
-    color: var(--link__text-color);
-    cursor: pointer;
-    padding-top: 5px;
-    text-decoration: underline;
-}
-
-/* Already assigned to you, or read only: shown, but greyed and not underlined */
-.annotationAssignYourself.disabled {
-    color: var(--text-color--disabled);
-    cursor: default;
-    text-decoration: none;
-}
-
 .annotationDurationLabel {
 }
 

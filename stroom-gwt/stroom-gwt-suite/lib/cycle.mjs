@@ -1222,7 +1222,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     await phase('change it to assigned to me (Change Assignee)', async () => {
       await annotate('Change Assignee');
       const dlg = page.locator('.dialog').last();
-      await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
+      await dlg.locator('.assign-yourself-link').first().click({ timeout: 5_000 });
       await settle(600);
       const shown = (await dlg.locator('.annotationLabel').first().textContent()).trim();
       if (!shown || shown === 'Nobody') throw new Error(`the dialog still shows "${shown}" after Assign Yourself`);
