@@ -69,6 +69,8 @@ We take React's ownership and data-flow rules, not its rendering machinery. Each
 
 ## Component model
 
+> From Phase 7a (decided 24 October 2026), what this section calls a component, the smart class with an ownership node, is a **controller**, and a component is a dumb template and its Java (see [Components, controllers and models](#components-controllers-and-models)). The sections below keep their names until Phase 7a's step 4 rewrites them.
+
 A component is a widget plus an ownership node: it owns child components, registrations and clean-ups, and disposing it releases all of them, depth first. Visibility (attached or detached) is separate from ownership, so a hidden tab keeps its state until its owner disposes it.
 
 ### The ownership node
@@ -831,6 +833,28 @@ A registry, `AppScreens` (`screens.on(type, provider, Screen::onShow)`), was pla
 
 The workbench's three overlapping calls for what a story shows (`addContent`, `disposeOnCleanUp`, `closeOnCleanUp`), each owning or closing differently (two of the leak check's failures came from that), become one rule: the story's root owns whatever the story shows, and the leak check closes it. There is one call to show a screen (`harness.show(screen)`, or `harness.showPage(page)` for a page shown on its own, which the focus check skips), one for what the story shows itself, in a frame or as a dialog (`harness.own(screen)`), and one for a popup that must also be asked to close, e.g. to stop polling (`harness.ownPopup(popup)`).
 
+## Components, controllers and models
+
+Decided 24 October 2026, after Phase 7. With GWTP gone, the UI is split by concern into three layers, named as a React developer would know them. The pattern is MVP with a passive view (presentational components and their containers, in React's terms).
+
+| Layer | What it is | GIN |
+|---|---|---|
+| **Component** | `Foo.java` and its template `Foo.ui.xml`, both dumb: widgets, layout, Stroom CSS class names, ARIA roles and labels, and visible text. Data comes in through setters (`setRules(list)`, `setReadOnly(true)`); events go out through one callback each, set by its controller (`setOnChange(Runnable)`, `setOnSelect(Consumer<T>)`); a reusable widget that several may watch keeps a `Listeners<T>` list (`addSelectionListener` returns a registration). It has a no-arg constructor, so templates can use it, and no REST, bus, context or ownership. | Made by GIN (no binding needed) or a template |
+| **Controller** | Wires a component to data and behaviour: REST calls, the bus, context (read-only, task monitor, document), dialogs, and other controllers. It pushes state into its component with setters and handles its callbacks. Controllers own controllers (the ownership tree, `make`, `makeDialog`, `listen`, `onDispose`, the REST `owner`), and the leak check counts them. | Yes |
+| **Model** | The data: the shared DTOs and documents, and a state class only where several controllers share state (e.g. a dashboard's query). No observable store. | — |
+
+Decisions:
+
+* **Templates, not HTML in Java.** GWT has no virtual DOM: a string re-rendered replaces the DOM, losing focus, selection, scroll and editor state. UiBinder is checked when GWT compiles (fields, widget types, handlers). Repetition and conditions are in the component's Java (`setRules(list)` adds a row per rule; `setVisible`). `SafeHtmlTemplates` stay for grid cells and rows. Templates use Stroom's global class names, not `ui:style`.
+* **Text in the template, in plain English.** Labels, headings, button text and ARIA labels are written in the `.ui.xml`; when i18n lands, the English is looked up in the language's JSON, as `msg("English")` is (see the i18n design). Not UiBinder's `ui:msg` (a compile per locale).
+* **Always a pair.** Every screen, dialog and smart part is a component (`Foo.java`, `Foo.ui.xml`) and a controller (`FooController.java`), even when small; a reusable dumb widget needs no controller. The three files sit side by side in the area's client package.
+* **A controller is given its component** in its `@Inject` constructor, with its other dependencies.
+* **Smart parts attach.** A part that needs data (e.g. a feed picker that fetches) is declared dumb in its screen's template (`<s:DocSelectionBox ui:field="feedBox"/>`); the screen's controller makes the part's controller and attaches it: `feedSelector = make(docSelectionControllerProvider); feedSelector.attach(view.getFeedBox());`. Templates stay dumb; the controllers form a tree beside the components'. Not `@UiField(provided = true)`, which would put a smart part in a template.
+* **Context is pushed.** Controllers watch context and call the component's setters (`setReadOnly`); components look nothing up.
+* **Dialogs.** The component is the dialog's content only. Its controller shows it through the popup manager with caption, size and buttons, and handles OK and Cancel (validating, saving, closing); a dialog's controller is owned until hidden (`makeDialog`).
+* **Base classes.** Today's smart `Component` (ownership, `listen`, REST owner, context) is renamed `Controller`, and `MyPresenterWidget` extends `Controller` until it goes. A new thin `Component` (a `Composite`, with no lifecycle) is the base of dumb components, and the home of shared helpers.
+* **Testing.** No view interfaces (as decided in Phase 0): controllers are tested with workbench stories, pure logic with JUnit.
+
 ## Phased implementation
 
 A pilot, then eleven phases, each shippable on its own and each ending by deleting an old mechanism. The pilot proves the framework on a duplicated screen without changing existing code. Phases 1 and 2 then fix today's leak and read-only bugs before any screen is rewritten; Phase 3 is where the component and callback model becomes the way new screens are written. Phases 0 to 6 (done 23 October 2026) put every presenter on the component model and removed GWTP; Phase 7 simplifies the lifecycle API, and Phases 8 to 11 move the screens themselves to components, area by area, ending with no presenters at all.
@@ -847,6 +871,7 @@ A pilot, then eleven phases, each shippable on its own and each ending by deleti
 | 5 · Migrate by area | Documents, dashboards, admin; `HasTaskMonitorFactory` retired; `onReveal`/`onHide` audited | Every presenter owned |
 | 6 · Remove GWTP | Plugin registry for proxies; `PresenterWidget` base dropped; GIN kept | No GWTP dependency |
 | 7 · Lifecycle API | `make`, `makeDialog`, `AppRoot`, `listen`/`own`, `onDispose(Runnable)`, screens wired by their area's plugin; one rule for stories | One way to make, own, register and release |
+| 7a · Components and controllers | `Component` renamed `Controller`; a thin dumb `Component`; pilot: receive rules (screen and `FieldEditor` dialog) and `DocSelectionBox` with its controller (attach) | The split proven; design and `AGENTS.md` updated |
 | 8 · Dialogs | The 115 presenters that show themselves as a popup become component dialogs; the popup manager shows components | No dialog presenter; no listener classes |
 | 9 · Documents | `DocPresenter` (51) and `DocTabPresenter` (30) become `DocumentEditor`s; tab bodies become components; tab providers go | `DocPresenter`, `DocTabPresenter` and the tab providers deleted |
 | 10 · Dashboards | The dashboard, its components and their settings become components | `AbstractComponentPresenter` deleted |
@@ -1043,6 +1068,17 @@ Make each lifecycle step one call, everywhere, before any screen is rewritten (s
 7. Done (24 October 2026): the authoring guide in `AGENTS.md` updated to the new calls: presenters follow the component rules, GIN's `Provider`, a "Register and release" rule (`listen`, `own(registration)`, `onDispose(Runnable)`) and the stories' one rule (`show`, `own`, `ownPopup`). The workbench's comments that still named the listener classes (the story modules' and stories') name the plugin or area class that replaced them.
 
 **Exit:** one way each to make a child, show a dialog, register a handler and release something; `ownUntilHidden`, `disposeWhenHidden`, `own(provider.get())`, the listener classes and the overridable `onDispose()` are gone.
+
+### Phase 7a: Components and controllers
+
+Prove the split (see [Components, controllers and models](#components-controllers-and-models)) before any screen is converted, so that Phases 8 to 11 convert straight into it.
+
+1. Rename `Component` to `Controller` (and `ComponentNode`'s users, the leak check's counts, the guide), one mechanical commit; `MyPresenterWidget extends Controller`.
+2. Add the thin `Component` base (a `Composite`), with tests.
+3. Pilot: split the receive rules screen and its `FieldEditor` dialog into components and controllers, and `DocSelectionBox` into a dumb box and a `DocSelectionController` attached to it, with their stories run with the leak check.
+4. Compare files, wiring and stories with before; revise the rules if needed; update this design and the authoring guide in `AGENTS.md`.
+
+**Exit:** the pilot's screens pass their stories with the leak check, and the rules are written down. Phases 8 to 11 convert each screen into a component and a controller.
 
 ### Phase 8: Dialogs
 
