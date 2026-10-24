@@ -152,7 +152,7 @@ Also on the harness, for what Stroom's app does around a screen:
   the config arrives is answered, which a screen may not expect (`UserListPresenter` then sets up
   its columns twice). Most of the `UsersScreen` stories deliberately open the screen at once:
   they are the regression test for `UiConfigCache.get` calling its consumer with null.
-* **Menus**: the harness installs Stroom's `Menu`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
+* **Menus**: the harness installs Stroom's `MenuManager`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
   'Actions...' menu, a grid's context menu) show Stroom's real menu on the page's body. Don't
   install another (menus would show twice).
 * **`closeOnCleanUp(popup)`** asks a popup to close on re-render as its Close button would

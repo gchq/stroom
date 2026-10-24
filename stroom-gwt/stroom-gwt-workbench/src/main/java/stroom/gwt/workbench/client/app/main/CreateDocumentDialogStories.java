@@ -47,7 +47,7 @@ public final class CreateDocumentDialogStories {
 
     // GWT's folder picker is an EntityTreePresenter: a quick filter above the tree
     private static final String QUICK_FILTER = ".quick-filter__input";
-    // The explorer tree's selected row (a CellTable row)
+    // The explorer tree's selected item
     private static final String TREE_SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
 
     private CreateDocumentDialogStories() {

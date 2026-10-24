@@ -34,9 +34,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.shared.AppPermission;
+import stroom.widget.datagrid.client.SortIcon;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/AccountsScreen`, showing Stroom's real [AccountsPresenter] (the 'Manage

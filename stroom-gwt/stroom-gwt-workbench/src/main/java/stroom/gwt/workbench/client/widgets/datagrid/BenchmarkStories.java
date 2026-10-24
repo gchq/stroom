@@ -21,7 +21,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Element;
@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// A harness for measuring [DataGridWidget] (it compared it with `MyDataGrid`, since removed):
+/// A harness for measuring [DataGrid] (it compared it with `MyDataGrid`, since removed):
 /// performance, and the behaviour the design's Phase 0 measures (where the keyboard row and the scroll position end up
 /// when new data arrives).
 ///
@@ -56,7 +56,7 @@ public final class BenchmarkStories {
 
     // The grid under test. Static, as the window functions are static.
     private static SimplePanel host;
-    private static DataGridWidget<Person> grid;
+    private static DataGrid<Person> grid;
     private static MultiSelectionModelImpl<Person> selectionModel;
     private static List<Person> rows;
 
@@ -96,7 +96,7 @@ public final class BenchmarkStories {
         final int pageSize = Math.max(rowCount, 1);
 
         final double start = now();
-        grid = new DataGridWidget<>(new SimpleEventBus(), pageSize);
+        grid = new DataGrid<>(new SimpleEventBus(), pageSize);
         grid.setVirtual("virtual".equals(kind));
         addColumns(grid);
         if (selection) {
@@ -269,7 +269,7 @@ public final class BenchmarkStories {
         }
     }
 
-    private static void addColumns(final DataGridWidget<Person> grid) {
+    private static void addColumns(final DataGrid<Person> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
                         .rightAligned()
                         .build(),

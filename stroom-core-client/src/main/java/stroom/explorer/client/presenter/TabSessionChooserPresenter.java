@@ -18,9 +18,9 @@ package stroom.explorer.client.presenter;
 
 import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -45,7 +45,7 @@ import java.util.function.Function;
 public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionChooserView> {
 
     private final MultiSelectionModelImpl<T> selectionModel = new MultiSelectionModelImpl<>();
-    private final DataGridWidget<T> list;
+    private final DataGrid<T> list;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     @Inject
@@ -55,11 +55,11 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
         super(eventBus, view);
 
         // A list of sessions, the one with the focus chosen. Escape goes on to the dialog (Cancel)
-        list = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        list = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         list.setProfile(DataGridProfile.LISTBOX);
         list.setAccessibleName("Tab sessions");
         list.setSelectionModel(selectionModel,
-                new DataGridWidgetSelectionEventManager<>(list, selectionModel, false));
+                new DataGridSelectionEventManager<>(list, selectionModel, false));
         view.setSelectionList(list);
 
         // Enter, or a double click, on a session confirms it and closes the dialog

@@ -16,14 +16,14 @@
 
 package stroom.item.client;
 
-import stroom.data.grid.client.PagerViewImpl;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
+import stroom.widget.datagrid.client.PagerViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.tab.client.event.CloseEvent;
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
@@ -84,7 +84,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final FlowPanel links;
     private final PagerViewImpl pagerView;
     // The options: a list (listbox) on the data grid
-    private final DataGridWidget<I> cellTable;
+    private final DataGrid<I> cellTable;
     private SelectionListModel<T, I> model;
     private final MultiSelectionModelImpl<I> selectionModel;
     private final List<NavigationState<I>> navigationStates = new ArrayList<>();
@@ -105,7 +105,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     };
 
     public SelectionList() {
-        cellTable = new DataGridWidget<>(new SimpleEventBus(), 100);
+        cellTable = new DataGrid<>(new SimpleEventBus(), 100);
         cellTable.setProfile(DataGridProfile.LISTBOX);
         // An option with no text (e.g. the blank one that clears a value) is named None
         cellTable.setRowName(item -> NullSafe.isBlankString(item.getLabel())
@@ -432,16 +432,16 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     /// same there, Shift+Space chooses the run from the last one chosen, Ctrl+A chooses all, and
     /// Enter or a double click acts on those chosen.
     private static class SelectionEventManager<T, I extends SelectionItem>
-            extends DataGridWidgetSelectionEventManager<I> {
+            extends DataGridSelectionEventManager<I> {
 
-        private final DataGridWidget<I> cellTable;
+        private final DataGrid<I> cellTable;
         private final MultiSelectionModelImpl<I> selectionModel;
         private final SelectionList<T, I> selectionList;
         private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
         // In a list of several choices, the option chosen last, where Shift chooses a run from
         private I multiSelectStart;
 
-        public SelectionEventManager(final DataGridWidget<I> cellTable,
+        public SelectionEventManager(final DataGrid<I> cellTable,
                                      final MultiSelectionModelImpl<I> selectionModel,
                                      final SelectionList<T, I> selectionList) {
             super(cellTable, selectionModel, false);

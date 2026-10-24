@@ -1123,42 +1123,6 @@
     color: var(--navigation-icon-button__color);
 }
 
-.navigation .cellTableSelectedRow {
-	background-color: var(--navigation__background-color--selected);
-	color: var(--navigation__text-color--selected);
-}
-
-.navigation .cellTableOddRow:hover,
-.navigation .cellTableEvenRow:hover {
-    background-color: var(--navigation__background-color--hovered);
-}
-
-.navigation .cellTableSelectedRow:hover {
-    background-color: var(--navigation__background-color--selected-hovered);
-}
-
-/*
-.navigation .cellTableOddRow:focus-within,
-.navigation .cellTableEvenRow:focus-within {
-    background-color: var(--navigation__background-color--focussed);
-}
-
-.navigation .cellTableSelectedRow:focus-within {
-    background-color: var(--navigation__background-color--selected--focussed);
-}
-*/
-
-.navigation .cellTableOddRow:focus-within,
-.navigation .cellTableEvenRow:focus-within {
-    box-shadow: var(--row__box-shadow--focussed);
-}
-
-.navigation .cellTableSelectedRow:focus-within {
-    box-shadow: var(--row__box-shadow--selected--focussed);
-}
-
-
-
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
@@ -1534,30 +1498,6 @@
     top: 3px;
 }
 
-.FindCellTable {
-    table-layout: fixed;
-}
-
-.FindCellTable tr:nth-child(even) {
-    background-color: var(--row__background-color--even);
-}
-.FindCellTable tr:nth-child(odd) {
-    background-color: var(--row__background-color--odd);
-}
-.FindCellTable tr:nth-child(even):hover,
-.FindCellTable tr:nth-child(odd):hover {
-    background-color: var(--row__background-color--hovered);
-}
-.FindCellTable tr:nth-child(even).cellTableSelectedRow,
-.FindCellTable tr:nth-child(odd).cellTableSelectedRow {
-	background-color: var(--row__background-color--selected);
-	color: var(--row__text-color--selected);
-}
-.FindCellTable tr:nth-child(even).cellTableSelectedRow:hover,
-.FindCellTable tr:nth-child(odd).cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected--hovered);
-}
-
 .findCell {
 }
 
@@ -1618,7 +1558,7 @@
     */
 }
 
-.cellTableSelectedRowCell .findCell-highlight {
+.data-grid__row--selected .findCell-highlight {
 	background-color: var(--highlight__background-color--selected);
 }
 
@@ -1665,9 +1605,6 @@
 }
 
 /* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
-.cellTableSelectedRow .findCell-tags,
-.cellTableSelectedRow .findCell-path,
-.cellTableSelectedRow .findCell-uuid,
 .data-grid__row--selected .findCell-tags,
 .data-grid__row--selected .findCell-path,
 .data-grid__row--selected .findCell-uuid {
@@ -2181,19 +2118,6 @@
 .popupContent .ColumnValuesFilterViewImpl {
     width: 400px;
     height: 400px;
-}
-
-.ColumnValuesFilterViewImpl .cellTableOddRow {
-    background-color: var(--row__background-color--odd);
-}
-
-.ColumnValuesFilterViewImpl .cellTableEvenRow {
-    background-color: var(--row__background-color--even);
-}
-
-.ColumnValuesFilterViewImpl .cellTableOddRow:hover,
-.ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
-    background-color: var(--row__background-color--hovered);
 }
 
 .data-grid .dashboard-table-filter-cell {

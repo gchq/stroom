@@ -192,7 +192,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" title=\"{1}\" tabindex=\"-1\">{2}</div>")
+            @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
             SafeHtml outer(String className, String tooltip, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
@@ -236,7 +236,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                     inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menu__arrow"));
                 }
 
-                // A disabled item looks so from its aria-disabled (MenuViewImpl)
+                // A disabled item looks so from its aria-disabled (Menu)
                 sb.append(TEMPLATE.outer("menu__item", inner.toSafeHtml()));
             }
         }
@@ -247,7 +247,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
@@ -290,7 +290,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")

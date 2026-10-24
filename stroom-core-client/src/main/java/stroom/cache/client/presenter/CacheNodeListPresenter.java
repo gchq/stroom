@@ -21,7 +21,6 @@ import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.info.client.CellIcon;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
@@ -31,7 +30,8 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.cache.CacheInfo;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -72,7 +72,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     protected static final String CACHE_INFO_KEY_MISS_COUNT = "MissCount";
     protected static final String HIT_RATIO_KEY = "HitRatio";
 
-    private final DataGridWidget<CacheInfo> dataGrid;
+    private final DataGrid<CacheInfo> dataGrid;
 
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
@@ -96,7 +96,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                                   final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         // One row per node, keyed by its name
         dataGrid.setKeyProvider(CacheInfo::getNodeName);
         dataGrid.setTableName("Cache Nodes");

@@ -16,7 +16,7 @@
 
 // The data grid geometry baseline (stroom-core-client-widget/DATA_GRID_DESIGN.md, Phase 0): what
 // is measured of each data grid in a story, and how a later measurement is compared with it. Used
-// by ../grid-geometry.mjs. Covers both MyDataGrid (a pair of tables) and DataGridWidget (.data-grid), so a
+// by ../grid-geometry.mjs. Covers both MyDataGrid (a pair of tables) and DataGrid (.data-grid), so a
 // screen measured with the old grid can be compared after it switches to the new one.
 
 // How far a measurement may move before it counts as changed, in pixels
@@ -40,7 +40,7 @@ export function measureGrids(maxRows) {
   const text = (el) => (el.innerText || '').replace(/\s+/g, ' ').trim();
   const grids = [];
 
-  // DataGridWidget: one element with its header and rows
+  // DataGrid: one element with its header and rows
   for (const root of document.querySelectorAll('.data-grid')) {
     if (!visible(root)) {
       continue;

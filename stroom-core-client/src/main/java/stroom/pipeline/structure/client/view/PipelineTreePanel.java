@@ -16,9 +16,9 @@
 
 package stroom.pipeline.structure.client.view;
 
-import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
 import stroom.widget.htree.client.TreeRenderer;

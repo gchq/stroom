@@ -22,7 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
-/// Small browser helpers used by [DataGridWidget] that GWT's DOM classes do not provide.
+/// Small browser helpers used by [DataGrid] that GWT's DOM classes do not provide.
 final class DataGridDom {
 
     private DataGridDom() {

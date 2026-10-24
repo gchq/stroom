@@ -19,7 +19,7 @@ package stroom.preferences.client;
 import stroom.preferences.client.KeyboardShortcutsPresenter.KeyboardShortcutsView;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -54,14 +54,14 @@ public class KeyboardShortcutsPresenter extends MyPresenterWidget<KeyboardShortc
     // The key code some browsers give Enter, as KeyBinding binds it
     private static final int LINE_FEED = '\n';
 
-    private final DataGridWidget<ShortcutRow> dataGrid;
+    private final DataGrid<ShortcutRow> dataGrid;
     private String filter;
 
     @Inject
     public KeyboardShortcutsPresenter(final EventBus eventBus,
                                       final KeyboardShortcutsView view) {
         super(eventBus, view);
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName(CAPTION);
         dataGrid.addDefaultSelectionModel(false);
         dataGrid.addResizableColumn(

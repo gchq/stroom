@@ -18,11 +18,11 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.datagrid.client.PagerView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -38,7 +38,7 @@ import java.util.ArrayList;
 public class XPathListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable {
 
-    private final DataGridWidget<XPathFilter> dataGrid;
+    private final DataGrid<XPathFilter> dataGrid;
     private final MultiSelectionModelImpl<XPathFilter> selectionModel;
     private final ListDataProvider<XPathFilter> dataProvider;
 
@@ -47,7 +47,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
                               final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("XPath Matches");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);

@@ -16,14 +16,14 @@
 
 package stroom.data.client.presenter;
 
-import stroom.data.grid.client.EventCell;
-import stroom.data.grid.client.HasContextMenus;
 import stroom.docstore.shared.DocumentType;
 import stroom.feed.client.CopyFeedUrlEvent;
 import stroom.feed.client.OpenFeedEvent;
 import stroom.feed.shared.FeedDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.EventCell;
+import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;

@@ -105,6 +105,38 @@ public abstract class MenuItem extends Item {
                 : null;
     }
 
+    /// @return The shortcut in the form the `aria-keyshortcuts` attribute takes, e.g. "Control+C"
+    /// for "Ctrl+C", or null for none or for a key sequence, which the attribute can't express.
+    public String getAriaKeyShortcuts() {
+        return toAriaKeyShortcuts(getShortcut());
+    }
+
+    // A shortcut as shown (e.g. "Ctrl+C") in the form aria-keyshortcuts takes ("Control+C"); null for
+    // none, or for a key sequence (e.g. "G H"), which the attribute can't express (a space separates
+    // alternatives)
+    static String toAriaKeyShortcuts(final String shortcut) {
+        if (shortcut == null || shortcut.isEmpty() || shortcut.contains(" ")) {
+            return null;
+        }
+        final String[] keys = shortcut.split("\\+", -1);
+        final StringBuilder sb = new StringBuilder();
+        for (final String key : keys) {
+            if (sb.length() > 0) {
+                sb.append('+');
+            }
+            if ("Ctrl".equals(key)) {
+                sb.append("Control");
+            } else if ("Cmd".equals(key)) {
+                sb.append("Meta");
+            } else if ("Del".equals(key)) {
+                sb.append("Delete");
+            } else {
+                sb.append(key);
+            }
+        }
+        return sb.toString();
+    }
+
     public boolean isEnabled() {
         return enabled;
     }

@@ -18,9 +18,9 @@ package stroom.document.asset.client.presenter.assets;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridProfile;
-import stroom.widget.datagrid.client.DataGridWidget;
-import stroom.widget.datagrid.client.DataGridWidgetSelectionEventManager;
+import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -74,7 +74,7 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
     private static Template template;
 
     private final List<DocumentAssetTreeItem> items = new ArrayList<>();
-    private final DataGridWidget<DocumentAssetTreeItem> grid;
+    private final DataGrid<DocumentAssetTreeItem> grid;
     private final MultiSelectionModelImpl<DocumentAssetTreeItem> selectionModel = new MultiSelectionModelImpl<>();
 
     private List<DocumentAssetTreeItem> rows = new ArrayList<>();
@@ -90,7 +90,7 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
             template = GWT.create(Template.class);
         }
 
-        grid = new DataGridWidget<>(this, DataGridWidget.MASSIVE_LIST_PAGE_SIZE);
+        grid = new DataGrid<>(this, DataGrid.MASSIVE_LIST_PAGE_SIZE);
         grid.setProfile(DataGridProfile.TREE);
         // The cells draw their own padding, as the explorer's do; a long name scrolls the tree sideways
         grid.setCellPadding(false);
@@ -268,7 +268,7 @@ public class DocumentAssetTree extends Composite implements Focus, HasSelectionH
 
     /// The tree's choosing: the keys and clicks of a grid, and a press on a folder's expander opens
     /// or closes it.
-    private class SelectionEventManager extends DataGridWidgetSelectionEventManager<DocumentAssetTreeItem> {
+    private class SelectionEventManager extends DataGridSelectionEventManager<DocumentAssetTreeItem> {
 
         SelectionEventManager() {
             super(grid, selectionModel, false);

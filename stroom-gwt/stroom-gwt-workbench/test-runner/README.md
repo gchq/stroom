@@ -245,7 +245,7 @@ again to check a surprising one.
 ## Data grid geometry
 
 `grid-geometry.mjs` measures every data grid in the stories (`MyDataGrid` or the new
-`DataGridWidget`): its header height, column widths and first ten row heights, at the default and
+`DataGrid`): its header height, column widths and first ten row heights, at the default and
 compact densities, once each story's play has finished. It is the size baseline for switching
 screens to the new grid (`stroom-core-client-widget/DATA_GRID_DESIGN.md`):
 

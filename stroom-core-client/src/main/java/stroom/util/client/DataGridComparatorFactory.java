@@ -16,10 +16,10 @@
 
 package stroom.util.client;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.OrderByColumn;
 
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;

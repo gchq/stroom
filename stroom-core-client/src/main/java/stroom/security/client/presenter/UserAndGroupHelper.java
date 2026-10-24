@@ -32,14 +32,12 @@ import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.event.OpenAccountEvent;
-import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.menu.client.presenter.Item;
@@ -52,20 +50,13 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.client.ui.FocusUtil;
-import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -212,41 +203,6 @@ public class UserAndGroupHelper {
     private static String getDescription(final User user) {
         return user.getType(CaseType.LOWER)
                + " '" + user.asRef().toDisplayString() + "'";
-    }
-
-    public static <T extends HasUserRef> boolean selectUserIfShown(final UserRef userRef,
-                                                                   final ResultPage<T> currentData,
-                                                                   final SelectionModel<T> selectionModel,
-                                                                   final DataGrid<T> dataGrid) {
-        if (currentData != null) {
-            final AtomicInteger idx = new AtomicInteger(-1);
-            GWT.log("Attempting to show user " + userRef);
-            final boolean found = currentData.stream()
-                    .peek(appUserPermissions -> idx.incrementAndGet())
-                    .filter(Objects::nonNull)
-                    .filter(hasUserRef ->
-                            Objects.equals(hasUserRef.getUserRef(), userRef))
-                    .findAny()
-                    .map(hasUserRef -> {
-                        GWT.log("Found " + userRef);
-                        selectionModel.setSelected(hasUserRef, true);
-                        dataGrid.flush();
-                        dataGrid.setKeyboardSelectedRow(idx.get());
-                        Scheduler.get().scheduleDeferred(() -> {
-                            try {
-                                final TableRowElement rowElement = dataGrid.getRowElement(idx.get());
-                                NullSafe.consume(rowElement, FocusUtil::focusRow);
-                            } catch (final IndexOutOfBoundsException e) {
-                                GWT.log(idx.get() + " is out of bounds");
-                            }
-                        });
-                        return true;
-                    })
-                    .orElse(false);
-            return found;
-        } else {
-            return false;
-        }
     }
 
     public static List<Item> buildUserActionMenu(final UserRef userRef,

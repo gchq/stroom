@@ -31,7 +31,7 @@ import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -102,7 +102,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
 
     private final Provider<FloorMapGroupEditPresenter> groupEditPresenterProvider;
 
-    private final DataGridWidget<FloorMapGroup> dataGrid;
+    private final DataGrid<FloorMapGroup> dataGrid;
     private final ListDataProvider<FloorMapGroup> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<FloorMapGroup> selectionModel = new SingleSelectionModel<>();
 
@@ -142,7 +142,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         super(eventBus, view);
         this.groupEditPresenterProvider = groupEditPresenterProvider;
 
-        dataGrid = new DataGridWidget<>(this);
+        dataGrid = new DataGrid<>(this);
         dataGrid.setTableName("Groups");
         // Rows keyed by id, so a row whose values change is still the same row
         dataGrid.setKeyProvider(FloorMapGroup::getId);

@@ -26,7 +26,6 @@ import stroom.gwt.workbench.client.widgets.buttons.RefreshButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.StepControlsStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStateStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarStories;
-import stroom.gwt.workbench.client.widgets.celllist.CellListStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocumentTypeCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.ExpanderCellStories;
@@ -40,7 +39,7 @@ import stroom.gwt.workbench.client.widgets.datagrid.BenchmarkStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridKeyboardStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowStateStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridRowUpdateStories;
-import stroom.gwt.workbench.client.widgets.datagrid.DataGridWidgetStories;
+import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DurationPickerStories;
@@ -204,8 +203,6 @@ public final class WidgetsStories {
         ScheduleBoxStories.addTo(registry);
         // Widgets/Date & Time/TimePicker
         TimePickerStories.addTo(registry);
-        // Widgets/CellList
-        CellListStories.addTo(registry);
         // Widgets/Display/ClassificationLabel
         ClassificationLabelStories.addTo(registry);
         // Widgets/Display/ClassificationWrapper
@@ -227,8 +224,8 @@ public final class WidgetsStories {
         // Widgets/Tabs/LinkTabsWidget
         LinkTabsWidgetStories.addTo(registry);
         // Widgets/Data Grid/DataGrid
-        // Widgets/Data Grid/DataGridWidget
-        DataGridWidgetStories.addTo(registry);
+        // Widgets/Data Grid/DataGrid
+        DataGridStories.addTo(registry);
         // Widgets/Data Grid/Benchmark
         BenchmarkStories.addTo(registry);
         BehaviourStories.addTo(registry);

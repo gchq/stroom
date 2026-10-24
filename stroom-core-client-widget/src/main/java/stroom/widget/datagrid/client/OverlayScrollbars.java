@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-/// The scrollbar thumbs [DataGridWidget] draws over its rows (design section 4.2).
+/// The scrollbar thumbs [DataGrid] draws over its rows (design section 4.2).
 ///
 /// The grid's scroller is a native one with its own scrollbars hidden, so wheel, touch, keyboard
 /// and `scrollIntoView` scrolling all stay native. These thumbs show where the view is and can be

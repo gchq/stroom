@@ -32,7 +32,7 @@ import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.datagrid.client.DataGridWidget;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.Scheduler;
@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The looks of a data grid's ([DataGridWidget]'s) rows in each of their states (`data-grid.css`), in
+/// The looks of a data grid's ([DataGrid]'s) rows in each of their states (`data-grid.css`), in
 /// the light and dark themes and the comfortable and compact densities (a story each, as the page
 /// doesn't scroll).
 ///
@@ -172,7 +172,7 @@ public final class DataGridRowStateStories {
 
     // The grid, with a row for each state, put in their states once drawn
     private static Widget newGrid(final Section section) {
-        final DataGridWidget<RowState> grid = new DataGridWidget<>(new SimpleEventBus());
+        final DataGrid<RowState> grid = new DataGrid<>(new SimpleEventBus());
         grid.setAccessibleName(section.title + ", new");
         addColumns(grid::addResizableColumn, grid::addColumn, grid::addColumn);
         final MultiSelectionModelImpl<RowState> selectionModel = grid.addDefaultSelectionModel(true);
@@ -283,8 +283,8 @@ public final class DataGridRowStateStories {
     // --------------------------------------------------------------------------------
     // Pseudo-states
 
-    // Copies the rules of Stroom's style sheets for the data grids (celltable/DataGrid.css,
-    // celltable/DataGridWidget.css and data-grid.css) that use :hover, :focus, :focus-within or
+    // Copies the rules of Stroom's style sheets for the data grids (cell-table.css and
+    // data-grid.css) that use :hover, :focus, :focus-within or
     // :focus-visible, each pseudo-class
     // turned into a class (.pseudo-hover), into a style element of their own with the id given,
     // keeping any @media rule they are in and following @imports

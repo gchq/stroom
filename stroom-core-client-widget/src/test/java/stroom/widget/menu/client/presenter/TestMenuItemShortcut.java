@@ -44,17 +44,17 @@ class TestMenuItemShortcut {
 
     @Test
     void ariaKeyShortcuts_namesModifiersAsTheAttributeDoes() {
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("Ctrl+C")).isEqualTo("Control+C");
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("Cmd+Shift+Z")).isEqualTo("Meta+Shift+Z");
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("Del")).isEqualTo("Delete");
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("F2")).isEqualTo("F2");
+        assertThat(MenuItem.toAriaKeyShortcuts("Ctrl+C")).isEqualTo("Control+C");
+        assertThat(MenuItem.toAriaKeyShortcuts("Cmd+Shift+Z")).isEqualTo("Meta+Shift+Z");
+        assertThat(MenuItem.toAriaKeyShortcuts("Del")).isEqualTo("Delete");
+        assertThat(MenuItem.toAriaKeyShortcuts("F2")).isEqualTo("F2");
     }
 
     @Test
     void ariaKeyShortcuts_leavesOutSequencesAndNothing() {
         // A space separates alternatives in the attribute, so a sequence can't be given
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("G H")).isNull();
-        assertThat(MenuViewImpl.toAriaKeyShortcuts(null)).isNull();
-        assertThat(MenuViewImpl.toAriaKeyShortcuts("")).isNull();
+        assertThat(MenuItem.toAriaKeyShortcuts("G H")).isNull();
+        assertThat(MenuItem.toAriaKeyShortcuts(null)).isNull();
+        assertThat(MenuItem.toAriaKeyShortcuts("")).isNull();
     }
 }

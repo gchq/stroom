@@ -26,7 +26,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 
 import java.util.List;
 
-/// The keyboard of a [DataGridWidget]: the WAI-ARIA grid pattern, with the row focus of its treegrid
+/// The keyboard of a [DataGrid]: the WAI-ARIA grid pattern, with the row focus of its treegrid
 /// example, as most of Stroom's grids are lists whose rows are chosen.
 ///
 /// The grid is one tab stop, the row, cell or control with the focus (a roving tab index). On a row,
@@ -57,7 +57,7 @@ import java.util.List;
 /// does: it sorts a sortable column, or opens the column's menu where the grid has one; the context
 /// menu key or Shift+F10 opens the menu too.
 ///
-/// The grid hands this its key events as they happen ([DataGridWidget] handles events
+/// The grid hands this its key events as they happen ([DataGrid] handles events
 /// synchronously), before the selection manager and the cells: a key this acts on is cancelled and
 /// goes no further.
 ///
@@ -69,7 +69,7 @@ class DataGridKeyboard<R> {
     private static final int KEY_F10 = 121;
     private static final int KEY_CONTEXT_MENU = 93;
 
-    private final DataGridWidget<R> grid;
+    private final DataGrid<R> grid;
     private Selector<R> selector;
     // The column with the focus (a cell's, or a header's), or -1 when a row has it
     private int column = -1;
@@ -83,7 +83,7 @@ class DataGridKeyboard<R> {
     // The edited field's value when editing started, which Escape puts back
     private String valueBeforeEditing;
 
-    DataGridKeyboard(final DataGridWidget<R> grid) {
+    DataGridKeyboard(final DataGrid<R> grid) {
         this.grid = grid;
     }
 
@@ -153,7 +153,7 @@ class DataGridKeyboard<R> {
         if (headerCell != null) {
             header = true;
             editing = false;
-            column = DataGridWidget.parseInt(headerCell.getAttribute(GridHtml.DATA_HCOL));
+            column = DataGrid.parseInt(headerCell.getAttribute(GridHtml.DATA_HCOL));
             return;
         }
         final Element row = grid.findAncestorWithAttribute(target, GridHtml.DATA_ROW);
@@ -169,7 +169,7 @@ class DataGridKeyboard<R> {
             if (cell == null) {
                 return;
             }
-            column = DataGridWidget.parseInt(cell.getAttribute(GridHtml.DATA_COL));
+            column = DataGrid.parseInt(cell.getAttribute(GridHtml.DATA_COL));
             final Element field = editableControl(cell);
             final boolean nowEditing = field != null && field.isOrHasChild(target);
             if (nowEditing && !editing) {
@@ -177,7 +177,7 @@ class DataGridKeyboard<R> {
             }
             editing = nowEditing;
         }
-        final int rowIndex = DataGridWidget.parseInt(row.getAttribute(GridHtml.DATA_ROW));
+        final int rowIndex = DataGrid.parseInt(row.getAttribute(GridHtml.DATA_ROW));
         if (rowIndex != grid.getKeyboardSelectedRow()) {
             grid.setKeyboardSelectedRow(rowIndex, false);
         }
@@ -212,7 +212,7 @@ class DataGridKeyboard<R> {
             // in a grid that draws only the rows in view): keys there act on the keyboard row
             return grid.isScroller(target) && onScrollerKeyDown(event);
         }
-        final int rowIndex = DataGridWidget.parseInt(row.getAttribute(GridHtml.DATA_ROW));
+        final int rowIndex = DataGrid.parseInt(row.getAttribute(GridHtml.DATA_ROW));
         if (editing) {
             return onEditingKeyDown(event, rowIndex);
         }

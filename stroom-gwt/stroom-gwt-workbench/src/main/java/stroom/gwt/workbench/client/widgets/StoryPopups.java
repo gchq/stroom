@@ -23,7 +23,7 @@ import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.help.client.presenter.HelpManager;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
@@ -87,7 +87,7 @@ public final class StoryPopups {
     ///
     /// @return This, for chaining.
     public StoryPopups withMenus() {
-        new Menu(eventBus, this::createMenuPresenter);
+        new MenuManager(eventBus, this::createMenuPresenter);
         // and the edit menu on text fields, in place of the browser's
         cleanUps.add(ContextMenuManager.install(eventBus::fireEvent));
         return this;

@@ -44,13 +44,3 @@
     z-index: 100;
 }
 
-/* The rows of a menu or list in a popup show their selection by their own look, not the
-   cell table's */
-.popup--floating .cellTableSelectedRowCell {
-    background-color: transparent;
-}
-
-.popup--floating .cellTableCell:has(.menu__separator) {
-    padding-left: 0;
-    padding-right: 0;
-}

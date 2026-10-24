@@ -31,10 +31,6 @@ import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
 import stroom.core.client.view.CoreViewImpl;
 import stroom.core.client.view.FullScreenViewImpl;
-import stroom.data.grid.client.PagerView;
-import stroom.data.grid.client.PagerViewImpl;
-import stroom.data.grid.client.PagerViewWithHeading;
-import stroom.data.grid.client.PagerViewWithHeadingImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
@@ -83,8 +79,12 @@ import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
 import stroom.widget.contextmenu.client.ContextMenuManager;
-import stroom.widget.menu.client.presenter.Menu;
+import stroom.widget.datagrid.client.PagerView;
+import stroom.widget.datagrid.client.PagerViewImpl;
+import stroom.widget.datagrid.client.PagerViewWithHeading;
+import stroom.widget.datagrid.client.PagerViewWithHeadingImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuManager;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
@@ -185,7 +185,7 @@ public class AppModule extends AbstractPresenterModule {
         bind(TabSessionChooserPresenter.class);
 
         // Menu
-        bind(Menu.class).asEagerSingleton();
+        bind(MenuManager.class).asEagerSingleton();
         // Stroom's edit menu on text fields, in place of the browser's context menu
         bind(ContextMenuManager.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);

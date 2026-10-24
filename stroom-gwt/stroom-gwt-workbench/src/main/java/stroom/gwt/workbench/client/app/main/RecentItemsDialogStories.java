@@ -16,7 +16,6 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.grid.client.PagerViewImpl;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
@@ -34,6 +33,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.datagrid.client.PagerViewImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
