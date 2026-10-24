@@ -50,16 +50,16 @@ import java.util.function.Consumer;
  *     </ul>
  * </p>
  * <p>
- *     The BEM block {@code histogram-widget} ({@code histogram-widget.css}), its markup {@code HistogramWidget.ui.xml}.
+ *     The BEM block {@code histogram} ({@code histogram.css}), its markup {@code Histogram.ui.xml}.
  * </p>
  */
-public class HistogramWidget extends Composite {
+public class Histogram extends Composite {
 
     /**
      * Height of the widget in pixels.
      *
      * <p>Must stay in step with the {@code height: 48px} in
-     * {@code histogram-widget.css}: CSS lays the canvas element out, while this
+     * {@code histogram.css}: CSS lays the canvas element out, while this
      * sizes its coordinate space. If the two disagree the browser scales the
      * drawing to fit, so the bars stretch or squash rather than looking wrong in
      * an obvious way.</p>
@@ -71,16 +71,16 @@ public class HistogramWidget extends Composite {
 
     /**
      * CSS custom properties holding the bar colours, defined per theme in
-     * {@code histogram-widget.css} and resolved at draw time by
+     * {@code histogram.css} and resolved at draw time by
      * {@link #themeColour}.
      */
-    private static final String BAR_COLOUR_PROPERTY = "--histogram-widget__bar-color";
-    private static final String PEAK_COLOUR_PROPERTY = "--histogram-widget__peak-color";
+    private static final String BAR_COLOUR_PROPERTY = "--histogram__bar-color";
+    private static final String PEAK_COLOUR_PROPERTY = "--histogram__peak-color";
 
     /**
      * Used when the CSS custom property cannot be resolved — an unstyled test
-     * harness, or a consumer whose page has not loaded {@code histogram-widget.css}.
-     * Kept in step with the light theme's value in {@code histogram-widget.css}, so a
+     * harness, or a consumer whose page has not loaded {@code histogram.css}.
+     * Kept in step with the light theme's value in {@code histogram.css}, so a
      * missing stylesheet degrades to the styled appearance rather than to invisible bars.
      */
     private static final String DEFAULT_BAR_COLOUR = "rgba(21,101,192,0.8)";
@@ -89,7 +89,7 @@ public class HistogramWidget extends Composite {
     private static final int TARGET_TICK_COUNT = 10;
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String TOOLTIP_VISIBLE = "histogram-widget__tooltip--visible";
+    private static final String TOOLTIP_VISIBLE = "histogram__tooltip--visible";
 
     private final Widget container;
     @UiField
@@ -104,12 +104,12 @@ public class HistogramWidget extends Composite {
     // Called when the user clicks, with the fractional position [0..1]
     private Consumer<Double> onClick;
 
-    public HistogramWidget() {
+    public Histogram() {
         container = BINDER.createAndBindUi(this);
 
         canvas = Canvas.createIfSupported();
         if (canvas != null) {
-            canvas.addStyleName("histogram-widget__canvas");
+            canvas.addStyleName("histogram__canvas");
             // Canvas pixels are opaque to assistive technology: without a role and
             // a name the whole distribution — and the per-bin counts the hover
             // tooltip reveals — simply do not exist for a screen-reader user.
@@ -193,7 +193,7 @@ public class HistogramWidget extends Composite {
      * itself, so that custom properties inherit down from whichever ancestor
      * carries the theme class.</p>
      *
-     * @param property the custom property name, e.g. {@code --histogram-widget__bar-color}
+     * @param property the custom property name, e.g. {@code --histogram__bar-color}
      * @param fallback returned when the property is absent or empty
      */
     private String themeColour(final String property, final String fallback) {
@@ -399,7 +399,7 @@ public class HistogramWidget extends Composite {
         // Position the tooltip horizontally centred on the cursor, within the canvas bounds.
         final int tooltipW = tooltip.getOffsetWidth();
         final int clampedX = Math.max(0, Math.min(containerWidth - tooltipW, relX - tooltipW / 2));
-        CssProperties.set(tooltip.getElement(), "--histogram-widget__tooltip-left", clampedX + "px");
+        CssProperties.set(tooltip.getElement(), "--histogram__tooltip-left", clampedX + "px");
         tooltip.addStyleName(TOOLTIP_VISIBLE);
     }
 
@@ -442,7 +442,7 @@ public class HistogramWidget extends Composite {
     // --------------------------------------------------------------------------------
 
 
-    interface Binder extends UiBinder<Widget, HistogramWidget> {
+    interface Binder extends UiBinder<Widget, Histogram> {
 
     }
 }

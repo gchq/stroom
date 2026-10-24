@@ -22,7 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.histogram.client.HistogramLayout;
-import stroom.widget.histogram.client.HistogramWidget;
+import stroom.widget.histogram.client.Histogram;
 import stroom.widget.presenter.client.ViewImpl;
 
 import com.google.gwt.dom.client.Element;
@@ -80,7 +80,7 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     /// Set when the user dismisses the datetime pill with Escape, so it stays
     /// dismissed until the bar is focused again.
     private boolean scrubTooltipSuppressed;
-    private final HistogramWidget histogramWidget;
+    private final Histogram histogram;
     private final ToolbarButton stepBackButton;
     private final ToolbarButton playPauseButton;
     private final ToolbarButton stepForwardButton;
@@ -224,14 +224,14 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         outerBar.addDomHandler(e -> showScrubTooltip(false), BlurEvent.getType());
 
         // Build the histogram widget and place it inside the container.
-        histogramWidget = new HistogramWidget();
+        histogram = new Histogram();
         // Histogram click-to-seek — treat it like releasing the scrubber.
-        histogramWidget.setOnClick(fraction -> {
+        histogram.setOnClick(fraction -> {
             if (commitHandler != null) {
                 commitHandler.accept(fraction * 100.0);
             }
         });
-        histogramContainer.setWidget(histogramWidget);
+        histogramContainer.setWidget(histogram);
 
         // Set tooltip text for out-of-range indicators (labels are declared in UiBinder).
         //noinspection UnnecessaryUnicodeEscape
@@ -414,15 +414,15 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
 
     @Override
     public void setHistogramData(final int[] binCounts, final HistogramLayout layout) {
-        if (histogramWidget != null) {
-            histogramWidget.setData(binCounts, layout);
+        if (histogram != null) {
+            histogram.setData(binCounts, layout);
         }
     }
 
     @Override
     public void redrawHistogram() {
-        if (histogramWidget != null) {
-            histogramWidget.redraw();
+        if (histogram != null) {
+            histogram.redraw();
         }
     }
 

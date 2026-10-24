@@ -1,9 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- The days of the week (days-widget.css), a tick box each -->
+<!-- The days of the week (days-of-week.css), a tick box each -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
-    <g:FlowPanel styleName="days-widget">
+    <g:FlowPanel styleName="days-of-week">
         <tickbox:TickBox ui:field="mon" label="Monday"/>
         <tickbox:TickBox ui:field="tue" label="Tuesday"/>
         <tickbox:TickBox ui:field="wed" label="Wednesday"/>

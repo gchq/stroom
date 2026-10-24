@@ -37,7 +37,7 @@ public class ProfilePeriodEditViewImpl
     private final Widget widget;
 
     @UiField
-    DaysWidget days;
+    DaysOfWeek days;
     @UiField
     TimeBox startTime;
     @UiField

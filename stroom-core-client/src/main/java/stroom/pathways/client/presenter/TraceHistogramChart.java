@@ -39,13 +39,13 @@ import java.util.function.BiConsumer;
  * as absolutely-positioned percentage-height divs. Clicking a bar zooms the time range to that
  * bucket via the registered handler.
  * <p>
- * The BEM block {@code trace-histogram-widget} ({@code trace-histogram-widget.css}). Every bar is as wide as the
- * others ({@code --trace-histogram-widget__bar-width}, on the plot); each has its place and height
- * ({@code --trace-histogram-widget__bar-index}, {@code --trace-histogram-widget__bar-height}).
+ * The BEM block {@code trace-histogram-chart} ({@code trace-histogram-chart.css}). Every bar is as wide as the
+ * others ({@code --trace-histogram-chart__bar-width}, on the plot); each has its place and height
+ * ({@code --trace-histogram-chart__bar-index}, {@code --trace-histogram-chart__bar-height}).
  */
-public class TraceHistogramWidget extends Composite {
+public class TraceHistogramChart extends Composite {
 
-    private static final String BLOCK = "trace-histogram-widget";
+    private static final String BLOCK = "trace-histogram-chart";
 
     private final HTML panel = new HTML();
     private DateTimeFormatter dateTimeFormatter;
@@ -53,7 +53,7 @@ public class TraceHistogramWidget extends Composite {
     private boolean rendered;
     private BiConsumer<Long, Long> onZoom;
 
-    public TraceHistogramWidget() {
+    public TraceHistogramChart() {
         panel.addStyleName(BLOCK);
         initWidget(panel);
 
@@ -149,11 +149,11 @@ public class TraceHistogramWidget extends Composite {
                         Attribute.className(barClass),
                         Attribute.title(title),
                         new Attribute("data-bucket-index", String.valueOf(i)),
-                        Attribute.style("--trace-histogram-widget__bar-index: " + i
-                                + "; --trace-histogram-widget__bar-height: " + heightPct + "%"));
+                        Attribute.style("--trace-histogram-chart__bar-index: " + i
+                                + "; --trace-histogram-chart__bar-height: " + heightPct + "%"));
             }
         }, Attribute.className(plotClass),
-                Attribute.style("--trace-histogram-widget__bar-width: " + barWidthPct + "%"));
+                Attribute.style("--trace-histogram-chart__bar-width: " + barWidthPct + "%"));
 
         hb.div(x -> {
             x.div(dateTimeFormatter.format(data.getFromMs(), "HH:mm:ss.SSS"),

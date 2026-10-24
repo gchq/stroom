@@ -31,10 +31,10 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.item.client.SelectionBox;
-import stroom.processor.client.view.DaysWidget;
+import stroom.processor.client.view.DaysOfWeek;
 import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeRangeSelector;
-import stroom.query.client.view.TimeZoneWidget;
+import stroom.query.client.view.TimeZoneBox;
 import stroom.schedule.client.ScheduleBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -172,10 +172,10 @@ public final class ViewStateStories {
                         w -> ((ScheduleBox) w).setEnabled(false)),
                 new Row("Line and column", ViewStateStories::lineCol, w -> ((LineColInput) w).setReadOnly(true),
                         w -> ((LineColInput) w).setEnabled(false)),
-                new Row("Time zone", ViewStateStories::timeZone, w -> ((TimeZoneWidget) w).setReadOnly(true),
-                        w -> ((TimeZoneWidget) w).setEnabled(false)),
-                new Row("Active days", ViewStateStories::days, w -> ((DaysWidget) w).setReadOnly(true),
-                        w -> ((DaysWidget) w).setEnabled(false)),
+                new Row("Time zone", ViewStateStories::timeZone, w -> ((TimeZoneBox) w).setReadOnly(true),
+                        w -> ((TimeZoneBox) w).setEnabled(false)),
+                new Row("Active days", ViewStateStories::days, w -> ((DaysOfWeek) w).setReadOnly(true),
+                        w -> ((DaysOfWeek) w).setEnabled(false)),
                 new Row("Quick filter", QuickFilter::new, null, w -> ((QuickFilter) w).setEnabled(false), FILTER_NOTE),
                 new Row("Time range", TimeRangeSelector::new, w -> ((TimeRangeSelector) w).setReadOnly(true),
                         w -> ((TimeRangeSelector) w).setEnabled(false)),
@@ -282,9 +282,9 @@ public final class ViewStateStories {
     private static boolean hasOwnName(final Widget widget) {
         return widget instanceof LabelledField
                || widget instanceof TickBox
-               || widget instanceof DaysWidget
+               || widget instanceof DaysOfWeek
                || widget instanceof DurationPicker
-               || widget instanceof TimeZoneWidget;
+               || widget instanceof TimeZoneBox;
     }
 
     private static Widget named(final Widget widget, final String name) {
@@ -504,7 +504,7 @@ public final class ViewStateStories {
     }
 
     private static Widget timeZone() {
-        final TimeZoneWidget widget = new TimeZoneWidget();
+        final TimeZoneBox widget = new TimeZoneBox();
         widget.setTimeZoneUse(UserTimeZone.Use.ID);
         widget.setTimeZoneId("Europe/London");
         widget.changeVisible();
@@ -512,7 +512,7 @@ public final class ViewStateStories {
     }
 
     private static Widget days() {
-        final DaysWidget widget = new DaysWidget();
+        final DaysOfWeek widget = new DaysOfWeek();
         widget.setValue(Days.create(Set.of(Day.MONDAY, Day.TUESDAY, Day.WEDNESDAY)));
         return widget;
     }

@@ -39,7 +39,7 @@
 @import url("setting-block.css");
 @import url("stroom-floormap.css");
 @import url("floormap-icon-picker.css");
-@import url("histogram-widget.css");
+@import url("histogram.css");
 @import url("stroom-dashboard.css");
 @import url("editor.css");
 @import url("scrollbar-metrics.css");
@@ -93,7 +93,7 @@
 @import url("form-group.css");
 @import url("settings-group.css");
 @import url("components.css");
-@import url("days-widget.css");
+@import url("days-of-week.css");
 @import url("paging-bar.css");
 @import url("find-result-cell.css");
 @import url("column-value-cell.css");
@@ -113,6 +113,6 @@
 @import url("red-green-text-cell.css");
 @import url("conditional-formatting.css");
 @import url("pathways.css");
-@import url("trace-histogram-widget.css");
+@import url("trace-histogram-chart.css");
 @import url("ask-stroom-ai.css");
 @import url("ai-chat-cell.css");

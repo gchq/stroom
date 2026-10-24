@@ -675,12 +675,12 @@ widget, tidy; complexity 2, effort S; used by 1.
 - **Component:** `stroom.planb.client.view.HistogramKeySchemaSettingsWidget`
 - **Controller:** `none`
 - **Template:** `stroom-core-client/src/main/resources/stroom/planb/client/view/HistogramKeySchemaSettingsWidget.ui.xml` → `stroom-core-client/src/main/java/stroom/planb/client/view/HistogramKeySchemaSettingsWidget.ui.xml`
-- **Goes:** `stroom-core-client/src/main/java/stroom/planb/client/view/HistogramKeySchemaSettingsView.java`; `Injected constructor with Binder and TimeZoneWidget (:56-57)`
+- **Goes:** `stroom-core-client/src/main/java/stroom/planb/client/view/HistogramKeySchemaSettingsView.java`; `Injected constructor with Binder and TimeZoneBox (:56-57)`
 - **Names:** Keeps its name. Line for line the same as MetricKeySchemaSettingsWidget but for the shared DTO (HistogramKeySchema vs MetricKeySchema); they could share a base, but separate classes keep the DTO types simple.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| stroom-core-client/src/main/java/stroom/planb/client/view/HistogramKeySchemaSettingsWidget.java:53, :63 | component-declaration | <qv:TimeZoneWidget ui:field="timeZone" addStyleNames="form-group"/> replacing the SimplePanel (template line 22) and the injected TimeZoneWidget; template-usable after wave 2 |
+| stroom-core-client/src/main/java/stroom/planb/client/view/HistogramKeySchemaSettingsWidget.java:53, :63 | component-declaration | <qv:TimeZoneBox ui:field="timeZone" addStyleNames="form-group"/> replacing the SimplePanel (template line 22) and the injected TimeZoneBox; template-usable after wave 2 |
 
 **Stays in Java:** Items from KeyType/HashLength/TemporalResolution ORDERED_LIST (:60-62); Hash length shown by key type; Values.
 
@@ -691,12 +691,12 @@ widget, tidy; complexity 2, effort S; used by 1.
 - **Component:** `stroom.planb.client.view.MetricKeySchemaSettingsWidget`
 - **Controller:** `none`
 - **Template:** `stroom-core-client/src/main/resources/stroom/planb/client/view/MetricKeySchemaSettingsWidget.ui.xml` → `stroom-core-client/src/main/java/stroom/planb/client/view/MetricKeySchemaSettingsWidget.ui.xml`
-- **Goes:** `stroom-core-client/src/main/java/stroom/planb/client/view/MetricKeySchemaSettingsView.java`; `Injected constructor with Binder and TimeZoneWidget (:56-57)`
+- **Goes:** `stroom-core-client/src/main/java/stroom/planb/client/view/MetricKeySchemaSettingsView.java`; `Injected constructor with Binder and TimeZoneBox (:56-57)`
 - **Names:** Keeps its name; see unit 660 on the duplicate.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| stroom-core-client/src/main/java/stroom/planb/client/view/MetricKeySchemaSettingsWidget.java:53, :63 | component-declaration | <qv:TimeZoneWidget ui:field="timeZone" addStyleNames="form-group"/> replacing the SimplePanel (template line 22) |
+| stroom-core-client/src/main/java/stroom/planb/client/view/MetricKeySchemaSettingsWidget.java:53, :63 | component-declaration | <qv:TimeZoneBox ui:field="timeZone" addStyleNames="form-group"/> replacing the SimplePanel (template line 22) |
 
 **Stays in Java:** Enum items (:60-62); Values.
 

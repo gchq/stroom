@@ -84,7 +84,7 @@ public class TracesListPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final PagerView pagerView;
-    private final TraceHistogramWidget histogramWidget;
+    private final TraceHistogramChart histogram;
     private final DataGrid<TraceRoot> dataGrid;
     private final MultiSelectionModelImpl<TraceRoot> selectionModel;
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
@@ -108,8 +108,8 @@ public class TracesListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;
-        this.histogramWidget = new TraceHistogramWidget();
-        histogramWidget.setDateTimeFormatter(dateTimeFormatter);
+        this.histogram = new TraceHistogramChart();
+        histogram.setDateTimeFormatter(dateTimeFormatter);
 
         dataGrid = new DataGrid<>(this);
         // Rows keyed by id, so a row whose values change is still the same row
@@ -133,8 +133,8 @@ public class TracesListPresenter
         final FlowPanel dataPanel = new FlowPanel();
         dataPanel.addStyleName("dock-container-vertical");
         dataPanel.addStyleName("max");
-        histogramWidget.addStyleName("dock-min");
-        dataPanel.add(histogramWidget);
+        histogram.addStyleName("dock-min");
+        dataPanel.add(histogram);
         final Widget pagerWidget = pagerView.asWidget();
         pagerWidget.addStyleName("dock-max");
         pagerWidget.addStyleName("overflow-hidden");
@@ -164,7 +164,7 @@ public class TracesListPresenter
     }
 
     public void setHistogramZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
-        histogramWidget.setOnZoom(zoomHandler);
+        histogram.setOnZoom(zoomHandler);
     }
 
     @Override
@@ -391,7 +391,7 @@ public class TracesListPresenter
                                     final Consumer<ResultPage<TraceRoot>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     if (dataSourceRef == null) {
-                        histogramWidget.setData(null);
+                        histogram.setData(null);
                         dataConsumer.accept(ResultPage.empty());
                     } else {
                         // The histogram rides back on the page so the bars and the rows are counted
@@ -417,11 +417,11 @@ public class TracesListPresenter
                                     // ResultPage.filterError.
                                     getView().setFilterError(
                                             NullSafe.get(page.getFilterError(), TokenError::getText));
-                                    histogramWidget.setData(page.getHistogram());
+                                    histogram.setData(page.getHistogram());
                                     dataConsumer.accept(page);
                                 })
                                 .onFailure(error -> {
-                                    histogramWidget.setData(null);
+                                    histogram.setData(null);
                                     errorHandler.onError(error);
                                 })
                                 .taskMonitorFactory(pagerView)

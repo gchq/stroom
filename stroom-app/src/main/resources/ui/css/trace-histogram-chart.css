@@ -15,14 +15,14 @@
  */
 
 /*
-   The trace histogram (stroom.pathways.client.presenter.TraceHistogramWidget), named BEM style: the
+   The trace histogram (stroom.pathways.client.presenter.TraceHistogramChart), named BEM style: the
    counts of traces in each part of the time range, as bars on a plot between a y axis (the highest
    count and 0) and an x axis (the range's start and end), or a hint when there is none. Every bar
-   is as wide as the others (--trace-histogram-widget__bar-width, on the plot), placed by its index
-   (--trace-histogram-widget__bar-index) and as tall as its count (--trace-histogram-widget__bar-height).
+   is as wide as the others (--trace-histogram-chart__bar-width, on the plot), placed by its index
+   (--trace-histogram-chart__bar-index) and as tall as its count (--trace-histogram-chart__bar-height).
 */
 
-.trace-histogram-widget {
+.trace-histogram-chart {
     display: grid;
     grid-template-columns: max-content 1fr;
     grid-template-rows: 1fr 14px;
@@ -34,7 +34,7 @@
     font-size: 8px;
 }
 
-.trace-histogram-widget__y-axis {
+.trace-histogram-chart__y-axis {
     grid-column: 1;
     grid-row: 1;
     display: flex;
@@ -45,7 +45,7 @@
     pointer-events: none;
 }
 
-.trace-histogram-widget__plot {
+.trace-histogram-chart__plot {
     grid-column: 2;
     grid-row: 1;
     position: relative;
@@ -53,7 +53,7 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.trace-histogram-widget__x-axis {
+.trace-histogram-chart__x-axis {
     grid-column: 2;
     grid-row: 2;
     display: flex;
@@ -63,18 +63,18 @@
     pointer-events: none;
 }
 
-.trace-histogram-widget__y-label,
-.trace-histogram-widget__x-label {
+.trace-histogram-chart__y-label,
+.trace-histogram-chart__x-label {
     font-size: 11px;
     line-height: 1;
 }
 
-.trace-histogram-widget__bar {
+.trace-histogram-chart__bar {
     position: absolute;
     bottom: 0;
-    left: calc(var(--trace-histogram-widget__bar-index) * var(--trace-histogram-widget__bar-width));
-    width: var(--trace-histogram-widget__bar-width);
-    height: var(--trace-histogram-widget__bar-height);
+    left: calc(var(--trace-histogram-chart__bar-index) * var(--trace-histogram-chart__bar-width));
+    width: var(--trace-histogram-chart__bar-width);
+    height: var(--trace-histogram-chart__bar-height);
     box-sizing: border-box;
     border-right: 1px solid transparent;
     background-clip: padding-box;
@@ -83,19 +83,19 @@
 }
 
 /* A bar with any traces can be seen however few it has */
-.trace-histogram-widget__bar--filled {
+.trace-histogram-chart__bar--filled {
     min-height: 3px;
 }
 
-.trace-histogram-widget__bar:hover {
+.trace-histogram-chart__bar:hover {
     background-color: rgba(144, 202, 249, 1);
 }
 
-.trace-histogram-widget__plot--min .trace-histogram-widget__bar {
+.trace-histogram-chart__plot--min .trace-histogram-chart__bar {
     cursor: default;
 }
 
-.trace-histogram-widget__hint {
+.trace-histogram-chart__hint {
     grid-column: 1 / -1;
     grid-row: 1 / -1;
     display: flex;

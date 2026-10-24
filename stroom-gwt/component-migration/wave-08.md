@@ -217,7 +217,7 @@ widget, tidy; complexity 3, effort M; used by 1.
 | FloorMapTimelineViewImpl.java:233-236 | text | «/» chevron text and title="Object out of range. Extend timeline range to view object." on both out-of-range labels |
 | FloorMapTimelineViewImpl.java:241-242 | aria | aria-hidden="true" on both out-of-range chevrons |
 | FloorMapTimelineViewImpl.java:246-249 | aria | timelineStatus: role="status" aria-live="polite" aria-atomic="true" |
-| FloorMapTimelineViewImpl.java:224-231 / .ui.xml:28 | component-declaration | <h:HistogramWidget ui:field="histogram" addStyleNames="stroom-floormap-timeline-histogram-container"/> (wave 2) in place of the SimplePanel filled with new HistogramWidget() |
+| FloorMapTimelineViewImpl.java:224-231 / .ui.xml:28 | component-declaration | <h:Histogram ui:field="histogram" addStyleNames="stroom-floormap-timeline-histogram-container"/> (wave 2) in place of the SimplePanel filled with new Histogram() |
 | FloorMapTimelineViewImpl.ui.xml:67 | css-class | stroom-floormap-visually-hidden duplicates sr-only (spinner.css:126); reuse sr-only once removals are allowed |
 
 **Stays in Java:** aria-valuenow/aria-valuetext/aria-label of the bar built from position and dates (FloorMapTimelineViewImpl.java:274,281,306-314); speed badge text and its aria-label "Playback speed ×N, opens the speed menu" (:389-402); play/pause icon/title, scrub tooltip text, date labels, out-of-range visibility and live text (:322-453); scrub-tooltip--visible state class (:517-519); drag and keyboard behaviour.

@@ -11,7 +11,7 @@
                         label="Active Days"
                         helpText="The days of the week on which this period applies."
                         screenReaderText="Tick each day this period applies.">
-            <days:DaysWidget ui:field="days"/>
+            <days:DaysOfWeek ui:field="days"/>
         </form:FormGroup>
         <form:FormGroup identity="startTime"
                         label="Start Time"

@@ -20,7 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.node.shared.NodeGroup;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeZoneWidget;
+import stroom.query.client.view.TimeZoneBox;
 import stroom.widget.presenter.client.View;
 import stroom.widget.presenter.client.ViewImpl;
 
@@ -35,7 +35,7 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
 
     private final Widget widget;
 
-    private final TimeZoneWidget timeZoneWidget;
+    private final TimeZoneBox timeZoneBox;
 
     @UiField
     TextBox name;
@@ -48,10 +48,10 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
 
     @Inject
     public ProcessorProfileEditViewImpl(final Binder binder,
-                                        final TimeZoneWidget timeZoneWidget) {
-        this.timeZoneWidget = timeZoneWidget;
+                                        final TimeZoneBox timeZoneBox) {
+        this.timeZoneBox = timeZoneBox;
         widget = binder.createAndBindUi(this);
-        timeZone.setWidget(timeZoneWidget.asWidget());
+        timeZone.setWidget(timeZoneBox.asWidget());
     }
 
     @Override
@@ -86,12 +86,12 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
 
     @Override
     public UserTimeZone getUserTimeZone() {
-        return timeZoneWidget.getUserTimeZone();
+        return timeZoneBox.getUserTimeZone();
     }
 
     @Override
     public void setUserTimeZone(final UserTimeZone userTimeZone) {
-        timeZoneWidget.setUserTimeZone(userTimeZone);
+        timeZoneBox.setUserTimeZone(userTimeZone);
     }
 
     public interface Binder extends UiBinder<Widget, ProcessorProfileEditViewImpl> {

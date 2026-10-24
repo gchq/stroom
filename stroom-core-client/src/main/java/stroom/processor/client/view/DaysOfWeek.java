@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/// The days of the week, a tick box each (`days-widget.css`, markup `DaysWidget.ui.xml`).
-public final class DaysWidget extends Composite {
+/// The days of the week, a tick box each (`days-of-week.css`, markup `DaysOfWeek.ui.xml`).
+public final class DaysOfWeek extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -54,7 +54,7 @@ public final class DaysWidget extends Composite {
     private final Set<Day> value = new HashSet<>();
     private Consumer<Days> onChange;
 
-    public DaysWidget() {
+    public DaysOfWeek() {
         initWidget(BINDER.createAndBindUi(this));
         listen(mon, Day.MONDAY);
         listen(tue, Day.TUESDAY);
@@ -135,7 +135,7 @@ public final class DaysWidget extends Composite {
         checkBox.setValue(value.contains(day));
     }
 
-    public interface Binder extends UiBinder<Widget, DaysWidget> {
+    public interface Binder extends UiBinder<Widget, DaysOfWeek> {
 
     }
 }

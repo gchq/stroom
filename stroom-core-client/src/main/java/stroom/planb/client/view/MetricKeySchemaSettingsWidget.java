@@ -22,7 +22,7 @@ import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
-import stroom.query.client.view.TimeZoneWidget;
+import stroom.query.client.view.TimeZoneBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,7 +38,7 @@ public class MetricKeySchemaSettingsWidget
         extends AbstractSettingsWidget
         implements MetricKeySchemaSettingsView {
 
-    private final TimeZoneWidget timeZoneWidget;
+    private final TimeZoneBox timeZoneBox;
 
     @UiField
     SelectionBox<KeyType> keyType;
@@ -51,13 +51,13 @@ public class MetricKeySchemaSettingsWidget
 
     @Inject
     public MetricKeySchemaSettingsWidget(final Binder binder,
-                                         final TimeZoneWidget timeZoneWidget) {
-        this.timeZoneWidget = timeZoneWidget;
+                                         final TimeZoneBox timeZoneBox) {
+        this.timeZoneBox = timeZoneBox;
         initWidget(binder.createAndBindUi(this));
         keyType.addItems(KeyType.ORDERED_LIST);
         hashLength.addItems(HashLength.ORDERED_LIST);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        timeZone.setWidget(timeZoneWidget.asWidget());
+        timeZone.setWidget(timeZoneBox.asWidget());
         setKeySchema(new MetricKeySchema.Builder().build());
         onKeyTypeChange();
     }
@@ -65,12 +65,12 @@ public class MetricKeySchemaSettingsWidget
     @Override
     public void setOnChange(final Runnable onChange) {
         super.setOnChange(onChange);
-        timeZoneWidget.setOnChange(onChange);
+        timeZoneBox.setOnChange(onChange);
     }
 
     @Override
     public MetricKeySchema getKeySchema() {
-        final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
+        final UserTimeZone userTimeZone = timeZoneBox.getUserTimeZone();
         return new MetricKeySchema.Builder()
                 .keyType(keyType.getValue())
                 .hashLength(hashLength.getValue())
@@ -85,7 +85,7 @@ public class MetricKeySchemaSettingsWidget
         keyType.setValue(schema.getKeyType());
         hashLength.setValue(schema.getHashLength());
         temporalResolution.setValue(schema.getTemporalResolution());
-        timeZoneWidget.setUserTimeZone(schema.getTimeZone());
+        timeZoneBox.setUserTimeZone(schema.getTimeZone());
         onKeyTypeChange();
     }
 
@@ -93,7 +93,7 @@ public class MetricKeySchemaSettingsWidget
         keyType.setReadOnly(readOnly);
         hashLength.setReadOnly(readOnly);
         temporalResolution.setReadOnly(readOnly);
-        timeZoneWidget.setReadOnly(readOnly);
+        timeZoneBox.setReadOnly(readOnly);
     }
 
     private void onKeyTypeChange() {

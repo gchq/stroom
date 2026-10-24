@@ -459,7 +459,7 @@ dialog, presenter; complexity 2, effort S; used by 3.
 | --- | --- | --- |
 | ProfilePeriodEditViewImpl.java:57-58 | structure | <valuespinner:ValueSpinner ui:field="maxNodeThreads" min="0" max="1000000" .../> |
 | ProfilePeriodEditViewImpl.java:59-60 | structure | <valuespinner:ValueSpinner ui:field="maxClusterThreads" min="0" max="1000000" .../> |
-| ProfilePeriodEditPresenter.java:50-51 | component-declaration | TimeBox x2 are declared (ui.xml:20,26); their popup provider set in Java becomes wave 4's TimeBoxController attached to each (make(provider).attach(view.getStartTime())). DaysWidget, TickBox x2, ValueSpinner x2, FormGroup: checked, already declared |
+| ProfilePeriodEditPresenter.java:50-51 | component-declaration | TimeBox x2 are declared (ui.xml:20,26); their popup provider set in Java becomes wave 4's TimeBoxController attached to each (make(provider).attach(view.getStartTime())). DaysOfWeek, TickBox x2, ValueSpinner x2, FormGroup: checked, already declared |
 
 **Stays in Java:** Max threads spinners enabled by their tick boxes (ProfilePeriodEditViewImpl.java:101,122,137,142): state; Values; 'Invalid start/end time' warnings (controller).
 

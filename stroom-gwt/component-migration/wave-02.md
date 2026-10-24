@@ -2,7 +2,7 @@
 
 Part of `../COMPONENT_MIGRATION_ORDER.md`; written 24 October 2026 from a review of every unit in the wave against the code after master (with `data_grid2` and `copy_and_paste`) was merged in. Line numbers are as of then. Each unit is done when it meets "Done means, for every unit".
 
-Give the shared value widgets and layout widgets setOnChange callbacks and one read-only setter, alongside their existing HasValue/ValueChangeEvent API, and make them usable in templates (TimeZoneWidget loses its injected Binder; DropDownBox keeps one disabled state).
+Give the shared value widgets and layout widgets setOnChange callbacks and one read-only setter, alongside their existing HasValue/ValueChangeEvent API, and make them usable in templates (TimeZoneBox loses its injected Binder; DropDownBox keeps one disabled state).
 
 ## CSS and template notes for the wave
 
@@ -12,7 +12,7 @@ Give the shared value widgets and layout widgets setOnChange callbacks and one r
 - Hiding: there is no Stroom utility hidden class in ui/css. UIObject.setVisible (GWT's own inline display:none) isn't counted as an inline style; SplitPane's own getStyle().setDisplay calls become BEM modifiers (split-pane__pane--hidden, split-pane__splitter--hidden) in split-pane.css.
 - Reused classes in this wave: sr-only (spinner.css:126), allow-focus, stroom-control (stroom.css:576), max (stroom.css:793), form (form.css:42), days (components.css:1655), pager-* (components.css:294-336). New classes go in the block's own CSS file: selection-box.css, split-pane.css, xsdbrowser.css, editor.css (scrollbar-metrics), stroom-histogram.css, pathways.css, tick-box.css only if word wrap is kept.
 - Custom property naming follows the existing --block__thing form (e.g. --split-pane__splitter-size): --split-pane__tracks, --xsd-node-grid__columns, --stroom-histogram__tooltip-left, --trace-histogram__bar-width/-index/-height.
-- Record corrections: Spinner.ui.xml (stroom-core-client/src/main/resources/stroom/main/client/view) belongs to stroom.main.client.view.Spinner (MainToolbar), not the ValueSpinner unit; DropDownBox and ValueSpinner don't declare FormGroup (they look up their parent FormGroup); DurationPicker should declare ValueSpinner and SelectionBox (same wave, so convert after them); PasswordBox and QuickFilter should declare Toolbar and ToolbarButton; TraceHistogramWidget has one inline style (Attribute.style, TraceHistogramWidget.java:134) the record counted as 0; DropDownBox's template is already beside its Java.
+- Record corrections: Spinner.ui.xml (stroom-core-client/src/main/resources/stroom/main/client/view) belongs to stroom.main.client.view.Spinner (MainToolbar), not the ValueSpinner unit; DropDownBox and ValueSpinner don't declare FormGroup (they look up their parent FormGroup); DurationPicker should declare ValueSpinner and SelectionBox (same wave, so convert after them); PasswordBox and QuickFilter should declare Toolbar and ToolbarButton; TraceHistogramChart has one inline style (Attribute.style, TraceHistogramChart.java:134) the record counted as 0; DropDownBox's template is already beside its Java.
 
 ## `TickBox`
 
@@ -155,27 +155,27 @@ widget, tidy; complexity 2, effort S; used by 1.
 
 **Stays in Java:** RadioGroup.java:84-100 each option's label, radio input, span, classes, title and text: added per item by addItem, from data; RadioGroup.java:117 aria-label from setAccessibleName: caller's (already a template attribute accessibleName=).
 
-## `HistogramWidget`
+## `Histogram`
 
 widget, tidy; complexity 2, effort S; used by 1.
 
-- **Component:** `stroom.widget.histogram.client.HistogramWidget`
+- **Component:** `stroom.widget.histogram.client.Histogram`
 - **Controller:** `none`
-- **Template:** `none` → `stroom-core-client/src/main/java/stroom/widget/histogram/client/HistogramWidget.ui.xml (new)`
+- **Template:** `none` → `stroom-core-client/src/main/java/stroom/widget/histogram/client/Histogram.ui.xml (new)`
 - **Goes:** `setClickHandler(Consumer<Double>) renamed setOnClick`
-- **Names:** Keeps its name and package; HistogramWidget, HistogramLayout, HistogramDataModel are unique.
+- **Names:** Keeps its name and package; Histogram, HistogramLayout, HistogramDataModel are unique.
 
 | Inline style | Code | Kind | Replacement |
 | --- | --- | --- | --- |
-| HistogramWidget.java:395 | `tooltip.getElement().getStyle().setLeft(clampedX, Unit.PX)` | dynamic | --stroom-histogram__tooltip-left: <n>px on the tooltip; .stroom-histogram-tooltip { left: var(--stroom-histogram__tooltip-left, 0); } in stroom-histogram.css:69 (replacing left: 0) |
+| Histogram.java:395 | `tooltip.getElement().getStyle().setLeft(clampedX, Unit.PX)` | dynamic | --stroom-histogram__tooltip-left: <n>px on the tooltip; .stroom-histogram-tooltip { left: var(--stroom-histogram__tooltip-left, 0); } in stroom-histogram.css:69 (replacing left: 0) |
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| HistogramWidget.java:94-95 | structure | root <g:FlowPanel styleName="stroom-histogram-container"> |
-| HistogramWidget.java:112-116 | structure | <g:FlowPanel ui:field="wrapper" styleName="stroom-histogram-wrapper">; the canvas is inserted first in Java |
-| HistogramWidget.java:109-110 | css-class | <g:Label ui:field="tooltip" styleName="stroom-histogram-tooltip"/> |
+| Histogram.java:94-95 | structure | root <g:FlowPanel styleName="stroom-histogram-container"> |
+| Histogram.java:112-116 | structure | <g:FlowPanel ui:field="wrapper" styleName="stroom-histogram-wrapper">; the canvas is inserted first in Java |
+| Histogram.java:109-110 | css-class | <g:Label ui:field="tooltip" styleName="stroom-histogram-tooltip"/> |
 
-**Stays in Java:** HistogramWidget.java:97-106 the Canvas (Canvas.createIfSupported, no public constructor, may be null), its stroom-histogram-canvas class and role=img: made in Java; HistogramWidget.java:239 aria-label: described from the data; HistogramWidget.java:390, 396 tooltip text and --visible: data and state.
+**Stays in Java:** Histogram.java:97-106 the Canvas (Canvas.createIfSupported, no public constructor, may be null), its stroom-histogram-canvas class and role=img: made in Java; Histogram.java:239 aria-label: described from the data; Histogram.java:390, 396 tooltip text and --visible: data and state.
 
 ## `FloorMapIconPicker`
 
@@ -193,26 +193,26 @@ widget, tidy; complexity 2, effort S; used by 1.
 
 **Stays in Java:** FloorMapIconPicker.java:76, 92-111 one cell per icon: cell, radio input, glyph (aria-hidden), label, their classes, title and text come from the icon list.
 
-## `TraceHistogramWidget`
+## `TraceHistogramChart`
 
 widget, tidy; complexity 2, effort S; used by 1.
 
-- **Component:** `stroom.pathways.client.presenter.TraceHistogramWidget`
+- **Component:** `stroom.pathways.client.presenter.TraceHistogramChart`
 - **Controller:** `none`
 - **Template:** `none` → `none (built in Java because all of its HTML is drawn from the histogram data; the one fixed class, trace-histogram, can be set by a one-line template if wanted)`
-- **Goes:** Constructor argument DateTimeFormatter (TraceHistogramWidget.java:50): public no-arg constructor plus setDateTimeFormatter(...) (TracesListPresenter.java:111 calls it); or have the controller pass formatted labels; `setZoomHandler(BiConsumer) (TraceHistogramWidget.java:80) renamed setOnZoom`
+- **Goes:** Constructor argument DateTimeFormatter (TraceHistogramChart.java:50): public no-arg constructor plus setDateTimeFormatter(...) (TracesListPresenter.java:111 calls it); or have the controller pass formatted labels; `setZoomHandler(BiConsumer) (TraceHistogramChart.java:80) renamed setOnZoom`
 - **Names:** Keeps its name and package (rule: a widget keeps both), though it sits in a presenter package; unique in all_simple_names.json.
 
 | Inline style | Code | Kind | Replacement |
 | --- | --- | --- | --- |
-| TraceHistogramWidget.java:134-135 | `Attribute.style("left: " + leftPct + "%; width: " + barWidthPct + "%; height: " +…` | dynamic | Width is the same for every bar: --trace-histogram__bar-width on .histogram-plot; each bar gets --trace-histogram__bar-index and --trace-histogram__bar-height only; .histogram-bar { left: calc(var(--trace-histogram__bar-index) * var(--trace-histogram__bar-width)); width: var(--trace-histogram__bar-width); height: var(--trace-histogram__bar-height); } in pathways.css:661 |
-| TraceHistogramWidget.java:129 | `" min-height: 3px;" when count > 0` | static | Modifier .histogram-bar--filled { min-height: 3px; } in pathways.css, added when count > 0 |
+| TraceHistogramChart.java:134-135 | `Attribute.style("left: " + leftPct + "%; width: " + barWidthPct + "%; height: " +…` | dynamic | Width is the same for every bar: --trace-histogram__bar-width on .histogram-plot; each bar gets --trace-histogram__bar-index and --trace-histogram__bar-height only; .histogram-bar { left: calc(var(--trace-histogram__bar-index) * var(--trace-histogram__bar-width)); width: var(--trace-histogram__bar-width); height: var(--trace-histogram__bar-height); } in pathways.css:661 |
+| TraceHistogramChart.java:129 | `" min-height: 3px;" when count > 0` | static | Modifier .histogram-bar--filled { min-height: 3px; } in pathways.css, added when count > 0 |
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| TraceHistogramWidget.java:52 | css-class | trace-histogram (pathways.css:614) on the HTML root, if given a template |
+| TraceHistogramChart.java:52 | css-class | trace-histogram (pathways.css:614) on the HTML root, if given a template |
 
-**Stays in Java:** TraceHistogramWidget.java:96-145 the axes, labels, bars, titles and data-bucket-index: from the data; hint() text: from the data's state.
+**Stays in Java:** TraceHistogramChart.java:96-145 the axes, labels, bars, titles and data-bucket-index: from the data; hint() text: from the data's state.
 
 ## `SplitPane`
 
@@ -230,21 +230,21 @@ widget, dumb; complexity 3, effort S; used by 7.
 
 **Stays in Java:** SplitPane.java:126-148 root block/modifier classes (split-pane, --vertical, --thin): it builds its own element and the modifiers are state set by template attributes; SplitPane.java:202-203 pane div and split-pane__pane: one per child, data-driven; SplitPane.java:737-750 splitter div, split-pane__splitter, role=separator, tabindex, aria-orientation: one per pair of panes, made at runtime; SplitPane.java:767-783 aria-controls, aria-label, aria-value*: from pane names and sizes at runtime; SplitPane.java:537 split-pane--resizing: state while dragging.
 
-## `DaysWidget`
+## `DaysOfWeek`
 
 widget, tidy; complexity 1, effort S; used by 1.
 
-- **Component:** `stroom.processor.client.view.DaysWidget`
+- **Component:** `stroom.processor.client.view.DaysOfWeek`
 - **Controller:** `none`
-- **Template:** `stroom-core-client/src/main/resources/stroom/processor/client/view/DaysWidget.ui.xml` → `stroom-core-client/src/main/java/stroom/processor/client/view/DaysWidget.ui.xml (moved beside the Java)`
-- **Goes:** `setEnabled (DaysWidget.java:81-85) once its caller uses setReadOnly`
+- **Template:** `stroom-core-client/src/main/resources/stroom/processor/client/view/DaysOfWeek.ui.xml` → `stroom-core-client/src/main/java/stroom/processor/client/view/DaysOfWeek.ui.xml (moved beside the Java)`
+- **Goes:** `setEnabled (DaysOfWeek.java:81-85) once its caller uses setReadOnly`
 - **Names:** Keeps its name and package; unique.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| DaysWidget.ui.xml:6-12 | component-declaration | seven TickBox (this wave) already declared with label text; days class is components.css:1655 |
+| DaysOfWeek.ui.xml:6-12 | component-declaration | seven TickBox (this wave) already declared with label text; days class is components.css:1655 |
 
-**Stays in Java:** The ticks: data; the @UiHandler ValueChangeEvent handlers (DaysWidget.java:103-137) become the widget's setOnChange output.
+**Stays in Java:** The ticks: data; the @UiHandler ValueChangeEvent handlers (DaysOfWeek.java:103-137) become the widget's setOnChange output.
 
 ## `ValueSpinner`
 
@@ -395,20 +395,20 @@ widget, tidy; complexity 2, effort S; used by 3.
 
 **Stays in Java:** DefaultMonthSelector.java:118-120 the 12 month items and :106-113 the 21 year items: locale-formatted data; CalendarGrid.java:76-105 weekday headings (locale names, abbr) and the 6x7 day cells: built in a loop from the model, text from data; CalendarGrid.java:133-137, 151, 165 day text, aria-label, aria-selected, aria-current, grid label: data and state.
 
-## `TimeZoneWidget`
+## `TimeZoneBox`
 
 widget, tidy; complexity 2, effort S; used by 3.
 
-- **Component:** `stroom.query.client.view.TimeZoneWidget`
+- **Component:** `stroom.query.client.view.TimeZoneBox`
 - **Controller:** `none`
-- **Template:** `stroom-core-client/src/main/resources/stroom/query/client/view/TimeZoneWidget.ui.xml` → `stroom-core-client/src/main/java/stroom/query/client/view/TimeZoneWidget.ui.xml (moved beside the Java)`
-- **Goes:** @Inject constructor taking Binder (TimeZoneWidget.java:53-54): becomes a public no-arg constructor with a static GWT.create Binder; ViewStateStories.java:507 then uses new TimeZoneWidget(); ChangeUiHandlers field and setUiHandlers (TimeZoneWidget.java:51, 195) replaced by setOnChange(Runnable); ProcessorProfileEditViewImpl, HistogramKeySchemaSettingsWidget and MetricKeySchemaSettingsWidget move in the same commit; `onReadOnly (TimeZoneWidget.java:148) duplicate of setReadOnly`
+- **Template:** `stroom-core-client/src/main/resources/stroom/query/client/view/TimeZoneBox.ui.xml` → `stroom-core-client/src/main/java/stroom/query/client/view/TimeZoneBox.ui.xml (moved beside the Java)`
+- **Goes:** @Inject constructor taking Binder (TimeZoneBox.java:53-54): becomes a public no-arg constructor with a static GWT.create Binder; ViewStateStories.java:507 then uses new TimeZoneBox(); ChangeUiHandlers field and setUiHandlers (TimeZoneBox.java:51, 195) replaced by setOnChange(Runnable); ProcessorProfileEditViewImpl, HistogramKeySchemaSettingsWidget and MetricKeySchemaSettingsWidget move in the same commit; `onReadOnly (TimeZoneBox.java:148) duplicate of setReadOnly`
 - **Names:** Keeps its name and package; unique.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| TimeZoneWidget.ui.xml:13,20,27 | component-declaration | SelectionBox x2 and ValueSpinner already declared inside FormGroups; nothing more |
-| TimeZoneWidget.ui.xml:8 | css-class | root 'max form': .max (stroom.css:793) and .form (form.css:42) are Stroom classes, keep |
+| TimeZoneBox.ui.xml:13,20,27 | component-declaration | SelectionBox x2 and ValueSpinner already declared inside FormGroups; nothing more |
+| TimeZoneBox.ui.xml:8 | css-class | root 'max form': .max (stroom.css:793) and .form (form.css:42) are Stroom classes, keep |
 
-**Stays in Java:** TimeZoneWidget.java:56-59 Use items and :63 zone ids from MomentJs: enum/data; TimeZoneWidget.java:144-145 FormGroup setVisible for Id/Offset: state (GWT setVisible).
+**Stays in Java:** TimeZoneBox.java:56-59 Use items and :63 zone ids from MomentJs: enum/data; TimeZoneBox.java:144-145 FormGroup setVisible for Id/Offset: state (GWT setVisible).
 

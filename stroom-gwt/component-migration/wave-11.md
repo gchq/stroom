@@ -1021,7 +1021,7 @@ dialog, presenter; complexity 3, effort M; used by 3.
 
 | Into the template | What | Detail |
 | --- | --- | --- |
-| ProcessorProfileEditViewImpl.java:51-54 / ui.xml:21 | component-declaration | <qv:TimeZoneWidget ui:field="timeZone" addStyleNames="form-group"/> (wave 2) in place of the injected widget put in a SimplePanel |
+| ProcessorProfileEditViewImpl.java:51-54 / ui.xml:21 | component-declaration | <qv:TimeZoneBox ui:field="timeZone" addStyleNames="form-group"/> (wave 2) in place of the injected widget put in a SimplePanel |
 | ProcessorProfileEditViewImpl.ui.xml:19 / ProcessorProfileEditPresenter.java:212 | component-declaration | <p:ProfilePeriodList ui:field="list" addStyleNames="dock-max"/> (wave 10) in place of the SimplePanel slot |
 
 **Stays in Java:** node group model (ProcessorProfileEditPresenter.java:214-216): REST-backed list model set by the controller; name validation and caption (ProcessorProfileEditPresenter.java:102-160).

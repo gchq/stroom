@@ -1350,7 +1350,7 @@ list, presenter; complexity 4, effort M; used by 1.
 | --- | --- | --- |
 | TracesListPresenter.java:107 | component-declaration | root <qf:QuickFilterPage ui:field="page" accessibleName="Filter traces"> (wave 10 entry 0) |
 | TracesListPresenter.java:132-141 | structure | <g:FlowPanel styleName="dock-container-vertical max"> as the page's data part, in place of the FlowPanel and addStyleName calls |
-| TracesListPresenter.java:111,135 | component-declaration | <p:TraceHistogramWidget ui:field="histogram" addStyleNames="dock-min"/> (wave 2; its DateTimeFormatter becomes a setter the controller calls) |
+| TracesListPresenter.java:111,135 | component-declaration | <p:TraceHistogramChart ui:field="histogram" addStyleNames="dock-min"/> (wave 2; its DateTimeFormatter becomes a setter the controller calls) |
 | TracesListPresenter.java:113-117,137-139 | component-declaration | <dg:PagerPanel ui:field="pager" addStyleNames="dock-max overflow-hidden"> holding <dg:DataGrid tableName="Traces"/> |
 
 **Stays in Java:** TracesListPresenter.java:120 errorRowStyles: per-row classes from data; TracesListPresenter.java:122-129 quick filter help text from field definitions and UiConfig (controller); TracesListPresenter.java:230-244 status icon titles chosen per trace, and the "No root span found" placeholder name (data); TracesListPresenter.java:442 quick filter context per data source.

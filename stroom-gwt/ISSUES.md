@@ -693,7 +693,7 @@ it takes it over, and it lets go of the box when it closes). Measured with the s
 `dom-cost.mjs`, DOM nodes an open document builds, before and after: dashboard 10,049 → 4,449
 (heap 6.0 → 2.9 MB), analytic rule 6,387 → 3,612, pipeline 4,934 → 3,254, view 2,783 → 1,106,
 query 1,878 → 1,290; what is shown is unchanged. Still built but not shown: about 630 time zone
-items per document (`TimeZoneWidget` adds every zone to each of its selection boxes), and most of a
+items per document (`TimeZoneBox` adds every zone to each of its selection boxes), and most of a
 dashboard's remaining 3,750 hidden nodes (not yet broken down). `MyDateBox` is gone since
 (October 2026): its boxes are `DateTimeBox`es, each of which builds its dialog only when first
 opened.
@@ -2302,7 +2302,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   their controls are disabled; axe can't tell, so the story's `color-contrast` is in the baseline.
   Workbench: `App/Editors/ElasticClusterEditor` `TimeoutSpinners`, `App/Editors/FloorMapForms`,
   `Widgets/Inputs/RadioGroup`.
-* **Inputs found by the audit of the rest of the input controls** (`TimeZoneWidget`, `ColourBox`,
+* **Inputs found by the audit of the rest of the input controls** (`TimeZoneBox`, `ColourBox`,
   `CustomFileUpload`, `FloorMapIconPicker`, `FormGroup`):
   * The floor map's icon picker could only be used with a mouse: its icons had no role, no tab stop
     and only answered a click, and its name was dropped. It is now a radio group of native radio

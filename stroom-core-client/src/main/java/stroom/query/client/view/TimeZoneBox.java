@@ -30,8 +30,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /// A time zone: how it is given (local, UTC, an id or an offset), then the id or the offset as
-/// chosen. Its markup is `TimeZoneWidget.ui.xml`.
-public final class TimeZoneWidget extends Composite {
+/// chosen. Its markup is `TimeZoneBox.ui.xml`.
+public final class TimeZoneBox extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -51,7 +51,7 @@ public final class TimeZoneWidget extends Composite {
     private int timeZoneOffsetMinutes;
     private Runnable onChange;
 
-    public TimeZoneWidget() {
+    public TimeZoneBox() {
         final Widget widget = BINDER.createAndBindUi(this);
         timeZoneUse.setOnChange(use -> onPartChange());
         timeZoneId.setOnChange(id -> onPartChange());
@@ -184,7 +184,7 @@ public final class TimeZoneWidget extends Composite {
         this.onChange = onChange;
     }
 
-    interface Binder extends UiBinder<Widget, TimeZoneWidget> {
+    interface Binder extends UiBinder<Widget, TimeZoneBox> {
 
     }
 }

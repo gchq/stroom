@@ -1515,7 +1515,7 @@ _1679 files._
 | `stroom-core-client/src/main/java/stroom/query/client/view/TextViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeRangePopup.java` | stroom-core-client | Popup |
 | `stroom-core-client/src/main/java/stroom/query/client/view/TimeRangeSelector.java` | stroom-core-client | — |
-| `stroom-core-client/src/main/java/stroom/query/client/view/TimeZoneWidget.java` | stroom-core-client | Widget |
+| `stroom-core-client/src/main/java/stroom/query/client/view/TimeZoneBox.java` | stroom-core-client | Widget |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/NavButtons.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryButtons.ui.xml` | stroom-core-client | — |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/QueryEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -1528,7 +1528,7 @@ _1679 files._
 | `stroom-core-client/src/main/resources/stroom/query/client/view/ResultStoreViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/TextViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/query/client/view/TimeRangePopup.ui.xml` | stroom-core-client | Popup |
-| `stroom-core-client/src/main/resources/stroom/query/client/view/TimeZoneWidget.ui.xml` | stroom-core-client | Widget |
+| `stroom-core-client/src/main/resources/stroom/query/client/view/TimeZoneBox.ui.xml` | stroom-core-client | Widget |
 
 ### Screen/Dialog — Data / streams
 
@@ -1955,7 +1955,7 @@ _1679 files._
 | `stroom-core-client/src/main/java/stroom/processor/client/presenter/ProfilePeriodListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/processor/client/presenter/RestSaveQueue.java` | stroom-core-client | — |
 | `stroom-core-client/src/main/java/stroom/processor/client/view/BatchProcessorFilterEditViewImpl.java` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/java/stroom/processor/client/view/DaysWidget.java` | stroom-core-client | Widget |
+| `stroom-core-client/src/main/java/stroom/processor/client/view/DaysOfWeek.java` | stroom-core-client | Widget |
 | `stroom-core-client/src/main/java/stroom/processor/client/view/EditFeedDependencyViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/processor/client/view/FeedDependencyViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/java/stroom/processor/client/view/ProcessorEditViewImpl.java` | stroom-core-client | ViewImpl |
@@ -1967,7 +1967,7 @@ _1679 files._
 | `stroom-core-client/src/main/java/stroom/processor/task/client/ProcessorTaskPlugin.java` | stroom-core-client | Plugin |
 | `stroom-core-client/src/main/java/stroom/processor/task/client/view/ProcessorTaskViewImpl.java` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/processor/client/view/BatchProcessorFilterEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
-| `stroom-core-client/src/main/resources/stroom/processor/client/view/DaysWidget.ui.xml` | stroom-core-client | Widget |
+| `stroom-core-client/src/main/resources/stroom/processor/client/view/DaysOfWeek.ui.xml` | stroom-core-client | Widget |
 | `stroom-core-client/src/main/resources/stroom/processor/client/view/EditFeedDependencyViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/processor/client/view/FeedDependencyViewImpl.ui.xml` | stroom-core-client | ViewImpl |
 | `stroom-core-client/src/main/resources/stroom/processor/client/view/ProcessorEditViewImpl.ui.xml` | stroom-core-client | ViewImpl |
@@ -1993,7 +1993,7 @@ _1679 files._
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwaysSplitPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwayTreePresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ShowTracesEvent.java` | stroom-core-client | Event |
-| `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceHistogramWidget.java` | stroom-core-client | Widget |
+| `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceHistogramChart.java` | stroom-core-client | Widget |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TraceOverviewWidget.java` | stroom-core-client | Widget |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TracesListPresenter.java` | stroom-core-client | Presenter |
 | `stroom-core-client/src/main/java/stroom/pathways/client/presenter/TracesListTabPresenter.java` | stroom-core-client | Presenter |

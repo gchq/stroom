@@ -123,7 +123,7 @@ public final class PlanBEditorStories {
                             "Store Latest Value", "Store Min Value", "Store Max Value", "Store Count", "Store Sum"}) {
                         play.expect(play.getByRole("checkbox", label)).toBeInTheDocument();
                     }
-                    // The key schema's TimeZoneWidget
+                    // The key schema's TimeZoneBox
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();
                     // A selection box in a form group is as wide as a text field, not the screen (its
                     // width was once lost, so they stretched across it)
@@ -131,7 +131,7 @@ public final class PlanBEditorStories {
                             .toHaveStyle("width", "200px");
                     DocumentEditors.expectNoProblems(play);
                 })
-                // The Time Zone control shows the offset when Use is Offset (TimeZoneWidget)
+                // The Time Zone control shows the offset when Use is Offset (TimeZoneBox)
                 .story("MetricTimeZoneOffset", context -> render(context, "planb-METRIC-OFFSET", false))
                 .withPlay(play -> {
                     // The offset is whole hours: its minutes can't be set, as browsers don't support
