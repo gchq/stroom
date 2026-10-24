@@ -117,8 +117,15 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     @Override
     public boolean confirmsItself() {
         // The user confirms the pipeline (create_pipeline's form), but not the index fields added after it, as the
-        // MCP server's tool didn't: over /mcp the call is approved as a whole.
+        // MCP server's tool didn't.
         return false;
+    }
+
+    @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder: the pipeline, and the fields of the build's own
+        // index (IndexFields refuses any other).
+        return true;
     }
 
     @Override

@@ -135,6 +135,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     }
 
     @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only what is in the build's folder.
+        return true;
+    }
+
+    @Override
     public boolean isReadOnly(final ToolCall call) {
         // Without a build it only reads.
         return stringArg(call, BUILD_ARG) == null;

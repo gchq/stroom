@@ -291,6 +291,7 @@ class TestDraftCefMappingTool {
         assertThat(tool.isReadOnly(call("{\"stream_ids\": [7], \"build\": \"b\", \"name\": \"n\"}"))).isFalse();
         assertThat(tool.isReadOnly(call("{\"stream_ids\": [7], \"uuid\": \"x\"}"))).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
+        assertThat(tool.changesOnlyItsBuild()).isTrue();
     }
 
     @SuppressWarnings("unchecked")
