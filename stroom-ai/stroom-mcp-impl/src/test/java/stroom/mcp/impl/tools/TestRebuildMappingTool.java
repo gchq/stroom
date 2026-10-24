@@ -116,6 +116,25 @@ class TestRebuildMappingTool {
     }
 
     @Test
+    void anXsltRewrittenOutsideTheGeneratorsLayoutSaysToCarryTheEditWithChanges() {
+        // Seen: TWITTER's XSLT, rewritten by hand with a plain template per record, read back as nothing; the agent
+        // took that for an empty kept mapping and the edit for one no mapping can express.
+        world.editByHand(uuid, code -> "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                       + "xmlns=\"event-logging:3\" version=\"3.0\"><xsl:template match=\"records\">"
+                                       + "<Events><xsl:apply-templates select=\"record\"/></Events></xsl:template>"
+                                       + "<xsl:template match=\"record\"><Event/></xsl:template></xsl:stylesheet>");
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result.get("saved")).isNull();
+        assertThat(String.valueOf(result.get("hint")))
+                .startsWith("The XSLT isn't laid out as the generator writes one (a template per rule)")
+                .contains("the kept mapping is still there")
+                .contains("build_translation_xslt uuid=<this XSLT> changes=")
+                .contains("data_parent writes Data in a named Data");
+    }
+
+    @Test
     void outputsThatDifferAreShownAndNothingIsSavedUnlessAccepted() {
         world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
         after = EVENT.replace("vpnd", "other");
