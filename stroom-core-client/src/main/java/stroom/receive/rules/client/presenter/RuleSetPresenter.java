@@ -32,7 +32,7 @@ import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
-import stroom.receive.rules.client.component.RuleSetSettings;
+import stroom.receive.rules.client.component.RuleSetSettingsController;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -78,7 +78,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private static final String TAB_LABEL = "Data Receipt Rules";
     private final ToolbarButton saveButton;
 
-    private final RuleSetSettings ruleSetSettings;
+    private final RuleSetSettingsController ruleSetSettings;
     // Shows the Rules tab's component in the tab panel
     private final ControllerLayer ruleSetSettingsLayer;
     private final FieldListPresenter fieldListPresenter;
@@ -97,7 +97,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
-                            final RuleSetSettings ruleSetSettings,
+                            final RuleSetSettingsController ruleSetSettings,
                             final Provider<FieldListPresenter> fieldListPresenterProvider,
                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                             final RestFactory restFactory,
