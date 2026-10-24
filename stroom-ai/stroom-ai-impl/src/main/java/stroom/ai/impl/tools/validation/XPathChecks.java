@@ -46,6 +46,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /// Evaluates a mapping's xpath inputs and extraction regexes against the sample, before anything is created or
 /// stepped. Ported from the Stroom MCP server's `utils/xpathcheck.py`, without its mapping model: the caller (the
@@ -75,6 +76,9 @@ public final class XPathChecks {
     private static final Pattern CONTROL = Pattern.compile("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]");
     private static final Pattern LITERAL = Pattern.compile("'[^']*'|\"[^\"]*\"");
     private static final Pattern VARIABLE = Pattern.compile("\\$[A-Za-z_]");
+    private static final Pattern VARIABLE_NAME = Pattern.compile("\\$([A-Za-z_][\\w.-]*)");
+    // A variable the expression binds itself: for $m in, let $x :=, some/every $y in.
+    private static final Pattern BINDING = Pattern.compile("\\$([A-Za-z_][\\w.-]*)\\s+(?:in\\b|:=)");
     // ^, or a leading (?:^|\s)-like group.
     private static final Pattern LEAD = Pattern.compile("^(?:\\^|\\(\\?:[^()]*\\))?");
     // The literal text after it.
@@ -174,6 +178,19 @@ public final class XPathChecks {
         return VARIABLE.matcher(LITERAL.matcher(xpath).replaceAll("''")).find();
     }
 
+    /// Whether an xpath reads a variable it doesn't bind itself (`for $m in ...` binds `$m`), outside its string
+    /// literals: one only the XSLT binds.
+    ///
+    /// @param xpath An xpath.
+    /// @return True if it reads a variable it doesn't bind.
+    public static boolean readsUnboundVariable(final String xpath) {
+        final String code = LITERAL.matcher(xpath).replaceAll("''");
+        final Set<String> bound = BINDING.matcher(code).results()
+                .map(found -> found.group(1))
+                .collect(Collectors.toSet());
+        return VARIABLE_NAME.matcher(code).results().anyMatch(found -> !bound.contains(found.group(1)));
+    }
+
     /// @param xpath            An xpath a mapping reads.
     /// @param importedPrefixes The prefixes of the shared XSLTs' functions the mapping calls (its functions
     ///                         entries).
@@ -242,6 +259,55 @@ public final class XPathChecks {
                              + (error != null
                         ? " (" + error + ")"
                         : "") + "." + hint);
+            }
+        }
+        return warnings;
+    }
+
+    /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record: the
+    /// element is written once, with them joined. Not in the Python server; seen: an agent dropped `repeat: true`
+    /// from a mentions entry, the mentions came out joined in one Data ("pataz1 Lancegooden"), and it took that
+    /// for something the generator can't do and wrote the XSLT by hand.
+    ///
+    /// @param inputs    Each xpath to check (as [#evaluable(String, Collection)] allows, or reading only variables
+    ///                  it binds itself: [#readsUnboundVariable(String)]), with what it is used for.
+    /// @param bound     The prefixes the mapping's functions entries bind.
+    /// @param documents The sample records as the translation reads them.
+    /// @param namespace The namespace of the records' elements, or null for none.
+    /// @return The warnings.
+    public static List<String> severalValues(final Map<String, List<String>> inputs,
+                                             final Map<String, String> bound,
+                                             final List<String> documents,
+                                             final String namespace) {
+        final List<String> evaluated = inputs.keySet().stream()
+                .filter(xpath -> XsltSafety.refused(xpath, bound) == null)
+                .toList();
+        final List<String> warnings = new ArrayList<>();
+        if (evaluated.isEmpty() || documents.isEmpty()) {
+            return warnings;
+        }
+        final List<XdmNode> parsed = parseAll(documents);
+        final XPathCompiler compiler = LockedSaxon.xpath(namespace);
+        for (final String xpath : evaluated) {
+            for (int record = 0; record < parsed.size(); record++) {
+                final List<String> values = new ArrayList<>();
+                try {
+                    final XPathSelector selector = compiler.compile(
+                            "for $v in (/*/(" + xpath + "))[normalize-space(string(.))] return string($v)").load();
+                    selector.setContextItem(parsed.get(record));
+                    selector.evaluate().forEach(item -> values.add(item.getStringValue()));
+                } catch (final SaxonApiException | RuntimeException e) {
+                    // A dynamic error on this record: checkXPaths says so.
+                    continue;
+                }
+                if (values.size() > 1) {
+                    warnings.add("xpath " + shown(xpath, 200) + " (used for " + usedFor(inputs.get(xpath))
+                                 + ") gives " + values.size() + " values in sample record " + (record + 1) + " ("
+                                 + PyText.repr(values.subList(0, Math.min(3, values.size()))) + "): without "
+                                 + "repeat they are written joined in one element. repeat: true writes one "
+                                 + "element per value (one Data per value, for a Data entry).");
+                    break;
+                }
             }
         }
         return warnings;
