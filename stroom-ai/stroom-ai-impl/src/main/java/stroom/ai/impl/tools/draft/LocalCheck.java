@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -67,6 +68,11 @@ public final class LocalCheck {
     private static final Pattern TOKEN = PyText.re("^[A-Za-z][\\w.:-]{0,39}$");
     private static final Pattern WORD = PyText.re("[A-Za-z_][\\w.-]*");
     private static final String NAME = "Name";
+    // An element that holds a user's id, e.g. EventSource/User/Id, EventDetail/Authenticate/User/Id.
+    private static final Pattern USER_ID = Pattern.compile("(^|/)User/Id$");
+    // DOMAIN\\user or user@domain: one name, then a domain.
+    private static final Pattern DOMAIN_QUALIFIED = Pattern.compile(
+            "[^\\\\\\s@]+\\\\[^\\\\\\s@]+|[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
     private static final int CACHED_PATTERNS = 512;
     private static final Map<String, Optional<Pattern>> PATTERNS = new ConcurrentHashMap<>();
 
@@ -843,6 +849,44 @@ public final class LocalCheck {
                        + "of event: give each rule its own (a value per rule, or an xpath joining the fields).");
     }
 
+    /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,
+    /// `user@domain`): an Id is usually the account name alone, which `strip_domain` gives (unlike the Stroom MCP
+    /// server, which said nothing: seen in eval cases 35, 36 and 43, the domain kept in every Id).
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The warnings.
+    public static List<String> domainQualifiedUserIds(final TranslationMapping mapping, final List<Object> records) {
+        final List<String> out = new ArrayList<>();
+        final List<Object> items = forEachItems(mapping, records);
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (!hasText(entry.field()) || !USER_ID.matcher(entry.path()).find() || entry.hasMap()
+                || hasText(entry.transform()) || hasText(entry.xpath()) || entry.value() != null) {
+                continue;
+            }
+            final List<Object> pool = hasText(mapping.forEach()) && !"record".equals(entry.scope())
+                    ? items
+                    : records;
+            final Set<String> qualified = new LinkedHashSet<>();
+            for (final Object record : pool) {
+                final String value = valueOf(record, entry.field());
+                if (value != null && DOMAIN_QUALIFIED.matcher(PyText.strip(value)).matches()) {
+                    qualified.add(PyText.strip(value));
+                }
+            }
+            if (!qualified.isEmpty()) {
+                final String said = entry.path() + " takes field '" + entry.field() + "', whose values are "
+                                    + "domain-qualified (" + PyText.repr(qualified.stream().limit(3).toList())
+                                    + "): an Id is usually the account name alone. If so, give the entry "
+                                    + "transform: strip_domain";
+                if (!out.contains(said)) {
+                    out.add(said);
+                }
+            }
+        }
+        return out;
+    }
+
     /// Fields mapped as they are into an element whose schema type has a pattern (an address, a port, a MAC),
     /// whose sample values don't fit it: Stroom's schema check refuses such events. Seen in eval case 40:
     /// CloudTrail's sourceIPAddress is an AWS service's name for calls a service made, and the step failed on
@@ -887,18 +931,35 @@ public final class LocalCheck {
             }
             if (!bad.isEmpty()) {
                 final long count = values.stream().filter(bad::contains).count();
+                final String caseTransform = caseTransform(bad, patterns);
                 final String said = entry.path() + " takes values of a set form (the schema's pattern), but field '"
                                     + entry.field() + "' has " + PyText.repr(bad.stream().limit(3).toList())
                                     + " in " + count + " of the " + values.size() + " sample records: Stroom's "
-                                    + "schema check refuses those events. Map only the values that fit (an extract "
-                                    + "whose regex matches only them gives an empty field otherwise), or map the "
-                                    + "field elsewhere (a name to a HostName, say)";
+                                    + "schema check refuses those events. " + (caseTransform != null
+                        ? "They fit once " + caseTransform + "-cased: give the entry transform: " + caseTransform
+                        : "Map only the values that fit (an extract whose regex matches only them gives an empty "
+                          + "field otherwise), or map the field elsewhere (a name to a HostName, say)");
                 if (!out.contains(said)) {
                     out.add(said);
                 }
             }
         }
         return out;
+    }
+
+    // "lower" or "upper" if every value fits one of the patterns once so cased, else null.
+    private static String caseTransform(final Set<String> values, final List<Pattern> patterns) {
+        for (final String transform : List.of("lower", "upper")) {
+            final boolean fits = values.stream()
+                    .map(value -> "lower".equals(transform)
+                            ? PyText.strip(value).toLowerCase(Locale.ROOT)
+                            : PyText.strip(value).toUpperCase(Locale.ROOT))
+                    .allMatch(value -> patterns.stream().anyMatch(p -> p.matcher(value).matches()));
+            if (fits) {
+                return transform;
+            }
+        }
+        return null;
     }
 
     private static List<Pattern> schemaPatterns(final EventSchema schema, final String path) {
