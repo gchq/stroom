@@ -21,7 +21,7 @@ import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.Timer;
 
-public class Spinner {
+public class SpinStepper {
 
     private static final int INITIAL_SPEED = 7;
     private int step = 1;

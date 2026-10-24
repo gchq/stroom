@@ -18,7 +18,6 @@ package stroom.cell.info.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -80,7 +79,9 @@ public class PercentBarCell extends AbstractCell<Number> {
                 final String thresholdClassName = getThresholdClassName(pctAsLong);
                 final String title = pctAsLong + "%";
 
-                final SafeStyles widthStyle = SafeStylesUtils.forWidth(pctAsLong, Unit.PCT);
+                // The bar's length, which PercentBarCell.css's width uses
+                final SafeStyles widthStyle = SafeStylesUtils.fromTrustedString(
+                        "--percent-bar-cell__width:" + pctAsLong + "%;");
 
                 sb.append(template.percentBar(
                         thresholdClassName, widthStyle, title));

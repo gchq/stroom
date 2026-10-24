@@ -29,6 +29,8 @@
 }
 
 .percentBarCell-bar {
+    /* The percentage (PercentBarCell.java) */
+    width: var(--percent-bar-cell__width, 0);
     height: 12px;
 }
 

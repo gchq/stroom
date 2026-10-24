@@ -10,6 +10,8 @@
 }
 
 .colourSwatchCell-swatch {
+    /* The colour shown (ColourSwatchCell.java) */
+    background-color: var(--colour-swatch-cell__colour, transparent);
     min-width: 14px;
     min-height: 14px;
     max-width: 14px;

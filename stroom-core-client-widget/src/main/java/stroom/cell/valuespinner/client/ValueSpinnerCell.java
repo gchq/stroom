@@ -69,7 +69,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             .appendHtmlConstant("</div>")
             .toSafeHtml();
 
-    private static volatile Spinner spinner;
+    private static volatile SpinStepper spinner;
     private final String name;
     private long min = 0;
     private long max = 100;
@@ -290,7 +290,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         if (spinner == null) {
             synchronized (ValueSpinnerCell.class) {
                 if (spinner == null) {
-                    spinner = new Spinner();
+                    spinner = new SpinStepper();
                 }
             }
         }

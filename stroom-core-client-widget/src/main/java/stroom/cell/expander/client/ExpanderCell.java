@@ -105,7 +105,9 @@ public class ExpanderCell extends AbstractCell<Expander> {
         if (value != null) {
             final int depth = value.getDepth();
             final int padding = (depth * ICON_WIDTH) + initialOffset;
-            final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
+            // The indent of the row's depth, which ExpanderCell.css's padding uses
+            final SafeStyles style = SafeStylesUtils.fromTrustedString(
+                    "--expander-cell__indent:" + padding + "px;");
             String className = "";
             // What a press does, for the mouse. Assistive technology hears the row's own state
             // (the grid gives a tree row aria-expanded), so the expander is hidden from it

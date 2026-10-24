@@ -16,26 +16,27 @@
 
 package stroom.widget.htree.client;
 
+import stroom.widget.util.client.CssProperties;
+
 import com.google.gwt.canvas.client.Canvas;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.OutlineStyle;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/// A canvas of stacked layers, made on demand by name, e.g. a tree's lines on one and its selection
+/// on another. Styled by `layered-canvas.css`; its size is set as custom properties on its root,
+/// which every layer shares.
 public class LayeredCanvas extends FlowPanel {
+
+    private static final String BLOCK = "layered-canvas";
 
     private final Map<String, Canvas> layerMap = new HashMap<>();
     private int width = 100;
     private int height = 100;
 
     private LayeredCanvas() {
-        final Style style = getElement().getStyle();
-        style.setWidth(width, Unit.PX);
-        style.setHeight(height, Unit.PX);
+        setStyleName(BLOCK);
     }
 
     public static LayeredCanvas createIfSupported() {
@@ -50,13 +51,7 @@ public class LayeredCanvas extends FlowPanel {
         if (canvas != null) {
             layerMap.put(name, canvas);
 
-            final Style style = canvas.getElement().getStyle();
-            style.setPosition(Position.ABSOLUTE);
-            style.setLeft(0, Unit.PX);
-            style.setTop(0, Unit.PX);
-            style.setWidth(width, Unit.PX);
-            style.setHeight(height, Unit.PX);
-            style.setOutlineStyle(OutlineStyle.NONE);
+            canvas.setStyleName(BLOCK + "__layer");
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
 
@@ -80,14 +75,11 @@ public class LayeredCanvas extends FlowPanel {
         this.width = width;
         this.height = height;
 
-        Style style = getElement().getStyle();
-        style.setWidth(width, Unit.PX);
-        style.setHeight(height, Unit.PX);
+        // The layers share the root's size
+        CssProperties.set(getElement(), "--" + BLOCK + "__width", width + "px");
+        CssProperties.set(getElement(), "--" + BLOCK + "__height", height + "px");
 
         for (final Canvas canvas : layerMap.values()) {
-            style = canvas.getElement().getStyle();
-            style.setWidth(width, Unit.PX);
-            style.setHeight(height, Unit.PX);
             canvas.setCoordinateSpaceWidth(width);
             canvas.setCoordinateSpaceHeight(height);
         }
