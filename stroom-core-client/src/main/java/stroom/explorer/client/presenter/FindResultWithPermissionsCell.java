@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 
 public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPermissions> {
 
+    private static final String BLOCK = "find-result-cell";
+
     @Override
     public void render(final Context context, final FindResultWithPermissions v, final SafeHtmlBuilder sb) {
         if (v != null) {
@@ -51,47 +53,47 @@ public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPe
                     main.append(SvgImageUtil.toSafeHtml(
                             docRef.getType(),
                             documentType.getIcon(),
-                            getCellClassName() + "-icon",
+                            BLOCK + "__icon",
                             "svgIcon"));
                 }
 
                 // Add name
-                main.append(Templates.div(getCellClassName() + "-name",
+                main.append(Templates.div(BLOCK + "__name",
                         SafeHtmlUtil.from(docRef.getName())));
 
                 if (permissions != null) {
                     if (permissions.getPermission() != null) {
                         // Add permission
-                        main.append(Templates.div(getCellClassName() + "-permission",
+                        main.append(Templates.div(BLOCK + "__permission",
                                 SafeHtmlUtil.from(permissions.getPermission().getDisplayValue())));
                     }
                     if (permissions.getInheritedPermission() != null) {
                         // Add inherited permission
-                        main.append(Templates.div(getCellClassName() + "-inherited-permission",
+                        main.append(Templates.div(BLOCK + "__inherited-permission",
                                 SafeHtmlUtil.from("(" +
                                                   permissions.getInheritedPermission().getDisplayValue() +
                                                   ")")));
                     }
                 }
 
-                row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
+                row.append(Templates.div(BLOCK + "__main", main.toSafeHtml()));
 
                 // Add path
-                sub.append(Templates.div(getCellClassName() + "-path",
+                sub.append(Templates.div(BLOCK + "__path",
                         SafeHtmlUtil.from(value.getPath())));
 
                 // Add uuid
-                sub.append(Templates.div(getCellClassName() + "-uuid",
+                sub.append(Templates.div(BLOCK + "__uuid",
                         SafeHtmlUtil.from(docRef.getUuid())));
 
-                row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+                row.append(Templates.div(BLOCK + "__sub", sub.toSafeHtml()));
 
                 if (permissions != null) {
                     addCreatePerms(row, permissions.getDocumentCreatePermissions());
                     addCreatePerms(row, permissions.getInheritedDocumentCreatePermissions());
                 }
 
-                sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
+                sb.append(Templates.div(BLOCK, row.toSafeHtml()));
             }
         }
     }
@@ -99,14 +101,10 @@ public class FindResultWithPermissionsCell extends AbstractCell<FindResultWithPe
     private void addCreatePerms(final SafeHtmlBuilder row, final Set<String> set) {
         if (set != null && set.size() > 0) {
             final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            sb.append(Templates.div(getCellClassName() + "-path",
+            sb.append(Templates.div(BLOCK + "__path",
                     SafeHtmlUtil.from(set.stream()
                             .collect(Collectors.joining(", ")))));
-            row.append(Templates.div(getCellClassName() + "-sub", sb.toSafeHtml()));
+            row.append(Templates.div(BLOCK + "__sub", sb.toSafeHtml()));
         }
-    }
-
-    private String getCellClassName() {
-        return "findCell";
     }
 }

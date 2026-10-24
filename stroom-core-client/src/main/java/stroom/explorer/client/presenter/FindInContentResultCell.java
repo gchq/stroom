@@ -29,6 +29,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
 
+    private static final String BLOCK = "find-result-cell";
+
     @Override
     public void render(final Context context, final FindInContentResult value, final SafeHtmlBuilder sb) {
         if (value != null) {
@@ -45,7 +47,7 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
                 main.append(SvgImageUtil.toSafeHtml(
                         match.getDocRef().getType(),
                         documentType.getIcon(),
-                        getCellClassName() + "-icon",
+                        BLOCK + "__icon",
                         "svgIcon"));
             }
 
@@ -64,17 +66,17 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             final String sampleAfter = sample.substring(Math.min(end, sample.length()))
                     .replaceAll("\n", " ");
             final SafeHtmlBuilder sampleHtml = new SafeHtmlBuilder();
-            sampleHtml.append(Templates.div(getCellClassName() + "-sample-before",
+            sampleHtml.append(Templates.div(BLOCK + "__sample-before",
                     SafeHtmlUtil.from(sampleBefore)));
-            sampleHtml.append(Templates.div(getCellClassName() + "-highlight",
+            sampleHtml.append(Templates.div(BLOCK + "__highlight",
                     SafeHtmlUtil.from(highlight)));
-            sampleHtml.append(Templates.div(getCellClassName() + "-sample-after",
+            sampleHtml.append(Templates.div(BLOCK + "__sample-after",
                     SafeHtmlUtil.from(sampleAfter)));
 
-            String sampleClass = getCellClassName() + "-sample";
+            String sampleClass = BLOCK + "__sample";
             // Different styling for samples that do not start at beginning of line
             if (!match.isSampleAtStartOfLine()) {
-                sampleClass = sampleClass + " " + getCellClassName() + "-sample-truncated";
+                sampleClass = sampleClass + " " + BLOCK + "__sample--truncated";
             }
             main.append(Templates.div(
                     sampleClass,
@@ -84,33 +86,29 @@ public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
             // Add name
             final String name = match.getDocRef().getName();
             main.append(Templates.div(
-                    getCellClassName() + "-name",
+                    BLOCK + "__name",
                     value.getPath() + " / " + name,
                     SafeHtmlUtil.from(name)));
 
-            row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
+            row.append(Templates.div(BLOCK + "__main", main.toSafeHtml()));
 
             // Add path
-            sub.append(Templates.div(getCellClassName() + "-path",
+            sub.append(Templates.div(BLOCK + "__path",
                     SafeHtmlUtil.from(value.getPath())));
 
             // Add uuid
-            sub.append(Templates.div(getCellClassName() + "-uuid",
+            sub.append(Templates.div(BLOCK + "__uuid",
                     SafeHtmlUtil.from(match.getDocRef().getUuid())));
 
-            row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+            row.append(Templates.div(BLOCK + "__sub", sub.toSafeHtml()));
 
             if (!value.getDocContentMatch().getTags().isEmpty()) {
                 final String tagsString = "Tags: " + value.getDocContentMatch().getTags().toString();
-                tags.append(Templates.div(getCellClassName() + "-tags", SafeHtmlUtil.from(tagsString)));
-                row.append(Templates.div(getCellClassName() + "-sub", tags.toSafeHtml()));
+                tags.append(Templates.div(BLOCK + "__tags", SafeHtmlUtil.from(tagsString)));
+                row.append(Templates.div(BLOCK + "__sub", tags.toSafeHtml()));
             }
 
-            sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
+            sb.append(Templates.div(BLOCK, row.toSafeHtml()));
         }
-    }
-
-    private String getCellClassName() {
-        return "findCell";
     }
 }

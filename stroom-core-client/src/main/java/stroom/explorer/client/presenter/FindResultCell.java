@@ -29,6 +29,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class FindResultCell extends AbstractCell<FindResult> {
 
+    private static final String BLOCK = "find-result-cell";
+
     @Override
     public void render(final Context context, final FindResult value, final SafeHtmlBuilder sb) {
         if (value != null && value.getDocRef() != null) {
@@ -43,33 +45,29 @@ public class FindResultCell extends AbstractCell<FindResult> {
                 main.append(SvgImageUtil.toSafeHtml(
                         docRef.getType(),
                         documentType.getIcon(),
-                        getCellClassName() + "-icon",
+                        BLOCK + "__icon",
                         "svgIcon"));
             }
 
             // Add name
             final String name = docRef.getName();
-            main.append(Templates.div(getCellClassName() + "-name",
+            main.append(Templates.div(BLOCK + "__name",
                     value.getPath() + " / " + name,
                     SafeHtmlUtil.from(name)));
 
-            row.append(Templates.div(getCellClassName() + "-main", main.toSafeHtml()));
+            row.append(Templates.div(BLOCK + "__main", main.toSafeHtml()));
 
             // Add path
-            sub.append(Templates.div(getCellClassName() + "-path",
+            sub.append(Templates.div(BLOCK + "__path",
                     SafeHtmlUtil.from(value.getPath())));
 
             // Add uuid
-            sub.append(Templates.div(getCellClassName() + "-uuid",
+            sub.append(Templates.div(BLOCK + "__uuid",
                     SafeHtmlUtil.from(docRef.getUuid())));
 
-            row.append(Templates.div(getCellClassName() + "-sub", sub.toSafeHtml()));
+            row.append(Templates.div(BLOCK + "__sub", sub.toSafeHtml()));
 
-            sb.append(Templates.div(getCellClassName() + "-row", row.toSafeHtml()));
+            sb.append(Templates.div(BLOCK, row.toSafeHtml()));
         }
-    }
-
-    private String getCellClassName() {
-        return "findCell";
     }
 }
